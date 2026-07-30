@@ -32,7 +32,7 @@ import org.rumbledb.exceptions.NodeAndNonNodeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import scala.Tuple2;
 
 import java.io.Serial;
@@ -41,7 +41,7 @@ import java.util.*;
 public class SlashExprIterator extends HybridRuntimeIterator {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
                 () -> computeLocalResults(context).iterator(),
                 getMetadata()

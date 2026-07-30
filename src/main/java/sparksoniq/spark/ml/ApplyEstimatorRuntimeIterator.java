@@ -21,7 +21,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
@@ -59,7 +59,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(() -> materializeFirstItemOrNull(context), getMetadata());
     }
 

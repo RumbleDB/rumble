@@ -20,7 +20,7 @@ import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
 
 import java.io.Serial;
@@ -47,7 +47,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new FlatMappingLocalCursor<>(
                 this.axisIterator,
                 context,

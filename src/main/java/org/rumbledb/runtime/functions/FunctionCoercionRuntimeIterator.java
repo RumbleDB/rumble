@@ -13,7 +13,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
@@ -49,7 +49,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new CoercionLocalCursor(
                 this.callableItem,
                 this.parameterNames,
@@ -86,7 +86,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
         }
 
         @Override
-        protected LocalCursor<Item> createDelegateCursor() {
+        protected Cursor<Item> createDelegateCursor() {
             return buildDelegate(
                 this.callableItem,
                 this.parameterNames,
@@ -94,7 +94,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
                 this.exceptionMessage,
                 this.staticContext,
                 this.context
-            ).createLocalCursor(this.context);
+            ).getCursor(this.context);
         }
     }
 

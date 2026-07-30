@@ -40,7 +40,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -78,8 +78,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
                 this.leftIterator,
                 this.rightIterator,
                 this.comparisonOperator,
@@ -216,14 +216,14 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         );
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimePlan<Item> leftPlan;
         private final RuntimePlan<Item> rightPlan;
         private final ComparisonOperator operator;
         private final DynamicContext context;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> leftPlan,
                 @NonNull RuntimePlan<Item> rightPlan,
                 @NonNull ComparisonOperator operator,

@@ -34,8 +34,9 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -51,6 +52,7 @@ public abstract class RuntimeTupleIterator
             RuntimePlan<FlworTuple>
         implements
             RuntimeIteratorInterface<FlworTuple>,
+            LocalRuntimePlan<FlworTuple>,
             DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
@@ -61,7 +63,7 @@ public abstract class RuntimeTupleIterator
     protected int evaluationDepthLimit;
 
     protected transient boolean isOpen;
-    private transient LocalCursor<FlworTuple> localCursor;
+    private transient Cursor<FlworTuple> localCursor;
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
@@ -80,7 +82,7 @@ public abstract class RuntimeTupleIterator
     }
 
     @Override
-    public abstract LocalCursor<FlworTuple> createLocalCursor(DynamicContext context);
+    public abstract Cursor<FlworTuple> createNativeCursor(DynamicContext context);
 
     @Override
     public final RuntimeStaticContext getRuntimeStaticContext() {
@@ -96,8 +98,8 @@ public abstract class RuntimeTupleIterator
             );
         }
         this.isOpen = true;
-        this.localCursor = createLocalCursor(context);
         try {
+            this.localCursor = getCursor(context);
         } catch (RuntimeException exception) {
             this.localCursor = null;
             this.isOpen = false;

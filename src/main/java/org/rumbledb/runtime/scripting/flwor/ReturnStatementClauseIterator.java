@@ -10,7 +10,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
@@ -37,7 +37,7 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> executeLocally(context),
                 getMetadata()
@@ -46,12 +46,12 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
 
     private Item executeLocally(DynamicContext context) {
         DynamicContext tupleContext = new DynamicContext(context);
-        try (LocalCursor<FlworTuple> tuples = this.clauseIterator.createLocalCursor(context)) {
+        try (Cursor<FlworTuple> tuples = this.clauseIterator.getCursor(context)) {
             while (tuples.hasNext()) {
                 FlworTuple tuple = tuples.next();
                 tupleContext.getVariableValues().removeAllVariables();
                 tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
-                try (LocalCursor<Item> results = this.expression.createLocalCursor(tupleContext)) {
+                try (Cursor<Item> results = this.expression.getCursor(tupleContext)) {
                     while (results.hasNext()) {
                         results.next();
                     }

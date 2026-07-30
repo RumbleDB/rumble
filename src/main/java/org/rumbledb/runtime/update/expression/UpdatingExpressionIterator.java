@@ -15,7 +15,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * Base plan for updating expressions whose local value is always the empty sequence.
@@ -30,7 +30,7 @@ abstract class UpdatingExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public final LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public final Cursor<Item> createNativeCursor(DynamicContext context) {
         return new EmptyLocalCursor<>(this.getMetadata());
     }
 }

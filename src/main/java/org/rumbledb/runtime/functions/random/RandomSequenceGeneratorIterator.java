@@ -6,7 +6,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -21,7 +21,7 @@ public class RandomSequenceGeneratorIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(() -> createRandoms(context), getMetadata());
     }
 

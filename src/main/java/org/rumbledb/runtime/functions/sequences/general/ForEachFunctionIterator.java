@@ -33,7 +33,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -46,7 +46,7 @@ import java.util.List;
 public class ForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ForEachLocalCursor(
                 this.sequenceIterator,
                 this.actionIterator,
@@ -147,7 +147,7 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator implements Da
         private final RuntimeIterator actionPlan;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
-        private LocalCursor<Item> sequenceCursor;
+        private Cursor<Item> sequenceCursor;
         private Item action;
         private Iterator<Item> currentResults;
 
@@ -167,7 +167,7 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator implements Da
         @Override
         protected void openLocal() {
             this.action = resolveAction(this.actionPlan, this.context, this.staticContext);
-            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
             this.currentResults = Collections.emptyIterator();
         }
 

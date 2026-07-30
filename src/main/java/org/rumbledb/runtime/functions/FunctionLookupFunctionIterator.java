@@ -26,7 +26,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -48,7 +48,7 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ComputedLocalCursor.fromArguments(
             this.getChildren(),
             context,

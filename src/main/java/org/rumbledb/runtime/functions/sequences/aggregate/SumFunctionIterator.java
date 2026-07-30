@@ -33,7 +33,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -64,9 +64,9 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         RuntimePlan<Item> zeroPlan = getChildren().size() > 1 ? getChild(1) : null;
-        return new Cursor(getChild(0), zeroPlan, context, getMetadata());
+        return new EvaluationCursor(getChild(0), zeroPlan, context, getMetadata());
     }
 
     @Override
@@ -124,7 +124,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             ExceptionMetadata metadata
     ) {
         Item result = null;
-        try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
+        try (Cursor<Item> cursor = plan.getCursor(context)) {
             while (cursor.hasNext()) {
                 result = addToSum(result, cursor.next(), metadata);
             }
@@ -230,14 +230,14 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return childContext;
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimePlan<Item> childPlan;
         private final RuntimePlan<Item> zeroPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> childPlan,
                 RuntimePlan<Item> zeroPlan,
                 @NonNull DynamicContext context,

@@ -25,7 +25,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * Local cursor that evaluates a condition and delegates to exactly one branch.
@@ -54,10 +54,10 @@ final class ConditionalLocalCursor<T> extends AbstractDelegatingLocalCursor<T> {
     }
 
     @Override
-    protected LocalCursor<T> createDelegateCursor() {
+    protected Cursor<T> createDelegateCursor() {
         RuntimePlan<T> selectedPlan = EffectiveBooleanValue.evaluate(this.conditionPlan, this.context)
             ? this.thenPlan
             : this.elsePlan;
-        return selectedPlan.createLocalCursor(this.context);
+        return selectedPlan.getCursor(this.context);
     }
 }

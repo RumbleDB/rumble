@@ -25,7 +25,7 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
                 () -> evaluate(context).iterator(),
                 getMetadata()

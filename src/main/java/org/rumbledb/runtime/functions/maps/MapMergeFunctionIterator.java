@@ -17,7 +17,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -64,7 +64,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(() -> materializeFirstItemOrNull(context), getMetadata());
     }
 
@@ -155,7 +155,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         boolean sawAnyMap = false;
         boolean allKeysString = true;
         boolean allValuesSingletons = true;
-        try (LocalCursor<Item> maps = this.mapsIterator.createLocalCursor(context)) {
+        try (Cursor<Item> maps = this.mapsIterator.getCursor(context)) {
             while (maps.hasNext()) {
                 Item mapItem = maps.next();
                 if (!mapItem.isMap()) {

@@ -27,7 +27,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.logics.BooleanLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -45,7 +45,7 @@ public class NotFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return BooleanLocalCursor.not(getChild(0), context, this.getMetadata());
     }
 

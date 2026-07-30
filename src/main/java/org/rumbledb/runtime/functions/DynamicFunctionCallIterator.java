@@ -43,7 +43,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
@@ -80,7 +80,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new DynamicCallLocalCursor(
                 this.functionItemIterator,
                 this.functionArguments,
@@ -292,7 +292,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private FunctionCall call;
-        private LocalCursor<Item> delegate;
+        private Cursor<Item> delegate;
         private List<Item> exitResults;
         private int exitIndex;
 
@@ -323,7 +323,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
                 this.staticContext,
                 this.context
             );
-            this.delegate = this.call.iterator.createLocalCursor(this.context);
+            this.delegate = this.call.iterator.getCursor(this.context);
         }
 
         @Override

@@ -21,7 +21,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
  *
  * @param <T> the value type returned by this cursor
  */
-public interface LocalCursor<T> extends AutoCloseable {
+public interface Cursor<T> extends AutoCloseable {
 
     /**
      * @return whether another value is available

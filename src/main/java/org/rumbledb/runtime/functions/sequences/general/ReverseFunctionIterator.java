@@ -33,7 +33,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
@@ -63,8 +63,8 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator implements Da
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.sequenceIterator, context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.sequenceIterator, context, getMetadata());
     }
 
     @Override
@@ -146,7 +146,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator implements Da
         return this.results.get(this.currentIndex++);
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> sequencePlan;
         private final DynamicContext context;
@@ -154,7 +154,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator implements Da
         private List<Item> results;
         private int currentIndex;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> sequencePlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
@@ -168,7 +168,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator implements Da
         @Override
         protected void openLocal() {
             this.results = new ArrayList<>();
-            try (LocalCursor<Item> childCursor = this.sequencePlan.createLocalCursor(this.context)) {
+            try (Cursor<Item> childCursor = this.sequencePlan.getCursor(this.context)) {
                 while (childCursor.hasNext()) {
                     this.results.add(childCursor.next());
                 }

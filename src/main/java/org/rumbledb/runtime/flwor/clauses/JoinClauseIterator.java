@@ -45,7 +45,7 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -84,7 +84,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
         return new EmptyLocalCursor<>(this.getMetadata());
     }
 

@@ -22,7 +22,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import java.io.Serial;
 
@@ -32,7 +33,7 @@ import java.io.Serial;
  * {@link org.rumbledb.context.NamedFunctions#getBuiltInFunctionIterator}; this iterator
  * must not be evaluated as a normal function body.
  */
-public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator {
+public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -42,7 +43,7 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new EmptyLocalCursor<>(this.getMetadata());
     }
 

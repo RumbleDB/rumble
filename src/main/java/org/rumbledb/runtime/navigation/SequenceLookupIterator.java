@@ -31,7 +31,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.Tuple2;
 
@@ -63,13 +63,13 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> {
                     if (this.position <= 0) {
                         return null;
                     }
-                    try (LocalCursor<Item> child = this.iterator.createLocalCursor(context)) {
+                    try (Cursor<Item> child = this.iterator.getCursor(context)) {
                         Item result = null;
                         for (int current = 0; current < this.position && child.hasNext(); current++) {
                             result = child.next();

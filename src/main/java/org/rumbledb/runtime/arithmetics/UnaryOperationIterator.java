@@ -31,7 +31,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
@@ -60,8 +60,8 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.child, this.negated, context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.child, this.negated, context, getMetadata());
     }
 
     @Override
@@ -122,13 +122,13 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         );
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimePlan<Item> childPlan;
         private final boolean negated;
         private final DynamicContext context;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> childPlan,
                 boolean negated,
                 @NonNull DynamicContext context,

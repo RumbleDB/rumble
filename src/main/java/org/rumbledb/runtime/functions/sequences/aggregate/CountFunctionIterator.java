@@ -30,7 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -58,12 +58,12 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         RuntimeIterator child = getChild(0);
         Name countedVariable = child instanceof VariableReferenceIterator variable
             ? variable.getVariableName()
             : null;
-        return new Cursor(child, countedVariable, context, getMetadata());
+        return new EvaluationCursor(child, countedVariable, context, getMetadata());
     }
 
 
@@ -114,7 +114,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static Item computeLocalCount(RuntimePlan<Item> plan, DynamicContext context) {
         long result = 0;
-        try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
+        try (Cursor<Item> cursor = plan.getCursor(context)) {
             while (cursor.hasNext()) {
                 cursor.next();
                 result++;
@@ -198,14 +198,14 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return NativeClauseContext.NoNativeQuery;
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimePlan<Item> childPlan;
         private final Name countedVariable;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> childPlan,
                 Name countedVariable,
                 @NonNull DynamicContext context,

@@ -32,7 +32,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -63,7 +63,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ObjectKeysLocalCursor(
                 this.iterator,
                 context,
@@ -176,7 +176,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
         private final RuntimeIterator inputPlan;
         private final DynamicContext context;
         private final Set<String> seenKeys;
-        private LocalCursor<Item> inputCursor;
+        private Cursor<Item> inputCursor;
         private Iterator<String> currentKeys;
         private String nextKey;
 
@@ -193,7 +193,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
         @Override
         protected void openLocal() {
-            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
+            this.inputCursor = this.inputPlan.getCursor(this.context);
             this.currentKeys = Collections.emptyIterator();
             advance();
         }

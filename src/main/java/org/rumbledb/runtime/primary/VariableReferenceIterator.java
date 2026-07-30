@@ -35,7 +35,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
@@ -67,8 +67,8 @@ public class VariableReferenceIterator extends HybridRuntimeIterator implements 
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.variableName, context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.variableName, context, getMetadata());
     }
 
     @Override
@@ -176,7 +176,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator implements 
         return result;
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final Name variableName;
         private final DynamicContext context;
@@ -184,7 +184,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator implements 
         private List<Item> items;
         private int currentIndex;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull Name variableName,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata

@@ -44,7 +44,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -110,7 +110,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
         return new ForLocalCursor(
                 this.child,
                 this.evaluationDepthLimit,
@@ -134,8 +134,8 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private DynamicContext tupleContext;
-        private LocalCursor<FlworTuple> childCursor;
-        private LocalCursor<Item> assignmentCursor;
+        private Cursor<FlworTuple> childCursor;
+        private Cursor<Item> assignmentCursor;
         private FlworTuple inputTuple;
         private FlworTuple nextTuple;
         private long position;
@@ -171,7 +171,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
             this.position = 1;
             this.firstItem = true;
             if (hasActiveChild()) {
-                this.childCursor = this.childPlan.createLocalCursor(this.context);
+                this.childCursor = this.childPlan.getCursor(this.context);
                 this.tupleContext = new DynamicContext(this.context);
                 advanceTuple();
             } else {
@@ -181,7 +181,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         }
 
         private void openAssignment(DynamicContext assignmentContext) {
-            this.assignmentCursor = this.assignmentPlan.createLocalCursor(assignmentContext);
+            this.assignmentCursor = this.assignmentPlan.getCursor(assignmentContext);
         }
 
         private void advanceTuple() {

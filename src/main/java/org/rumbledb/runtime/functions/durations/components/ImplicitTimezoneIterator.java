@@ -9,7 +9,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class ImplicitTimezoneIterator extends AtMostOneItemLocalRuntimeIterator 
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new SingletonLocalCursor<>(materializeFirstItemOrNull(context), this.getMetadata());
     }
 

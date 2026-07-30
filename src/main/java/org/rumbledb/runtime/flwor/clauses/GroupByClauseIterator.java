@@ -41,7 +41,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
@@ -100,7 +100,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(() -> computeLocalResults(context).iterator(), getMetadata());
     }
 
@@ -110,7 +110,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         }
         Map<FlworKey, List<FlworTuple>> tuplesByKey = new HashMap<>();
         DynamicContext tupleContext = new DynamicContext(context);
-        try (LocalCursor<FlworTuple> childCursor = this.child.createLocalCursor(context)) {
+        try (Cursor<FlworTuple> childCursor = this.child.getCursor(context)) {
             while (childCursor.hasNext()) {
                 FlworTuple tuple = childCursor.next();
                 List<Item> keys = new ArrayList<>();

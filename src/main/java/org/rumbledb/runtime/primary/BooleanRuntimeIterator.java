@@ -25,7 +25,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -46,7 +46,7 @@ public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new SingletonLocalCursor<>(this.item, this.getMetadata());
     }
 

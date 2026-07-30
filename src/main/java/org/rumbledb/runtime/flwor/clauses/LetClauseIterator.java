@@ -39,7 +39,7 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -91,7 +91,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
         return new LetLocalCursor(
                 this.child,
                 this.variableName,
@@ -112,7 +112,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         private final RumbleRuntimeConfiguration configuration;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<FlworTuple> childCursor;
+        private Cursor<FlworTuple> childCursor;
         private DynamicContext tupleContext;
         private FlworTuple nextTuple;
         private boolean startingClause;
@@ -145,7 +145,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
                 this.nextTuple = generateTuple(null);
                 return;
             }
-            this.childCursor = this.childPlan.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.getCursor(this.context);
             this.tupleContext = new DynamicContext(this.context);
             advance();
         }

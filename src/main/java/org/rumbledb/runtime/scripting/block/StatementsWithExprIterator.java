@@ -10,7 +10,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -40,7 +40,7 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator implements
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         int resultIndex = this.getChildren().size() - 1;
         return new SequentialLocalCursor<>(
                 this.getChildren().subList(0, resultIndex),

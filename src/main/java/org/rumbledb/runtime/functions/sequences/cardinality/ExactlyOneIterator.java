@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.SequenceExceptionExactlyOne;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
@@ -51,8 +51,8 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(getChild(0), context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(getChild(0), context, getMetadata());
     }
 
     @Override
@@ -80,13 +80,13 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
         return this.getChild(0).generateNativeQuery(nativeClauseContext);
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimePlan<Item> childPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> childPlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata

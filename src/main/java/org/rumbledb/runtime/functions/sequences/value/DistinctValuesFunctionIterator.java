@@ -30,7 +30,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.AtomicValueComparisonKey;
@@ -59,7 +59,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implem
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new DistinctLocalCursor(
                 this.sequenceIterator,
                 this.getChildren().size() == 2 ? this.getChild(1) : null,
@@ -125,7 +125,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implem
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private final List<Item> seen = new ArrayList<>();
-        private LocalCursor<Item> sequenceCursor;
+        private Cursor<Item> sequenceCursor;
         private Item nextResult;
         private String activeCollation;
 
@@ -152,7 +152,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implem
                 this.sequencePlan.getRuntimeStaticContext()
             );
             CollationSupport.checkCollationSupported(this.activeCollation, this.metadata);
-            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
             advance();
         }
 

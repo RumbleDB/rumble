@@ -9,7 +9,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
@@ -50,7 +50,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator implements 
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new TypeswitchLocalCursor(this.testField, this.cases, this.defaultCase, context, getMetadata());
     }
 
@@ -59,7 +59,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator implements 
         private final List<TypeswitchRuntimeIteratorCase> cases;
         private final TypeswitchRuntimeIteratorCase defaultCase;
         private final DynamicContext context;
-        private LocalCursor<Item> selected;
+        private Cursor<Item> selected;
 
         private TypeswitchLocalCursor(
                 RuntimeIterator testPlan,
@@ -79,7 +79,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator implements 
         protected void openLocal() {
             Match match = selectMatch();
             bindMatch(match, this.context);
-            this.selected = match.typeSwitchCase.getReturnIterator().createLocalCursor(this.context);
+            this.selected = match.typeSwitchCase.getReturnIterator().getCursor(this.context);
         }
 
         @Override

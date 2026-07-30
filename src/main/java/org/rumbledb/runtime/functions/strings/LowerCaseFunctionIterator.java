@@ -27,7 +27,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -45,7 +45,7 @@ public class LowerCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ContextOrArgumentLocalCursor.mapArgument(
             this.getChild(0),
             context,

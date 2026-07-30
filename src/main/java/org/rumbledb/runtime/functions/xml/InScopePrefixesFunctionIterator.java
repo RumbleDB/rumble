@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -67,7 +67,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ContextOrArgumentLocalCursor.flatMapArgument(
             this.getChild(0),
             context,

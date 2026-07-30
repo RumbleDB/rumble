@@ -29,20 +29,24 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanConversions;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class HybridRuntimeIterator extends RuntimeIterator implements RDDRuntimePlan<Item> {
+public abstract class HybridRuntimeIterator extends RuntimeIterator
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
     protected List<Item> result = null;
     private int currentResultIndex = 0;
-    private transient LocalCursor<Item> localCursor;
+    private transient Cursor<Item> localCursor;
 
     protected HybridRuntimeIterator(
             List<RuntimeIterator> children,
@@ -56,7 +60,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator implements R
         super.open(context);
         if (isLocal()) {
             try {
-                this.localCursor = createLocalCursor(context);
+                this.localCursor = createNativeCursor(context);
             } catch (RuntimeException exception) {
                 this.localCursor = null;
                 super.close();
@@ -193,7 +197,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator implements R
      * Cursor-native subclasses need no local lifecycle overrides.
      */
     protected void openLocal() {
-        this.localCursor = createLocalCursor(this.currentDynamicContextForLocalExecution);
+        this.localCursor = createNativeCursor(this.currentDynamicContextForLocalExecution);
     }
 
     protected void closeLocal() {

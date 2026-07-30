@@ -15,7 +15,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class TransformExpressionIterator extends HybridRuntimeIterator {
@@ -52,7 +52,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new TransformLocalCursor(
                 this.copyDeclMap,
                 this.modifyIterator,
@@ -105,7 +105,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         private final boolean resultMutable;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> returnCursor;
+        private Cursor<Item> returnCursor;
 
         private TransformLocalCursor(
                 Map<Name, RuntimeIterator> copyDeclarations,
@@ -130,7 +130,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         protected void openLocal() {
             PendingUpdateList updates = getPendingUpdateList();
             updates.applyUpdates(this.metadata);
-            this.returnCursor = this.returnPlan.createLocalCursor(this.context);
+            this.returnCursor = this.returnPlan.getCursor(this.context);
         }
 
         @Override

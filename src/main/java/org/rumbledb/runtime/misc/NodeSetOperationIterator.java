@@ -29,7 +29,7 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
@@ -43,7 +43,7 @@ import java.util.TreeSet;
 public class NodeSetOperationIterator extends HybridRuntimeIterator {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
                 () -> computeNodeSet(context).iterator(),
                 getMetadata()

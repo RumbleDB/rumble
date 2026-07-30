@@ -38,7 +38,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
@@ -56,7 +56,7 @@ import java.util.TreeMap;
 public class SimpleMapExpressionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new SimpleMapLocalCursor(this.leftIterator, this.rightIterator, context, getMetadata());
     }
 
@@ -83,7 +83,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator implement
         private final org.rumbledb.exceptions.ExceptionMetadata metadata;
         private List<Item> inputs;
         private int inputIndex;
-        private LocalCursor<Item> currentResults;
+        private Cursor<Item> currentResults;
 
         private SimpleMapLocalCursor(
                 RuntimeIterator leftPlan,
@@ -120,7 +120,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator implement
                 mapContext.getVariableValues().setPosition(this.inputIndex + 1L);
                 mapContext.getVariableValues().setLast(this.inputs.size());
                 this.inputIndex++;
-                this.currentResults = this.rightPlan.createLocalCursor(mapContext);
+                this.currentResults = this.rightPlan.getCursor(mapContext);
             }
             return true;
         }

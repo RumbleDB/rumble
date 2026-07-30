@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
@@ -51,7 +51,7 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new StringToCodepointsLocalCursor(
                 this.getChild(0),
                 context,

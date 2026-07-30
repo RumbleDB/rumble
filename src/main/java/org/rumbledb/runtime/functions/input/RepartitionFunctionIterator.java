@@ -28,7 +28,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.io.Serial;
@@ -52,8 +52,8 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator implement
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return this.iterator.createLocalCursor(context);
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return this.iterator.getCursor(context);
     }
 
     @Override

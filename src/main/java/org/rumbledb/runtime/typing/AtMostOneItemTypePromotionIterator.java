@@ -14,7 +14,7 @@ import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -73,8 +73,8 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
                 this.iterator,
                 this.sequenceType,
                 this.itemType,
@@ -129,7 +129,7 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         return item;
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimeIterator iterator;
         private final SequenceType sequenceType;
@@ -138,7 +138,7 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
 
-        private Cursor(
+        private EvaluationCursor(
                 RuntimeIterator iterator,
                 SequenceType sequenceType,
                 ItemType itemType,

@@ -34,7 +34,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ import java.util.List;
 public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new RemovalLocalCursor(this.iterator, this.getChild(1), context, getMetadata());
     }
 
@@ -53,7 +53,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator impl
         private final RuntimeIterator keysPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> inputCursor;
+        private Cursor<Item> inputCursor;
         private List<String> keys;
 
         private RemovalLocalCursor(
@@ -72,7 +72,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator impl
         @Override
         protected void openLocal() {
             this.keys = getRemovalKeys();
-            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
+            this.inputCursor = this.inputPlan.getCursor(this.context);
         }
 
         @Override

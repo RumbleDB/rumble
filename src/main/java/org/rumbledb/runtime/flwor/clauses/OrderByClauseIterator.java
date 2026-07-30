@@ -40,7 +40,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -85,7 +85,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(() -> computeLocalResults(context).iterator(), getMetadata());
     }
 
@@ -97,7 +97,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
                 new FlworKeyComparator(this.expressionsWithIterator, getMetadata())
         );
         DynamicContext tupleContext = new DynamicContext(context);
-        try (LocalCursor<FlworTuple> childCursor = this.child.createLocalCursor(context)) {
+        try (Cursor<FlworTuple> childCursor = this.child.getCursor(context)) {
             while (childCursor.hasNext()) {
                 FlworTuple tuple = childCursor.next();
                 List<Item> keys = new ArrayList<>();

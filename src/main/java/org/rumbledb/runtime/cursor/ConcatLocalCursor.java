@@ -35,7 +35,7 @@ public final class ConcatLocalCursor<T> extends AbstractLocalCursor<T> {
     private final List<? extends RuntimePlan<T>> childPlans;
     private final DynamicContext context;
     private int childIndex;
-    private LocalCursor<T> currentChild;
+    private Cursor<T> currentChild;
     private T nextValue;
     private boolean hasNext;
 
@@ -89,7 +89,7 @@ public final class ConcatLocalCursor<T> extends AbstractLocalCursor<T> {
                     this.hasNext = false;
                     return;
                 }
-                this.currentChild = this.childPlans.get(this.childIndex).createLocalCursor(this.context);
+                this.currentChild = this.childPlans.get(this.childIndex).getCursor(this.context);
                 this.childIndex++;
             }
             if (this.currentChild.hasNext()) {

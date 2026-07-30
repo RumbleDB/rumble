@@ -30,7 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import java.io.Serial;
@@ -57,7 +57,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IndexOfLocalCursor(
                 this.sequenceIterator,
                 this.searchIterator,
@@ -152,7 +152,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
         private final RuntimeIterator collationPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> sequenceCursor;
+        private Cursor<Item> sequenceCursor;
         private Item search;
         private Item nextResult;
         private int index;
@@ -181,7 +181,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                 }
             }
             this.search = this.searchPlan.materializeFirstOrNull(this.context);
-            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
             this.index = 0;
             advance();
         }

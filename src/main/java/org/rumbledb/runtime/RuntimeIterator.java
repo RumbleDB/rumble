@@ -38,7 +38,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -70,9 +70,6 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
         this.isOpen = false;
         this.children = List.copyOf(Objects.requireNonNullElse(children, Collections.emptyList()));
     }
-
-    @Override
-    public abstract LocalCursor<Item> createLocalCursor(DynamicContext context);
 
     /**
      * This function calculates the effective boolean value of the sequence given by iterator.
@@ -242,9 +239,12 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
     }
 
     @Override
-    protected final RuntimeDataFrame<Item> convertLocalToDataFrame(DynamicContext context) {
+    protected final RuntimeDataFrame<Item> convertLocalToDataFrame(
+            Cursor<Item> cursor,
+            DynamicContext context
+    ) {
         return ItemRuntimeDataFrameFactory.INSTANCE.fromList(
-            RuntimePlanConversions.materializeLocal(this, context),
+            RuntimePlanConversions.materializeCursor(cursor),
             context,
             this.staticContext
         );

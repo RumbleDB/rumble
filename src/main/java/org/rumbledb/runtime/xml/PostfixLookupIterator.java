@@ -37,7 +37,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * Postfix lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
@@ -46,7 +46,7 @@ import org.rumbledb.runtime.cursor.LocalCursor;
 public class PostfixLookupIterator extends HybridRuntimeIterator {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new LookupLocalCursor(
                 this.iterator,
                 this.lookupIterator,
@@ -63,7 +63,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
         private final boolean wildcard;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
-        private LocalCursor<Item> inputCursor;
+        private Cursor<Item> inputCursor;
         private List<Item> keys;
         private Iterator<Item> currentResults;
 
@@ -87,7 +87,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
             this.keys = this.wildcard
                 ? List.of()
                 : this.lookupPlan.materialize(this.context);
-            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
+            this.inputCursor = this.inputPlan.getCursor(this.context);
             this.currentResults = Collections.emptyIterator();
         }
 

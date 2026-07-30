@@ -20,14 +20,16 @@
 
 package org.rumbledb.runtime;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class LocalRuntimeIterator extends RuntimeIterator {
+public abstract class LocalRuntimeIterator extends RuntimeIterator implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

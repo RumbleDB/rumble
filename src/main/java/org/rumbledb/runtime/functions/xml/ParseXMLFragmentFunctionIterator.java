@@ -11,7 +11,7 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -41,7 +41,7 @@ public class ParseXMLFragmentFunctionIterator extends AtMostOneItemLocalRuntimeI
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(() -> materializeFirstItemOrNull(context), getMetadata());
     }
 

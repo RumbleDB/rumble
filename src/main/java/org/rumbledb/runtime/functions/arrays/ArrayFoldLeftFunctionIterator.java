@@ -32,7 +32,7 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
@@ -45,7 +45,7 @@ import java.util.List;
 public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(() -> computeResult(context).iterator(), getMetadata());
     }
 

@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import lombok.NonNull;
@@ -59,8 +59,8 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.sequenceIterator, this.positionIterator, context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.sequenceIterator, this.positionIterator, context, getMetadata());
     }
 
     @Override
@@ -132,17 +132,17 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> sequencePlan;
         private final RuntimePlan<Item> positionPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> sequenceCursor;
+        private Cursor<Item> sequenceCursor;
         private int removePosition;
         private int currentPosition;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> sequencePlan,
                 @NonNull RuntimePlan<Item> positionPlan,
                 @NonNull DynamicContext context,
@@ -160,7 +160,7 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
             Item positionItem = this.positionPlan.materializeFirstOrNull(this.context);
             this.removePosition = positionItem.getIntValue();
             this.currentPosition = 1;
-            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
         }
 
         @Override

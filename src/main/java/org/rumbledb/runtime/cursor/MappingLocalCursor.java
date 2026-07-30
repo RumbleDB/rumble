@@ -35,7 +35,7 @@ public final class MappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
     private final RuntimePlan<I> inputPlan;
     private final DynamicContext context;
     private final Function<? super I, ? extends O> mapper;
-    private LocalCursor<I> inputCursor;
+    private Cursor<I> inputCursor;
 
     public MappingLocalCursor(
             @NonNull RuntimePlan<I> inputPlan,
@@ -51,7 +51,7 @@ public final class MappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
 
     @Override
     protected void openLocal() {
-        this.inputCursor = this.inputPlan.createLocalCursor(this.context);
+        this.inputCursor = this.inputPlan.getCursor(this.context);
     }
 
     @Override

@@ -32,7 +32,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
@@ -55,8 +55,8 @@ public class OneOrMoreIterator extends HybridRuntimeIterator implements DataFram
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.iterator, context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.iterator, context, getMetadata());
     }
 
     @Override
@@ -132,14 +132,14 @@ public class OneOrMoreIterator extends HybridRuntimeIterator implements DataFram
         }
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> childPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> childCursor;
+        private Cursor<Item> childCursor;
 
-        private Cursor(RuntimePlan<Item> childPlan, DynamicContext context, ExceptionMetadata metadata) {
+        private EvaluationCursor(RuntimePlan<Item> childPlan, DynamicContext context, ExceptionMetadata metadata) {
             super(metadata);
             this.childPlan = Objects.requireNonNull(childPlan, "child plan cannot be null");
             this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
@@ -148,7 +148,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator implements DataFram
 
         @Override
         protected void openLocal() {
-            this.childCursor = this.childPlan.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.getCursor(this.context);
             if (!this.childCursor.hasNext()) {
                 throw new SequenceExceptionOneOrMore(
                         "fn:one-or-more() called with a sequence containing less than 1 item",

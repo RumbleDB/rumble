@@ -41,7 +41,7 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -90,7 +90,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator implements DataF
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ReturnLocalCursor(
                 this.child,
                 this.expression,
@@ -105,8 +105,8 @@ public class ReturnClauseIterator extends HybridRuntimeIterator implements DataF
         private final RuntimePlan<Item> expressionPlan;
         private final DynamicContext context;
         private final org.rumbledb.exceptions.ExceptionMetadata metadata;
-        private LocalCursor<FlworTuple> tupleCursor;
-        private LocalCursor<Item> expressionCursor;
+        private Cursor<FlworTuple> tupleCursor;
+        private Cursor<Item> expressionCursor;
         private DynamicContext tupleContext;
         private Item nextResult;
         private boolean hasNext;
@@ -126,7 +126,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator implements DataF
 
         @Override
         protected void openLocal() {
-            this.tupleCursor = this.tuplePlan.createLocalCursor(this.context);
+            this.tupleCursor = this.tuplePlan.getCursor(this.context);
             this.tupleContext = new DynamicContext(this.context);
             advance();
         }
@@ -161,7 +161,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator implements DataF
                 FlworTuple tuple = this.tupleCursor.next();
                 this.tupleContext.getVariableValues().removeAllVariables();
                 this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, this.metadata);
-                this.expressionCursor = this.expressionPlan.createLocalCursor(this.tupleContext);
+                this.expressionCursor = this.expressionPlan.getCursor(this.tupleContext);
                 if (this.expressionCursor.hasNext()) {
                     this.nextResult = this.expressionCursor.next();
                     this.hasNext = true;

@@ -23,7 +23,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -118,7 +118,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
         return new WindowLocalCursor(
                 new WindowSpec(
                         this.child,
@@ -143,7 +143,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         private final WindowSpec spec;
         private final DynamicContext context;
         private final Deque<FlworTuple> pending = new ArrayDeque<>();
-        private LocalCursor<FlworTuple> childCursor;
+        private Cursor<FlworTuple> childCursor;
 
         private WindowLocalCursor(WindowSpec spec, DynamicContext context) {
             super(spec.staticContext.getMetadata());
@@ -154,7 +154,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         @Override
         protected void openLocal() {
             if (this.spec.hasActiveChild()) {
-                this.childCursor = this.spec.childPlan.createLocalCursor(this.context);
+                this.childCursor = this.spec.childPlan.getCursor(this.context);
                 fillPending();
             } else {
                 this.pending.addAll(generateWindows(this.spec, this.context, null));

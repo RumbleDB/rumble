@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import lombok.NonNull;
@@ -54,8 +54,8 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.iterator, context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.iterator, context, getMetadata());
     }
 
     @Override
@@ -115,14 +115,14 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
         return childRDD;
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> childPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> childCursor;
+        private Cursor<Item> childCursor;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> childPlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
@@ -135,7 +135,7 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
 
         @Override
         protected void openLocal() {
-            this.childCursor = this.childPlan.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.getCursor(this.context);
             if (this.childCursor.hasNext()) {
                 this.childCursor.next();
             }

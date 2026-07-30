@@ -41,7 +41,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -64,7 +64,7 @@ import java.util.*;
 public class PredicateIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new PredicateLocalCursor(
                 this.iterator,
                 this.filter,
@@ -117,7 +117,7 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
         private final boolean booleanOnlyFilter;
         private final DynamicContext context;
         private DynamicContext filterContext;
-        private LocalCursor<Item> inputCursor;
+        private Cursor<Item> inputCursor;
         private Item nextResult;
         private long position;
 
@@ -142,13 +142,13 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
                 this.filterContext.getVariableValues().setLast(countInput());
             }
             this.position = 0;
-            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
+            this.inputCursor = this.inputPlan.getCursor(this.context);
             advance();
         }
 
         private long countInput() {
             long count = 0;
-            try (LocalCursor<Item> cursor = this.inputPlan.createLocalCursor(this.context)) {
+            try (Cursor<Item> cursor = this.inputPlan.getCursor(this.context)) {
                 while (cursor.hasNext()) {
                     cursor.next();
                     count++;

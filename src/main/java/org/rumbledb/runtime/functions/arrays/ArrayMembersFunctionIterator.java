@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.navigation.ArrayMembersClosure;
 
 import java.io.Serial;
@@ -55,7 +55,7 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new FlatMappingLocalCursor<>(
                 this.iterator,
                 context,

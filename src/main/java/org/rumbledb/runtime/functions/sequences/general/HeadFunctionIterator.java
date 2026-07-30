@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import lombok.NonNull;
@@ -48,8 +48,8 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(getChild(0), context, this.getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(getChild(0), context, this.getMetadata());
     }
 
     @Override
@@ -64,12 +64,12 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return this.getChild(0).materializeFirstItemOrNull(dynamicContext);
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimePlan<Item> childPlan;
         private final DynamicContext context;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> childPlan,
                 @NonNull DynamicContext context,
                 ExceptionMetadata metadata

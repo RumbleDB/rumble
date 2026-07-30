@@ -31,7 +31,7 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.types.SequenceType;
 
@@ -46,7 +46,7 @@ import java.util.List;
 public class MapForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new MapForEachLocalCursor(
                 this.mapIterator,
                 this.actionIterator,
@@ -179,7 +179,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator implements
         private final DynamicContext context;
         private Invocation invocation;
         private java.util.Iterator<Item> keys;
-        private LocalCursor<Item> callbackCursor;
+        private Cursor<Item> callbackCursor;
 
         private MapForEachLocalCursor(
                 RuntimeIterator mapPlan,
@@ -217,7 +217,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator implements
                     this.keys.next(),
                     this.staticContext
                 );
-                this.callbackCursor = callback.createLocalCursor(this.context);
+                this.callbackCursor = callback.getCursor(this.context);
             }
             return true;
         }

@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
@@ -55,11 +55,11 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         if (this.partitionsIterator == null) {
-            return this.sequenceIterator.createLocalCursor(context);
+            return this.sequenceIterator.getCursor(context);
         }
-        return new Cursor(
+        return new EvaluationCursor(
                 this.sequenceIterator,
                 this.partitionsIterator,
                 context,
@@ -145,15 +145,15 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         return this.sequenceIterator.next();
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> sequencePlan;
         private final RuntimePlan<Item> partitionsPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> sequenceCursor;
+        private Cursor<Item> sequenceCursor;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> sequencePlan,
                 @NonNull RuntimePlan<Item> partitionsPlan,
                 @NonNull DynamicContext context,
@@ -168,7 +168,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
         @Override
         protected void openLocal() {
-            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
             getNumberOfPartitions(this.partitionsPlan, this.context, this.metadata);
         }
 

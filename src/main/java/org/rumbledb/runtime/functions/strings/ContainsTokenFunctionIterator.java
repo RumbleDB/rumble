@@ -7,7 +7,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.Comparator;
@@ -25,7 +25,7 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(() -> evaluate(context), getMetadata());
     }
 
@@ -79,7 +79,7 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
             String token,
             Comparator<String> comparator
     ) {
-        try (LocalCursor<Item> cursor = this.getChild(0).createLocalCursor(context)) {
+        try (Cursor<Item> cursor = this.getChild(0).getCursor(context)) {
             while (cursor.hasNext()) {
                 String[] inputTokens = cursor.next().getStringValue().split("[\\t\\n\\r ]+");
                 if (isTokenInSequence(inputTokens, token, comparator)) {

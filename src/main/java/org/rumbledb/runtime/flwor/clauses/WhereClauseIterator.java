@@ -38,7 +38,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -70,7 +70,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
         return new WhereLocalCursor(this.child, this.expression, context, getMetadata());
     }
 
@@ -80,7 +80,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         private final RuntimeIterator expressionPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<FlworTuple> childCursor;
+        private Cursor<FlworTuple> childCursor;
         private DynamicContext tupleContext;
         private FlworTuple nextTuple;
 
@@ -102,7 +102,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
             if (this.childPlan == null) {
                 throw new OurBadException("Invalid where clause.");
             }
-            this.childCursor = this.childPlan.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.getCursor(this.context);
             this.tupleContext = new DynamicContext(this.context);
             advance();
         }

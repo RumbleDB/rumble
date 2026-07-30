@@ -33,7 +33,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -46,7 +46,7 @@ import java.util.List;
 public class ObjectProjectFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ProjectionLocalCursor(this.iterator, this.getChild(1), context, getMetadata());
     }
 
@@ -56,7 +56,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator impleme
         private final RuntimeIterator keysPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> inputCursor;
+        private Cursor<Item> inputCursor;
         private List<Item> keys;
 
         private ProjectionLocalCursor(
@@ -75,7 +75,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator impleme
         @Override
         protected void openLocal() {
             this.keys = getProjectionKeys();
-            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
+            this.inputCursor = this.inputPlan.getCursor(this.context);
         }
 
         @Override

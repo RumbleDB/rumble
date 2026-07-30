@@ -21,7 +21,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -73,8 +73,8 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.iterator, context, this.validator);
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.iterator, context, this.validator);
     }
 
     @Override
@@ -210,17 +210,17 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
         return new HomogeneousItemDataFrame(df, itemType);
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> childPlan;
         private final DynamicContext context;
         private final TreatTypeValidator validator;
 
-        private LocalCursor<Item> childCursor;
+        private Cursor<Item> childCursor;
         private Item nextResult;
         private int resultCount;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> childPlan,
                 @NonNull DynamicContext context,
                 @NonNull TreatTypeValidator validator
@@ -235,7 +235,7 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
         protected void openLocal() {
             this.validator.resolve(this.context);
             this.resultCount = 0;
-            this.childCursor = this.childPlan.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.getCursor(this.context);
             setNextResult();
         }
 

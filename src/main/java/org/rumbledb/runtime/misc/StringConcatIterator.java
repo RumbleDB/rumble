@@ -34,7 +34,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -55,8 +55,8 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.leftIterator, this.rightIterator, context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.leftIterator, this.rightIterator, context, getMetadata());
     }
 
     @Override
@@ -105,13 +105,13 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
         return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimePlan<Item> leftPlan;
         private final RuntimePlan<Item> rightPlan;
         private final DynamicContext context;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> leftPlan,
                 @NonNull RuntimePlan<Item> rightPlan,
                 @NonNull DynamicContext context,

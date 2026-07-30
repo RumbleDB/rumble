@@ -33,7 +33,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -71,7 +71,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
         return new CountLocalCursor(this.child, this.variableName, context, getMetadata());
     }
 
@@ -80,7 +80,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         private final RuntimeTupleIterator childPlan;
         private final Name variableName;
         private final DynamicContext context;
-        private LocalCursor<FlworTuple> childCursor;
+        private Cursor<FlworTuple> childCursor;
         private int count;
 
         private CountLocalCursor(
@@ -100,7 +100,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
             if (this.childPlan == null) {
                 throw new OurBadException("Invalid count clause.");
             }
-            this.childCursor = this.childPlan.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.getCursor(this.context);
             this.count = 1;
         }
 

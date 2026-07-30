@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -52,7 +52,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new TokenizeLocalCursor(this.getChildren(), context, getMetadata());
     }
 
@@ -194,7 +194,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         }
 
         private String materializeSeparator() {
-            try (LocalCursor<Item> cursor = this.arguments.get(1).createLocalCursor(this.context)) {
+            try (Cursor<Item> cursor = this.arguments.get(1).getCursor(this.context)) {
                 if (!cursor.hasNext()) {
                     throw invalidSeparator();
                 }

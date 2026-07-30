@@ -24,17 +24,19 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.plan.RuntimePlanConversions;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
+public abstract class RDDRuntimeIterator extends RuntimeIterator implements RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    private transient Cursor<Item> executionCursor;
 
     protected RDDRuntimeIterator(
             List<RuntimeIterator> children,
@@ -44,32 +46,45 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public final LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RuntimePlanConversions.rddToLocalCursor(getNativeRDD(context), getRuntimeStaticContext());
+    public void open(DynamicContext context) {
+        super.open(context);
+        try {
+            this.executionCursor = this.getCursor(context);
+        } catch (RuntimeException exception) {
+            this.executionCursor = null;
+            super.close();
+            throw exception;
+        }
     }
 
     @Override
+    public boolean hasNext() {
+        return this.executionCursor != null && this.executionCursor.hasNext();
+    }
+
+    @Override
+    public Item next() {
+        if (this.executionCursor == null) {
+            throw new IteratorFlowException("Runtime iterator is not open", this.getMetadata());
+        }
+        return this.executionCursor.next();
+    }
+
+    @Override
+    public void close() {
+        if (this.executionCursor != null) {
+            this.executionCursor.close();
+            this.executionCursor = null;
+        }
+        super.close();
+    }
+
+    @Override
+    public final JavaRDD<Item> getNativeRDD(DynamicContext context) {
+        return this.getRDDAux(context);
+    }
+
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
-    }
-
-    @Override
-    protected void openLocal() {
-        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
-    }
-
-    @Override
-    protected void closeLocal() {
-        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
-    }
-
-    @Override
-    protected Item nextLocal() {
-        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 }

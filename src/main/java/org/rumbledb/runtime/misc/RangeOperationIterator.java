@@ -41,7 +41,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TreatIterator;
@@ -73,8 +73,8 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.leftIterator, this.rightIterator, context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.leftIterator, this.rightIterator, context, getMetadata());
     }
 
     @Override
@@ -209,7 +209,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
     protected void closeLocal() {
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> leftPlan;
         private final RuntimePlan<Item> rightPlan;
@@ -218,7 +218,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
         private long position;
         private boolean hasNext;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> leftPlan,
                 @NonNull RuntimePlan<Item> rightPlan,
                 @NonNull DynamicContext context,

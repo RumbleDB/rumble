@@ -31,7 +31,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import java.io.Serial;
@@ -66,7 +66,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator implements Data
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new SwitchLocalCursor(this.testField, this.cases, this.defaultReturn, context, getMetadata());
     }
 
@@ -76,7 +76,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator implements Data
         private final RuntimeIterator defaultPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> selected;
+        private Cursor<Item> selected;
 
         private SwitchLocalCursor(
                 RuntimeIterator testPlan,
@@ -95,7 +95,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator implements Data
 
         @Override
         protected void openLocal() {
-            this.selected = selectApplicablePlan().createLocalCursor(this.context);
+            this.selected = selectApplicablePlan().getCursor(this.context);
         }
 
         @Override

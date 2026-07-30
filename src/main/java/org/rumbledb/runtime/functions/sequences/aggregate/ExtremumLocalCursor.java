@@ -28,7 +28,7 @@ import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -101,7 +101,7 @@ final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
                 )
         );
 
-        try (LocalCursor<Item> childCursor = this.childPlan.createLocalCursor(this.context)) {
+        try (Cursor<Item> childCursor = this.childPlan.getCursor(this.context)) {
             while (childCursor.hasNext()) {
                 Item candidate = childCursor.next();
                 if (candidate.isNull()) {

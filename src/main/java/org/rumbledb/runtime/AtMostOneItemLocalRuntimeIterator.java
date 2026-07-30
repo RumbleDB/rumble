@@ -33,13 +33,14 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
-public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator {
+public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

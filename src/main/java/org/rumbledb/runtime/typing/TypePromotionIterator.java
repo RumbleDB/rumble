@@ -15,7 +15,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.FunctionCoercion;
@@ -67,8 +67,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator implements Data
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
                 this.iterator,
                 context,
                 this.sequenceType,
@@ -295,7 +295,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator implements Data
         return promotedItem;
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> childPlan;
         private final DynamicContext context;
@@ -305,11 +305,11 @@ public class TypePromotionIterator extends HybridRuntimeIterator implements Data
         private final RuntimeStaticContext staticContext;
         private final ExceptionMetadata metadata;
 
-        private LocalCursor<Item> childCursor;
+        private Cursor<Item> childCursor;
         private Item nextResult;
         private long childIndex;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> childPlan,
                 @NonNull DynamicContext context,
                 @NonNull SequenceType sequenceType,
@@ -331,7 +331,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator implements Data
         @Override
         protected void openLocal() {
             this.childIndex = 0;
-            this.childCursor = this.childPlan.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.getCursor(this.context);
             setNextResult();
         }
 

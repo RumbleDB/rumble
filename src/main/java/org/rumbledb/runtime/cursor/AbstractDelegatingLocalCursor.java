@@ -17,7 +17,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  */
 public abstract class AbstractDelegatingLocalCursor<T> extends AbstractLocalCursor<T> {
 
-    private LocalCursor<T> delegate;
+    private Cursor<T> delegate;
 
     protected AbstractDelegatingLocalCursor(@NonNull ExceptionMetadata metadata) {
         super(metadata);
@@ -28,7 +28,7 @@ public abstract class AbstractDelegatingLocalCursor<T> extends AbstractLocalCurs
      *
      * @return a fresh cursor owned by this cursor
      */
-    protected abstract LocalCursor<T> createDelegateCursor();
+    protected abstract Cursor<T> createDelegateCursor();
 
     @Override
     protected final void openLocal() {

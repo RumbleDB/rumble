@@ -34,7 +34,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.exceptions.OurBadException;
@@ -64,8 +64,8 @@ public class DataFunctionIterator extends HybridRuntimeIterator implements DataF
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.sequenceIterator, context, getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.sequenceIterator, context, getMetadata());
     }
 
     @Override
@@ -169,15 +169,15 @@ public class DataFunctionIterator extends HybridRuntimeIterator implements DataF
         return this.hasNext;
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> sequencePlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> inputCursor;
+        private Cursor<Item> inputCursor;
         private Iterator<Item> atomizedValues;
 
-        private Cursor(
+        private EvaluationCursor(
                 RuntimePlan<Item> sequencePlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
@@ -192,7 +192,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator implements DataF
         protected void openLocal() {
             this.atomizedValues = Collections.emptyIterator();
             if (this.sequencePlan != null) {
-                this.inputCursor = this.sequencePlan.createLocalCursor(this.context);
+                this.inputCursor = this.sequencePlan.getCursor(this.context);
             } else {
                 List<Item> contextItems = this.context.getVariableValues()
                     .getLocalVariableValue(Name.CONTEXT_ITEM, this.metadata);

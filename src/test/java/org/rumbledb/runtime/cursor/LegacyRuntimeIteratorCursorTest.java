@@ -30,10 +30,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -47,8 +49,8 @@ public class LegacyRuntimeIteratorCursorTest {
                 ItemFactory.getInstance().createIntItem(42),
                 createStaticContext(configuration)
         );
-        LocalCursor<Item> first = prototype.createLocalCursor(dynamicContext);
-        LocalCursor<Item> second = prototype.createLocalCursor(dynamicContext);
+        Cursor<Item> first = prototype.getCursor(dynamicContext);
+        Cursor<Item> second = prototype.getCursor(dynamicContext);
 
         try {
             assertEquals(42, first.next().getIntValue());
@@ -70,12 +72,31 @@ public class LegacyRuntimeIteratorCursorTest {
                 ItemFactory.getInstance().createIntItem(1),
                 createStaticContext(configuration)
         );
-        LocalCursor<Item> cursor = prototype.createLocalCursor(dynamicContext);
+        Cursor<Item> cursor = prototype.getCursor(dynamicContext);
 
         assertTrue(cursor.hasNext());
         cursor.close();
         assertDoesNotThrow(cursor::close);
         assertThrows(IteratorFlowException.class, cursor::hasNext);
+    }
+
+    @Test
+    public void localExecutionRequiresTheLocalCapability() {
+        RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
+        DynamicContext dynamicContext = new DynamicContext(configuration);
+        RuntimeStaticContext staticContext = createStaticContext(configuration);
+        RuntimePlan<Item> planWithoutLocalCapability = new RuntimePlan<>() {
+            @Override
+            public RuntimeStaticContext getRuntimeStaticContext() {
+                return staticContext;
+            }
+        };
+
+        OurBadException exception = assertThrows(
+            OurBadException.class,
+            () -> planWithoutLocalCapability.getCursor(dynamicContext)
+        );
+        assertTrue(exception.getMessage().contains("does not implement the corresponding capability"));
     }
 
     private static RuntimeStaticContext createStaticContext(RumbleRuntimeConfiguration configuration) {

@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
@@ -19,7 +20,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 
 /**
@@ -27,103 +28,68 @@ import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
  *
  * <p>
  * A plan may be shared by multiple evaluations. Mutable state belonging to one local evaluation must be kept in the
- * {@link LocalCursor} returned by {@link #createLocalCursor(DynamicContext)}, never in the plan.
+ * {@link Cursor} returned by a {@link LocalRuntimePlan}, never in the plan.
  * </p>
  *
  * <p>
- * Plans may also implement {@link RDDRuntimePlan} or {@link DataFrameRuntimePlan} to request distributed execution
- * with centrally managed conversion.
+ * A plan implements {@link LocalRuntimePlan}, {@link RDDRuntimePlan}, or {@link DataFrameRuntimePlan} for every
+ * representation it supports natively. The compiled execution mode selects one native representation; conversion to
+ * a representation requested by a caller happens only after that selection.
  * </p>
  *
- * @param <T> the type produced by local execution of this plan
+ * @param <T> the logical value produced by this plan
  */
 public abstract class RuntimePlan<T> implements Serializable {
 
-    /**
-     * Creates an unopened cursor owned by one local evaluation.
-     *
-     * @param context the dynamic context for that evaluation
-     * @return an independent, unopened local cursor
-     */
-    public abstract LocalCursor<T> createLocalCursor(DynamicContext context);
+    public Cursor<T> createNativeCursor(DynamicContext context) {
+        throw this.unsupportedRepresentation(ExecutionMode.LOCAL);
+    }
 
-    private LocalCursor<T> createExecutionCursor(@NonNull DynamicContext context) {
-        return switch (this.getExecutionMode()) {
-            case LOCAL -> this.createLocalCursor(context);
-            case RDD -> RuntimePlanConversions.rddToLocalCursor(
-                this.getRDD(context),
+    /**
+     * Executes this plan in its compiled representation and exposes the result as a cursor.
+     */
+    public final Cursor<T> getCursor(@NonNull DynamicContext context) {
+        return this.executeAs(
+            context,
+            Function.identity(),
+            rdd -> RuntimePlanConversions.rddToCursor(rdd, this.getRuntimeStaticContext()),
+            dataFrame -> RuntimePlanConversions.rddToCursor(
+                dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()),
                 this.getRuntimeStaticContext()
-            );
-            case DATAFRAME -> RuntimePlanConversions.rddToLocalCursor(
-                this.getDataFrameResult(context).toRDD(this.getRuntimeStaticContext().getMetadata()),
-                this.getRuntimeStaticContext()
-            );
-            case UNSET -> throw this.unsetExecutionMode();
-        };
+            )
+        );
     }
 
     /**
      * Returns this plan as an RDD, executing its compiled representation first and converting only at this boundary.
      */
     public final JavaRDD<T> getRDD(@NonNull DynamicContext context) {
-        return switch (this.getExecutionMode()) {
-            case LOCAL -> RuntimePlanConversions.localToRDD(this, context);
-            case RDD -> {
-                if (this.hasNativeRDD()) {
-                    yield this.getNativeRDD(context);
-                }
-                if (this.hasNativeDataFrame()) {
-                    yield this.getNativeDataFrame(context).toRDD(this.getRuntimeStaticContext().getMetadata());
-                }
-                yield RuntimePlanConversions.localToRDD(this, context);
-            }
-            case DATAFRAME -> {
-                if (this.hasNativeDataFrame()) {
-                    yield this.getNativeDataFrame(context).toRDD(this.getRuntimeStaticContext().getMetadata());
-                }
-                if (this.hasNativeRDD()) {
-                    yield this.getNativeRDD(context);
-                }
-                yield RuntimePlanConversions.localToRDD(this, context);
-            }
-            case UNSET -> throw this.unsetExecutionMode();
-        };
+        return this.executeAs(
+            context,
+            RuntimePlanConversions::cursorToRDD,
+            Function.identity(),
+            dataFrame -> dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata())
+        );
     }
 
     /**
      * Executes this plan in its compiled representation and exposes the result as a typed runtime DataFrame.
      */
     protected final RuntimeDataFrame<T> getDataFrameResult(@NonNull DynamicContext context) {
-        return switch (this.getExecutionMode()) {
-            case LOCAL -> this.convertLocalToDataFrame(context);
-            case RDD -> {
-                if (this.hasNativeRDD()) {
-                    yield this.convertRDDToDataFrame(this.getNativeRDD(context), context);
-                }
-                if (this.hasNativeDataFrame()) {
-                    yield this.getNativeDataFrame(context);
-                }
-                yield this.convertLocalToDataFrame(context);
-            }
-            case DATAFRAME -> {
-                if (this.hasNativeDataFrame()) {
-                    yield this.getNativeDataFrame(context);
-                }
-                if (this.hasNativeRDD()) {
-                    yield this.convertRDDToDataFrame(this.getNativeRDD(context), context);
-                }
-                yield this.convertLocalToDataFrame(context);
-            }
-            case UNSET -> throw this.unsetExecutionMode();
-        };
+        return this.executeAs(
+            context,
+            cursor -> this.convertLocalToDataFrame(cursor, context),
+            rdd -> this.convertRDDToDataFrame(rdd, context),
+            Function.identity()
+        );
     }
 
-    protected RuntimeDataFrame<T> convertLocalToDataFrame(DynamicContext context) {
+    protected RuntimeDataFrame<T> convertLocalToDataFrame(Cursor<T> cursor, DynamicContext context) {
         throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
     }
 
     protected RuntimeDataFrame<T> convertRDDToDataFrame(JavaRDD<T> rdd, DynamicContext context) {
-        throw this.unsupportedRepresentation(ExecutionMode.RDD);
+        throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
     }
 
     protected JavaRDD<T> getNativeRDD(DynamicContext context) {
@@ -134,12 +100,39 @@ public abstract class RuntimePlan<T> implements Serializable {
         throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
     }
 
-    private boolean hasNativeRDD() {
-        return this instanceof RDDRuntimePlan<?>;
+    private <R> R executeAs(
+            DynamicContext context,
+            Function<Cursor<T>, R> fromCursor,
+            Function<JavaRDD<T>, R> fromRDD,
+            Function<RuntimeDataFrame<T>, R> fromDataFrame
+    ) {
+        return switch (this.getExecutionMode()) {
+            case LOCAL -> {
+                this.requireCapability(this instanceof LocalRuntimePlan<?>, ExecutionMode.LOCAL);
+                yield fromCursor.apply(this.createNativeCursor(context));
+            }
+            case RDD -> {
+                this.requireCapability(this instanceof RDDRuntimePlan<?>, ExecutionMode.RDD);
+                yield fromRDD.apply(this.getNativeRDD(context));
+            }
+            case DATAFRAME -> {
+                this.requireCapability(this instanceof DataFrameRuntimePlan<?>, ExecutionMode.DATAFRAME);
+                yield fromDataFrame.apply(this.getNativeDataFrame(context));
+            }
+            case UNSET -> throw this.unsetExecutionMode();
+        };
     }
 
-    private boolean hasNativeDataFrame() {
-        return this instanceof DataFrameRuntimePlan<?>;
+    private void requireCapability(boolean supported, ExecutionMode mode) {
+        if (!supported) {
+            throw new OurBadException(
+                    "The runtime plan "
+                        + this.getClass().getCanonicalName()
+                        + " was compiled for "
+                        + mode
+                        + " execution but does not implement the corresponding capability."
+            );
+        }
     }
 
     private ExecutionMode getExecutionMode() {
@@ -168,7 +161,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final List<T> materialize(@NonNull DynamicContext context) {
         List<T> result = new ArrayList<>();
-        try (LocalCursor<T> cursor = this.createExecutionCursor(context)) {
+        try (Cursor<T> cursor = this.getCursor(context)) {
             while (cursor.hasNext()) {
                 result.add(cursor.next());
             }
@@ -183,7 +176,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @return the first result, or {@code null}
      */
     public final T materializeFirstOrNull(@NonNull DynamicContext context) {
-        try (LocalCursor<T> cursor = this.createExecutionCursor(context)) {
+        try (Cursor<T> cursor = this.getCursor(context)) {
             return cursor.hasNext() ? cursor.next() : null;
         }
     }
@@ -201,7 +194,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             throw new IllegalArgumentException("limit cannot be negative");
         }
         List<T> result = new ArrayList<>(limit);
-        try (LocalCursor<T> cursor = this.createExecutionCursor(context)) {
+        try (Cursor<T> cursor = this.getCursor(context)) {
             while (result.size() < limit && cursor.hasNext()) {
                 result.add(cursor.next());
             }
@@ -217,7 +210,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @throws MoreThanOneItemException if more than one result is produced
      */
     public final T materializeAtMostOne(@NonNull DynamicContext context) throws MoreThanOneItemException {
-        try (LocalCursor<T> cursor = this.createExecutionCursor(context)) {
+        try (Cursor<T> cursor = this.getCursor(context)) {
             if (!cursor.hasNext()) {
                 return null;
             }

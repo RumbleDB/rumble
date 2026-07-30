@@ -35,7 +35,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -72,8 +72,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
                 this.sequenceIterator,
                 this.positionIterator,
                 this.lengthIterator,
@@ -289,18 +289,18 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
         }
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> sequencePlan;
         private final RuntimePlan<Item> positionPlan;
         private final RuntimePlan<Item> lengthPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> sequenceCursor;
+        private Cursor<Item> sequenceCursor;
         private int startPosition;
         private int currentLength;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> sequencePlan,
                 @NonNull RuntimePlan<Item> positionPlan,
                 RuntimePlan<Item> lengthPlan,
@@ -332,7 +332,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
                 return;
             }
 
-            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
             int currentPosition = 1;
             while (currentPosition < this.startPosition && this.sequenceCursor.hasNext()) {
                 this.sequenceCursor.next();

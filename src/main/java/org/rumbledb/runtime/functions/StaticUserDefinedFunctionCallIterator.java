@@ -34,7 +34,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -66,7 +66,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new UserDefinedCallLocalCursor(
                 this.functionIdentifier,
                 this.functionArguments,
@@ -143,7 +143,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         private final boolean tailCallOptimizationCandidate;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
-        private LocalCursor<Item> delegate;
+        private Cursor<Item> delegate;
         private List<Item> exitResults;
         private int exitIndex;
         private Item nextResult;
@@ -199,7 +199,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         }
 
         private void openDelegate(RuntimeIterator call) {
-            this.delegate = call.createLocalCursor(this.context);
+            this.delegate = call.getCursor(this.context);
             try {
             } catch (ExitStatementException e) {
                 this.exitResults = e.getLocalResult();

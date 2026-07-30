@@ -29,7 +29,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -53,7 +53,7 @@ public final class EffectiveBooleanValue {
     ) {
         Objects.requireNonNull(plan, "plan cannot be null");
         Objects.requireNonNull(context, "dynamic context cannot be null");
-        try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
+        try (Cursor<Item> cursor = plan.getCursor(context)) {
             return evaluateOpenSequence(
                 cursor::hasNext,
                 cursor::next,

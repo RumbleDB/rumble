@@ -14,7 +14,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * Drains a sequence of side-effecting plans before streaming a result plan.
@@ -24,7 +24,7 @@ final class SequentialLocalCursor<T> extends AbstractLocalCursor<T> {
     private final List<? extends RuntimePlan<?>> prefixPlans;
     private final RuntimePlan<T> resultPlan;
     private final DynamicContext context;
-    private LocalCursor<T> resultCursor;
+    private Cursor<T> resultCursor;
 
     public SequentialLocalCursor(
             @NonNull List<? extends RuntimePlan<?>> prefixPlans,
@@ -43,11 +43,11 @@ final class SequentialLocalCursor<T> extends AbstractLocalCursor<T> {
         for (RuntimePlan<?> prefixPlan : this.prefixPlans) {
             drain(prefixPlan);
         }
-        this.resultCursor = this.resultPlan.createLocalCursor(this.context);
+        this.resultCursor = this.resultPlan.getCursor(this.context);
     }
 
     private <V> void drain(RuntimePlan<V> plan) {
-        try (LocalCursor<V> cursor = plan.createLocalCursor(this.context)) {
+        try (Cursor<V> cursor = plan.getCursor(this.context)) {
             while (cursor.hasNext()) {
                 cursor.next();
             }

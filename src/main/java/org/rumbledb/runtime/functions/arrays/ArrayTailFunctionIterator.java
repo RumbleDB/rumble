@@ -41,7 +41,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 public class ArrayTailFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
@@ -66,7 +66,7 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator implements 
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> tailArgument(this.arrayIterator.materialize(context)),
                 getMetadata()

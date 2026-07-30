@@ -11,7 +11,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -33,7 +33,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator implements Data
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ExitLocalCursor(this.childIterator, context, getMetadata());
     }
 

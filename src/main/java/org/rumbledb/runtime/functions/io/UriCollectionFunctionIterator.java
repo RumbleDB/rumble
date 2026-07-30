@@ -7,7 +7,7 @@ import org.rumbledb.exceptions.UnimplementedFunctionException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -24,7 +24,7 @@ public class UriCollectionFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> {
                     throw new UnimplementedFunctionException("fn:uri-collection", getMetadata());

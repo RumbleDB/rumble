@@ -10,7 +10,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -21,7 +21,7 @@ import java.util.List;
 public class ProgramIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ProgramLocalCursor(
                 this.statementsAndExprIterator,
                 this.executionState,
@@ -88,7 +88,7 @@ public class ProgramIterator extends HybridRuntimeIterator implements DataFrameR
         private final RuntimeIterator statementsAndExprPlan;
         private final ProgramExecutionState executionState;
         private final DynamicContext context;
-        private LocalCursor<Item> delegate;
+        private Cursor<Item> delegate;
         private List<Item> exitResults;
         private int exitIndex;
 
@@ -106,7 +106,7 @@ public class ProgramIterator extends HybridRuntimeIterator implements DataFrameR
 
         @Override
         protected void openLocal() {
-            this.delegate = this.statementsAndExprPlan.createLocalCursor(this.context);
+            this.delegate = this.statementsAndExprPlan.getCursor(this.context);
         }
 
         private void captureExit(ExitStatementException exception) {

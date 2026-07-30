@@ -26,7 +26,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -66,7 +66,7 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator imple
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new BuiltinCallLocalCursor(
                 this.functionItem,
                 this.functionArguments,
@@ -95,12 +95,12 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator imple
         }
 
         @Override
-        protected LocalCursor<Item> createDelegateCursor() {
+        protected Cursor<Item> createDelegateCursor() {
             return newBuiltinDelegate(
                 this.functionItem,
                 this.functionArguments,
                 this.staticContext
-            ).createLocalCursor(this.context);
+            ).getCursor(this.context);
         }
     }
 

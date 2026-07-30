@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -56,7 +56,7 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new TraceLocalCursor(
                 this.getChild(0),
                 this.getChildren().size() == 2 ? this.getChild(1) : null,
@@ -133,7 +133,7 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
         private final RuntimeIterator labelPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> valueCursor;
+        private Cursor<Item> valueCursor;
         private String label;
         private int position;
 
@@ -156,7 +156,7 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
                 ? ""
                 : this.labelPlan.materializeFirstOrNull(this.context).getStringValue();
             this.position = 0;
-            this.valueCursor = this.valuePlan.createLocalCursor(this.context);
+            this.valueCursor = this.valuePlan.getCursor(this.context);
         }
 
         @Override

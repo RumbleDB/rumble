@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
 
@@ -64,8 +64,8 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
                 this.sequenceIterator,
                 this.positionIterator,
                 this.insertIterator,
@@ -199,20 +199,20 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
-    private static final class Cursor extends AbstractLocalCursor<Item> {
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> sequencePlan;
         private final RuntimePlan<Item> positionPlan;
         private final RuntimePlan<Item> insertPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
-        private LocalCursor<Item> sequenceCursor;
-        private LocalCursor<Item> insertCursor;
+        private Cursor<Item> sequenceCursor;
+        private Cursor<Item> insertCursor;
         private int insertPosition;
         private int currentPosition;
         private boolean insertionCompleted;
 
-        private Cursor(
+        private EvaluationCursor(
                 @NonNull RuntimePlan<Item> sequencePlan,
                 @NonNull RuntimePlan<Item> positionPlan,
                 @NonNull RuntimePlan<Item> insertPlan,
@@ -234,8 +234,8 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
             this.currentPosition = 1;
             this.insertionCompleted = false;
 
-            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
-            this.insertCursor = this.insertPlan.createLocalCursor(this.context);
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
+            this.insertCursor = this.insertPlan.getCursor(this.context);
         }
 
         @Override

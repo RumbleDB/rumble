@@ -23,7 +23,7 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.functions.io.TextResourceUtil;
 
@@ -41,7 +41,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ComputedLocalCursor.fromArguments(
             this.getChildren(),
             context,

@@ -12,7 +12,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -46,8 +46,8 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.child, this.sequenceType, this.staticContext, getMetadata(), context);
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.child, this.sequenceType, this.staticContext, getMetadata(), context);
     }
 
     private static Item evaluate(
@@ -105,14 +105,14 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
 
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimeIterator childPlan;
         private final SequenceType sequenceType;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
 
-        private Cursor(
+        private EvaluationCursor(
                 RuntimeIterator childPlan,
                 SequenceType sequenceType,
                 RuntimeStaticContext staticContext,

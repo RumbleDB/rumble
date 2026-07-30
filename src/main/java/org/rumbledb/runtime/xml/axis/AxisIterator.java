@@ -9,7 +9,7 @@ import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new AxisLocalCursor(
                 this.axis,
                 this.resultOrder,

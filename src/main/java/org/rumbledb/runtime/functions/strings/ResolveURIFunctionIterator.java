@@ -8,7 +8,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.net.URI;
@@ -27,7 +27,7 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
     }
 

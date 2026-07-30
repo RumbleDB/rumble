@@ -7,7 +7,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -44,7 +44,7 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> execute(
                     this.testField.materializeFirstOrNull(context),

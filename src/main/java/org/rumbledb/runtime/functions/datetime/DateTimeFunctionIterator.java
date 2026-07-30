@@ -11,7 +11,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.BinaryMappingLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.time.OffsetTime;
 import java.util.List;
@@ -31,7 +31,7 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         ExceptionMetadata metadata = getMetadata();
         return BinaryMappingLocalCursor.eager(
             this.dateIterator,

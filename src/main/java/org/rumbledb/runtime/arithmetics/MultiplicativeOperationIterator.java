@@ -40,7 +40,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -71,8 +71,8 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
                 this.leftIterator,
                 this.rightIterator,
                 this.multiplicativeOperator,
@@ -139,7 +139,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         return processItem(left, right, operator, metadata);
     }
 
-    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
 
         private final RuntimePlan<Item> leftPlan;
         private final RuntimePlan<Item> rightPlan;
@@ -147,7 +147,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
 
-        private Cursor(
+        private EvaluationCursor(
                 RuntimePlan<Item> leftPlan,
                 RuntimePlan<Item> rightPlan,
                 MultiplicativeOperator operator,

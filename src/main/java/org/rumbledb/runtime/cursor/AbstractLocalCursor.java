@@ -32,7 +32,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
  *
  * @param <T> the value type returned by this cursor
  */
-public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
+public abstract class AbstractLocalCursor<T> implements Cursor<T> {
 
     @Getter
     private final ExceptionMetadata metadata;

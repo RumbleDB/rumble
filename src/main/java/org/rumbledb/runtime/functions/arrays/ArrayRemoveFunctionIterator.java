@@ -38,7 +38,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * F&amp;O 3.1 array:remove — returns a new array with members at the given 1-based positions omitted
@@ -69,7 +69,7 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator implement
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> remove(
                     this.arrayIterator.materialize(context),

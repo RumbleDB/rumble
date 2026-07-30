@@ -42,7 +42,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -89,7 +89,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator implements D
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new FunctionCallLocalCursor(
                 this.functionItem,
                 this.functionArguments,
@@ -107,7 +107,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator implements D
         private final boolean tailOptimization;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
-        private LocalCursor<Item> body;
+        private Cursor<Item> body;
 
         private FunctionCallLocalCursor(
                 Item functionItem,
@@ -143,7 +143,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator implements D
                 bodyPlan = this.functionItem.getBodyIterator();
                 bodyContext = createCallContext(this.functionItem, this.functionArguments, this.context);
             }
-            this.body = bodyPlan.createLocalCursor(bodyContext);
+            this.body = bodyPlan.getCursor(bodyContext);
         }
 
         @Override

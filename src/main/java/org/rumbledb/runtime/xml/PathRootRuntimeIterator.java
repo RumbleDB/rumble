@@ -8,7 +8,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -22,7 +22,7 @@ public class PathRootRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(() -> findRoot(context), getMetadata());
     }
 

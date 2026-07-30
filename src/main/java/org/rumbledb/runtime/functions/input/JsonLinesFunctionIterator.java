@@ -31,7 +31,7 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 
 import com.google.gson.stream.JsonReader;
@@ -46,7 +46,7 @@ import java.util.List;
 public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ResourceLocalCursor<>(
                 () -> openJsonLines(context),
                 getMetadata()

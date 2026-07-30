@@ -12,12 +12,11 @@ import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -29,7 +28,7 @@ public final class RuntimePlanConversions {
     private RuntimePlanConversions() {
     }
 
-    public static <T> LocalCursor<T> rddToLocalCursor(JavaRDD<T> rdd, RuntimeStaticContext staticContext) {
+    public static <T> Cursor<T> rddToCursor(JavaRDD<T> rdd, RuntimeStaticContext staticContext) {
         return new IteratorLocalCursor<>(
                 () -> collectRDDWithLimit(
                     rdd,
@@ -65,15 +64,15 @@ public final class RuntimePlanConversions {
         );
     }
 
-    public static <T> JavaRDD<T> localToRDD(RuntimePlan<T> plan, DynamicContext context) {
+    public static <T> JavaRDD<T> cursorToRDD(Cursor<T> cursor) {
         return SparkSessionManager.getInstance()
             .getJavaSparkContext()
-            .parallelize(materializeLocal(plan, context));
+            .parallelize(materializeCursor(cursor));
     }
 
-    public static <T> List<T> materializeLocal(RuntimePlan<T> plan, DynamicContext context) {
+    public static <T> List<T> materializeCursor(Cursor<T> cursor) {
         List<T> items = new ArrayList<>();
-        try (LocalCursor<T> cursor = plan.createLocalCursor(context)) {
+        try (cursor) {
             while (cursor.hasNext()) {
                 items.add(cursor.next());
             }

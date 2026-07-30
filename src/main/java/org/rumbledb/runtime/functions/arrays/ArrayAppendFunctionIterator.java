@@ -34,7 +34,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * F&amp;O 3.1 array:append — returns a new array with one additional member (the appendage sequence).
@@ -64,7 +64,7 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator implement
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> createResult(
                     requireArray(this.arrayIterator.materialize(context)),

@@ -34,7 +34,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -43,7 +43,7 @@ import java.util.List;
 public class ForEachPairFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ForEachPairLocalCursor(
                 this.sequenceIterator1,
                 this.sequenceIterator2,
@@ -146,7 +146,7 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator implement
         private Item action;
         private RuntimeStaticContext argumentContext;
         private int pairIndex;
-        private LocalCursor<Item> callbackCursor;
+        private Cursor<Item> callbackCursor;
 
         private ForEachPairLocalCursor(
                 RuntimeIterator firstPlan,
@@ -187,7 +187,7 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator implement
                     this.staticContext
                 );
                 this.pairIndex++;
-                this.callbackCursor = callback.createLocalCursor(this.context);
+                this.callbackCursor = callback.getCursor(this.context);
             }
             return true;
         }
