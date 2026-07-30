@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.plan.EvaluationArguments;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -27,7 +29,6 @@ import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -47,14 +48,14 @@ public class EndsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(
-            ComputedLocalCursor.arguments(
+            EvaluationArguments.lazy(
                 this.getChildren().size(),
                 index -> this.getChild(index).materializeFirstItemOrNull(context)
             )
         );
     }
 
-    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+    private Item evaluate(EvaluationArguments<Item> arguments) {
         if (arguments.size() == 3) {
             String collation = arguments.get(2).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {

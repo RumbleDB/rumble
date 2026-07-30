@@ -20,17 +20,13 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -60,35 +56,5 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
         return result;
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> childPlan;
-        private final DynamicContext context;
-        private final ExceptionMetadata metadata;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.childPlan = childPlan;
-            this.context = context;
-            this.metadata = metadata;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            try {
-                return this.childPlan.materializeAtMostOne(this.context);
-            } catch (MoreThanOneItemException exception) {
-                throw new SequenceExceptionZeroOrOne(
-                        "fn:zero-or-one() called with a sequence containing more than one item",
-                        this.metadata
-                );
-            }
-        }
     }
 }

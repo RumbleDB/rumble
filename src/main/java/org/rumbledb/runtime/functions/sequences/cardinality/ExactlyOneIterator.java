@@ -20,18 +20,14 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionExactlyOne;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -71,43 +67,5 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return this.getChild(0).generateNativeQuery(nativeClauseContext);
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> childPlan;
-        private final DynamicContext context;
-        private final ExceptionMetadata metadata;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.childPlan = childPlan;
-            this.context = context;
-            this.metadata = metadata;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            try {
-                Item value = this.childPlan.materializeAtMostOne(this.context);
-                if (value == null) {
-                    throw invalidCardinality();
-                }
-                return value;
-            } catch (MoreThanOneItemException exception) {
-                throw invalidCardinality();
-            }
-        }
-
-        private SequenceExceptionExactlyOne invalidCardinality() {
-            return new SequenceExceptionExactlyOne(
-                    "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                    this.metadata
-            );
-        }
     }
 }

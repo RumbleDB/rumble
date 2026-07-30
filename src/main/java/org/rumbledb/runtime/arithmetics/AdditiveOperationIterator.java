@@ -30,7 +30,6 @@ import java.time.OffsetDateTime;
 import java.time.Period;
 import java.time.Duration;
 
-import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -41,9 +40,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -137,46 +134,6 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             );
         }
         return result;
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> leftPlan;
-        private final RuntimePlan<Item> rightPlan;
-        private final boolean isMinus;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> leftPlan,
-                @NonNull RuntimePlan<Item> rightPlan,
-                boolean isMinus,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.leftPlan = leftPlan;
-            this.rightPlan = rightPlan;
-            this.isMinus = isMinus;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            Item left = materializeOperand(this.leftPlan, "left");
-            Item right = materializeOperand(this.rightPlan, "right");
-            return applyOperator(left, right, this.isMinus, this.getMetadata());
-        }
-
-        private Item materializeOperand(RuntimePlan<Item> plan, String side) {
-            try {
-                return plan.materializeAtMostOne(this.context);
-            } catch (MoreThanOneItemException exception) {
-                throw new UnexpectedTypeException(
-                        "Addition expression requires at most one item in its " + side + " input sequence.",
-                        this.getMetadata()
-                );
-            }
-        }
     }
 
     public static Item processItem(Item left, Item right, boolean isMinus) {

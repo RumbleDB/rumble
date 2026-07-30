@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
+import org.rumbledb.runtime.plan.EvaluationArguments;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -7,7 +9,6 @@ import org.rumbledb.exceptions.CastException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.io.Serial;
@@ -26,14 +27,14 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(
-            ComputedLocalCursor.arguments(
+            EvaluationArguments.lazy(
                 this.getChildren().size(),
                 index -> this.getChild(index).materializeFirstItemOrNull(context)
             )
         );
     }
 
-    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+    private Item evaluate(EvaluationArguments<Item> arguments) {
         Item valueItem = arguments.get(0);
         Item pictureItem = arguments.get(1);
         Item languageItem = arguments.size() > 2 ? arguments.get(2) : null;

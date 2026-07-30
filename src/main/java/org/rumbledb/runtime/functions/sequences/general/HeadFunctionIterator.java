@@ -23,13 +23,9 @@ package org.rumbledb.runtime.functions.sequences.general;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
-import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
@@ -55,26 +51,5 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return i.get(0);
         }
         return this.getChild(0).materializeFirstItemOrNull(dynamicContext);
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> childPlan;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
-                @NonNull DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.childPlan = childPlan;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            return this.childPlan.materializeFirstOrNull(this.context);
-        }
     }
 }

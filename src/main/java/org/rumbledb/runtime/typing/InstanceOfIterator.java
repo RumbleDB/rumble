@@ -33,7 +33,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -120,30 +119,6 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         return ItemFactory.getInstance().createBooleanItem(true);
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimeIterator child;
-        private final SequenceType sequenceType;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                RuntimeIterator child,
-                SequenceType sequenceType,
-                ExceptionMetadata metadata,
-                DynamicContext context
-        ) {
-            super(metadata);
-            this.child = child;
-            this.sequenceType = sequenceType;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            return evaluate(this.child, this.sequenceType, this.getMetadata(), this.context);
-        }
     }
 
     private static boolean isInvalidArity(long numOfItems, SequenceType sequenceType) {

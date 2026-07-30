@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.json;
 
+import org.rumbledb.runtime.plan.EvaluationArguments;
+
 import com.google.gson.stream.JsonReader;
 
 import java.io.Serial;
@@ -22,7 +24,6 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.functions.io.TextResourceUtil;
 
@@ -41,7 +42,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(
-            ComputedLocalCursor.arguments(
+            EvaluationArguments.lazy(
                 this.getChildren().size(),
                 index -> this.getChild(index).materializeFirstItemOrNull(context)
             ),
@@ -49,7 +50,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         );
     }
 
-    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments, DynamicContext context) {
+    private Item evaluate(EvaluationArguments<Item> arguments, DynamicContext context) {
         Item pathItem = arguments.get(0);
         Item optionsItem = arguments.size() > 1 ? arguments.get(1) : null;
         if (pathItem == null) {

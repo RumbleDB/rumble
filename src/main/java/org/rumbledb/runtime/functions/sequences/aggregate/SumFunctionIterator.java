@@ -32,7 +32,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -43,7 +42,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
-import lombok.NonNull;
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
@@ -221,34 +219,5 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         // each row contains a single value
         return childContext;
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> childPlan;
-        private final RuntimePlan<Item> zeroPlan;
-        private final DynamicContext context;
-        private final ExceptionMetadata metadata;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
-                RuntimePlan<Item> zeroPlan,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.childPlan = childPlan;
-            this.zeroPlan = zeroPlan;
-            this.context = context;
-            this.metadata = metadata;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            Item zeroElement = this.zeroPlan == null
-                ? ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO)
-                : this.zeroPlan.materializeFirstOrNull(this.context);
-            return computeLocalSum(zeroElement, this.childPlan, this.context, this.metadata);
-        }
     }
 }

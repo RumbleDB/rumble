@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
+import org.rumbledb.runtime.plan.EvaluationArguments;
+
 import java.io.Serial;
 import java.time.Duration;
 
@@ -10,7 +12,6 @@ import org.rumbledb.exceptions.InvalidTimezoneException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 
 import java.time.ZoneOffset;
 import java.util.List;
@@ -27,14 +28,14 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return adjust(
-            ComputedLocalCursor.arguments(
+            EvaluationArguments.lazy(
                 this.getChildren().size(),
                 index -> this.getChild(index).materializeFirstItemOrNull(context)
             )
         );
     }
 
-    private Item adjust(ComputedLocalCursor.Arguments<Item> arguments) {
+    private Item adjust(EvaluationArguments<Item> arguments) {
         Item timeItem = arguments.get(0);
         if (timeItem == null) {
             return null;

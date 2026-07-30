@@ -23,7 +23,6 @@ package org.rumbledb.runtime.misc;
 import java.io.Serial;
 import java.time.*;
 
-import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -39,9 +38,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import java.math.BigDecimal;
@@ -200,52 +197,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             operator,
             metadata
         );
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> leftPlan;
-        private final RuntimePlan<Item> rightPlan;
-        private final ComparisonOperator operator;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> leftPlan,
-                @NonNull RuntimePlan<Item> rightPlan,
-                @NonNull ComparisonOperator operator,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.leftPlan = leftPlan;
-            this.rightPlan = rightPlan;
-            this.operator = operator;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            Item left = materializeOperand(this.leftPlan);
-            if (left == null) {
-                return null;
-            }
-            Item right = materializeOperand(this.rightPlan);
-            if (right == null) {
-                return null;
-            }
-            return applyComparison(left, right, this.operator, this.getMetadata());
-        }
-
-        private Item materializeOperand(RuntimePlan<Item> plan) {
-            try {
-                return plan.materializeAtMostOne(this.context);
-            } catch (MoreThanOneItemException exception) {
-                throw new UnexpectedTypeException(
-                        "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                        this.getMetadata()
-                );
-            }
-        }
     }
 
     public static long compareItems(

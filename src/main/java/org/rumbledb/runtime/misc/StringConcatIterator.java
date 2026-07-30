@@ -23,7 +23,6 @@ package org.rumbledb.runtime.misc;
 import java.io.Serial;
 import java.util.Arrays;
 
-import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -33,8 +32,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -97,45 +94,5 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
         String leftStringValue = left.getStringValue();
         String rightStringValue = right.getStringValue();
         return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> leftPlan;
-        private final RuntimePlan<Item> rightPlan;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> leftPlan,
-                @NonNull RuntimePlan<Item> rightPlan,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.leftPlan = leftPlan;
-            this.rightPlan = rightPlan;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            Item emptyString = ItemFactory.getInstance().createStringItem("");
-            Item left = materializeOperand(this.leftPlan, emptyString, "left");
-            Item right = materializeOperand(this.rightPlan, emptyString, "right");
-            return concatenate(left, right, this.getMetadata());
-        }
-
-        private Item materializeOperand(RuntimePlan<Item> plan, Item defaultValue, String side) {
-            try {
-                return plan.materializeAtMostOneOrDefault(this.context, defaultValue);
-            } catch (MoreThanOneItemException exception) {
-                throw new UnexpectedTypeException(
-                        "String concatenation expression requires at most one item in its "
-                            + side
-                            + " input sequence.",
-                        this.getMetadata()
-                );
-            }
-        }
     }
 }

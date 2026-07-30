@@ -4,7 +4,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -13,7 +12,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -113,46 +111,6 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
             item = checkTypePromotion(item, itemType, sequenceType, exceptionMessage, staticContext);
         }
         return item;
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimeIterator iterator;
-        private final SequenceType sequenceType;
-        private final ItemType itemType;
-        private final String exceptionMessage;
-        private final RuntimeStaticContext staticContext;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                RuntimeIterator iterator,
-                SequenceType sequenceType,
-                ItemType itemType,
-                String exceptionMessage,
-                RuntimeStaticContext staticContext,
-                DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.iterator = iterator;
-            this.sequenceType = sequenceType;
-            this.itemType = itemType;
-            this.exceptionMessage = exceptionMessage;
-            this.staticContext = staticContext;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            return evaluate(
-                this.iterator,
-                this.sequenceType,
-                this.itemType,
-                this.exceptionMessage,
-                this.staticContext,
-                this.context
-            );
-        }
     }
 
     private static Item checkTypePromotion(

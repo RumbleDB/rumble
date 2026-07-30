@@ -30,12 +30,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
-import lombok.NonNull;
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
@@ -119,28 +117,5 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             MultiplicativeExpression.MultiplicativeOperator.DIV,
             metadata
         );
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> childPlan;
-        private final DynamicContext context;
-        private final ExceptionMetadata metadata;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.childPlan = childPlan;
-            this.context = context;
-            this.metadata = metadata;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            return computeLocalAverage(this.childPlan, this.context, this.metadata);
-        }
     }
 }

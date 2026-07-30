@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.misc;
 
-import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -33,8 +32,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -162,46 +159,5 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         }
 
         return ItemFactory.getInstance().createBooleanItem(result);
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> leftPlan;
-        private final RuntimePlan<Item> rightPlan;
-        private final NodeComparisonExpression.NodeComparisonOperator operator;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> leftPlan,
-                @NonNull RuntimePlan<Item> rightPlan,
-                @NonNull NodeComparisonExpression.NodeComparisonOperator operator,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.leftPlan = leftPlan;
-            this.rightPlan = rightPlan;
-            this.operator = operator;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            Item leftItem = materializeOperand(this.leftPlan, true);
-            Item rightItem = materializeOperand(this.rightPlan, false);
-            return applyComparison(leftItem, rightItem, this.operator, this.getMetadata());
-        }
-
-        private Item materializeOperand(RuntimePlan<Item> plan, boolean isLeftOperand) {
-            try {
-                return plan.materializeAtMostOne(this.context);
-            } catch (MoreThanOneItemException exception) {
-                throw new UnexpectedTypeException(
-                        (isLeftOperand ? "Left" : "Right")
-                            + " operand of node comparison must be a single node or empty sequence, got more than one item",
-                        this.getMetadata()
-                );
-            }
-        }
     }
 }

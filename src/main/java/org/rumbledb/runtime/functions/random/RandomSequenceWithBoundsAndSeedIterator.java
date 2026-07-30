@@ -1,11 +1,12 @@
 package org.rumbledb.runtime.functions.random;
 
+import org.rumbledb.runtime.plan.EvaluationArguments;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -30,7 +31,7 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
                 () -> createRandomNumberStream(
-                    ComputedLocalCursor.arguments(
+                    EvaluationArguments.lazy(
                         this.getChildren().size(),
                         index -> this.getChild(index).materializeFirstOrNull(context)
                     )
@@ -55,7 +56,7 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
         );
     }
 
-    private GeneratedRandomsIterator createRandomNumberStream(ComputedLocalCursor.Arguments<Item> arguments) {
+    private GeneratedRandomsIterator createRandomNumberStream(EvaluationArguments<Item> arguments) {
         return createRandomNumberStream(
             arguments.get(0),
             arguments.get(1),

@@ -3,11 +3,9 @@ package org.rumbledb.runtime.functions.typing;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
@@ -47,22 +45,5 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
             return argument.get(0).getItemMembers();
         }
         return argument;
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimeIterator argumentPlan;
-        private final DynamicContext context;
-
-        private EvaluationCursor(RuntimeIterator argumentPlan, DynamicContext context, ExceptionMetadata metadata) {
-            super(metadata);
-            this.argumentPlan = argumentPlan;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            return evaluate(this.argumentPlan, this.context);
-        }
     }
 }

@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.arithmetics;
 
-import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,9 +29,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -114,39 +111,6 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
                     item.serialize(),
                 metadata
         );
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> childPlan;
-        private final boolean negated;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
-                boolean negated,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.childPlan = childPlan;
-            this.negated = negated;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            Item item;
-            try {
-                item = this.childPlan.materializeAtMostOne(this.context);
-            } catch (MoreThanOneItemException exception) {
-                throw new UnexpectedTypeException(
-                        "Unary expression requires at most one item in its input sequence.",
-                        this.getMetadata()
-                );
-            }
-            return applyOperator(item, this.negated, this.getMetadata());
-        }
     }
 
     @Override

@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.EvaluationArguments;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -25,7 +27,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 import java.io.Serial;
@@ -49,14 +50,14 @@ public class QNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(
-            ComputedLocalCursor.arguments(
+            EvaluationArguments.lazy(
                 this.getChildren().size(),
                 index -> this.getChild(index).materializeFirstItemOrNull(context)
             )
         );
     }
 
-    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+    private Item evaluate(EvaluationArguments<Item> arguments) {
         Item uriItem = arguments.get(0);
         String uriString = uriItem == null ? null : uriItem.getStringValue();
 

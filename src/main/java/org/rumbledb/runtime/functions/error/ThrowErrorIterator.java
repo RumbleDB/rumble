@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.error;
 
+import org.rumbledb.runtime.plan.EvaluationArguments;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -8,7 +10,6 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -24,7 +25,7 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return raiseError(
-            ComputedLocalCursor.arguments(
+            EvaluationArguments.lazy(
                 this.getChildren().size(),
                 index -> this.getChild(index).materializeFirstItemOrNull(context)
             ),
@@ -35,7 +36,7 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private Item raiseError(
-            ComputedLocalCursor.Arguments<Item> arguments,
+            EvaluationArguments<Item> arguments,
             java.util.function.Supplier<List<Item>> errorValue
     ) {
         if (arguments.size() == 0 || arguments.get(0) == null) {

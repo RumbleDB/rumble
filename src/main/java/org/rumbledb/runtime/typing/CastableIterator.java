@@ -11,7 +11,6 @@ import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -96,33 +95,6 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
                 .createBooleanItem(false);
         }
 
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimeIterator childPlan;
-        private final SequenceType sequenceType;
-        private final RuntimeStaticContext staticContext;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                RuntimeIterator childPlan,
-                SequenceType sequenceType,
-                RuntimeStaticContext staticContext,
-                ExceptionMetadata metadata,
-                DynamicContext context
-        ) {
-            super(metadata);
-            this.childPlan = childPlan;
-            this.sequenceType = sequenceType;
-            this.staticContext = staticContext;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            return evaluate(this.childPlan, this.sequenceType, this.staticContext, this.getMetadata(), this.context);
-        }
     }
 
     static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {

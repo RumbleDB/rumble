@@ -12,7 +12,6 @@ import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
@@ -122,35 +121,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             throw new CastException(message, metadata);
         }
         return result;
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimeIterator childPlan;
-        private final SequenceType sequenceType;
-        private final RuntimeStaticContext staticContext;
-        private final ExceptionMetadata metadata;
-        private final DynamicContext context;
-
-        private EvaluationCursor(
-                RuntimeIterator childPlan,
-                SequenceType sequenceType,
-                RuntimeStaticContext staticContext,
-                ExceptionMetadata metadata,
-                DynamicContext context
-        ) {
-            super(metadata);
-            this.childPlan = childPlan;
-            this.sequenceType = sequenceType;
-            this.staticContext = staticContext;
-            this.metadata = metadata;
-            this.context = context;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            return evaluate(this.childPlan, this.sequenceType, this.staticContext, this.metadata, this.context);
-        }
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {

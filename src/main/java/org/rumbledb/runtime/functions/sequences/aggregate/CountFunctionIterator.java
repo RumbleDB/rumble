@@ -29,7 +29,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -37,7 +36,6 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
@@ -186,35 +184,5 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         return NativeClauseContext.NoNativeQuery;
-    }
-
-    private static final class EvaluationCursor extends AtMostOneLocalCursor<Item> {
-
-        private final RuntimePlan<Item> childPlan;
-        private final Name countedVariable;
-        private final DynamicContext context;
-        private final ExceptionMetadata metadata;
-
-        private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
-                Name countedVariable,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
-            super(metadata);
-            this.childPlan = childPlan;
-            this.countedVariable = countedVariable;
-            this.context = context;
-            this.metadata = metadata;
-        }
-
-        @Override
-        protected Item materializeOneItemOrNull() {
-            if (this.countedVariable != null) {
-                return this.context.getVariableValues()
-                    .getVariableCount(this.countedVariable, this.metadata);
-            }
-            return computeLocalCount(this.childPlan, this.context);
-        }
     }
 }
