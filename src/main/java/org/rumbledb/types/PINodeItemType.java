@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
@@ -19,6 +20,7 @@ public class PINodeItemType extends AbstractItemType {
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
+    @Getter
     private String normalizedTarget;
 
     public PINodeItemType() {
@@ -41,10 +43,6 @@ public class PINodeItemType extends AbstractItemType {
     @Override
     protected Object equalityKey() {
         return structuralTypeKey(PINodeItemType.class, this.catalogueName, this.normalizedTarget);
-    }
-
-    public String getNormalizedTarget() {
-        return this.normalizedTarget;
     }
 
     @Override

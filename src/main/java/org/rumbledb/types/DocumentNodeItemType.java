@@ -13,13 +13,13 @@ import java.util.Set;
  * Wildcard document-node() is represented with no element-test restriction.
  * document-node(element(...)) is represented with a concrete inner element node item type.
  */
+@Getter
 public class DocumentNodeItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
-    @Getter
     private ItemType elementTestType;
 
     public DocumentNodeItemType() {
@@ -42,10 +42,6 @@ public class DocumentNodeItemType extends AbstractItemType {
     @Override
     protected Object equalityKey() {
         return structuralTypeKey(DocumentNodeItemType.class, this.catalogueName, this.elementTestType);
-    }
-
-    public ItemType getElementTestType() {
-        return this.elementTestType;
     }
 
     @Override
