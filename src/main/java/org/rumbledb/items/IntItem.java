@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -33,12 +30,14 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class IntItem implements Item {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private int value;
 
@@ -100,22 +99,27 @@ public class IntItem implements Item {
         return String.valueOf(this.value);
     }
 
+    @Override
     public double castToDoubleValue() {
         return Integer.valueOf(this.value).doubleValue();
     }
 
+    @Override
     public float castToFloatValue() {
         return Integer.valueOf(this.value).floatValue();
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         return BigDecimal.valueOf(this.value);
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return BigInteger.valueOf(this.value);
     }
 
+    @Override
     public int castToIntValue() {
         return this.value;
     }
@@ -140,15 +144,7 @@ public class IntItem implements Item {
         return false;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this.value);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readInt();
-    }
 
     public int hashCode() {
         return getIntValue();
@@ -164,6 +160,7 @@ public class IntItem implements Item {
         return new NativeClauseContext(context, "" + this.value, SequenceType.createSequenceType("int"));
     }
 
+    @Override
     public boolean isNumeric() {
         return true;
     }

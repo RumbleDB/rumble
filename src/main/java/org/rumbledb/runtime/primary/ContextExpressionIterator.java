@@ -36,12 +36,14 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ContextExpressionIterator(RuntimeStaticContext staticContext) {
@@ -67,6 +69,7 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
         return items.get(0);
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);

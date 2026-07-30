@@ -20,15 +20,17 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 
+import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
 public class CreateCollectionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
-    private Mode mode;
+    private final Mode mode;
 
     public CreateCollectionIterator(
             RuntimeIterator targetIterator,
@@ -36,11 +38,10 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext);
+        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.mode = mode;
-        this.isUpdating = true;
 
     }
 
@@ -60,11 +61,6 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-
-    }
-
-    @Override
-    protected void resetLocal() {
 
     }
 
@@ -110,7 +106,11 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         Mode mode = this.mode;
         // If it is a delta-file() call we need to resolve the path to an absolute path.
         if (mode == Mode.DELTA) {
-            URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, logicalPath, getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                this.staticContext.getStaticURI(),
+                logicalPath,
+                getMetadata()
+            );
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 

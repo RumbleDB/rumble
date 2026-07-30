@@ -12,11 +12,15 @@ import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
@@ -24,37 +28,26 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     private RuntimeIterator matchingIterator;
     private Item testValue;
 
-
     public TypeswitchRuntimeIterator(
             RuntimeIterator test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(test);
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
-            this.children.add(typeSwitchCase.getReturnIterator());
-        }
-        this.children.add(defaultCase.getReturnIterator());
+        super(
+            Stream.of(
+                Stream.of(test),
+                cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator),
+                Stream.of(defaultCase.getReturnIterator())
+            ).flatMap(Function.identity()).toList(),
+            staticContext
+        );
 
         this.testField = test;
         this.cases = cases;
         this.defaultCase = defaultCase;
-        this.isUpdating = isUpdating;
         this.matchingIterator = null;
     }
-
-    public TypeswitchRuntimeIterator(
-            RuntimeIterator test,
-            List<TypeswitchRuntimeIteratorCase> cases,
-            TypeswitchRuntimeIteratorCase defaultCase,
-            RuntimeStaticContext staticContext
-    ) {
-        this(test, cases, defaultCase, false, staticContext);
-    }
-
 
     @Override
     public void openLocal() {
@@ -93,12 +86,6 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     @Override
     public void closeLocal() {
         resetMatchingIteratorToNull();
-    }
-
-    @Override
-    public void resetLocal() {
-        resetMatchingIteratorToNull();
-        initializeIterator();
     }
 
     private void initializeIterator() {
@@ -219,6 +206,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
         return this.defaultCase.getReturnIterator().getPendingUpdateList(context);
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }

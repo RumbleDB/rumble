@@ -33,11 +33,13 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.util.List;
 
 public class DataFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
     private List<Item> nextResults;
@@ -49,8 +51,8 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        if (!this.children.isEmpty())
-            this.sequenceIterator = this.children.get(0);
+        if (!this.getChildren().isEmpty())
+            this.sequenceIterator = this.getChild(0);
     }
 
     @Override
@@ -152,14 +154,6 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
         if (this.sequenceIterator != null) {
             this.sequenceIterator.close();
         }
-    }
-
-    @Override
-    protected void resetLocal() {
-        if (this.sequenceIterator != null)
-            this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.usedContext = false;
-        setNextResult();
     }
 
     @Override

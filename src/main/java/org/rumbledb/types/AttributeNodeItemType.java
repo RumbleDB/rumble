@@ -3,7 +3,10 @@ package org.rumbledb.types;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.util.Objects;
+
+import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -12,8 +15,10 @@ import java.util.Set;
  * Wildcard attribute() is represented with no node-name restriction.
  * attribute(QName) is represented with a concrete node-name restriction.
  */
+@EqualsAndHashCode
 public class AttributeNodeItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
@@ -36,30 +41,7 @@ public class AttributeNodeItemType implements ItemType {
         return this.nodeName == null;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
-        kryo.writeObjectOrNull(output, this.nodeName, Name.class);
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.catalogueName = kryo.readObjectOrNull(input, Name.class);
-        this.nodeName = kryo.readObjectOrNull(input, Name.class);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType) || !itemType.isNodeItemType()) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.catalogueName, this.nodeName);
-    }
 
     @Override
     public boolean isEqualTo(ItemType otherType) {

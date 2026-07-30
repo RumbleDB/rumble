@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.maps;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,7 @@ import org.rumbledb.runtime.RuntimeIterator;
  */
 public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static class AccumulatedEntry {

@@ -6,16 +6,19 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChildAxisIterator extends AxisIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ChildAxisIterator(RuntimeStaticContext staticContext) {
         super(staticContext);
     }
 
+    @Override
     protected void setNextResult() {
         if (this.results == null) {
             this.results = new ArrayList<>();

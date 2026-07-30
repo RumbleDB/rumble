@@ -18,11 +18,13 @@ import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Item callableItem;
@@ -80,17 +82,6 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.delegate != null) {
-            this.delegate.reset(this.currentDynamicContextForLocalExecution);
-        } else {
-            this.delegate = buildDelegate(this.currentDynamicContextForLocalExecution);
-            this.delegate.open(this.currentDynamicContextForLocalExecution);
-        }
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.delegate != null && this.delegate.isOpen()) {
             this.delegate.close();
@@ -113,8 +104,10 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
         ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode();
         RuntimeStaticContext callStaticContext = getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(wrappedCallableExecutionMode);
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(wrappedCallableExecutionMode)
+            .build();
 
         if (this.callableItem.isArray()) {
             return new ArrayFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
@@ -139,7 +132,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
             callIterator,
             this.expectedReturnType,
             this.exceptionMessage,
-            callStaticContext.withStaticType(this.expectedReturnType)
+            callStaticContext.toBuilder().staticType(this.expectedReturnType).build()
         );
     }
 
@@ -153,8 +146,10 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
             }
         }
         RuntimeStaticContext parameterStaticContext = getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(parameterExecutionMode);
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(parameterExecutionMode)
+            .build();
         return new VariableReferenceIterator(parameterName, parameterStaticContext);
     }
 

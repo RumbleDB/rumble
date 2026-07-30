@@ -78,13 +78,14 @@ public abstract class Expression extends Node {
             RumbleConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return new RuntimeStaticContext(
-                conf,
-                getStaticSequenceType(),
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                this.staticContext
-        );
+        return RuntimeStaticContext.fromStaticContext(this.staticContext)
+            .configuration(conf)
+            .staticType(getStaticSequenceType())
+            .executionMode(getHighestExecutionMode(visitorConfig))
+            .metadata(getMetadata())
+            .isUpdating(isUpdating())
+            .isSequential(isSequential())
+            .build();
     }
 
     /**

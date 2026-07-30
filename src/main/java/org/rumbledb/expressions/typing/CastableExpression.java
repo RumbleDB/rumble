@@ -13,8 +13,8 @@ import org.rumbledb.types.SequenceType.Arity;
 
 public class CastableExpression extends Expression {
 
-    protected Expression mainExpression;
-    private SequenceType sequenceType;
+    protected final Expression mainExpression;
+    private final SequenceType sequenceType;
 
     public CastableExpression(Expression mainExpression, SequenceType type, ExceptionMetadata metadata) {
         super(metadata);
@@ -48,6 +48,7 @@ public class CastableExpression extends Expression {
         return Collections.singletonList(this.mainExpression);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

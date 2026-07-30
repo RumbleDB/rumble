@@ -45,7 +45,7 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-import org.rumbledb.spark.SparkSessionManager;
+
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -55,9 +55,10 @@ import scala.collection.Iterator;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.IOException;
-import java.io.Serializable;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
@@ -71,10 +72,25 @@ import java.util.Map;
 import java.util.Collections;
 import java.util.Set;
 
-public class ItemParser implements Serializable {
+public class ItemParser {
 
-
-    private static final long serialVersionUID = 1L;
+    /**
+     * Parses a JSON string to an item.
+     *
+     * @param string the JSON string.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     */
+    @Deprecated
+    public static Item getItemFromString(String string, ExceptionMetadata metadata, boolean mutable) {
+        string = "[ " + string + " ]";
+        JsonReader object = new JsonReader(new StringReader(string));
+        Item arrayItem = ItemParser.parseOptionlessJSON(object, metadata, mutable);
+        if (arrayItem.getSize() == 0) {
+            throw new ParsingException("Empty string to parse as JSON!", metadata);
+        }
+        return arrayItem.getItemAt(0);
+    }
 
     public static Item getItemFromJSONString(
             String string,
@@ -84,6 +100,15 @@ public class ItemParser implements Serializable {
             ExceptionMetadata metadata
     ) {
         return JSONParser.parse(string, options, xmlVersion, isJSONiq10, metadata);
+    }
+
+    /**
+     * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, String, ExceptionMetadata, boolean)}
+     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
+     */
+    @Deprecated
+    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
+        return getItemFromObject(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
     }
 
     /**
@@ -109,6 +134,15 @@ public class ItemParser implements Serializable {
             ex.initCause(e);
             throw ex;
         }
+    }
+
+    /**
+     * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, String, ExceptionMetadata, boolean)}
+     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
+     */
+    @Deprecated
+    public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
+        return parseOptionlessJSON(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
     }
 
     /**
@@ -890,6 +924,10 @@ public class ItemParser implements Serializable {
     public static Item getItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
         if (currentNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(currentNode)) {
             return getTextNodeItem(currentNode, path);
+        } else if (currentNode.getNodeType() == Node.COMMENT_NODE) {
+            return getCommentNodeItem(currentNode, path);
+        } else if (currentNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
+            return getProcessingInstructionNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
             return getDocumentNodeItem(currentNode, path, removeParentPointers);
         }
@@ -929,6 +967,10 @@ public class ItemParser implements Serializable {
             Node childNode = nodeList.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 children.add(getItemFromXML(childNode, path, removeParentPointers));
+            } else if (childNode.getNodeType() == Node.COMMENT_NODE) {
+                children.add(ItemFactory.getInstance().createXmlCommentNode(childNode));
+            } else if (childNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
+                children.add(ItemFactory.getInstance().createXmlProcessingInstructionNode(childNode));
             } else if (
                 (childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
                     && !hasWhitespaceText(childNode)
@@ -991,5 +1033,17 @@ public class ItemParser implements Serializable {
         Item textItem = ItemFactory.getInstance().createXmlTextNode(currentNode);
         textItem.setXmlDocumentPosition(path, 0);
         return textItem;
+    }
+
+    private static Item getCommentNodeItem(Node currentNode, String path) {
+        Item commentItem = ItemFactory.getInstance().createXmlCommentNode(currentNode);
+        commentItem.setXmlDocumentPosition(path, 0);
+        return commentItem;
+    }
+
+    private static Item getProcessingInstructionNodeItem(Node currentNode, String path) {
+        Item processingInstructionItem = ItemFactory.getInstance().createXmlProcessingInstructionNode(currentNode);
+        processingInstructionItem.setXmlDocumentPosition(path, 0);
+        return processingInstructionItem;
     }
 }

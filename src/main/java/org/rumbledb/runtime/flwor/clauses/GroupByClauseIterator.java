@@ -31,6 +31,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
@@ -46,16 +47,21 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
-import org.rumbledb.runtime.flwor.tuple.FlworKey;
-import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
-import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
+import org.rumbledb.runtime.flwor.tuple.FlworKey;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,11 +75,12 @@ import java.util.stream.Collectors;
 
 public class GroupByClauseIterator extends RuntimeTupleIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final List<GroupByClauseSparkIteratorExpression> groupingExpressions;
     private List<FlworTuple> localTupleResults;
     private int resultIndex;
-    private Map<Name, DynamicContext.VariableDependency> dependencies;
+    private final Map<Name, DynamicContext.VariableDependency> dependencies;
 
     public GroupByClauseIterator(
             RuntimeTupleIterator child,
@@ -136,18 +143,6 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         }
     }
 
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (this.child != null) {
-            this.child.reset(this.currentDynamicContext);
-            this.localTupleResults = null;
-            this.hasNext = this.child.hasNext();
-        } else {
-            throw new OurBadException("Invalid groupby clause.");
-        }
-    }
-
     /**
      * All local results need to be calculated for grouping to be performed.
      */
@@ -196,20 +191,49 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         );
                     }
                     if (resultItem != null) {
-                        if (!resultItem.isAtomic()) {
+                        List<Item> atomizedResults;
+                        try {
+                            atomizedResults = resultItem.atomizedValue();
+                        } catch (CannotAtomizeException e) {
                             throw new UnexpectedTypeException(
-                                    "Keys in a group-by clause must be atomics.",
+                                    "Group by variable must atomize to a supported atomic value.",
                                     getMetadata()
                             );
                         }
-                        newVariableResults = Collections.singletonList(resultItem);
+                        if (atomizedResults.size() > 1) {
+                            throw new UnexpectedTypeException(
+                                    "Keys in a group-by clause must atomize to at most one item.",
+                                    getMetadata()
+                            );
+                        }
+                        if (atomizedResults.isEmpty()) {
+                            newVariableResults = Collections.emptyList();
+                        } else {
+                            Item atomizedResult = atomizedResults.get(0);
+                            if (!atomizedResult.isAtomic()) {
+                                throw new UnexpectedTypeException(
+                                        "Keys in a group-by clause must atomize to atomic values.",
+                                        getMetadata()
+                                );
+                            }
+                            Item normalizedGroupingKey = CollationSupport.normalizeItemForCollation(
+                                atomizedResult,
+                                expression.getCollationURI() == null
+                                    ? getStaticContext().getDefaultCollation()
+                                    : expression.getCollationURI(),
+                                getMetadata()
+                            );
+                            newVariableResults = Collections.singletonList(atomizedResult);
+                            results.add(normalizedGroupingKey);
+                        }
                     } else {
                         newVariableResults = Collections.emptyList();
+                        results.addAll(newVariableResults);
                     }
+                    validateGroupingKeySequenceType(expression.getSequenceType(), newVariableResults, tupleContext);
 
                     // if a new variable is declared inside the group by clause, insert value in tuple
                     inputTuple.putValue(expression.getVariableName(), newVariableResults);
-                    results.addAll(newVariableResults);
 
                 } else { // if grouping on a variable reference
                     Name groupVariableName = expression.getVariableName();
@@ -226,7 +250,14 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         .getLocalVariableValue(groupVariableName, getMetadata());
                     List<Item> atomizedGroupValues = new ArrayList<>();
                     for (Item groupVariableValue : groupVariableValues) {
-                        atomizedGroupValues.addAll(groupVariableValue.atomizedValue());
+                        try {
+                            atomizedGroupValues.addAll(groupVariableValue.atomizedValue());
+                        } catch (CannotAtomizeException e) {
+                            throw new UnexpectedTypeException(
+                                    "Group by variable must atomize to a supported atomic value.",
+                                    getMetadata()
+                            );
+                        }
                     }
                     if (atomizedGroupValues.size() > 1) {
                         throw new UnexpectedTypeException(
@@ -234,8 +265,21 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                                 getMetadata()
                         );
                     }
+                    validateGroupingKeySequenceType(expression.getSequenceType(), atomizedGroupValues, tupleContext);
                     inputTuple.putValue(groupVariableName, atomizedGroupValues);
-                    results.addAll(atomizedGroupValues);
+                    if (atomizedGroupValues.size() == 1) {
+                        results.add(
+                            CollationSupport.normalizeItemForCollation(
+                                atomizedGroupValues.get(0),
+                                expression.getCollationURI() == null
+                                    ? getStaticContext().getDefaultCollation()
+                                    : expression.getCollationURI(),
+                                getMetadata()
+                            )
+                        );
+                    } else {
+                        results.addAll(atomizedGroupValues);
+                    }
                 }
             }
             FlworKey key = new FlworKey(results);
@@ -247,6 +291,44 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             values.add(inputTuple);
         }
         return keyValuePairs;
+    }
+
+    private void validateGroupingKeySequenceType(
+            SequenceType declaredType,
+            List<Item> groupingKey,
+            DynamicContext dynamicContext
+    ) {
+        if (declaredType == null) {
+            return;
+        }
+        if (!declaredType.isResolved()) {
+            declaredType.resolve(dynamicContext, getMetadata());
+        }
+
+        boolean validCardinality = switch (declaredType.getArity()) {
+            case Zero -> groupingKey.isEmpty();
+            case One -> groupingKey.size() == 1;
+            case OneOrZero -> groupingKey.size() <= 1;
+            case OneOrMore -> !groupingKey.isEmpty();
+            case ZeroOrMore -> true;
+        };
+        if (!validCardinality) {
+            throw new UnexpectedTypeException(
+                    "The grouping key has cardinality "
+                        + groupingKey.size()
+                        + ", but the expected type is "
+                        + declaredType,
+                    getMetadata()
+            );
+        }
+        for (Item item : groupingKey) {
+            if (!InstanceOfIterator.doesItemTypeMatchItem(declaredType.getItemType(), item)) {
+                throw new UnexpectedTypeException(
+                        item.getDynamicType() + " is not expected here. The expected type is " + declaredType,
+                        getMetadata()
+                );
+            }
+        }
     }
 
     /**
@@ -443,7 +525,13 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessNames, context, inputSchema, UDFcolumns, getMetadata()),
+                new GroupClauseCreateColumnsUDF(
+                        this.groupingExpressions,
+                        context,
+                        inputSchema,
+                        UDFcolumns,
+                        getMetadata()
+                ),
                 DataTypes.createStructType(typedFields)
             );
 
@@ -497,6 +585,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         return new FlworDataFrame(result);
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
@@ -513,6 +602,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
@@ -522,6 +612,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
@@ -535,6 +626,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         }
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
@@ -594,6 +686,12 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             DynamicContext context,
             String input
     ) {
+        for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
+            if (expression.getSequenceType() != null) {
+                return null;
+            }
+        }
+
         StringBuilder groupByString = new StringBuilder();
         String sep = " ";
         for (Name groupingVar : groupingVariables) {
@@ -680,6 +778,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             );
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.GROUP_BY) {
             return true;
@@ -723,6 +822,11 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
+            if (expression.getSequenceType() != null) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+        }
         List<FlworDataFrameColumn> dfColumns = FlworDataFrameUtils.getColumns(
             (StructType) nativeClauseContext.getSchema(),
             null,

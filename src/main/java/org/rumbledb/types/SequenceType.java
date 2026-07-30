@@ -28,14 +28,19 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode
 public class SequenceType implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private ItemType itemType;
     private Arity arity;
@@ -255,20 +260,6 @@ public class SequenceType implements Serializable {
             }
         }
         return this;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof SequenceType sequenceType)) {
-            return false;
-        }
-        if (isEmptySequence()) {
-            return sequenceType.isEmptySequence();
-        }
-        if (sequenceType.isEmptySequence()) {
-            return false;
-        }
-        return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
     }
 
     public enum Arity {

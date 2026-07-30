@@ -37,24 +37,12 @@ public class FormatNumberPictureSupport {
         return cp == decimalFormat.getPatternSeparator();
     }
 
-    static boolean isPercent(int cp, DecimalFormatDefinition decimalFormat) {
-        return cp == decimalFormat.getPercent();
-    }
-
-    static boolean isPerMille(int cp, DecimalFormatDefinition decimalFormat) {
-        return cp == decimalFormat.getPerMille();
-    }
-
     static boolean isActiveCharacter(int cp, DecimalFormatDefinition decimalFormat) {
         return isDecimalSeparator(cp, decimalFormat)
             || isGroupingSeparator(cp, decimalFormat)
             || isOptionalDigit(cp, decimalFormat)
             || isMandatoryDigit(cp, decimalFormat)
             || isExponentSeparator(cp, decimalFormat);
-    }
-
-    static boolean isPassiveCharacter(int cp, DecimalFormatDefinition decimalFormat) {
-        return !isActiveCharacter(cp, decimalFormat);
     }
 
     /**

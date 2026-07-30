@@ -17,7 +17,6 @@ public abstract class Statement extends Node {
         super(metadata);
     }
 
-
     public StaticContext getStaticContext() {
         return this.staticContext;
     }
@@ -57,13 +56,13 @@ public abstract class Statement extends Node {
             RumbleConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return new RuntimeStaticContext(
-                conf,
-                getStaticSequenceType(),
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                getStaticContext()
-        );
+        return RuntimeStaticContext.fromStaticContext(getStaticContext())
+            .configuration(conf)
+            .staticType(getStaticSequenceType())
+            .executionMode(getHighestExecutionMode(visitorConfig))
+            .metadata(getMetadata())
+            .isSequential(isSequential())
+            .build();
     }
 
     @Override

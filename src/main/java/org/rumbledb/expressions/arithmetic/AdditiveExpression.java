@@ -30,9 +30,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class AdditiveExpression extends Expression {
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private boolean isMinus;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+    private final boolean isMinus;
 
     public AdditiveExpression(
             Expression leftExpression,
@@ -68,6 +68,7 @@ public class AdditiveExpression extends Expression {
         return this.isMinus;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

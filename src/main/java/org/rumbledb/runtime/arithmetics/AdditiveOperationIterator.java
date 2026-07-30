@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.arithmetics;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.OffsetTime;
@@ -47,6 +48,7 @@ import org.rumbledb.types.SequenceType.Arity;
 
 public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Item left;
@@ -67,6 +69,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         this.isMinus = isMinus;
     }
 
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         try {
             this.left = this.leftIterator.materializeAtMostOneItemOrNull(dynamicContext);

@@ -4,16 +4,18 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.util.Set;
 
 public class FunctionItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final boolean isGeneric;
     private final FunctionSignature signature;
 
-    static FunctionItemType anyFunctionItem = new FunctionItemType(true);
+    static final FunctionItemType anyFunctionItem = new FunctionItemType(true);
 
     FunctionItemType(FunctionSignature signature) {
         if (signature == null) {
@@ -29,17 +31,7 @@ public class FunctionItemType implements ItemType {
         this.signature = null;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        // Implement serialization logic here if needed
-        throw new UnsupportedOperationException("Serialization not implemented yet.");
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        // Implement deserialization logic here if needed
-        throw new UnsupportedOperationException("Deserialization not implemented yet.");
-    }
 
     @Override
     public Name getName() {

@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.misc;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,9 +47,10 @@ import org.rumbledb.types.SequenceType;
 public class RangeOperationIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private long left;
     private long right;
     private long index;
@@ -108,6 +110,12 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         if (left == null || right == null) {
             return false;
         }
+        if (left.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createIntegerItem(left.castToIntegerValue());
+        }
+        if (right.isUntypedAtomic()) {
+            right = ItemFactory.getInstance().createIntegerItem(right.castToIntegerValue());
+        }
         if (
             !(left.isInteger())
                 || !(right.isInteger())
@@ -150,6 +158,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         return null;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }
@@ -188,10 +197,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-    }
-
-    @Override
-    protected void resetLocal() {
     }
 
     @Override

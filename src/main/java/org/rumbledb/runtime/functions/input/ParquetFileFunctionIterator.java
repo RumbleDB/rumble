@@ -29,13 +29,16 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+
 import org.rumbledb.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ParquetFileFunctionIterator(
@@ -48,15 +51,15 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
 
-        String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
+        String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
 
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, url, getMetadata());
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         int partitions = -1;
-        if (this.children.size() > 1) {
-            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 1) {
+            partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
         }
         try {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()

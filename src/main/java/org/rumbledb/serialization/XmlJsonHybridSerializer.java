@@ -1,5 +1,6 @@
 package org.rumbledb.serialization;
 
+import java.io.Serial;
 import java.util.List;
 
 import org.apache.commons.text.StringEscapeUtils;
@@ -9,6 +10,7 @@ import org.rumbledb.items.xml.NamespaceItem;
 
 public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final org.rumbledb.serialization.SerializationParameters params;

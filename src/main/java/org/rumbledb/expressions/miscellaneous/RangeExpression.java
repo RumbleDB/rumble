@@ -31,8 +31,8 @@ import org.rumbledb.expressions.Node;
 
 public class RangeExpression extends Expression {
 
-    private Expression leftExpression;
-    private Expression rightExpression;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
 
     public RangeExpression(Expression leftExpression, Expression rightExpression, ExceptionMetadata metadata) {
         super(metadata);

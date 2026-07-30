@@ -1,9 +1,7 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.time.OffsetDateTime;
 import java.time.Year;
 import java.time.ZoneOffset;
@@ -20,6 +18,7 @@ import java.util.regex.Pattern;
 
 public class gYearItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
     private Year year;
@@ -85,6 +84,7 @@ public class gYearItem implements Item {
         return false;
     }
 
+    @Override
     public String getStringValue() {
         return String.format(
             "%s%04d%s",
@@ -104,18 +104,7 @@ public class gYearItem implements Item {
         return this.hasTimeZone;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-        output.writeBoolean(this.hasTimeZone);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        String dateTimeString = input.readString();
-        this.hasTimeZone = input.readBoolean();
-        getgYearFromString(dateTimeString);
-    }
 
     @Override
     public boolean getEffectiveBooleanValue() {

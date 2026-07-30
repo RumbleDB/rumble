@@ -19,10 +19,12 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ApplyFunctionIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator delegate;
     private Item nextResult;
@@ -60,12 +62,6 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.delegate.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.delegate != null && this.delegate.isOpen()) {
             this.delegate.close();
@@ -91,8 +87,8 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         Item functionItem;
         Item argumentsArray;
         try {
-            functionItem = this.children.get(0).materializeAtMostOneItemOrNull(context);
-            argumentsArray = this.children.get(1).materializeAtMostOneItemOrNull(context);
+            functionItem = this.getChild(0).materializeAtMostOneItemOrNull(context);
+            argumentsArray = this.getChild(1).materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:apply expects exactly one function item and exactly one array item.",
@@ -100,8 +96,10 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
             );
         }
         RuntimeStaticContext localItemStarContext = this.staticContext
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(ExecutionMode.LOCAL);
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .build();
 
         if (functionItem.getParameterNames().size() != argumentsArray.getSize()) {
             throw new RumbleException(
@@ -123,8 +121,10 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         RuntimeIterator functionItemIterator = new ConstantRuntimeIterator(
                 functionItem,
                 this.staticContext
-                    .withStaticType(SequenceType.createSequenceType("function(*)"))
-                    .withExecutionMode(ExecutionMode.LOCAL)
+                    .toBuilder()
+                    .staticType(SequenceType.createSequenceType("function(*)"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .build()
         );
         return new DynamicFunctionCallIterator(
                 functionItemIterator,

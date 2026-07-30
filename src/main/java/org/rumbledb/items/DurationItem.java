@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -18,12 +19,10 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class DurationItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Duration durationValue = Duration.ZERO;
     private Period periodValue = Period.ZERO;
@@ -77,6 +76,7 @@ public class DurationItem implements Item {
         return false;
     }
 
+    @Override
     public Duration getDurationValue() {
         if (Objects.isNull(this.durationValue) && Objects.isNull(this.periodValue)) {
             return Duration.ZERO;
@@ -89,6 +89,7 @@ public class DurationItem implements Item {
             .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue);
     }
 
+    @Override
     public Period getPeriodValue() {
         return this.periodValue;
     }
@@ -124,15 +125,7 @@ public class DurationItem implements Item {
         return Objects.hash(this.durationValue, this.periodValue);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        getDurationFromString(input.readString());
-    }
 
     private void getDurationFromString(String durationPeriodString) {
         try {
@@ -162,7 +155,7 @@ public class DurationItem implements Item {
         return BuiltinTypesCatalogue.durationItem;
     }
 
-    public static Comparator<Period> periodComparator = (p1, p2) -> {
+    public static final Comparator<Period> periodComparator = (p1, p2) -> {
         LocalDate base = LocalDate.of(2000, 1, 1);
         return base.plus(p1).compareTo(base.plus(p2));
     };

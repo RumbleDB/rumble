@@ -19,6 +19,7 @@
  */
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,19 +36,17 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class MapEntryItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
-    private Item key;
-    private List<Item> value;
+    private final Item key;
+    private final List<Item> value;
 
     public MapEntryItem() {
         this.key = null;
@@ -182,18 +181,7 @@ public class MapEntryItem implements Item {
 
     // endregion maps
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.key);
-        kryo.writeClassAndObject(output, this.value);
-    }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(Kryo kryo, Input input) {
-        this.key = (Item) kryo.readClassAndObject(input);
-        this.value = (List<Item>) kryo.readClassAndObject(input);
-    }
 
     @Override
     public ItemType getDynamicType() {

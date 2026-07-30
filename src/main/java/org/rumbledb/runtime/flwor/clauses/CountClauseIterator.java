@@ -37,9 +37,11 @@ import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,8 +53,9 @@ import java.util.stream.Collectors;
 
 public class CountClauseIterator extends RuntimeTupleIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Name variableName;
+    private final Name variableName;
     private FlworTuple nextLocalTupleResult;
     private int currentCountIndex;
 
@@ -75,18 +78,6 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         super.open(context);
         if (this.child != null) {
             this.child.open(this.currentDynamicContext);
-
-            setNextLocalTupleResult();
-        } else {
-            throw new OurBadException("Invalid count clause.");
-        }
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (this.child != null) {
-            this.child.reset(this.currentDynamicContext);
 
             setNextLocalTupleResult();
         } else {
@@ -183,6 +174,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         return dfWithIndex;
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
@@ -190,6 +182,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
         result.addAll(this.child.getOutputTupleVariableNames());
@@ -197,6 +190,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (int i = 0; i < indent + 1; ++i) {
@@ -206,6 +200,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         buffer.append("\n");
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
@@ -221,6 +216,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         return projection;
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.COUNT) {
             return true;

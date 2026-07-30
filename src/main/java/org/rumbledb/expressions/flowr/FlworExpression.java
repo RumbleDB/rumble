@@ -52,6 +52,7 @@ public class FlworExpression extends Expression {
         return this.returnClause;
     }
 
+    @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.returnClause);
     }

@@ -39,6 +39,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.ItemType;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +55,7 @@ import java.util.List;
  */
 public class DataFrameContext implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<FlworDataFrameColumn> columns;
     private DynamicContext context;
@@ -182,6 +184,7 @@ public class DataFrameContext implements Serializable {
         return this.input;
     }
 
+    @Serial
     private void readObject(java.io.ObjectInputStream in)
             throws IOException,
                 ClassNotFoundException {

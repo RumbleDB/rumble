@@ -13,22 +13,22 @@ import java.util.*;
 
 public class PendingUpdateList {
 
-    private Map<Item, Item> insertObjMap;
-    private Map<Item, Map<Item, List<Item>>> insertArrayMap;
-    private Map<Item, Map<Item, Item>> delReplaceObjMap;
-    private Map<Item, Map<Item, Item>> delReplaceArrayMap;
-    private Map<Item, Map<Item, Item>> renameObjMap;
-    private Comparator<Item> targetComparator;
-    private Comparator<Item> arraySelectorComparator;
+    private final Map<Item, Item> insertObjMap;
+    private final Map<Item, Map<Item, List<Item>>> insertArrayMap;
+    private final Map<Item, Map<Item, Item>> delReplaceObjMap;
+    private final Map<Item, Map<Item, Item>> delReplaceArrayMap;
+    private final Map<Item, Map<Item, Item>> renameObjMap;
+    private final Comparator<Item> targetComparator;
+    private final Comparator<Item> arraySelectorComparator;
 
-    private Map<String, UpdatePrimitive> createCollectionMap;
-    private Map<String, UpdatePrimitive> truncateCollectionMap;
-    private Map<String, Map<Double, UpdatePrimitive>> deleteTupleMap;
-    private Map<String, Map<Double, UpdatePrimitive>> editTupleMap;
-    private List<UpdatePrimitive> insertFirstList;
-    private List<UpdatePrimitive> insertLastList;
-    private List<UpdatePrimitive> insertBeforeList;
-    private List<UpdatePrimitive> insertAfterList;
+    private final Map<String, UpdatePrimitive> createCollectionMap;
+    private final Map<String, UpdatePrimitive> truncateCollectionMap;
+    private final Map<String, Map<Double, UpdatePrimitive>> deleteTupleMap;
+    private final Map<String, Map<Double, UpdatePrimitive>> editTupleMap;
+    private final List<UpdatePrimitive> insertFirstList;
+    private final List<UpdatePrimitive> insertLastList;
+    private final List<UpdatePrimitive> insertBeforeList;
+    private final List<UpdatePrimitive> insertAfterList;
 
 
     public PendingUpdateList() {

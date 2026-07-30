@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
@@ -35,11 +32,13 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class FloatItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private float value;
 
@@ -136,6 +135,7 @@ public class FloatItem implements Item {
         return this.value;
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         if (Float.isNaN(this.value) || Float.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
@@ -143,10 +143,12 @@ public class FloatItem implements Item {
         return BigDecimal.valueOf(this.value);
     }
 
+    @Override
     public int castToIntValue() {
         return Float.valueOf(this.value).intValue();
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return BigDecimal.valueOf(this.value).toBigInteger();
     }
@@ -156,15 +158,7 @@ public class FloatItem implements Item {
         return true;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeFloat(this.value);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readFloat();
-    }
 
     public int hashCode() {
         return (int) Math.round(this.value);

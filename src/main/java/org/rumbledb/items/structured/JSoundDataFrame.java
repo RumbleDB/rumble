@@ -1,5 +1,6 @@
 package org.rumbledb.items.structured;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,9 +25,10 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
 public class JSoundDataFrame implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private Dataset<Row> dataFrame;
+    private final Dataset<Row> dataFrame;
     private ItemType itemType;
 
     public JSoundDataFrame(Dataset<Row> dataFrame, ItemType itemType) {

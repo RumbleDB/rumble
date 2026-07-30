@@ -40,18 +40,21 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import org.rumbledb.spark.SparkSessionManager;
+
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Map;
 
 public class ArrayLookupIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private int lookup;
     private Item nextResult;
     private java.util.Queue<Item> lookupResultQueue;
@@ -90,19 +93,12 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.lookupResultQueue = null;
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
 
     private void initLookupPosition(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.children.get(1);
+        RuntimeIterator lookupIterator = this.getChild(1);
 
         try {
             Item lookupExpression = lookupIterator.materializeExactlyOneItem(context);
@@ -171,7 +167,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         initLookupPosition(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this.lookup);
 
@@ -193,7 +189,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
-            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
+            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
                 .getVariableDependencies();
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
@@ -257,8 +253,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();

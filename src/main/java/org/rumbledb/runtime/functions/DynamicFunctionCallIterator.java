@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -48,15 +50,16 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
 
+    @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private RuntimeIterator functionItemIterator;
-    private List<RuntimeIterator> functionArguments;
+    private final RuntimeIterator functionItemIterator;
+    private final List<RuntimeIterator> functionArguments;
 
     // calculated fields
     private Item functionItem;
     private RuntimeIterator functionCallIterator;
-    private boolean isPartialApplication;
+    private final boolean isPartialApplication;
     private Item nextResult;
 
     // Exit statement fields
@@ -72,19 +75,19 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.isPartialApplication = false;
+        super(
+            Stream.concat(
+                functionArguments.stream().filter(arg -> arg != null),
+                functionArguments.contains(functionItemIterator)
+                    ? Stream.empty()
+                    : Stream.of(functionItemIterator)
+            ).toList(),
+            staticContext
+        );
+
+        this.isPartialApplication = functionArguments.stream().anyMatch(arg -> arg == null);
         this.nextExitStatementResult = 0;
-        for (RuntimeIterator arg : functionArguments) {
-            if (arg != null) {
-                this.children.add(arg);
-            } else {
-                this.isPartialApplication = true;
-            }
-        }
-        if (!this.children.contains(functionItemIterator)) {
-            this.children.add(functionItemIterator);
-        }
+
         this.functionItemIterator = functionItemIterator;
         this.functionArguments = functionArguments;
     }
@@ -180,12 +183,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                 );
             }
             RuntimeIterator keyIterator = this.functionArguments.get(0);
-            RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             this.functionCallIterator = new ArrayFunctionCallIterator(
                     this.functionItem,
                     keyIterator,
@@ -207,12 +210,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                 );
             }
             RuntimeIterator keyIterator = this.functionArguments.get(0);
-            RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             this.functionCallIterator = new MapFunctionCallIterator(
                     this.functionItem,
                     keyIterator,
@@ -273,12 +276,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.functionCallIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     public void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
@@ -289,6 +286,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         this.encounteredExitStatement = false;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }

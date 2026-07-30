@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -12,10 +9,12 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class AttributeItem implements Item {
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name dmNodeName;
     private String stringValue;
@@ -59,23 +58,6 @@ public class AttributeItem implements Item {
     }
 
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.parent);
-        kryo.writeObject(output, this.dmNodeName);
-        output.writeString(this.stringValue);
-        kryo.writeClassAndObject(output, this.typeAnnotation);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.parent = (Item) kryo.readClassAndObject(input);
-        this.dmNodeName = kryo.readObject(input, Name.class);
-        this.stringValue = input.readString();
-        this.typeAnnotation = (ItemType) kryo.readClassAndObject(input);
-    }
 
     @Override
     public Name nodeName() {
@@ -95,6 +77,15 @@ public class AttributeItem implements Item {
     @Override
     public void setParent(Item parent) {
         this.parent = parent;
+    }
+
+    public void setNodeName(Name nodeName) {
+        this.dmNodeName = nodeName;
+    }
+
+    @Override
+    public void addParentToDescendants() {
+        // Attribute nodes are leaves and therefore have no descendants to update.
     }
 
     @Override
@@ -274,6 +265,7 @@ public class AttributeItem implements Item {
         );
     }
 
+    @Override
     public void setSchemaType(ItemType typeAnnotation) {
         this.typeAnnotation = typeAnnotation;
     }

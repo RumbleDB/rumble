@@ -17,11 +17,8 @@
 
 package org.rumbledb.serialization;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,8 +38,9 @@ import java.util.Set;
  * </ul>
  *
  */
-public class SerializationParameters implements Serializable, KryoSerializable {
+public class SerializationParameters implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -385,6 +383,37 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.htmlVersion = htmlVersion;
     }
 
+    /**
+     * Requested HTML version for the HTML/XHTML output methods.
+     *
+     * Per XSLT and XQuery Serialization 3.1, the requested HTML version is the
+     * value of {@code html-version} when that parameter is present; otherwise it
+     * falls back to {@code version}.
+     *
+     * @return the requested HTML version, or {@code null} if neither parameter is set
+     */
+    public String getRequestedHtmlVersion() {
+        return this.htmlVersion != null ? this.htmlVersion : this.version;
+    }
+
+    /**
+     * Whether the requested HTML version denotes HTML5.
+     *
+     * This check is intentionally narrow: we recognize the specific lexical forms
+     * that should trigger the HTML5 branch ({@code 5} and {@code 5.0}) without
+     * treating arbitrary version strings as decimals.
+     *
+     * @return {@code true} if the requested HTML version is {@code "5"} or {@code "5.0"}
+     */
+    public boolean isRequestedHtml5Version() {
+        String requestedHtmlVersion = getRequestedHtmlVersion();
+        if (requestedHtmlVersion == null || requestedHtmlVersion.trim().isEmpty()) {
+            return false;
+        }
+        String trimmed = requestedHtmlVersion.trim();
+        return "5".equals(trimmed) || "5.0".equals(trimmed);
+    }
+
     public boolean getByteOrderMark() {
         return this.byteOrderMark;
     }
@@ -457,144 +486,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.sparkOptions = sparkOptions;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.method);
-        output.writeString(this.encoding);
-        output.writeString(this.version);
-        output.writeBoolean(this.omitXmlDeclaration);
-        output.writeString(this.standalone != null ? this.standalone.name() : null);
-        output.writeString(this.doctypeSystem);
-        output.writeString(this.doctypePublic);
-        output.writeString(this.mediaType);
-        output.writeString(this.normalizationForm);
-        output.writeBoolean(this.undeclarePrefixes);
 
-        // characterMaps
-        int cmSize = this.characterMaps != null ? this.characterMaps.size() : 0;
-        output.writeInt(cmSize);
-        if (cmSize > 0) {
-            for (Map.Entry<String, String> e : this.characterMaps.entrySet()) {
-                output.writeString(e.getKey());
-                output.writeString(e.getValue());
-            }
-        }
-
-        // cdataSectionElements
-        int cdataSize = this.cdataSectionElements != null ? this.cdataSectionElements.size() : 0;
-        output.writeInt(cdataSize);
-        if (cdataSize > 0) {
-            for (String qn : this.cdataSectionElements) {
-                output.writeString(qn);
-            }
-        }
-
-        output.writeBoolean(this.includeContentType);
-        output.writeBoolean(this.escapeUriAttributes);
-        output.writeString(this.htmlVersion);
-        output.writeBoolean(this.byteOrderMark);
-        output.writeBoolean(this.indent);
-        output.writeInt(this.indentSpaces);
-
-        // suppressIndentation
-        int siSize = this.suppressIndentation != null ? this.suppressIndentation.size() : 0;
-        output.writeInt(siSize);
-        if (siSize > 0) {
-            for (String qn : this.suppressIndentation) {
-                output.writeString(qn);
-            }
-        }
-
-        output.writeString(this.itemSeparator);
-        output.writeBoolean(this.allowDuplicateNames);
-        output.writeString(this.jsonNodeOutputMethod != null ? this.jsonNodeOutputMethod.name() : null);
-
-        // extensionParameters
-        int epSize = this.extensionParameters != null ? this.extensionParameters.size() : 0;
-        output.writeInt(epSize);
-        if (epSize > 0) {
-            for (Map.Entry<String, String> e : this.extensionParameters.entrySet()) {
-                output.writeString(e.getKey());
-                output.writeString(e.getValue());
-            }
-        }
-
-        // sparkOptions
-        int soSize = this.sparkOptions != null ? this.sparkOptions.size() : 0;
-        output.writeInt(soSize);
-        if (soSize > 0) {
-            for (Map.Entry<String, String> e : this.sparkOptions.entrySet()) {
-                output.writeString(e.getKey());
-                output.writeString(e.getValue());
-            }
-        }
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.method = input.readString();
-        this.encoding = input.readString();
-        this.version = input.readString();
-        this.omitXmlDeclaration = input.readBoolean();
-        String standaloneName = input.readString();
-        this.standalone = standaloneName != null ? Standalone.valueOf(standaloneName) : Standalone.OMIT;
-        this.doctypeSystem = input.readString();
-        this.doctypePublic = input.readString();
-        this.mediaType = input.readString();
-        String nfName = input.readString();
-        this.normalizationForm = nfName != null ? nfName : "none";
-        this.undeclarePrefixes = input.readBoolean();
-
-        int cmSize = input.readInt();
-        this.characterMaps = new HashMap<>();
-        for (int i = 0; i < cmSize; i++) {
-            String k = input.readString();
-            String v = input.readString();
-            this.characterMaps.put(k, v);
-        }
-
-        int cdataSize = input.readInt();
-        this.cdataSectionElements = new HashSet<>();
-        for (int i = 0; i < cdataSize; i++) {
-            this.cdataSectionElements.add(input.readString());
-        }
-
-        this.includeContentType = input.readBoolean();
-        this.escapeUriAttributes = input.readBoolean();
-        this.htmlVersion = input.readString();
-        this.byteOrderMark = input.readBoolean();
-        this.indent = input.readBoolean();
-        this.indentSpaces = input.readInt();
-
-        int siSize = input.readInt();
-        this.suppressIndentation = new HashSet<>();
-        for (int i = 0; i < siSize; i++) {
-            this.suppressIndentation.add(input.readString());
-        }
-
-        this.itemSeparator = input.readString();
-        this.allowDuplicateNames = input.readBoolean();
-        String jnomName = input.readString();
-        this.jsonNodeOutputMethod = jnomName != null
-            ? JsonNodeOutputMethod.valueOf(jnomName)
-            : JsonNodeOutputMethod.UNSPECIFIED;
-
-        int epSize = input.readInt();
-        this.extensionParameters = new HashMap<>();
-        for (int i = 0; i < epSize; i++) {
-            String k = input.readString();
-            String v = input.readString();
-            this.extensionParameters.put(k, v);
-        }
-
-        int soSize = input.readInt();
-        this.sparkOptions = new HashMap<>();
-        for (int i = 0; i < soSize; i++) {
-            String k = input.readString();
-            String v = input.readString();
-            this.sparkOptions.put(k, v);
-        }
-    }
 
     /**
      * Returns a copy of the SerializationParameters instance.

@@ -99,11 +99,11 @@ import scala.collection.Iterator;
 public class FlworDataFrameUtils {
 
     // we use UUID to escape backtick within DataFrame columns
-    public static String backtickEscape = "d32a3242-b15d-46b8-b689-d2288f7f492f";
+    public static final String backtickEscape = "d32a3242-b15d-46b8-b689-d2288f7f492f";
 
-    private static ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
+    private static final ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
 
-    private static ThreadLocal<List<Item>> lastObjectItemCache = ThreadLocal.withInitial(() -> null);
+    private static final ThreadLocal<List<Item>> lastObjectItemCache = ThreadLocal.withInitial(() -> null);
 
     public static void registerKryoClassesKryo(Kryo kryo) {
         kryo.register(Item.class);

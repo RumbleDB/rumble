@@ -53,20 +53,22 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.TypeMappings;
 import scala.Tuple2;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.*;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private RuntimeIterator filter;
+    private final RuntimeIterator iterator;
+    private final RuntimeIterator filter;
     private Item nextResult;
     private long position;
     private boolean mustMaintainPosition;
     private DynamicContext filterDynamicContext;
-    private boolean isBooleanOnlyFilter;
+    private final boolean isBooleanOnlyFilter;
 
 
     public PredicateIterator(
@@ -105,21 +107,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.close();
-        this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
-            setLast();
-        }
-        if (!this.isBooleanOnlyFilter) {
-            this.position = 0;
-            this.mustMaintainPosition = true;
-        }
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
@@ -136,7 +123,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        if (this.children.size() < 2) {
+        if (this.getChildren().size() < 2) {
             throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
         }
         this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
@@ -232,8 +219,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = this.children.get(0);
-        RuntimeIterator filter = this.children.get(1);
+        RuntimeIterator iterator = this.getChild(0);
+        RuntimeIterator filter = this.getChild(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
         if (this.isBooleanOnlyFilter) {
             Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
@@ -260,9 +247,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
         return true;
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
-        RuntimeIterator filter = this.children.get(1);
+        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        RuntimeIterator filter = this.getChild(1);
         NativeClauseContext nativeClauseContext = new NativeClauseContext(
                 FLWOR_CLAUSES.FILTER,
                 childDataFrame.getDataFrame().schema(),
@@ -362,6 +350,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();

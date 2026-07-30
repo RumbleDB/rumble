@@ -12,10 +12,12 @@ import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
+import java.io.Serial;
 import java.util.List;
 
 public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public AnnotateFunctionIterator(
@@ -27,8 +29,8 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator inputDataIterator = this.children.get(0);
-        RuntimeIterator schemaIterator = this.children.get(1);
+        RuntimeIterator inputDataIterator = this.getChild(0);
+        RuntimeIterator schemaIterator = this.getChild(1);
         Item schemaItem = schemaIterator.materializeFirstItemOrNull(context);
         ItemType schemaType = ItemTypeFactory.createItemTypeFromJSoundCompactItem(null, schemaItem, null);
         schemaType.resolve(context, getMetadata());

@@ -32,7 +32,7 @@ import org.rumbledb.expressions.Node;
 
 public class StringLiteralExpression extends Expression {
 
-    private String value;
+    private final String value;
 
     public StringLiteralExpression(String value, ExceptionMetadata metadata) {
         super(metadata);
@@ -53,6 +53,7 @@ public class StringLiteralExpression extends Expression {
         return new ArrayList<>();
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

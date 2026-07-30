@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 public class SlashExprClosureZipped implements FlatMapFunction<Tuple2<Item, Long>, Item> {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator rightIterator;
     private final DynamicContext dynamicContext;
@@ -36,6 +38,7 @@ public class SlashExprClosureZipped implements FlatMapFunction<Tuple2<Item, Long
         this.contextSize = contextSize;
     }
 
+    @Override
     public Iterator<Item> call(Tuple2<Item, Long> itemWithIndex) {
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(itemWithIndex._1());

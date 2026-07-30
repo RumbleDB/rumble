@@ -35,10 +35,12 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator sequenceIterator1;
@@ -92,18 +94,18 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.firstArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
-        this.secondArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        this.firstArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
+        this.secondArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.pairIndex = 0;
 
         this.mutableFirstArgumentIterator = new MutableArgumentIterator(this.firstArgumentContext);
@@ -163,18 +165,6 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.sequenceIterator1.reset(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator2.reset(this.currentDynamicContextForLocalExecution);
-        this.actionIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeState(this.currentDynamicContextForLocalExecution);
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.sequenceIterator1.isOpen()) {
             this.sequenceIterator1.close();
@@ -215,6 +205,7 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
     }
 
     private static class MutableArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
+        @Serial
         private static final long serialVersionUID = 1L;
         private Item currentItem;
 

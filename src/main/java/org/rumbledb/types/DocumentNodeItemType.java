@@ -3,7 +3,10 @@ package org.rumbledb.types;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.util.Objects;
+
+import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -12,8 +15,10 @@ import java.util.Set;
  * Wildcard document-node() is represented with no element-test restriction.
  * document-node(element(...)) is represented with a concrete inner element node item type.
  */
+@EqualsAndHashCode
 public class DocumentNodeItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
@@ -40,30 +45,7 @@ public class DocumentNodeItemType implements ItemType {
         return this.elementTestType;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
-        kryo.writeObjectOrNull(output, this.elementTestType, ElementNodeItemType.class);
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.catalogueName = kryo.readObjectOrNull(input, Name.class);
-        this.elementTestType = kryo.readObjectOrNull(input, ElementNodeItemType.class);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType) || !itemType.isNodeItemType()) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.catalogueName, this.elementTestType);
-    }
 
     @Override
     public boolean isEqualTo(ItemType otherType) {

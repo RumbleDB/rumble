@@ -18,6 +18,7 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,6 +53,7 @@ import org.rumbledb.types.SequenceType;
  */
 public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
@@ -315,9 +317,11 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
     private RuntimeStaticContext localStaticContext() {
         return getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(ExecutionMode.LOCAL)
-            .withMetadata(getMetadata());
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
@@ -347,20 +351,6 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         this.hasProducedResult = true;
         this.hasNext = false;
         return this.resultItem;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.arrayIterator.reset(this.currentDynamicContextForLocalExecution);
-        if (this.collationIterator != null) {
-            this.collationIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        if (this.keyIterator != null) {
-            this.keyIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
     }
 
     @Override

@@ -12,8 +12,8 @@ import org.apache.spark.sql.SparkSession;
 
 public class TruncateCollectionPrimitive implements UpdatePrimitive {
     private final Collection collection;
-    private ExceptionMetadata metadata;
-    private RumbleConfiguration configuration;
+    private final ExceptionMetadata metadata;
+    private final RumbleConfiguration configuration;
 
     public TruncateCollectionPrimitive(
             Collection collection,

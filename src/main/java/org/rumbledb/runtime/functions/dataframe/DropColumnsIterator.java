@@ -10,9 +10,11 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class DropColumnsIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public DropColumnsIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
@@ -35,11 +37,6 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-
-    }
-
-    @Override
     public boolean hasNextLocal() {
         return false;
     }
@@ -49,9 +46,10 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
         return null;
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame dataFrame = this.children.get(0).getDataFrame(context);
-        List<Item> columnsToDropItems = this.children.get(1).materialize(context);
+        JSoundDataFrame dataFrame = this.getChild(0).getDataFrame(context);
+        List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",

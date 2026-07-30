@@ -14,12 +14,14 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
@@ -98,13 +100,6 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
 
     private void setNextResult() {
         this.hasNext = !this.pendingResults.isEmpty();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.arrayIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

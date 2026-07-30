@@ -1,9 +1,7 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Period;
@@ -21,6 +19,7 @@ import org.rumbledb.types.ItemType;
 
 public class YearMonthDurationItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Period value;
     private static final Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
@@ -78,15 +77,7 @@ public class YearMonthDurationItem implements Item {
         return Objects.hash(this.value);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = normalizeMonthsToYears(Period.parse(input.readString()));
-    }
 
     @Override
     public boolean equals(Object other) {
@@ -119,6 +110,7 @@ public class YearMonthDurationItem implements Item {
         return Duration.between(anchor, target);
     }
 
+    @Override
     public Period getPeriodValue() {
         return this.value;
     }

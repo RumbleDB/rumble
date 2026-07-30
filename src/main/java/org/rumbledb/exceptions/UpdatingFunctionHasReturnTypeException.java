@@ -22,8 +22,11 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 public class UpdatingFunctionHasReturnTypeException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public UpdatingFunctionHasReturnTypeException(String message, ExceptionMetadata metadata) {

@@ -9,10 +9,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndefinedTypeException;
 
+import java.io.Serial;
 import java.util.*;
 
 public class ItemTypeReference implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private ItemType resolvedItemType;
@@ -28,22 +30,14 @@ public class ItemTypeReference implements ItemType {
         this.name = name;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.resolvedItemType);
-    }
+
 
     @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.resolvedItemType = (ItemType) kryo.readClassAndObject(input);
-    }
-
     public boolean isResolved() {
         return this.resolvedItemType != null;
     }
 
+    @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
         if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(this.name)) {
             throw new UndefinedTypeException("Type undefined: " + this.name, metadata);
@@ -56,6 +50,7 @@ public class ItemTypeReference implements ItemType {
 
 
 
+    @Override
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
 
         Name renamed = renameAtomic(context, this.name);
@@ -122,6 +117,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.equals(other);
     }
 
+    @Override
     public boolean isAtomicItemType() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -129,6 +125,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isAtomicItemType();
     }
 
+    @Override
     public boolean isObjectItemType() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -136,6 +133,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isObjectItemType();
     }
 
+    @Override
     public boolean isArrayItemType() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -143,6 +141,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isArrayItemType();
     }
 
+    @Override
     public boolean isJsonItemType() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -150,6 +149,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isJsonItemType();
     }
 
+    @Override
     public boolean isUnionType() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -157,6 +157,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isUnionType();
     }
 
+    @Override
     public boolean isFunctionItemType() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -164,6 +165,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isFunctionItemType();
     }
 
+    @Override
     public boolean isNumeric() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -171,11 +173,13 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isNumeric();
     }
 
+    @Override
     public boolean hasName() {
         return true;
     }
 
 
+    @Override
     public Name getName() {
         if (this.resolvedItemType != null) {
             return this.resolvedItemType.getName();
@@ -183,6 +187,7 @@ public class ItemTypeReference implements ItemType {
         return this.name;
     }
 
+    @Override
     public FunctionSignature getSignature() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -190,6 +195,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getSignature();
     }
 
+    @Override
     public boolean isSubtypeOf(ItemType superType) {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -197,6 +203,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isSubtypeOf(superType);
     }
 
+    @Override
     public ItemType findLeastCommonSuperTypeWith(ItemType other) {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -204,6 +211,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.findLeastCommonSuperTypeWith(other);
     }
 
+    @Override
     public ItemType findLeastCommonSuperTypeLax(ItemType other) {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -211,6 +219,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.findLeastCommonSuperTypeLax(other);
     }
 
+    @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -218,6 +227,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isStaticallyCastableAs(other);
     }
 
+    @Override
     public boolean canBePromotedTo(ItemType itemType) {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -225,6 +235,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.canBePromotedTo(itemType);
     }
 
+    @Override
     public boolean isUserDefined() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -232,6 +243,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isUserDefined();
     }
 
+    @Override
     public boolean isPrimitive() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -239,6 +251,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.isPrimitive();
     }
 
+    @Override
     public ItemType getPrimitiveType() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -246,6 +259,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getPrimitiveType();
     }
 
+    @Override
     public List<Item> getEnumerationFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -253,6 +267,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getEnumerationFacet();
     }
 
+    @Override
     public List<String> getConstraintsFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -260,6 +275,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getConstraintsFacet();
     }
 
+    @Override
     public Integer getMinLengthFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -267,6 +283,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getMinLengthFacet();
     }
 
+    @Override
     public Integer getLengthFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -274,6 +291,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getLengthFacet();
     }
 
+    @Override
     public Integer getMaxLengthFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -281,6 +299,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getMaxLengthFacet();
     }
 
+    @Override
     public Item getMinExclusiveFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -288,6 +307,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getMinExclusiveFacet();
     }
 
+    @Override
     public Item getMinInclusiveFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -295,6 +315,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getMinInclusiveFacet();
     }
 
+    @Override
     public Item getMaxExclusiveFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -302,6 +323,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getMaxExclusiveFacet();
     }
 
+    @Override
     public Item getMaxInclusiveFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -309,6 +331,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getMaxInclusiveFacet();
     }
 
+    @Override
     public Integer getTotalDigitsFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -316,6 +339,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getTotalDigitsFacet();
     }
 
+    @Override
     public Integer getFractionDigitsFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -323,6 +347,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getFractionDigitsFacet();
     }
 
+    @Override
     public TimezoneFacet getExplicitTimezoneFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -330,6 +355,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getExplicitTimezoneFacet();
     }
 
+    @Override
     public WhitespaceFacet getWhitespaceFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -337,6 +363,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getWhitespaceFacet();
     }
 
+    @Override
     public List<String> getPatternFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -344,6 +371,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getPatternFacet();
     }
 
+    @Override
     public OrderedFacetValue getOrderedFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -351,6 +379,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getOrderedFacet();
     }
 
+    @Override
     public Boolean getBoundedFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -358,6 +387,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getBoundedFacet();
     }
 
+    @Override
     public CardinalityFacetValue getCardinalityFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -365,6 +395,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getCardinalityFacet();
     }
 
+    @Override
     public Boolean getNumericFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -372,6 +403,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getNumericFacet();
     }
 
+    @Override
     public List<String> getObjectKeysFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -379,6 +411,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getObjectKeysFacet();
     }
 
+    @Override
     public FieldDescriptor getObjectContentFacet(String key) {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -386,6 +419,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getObjectContentFacet(key);
     }
 
+    @Override
     public List<FieldDescriptor> getObjectContentFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -401,6 +435,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getObjectContentFacetAsUnorderedMap();
     }
 
+    @Override
     public boolean getClosedFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -408,6 +443,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getClosedFacet();
     }
 
+    @Override
     public ItemType getArrayContentFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -415,6 +451,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getArrayContentFacet();
     }
 
+    @Override
     public List<ItemType> getTypes() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
@@ -422,6 +459,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getTypes();
     }
 
+    @Override
     public String getIdentifierString() {
         if (!this.hasName()) {
             return "<anonymous>";

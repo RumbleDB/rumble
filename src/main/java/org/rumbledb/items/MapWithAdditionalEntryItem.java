@@ -19,6 +19,7 @@
  */
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,21 +32,19 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class MapWithAdditionalEntryItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
-    private Item original;
-    private Item additionalKey;
-    private List<Item> additionalValue;
-    private ItemSameKeyComparator itemSameKeyComparator = new ItemSameKeyComparator();
+    private final Item original;
+    private final Item additionalKey;
+    private final List<Item> additionalValue;
+    private final ItemSameKeyComparator itemSameKeyComparator = new ItemSameKeyComparator();
 
     public MapWithAdditionalEntryItem() {
         this.original = null;
@@ -128,6 +127,7 @@ public class MapWithAdditionalEntryItem implements Item {
         return this.original.getSize() + 1;
     }
 
+    @Override
     public boolean hasKey(String key) throws UnsupportedOperationException {
         if (this.additionalKey.isString() && this.additionalKey.getStringValue().equals(key)) {
             return true;
@@ -135,6 +135,7 @@ public class MapWithAdditionalEntryItem implements Item {
         return this.original.hasKey(key);
     }
 
+    @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         if (this.itemSameKeyComparator.compare(this.additionalKey, key) == 0) {
             return true;
@@ -241,20 +242,7 @@ public class MapWithAdditionalEntryItem implements Item {
 
     // endregion maps
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.original);
-        kryo.writeClassAndObject(output, this.additionalKey);
-        kryo.writeClassAndObject(output, this.additionalValue);
-    }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(Kryo kryo, Input input) {
-        this.original = (Item) kryo.readClassAndObject(input);
-        this.additionalKey = (Item) kryo.readClassAndObject(input);
-        this.additionalValue = (List<Item>) kryo.readClassAndObject(input);
-    }
 
     @Override
     public ItemType getDynamicType() {

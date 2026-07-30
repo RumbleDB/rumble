@@ -30,8 +30,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SimpleMapExpression extends Expression {
-    private Expression leftExpression;
-    private Expression rightExpression;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
 
     public SimpleMapExpression(
             Expression leftExpression,
@@ -61,6 +61,7 @@ public class SimpleMapExpression extends Expression {
         return this.rightExpression;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

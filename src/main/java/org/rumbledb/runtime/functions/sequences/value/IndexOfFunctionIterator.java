@@ -32,14 +32,16 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator searchIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator searchIterator;
     private Item search;
     private Item nextResult;
     private int currentIndex;
@@ -49,13 +51,13 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.sequenceIterator = this.children.get(0);
-        this.searchIterator = this.children.get(1);
+        this.sequenceIterator = this.getChild(0);
+        this.searchIterator = this.getChild(1);
     }
 
     private void checkCollation(DynamicContext context) {
-        if (this.children.size() == 3) {
-            String collation = this.children.get(2)
+        if (this.getChildren().size() == 3) {
+            String collation = this.getChild(2)
                 .materializeFirstItemOrNull(context)
                 .getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
@@ -87,14 +89,6 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.sequenceIterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.currentIndex = 0;
-        checkCollation(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

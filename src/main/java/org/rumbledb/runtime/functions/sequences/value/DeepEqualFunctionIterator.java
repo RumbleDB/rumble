@@ -36,6 +36,7 @@ import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import scala.Tuple2;
 
+import java.io.Serial;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +44,7 @@ import java.util.Objects;
 public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static boolean sameExpandedNodeName(Item node1, Item node2) {
@@ -61,10 +63,10 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator sequenceIterator1 = this.children.get(0);
-        RuntimeIterator sequenceIterator2 = this.children.get(1);
-        if (this.children.size() == 3) {
-            String collation = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+        RuntimeIterator sequenceIterator1 = this.getChild(0);
+        RuntimeIterator sequenceIterator2 = this.getChild(1);
+        if (this.getChildren().size() == 3) {
+            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new DefaultCollationException("Wrong collation parameter", getMetadata());
             }

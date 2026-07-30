@@ -54,6 +54,9 @@ public class VisitorHelpers {
             Node node,
             RumbleConfiguration.RumbleConfigurationBuilder builder
     ) {
+        if (new ParentPointerAnalysisVisitor().scan(node)) {
+            builder.configureOptimization(optimization -> optimization.optimizeParentPointers(false));
+        }
         return new EffectiveConfigurationVisitor().getEffectiveConfiguration(node, builder);
     }
 

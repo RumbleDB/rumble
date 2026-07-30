@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -10,10 +7,12 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class TextItem implements Item {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String content; // is also typed-value
     private Item parent;
@@ -58,11 +57,19 @@ public class TextItem implements Item {
     }
 
     @Override
+    public void addParentToDescendants() {
+        // Text nodes are leaves and therefore have no descendants to update.
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (!(other instanceof TextItem otherTextItem)) {
             return false;
         }
-        return this.getXmlDocumentPosition().equals(otherTextItem.getXmlDocumentPosition());
+        if (this.documentPos == null || otherTextItem.documentPos == null) {
+            return false;
+        }
+        return this.documentPos.equals(otherTextItem.documentPos);
     }
 
     @Override
@@ -70,25 +77,17 @@ public class TextItem implements Item {
         return this.content;
     }
 
+    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.content.isEmpty();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.parent);
-        output.writeString(this.content);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.parent = (Item) kryo.readClassAndObject(input);
-        this.content = input.readString();
-    }
 
     public int hashCode() {
+        if (this.documentPos == null) {
+            return System.identityHashCode(this);
+        }
         return this.documentPos.hashCode();
     }
 

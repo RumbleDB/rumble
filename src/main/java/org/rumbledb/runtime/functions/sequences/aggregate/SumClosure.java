@@ -6,10 +6,13 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 
+import java.io.Serial;
+
 public class SumClosure implements Function2<Item, Item, Item> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private ExceptionMetadata metadata;
+    private final ExceptionMetadata metadata;
 
     public SumClosure(ExceptionMetadata metadata) {
         this.metadata = metadata;

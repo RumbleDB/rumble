@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -33,12 +30,14 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class StringItem implements Item {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private String value;
 
@@ -84,6 +83,7 @@ public class StringItem implements Item {
         return getStringValue();
     }
 
+    @Override
     public double castToDoubleValue() {
         String trimmedValue = this.value.trim();
         if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
@@ -98,6 +98,7 @@ public class StringItem implements Item {
         return Double.parseDouble(this.getValue());
     }
 
+    @Override
     public float castToFloatValue() {
         String trimmedValue = this.value.trim();
         if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
@@ -115,14 +116,17 @@ public class StringItem implements Item {
         return Float.parseFloat(this.getValue());
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         return new BigDecimal(this.value.trim());
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return new BigInteger(this.value.trim());
     }
 
+    @Override
     public int castToIntValue() {
         return Integer.parseInt(this.value.trim());
     }
@@ -132,19 +136,12 @@ public class StringItem implements Item {
         return true;
     }
 
+    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readString();
-    }
 
     public int hashCode() {
         return getStringValue().hashCode();

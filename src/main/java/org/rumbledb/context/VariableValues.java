@@ -20,10 +20,6 @@
 
 package org.rumbledb.context;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -34,10 +30,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -45,8 +43,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class VariableValues implements Serializable, KryoSerializable {
+public class VariableValues implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Map<Name, List<Item>> localVariableValues;
     private Map<Name, Item> localVariableCounts;
@@ -345,26 +344,13 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.dataFrameVariableValues.clear();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObjectOrNull(output, this.parent, VariableValues.class);
-        kryo.writeObject(output, this.localVariableValues);
-        kryo.writeObject(output, this.configuration);
-    }
 
+    @Serial
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
         this.nestedQuery = true;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.parent = kryo.readObjectOrNull(input, VariableValues.class);
-        this.localVariableValues = kryo.readObject(input, HashMap.class);
-        this.configuration = kryo.readObject(input, RumbleConfiguration.class);
-        this.nestedQuery = true;
-    }
 
     public Item getPosition() {
         if (this.localVariableValues.containsKey(Name.CONTEXT_POSITION)) {

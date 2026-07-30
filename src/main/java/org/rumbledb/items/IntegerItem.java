@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -32,12 +29,14 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class IntegerItem implements Item {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private BigInteger value;
 
@@ -129,15 +128,7 @@ public class IntegerItem implements Item {
         return true;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.value);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = kryo.readObject(input, BigInteger.class);
-    }
 
     public int hashCode() {
         return this.value.hashCode();
@@ -153,6 +144,7 @@ public class IntegerItem implements Item {
         return new NativeClauseContext(context, this.value.toString(), SequenceType.createSequenceType("integer"));
     }
 
+    @Override
     public boolean isNumeric() {
         return true;
     }

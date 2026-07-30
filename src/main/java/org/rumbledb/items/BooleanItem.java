@@ -24,13 +24,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+
+import java.io.Serial;
 
 public class BooleanItem implements Item {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private boolean value;
 
@@ -77,15 +77,7 @@ public class BooleanItem implements Item {
         return true;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeBoolean(this.getValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readBoolean();
-    }
 
     public boolean equals(Object other) {
         if (!(other instanceof Item otherItem)) {

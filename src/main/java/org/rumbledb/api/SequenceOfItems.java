@@ -19,6 +19,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.SerializerUtils;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.spark.SparkSessionManager;
@@ -45,9 +46,9 @@ import org.rumbledb.config.RumbleConfiguration;
  */
 public class SequenceOfItems {
 
-    private RuntimeIterator iterator;
-    private DynamicContext dynamicContext;
-    private RumbleConfiguration configuration;
+    private final RuntimeIterator iterator;
+    private final DynamicContext dynamicContext;
+    private final RumbleConfiguration configuration;
     private boolean isOpen;
     private List<Item> cachedItems;
 
@@ -326,7 +327,11 @@ public class SequenceOfItems {
         SerializationParameters params = SerializationParameters.copy(
             this.getRuntimeStaticContext().getSerializationParameters()
         );
-        Serializer serializer = Serializers.from(params);
+        SerializationParameters itemParams = SerializationParameters.copy(params);
+        if ("xml".equalsIgnoreCase(params.getMethod())) {
+            itemParams.setOmitXmlDeclaration(true);
+        }
+        Serializer serializer = Serializers.from(itemParams);
         String itemSeparator = params.getItemSeparator();
         if (itemSeparator == null) {
             itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
@@ -334,6 +339,13 @@ public class SequenceOfItems {
 
         StringBuilder sb = new StringBuilder();
         List<Item> items = this.getAsList();
+        if (
+            "xml".equalsIgnoreCase(params.getMethod())
+                && !params.getOmitXmlDeclaration()
+                && !items.isEmpty()
+        ) {
+            SerializerUtils.appendXmlDeclaration(sb, params);
+        }
         if ("json".equalsIgnoreCase(params.getMethod())) {
             if (items.isEmpty()) {
                 return "null";

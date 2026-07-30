@@ -105,7 +105,7 @@ import java.util.TreeSet;
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @SuppressWarnings("unused")
-    private RumbleConfiguration configuration;
+    private final RumbleConfiguration configuration;
 
     /**
      * Input variable dependencies are lists of variables and functions that an expression depends on.

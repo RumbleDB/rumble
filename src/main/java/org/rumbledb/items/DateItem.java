@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -16,12 +17,10 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class DateItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private OffsetDateTime value;
     private boolean hasTimeZone = false;
@@ -136,24 +135,7 @@ public class DateItem implements Item {
         return true;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        String formatted = this.value.format(
-            !this.hasTimeZone ? DateTimeFormatter.ISO_LOCAL_DATE : DateTimeFormatter.ISO_OFFSET_DATE
-        );
-        if (formatted.startsWith("+")) {
-            formatted = formatted.substring(1);
-        }
-        output.writeString(formatted);
-        output.writeBoolean(this.hasTimeZone);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        String dateString = input.readString();
-        this.hasTimeZone = input.readBoolean();
-        getDateFromString(dateString);
-    }
 
     @Override
     public ItemType getDynamicType() {

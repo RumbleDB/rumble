@@ -45,6 +45,7 @@ import org.rumbledb.spark.SparkSessionManager;
 
 import scala.Tuple2;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -55,9 +56,10 @@ import java.util.TreeMap;
 
 public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private Item nextResult;
     private DynamicContext mapDynamicContext;
     private Queue<Item> mapValues;
@@ -77,7 +79,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
         long count = childRDD.count();
         FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SimpleMapExpressionClosureZipped(
@@ -112,16 +114,6 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.leftIterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        setLast();
-        this.mapValues = new LinkedList<>();
-        this.position = 0;
-        this.leftIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override
@@ -176,6 +168,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         return mapValuesRaw;
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
@@ -185,6 +178,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         return result;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }

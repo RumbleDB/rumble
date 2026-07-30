@@ -16,10 +16,12 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+import java.io.Serial;
 import java.util.Arrays;
 
 public class EditCollectionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
@@ -29,10 +31,9 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext);
+        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
-        this.isUpdating = true;
 
     }
 
@@ -52,11 +53,6 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-
-    }
-
-    @Override
-    protected void resetLocal() {
 
     }
 

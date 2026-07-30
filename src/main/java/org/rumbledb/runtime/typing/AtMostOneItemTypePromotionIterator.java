@@ -18,16 +18,18 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
+import java.io.Serial;
 import java.util.Collections;
 
 public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private RuntimeIterator iterator;
-    private SequenceType sequenceType;
+    private final RuntimeIterator iterator;
+    private final SequenceType sequenceType;
 
-    private ItemType itemType;
+    private final ItemType itemType;
 
     public AtMostOneItemTypePromotionIterator(
             RuntimeIterator iterator,
@@ -118,28 +120,33 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         if (item.isAnyURI() && this.itemType.equals(BuiltinTypesCatalogue.stringItem)) {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());
         }
-        if (item.isFloat() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
-            return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+        if (!item.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
+            throw new UnexpectedTypeException(
+                    this.exceptionMessage
+                        + item.getDynamicType().toString()
+                        + " cannot be promoted to type "
+                        + this.sequenceType
+                        + ".",
+                    getMetadata()
+            );
         }
-        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
-            return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
-        }
-        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.floatItem)) {
-            return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
-        }
-        throw new UnexpectedTypeException(
-                this.exceptionMessage
-                    + item.getDynamicType().toString()
-                    + " cannot be promoted to type "
-                    + this.sequenceType
-                    + ".",
-                getMetadata()
+        item = CastIterator.castItemToType(
+            item,
+            this.sequenceType.getItemType(),
+            getMetadata(),
+            this.staticContext
         );
+        if (item == null) {
+            throw new OurBadException(
+                    "We were not able to promote an item to type " + this.sequenceType.getItemType()
+            );
+        }
+        return item;
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext value = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (value.equals(NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }

@@ -57,7 +57,7 @@ public class ItemFactory {
     }
 
     public Item createStringItem(String s) {
-        if (s.equals("")) {
+        if (s == null || s.isEmpty()) {
             return this.emptyStringItem;
         }
         return new StringItem(s);
@@ -416,6 +416,10 @@ public class ItemFactory {
         return new CommentItem(content);
     }
 
+    public Item createXmlCommentNode(Node currentNode) {
+        return new CommentItem(currentNode);
+    }
+
     public Item createXmlAttributeNode(Node attribute) {
         return new AttributeItem(attribute);
     }
@@ -471,5 +475,9 @@ public class ItemFactory {
      */
     public Item createXmlProcessingInstructionNode(String target, String content) {
         return new ProcessingInstructionItem(target, content);
+    }
+
+    public Item createXmlProcessingInstructionNode(Node currentNode) {
+        return new ProcessingInstructionItem(currentNode);
     }
 }

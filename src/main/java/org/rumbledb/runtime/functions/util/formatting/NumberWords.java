@@ -12,9 +12,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.EqualsAndHashCode;
 
 public final class NumberWords {
     // For plain ordinal word formatting (`Ww;o`) RumbleDB selects the ICU masculine ordinal rule set when available,
@@ -117,6 +118,7 @@ public final class NumberWords {
         }
     }
 
+    @EqualsAndHashCode
     private static final class RuleFormatKey {
         private final ULocale locale;
         private final int ruleType;
@@ -126,22 +128,6 @@ public final class NumberWords {
             this.ruleType = ruleType;
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof RuleFormatKey)) {
-                return false;
-            }
-            RuleFormatKey other = (RuleFormatKey) o;
-            return this.ruleType == other.ruleType && this.locale.equals(other.locale);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.locale, this.ruleType);
-        }
     }
 
     private static String formatWithRequestedRuleSet(

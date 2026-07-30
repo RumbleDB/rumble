@@ -1,6 +1,5 @@
 package org.rumbledb.api;
 
-import com.esotericsoftware.kryo.KryoSerializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -43,7 +42,7 @@ import java.util.Map;
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
-public interface Item extends Serializable, KryoSerializable {
+public interface Item extends Serializable {
 
     /**
      * Makes a copy.

@@ -38,6 +38,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,9 +47,10 @@ import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
 
 public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private int position;
+    private final RuntimeIterator iterator;
+    private final int position;
     private final int optimizationThreshold = 10_000_000; // do optimization only if position is above this threshold
 
     public SequenceLookupIterator(
@@ -157,13 +159,14 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE
                 && this.iterator instanceof CommaExpressionIterator childIterator
         ) {
+            List<RuntimeIterator> children = childIterator.getOperands();
             if (
-                childIterator.getChildren().size() == 2
-                    && childIterator.getChildren().get(0) instanceof ComparisonIterator
-                    && childIterator.getChildren().get(1) instanceof BooleanRuntimeIterator
+                children.size() == 2
+                    && children.get(0) instanceof ComparisonIterator
+                    && children.get(1) instanceof BooleanRuntimeIterator
                     && this.position == 1
             ) {
-                NativeClauseContext childContext = childIterator.getChildren()
+                NativeClauseContext childContext = children
                     .get(0)
                     .generateNativeQuery(nativeClauseContext);
                 if (childContext == NativeClauseContext.NoNativeQuery) {

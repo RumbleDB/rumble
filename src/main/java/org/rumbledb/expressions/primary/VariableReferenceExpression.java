@@ -28,14 +28,11 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VariableReferenceExpression extends Expression implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-    private Name name;
+public class VariableReferenceExpression extends Expression {
+    private final Name name;
     private SequenceType type;
 
 
@@ -71,6 +68,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
         return new ArrayList<>();
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

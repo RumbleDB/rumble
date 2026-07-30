@@ -27,14 +27,16 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Comparator;
 
 public class ItemComparator implements Comparator<Item>, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private RumbleException exception;
+    private final RumbleException exception;
     // For min(), NaN is returned if it appears in the input sequence. It must thus compare to less
     // than any other number for this purpose.
     private boolean compareMin = false;
@@ -55,6 +57,7 @@ public class ItemComparator implements Comparator<Item>, Serializable {
      *
      * @return -1 if v1 &lt; v2; 0 if v1 == v2; 1 if v1 &gt; v2;
      */
+    @Override
     public int compare(Item v1, Item v2) {
         if (this.compareMin) {
             if (

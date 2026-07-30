@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.maps;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.rumbledb.runtime.RuntimeIterator;
  */
 public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator mapIterator;
@@ -169,15 +171,6 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
         this.hasProducedResult = true;
         this.hasNext = false;
         return this.resultItem;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.mapIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.keysIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
     }
 
     @Override

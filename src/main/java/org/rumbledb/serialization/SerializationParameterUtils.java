@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class SerializationParameterUtils {
 
@@ -44,11 +45,20 @@ public final class SerializationParameterUtils {
             List<Item> optionsItems,
             ExceptionMetadata metadata
     ) {
+        applyParameterItems(params, optionsItems, null, metadata);
+    }
+
+    private static void applyParameterItems(
+            SerializationParameters params,
+            List<Item> optionsItems,
+            Set<String> explicitParameterNames,
+            ExceptionMetadata metadata
+    ) {
         if (optionsItems == null || optionsItems.isEmpty()) {
             return;
         }
         if (optionsItems.size() == 1) {
-            applyParameterItem(params, optionsItems.get(0), metadata);
+            applyParameterItem(params, optionsItems.get(0), explicitParameterNames, metadata);
             return;
         }
         for (Item item : optionsItems) {
@@ -59,13 +69,14 @@ public final class SerializationParameterUtils {
                 );
             }
         }
-        applyParameterElements(params, optionsItems, metadata);
+        applyParameterElements(params, optionsItems, explicitParameterNames, metadata);
     }
 
     public static void applyParameterDocument(
             SerializationParameters params,
             StaticContext staticContext,
             String location,
+            Set<String> explicitParameterNames,
             ExceptionMetadata metadata
     ) {
         try {
@@ -85,7 +96,7 @@ public final class SerializationParameterUtils {
                     uri.toString(),
                     staticContext.getRumbleConfiguration().optimization().optimizeParentPointers()
                 );
-                applyParameterItem(params, item, metadata);
+                applyParameterItem(params, item, explicitParameterNames, metadata);
             }
         } catch (ParserConfigurationException e) {
             throw new OurBadException("Document builder creation failed with: " + e, metadata);
@@ -111,6 +122,7 @@ public final class SerializationParameterUtils {
     private static void applyParameterItem(
             SerializationParameters params,
             Item options,
+            Set<String> explicitParameterNames,
             ExceptionMetadata metadata
     ) {
         if (options.isDocumentNode()) {
@@ -120,7 +132,7 @@ public final class SerializationParameterUtils {
                     elementChildren.add(child);
                 }
             }
-            applyParameterItems(params, elementChildren, metadata);
+            applyParameterItems(params, elementChildren, explicitParameterNames, metadata);
             return;
         }
         if (options.isElementNode()) {
@@ -131,14 +143,14 @@ public final class SerializationParameterUtils {
                         childElements.add(child);
                     }
                 }
-                applyParameterElements(params, childElements, metadata);
+                applyParameterElements(params, childElements, explicitParameterNames, metadata);
                 return;
             }
-            applyParameterElements(params, List.of(options), metadata);
+            applyParameterElements(params, List.of(options), explicitParameterNames, metadata);
             return;
         }
         if (options.isMap() || options.isObject()) {
-            applyParameterMap(params, options, metadata);
+            applyParameterMap(params, options, explicitParameterNames, metadata);
             return;
         }
         throw new InvalidArgumentTypeException(
@@ -150,11 +162,15 @@ public final class SerializationParameterUtils {
     private static void applyParameterMap(
             SerializationParameters params,
             Item options,
+            Set<String> explicitParameterNames,
             ExceptionMetadata metadata
     ) {
         for (Item key : options.getItemKeys()) {
             String parameterName = parameterNameFromKey(key, metadata);
             if (parameterName == null) {
+                continue;
+            }
+            if (explicitParameterNames != null && explicitParameterNames.contains(parameterName)) {
                 continue;
             }
             List<Item> valueSequence = options.getSequenceByKey(key);
@@ -170,6 +186,7 @@ public final class SerializationParameterUtils {
     private static void applyParameterElements(
             SerializationParameters params,
             List<Item> elements,
+            Set<String> explicitParameterNames,
             ExceptionMetadata metadata
     ) {
         for (Item element : elements) {
@@ -184,6 +201,13 @@ public final class SerializationParameterUtils {
             if (namespace != null && !namespace.isEmpty() && !SERIALIZATION_NAMESPACE.equals(namespace)) {
                 continue;
             }
+            if (explicitParameterNames != null && explicitParameterNames.contains(name.getLocalName())) {
+                continue;
+            }
+            if ("use-character-maps".equals(name.getLocalName())) {
+                applyCharacterMapsParameter(params, element, metadata);
+                continue;
+            }
             String value = attributeValue(element, "value");
             if (value == null) {
                 value = element.getStringValue();
@@ -192,10 +216,50 @@ public final class SerializationParameterUtils {
                 "cdata-section-elements".equals(name.getLocalName())
                     || "suppress-indentation".equals(name.getLocalName())
             ) {
-                value = expandLexicalQNames(value, element);
+                value = expandLexicalQNames(value, element, false);
             }
             applyNormalizedParameter(params, name.getLocalName(), value, metadata);
         }
+    }
+
+    private static void applyCharacterMapsParameter(
+            SerializationParameters params,
+            Item useCharacterMapsElement,
+            ExceptionMetadata metadata
+    ) {
+        Map<String, String> characterMaps = new HashMap<>();
+        for (Item child : useCharacterMapsElement.children()) {
+            if (!child.isElementNode()) {
+                continue;
+            }
+            Name childName = child.nodeName();
+            if (
+                childName == null
+                    || !"character-map".equals(childName.getLocalName())
+            ) {
+                continue;
+            }
+            String childNamespace = childName.getNamespace();
+            if (
+                childNamespace != null
+                    && !childNamespace.isEmpty()
+                    && !SERIALIZATION_NAMESPACE.equals(childNamespace)
+            ) {
+                continue;
+            }
+            String character = attributeValue(child, "character");
+            String mapString = attributeValue(child, "map-string");
+            if (character == null || mapString == null) {
+                throw new InvalidSerializationParameterValueException(
+                        "use-character-maps",
+                        child.getStringValue(),
+                        "character-map elements with character and map-string attributes",
+                        metadata
+                );
+            }
+            characterMaps.put(character, mapString);
+        }
+        params.setCharacterMaps(characterMaps);
     }
 
     private static void applyNormalizedParameter(
@@ -270,7 +334,7 @@ public final class SerializationParameterUtils {
             return List.of(expandedQName(item.getQNameValue()));
         }
         if ("cdata-section-elements".equals(parameterName) || "suppress-indentation".equals(parameterName)) {
-            return List.of(expandLexicalQNames(item.getStringValue(), namespaceContext));
+            return List.of(expandLexicalQNames(item.getStringValue(), namespaceContext, false));
         }
         return List.of(item.getStringValue());
     }
@@ -304,7 +368,11 @@ public final class SerializationParameterUtils {
         return null;
     }
 
-    private static String expandLexicalQNames(String value, Item contextNode) {
+    private static String expandLexicalQNames(
+            String value,
+            Item contextNode,
+            boolean useDefaultNamespaceForUnprefixed
+    ) {
         if (value == null || value.trim().isEmpty()) {
             return value;
         }
@@ -314,19 +382,30 @@ public final class SerializationParameterUtils {
             if (token.isEmpty()) {
                 continue;
             }
-            sb.append(separator).append(expandLexicalQName(token, contextNode));
+            sb.append(separator).append(expandLexicalQName(token, contextNode, useDefaultNamespaceForUnprefixed));
             separator = " ";
         }
         return sb.toString();
     }
 
-    private static String expandLexicalQName(String token, Item contextNode) {
+    private static String expandLexicalQName(
+            String token,
+            Item contextNode,
+            boolean useDefaultNamespaceForUnprefixed
+    ) {
         if (token.startsWith("Q{")) {
             return token;
         }
         int colon = token.indexOf(':');
         if (colon < 0) {
-            return token;
+            if (!useDefaultNamespaceForUnprefixed) {
+                return token;
+            }
+            String namespace = resolveNamespace("", contextNode);
+            if (namespace == null || namespace.isEmpty()) {
+                return token;
+            }
+            return "Q{" + namespace + "}" + token;
         }
         String prefix = token.substring(0, colon);
         String localName = token.substring(colon + 1);

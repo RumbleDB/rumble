@@ -12,11 +12,13 @@ import org.rumbledb.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.lit;
 
+import java.io.Serial;
 import java.util.List;
 
 
 public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public DeltaTableFunctionIterator(
@@ -28,7 +30,7 @@ public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator collectionNameIterator = this.children.get(0);
+        RuntimeIterator collectionNameIterator = this.getChild(0);
         String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
 
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);

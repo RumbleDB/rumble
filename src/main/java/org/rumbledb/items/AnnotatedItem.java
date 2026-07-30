@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -30,12 +31,10 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class AnnotatedItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Item itemToAnnotate;
@@ -80,17 +79,7 @@ public class AnnotatedItem implements Item {
         return Objects.hash(this.itemToAnnotate, this.type);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.itemToAnnotate);
-        kryo.writeClassAndObject(output, this.type);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.itemToAnnotate = (Item) kryo.readClassAndObject(input);
-        this.type = (ItemType) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
-    }
 
     @Override
     public boolean isFunction() {

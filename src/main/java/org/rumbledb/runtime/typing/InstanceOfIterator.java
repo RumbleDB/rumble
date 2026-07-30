@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.typing;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +43,7 @@ import org.rumbledb.types.SequenceType;
 
 public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
     private final SequenceType sequenceType;
@@ -56,6 +58,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         this.sequenceType = sequenceType;
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {

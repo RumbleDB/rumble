@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -34,12 +35,10 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class DoubleItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private double value;
 
@@ -146,6 +145,7 @@ public class DoubleItem implements Item {
         return (float) this.value;
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         if (Double.isNaN(this.value) || Double.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
@@ -153,10 +153,12 @@ public class DoubleItem implements Item {
         return BigDecimal.valueOf(getDoubleValue());
     }
 
+    @Override
     public int castToIntValue() {
         return Double.valueOf(this.value).intValue();
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return BigDecimal.valueOf(this.value).toBigInteger();
     }
@@ -171,15 +173,7 @@ public class DoubleItem implements Item {
         return Double.isNaN(this.value);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeDouble(this.value);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readDouble();
-    }
 
     public int hashCode() {
         return (int) Math.round(getDoubleValue());

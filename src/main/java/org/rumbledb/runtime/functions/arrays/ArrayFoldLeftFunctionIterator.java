@@ -36,12 +36,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
@@ -123,32 +125,32 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
-            RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
         List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
-            RuntimeStaticContext childStaticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             childIterators.add(new ConstantRuntimeIterator(item, childStaticContext));
         }
 
-        RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         return new CommaExpressionIterator(childIterators, staticContext);
     }
 
@@ -190,13 +192,6 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = false;
         }
         return result;
-    }
-
-    @Override
-    protected void resetLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.resultIndex = 0;
-        this.hasNext = this.resultSequence != null && !this.resultSequence.isEmpty();
     }
 
     @Override

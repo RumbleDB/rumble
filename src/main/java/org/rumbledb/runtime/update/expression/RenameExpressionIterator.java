@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.io.Serial;
 import java.util.Arrays;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -21,10 +22,11 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 public class RenameExpressionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator mainIterator;
-    private RuntimeIterator locatorIterator;
-    private RuntimeIterator nameIterator;
+    private final RuntimeIterator mainIterator;
+    private final RuntimeIterator locatorIterator;
+    private final RuntimeIterator nameIterator;
 
     public RenameExpressionIterator(
             RuntimeIterator mainIterator,
@@ -32,12 +34,14 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator nameIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(mainIterator, locatorIterator, nameIterator), staticContext);
+        super(
+            Arrays.asList(mainIterator, locatorIterator, nameIterator),
+            staticContext.toBuilder().isUpdating(true).build()
+        );
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.nameIterator = nameIterator;
-        this.isUpdating = true;
     }
 
     @Override
@@ -52,11 +56,6 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-
-    }
-
-    @Override
-    protected void resetLocal() {
 
     }
 

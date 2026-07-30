@@ -99,7 +99,7 @@ import java.util.Map.Entry;
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
-    private RumbleConfiguration configuration;
+    private final RumbleConfiguration configuration;
     private ExternalBindings externalBindings;
     private List<Statement> exitStatementChildren;
 

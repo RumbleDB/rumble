@@ -29,6 +29,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,11 +40,12 @@ import java.util.Queue;
  */
 public class MapFunctionCallIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Item mapItem;
     private final RuntimeIterator keyIterator;
-    private Queue<Item> pendingResults;
+    private final Queue<Item> pendingResults;
 
     public MapFunctionCallIterator(
             Item mapItem,
@@ -109,16 +111,6 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
 
     private void setNextResult() {
         this.hasNext = !this.pendingResults.isEmpty();
-    }
-
-    @Override
-    protected void resetLocal() {
-        if (this.keyIterator != null) {
-            this.keyIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        this.pendingResults.clear();
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

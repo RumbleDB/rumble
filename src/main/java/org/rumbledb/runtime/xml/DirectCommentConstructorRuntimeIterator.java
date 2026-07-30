@@ -26,6 +26,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
+import java.io.Serial;
 import java.util.Collections;
 
 /**
@@ -35,6 +36,7 @@ import java.util.Collections;
  */
 public class DirectCommentConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final String content;
 

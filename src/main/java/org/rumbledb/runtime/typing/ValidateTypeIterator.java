@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.typing;
 
+import java.io.Serial;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -42,11 +43,12 @@ import org.rumbledb.types.TypeMappings;
 
 public class ValidateTypeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemType itemType;
+    private final ItemType itemType;
 
-    private boolean isValidate;
+    private final boolean isValidate;
 
     public ValidateTypeIterator(
             RuntimeIterator instance,
@@ -61,7 +63,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator inputDataIterator = this.children.get(0);
+        RuntimeIterator inputDataIterator = this.getChild(0);
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
         }
@@ -122,6 +124,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         StructType schema = convertToDataFrameSchema(itemType, staticContext);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<>() {
+                @Serial
                 private static final long serialVersionUID = 1L;
 
                 @Override
@@ -151,6 +154,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<>() {
+                @Serial
                 private static final long serialVersionUID = 1L;
 
                 @Override
@@ -453,33 +457,28 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
+        JavaRDD<Item> childrenItems = this.getChild(0).getRDD(context);
         return childrenItems.map(x -> validate(x, this.itemType, getMetadata(), this.isValidate, this.staticContext));
     }
 
     @Override
     protected void openLocal() {
-        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
+        this.getChild(0).open(this.currentDynamicContextForLocalExecution);
     }
 
     @Override
     protected void closeLocal() {
-        this.children.get(0).close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
+        this.getChild(0).close();
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return this.children.get(0).hasNext();
+        return this.getChild(0).hasNext();
     }
 
     @Override
     protected Item nextLocal() {
-        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate, this.staticContext);
+        return validate(this.getChild(0).next(), this.itemType, getMetadata(), this.isValidate, this.staticContext);
     }
 
     private static Item validate(
@@ -817,7 +816,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (this.isValidate) {
             return NativeClauseContext.NoNativeQuery;
         }
-        return this.children.get(0).generateNativeQuery(nativeClauseContext);
+        return this.getChild(0).generateNativeQuery(nativeClauseContext);
     }
 
 

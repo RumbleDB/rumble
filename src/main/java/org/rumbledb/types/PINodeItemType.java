@@ -4,7 +4,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.util.Objects;
+
+import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -13,8 +16,10 @@ import java.util.Set;
  * Wildcard processing-instruction() is represented with no target-name restriction.
  * processing-instruction(N) is represented with a normalized target-name restriction.
  */
+@EqualsAndHashCode
 public class PINodeItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
@@ -41,30 +46,7 @@ public class PINodeItemType implements ItemType {
         return this.normalizedTarget;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
-        output.writeString(this.normalizedTarget);
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.catalogueName = kryo.readObjectOrNull(input, Name.class);
-        this.normalizedTarget = input.readString();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType) || !itemType.isNodeItemType()) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.catalogueName, this.normalizedTarget);
-    }
 
     @Override
     public boolean isEqualTo(ItemType otherType) {

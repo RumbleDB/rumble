@@ -36,10 +36,12 @@ import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.List;
 
 public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     protected List<Item> result = null;
     private int currentResultIndex = 0;
@@ -66,7 +68,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
         if (executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames()) {
-            this.staticContext = this.staticContext.withExecutionMode(ExecutionMode.RDD);
+            this.staticContext = this.staticContext.toBuilder().executionMode(ExecutionMode.RDD).build();
         }
     }
 
@@ -76,16 +78,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (!isRDDOrDataFrame() && implementsLocal()) {
             openLocal();
         }
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (!isRDDOrDataFrame() && implementsLocal()) {
-            resetLocal();
-            return;
-        }
-        this.result = null;
     }
 
     @Override
@@ -188,6 +180,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
     }
 
+    @Override
     public void materialize(DynamicContext context, List<Item> result) {
         if (!isRDDOrDataFrame()) {
             super.materialize(context, result);
@@ -199,6 +192,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         result.addAll(collectedItems);
     }
 
+    @Override
     public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
         if (!isRDDOrDataFrame()) {
             super.materializeNFirstItems(context, result, n);
@@ -209,6 +203,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         result.addAll(items.take(n));
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
@@ -224,6 +219,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
     }
 
+    @Override
     public Item materializeExactlyOneItem(
             DynamicContext context
     )
@@ -243,6 +239,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         throw new MoreThanOneItemException();
     }
 
+    @Override
     public Item materializeAtMostOneItemOrNull(
             DynamicContext context
     )
@@ -266,8 +263,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected abstract void openLocal();
 
     protected abstract void closeLocal();
-
-    protected abstract void resetLocal();
 
     protected abstract boolean hasNextLocal();
 
