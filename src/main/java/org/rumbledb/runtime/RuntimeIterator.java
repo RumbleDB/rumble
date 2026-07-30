@@ -309,7 +309,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         if (isRDD()) {
             return ItemRuntimeDataFrameFactory.INSTANCE.fromRDD(this.getRDD(context), context, this.staticContext);
         }
-        return ItemRuntimeDataFrameFactory.INSTANCE.fromLocal(this.materialize(context), context, this.staticContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromList(this.materialize(context), context, this.staticContext);
     }
 
     public boolean isUpdating() {

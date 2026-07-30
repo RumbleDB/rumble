@@ -21,7 +21,7 @@ import org.rumbledb.context.RuntimeStaticContext;
  */
 public interface RuntimeDataFrameFactory<T> extends Serializable {
 
-    RuntimeDataFrame<T> fromLocal(
+    RuntimeDataFrame<T> fromList(
             List<T> values,
             DynamicContext context,
             RuntimeStaticContext staticContext

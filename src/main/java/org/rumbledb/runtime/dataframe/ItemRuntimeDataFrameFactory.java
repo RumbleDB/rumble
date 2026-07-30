@@ -33,7 +33,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
     }
 
     @Override
-    public RuntimeDataFrame<Item> fromLocal(
+    public RuntimeDataFrame<Item> fromList(
             List<Item> items,
             DynamicContext context,
             RuntimeStaticContext staticContext
