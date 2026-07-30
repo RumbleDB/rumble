@@ -34,6 +34,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -42,28 +43,21 @@ public class FlworTuple implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final LinkedHashMap<Name, List<Item>> localVariables;
-    private final LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
-    private final LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
+    private LinkedHashMap<Name, List<Item>> localVariables;
+    private LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
+    private LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
+    private int initialCapacity = 1;
     private RumbleRuntimeConfiguration configuration;
 
     public FlworTuple() {
-        this.localVariables = new LinkedHashMap<>(1, 1);
-        this.rddVariables = new LinkedHashMap<>(1, 1);
-        this.dataFrameVariables = new LinkedHashMap<>(1, 1);
     }
 
     public FlworTuple(RumbleRuntimeConfiguration configuration) {
-        this.localVariables = new LinkedHashMap<>(1, 1);
-        this.rddVariables = new LinkedHashMap<>(1, 1);
-        this.dataFrameVariables = new LinkedHashMap<>(1, 1);
         this.configuration = configuration;
     }
 
     public FlworTuple(RumbleRuntimeConfiguration configuration, int nb) {
-        this.localVariables = new LinkedHashMap<>(nb, 1);
-        this.rddVariables = new LinkedHashMap<>(nb, 1);
-        this.dataFrameVariables = new LinkedHashMap<>(nb, 1);
+        this.initialCapacity = nb;
         this.configuration = configuration;
     }
 
@@ -71,59 +65,92 @@ public class FlworTuple implements Serializable {
      * Deep copy constructor
      */
     public FlworTuple(FlworTuple toCopy) {
-        this.localVariables = new LinkedHashMap<>(toCopy.localVariables.size(), 1);
-        this.rddVariables = new LinkedHashMap<>(toCopy.rddVariables.size(), 1);
-        this.dataFrameVariables = new LinkedHashMap<>(toCopy.dataFrameVariables.size(), 1);
-        for (Name key : toCopy.localVariables.keySet()) {
-            this.putValue(key, toCopy.localVariables.get(key));
+        this.initialCapacity = toCopy.initialCapacity;
+        if (toCopy.localVariables != null) {
+            for (Name key : toCopy.localVariables.keySet()) {
+                this.putValue(key, toCopy.localVariables.get(key));
+            }
         }
-        for (Name key : toCopy.rddVariables.keySet()) {
-            this.putValue(key, toCopy.rddVariables.get(key));
+        if (toCopy.rddVariables != null) {
+            for (Name key : toCopy.rddVariables.keySet()) {
+                this.putValue(key, toCopy.rddVariables.get(key));
+            }
         }
-        for (Name key : toCopy.dataFrameVariables.keySet()) {
-            this.putValue(key, toCopy.dataFrameVariables.get(key));
+        if (toCopy.dataFrameVariables != null) {
+            for (Name key : toCopy.dataFrameVariables.keySet()) {
+                this.putValue(key, toCopy.dataFrameVariables.get(key));
+            }
         }
         this.configuration = toCopy.configuration;
     }
 
+    private LinkedHashMap<Name, List<Item>> localVariables() {
+        if (this.localVariables == null) {
+            this.localVariables = new LinkedHashMap<>(this.initialCapacity, 1);
+        }
+        return this.localVariables;
+    }
+
+    private LinkedHashMap<Name, JavaRDD<Item>> rddVariables() {
+        if (this.rddVariables == null) {
+            this.rddVariables = new LinkedHashMap<>(this.initialCapacity, 1);
+        }
+        return this.rddVariables;
+    }
+
+    private LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables() {
+        if (this.dataFrameVariables == null) {
+            this.dataFrameVariables = new LinkedHashMap<>(this.initialCapacity, 1);
+        }
+        return this.dataFrameVariables;
+    }
+
+    private static boolean has(LinkedHashMap<Name, ?> map, Name key) {
+        return map != null && map.containsKey(key);
+    }
+
+    private static <V> Set<Name> keys(LinkedHashMap<Name, V> map) {
+        return (map == null || map.isEmpty()) ? Collections.emptySet() : map.keySet();
+    }
+
     public Set<Name> getLocalKeys() {
-        return this.localVariables.keySet();
+        return keys(this.localVariables);
     }
 
     public Set<Name> getRDDKeys() {
-        return this.rddVariables.keySet();
+        return keys(this.rddVariables);
     }
 
     public Set<Name> getDataFrameKeys() {
-        return this.dataFrameVariables.keySet();
+        return keys(this.dataFrameVariables);
     }
 
     public boolean contains(Name key) {
-        return this.localVariables.containsKey(key)
-            || this.rddVariables.containsKey(key)
-            || this.dataFrameVariables.containsKey(key);
+        return has(this.localVariables, key)
+            || has(this.rddVariables, key)
+            || has(this.dataFrameVariables, key);
     }
 
     public boolean isRDD(Name key, ExceptionMetadata metadata) {
         if (!contains(key)) {
             throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
-        return this.rddVariables.containsKey(key)
-            || this.dataFrameVariables.containsKey(key);
+        return has(this.rddVariables, key)
+            || has(this.dataFrameVariables, key);
     }
 
     public boolean isDataFrame(Name key, ExceptionMetadata metadata) {
         if (!contains(key)) {
             throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
-        return this.dataFrameVariables.containsKey(key);
+        return has(this.dataFrameVariables, key);
     }
 
     public List<Item> getLocalValue(Name key, ExceptionMetadata metadata) {
-        if (this.localVariables.containsKey(key)) {
+        if (has(this.localVariables, key)) {
             return this.localVariables.get(key);
         }
-        if (this.rddVariables.containsKey(key)) {
+        if (has(this.rddVariables, key)) {
             JavaRDD<Item> rdd = this.getRDDValue(key, metadata);
             return HybridRuntimeIterator.collectRDDwithLimit(rdd, this.configuration, metadata);
         }
@@ -132,10 +159,10 @@ public class FlworTuple implements Serializable {
     }
 
     public JavaRDD<Item> getRDDValue(Name key, ExceptionMetadata metadata) {
-        if (this.rddVariables.containsKey(key)) {
+        if (has(this.rddVariables, key)) {
             return this.rddVariables.get(key);
         }
-        if (this.dataFrameVariables.containsKey(key)) {
+        if (has(this.dataFrameVariables, key)) {
             JSoundDataFrame df = this.dataFrameVariables.get(key);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
@@ -144,7 +171,7 @@ public class FlworTuple implements Serializable {
     }
 
     public JSoundDataFrame getDataFrameValue(Name key, ExceptionMetadata metadata) {
-        if (this.dataFrameVariables.containsKey(key)) {
+        if (has(this.dataFrameVariables, key)) {
             return this.dataFrameVariables.get(key);
         }
         throw new OurBadException("Undeclared FLOWR variable", metadata);
@@ -157,24 +184,30 @@ public class FlworTuple implements Serializable {
     }
 
     public FlworTuple putValue(Name key, List<Item> value) {
-        this.rddVariables.remove(key);
-        this.dataFrameVariables.remove(key);
-        this.localVariables.put(key, value);
+        remove(this.rddVariables, key);
+        remove(this.dataFrameVariables, key);
+        localVariables().put(key, value);
         return this;
     }
 
     public FlworTuple putValue(Name key, JavaRDD<Item> value) {
-        this.localVariables.remove(key);
-        this.dataFrameVariables.remove(key);
-        this.rddVariables.put(key, value);
+        remove(this.localVariables, key);
+        remove(this.dataFrameVariables, key);
+        rddVariables().put(key, value);
         return this;
     }
 
     public FlworTuple putValue(Name key, JSoundDataFrame value) {
-        this.localVariables.remove(key);
-        this.rddVariables.remove(key);
-        this.dataFrameVariables.put(key, value);
+        remove(this.localVariables, key);
+        remove(this.rddVariables, key);
+        dataFrameVariables().put(key, value);
         return this;
+    }
+
+    private static void remove(LinkedHashMap<Name, ?> map, Name key) {
+        if (map != null) {
+            map.remove(key);
+        }
     }
 
 
@@ -183,17 +216,17 @@ public class FlworTuple implements Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("  Local:\n");
-        for (Name s : this.localVariables.keySet()) {
+        for (Name s : getLocalKeys()) {
             sb.append("    ");
             sb.append(s);
         }
         sb.append("\n  RDD:\n");
-        for (Name s : this.rddVariables.keySet()) {
+        for (Name s : getRDDKeys()) {
             sb.append("    ");
             sb.append(s);
         }
         sb.append("\n  DataFrame:\n");
-        for (Name s : this.dataFrameVariables.keySet()) {
+        for (Name s : getDataFrameKeys()) {
             sb.append("    ");
             sb.append(s);
         }
