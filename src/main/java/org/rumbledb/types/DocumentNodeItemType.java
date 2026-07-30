@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.Getter;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
@@ -22,6 +23,7 @@ public class DocumentNodeItemType implements ItemType {
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
+    @Getter
     private ItemType elementTestType;
 
     public DocumentNodeItemType() {
@@ -40,11 +42,6 @@ public class DocumentNodeItemType implements ItemType {
     private boolean isWildcardDocument() {
         return this.elementTestType == null;
     }
-
-    public ItemType getElementTestType() {
-        return this.elementTestType;
-    }
-
 
 
     @Override

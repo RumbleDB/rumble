@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.statement;
 
+import lombok.Getter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -8,6 +9,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
+@Getter
 public abstract class Statement extends Node {
     protected StaticContext staticContext;
     protected SequenceType staticSequenceType;
@@ -17,24 +19,12 @@ public abstract class Statement extends Node {
         super(metadata);
     }
 
-    public StaticContext getStaticContext() {
-        return this.staticContext;
-    }
-
     public void setStaticContext(StaticContext staticContext) {
         this.staticContext = staticContext;
     }
 
     public void setStaticSequenceType(SequenceType staticSequenceType) {
         this.staticSequenceType = staticSequenceType;
-    }
-
-    public SequenceType getStaticSequenceType() {
-        return this.staticSequenceType;
-    }
-
-    public boolean isSequential() {
-        return this.isSequential;
     }
 
     public void setSequential(boolean isSequential) {

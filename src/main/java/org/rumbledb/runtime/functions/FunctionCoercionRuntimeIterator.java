@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -27,6 +28,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @Getter
     private final Item callableItem;
     private final List<Name> parameterNames;
     private final SequenceType expectedReturnType;
@@ -46,10 +48,6 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
         this.parameterNames = parameterNames;
         this.expectedReturnType = expectedReturnType;
         this.exceptionMessage = exceptionMessage;
-    }
-
-    public Item getCallableItem() {
-        return this.callableItem;
     }
 
     public ExecutionMode getWrappedCallableExecutionMode() {

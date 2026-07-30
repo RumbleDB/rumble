@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.module;
 
 
+import lombok.Getter;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -34,6 +35,7 @@ import java.util.List;
 public class FunctionDeclaration extends Node {
 
     private final InlineFunctionExpression functionExpression;
+    @Getter
     private boolean recursive = false;
 
     public FunctionDeclaration(
@@ -86,10 +88,6 @@ public class FunctionDeclaration extends Node {
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         this.functionExpression.serializeToJSONiq(sb, 0);
-    }
-
-    public boolean isRecursive() {
-        return this.recursive;
     }
 
     public void setRecursive(boolean recursive) {

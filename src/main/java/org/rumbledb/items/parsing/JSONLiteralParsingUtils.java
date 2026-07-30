@@ -1,5 +1,6 @@
 package org.rumbledb.items.parsing;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
@@ -106,6 +107,7 @@ public final class JSONLiteralParsingUtils {
         return String.format("%04X", value);
     }
 
+    @Getter
     public static final class DecodedEscape {
         private final String decodedText;
         private final String rawEscape;
@@ -117,16 +119,5 @@ public final class JSONLiteralParsingUtils {
             this.nextIndex = nextIndex;
         }
 
-        public String getDecodedText() {
-            return this.decodedText;
-        }
-
-        public String getRawEscape() {
-            return this.rawEscape;
-        }
-
-        public int getNextIndex() {
-            return this.nextIndex;
-        }
     }
 }

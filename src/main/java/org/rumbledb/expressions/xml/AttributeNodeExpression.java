@@ -23,6 +23,7 @@ package org.rumbledb.expressions.xml;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -45,6 +46,7 @@ public class AttributeNodeExpression extends Expression {
      * The value is a list of expressions. This is because an attribute node can be
      * constructed from multiple expressions and literals, which are materialized at runtime.
      */
+    @Getter
     private final List<Expression> value;
 
     public AttributeNodeExpression(Name attributeName, List<Expression> value, ExceptionMetadata metadata) {
@@ -55,10 +57,6 @@ public class AttributeNodeExpression extends Expression {
 
     public Name getNodeName() {
         return this.attributeName;
-    }
-
-    public List<Expression> getValue() {
-        return this.value;
     }
 
     @Override

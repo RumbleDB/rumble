@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
 import org.apache.spark.SparkException;
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.JsoniqQueryExecutor;
@@ -30,6 +31,7 @@ public class RumbleHttpHandler implements HttpHandler {
 
     private final RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
+    @Getter
     private enum StatusCode {
         SUCCESS(200),
         METHOD_NOT_SUPPORTED(405),
@@ -41,9 +43,6 @@ public class RumbleHttpHandler implements HttpHandler {
             this.code = code;
         }
 
-        public int getCode() {
-            return this.code;
-        }
     }
 
     public RumbleHttpHandler(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {

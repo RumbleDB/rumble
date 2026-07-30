@@ -24,6 +24,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.errorcodes.ErrorCode;
 
@@ -35,9 +36,12 @@ public class RumbleException extends RuntimeException {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private final ErrorCode errorCode;
     private final String errorMessage;
+    @Getter
     private final List<Item> errorValue;
+    @Getter
     private ExceptionMetadata metadata;
 
     public RumbleException(String message, ErrorCode errorCode) {
@@ -104,24 +108,12 @@ public class RumbleException extends RuntimeException {
             + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
 
-    public ErrorCode getErrorCode() {
-        return this.errorCode;
-    }
-
-    public ExceptionMetadata getMetadata() {
-        return this.metadata;
-    }
-
     public void setMetadata(ExceptionMetadata metadata) {
         this.metadata = metadata;
     }
 
     public String getJSONiqErrorMessage() {
         return this.errorMessage;
-    }
-
-    public List<Item> getErrorValue() {
-        return this.errorValue;
     }
 
     public static RumbleException unnestException(Throwable ex) {

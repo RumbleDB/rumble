@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.net.URI;
@@ -40,6 +41,7 @@ public class AnyURIItem implements Item {
     @Serial
     private static final long serialVersionUID = 1L;
     private String lexicalValue;
+    @Getter
     private URI value;
 
     public AnyURIItem(String value) {
@@ -92,10 +94,6 @@ public class AnyURIItem implements Item {
     @Override
     public int hashCode() {
         return this.lexicalValue.hashCode();
-    }
-
-    public URI getValue() {
-        return this.value;
     }
 
     @Override

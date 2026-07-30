@@ -1,5 +1,6 @@
 package org.rumbledb.items.xml;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -16,7 +17,17 @@ import java.util.List;
 public class NamespaceItem implements Item {
     @Serial
     private static final long serialVersionUID = 1L;
+
+    /**
+     * Nnamespace prefix (possibly empty).
+     */
+    @Getter
     private String prefix;
+
+    /**
+     * Namespaces URI.
+     */
+    @Getter
     private String uri;
     private Item parent;
     private XMLDocumentPosition documentPos;
@@ -82,20 +93,6 @@ public class NamespaceItem implements Item {
             return null;
         }
         return NamespaceBindingUtils.nameLocalOnly(this.prefix);
-    }
-
-    /**
-     * Returns the namespace prefix (possibly empty).
-     */
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    /**
-     * Returns the namespace URI.
-     */
-    public String getUri() {
-        return this.uri;
     }
 
     @Override

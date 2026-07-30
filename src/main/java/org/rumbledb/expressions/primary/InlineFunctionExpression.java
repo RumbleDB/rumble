@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 
+import lombok.Getter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -44,14 +45,19 @@ import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants
 
 public class InlineFunctionExpression extends Expression {
 
+    @Getter
     private final Name name;
+    @Getter
     private final FunctionIdentifier functionIdentifier;
+    @Getter
     private final Map<Name, SequenceType> params;
     private final SequenceType returnType;
+    @Getter
     private final StatementsAndOptionalExpr body;
     private final List<Annotation> annotations;
     private boolean hasSequentialPropertyAnnotation;
     private boolean hasExitStatement;
+    @Getter
     private final boolean isExternal;
 
     public InlineFunctionExpression(
@@ -112,28 +118,12 @@ public class InlineFunctionExpression extends Expression {
         this(annotations, name, params, returnType, body, false, metadata);
     }
 
-    public Name getName() {
-        return this.name;
-    }
-
-    public FunctionIdentifier getFunctionIdentifier() {
-        return this.functionIdentifier;
-    }
-
-    public Map<Name, SequenceType> getParams() {
-        return this.params;
-    }
-
     public SequenceType getReturnType() {
         return this.returnType == null ? SequenceType.createSequenceType("item*") : this.returnType;
     }
 
     public SequenceType getActualReturnType() {
         return this.returnType;
-    }
-
-    public StatementsAndOptionalExpr getBody() {
-        return this.body;
     }
 
     @Nullable
@@ -149,10 +139,6 @@ public class InlineFunctionExpression extends Expression {
             }
         }
         return false;
-    }
-
-    public boolean isExternal() {
-        return this.isExternal;
     }
 
     @Override

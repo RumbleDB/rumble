@@ -1,7 +1,9 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
+import lombok.Getter;
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
 
+@Getter
 public class PrimaryFormatToken {
 
     public static final String DECIMAL = "DECIMAL";
@@ -64,15 +66,4 @@ public class PrimaryFormatToken {
         return new PrimaryFormatToken(OTHER, null, otherToken);
     }
 
-    public String getType() {
-        return this.type;
-    }
-
-    public NumericPicture getNumericPicture() {
-        return this.numericPicture;
-    }
-
-    public String getOtherToken() {
-        return this.otherToken;
-    }
 }

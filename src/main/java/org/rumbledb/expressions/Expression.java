@@ -21,6 +21,7 @@
 package org.rumbledb.expressions;
 
 
+import lombok.Getter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -42,27 +43,28 @@ import org.rumbledb.types.SequenceType.Arity;
  *
  * An expression has a classification, largely denoting it as UPDATING or SIMPLE.
  */
+@Getter
 public abstract class Expression extends Node {
 
+    /**
+     * Static context attached to this expression
+     */
     protected StaticContext staticContext;
 
+    /**
+     * Statically inferred sequence type.
+     */
     protected SequenceType staticSequenceType;
 
+    /**
+     * Expression Classification of the expression.
+     */
     protected ExpressionClassification expressionClassification = ExpressionClassification.UNSET;
 
     protected boolean isSequential;
 
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
-    }
-
-    /**
-     * Retrieves the static context attached to this expression.
-     * 
-     * @return the static context.
-     */
-    public StaticContext getStaticContext() {
-        return this.staticContext;
     }
 
     /**
@@ -89,16 +91,6 @@ public abstract class Expression extends Node {
     }
 
     /**
-     * Provides the inferred static type, only if static analysis
-     * is activated.
-     * 
-     * @return the statically inferred sequence type.
-     */
-    public SequenceType getStaticSequenceType() {
-        return this.staticSequenceType;
-    }
-
-    /**
      * Tells whether this expression is guaranteed to return
      * zero or one item but not more.
      *
@@ -120,15 +112,6 @@ public abstract class Expression extends Node {
      */
     public void setStaticSequenceType(SequenceType staticSequenceType) {
         this.staticSequenceType = staticSequenceType;
-    }
-
-    /**
-     * Gets the inferred expression classification of this node, for use ...
-     *
-     * @return Expression Classification of the expression.
-     */
-    public ExpressionClassification getExpressionClassification() {
-        return this.expressionClassification;
     }
 
     /**
@@ -178,10 +161,6 @@ public abstract class Expression extends Node {
         if (isSequential) {
             setIsInSequentialBlock(true);
         }
-    }
-
-    public boolean isSequential() {
-        return this.isSequential;
     }
 
     @Override

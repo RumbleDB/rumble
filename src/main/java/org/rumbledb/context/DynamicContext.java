@@ -21,6 +21,7 @@
 package org.rumbledb.context;
 
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serial;
@@ -42,16 +43,19 @@ public class DynamicContext implements Serializable {
     private static final long serialVersionUID = 1L;
     private DynamicContext parent;
     private RumbleRuntimeConfiguration conf;
+    @Getter
     private VariableValues variableValues;
     private NamedFunctions namedFunctions;
     private InScopeSchemaTypes inScopeSchemaTypes;
     private OffsetDateTime currentDateTime;
+    @Getter
     private int currentMutabilityLevel;
     private final GlobalVariables globalVariables;
     /**
      * The top-level runtime iterator for constructing the XML Node Tree.
      * This is used in the context of direct constructors.
      */
+    @Getter
     private RuntimeIterator topLevelRuntimeIterator;
 
     /**
@@ -133,15 +137,6 @@ public class DynamicContext implements Serializable {
         return null;
     }
 
-    public VariableValues getVariableValues() {
-        return this.variableValues;
-    }
-
-
-
-    public int getCurrentMutabilityLevel() {
-        return this.currentMutabilityLevel;
-    }
 
     public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
         this.currentMutabilityLevel = currentMutabilityLevel;
@@ -248,15 +243,6 @@ public class DynamicContext implements Serializable {
 
     public void addGlobalVariable(Name globalVariable) {
         this.globalVariables.addGlobalVariable(globalVariable);
-    }
-
-    /**
-     * Gets the top-level runtime iterator for XML tree building.
-     * 
-     * @return the top-level runtime iterator, or null if not set
-     */
-    public RuntimeIterator getTopLevelRuntimeIterator() {
-        return this.topLevelRuntimeIterator;
     }
 
     /**

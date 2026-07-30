@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.statement;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
@@ -9,6 +10,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class StatementsAndOptionalExpr extends Expression {
     private final List<Statement> statements;
     private final Expression expression;
@@ -69,14 +71,6 @@ public class StatementsAndOptionalExpr extends Expression {
             this.expression.serializeToJSONiq(sb, 0);
             sb.append('\n');
         }
-    }
-
-    public List<Statement> getStatements() {
-        return this.statements;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
     }
 
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import java.io.Serializable;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -55,11 +56,16 @@ public class WindowClause extends Clause {
     public record WindowCondition(WindowVars variables, Expression expression, boolean only) {
     }
 
+    @Getter
     private final WindowType windowType;
+    @Getter
     private final Name windowVariable;
     private final SequenceType sequenceType;
+    @Getter
     private final Expression expression;
+    @Getter
     private final WindowCondition startCondition;
+    @Getter
     private final WindowCondition endCondition;
 
     public WindowClause(
@@ -80,32 +86,12 @@ public class WindowClause extends Clause {
         this.endCondition = endCondition;
     }
 
-    public WindowType getWindowType() {
-        return this.windowType;
-    }
-
-    public Name getWindowVariable() {
-        return this.windowVariable;
-    }
-
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
     public SequenceType getSequenceType() {
         return this.sequenceType == null ? SequenceType.createSequenceType("item*") : this.sequenceType;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
-    }
-
-    public WindowCondition getStartCondition() {
-        return this.startCondition;
-    }
-
-    public WindowCondition getEndCondition() {
-        return this.endCondition;
     }
 
     @Override

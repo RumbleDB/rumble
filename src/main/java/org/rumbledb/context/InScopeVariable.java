@@ -1,9 +1,11 @@
 package org.rumbledb.context;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
+@Getter
 public class InScopeVariable {
 
     private final Name name;
@@ -39,27 +41,8 @@ public class InScopeVariable {
         this.isAssignable = isAssignable;
     }
 
-    public Name getName() {
-        return this.name;
-    }
-
-    public SequenceType getSequenceType() {
-        return this.sequenceType;
-    }
-
-    public ExceptionMetadata getMetadata() {
-        return this.metadata;
-    }
-
-    public ExecutionMode getStorageMode() {
-        return this.storageMode;
-    }
-
     public void setStorageMode(ExecutionMode mode) {
         this.storageMode = mode;
     }
 
-    public boolean isAssignable() {
-        return this.isAssignable;
-    }
 }

@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 
 import java.util.Collections;
@@ -9,6 +10,7 @@ import java.util.List;
  * Facets class represent a container with the ability to get and set facets and is intended to be a mutable proxy that
  * will be passed to a DerivedAtomicType to indicate the specified facets
  */
+@Getter
 public class Facets {
 
     /**
@@ -81,116 +83,44 @@ public class Facets {
 
     }
 
-    public Item getMinInclusive() {
-        return this.minInclusive;
-    }
-
     public void setMinInclusive(Item minInclusive) {
         this.minInclusive = minInclusive;
-    }
-
-    public Item getMaxInclusive() {
-        return this.maxInclusive;
     }
 
     public void setMaxInclusive(Item maxInclusive) {
         this.maxInclusive = maxInclusive;
     }
 
-    public Item getMinExclusive() {
-        return this.minExclusive;
-    }
-
     public void setMinExclusive(Item minExclusive) {
         this.minExclusive = minExclusive;
-    }
-
-    public Item getMaxExclusive() {
-        return this.maxExclusive;
     }
 
     public void setMaxExclusive(Item maxExclusive) {
         this.maxExclusive = maxExclusive;
     }
 
-    public Integer getLength() {
-        return this.length;
-    }
-
-    public Integer getMinLength() {
-        return this.minLength;
-    }
-
-    public Integer getMaxLength() {
-        return this.maxLength;
-    }
-
-    public Integer getTotalDigits() {
-        return this.totalDigits;
-    }
-
-    public Integer getFractionDigits() {
-        return this.fractionDigits;
-    }
-
     public void setFractionDigits(Integer fractionDigits) {
         this.fractionDigits = fractionDigits;
-    }
-
-    public List<String> getConstraints() {
-        return this.constraints;
-    }
-
-    public List<Item> getEnumeration() {
-        return this.enumeration;
-    }
-
-    public TimezoneFacet getExplicitTimezone() {
-        return this.explicitTimezone;
     }
 
     public void setExplicitTimezone(TimezoneFacet explicitTimezone) {
         this.explicitTimezone = explicitTimezone;
     }
 
-    public WhitespaceFacet getWhiteSpace() {
-        return this.whiteSpace;
-    }
-
     public void setWhiteSpace(WhitespaceFacet whiteSpace) {
         this.whiteSpace = whiteSpace;
-    }
-
-    public List<String> getPattern() {
-        return this.pattern;
     }
 
     public void setPattern(List<String> pattern) {
         this.pattern = pattern;
     }
 
-    public OrderedFacetValue getOrdered() {
-        return this.ordered;
-    }
-
-    public Boolean getBounded() {
-        return this.bounded;
-    }
-
     public void setBounded(Boolean bounded) {
         this.bounded = bounded;
     }
 
-    public CardinalityFacetValue getCardinality() {
-        return this.cardinality;
-    }
-
     public void setCardinality(CardinalityFacetValue cardinality) {
         this.cardinality = cardinality;
-    }
-
-    public Boolean getNumeric() {
-        return this.numeric;
     }
 
     /**

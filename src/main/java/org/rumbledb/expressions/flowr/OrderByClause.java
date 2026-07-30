@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -29,6 +30,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class OrderByClause extends Clause {
 
 
@@ -90,14 +92,6 @@ public class OrderByClause extends Clause {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitOrderByClause(this, argument);
-    }
-
-    public boolean isStable() {
-        return this.isStable;
-    }
-
-    public List<OrderByClauseSortingKey> getSortingKeys() {
-        return this.sortingKeys;
     }
 
 }

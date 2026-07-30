@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -12,6 +13,7 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+@Getter
 public class UntypedAtomicItem implements Item {
 
     @Serial
@@ -25,10 +27,6 @@ public class UntypedAtomicItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new UntypedAtomicItem(this.value);
-    }
-
-    public String getValue() {
-        return this.value;
     }
 
     @Override

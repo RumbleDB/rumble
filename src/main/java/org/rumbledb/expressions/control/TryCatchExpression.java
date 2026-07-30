@@ -26,11 +26,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
+@Getter
 public class TryCatchExpression extends Expression {
 
     private final Expression tryExpression;
@@ -47,16 +49,8 @@ public class TryCatchExpression extends Expression {
         this.catchExpressions = new LinkedHashMap<>(catchExpressions);
     }
 
-    public Expression getTryExpression() {
-        return this.tryExpression;
-    }
-
     public List<CatchPattern> getCatchPatterns() {
         return new ArrayList<>(this.catchExpressions.keySet());
-    }
-
-    public Map<CatchPattern, Expression> getCatchExpressions() {
-        return this.catchExpressions;
     }
 
     public Expression getExpressionCatching(CatchPattern pattern) {

@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.flwor;
 
+import lombok.Getter;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
@@ -20,27 +21,38 @@ public class NativeClauseContext {
     public static final NativeClauseContext NoNativeQuery = new NativeClauseContext();
 
     private NativeClauseContext parent;
+    @Getter
     private FLWOR_CLAUSES clauseType;
+    @Getter
     private DataType schema;
+    @Getter
     private DynamicContext context;
+    @Getter
     private String resultingQuery;
+    @Getter
     private List<String> lateralViewPart; // used in array unboxing to generate the correct lateral view
+    @Getter
     private SequenceType resultingType;
 
     private List<String> conditionalColumns; // used in where clauses
 
+    @Getter
     private String view;
 
     private int monotonicallyIncreasingId;
 
+    @Getter
     private boolean isExplodedView; // if the view is exploded, then the result is a sequence; otherwise it's atomic
 
     private List<Name> positionalVariableNames;
 
+    @Getter
     private Map<String, Boolean> sortingColumns;
 
     private Map<Name, Name> variables;
+    @Getter
     private String rowIdField;
+    @Getter
     private boolean grouped;
 
     private NativeClauseContext() {
@@ -112,10 +124,6 @@ public class NativeClauseContext {
         return result;
     }
 
-    public FLWOR_CLAUSES getClauseType() {
-        return this.clauseType;
-    }
-
     public void setClauseType(FLWOR_CLAUSES clauseType) {
         this.clauseType = clauseType;
     }
@@ -124,36 +132,12 @@ public class NativeClauseContext {
         this.resultingQuery = resultingQuery;
     }
 
-    public String getResultingQuery() {
-        return this.resultingQuery;
-    }
-
-    public DataType getSchema() {
-        return this.schema;
-    }
-
     public void setSchema(DataType schema) {
         this.schema = schema;
     }
 
-    public DynamicContext getContext() {
-        return this.context;
-    }
-
-    public List<String> getLateralViewPart() {
-        return this.lateralViewPart;
-    }
-
-    public SequenceType getResultingType() {
-        return this.resultingType;
-    }
-
     public void setResultingType(SequenceType resultingType) {
         this.resultingType = resultingType;
-    }
-
-    public String getView() {
-        return this.view;
     }
 
     public void setView(String view) {
@@ -209,10 +193,6 @@ public class NativeClauseContext {
         this.isExplodedView = isExplodedView;
     }
 
-    public boolean isExplodedView() {
-        return this.isExplodedView;
-    }
-
     public void addPositionalVariableName(Name name) {
         this.positionalVariableNames.add(name);
     }
@@ -224,20 +204,12 @@ public class NativeClauseContext {
         return this.positionalVariableNames.get(this.positionalVariableNames.size() - 1);
     }
 
-    public Map<String, Boolean> getSortingColumns() {
-        return this.sortingColumns;
-    }
-
     public void addSortingColumn(String name, boolean descending) {
         this.sortingColumns.put(name, descending);
     }
 
     public void setRowId(String rowIdField) {
         this.rowIdField = rowIdField;
-    }
-
-    public String getRowIdField() {
-        return this.rowIdField;
     }
 
     public void clearConditionalColumns() {
@@ -250,10 +222,6 @@ public class NativeClauseContext {
 
     public void setGrouped(boolean grouped) {
         this.grouped = grouped;
-    }
-
-    public boolean isGrouped() {
-        return this.grouped;
     }
 
     public String toString() {

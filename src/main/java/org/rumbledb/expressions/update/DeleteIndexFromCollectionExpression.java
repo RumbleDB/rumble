@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.update;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -10,6 +11,7 @@ import org.rumbledb.runtime.update.primitives.Mode;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class DeleteIndexFromCollectionExpression extends Expression {
     private Expression collection;
     private Expression numDelete;
@@ -33,22 +35,6 @@ public class DeleteIndexFromCollectionExpression extends Expression {
         this.numDelete = numDelete;
         this.isFirst = isFirst;
         this.mode = mode;
-    }
-
-    public Expression getCollection() {
-        return this.collection;
-    }
-
-    public Expression getNumDelete() {
-        return this.numDelete;
-    }
-
-    public Mode getMode() {
-        return this.mode;
-    }
-
-    public boolean isFirst() {
-        return this.isFirst;
     }
 
     @Override

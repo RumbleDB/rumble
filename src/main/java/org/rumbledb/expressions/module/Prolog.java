@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.module;
 
 
+import lombok.Getter;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Getter
 public class Prolog extends Node {
 
     private List<Node> declarations;
@@ -51,14 +53,6 @@ public class Prolog extends Node {
 
     public void addImportedModule(LibraryModule importedModule) {
         this.importedModules.add(importedModule);
-    }
-
-    public List<LibraryModule> getImportedModules() {
-        return this.importedModules;
-    }
-
-    public List<Node> getDeclarations() {
-        return this.declarations;
     }
 
     public List<FunctionDeclaration> getFunctionDeclarations() {

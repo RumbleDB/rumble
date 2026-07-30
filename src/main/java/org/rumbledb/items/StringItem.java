@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import org.rumbledb.api.Item;
@@ -35,6 +36,7 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+@Getter
 @NoArgsConstructor // For Kryo serialization
 public class StringItem implements Item {
 
@@ -64,10 +66,6 @@ public class StringItem implements Item {
             return c == 0;
         }
         return false;
-    }
-
-    public String getValue() {
-        return this.value;
     }
 
     @Override

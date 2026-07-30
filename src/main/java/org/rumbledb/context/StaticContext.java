@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import lombok.Getter;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -43,6 +44,7 @@ import org.rumbledb.types.SequenceType;
 
 public class StaticContext {
 
+    @Getter
     private Map<Name, InScopeVariable> inScopeVariables;
     private Map<String, String> staticallyKnownNamespaces;
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
@@ -67,6 +69,7 @@ public class StaticContext {
      */
     private String defaultFunctionNamespaceUri;
 
+    @Getter
     private SequenceType contextItemStaticType;
     private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
     private static final Map<String, String> defaultBindings;
@@ -74,6 +77,7 @@ public class StaticContext {
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
 
+    @Getter
     private int currentMutabilityLevel;
 
     static {
@@ -308,10 +312,6 @@ public class StaticContext {
 
     public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
         this.staticallyKnownFunctionSignatures.put(identifier, signature);
-    }
-
-    public Map<Name, InScopeVariable> getInScopeVariables() {
-        return this.inScopeVariables;
     }
 
     @Override
@@ -639,10 +639,6 @@ public class StaticContext {
         return this.defaultCollation;
     }
 
-    public SequenceType getContextItemStaticType() {
-        return this.contextItemStaticType;
-    }
-
     public void setContextItemStaticType(SequenceType contextItemStaticType) {
         this.contextItemStaticType = contextItemStaticType;
     }
@@ -706,10 +702,6 @@ public class StaticContext {
             return this.parent.getInScopeSchemaTypes();
         }
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
-    }
-
-    public int getCurrentMutabilityLevel() {
-        return this.currentMutabilityLevel;
     }
 
     public void setCurrentMutabilityLevel(int currentMutabilityLevel) {

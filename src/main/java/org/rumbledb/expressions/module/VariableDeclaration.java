@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.module;
 
 
+import lombok.Getter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -41,11 +42,14 @@ import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAss
 public class VariableDeclaration extends Node {
     // Default is false for variable declaration.
     private final boolean DEFAULT_ASSIGNABLE = false;
+    @Getter
     private final Name variableName;
     private final boolean external;
     protected final SequenceType sequenceType;
+    @Getter
     protected final Expression expression;
     private final List<Annotation> annotations;
+    @Getter
     private final boolean isAssignable;
 
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
@@ -74,10 +78,6 @@ public class VariableDeclaration extends Node {
         }
     }
 
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
     public boolean external() {
         return this.external;
     }
@@ -96,10 +96,6 @@ public class VariableDeclaration extends Node {
     // as above but does NOT default to item*
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
     }
 
     @Override
@@ -171,8 +167,5 @@ public class VariableDeclaration extends Node {
     }
 
 
-    public boolean isAssignable() {
-        return this.isAssignable;
-    }
 }
 

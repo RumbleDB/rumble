@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -28,6 +29,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class ReturnClause extends Clause {
 
 
@@ -36,10 +38,6 @@ public class ReturnClause extends Clause {
     public ReturnClause(Expression expr, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.RETURN, metadata);
         this.returnExpr = expr;
-    }
-
-    public Expression getReturnExpr() {
-        return this.returnExpr;
     }
 
     @Override

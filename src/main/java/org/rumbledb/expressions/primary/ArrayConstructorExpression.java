@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.primary;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@Getter
 public class ArrayConstructorExpression extends Expression {
 
     private final Expression expression;
@@ -69,18 +71,6 @@ public class ArrayConstructorExpression extends Expression {
         this.expression = null;
         this.memberExpressions = memberExpressions;
         this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
-    }
-
-    public List<Expression> getMemberExpressions() {
-        return this.memberExpressions;
-    }
-
-    public boolean isFixedSlotsArrayConstructor() {
-        return this.isFixedSlotsArrayConstructor;
     }
 
     @Override

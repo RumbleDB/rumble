@@ -23,6 +23,7 @@ package org.rumbledb.expressions.flowr;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -36,9 +37,12 @@ import org.rumbledb.types.SequenceType;
 
 public class LetClause extends Clause {
 
+    @Getter
     private final Name variableName;
     protected SequenceType sequenceType;
+    @Getter
     protected SequenceType staticType;
+    @Getter
     protected Expression expression;
 
     private boolean isReferenced;
@@ -62,20 +66,12 @@ public class LetClause extends Clause {
         this.isReferenced = true;
     }
 
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
     public SequenceType getSequenceType() {
         return this.sequenceType == null ? SequenceType.createSequenceType("item*") : this.sequenceType;
     }
 
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
     }
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
@@ -144,10 +140,6 @@ public class LetClause extends Clause {
         sb.append(" := (");
         this.expression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
-    }
-
-    public SequenceType getStaticType() {
-        return this.staticType;
     }
 
     public void setStaticType(SequenceType staticType) {

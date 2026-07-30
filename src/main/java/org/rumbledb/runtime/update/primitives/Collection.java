@@ -2,17 +2,29 @@ package org.rumbledb.runtime.update.primitives;
 
 import java.io.Serial;
 import java.io.Serializable;
+
+import lombok.Getter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
 
 
 
+@Getter
 public class Collection implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
+    /**
+     * Storage mode of the collection
+     */
     private final Mode mode;
+    /**
+     * The logical name of the collection
+     */
     private String logicalName;
+    /**
+     * The physical name of the collection
+     */
     private String physicalName;
 
     /**
@@ -66,27 +78,6 @@ public class Collection implements Serializable {
             this.logicalName = collectionPath;
             this.physicalName = collectionPath;
         }
-    }
-
-    /**
-     * @return The storage mode of the collection
-     */
-    public Mode getMode() {
-        return this.mode;
-    }
-
-    /**
-     * @return The logical name of the collection
-     */
-    public String getLogicalName() {
-        return this.logicalName;
-    }
-
-    /**
-     * @return The physical name of the collection
-     */
-    public String getPhysicalName() {
-        return this.physicalName;
     }
 
     /**

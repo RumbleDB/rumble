@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 
+import lombok.Getter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -38,6 +39,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
  *
  * Clauses, unlike expressions, return tuple streams.
  */
+@Getter
 public abstract class Clause extends Node {
 
     /* Clauses are organized in doubly-linked lists */
@@ -52,18 +54,6 @@ public abstract class Clause extends Node {
         this.staticContext = null;
         this.previousClause = null;
         this.nextClause = null;
-    }
-
-    public FLWOR_CLAUSES getClauseType() {
-        return this.clauseType;
-    }
-
-    public Clause getPreviousClause() {
-        return this.previousClause;
-    }
-
-    public Clause getNextClause() {
-        return this.nextClause;
     }
 
     public Clause getFirstClause() {
@@ -234,10 +224,6 @@ public abstract class Clause extends Node {
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
-    }
-
-    public StaticContext getStaticContext() {
-        return this.staticContext;
     }
 
     public void setStaticContext(StaticContext staticContext) {

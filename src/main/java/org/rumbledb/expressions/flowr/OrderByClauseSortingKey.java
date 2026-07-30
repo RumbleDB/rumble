@@ -20,11 +20,15 @@
 
 package org.rumbledb.expressions.flowr;
 
+import lombok.Getter;
 import org.rumbledb.expressions.Expression;
 
 public class OrderByClauseSortingKey {
+    @Getter
     private final Expression expression;
+    @Getter
     private final boolean ascending;
+    @Getter
     private final EMPTY_ORDER emptyOrder;
     private final String collationURI;
 
@@ -38,18 +42,6 @@ public class OrderByClauseSortingKey {
         this.ascending = ascending;
         this.collationURI = collationURI;
         this.emptyOrder = empty_order;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
-    }
-
-    public boolean isAscending() {
-        return this.ascending;
-    }
-
-    public EMPTY_ORDER getEmptyOrder() {
-        return this.emptyOrder;
     }
 
     public String getUri() {

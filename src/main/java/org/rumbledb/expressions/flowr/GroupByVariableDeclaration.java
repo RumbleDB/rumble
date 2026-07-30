@@ -20,15 +20,19 @@
 
 package org.rumbledb.expressions.flowr;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 
 public class GroupByVariableDeclaration {
 
+    @Getter
     protected Name variableName;
+    @Getter
     protected Expression expression;
     protected SequenceType sequenceType;
+    @Getter
     protected String collationURI;
 
     public GroupByVariableDeclaration(
@@ -46,19 +50,8 @@ public class GroupByVariableDeclaration {
         this.collationURI = collationURI;
     }
 
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
-    }
-
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
-    public String getCollationURI() {
-        return this.collationURI;
-    }
 }

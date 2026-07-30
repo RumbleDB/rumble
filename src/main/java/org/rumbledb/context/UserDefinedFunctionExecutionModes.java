@@ -20,6 +20,7 @@
 
 package org.rumbledb.context;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -38,6 +39,7 @@ public class UserDefinedFunctionExecutionModes {
     // but functions items are fully known at runtimeIterator generation
     private final HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
     private final HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
+    @Getter
     private final List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
     private String queryLanguage;
 
@@ -165,10 +167,6 @@ public class UserDefinedFunctionExecutionModes {
         return this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
             && this.userDefinedFunctionsExecutionMode.get(functionIdentifier) == ExecutionMode.UNSET
             && executionMode != ExecutionMode.UNSET;
-    }
-
-    public List<FunctionIdentifier> getUserDefinedFunctionIdentifiersWithUnsetExecutionModes() {
-        return this.userDefinedFunctionIdentifiersWithUnsetExecutionModes;
     }
 
     @Override

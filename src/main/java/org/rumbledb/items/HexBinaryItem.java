@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -19,6 +20,7 @@ public class HexBinaryItem implements Item {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private byte[] value;
     private String stringValue;
 
@@ -49,10 +51,6 @@ public class HexBinaryItem implements Item {
             return c == 0;
         }
         return false;
-    }
-
-    public byte[] getValue() {
-        return this.value;
     }
 
     @Override

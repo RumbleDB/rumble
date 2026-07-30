@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.xml;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // clone of ObjectLookupExpression but for xquery lookup
+@Getter
 public class UnaryLookupExpression extends Expression {
 
     private final Expression lookupExpression;
@@ -57,11 +59,6 @@ public class UnaryLookupExpression extends Expression {
         else
             sb.append("*");
         sb.append("\n");
-    }
-
-    public Expression getLookupExpression() {
-        // can be null if wildcard
-        return this.lookupExpression;
     }
 
     @Override

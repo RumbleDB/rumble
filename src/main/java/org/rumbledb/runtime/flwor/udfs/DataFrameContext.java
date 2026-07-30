@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import lombok.Getter;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
@@ -58,10 +59,42 @@ public class DataFrameContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private List<FlworDataFrameColumn> columns;
+
+    /**
+     * -- GETTER --
+     * Gets the currently populated dynamic context. It is a child of the context passed to the constructor,
+     * populated with the current input tuple with one of the two set* functions.
+     *
+     * @return the dynamic context, for evaluating and expression.
+     */
+    @Getter
     private DynamicContext context;
 
+    /**
+     * -- GETTER --
+     * Gets a Kryo object that the caller can use for serialization and deserialization purposes.
+     *
+     * @return a Kryo.
+     */
+    @Getter
     private transient Kryo kryo;
+
+    /**
+     * -- GETTER --
+     * Gets a Kryo output that the caller can use for serialization purposes.
+     *
+     * @return a Kryo output.
+     */
+    @Getter
     private transient Output output;
+
+    /**
+     * -- GETTER --
+     * Gets a Kryo input that the caller can use for deserialization purposes.
+     *
+     * @return a Kryo input.
+     */
+    @Getter
     private transient Input input;
 
     /**
@@ -145,43 +178,6 @@ public class DataFrameContext implements Serializable {
                     );
             }
         }
-    }
-
-    /**
-     * Gets the currently populated dynamic context. It is a child of the context passed to the constructor,
-     * populated with the current input tuple with one of the two set* functions.
-     * 
-     * @return the dynamic context, for evaluating and expression.
-     */
-    public DynamicContext getContext() {
-        return this.context;
-    }
-
-    /**
-     * Gets a Kryo output that the caller can use for serialization purposes.
-     * 
-     * @return a Kryo output.
-     */
-    public Output getOutput() {
-        return this.output;
-    }
-
-    /**
-     * Gets a Kryo object that the caller can use for serialization and deserialization purposes.
-     * 
-     * @return a Kryo.
-     */
-    public Kryo getKryo() {
-        return this.kryo;
-    }
-
-    /**
-     * Gets a Kryo input that the caller can use for deserialization purposes.
-     * 
-     * @return a Kryo input.
-     */
-    public Input getInput() {
-        return this.input;
     }
 
     @Serial
