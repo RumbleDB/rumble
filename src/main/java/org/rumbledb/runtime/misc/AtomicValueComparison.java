@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.misc;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
@@ -30,10 +32,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  * equality and map {@code op:same-key}: numeric comparison applies type promotion and is not
  * transitive across mixed numeric types.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AtomicValueComparison {
 
-    private AtomicValueComparison() {
-    }
 
     /**
      * Returns whether two atomic values belong to the same distinct/grouping equivalence class.

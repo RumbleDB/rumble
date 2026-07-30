@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -13,6 +14,7 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.runtime.typing.CastIterator;
 
 
+@NoArgsConstructor(force = true) // For Kryo serialization
 public class FieldDescriptor implements Serializable {
 
     @Serial

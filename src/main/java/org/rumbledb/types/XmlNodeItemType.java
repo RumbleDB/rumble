@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
@@ -14,6 +15,7 @@ import java.util.Set;
  *
  * All concrete node types share node() as their base type at depth 1.
  */
+@NoArgsConstructor(force = true) // For Kryo serialization
 public class XmlNodeItemType extends AbstractItemType {
 
     @Serial

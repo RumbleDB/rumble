@@ -1,14 +1,15 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class FormatNumberTypeResolver {
-    private FormatNumberTypeResolver() {
-    }
 
     // We want to use BigDecimal for an easier formatting experience, but Float or Double can be negative zero, so we
     // pass an additional flag that can be easily checked

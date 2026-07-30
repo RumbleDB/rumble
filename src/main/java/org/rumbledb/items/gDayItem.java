@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.time.OffsetDateTime;
@@ -13,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+@NoArgsConstructor // For Kryo serialization
 public class gDayItem extends AbstractAtomicItem {
 
     @Serial

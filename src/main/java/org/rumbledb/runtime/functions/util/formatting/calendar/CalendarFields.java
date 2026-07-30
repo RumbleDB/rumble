@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting.calendar;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import com.ibm.icu.util.Calendar;
 import com.ibm.icu.util.TimeZone;
 import com.ibm.icu.util.ULocale;
@@ -14,13 +16,12 @@ import java.util.Map;
 
 import lombok.EqualsAndHashCode;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class CalendarFields {
 
     private static final ThreadLocal<Map<CalendarKey, CachedCalendar>> CALENDAR_CACHE = ThreadLocal
         .withInitial(HashMap::new);
 
-    private CalendarFields() {
-    }
 
     public static Calendar calendar(OffsetDateTime value, FormattingContext context) {
         String tzid = context.placeZoneId != null

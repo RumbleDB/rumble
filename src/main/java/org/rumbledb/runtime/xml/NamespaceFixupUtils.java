@@ -18,6 +18,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,10 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class NamespaceFixupUtils {
 
-    private NamespaceFixupUtils() {
-    }
 
     static Item copyNodeForConstructor(Item item, RuntimeStaticContext staticContext) {
         Item copy = item.copy(true);

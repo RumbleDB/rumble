@@ -17,6 +17,8 @@
 
 package org.rumbledb.items;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 import org.rumbledb.api.Item;
@@ -28,10 +30,9 @@ import org.rumbledb.api.Item;
  * raise dynamic errors, and do not form an equivalence relation. The XDM {@code op:same-key}
  * relation is stable and is already the equality required by maps.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AtomicItemEquivalence {
 
-    private AtomicItemEquivalence() {
-    }
 
     public static boolean equivalent(Item left, Item right) {
         if (left == right) {

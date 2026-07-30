@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexFlagException;
@@ -33,12 +35,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class RegexPatternUtils {
 
     private static final Pattern XML_WHITESPACE_PATTERN = Pattern.compile("[\\t\\n\\r ]+");
 
-    private RegexPatternUtils() {
-    }
 
     public static CompiledRegex compileRegex(String pattern, String flagsString, ExceptionMetadata metadata) {
         boolean quote = false;

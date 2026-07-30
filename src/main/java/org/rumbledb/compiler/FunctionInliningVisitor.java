@@ -1,5 +1,6 @@
 package org.rumbledb.compiler;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Expression;
@@ -33,12 +34,11 @@ import java.util.UUID;
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
 
 
+@NoArgsConstructor
 public class FunctionInliningVisitor extends CloneVisitor {
 
     private String queryLanguage;
 
-    public FunctionInliningVisitor() {
-    }
 
     private boolean isVariableReferenced(Node expression, Name name) {
         if (expression instanceof VariableReferenceExpression variableReference) {

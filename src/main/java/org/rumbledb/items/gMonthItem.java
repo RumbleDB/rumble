@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.time.Month;
@@ -13,6 +14,7 @@ import org.rumbledb.types.ItemType;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@NoArgsConstructor // For Kryo serialization
 public class gMonthItem extends AbstractAtomicItem {
 
     @Serial

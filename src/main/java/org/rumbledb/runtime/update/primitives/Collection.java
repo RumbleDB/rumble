@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.primitives;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -11,6 +12,7 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
 
 
 @Getter
+@NoArgsConstructor(force = true) // For Kryo serialization
 public class Collection implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

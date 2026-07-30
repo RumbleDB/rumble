@@ -1,5 +1,7 @@
 package org.rumbledb.context;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -8,6 +10,7 @@ import java.util.Set;
 /**
  * Built-in collation URIs known to the implementation.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class CollationCatalogue {
 
     public static final String CODEPOINT_COLLATION = Name.DEFAULT_COLLATION_NS;
@@ -27,8 +30,6 @@ public final class CollationCatalogue {
         DEFAULT_STATICALLY_KNOWN_COLLATIONS = Collections.unmodifiableSet(collations);
     }
 
-    private CollationCatalogue() {
-    }
 
     public static Set<String> defaultStaticallyKnownCollations() {
         return DEFAULT_STATICALLY_KNOWN_COLLATIONS;

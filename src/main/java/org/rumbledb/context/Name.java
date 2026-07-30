@@ -24,6 +24,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.OurBadException;
 
 import lombok.EqualsAndHashCode;
@@ -43,6 +44,7 @@ import lombok.EqualsAndHashCode;
  */
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(force = true) // For Kryo serialization
 public class Name implements Comparable<Name>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -80,12 +82,6 @@ public class Name implements Comparable<Name>, Serializable {
     public static final Name TAIL_CALL_OPTIMIZATION = createVariableInNoNamespace(
         "$186e9958-978d-421c-96dd-9306ff5644b8"
     );
-
-    public Name() {
-        this.namespace = null;
-        this.prefix = null;
-        this.localName = null;
-    }
 
     public Name(String namespace, String prefix, String localName) {
         this.namespace = namespace;

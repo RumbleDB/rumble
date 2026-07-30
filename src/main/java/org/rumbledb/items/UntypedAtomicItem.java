@@ -1,6 +1,7 @@
 package org.rumbledb.items;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @Getter
+@NoArgsConstructor // For Kryo serialization
 public class UntypedAtomicItem extends AbstractAtomicItem {
 
     @Serial

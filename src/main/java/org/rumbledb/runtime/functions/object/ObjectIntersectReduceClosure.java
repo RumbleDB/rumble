@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -30,14 +31,13 @@ import org.apache.spark.api.java.function.Function2;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 
+@NoArgsConstructor
 public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ObjectIntersectReduceClosure() {
-    }
 
     @Override
     public Item call(Item v1, Item v2) throws Exception {

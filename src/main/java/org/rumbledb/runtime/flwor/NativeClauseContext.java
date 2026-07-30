@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.flwor;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.spark.sql.types.DataType;
@@ -18,6 +20,7 @@ import java.util.Map;
 /**
  * This class describes the context of a native clause and is used when processing FLWOR expressions without UDF
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class NativeClauseContext {
     public static final NativeClauseContext NoNativeQuery = new NativeClauseContext();
 
@@ -63,8 +66,6 @@ public class NativeClauseContext {
     @Getter
     private boolean grouped;
 
-    private NativeClauseContext() {
-    }
 
     public NativeClauseContext(FLWOR_CLAUSES clauseType, StructType schema, DynamicContext context) {
         this.clauseType = clauseType;

@@ -20,6 +20,7 @@
 
 package org.rumbledb.items.parsing;
 
+import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
@@ -27,13 +28,12 @@ import org.rumbledb.items.ItemFactory;
 import java.io.Serial;
 import java.util.Iterator;
 
+@NoArgsConstructor
 public class StringToStringItemMapper implements FlatMapFunction<Iterator<String>, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringToStringItemMapper() {
-    }
 
     @Override
     public Iterator<Item> call(Iterator<String> stringIterator) throws Exception {

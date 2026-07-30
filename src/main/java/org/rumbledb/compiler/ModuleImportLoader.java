@@ -7,6 +7,8 @@
 
 package org.rumbledb.compiler;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.StaticContext;
@@ -21,10 +23,9 @@ import java.net.URI;
 import java.util.List;
 
 /** Shared module import semantics for the JSONiq and XQuery frontends. */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class ModuleImportLoader {
 
-    private ModuleImportLoader() {
-    }
 
     public static LibraryModule load(
             String namespace,

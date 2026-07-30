@@ -17,6 +17,8 @@
 
 package org.rumbledb.compiler;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -27,12 +29,11 @@ import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
  * Parses XQuery 3.1 {@code URIQualifiedName} tokens ({@code BracedURILiteral NCName}) into expanded {@link Name}
  * values. See <a href="https://www.w3.org/TR/xquery-31/#doc-xquery31-URIQualifiedName">XQuery 3.1</a>.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class URIQualifiedNameParser {
 
     public static final String XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
 
-    private URIQualifiedNameParser() {
-    }
 
     /**
      * @param tokenText full lexer text of one {@code URIQualifiedName} token, e.g. {@code Q{http://ex}invoice}

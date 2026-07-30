@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.misc;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.RuleBasedCollator;
 import com.ibm.icu.text.StringSearch;
@@ -21,12 +23,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class CollationSupport {
 
     private static final ConcurrentHashMap<String, RuleBasedCollator> UCA_COLLATOR_CACHE = new ConcurrentHashMap<>();
 
-    private CollationSupport() {
-    }
 
     public static String resolveCollation(String explicitCollationUri, RuntimeStaticContext staticContext) {
         if (explicitCollationUri != null) {

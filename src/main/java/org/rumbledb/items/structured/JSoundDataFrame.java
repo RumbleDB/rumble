@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -27,6 +28,7 @@ import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
 
 @Getter
+@NoArgsConstructor(force = true) // For Kryo serialization
 public class JSoundDataFrame implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

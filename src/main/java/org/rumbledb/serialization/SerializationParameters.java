@@ -19,6 +19,7 @@ package org.rumbledb.serialization;
 
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serial;
@@ -42,6 +43,7 @@ import java.util.Set;
  *
  */
 @Setter
+@NoArgsConstructor
 public class SerializationParameters implements Serializable {
 
     @Serial
@@ -238,10 +240,6 @@ public class SerializationParameters implements Serializable {
      */
     @Getter
     private Map<String, String> sparkOptions;
-
-    public SerializationParameters() {
-        // empty for Kryo/Java serialization
-    }
 
     public static SerializationParameters defaults() {
         return defaults(null);

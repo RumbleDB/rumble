@@ -16,6 +16,8 @@
  */
 package org.rumbledb.runtime.misc;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
@@ -27,10 +29,9 @@ import org.rumbledb.items.ItemFactory;
  *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-deep-equal">fn:deep-equal</a>
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AtomicDeepEqual {
 
-    private AtomicDeepEqual() {
-    }
 
     /**
      * Deep equality for individual items when neither side is an array or node

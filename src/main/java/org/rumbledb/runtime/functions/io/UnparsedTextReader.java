@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.io;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidEncodingException;
@@ -14,10 +16,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class UnparsedTextReader {
 
-    private UnparsedTextReader() {
-    }
 
 
     private static URI resolveHref(URI staticBaseUri, String href, ExceptionMetadata metadata) {

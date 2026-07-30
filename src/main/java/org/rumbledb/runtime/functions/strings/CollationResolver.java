@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.strings;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.RuleBasedCollator;
 import com.ibm.icu.util.ULocale;
@@ -18,10 +20,9 @@ import java.util.Map;
  * Resolves a collation URI to a {@link Comparator} usable for string comparison, backed by ICU4J
  * for the UCA-parametrized collation family.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class CollationResolver {
 
-    private CollationResolver() {
-    }
 
     public static Comparator<String> resolve(String collationUri, ExceptionMetadata metadata) {
         if (collationUri == null || CollationCatalogue.CODEPOINT_COLLATION.equals(collationUri)) {

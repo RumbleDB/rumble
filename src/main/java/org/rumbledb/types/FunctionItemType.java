@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
@@ -7,6 +8,7 @@ import org.rumbledb.exceptions.OurBadException;
 import java.io.Serial;
 import java.util.Set;
 
+@NoArgsConstructor(force = true) // For Kryo serialization
 public class FunctionItemType extends AbstractItemType {
 
     @Serial

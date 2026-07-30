@@ -19,6 +19,7 @@
  */
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +38,7 @@ import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
 
+@NoArgsConstructor(force = true) // For Kryo serialization
 public class MapEntryItem extends AbstractMapItem {
 
     @Serial

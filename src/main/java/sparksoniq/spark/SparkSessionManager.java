@@ -20,6 +20,8 @@
 
 package sparksoniq.spark;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.parquet.format.IntType;
@@ -74,6 +76,7 @@ import org.rumbledb.types.SequenceType;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SparkSessionManager {
 
     private static final String APP_NAME = "Rumble application";
@@ -108,8 +111,6 @@ public class SparkSessionManager {
     public static final String tableLocationColumnName = "__tableLocation";
     public static final String rowOrderColumnName = "__rowOrder";
 
-    private SparkSessionManager() {
-    }
 
     private SparkSessionManager(SparkConf conf) {
         this.configuration = conf;
