@@ -35,7 +35,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -147,7 +147,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator expression = this.getChild(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
@@ -157,7 +157,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
                 );
             // context
             this.child.open(context);
-            JSoundDataFrame result = null;
+            HomogeneousItemDataFrame result = null;
             while (this.child.hasNext()) {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
@@ -165,7 +165,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
                 dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                                                                                                // from new tuple
 
-                JSoundDataFrame intermediateResult = this.expression.getDataFrame(dynamicContext);
+                HomogeneousItemDataFrame intermediateResult = this.expression.getDataFrame(dynamicContext);
                 if (result == null) {
                     result = intermediateResult;
                 } else {
@@ -174,7 +174,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             }
             this.child.close();
             if (result == null) {
-                return JSoundDataFrame.emptyDataFrame();
+                return HomogeneousItemDataFrame.emptyDataFrame();
             }
             return result;
         }
@@ -209,7 +209,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
                             )
                         );
             }
-            JSoundDataFrame result = new JSoundDataFrame(
+            HomogeneousItemDataFrame result = new HomogeneousItemDataFrame(
                     nativeQueryResult,
                     this.expression.getStaticType().getItemType()
             );

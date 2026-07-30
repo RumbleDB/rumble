@@ -3,7 +3,7 @@ package org.rumbledb.exceptions;
 import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -18,14 +18,14 @@ public class ExitStatementException extends RuntimeException {
     @Getter
     private final JavaRDD<Item> rddResult;
     @Getter
-    private final JSoundDataFrame dataFrameResult;
+    private final HomogeneousItemDataFrame dataFrameResult;
     private final ExceptionMetadata exceptionMetadata;
 
     public ExitStatementException(
             PendingUpdateList pendingUpdateList,
             List<Item> localResult,
             JavaRDD<Item> rddResult,
-            JSoundDataFrame dataFrameResult,
+            HomogeneousItemDataFrame dataFrameResult,
             ExceptionMetadata exceptionMetadata
     ) {
         this.pendingUpdateList = pendingUpdateList;

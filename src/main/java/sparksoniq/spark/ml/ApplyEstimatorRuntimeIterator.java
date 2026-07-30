@@ -18,7 +18,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -46,7 +46,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     @Getter
     private final Estimator<?> estimator;
 
-    private JSoundDataFrame inputDataset;
+    private HomogeneousItemDataFrame inputDataset;
     private Item paramMapItem;
 
     public ApplyEstimatorRuntimeIterator(
@@ -218,7 +218,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         return generateTransformerFunctionItem(fittedModel, dynamicContext);
     }
 
-    private JSoundDataFrame getInputDataset(DynamicContext context) {
+    private HomogeneousItemDataFrame getInputDataset(DynamicContext context) {
         Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
         return RumbleMLUtils.getDataFrameOrInferFromVariable(

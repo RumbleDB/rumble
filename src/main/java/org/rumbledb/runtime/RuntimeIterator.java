@@ -42,7 +42,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -289,7 +289,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
             || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         throw new OurBadException(
                 "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
@@ -301,7 +301,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
      * 
      * @return the DataFrame.
      */
-    public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
+    public final HomogeneousItemDataFrame getOrCreateDataFrame(DynamicContext context) {
         if (isDataFrame()) {
             return this.getDataFrame(context);
         }

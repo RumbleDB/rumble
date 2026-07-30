@@ -26,7 +26,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
 import java.io.Serial;
@@ -42,7 +42,7 @@ public class FlworTuple implements Serializable {
     private static final long serialVersionUID = 1L;
     private final LinkedHashMap<Name, List<Item>> localVariables;
     private final LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
-    private final LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
+    private final LinkedHashMap<Name, HomogeneousItemDataFrame> dataFrameVariables;
     private RumbleRuntimeConfiguration configuration;
 
     public FlworTuple() {
@@ -134,13 +134,13 @@ public class FlworTuple implements Serializable {
             return this.rddVariables.get(key);
         }
         if (this.dataFrameVariables.containsKey(key)) {
-            JSoundDataFrame df = this.dataFrameVariables.get(key);
+            HomogeneousItemDataFrame df = this.dataFrameVariables.get(key);
             return df.toRDD(metadata);
         }
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public JSoundDataFrame getDataFrameValue(Name key, ExceptionMetadata metadata) {
+    public HomogeneousItemDataFrame getDataFrameValue(Name key, ExceptionMetadata metadata) {
         if (this.dataFrameVariables.containsKey(key)) {
             return this.dataFrameVariables.get(key);
         }
@@ -167,7 +167,7 @@ public class FlworTuple implements Serializable {
         return this;
     }
 
-    public FlworTuple putValue(Name key, JSoundDataFrame value) {
+    public FlworTuple putValue(Name key, HomogeneousItemDataFrame value) {
         this.localVariables.remove(key);
         this.rddVariables.remove(key);
         this.dataFrameVariables.put(key, value);

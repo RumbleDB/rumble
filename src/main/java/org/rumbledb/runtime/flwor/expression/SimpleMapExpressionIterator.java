@@ -34,7 +34,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -184,8 +184,8 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame df = this.leftIterator.getDataFrame(context);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame df = this.leftIterator.getDataFrame(context);
         if (df.isEmptySequence()) {
             return df;
         }
@@ -206,7 +206,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
             Dataset<Row> result = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .createDataFrame(rowRDD, schema);
-            return new JSoundDataFrame(result, getStaticType().getItemType());
+            return new HomogeneousItemDataFrame(result, getStaticType().getItemType());
         }
         LogManager.getLogger("SimpleMapExpressionIterator")
             .info("Rumble was able to optimize a simple map expression to a native SQL query.");
@@ -222,7 +222,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
                 )
             );
         // execute query
-        return new JSoundDataFrame(result, getStaticType().getItemType());
+        return new HomogeneousItemDataFrame(result, getStaticType().getItemType());
     }
 
 

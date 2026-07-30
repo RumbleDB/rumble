@@ -5,7 +5,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.spark.SparkSessionManager;
@@ -27,7 +27,7 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.getChild(0);
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();

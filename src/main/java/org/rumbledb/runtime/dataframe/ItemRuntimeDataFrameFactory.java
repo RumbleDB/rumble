@@ -14,13 +14,13 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 
 /**
- * Encodes item RDDs as {@link JSoundDataFrame}s.
+ * Encodes item RDDs as {@link HomogeneousItemDataFrame}s.
  */
 public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactory<Item> {
 
@@ -33,7 +33,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
     }
 
     @Override
-    public JSoundDataFrame fromLocal(
+    public HomogeneousItemDataFrame fromLocal(
             List<Item> items,
             DynamicContext context,
             RuntimeStaticContext staticContext
@@ -53,7 +53,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
     }
 
     @Override
-    public JSoundDataFrame fromRDD(
+    public HomogeneousItemDataFrame fromRDD(
             JavaRDD<Item> rdd,
             DynamicContext context,
             RuntimeStaticContext staticContext

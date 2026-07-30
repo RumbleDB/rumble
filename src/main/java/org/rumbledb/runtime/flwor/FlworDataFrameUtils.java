@@ -78,7 +78,7 @@ import org.rumbledb.items.QNameItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
@@ -867,13 +867,13 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * Zips a JSoundDataFrame to a special column.
+     * Zips a HomogeneousItemDataFrame to a special column.
      *
      * @param jdf - the JSoundDataframe to perform the operation on
      * @param offset - starting offset for the first index
-     * @return returns JSoundDataFrame with the added column containing indices (with some specific UUID)
+     * @return returns HomogeneousItemDataFrame with the added column containing indices (with some specific UUID)
      */
-    public static Dataset<Row> zipWithIndex(JSoundDataFrame jdf, Long offset) {
+    public static Dataset<Row> zipWithIndex(HomogeneousItemDataFrame jdf, Long offset) {
         return zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName);
     }
 

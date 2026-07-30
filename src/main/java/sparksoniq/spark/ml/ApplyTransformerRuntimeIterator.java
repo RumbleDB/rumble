@@ -16,7 +16,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -39,7 +39,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     @Getter
     private final Transformer transformer;
 
-    private JSoundDataFrame inputDataset;
+    private HomogeneousItemDataFrame inputDataset;
     private Item paramMapItem;
     private final List<String> columnNamesOfGeneratedVectors = new ArrayList<>();
 
@@ -54,7 +54,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         this.inputDataset = getInputDataset(context);
         this.paramMapItem = getParamMapItem(context);
 
@@ -72,7 +72,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
             for (String name : this.columnNamesOfGeneratedVectors) {
                 result = result.drop(name);
             }
-            return new JSoundDataFrame(result, BuiltinTypesCatalogue.objectItem);
+            return new HomogeneousItemDataFrame(result, BuiltinTypesCatalogue.objectItem);
         } catch (IllegalArgumentException | NoSuchElementException e) {
             if (e.getMessage().matches(".*DecimalType.*is not supported.*")) {
                 throw new InvalidRumbleMLParamException(
@@ -173,7 +173,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         }
     }
 
-    private JSoundDataFrame getInputDataset(DynamicContext context) {
+    private HomogeneousItemDataFrame getInputDataset(DynamicContext context) {
         Name transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
             .get(0);
         return RumbleMLUtils.getDataFrameOrInferFromVariable(

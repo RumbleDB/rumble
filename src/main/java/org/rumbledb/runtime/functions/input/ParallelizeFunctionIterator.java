@@ -26,7 +26,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -57,7 +57,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> rdd = null;
         List<Item> contents = new ArrayList<>();
         if (this.sequenceIterator.isDataFrame()) {
-            JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
+            HomogeneousItemDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
             rdd = dataFrame.toRDD(this.getMetadata());
             if (this.getChildren().size() == 1) {
                 return rdd;
