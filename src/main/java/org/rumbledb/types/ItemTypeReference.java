@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -12,6 +13,7 @@ import org.rumbledb.exceptions.UndefinedTypeException;
 import java.io.Serial;
 import java.util.*;
 
+@NoArgsConstructor
 public class ItemTypeReference implements ItemType {
 
     @Serial
@@ -105,6 +107,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getAllowedFacets();
     }
 
+    @Override
     public boolean equals(Object other) {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
