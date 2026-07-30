@@ -164,11 +164,7 @@ public class VisitorHelpers {
                 .resolve(location, configuration, metadata)
         ) {
             String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8.name());
-            URI systemId = resource.getSystemId();
-            if (configuration.getStaticBaseUri() != null) {
-                systemId = resolveStaticBaseUri(configuration.getStaticBaseUri(), configuration);
-            }
-            return new ModuleSource(query, systemId);
+            return new ModuleSource(query, resource.getSystemId());
         }
     }
 
@@ -219,12 +215,16 @@ public class VisitorHelpers {
     )
             throws IOException {
         ModuleSource source = readModuleSource(location, compilationConfiguration, metadata);
-        return parseLibraryModule(
+        LibraryModule libraryModule = parseLibraryModule(
             source.query(),
             source.systemId(),
             importingModuleContext,
             compilationConfiguration
         );
+        // Keep the requested absolute import location as the module identity for duplicate-import semantics,
+        // while using the resolved resource system ID as the library module's static base URI.
+        libraryModule.setLocation(location.toString());
+        return libraryModule;
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
