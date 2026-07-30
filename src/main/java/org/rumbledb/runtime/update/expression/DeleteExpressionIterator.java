@@ -24,18 +24,17 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator mainIterator;
-    private RuntimeIterator lookupIterator;
+    private final RuntimeIterator mainIterator;
+    private final RuntimeIterator lookupIterator;
 
     public DeleteExpressionIterator(
             RuntimeIterator mainIterator,
             RuntimeIterator lookupIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(mainIterator, lookupIterator), staticContext);
+        super(Arrays.asList(mainIterator, lookupIterator), staticContext.toBuilder().isUpdating(true).build());
         this.mainIterator = mainIterator;
         this.lookupIterator = lookupIterator;
-        this.isUpdating = true;
     }
 
     @Override

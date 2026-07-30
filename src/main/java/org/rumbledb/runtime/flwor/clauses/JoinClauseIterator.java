@@ -66,9 +66,9 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
 
     // Properties
     @SuppressWarnings("unused")
-    private boolean isLeftOuterJoin;
+    private final boolean isLeftOuterJoin;
     @SuppressWarnings("unused")
-    private DataFrameContext dataFrameContext;
+    private final DataFrameContext dataFrameContext;
 
     // Computation state
     @SuppressWarnings("unused")
@@ -205,35 +205,36 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         if (rightTupleSideEqualityCriteria.size() == 1) {
             rightHandSideEqualityCriterion = rightTupleSideEqualityCriteria.get(0);
         } else {
+            RuntimeStaticContext rhsStaticContext = staticContext
+                .toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(metadata)
+                .build();
+
             rightHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
                             rightTupleSideEqualityCriteria,
-                            staticContext.withStaticType(SequenceType.createSequenceType("item*"))
-                                .withExecutionMode(ExecutionMode.LOCAL)
-                                .withMetadata(metadata)
+                            rhsStaticContext
                     ),
-                    staticContext
-                        .withStaticType(SequenceType.createSequenceType("item*"))
-                        .withExecutionMode(ExecutionMode.LOCAL)
-                        .withMetadata(metadata),
+                    rhsStaticContext,
                     false
             );
         }
         if (leftTupleSideEqualityCriteria.size() == 1) {
             leftHandSideEqualityCriterion = leftTupleSideEqualityCriteria.get(0);
         } else {
+            RuntimeStaticContext lhsStaticContext = staticContext.toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(metadata)
+                .build();
             leftHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
                             leftTupleSideEqualityCriteria,
-                            staticContext.withStaticType(
-                                SequenceType.createSequenceType("item*")
-                            ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(metadata)
+                            lhsStaticContext
                     ),
-                    new RuntimeStaticContext(
-                            staticContext.withStaticType(SequenceType.createSequenceType("item*"))
-                                .withExecutionMode(ExecutionMode.LOCAL)
-                                .withMetadata(metadata)
-                    ),
+                    lhsStaticContext,
                     false
             );
         }

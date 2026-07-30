@@ -55,7 +55,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name variableName;
+    private final Name variableName;
     private FlworTuple nextLocalTupleResult;
     private int currentCountIndex;
 

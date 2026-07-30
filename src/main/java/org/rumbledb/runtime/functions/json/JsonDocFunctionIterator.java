@@ -40,8 +40,8 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator pathIterator = this.children.get(0);
-        RuntimeIterator optionsIterator = this.children.size() > 1 ? this.children.get(1) : null;
+        RuntimeIterator pathIterator = this.getChild(0);
+        RuntimeIterator optionsIterator = this.getChildren().size() > 1 ? this.getChild(1) : null;
 
         Item pathItem = pathIterator.materializeFirstItemOrNull(context);
         Item optionsItem = optionsIterator != null
@@ -62,7 +62,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             getMetadata()
         );
 
-        URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticURI, getMetadata());
+        URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticContext.getStaticURI(), getMetadata());
 
         String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
 

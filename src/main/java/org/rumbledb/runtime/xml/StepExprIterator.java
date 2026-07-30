@@ -39,8 +39,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             NodeTest nodeTest,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(axisIterator);
+        super(List.of(axisIterator), staticContext);
         this.axisIterator = axisIterator;
         this.nodeTest = nodeTest;
     }
@@ -188,7 +187,22 @@ public class StepExprIterator extends LocalRuntimeIterator {
             }
             return node;
         }
-        if (nameTest.getWildcardQName().equals(nodeNameLexical(node))) {
+        if (!isPrincipalNodeKind(node)) {
+            return null;
+        }
+        String wildcard = nameTest.getWildcardQName();
+        Name nodeName = node.nodeName();
+        if (nodeName == null) {
+            return null;
+        }
+        if (wildcard.startsWith("*:")) {
+            String localName = wildcard.substring(2);
+            if (localName.equals(nodeName.getLocalName())) {
+                return node;
+            }
+            return null;
+        }
+        if (wildcard.equals(nodeNameLexical(node))) {
             return node;
         }
         return null;

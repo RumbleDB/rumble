@@ -36,37 +36,34 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name functionName;
-    private Map<Name, SequenceType> paramNameToSequenceTypes;
-    SequenceType returnType;
-    RuntimeIterator bodyIterator;
+    private final Name functionName;
+    private final Map<Name, SequenceType> paramNameToSequenceTypes;
+    final SequenceType returnType;
+    final RuntimeIterator bodyIterator;
 
     public FunctionRuntimeIterator(
             Name functionName,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             RuntimeIterator bodyIterator,
-            RuntimeStaticContext staticContext,
-            boolean isUpdating
+            RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
         this.functionName = functionName;
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
         this.returnType = returnType;
         this.bodyIterator = bodyIterator;
-        this.isUpdating = isUpdating;
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        RuntimeIterator bodyIteratorCopy = ((RuntimeIterator) this.bodyIterator).deepCopy();
         FunctionItem function = new FunctionItem(
                 this.functionName,
                 this.paramNameToSequenceTypes,
                 this.returnType,
                 dynamicContext.getModuleContext(),
-                bodyIteratorCopy,
-                this.isUpdating
+                this.bodyIterator,
+                this.staticContext.isUpdating()
         );
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
         return function;

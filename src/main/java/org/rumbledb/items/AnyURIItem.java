@@ -31,15 +31,13 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class AnyURIItem implements Item {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
+    private String lexicalValue;
     private URI value;
 
     public AnyURIItem() {
@@ -48,12 +46,16 @@ public class AnyURIItem implements Item {
 
     public AnyURIItem(String value) {
         super();
+        if (value == null) {
+            throw new IllegalArgumentException();
+        }
+        this.lexicalValue = value;
         this.value = parseAnyURIString(value);
     }
 
     @Override
     public Item copy(boolean mutable) {
-        return new AnyURIItem(this.value.toString());
+        return new AnyURIItem(this.lexicalValue);
     }
 
     @Override
@@ -76,23 +78,23 @@ public class AnyURIItem implements Item {
         try {
             return new URI(anyURIString);
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e.getMessage());
+            return null;
         }
     }
 
     @Override
     public String getStringValue() {
-        return this.value.toString();
+        return this.lexicalValue;
     }
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.value.toString().isEmpty();
+        return !this.lexicalValue.isEmpty();
     }
 
     @Override
     public int hashCode() {
-        return this.value.hashCode();
+        return this.lexicalValue.hashCode();
     }
 
     public URI getValue() {
@@ -104,15 +106,7 @@ public class AnyURIItem implements Item {
         return getStringValue();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.getValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = kryo.readObject(input, URI.class);
-    }
 
     @Override
     public boolean isAnyURI() {

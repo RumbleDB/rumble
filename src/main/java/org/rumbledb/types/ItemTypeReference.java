@@ -30,17 +30,7 @@ public class ItemTypeReference implements ItemType {
         this.name = name;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.resolvedItemType);
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.resolvedItemType = (ItemType) kryo.readClassAndObject(input);
-    }
 
     @Override
     public boolean isResolved() {

@@ -18,15 +18,15 @@ public class UnionItemType implements ItemType {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
+    private static final Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(ConstrainingFacetTypes.CONTENT)
     );
 
-    private Name name;
-    private ItemType baseType;
-    private int typeTreeDepth;
-    private List<ItemType> types;
-    private boolean userDefined;
+    private final Name name;
+    private final ItemType baseType;
+    private final int typeTreeDepth;
+    private final List<ItemType> types;
+    private final boolean userDefined;
 
     UnionItemType(Name name, ItemType baseType, List<ItemType> types) {
         this(name, baseType, types, true);
@@ -52,25 +52,7 @@ public class UnionItemType implements ItemType {
         this.userDefined = userDefined;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeClassAndObject(output, this.name);
-        kryo.writeClassAndObject(output, this.baseType);
-        output.writeInt(this.typeTreeDepth);
-        kryo.writeClassAndObject(output, this.types);
-        output.writeBoolean(this.userDefined);
 
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = (Name) kryo.readClassAndObject(input);
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.typeTreeDepth = input.readInt();
-        this.types = (List<ItemType>) kryo.readClassAndObject(input);
-        this.userDefined = input.readBoolean();
-    }
 
     @Override
     public boolean equals(Object other) {

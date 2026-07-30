@@ -52,7 +52,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     private static final long serialVersionUID = 1L;
     Item left;
     Item right;
-    MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
+    final MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
 

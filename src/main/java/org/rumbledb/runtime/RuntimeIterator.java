@@ -23,19 +23,15 @@ package org.rumbledb.runtime;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
+import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -55,27 +51,19 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>, KryoSerializable {
+public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     @Serial
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
-    protected boolean isUpdating;
-    protected transient boolean isSequential;
-    protected List<RuntimeIterator> children;
+    private List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
-    protected URI staticURI;
-    // private StaticContext staticContext;
 
-    protected RuntimeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    protected RuntimeIterator(List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
         if (this.staticContext.getStaticType() == null) {
             throw new OurBadException(
@@ -83,22 +71,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
             );
         }
         this.isOpen = false;
-        this.isUpdating = false;
-        this.isSequential = false;
 
-        this.children = new ArrayList<>();
-        if (children != null && !children.isEmpty()) {
-            this.children.addAll(children);
-        }
-    }
-
-    // For performance reasons, and as only the static URI is really needed at the moment, we only store it.
-    // This avoids the deserialization of many static context copies at runtime.
-    public void setStaticContext(StaticContext staticContext) {
-        if (this.staticURI != null) {
-            throw new OurBadException("Static context already consumed.");
-        }
-        this.staticURI = staticContext.getStaticBaseURI();
+        this.children = List.copyOf(Objects.requireNonNullElse(children, Collections.emptyList()));
     }
 
     /**
@@ -231,21 +205,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         this.isOpen = false;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.children);
-        // TODO serializer other fields
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.hasNext = false;
-        this.isOpen = false;
-        this.currentDynamicContextForLocalExecution = null;
-        this.children = kryo.readObject(input, ArrayList.class);
-        // TODO serializer other fields
-    }
 
     @Override
     public boolean hasNext() {
@@ -254,6 +214,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
 
     public boolean isOpen() {
         return this.isOpen;
+    }
+
+    protected final RuntimeIterator getChild(int index) {
+        return this.children.get(index);
+    }
+
+    protected final List<RuntimeIterator> getChildren() {
+        return this.children;
     }
 
     public ExceptionMetadata getMetadata() {
@@ -397,7 +365,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     }
 
     public boolean isUpdating() {
-        return this.isUpdating;
+        return this.staticContext.isUpdating();
     }
 
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
@@ -408,7 +376,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     }
 
     public boolean isSequential() {
-        return this.isSequential;
+        return this.staticContext.isSequential();
     }
 
     @Override
@@ -549,7 +517,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         buffer.append(" | ");
         buffer.append(this.isUpdating() ? "updating" : "simple");
         buffer.append(" | ");
-        buffer.append(this.isSequential ? "sequential" : "non-sequential");
+        buffer.append(this.isSequential() ? "sequential" : "non-sequential");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");

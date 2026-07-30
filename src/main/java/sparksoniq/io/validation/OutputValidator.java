@@ -33,11 +33,12 @@ import java.util.Comparator;
 import java.util.List;
 
 public class OutputValidator {
-    private static String ZORBA_FILE_PATH = // "/home/stefan/Work/ETH/Thesis/benchmarks/validation/zorba-results/conf1";
+    private static final String ZORBA_FILE_PATH = // "/home/stefan/Work/ETH/Thesis/benchmarks/validation/zorba-results/conf1";
         "/home/stefan/Desktop/media_sdb1/Scoala/ETH/Big_Data/validation/zorba-results/where1Zorba";
     // private static String SPARK_OUTPUT_DIR =
     // "/home/stefan/Work/ETH/Thesis/benchmarks/validation/output-where/output-where-confusion1/output/";
-    private static String SPARK_OUTPUT_DIR = "/home/stefan/Desktop/media_sdb1/Scoala/ETH/Big_Data/validation/output/";
+    private static final String SPARK_OUTPUT_DIR =
+        "/home/stefan/Desktop/media_sdb1/Scoala/ETH/Big_Data/validation/output/";
 
     public static void main(String[] args) throws IOException {
         File sparkDir = new File(SPARK_OUTPUT_DIR);

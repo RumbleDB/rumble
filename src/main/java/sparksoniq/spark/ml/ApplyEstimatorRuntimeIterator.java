@@ -41,8 +41,8 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private String estimatorShortName;
-    private Estimator<?> estimator;
+    private final String estimatorShortName;
+    private final Estimator<?> estimator;
 
     private JSoundDataFrame inputDataset;
     private Item paramMapItem;
@@ -357,9 +357,12 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
-                this.staticContext.withStaticType(new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One))
-                    .withExecutionMode(ExecutionMode.DATAFRAME)
-                    .withMetadata(getMetadata())
+                this.staticContext
+                    .toBuilder()
+                    .staticType(new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One))
+                    .executionMode(ExecutionMode.DATAFRAME)
+                    .metadata(getMetadata())
+                    .build()
         );
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(

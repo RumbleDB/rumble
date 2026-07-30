@@ -51,17 +51,21 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator urlIterator = this.children.get(0);
+        RuntimeIterator urlIterator = this.getChild(0);
         Item url = urlIterator.materializeFirstItemOrNull(context);
         if (url == null) {
             return SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .emptyRDD();
         }
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, url.getStringValue(), getMetadata());
+        URI uri = FileSystemUtil.resolveFileSystemURI(
+            this.staticContext.getStaticURI(),
+            url.getStringValue(),
+            getMetadata()
+        );
         int partitions = MIN_PARTITIONS;
-        if (this.children.size() > 1) {
-            Item partitionsItem = this.children.get(1).materializeFirstItemOrNull(context);
+        if (this.getChildren().size() > 1) {
+            Item partitionsItem = this.getChild(1).materializeFirstItemOrNull(context);
             if (partitionsItem != null) {
                 partitions = partitionsItem.getIntValue();
             }

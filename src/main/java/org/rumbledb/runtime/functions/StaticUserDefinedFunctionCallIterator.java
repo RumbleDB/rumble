@@ -47,8 +47,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private FunctionIdentifier functionIdentifier;
-    private List<RuntimeIterator> functionArguments;
+    private final FunctionIdentifier functionIdentifier;
+    private final List<RuntimeIterator> functionArguments;
 
     // calculated fields
     private RuntimeIterator userDefinedFunctionCallIterator;
@@ -56,13 +56,12 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     private List<Item> exitStatementLocalResult;
     private boolean encounteredExitStatement;
     private int nextExitStatementResult;
-    private boolean tailCallOptimizationCandidate;
+    private final boolean tailCallOptimizationCandidate;
 
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext staticContext,
-            boolean isUpdating,
             boolean tailCallOptimization
     ) {
         super(null, staticContext);
@@ -70,7 +69,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         this.functionArguments = functionArguments;
         this.userDefinedFunctionCallIterator = null;
         this.nextExitStatementResult = 0;
-        this.isUpdating = isUpdating;
         this.tailCallOptimizationCandidate = tailCallOptimization;
     }
 
@@ -95,6 +93,10 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         } catch (ExitStatementException exitStatementException) {
             this.encounteredExitStatement = true;
             this.exitStatementLocalResult = exitStatementException.getLocalResult();
+            closeUserDefinedFunctionCallIterator();
+        } catch (RuntimeException exception) {
+            closeUserDefinedFunctionCallIterator();
+            throw exception;
         }
         setNextResult();
         if (this.tailCallOptimizationCandidate) {
@@ -141,10 +143,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     protected void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
-        if (this.userDefinedFunctionCallIterator != null && this.userDefinedFunctionCallIterator.isOpen()) {
-            this.userDefinedFunctionCallIterator.close();
-        }
-        this.userDefinedFunctionCallIterator = null;
+        closeUserDefinedFunctionCallIterator();
         this.encounteredExitStatement = false;
         this.nextExitStatementResult = 0;
     }
@@ -159,6 +158,10 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             } catch (ExitStatementException exitStatementException) {
                 this.encounteredExitStatement = true;
                 this.exitStatementLocalResult = exitStatementException.getLocalResult();
+                closeUserDefinedFunctionCallIterator();
+            } catch (RuntimeException exception) {
+                closeUserDefinedFunctionCallIterator();
+                throw exception;
             }
         }
 
@@ -176,6 +179,16 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             } else {
                 this.hasNext = true;
             }
+        }
+    }
+
+    /**
+     * Closes the nested call but keeps the call-site object. The nested FunctionItemCallIterator decides whether its
+     * body execution is reusable or must be discarded.
+     */
+    private void closeUserDefinedFunctionCallIterator() {
+        if (this.userDefinedFunctionCallIterator != null && this.userDefinedFunctionCallIterator.isOpen()) {
+            this.userDefinedFunctionCallIterator.close();
         }
     }
 

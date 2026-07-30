@@ -260,7 +260,7 @@ public class BuiltinFunctionCatalogue {
 
     private static FunctionIdentifier resolveIdentifierFallback(FunctionIdentifier identifier) {
         Name name = identifier.getName();
-        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
+        if (Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(name.getNamespace())) {
             FunctionIdentifier fn = new FunctionIdentifier(
                     new Name(Name.FN_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()

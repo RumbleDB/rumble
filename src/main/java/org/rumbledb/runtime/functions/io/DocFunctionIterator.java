@@ -38,7 +38,7 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.pathIterator = this.children.get(0);
+        this.pathIterator = this.getChild(0);
         this.pathIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.pathIterator.hasNext();
         this.pathIterator.close();
@@ -50,7 +50,11 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = false;
             Item path = this.pathIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             try {
-                URI uri = FileSystemUtil.resolveURI(this.staticURI, path.getStringValue(), getMetadata());
+                URI uri = FileSystemUtil.resolveURI(
+                    this.staticContext.getStaticURI(),
+                    path.getStringValue(),
+                    getMetadata()
+                );
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 documentBuilderFactory.setNamespaceAware(true);
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();

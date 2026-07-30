@@ -43,7 +43,7 @@ public abstract class Clause extends Node {
     /* Clauses are organized in doubly-linked lists */
     protected Clause previousClause;
     protected Clause nextClause;
-    protected FLWOR_CLAUSES clauseType;
+    protected final FLWOR_CLAUSES clauseType;
     protected StaticContext staticContext;
 
     public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
@@ -248,12 +248,11 @@ public abstract class Clause extends Node {
             RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return new RuntimeStaticContext(
-                conf,
-                null,
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                this.staticContext
-        );
+        return RuntimeStaticContext.fromStaticContext(this.staticContext)
+            .configuration(conf)
+            .staticType(null)
+            .executionMode(getHighestExecutionMode(visitorConfig))
+            .metadata(getMetadata())
+            .build();
     }
 }

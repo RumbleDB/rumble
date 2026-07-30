@@ -39,7 +39,7 @@ import java.util.Collections;
 
 public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    private boolean negated;
+    private final boolean negated;
     private final RuntimeIterator child;
     private Item item;
     @Serial
@@ -68,6 +68,9 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.item == null) {
             return null;
+        }
+        if (this.item.isUntypedAtomic()) {
+            this.item = ItemFactory.getInstance().createDoubleItem(this.item.castToDoubleValue());
         }
 
         if (!this.negated) {

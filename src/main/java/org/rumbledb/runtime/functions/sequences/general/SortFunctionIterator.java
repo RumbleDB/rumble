@@ -246,9 +246,11 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
 
     private RuntimeStaticContext localStaticContext() {
         return getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(ExecutionMode.LOCAL)
-            .withMetadata(getMetadata());
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
     }
 
     @Override

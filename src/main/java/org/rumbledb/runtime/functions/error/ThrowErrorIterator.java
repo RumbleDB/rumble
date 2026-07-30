@@ -22,7 +22,7 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.children.isEmpty() || this.children.get(0).materializeFirstItemOrNull(context) == null) {
+        if (this.getChildren().isEmpty() || this.getChild(0).materializeFirstItemOrNull(context) == null) {
             // No argument case.
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
@@ -31,23 +31,23 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        Name errorCode = this.children.get(0).materializeFirstItemOrNull(context).getQNameValue();
+        Name errorCode = this.getChild(0).materializeFirstItemOrNull(context).getQNameValue();
 
-        if (this.children.size() == 1) {
+        if (this.getChildren().size() == 1) {
             // Error code argument case.
             throw new RumbleException(
                     "An error has been raised without an error description.",
                     new ErrorCode(errorCode),
                     this.getMetadata()
             );
-        } else if (this.children.size() == 2) {
+        } else if (this.getChildren().size() == 2) {
             // Error code and description arguments case.
-            String description = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+            String description = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
             throw new RumbleException(description, new ErrorCode(errorCode), this.getMetadata());
         } else {
             // Error code, description, and object case.
-            String description = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
-            List<Item> value = this.children.get(2).materialize(context);
+            String description = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+            List<Item> value = this.getChild(2).materialize(context);
             String message = description;
 
             throw new RumbleException(message, new ErrorCode(errorCode), this.getMetadata(), value);

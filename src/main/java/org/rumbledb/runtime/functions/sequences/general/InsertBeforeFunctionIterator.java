@@ -39,9 +39,9 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
-    private RuntimeIterator insertIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator positionIterator;
+    private final RuntimeIterator insertIterator;
     private Item nextResult;
     private int insertPosition; // position to start inserting
     private int currentPosition; // current position
@@ -53,9 +53,9 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
-        this.positionIterator = this.children.get(1);
-        this.insertIterator = this.children.get(2);
+        this.sequenceIterator = this.getChild(0);
+        this.positionIterator = this.getChild(1);
+        this.insertIterator = this.getChild(2);
     }
 
     @Override

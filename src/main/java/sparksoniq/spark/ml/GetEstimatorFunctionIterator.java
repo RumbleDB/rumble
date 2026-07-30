@@ -66,10 +66,10 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        String estimatorShortName = this.children.get(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+        String estimatorShortName = this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
         Item paramMapItem = null;
-        if (this.children.size() >= 2) {
-            paramMapItem = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
+        if (this.getChildren().size() >= 2) {
+            paramMapItem = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
         }
 
         String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(
@@ -112,9 +112,12 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
             RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
                     estimatorShortName,
                     estimator,
-                    this.staticContext.withStaticType(SequenceType.createSequenceType("function(*)"))
-                        .withExecutionMode(ExecutionMode.LOCAL)
-                        .withMetadata(getMetadata())
+                    this.staticContext
+                        .toBuilder()
+                        .staticType(SequenceType.createSequenceType("function(*)"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build()
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(

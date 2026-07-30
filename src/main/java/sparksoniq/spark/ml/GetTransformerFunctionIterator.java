@@ -68,10 +68,10 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        String transformerShortName = this.children.get(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+        String transformerShortName = this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
         Item paramMapItem = null;
-        if (this.children.size() >= 2) {
-            paramMapItem = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
+        if (this.getChildren().size() >= 2) {
+            paramMapItem = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
         }
 
         String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(
@@ -121,9 +121,12 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
             RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                     transformerShortName,
                     transformer,
-                    this.staticContext.withStaticType(SequenceType.createSequenceType("object*"))
-                        .withExecutionMode(ExecutionMode.DATAFRAME)
-                        .withMetadata(getMetadata())
+                    this.staticContext
+                        .toBuilder()
+                        .staticType(SequenceType.createSequenceType("object*"))
+                        .executionMode(ExecutionMode.DATAFRAME)
+                        .metadata(getMetadata())
+                        .build()
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(

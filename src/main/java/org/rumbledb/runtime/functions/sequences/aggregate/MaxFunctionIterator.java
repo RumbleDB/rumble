@@ -41,6 +41,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -49,6 +50,7 @@ import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -73,6 +75,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient Duration currentMaxDayTimeDuration;
     private transient Period currentMaxYearMonthDuration;
     private transient OffsetTime currentMaxTime;
+    private transient Item currentMaxBinary;
     private transient byte activeType = 0;
     private transient ItemType returnType;
     private transient Item result;
@@ -84,7 +87,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
         this.comparator = new ItemComparator(
                 false,
                 new InvalidArgumentTypeException(
@@ -96,8 +99,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.children.size() == 2) {
-            String collation = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+        if (this.getChildren().size() == 2) {
+            String collation = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
@@ -121,6 +124,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         this.currentMaxDayTimeDuration = null;
         this.currentMaxYearMonthDuration = null;
         this.currentMaxTime = null;
+        this.currentMaxBinary = null;
         this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
@@ -183,6 +187,12 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             if (candidateItem.hasTimeZone()) {
                                 this.hasTimeZone = true;
                             }
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
+                            this.activeType = 13;
+                            this.currentMaxBinary = candidateItem;
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
+                            this.activeType = 14;
+                            this.currentMaxBinary = candidateItem;
                         } else {
                             throw new OurBadException("Inconsistent state in state iteration");
                         }
@@ -321,10 +331,17 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.activeType = 6;
                             this.returnType = BuiltinTypesCatalogue.stringItem;
                             this.currentMaxString = this.currentMaxURI;
-                            if (candidateItem.getStringValue().compareTo(this.currentMaxURI) > 0) {
+                            if (
+                                CollationSupport.compareByCodePoint(
+                                    candidateItem.getStringValue(),
+                                    this.currentMaxURI
+                                ) > 0
+                            ) {
                                 this.currentMaxString = candidateItem.getStringValue();
                             }
-                        } else if (candidateItem.getStringValue().compareTo(this.currentMaxURI) > 0) {
+                        } else if (
+                            CollationSupport.compareByCodePoint(candidateItem.getStringValue(), this.currentMaxURI) > 0
+                        ) {
                             this.currentMaxURI = candidateItem.getStringValue();
 
                         }
@@ -336,7 +353,12 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getStringValue().compareTo(this.currentMaxString) > 0) {
+                        if (
+                            CollationSupport.compareByCodePoint(
+                                candidateItem.getStringValue(),
+                                this.currentMaxString
+                            ) > 0
+                        ) {
                             this.currentMaxString = candidateItem.getStringValue();
                             this.returnType = candidateType;
                         }
@@ -415,6 +437,32 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
                         break;
+                    case 13:
+                        if (!candidateType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (
+                            Arrays.compare(candidateItem.getBinaryValue(), this.currentMaxBinary.getBinaryValue()) > 0
+                        ) {
+                            this.currentMaxBinary = candidateItem;
+                        }
+                        break;
+                    case 14:
+                        if (!candidateType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (
+                            Arrays.compare(candidateItem.getBinaryValue(), this.currentMaxBinary.getBinaryValue()) > 0
+                        ) {
+                            this.currentMaxBinary = candidateItem;
+                        }
+                        break;
                     default:
                         throw new OurBadException("Inconsistent state in state iteration");
                 }
@@ -469,6 +517,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     itemResult = ItemFactory.getInstance()
                         .createTimeItem(this.currentMaxTime, this.hasTimeZone);
                     break;
+                case 13:
+                case 14:
+                    itemResult = this.currentMaxBinary;
+                    break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");
             }
@@ -516,7 +568,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator expr) {
+        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MAX);
@@ -541,11 +593,11 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (this.children.size() > 1) {
+        if (this.getChildren().size() > 1) {
             // for now, only consider max over a sequence
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

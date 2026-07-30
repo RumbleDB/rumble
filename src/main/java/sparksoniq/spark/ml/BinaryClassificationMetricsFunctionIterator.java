@@ -35,12 +35,12 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        JavaRDD<Item> scoresAndLabels = this.children.get(0).getRDD(context);
-        String scoreCol = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
-        String labelCol = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+        JavaRDD<Item> scoresAndLabels = this.getChild(0).getRDD(context);
+        String scoreCol = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+        String labelCol = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
         int numBins = -1;
-        if (this.children.size() > 3) {
-            numBins = this.children.get(3).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 3) {
+            numBins = this.getChild(3).materializeFirstItemOrNull(context).getIntValue();
         }
         JavaPairRDD<Object, Object> predictionAndLabels = scoresAndLabels.mapToPair(
             p -> new Tuple2<>(
@@ -58,46 +58,41 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         objectItem.putItemByKey("areaUnderPR", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderPR()));
         objectItem.putItemByKey("areaUnderROC", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderROC()));
         JavaRDD<Item> rdd = tupleToArrays(bcm.pr().toJavaRDD(), "recall", "precision");
+
+        RuntimeStaticContext staticContext = this.staticContext
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("object*"))
+            .executionMode(ExecutionMode.RDD)
+            .metadata(getMetadata())
+            .build();
+
         RuntimeIterator it = new ConstantRDDRuntimeIterator(
                 rdd,
-                this.staticContext.withStaticType(
-                    SequenceType.createSequenceType("object*")
-                ).withExecutionMode(ExecutionMode.RDD).withMetadata(getMetadata())
+                staticContext
         );
         objectItem.putLazyItemByKey("pr", it, context, true);
         rdd = tupleToArrays(bcm.fMeasureByThreshold().toJavaRDD(), "threshold", "F-Measure");
         it = new ConstantRDDRuntimeIterator(
                 rdd,
-                this.staticContext.withStaticType(
-                    SequenceType.createSequenceType("object*")
-                ).withExecutionMode(ExecutionMode.RDD).withMetadata(getMetadata())
+                staticContext
         );
         objectItem.putLazyItemByKey("fMeasureByThreshold", it, context, true);
         rdd = tupleToArrays(bcm.precisionByThreshold().toJavaRDD(), "threshold", "precision");
         it = new ConstantRDDRuntimeIterator(
                 rdd,
-                this.staticContext.withStaticType(
-                    SequenceType.createSequenceType("object*")
-                ).withExecutionMode(ExecutionMode.RDD).withMetadata(getMetadata())
+                staticContext
         );
         objectItem.putLazyItemByKey("precisionByThreshold", it, context, true);
         rdd = tupleToArrays(bcm.recallByThreshold().toJavaRDD(), "threshold", "recall");
         it = new ConstantRDDRuntimeIterator(
                 rdd,
-                this.staticContext
-                    .withStaticType(
-                        SequenceType.createSequenceType("object*")
-                    )
-                    .withExecutionMode(ExecutionMode.RDD)
-                    .withMetadata(getMetadata())
+                staticContext
         );
         objectItem.putLazyItemByKey("recallByThreshold", it, context, true);
         rdd = tupleToArrays(bcm.roc().toJavaRDD(), "false positive rate", "true positive rate");
         it = new ConstantRDDRuntimeIterator(
                 rdd,
-                this.staticContext.withStaticType(
-                    SequenceType.createSequenceType("object*")
-                ).withExecutionMode(ExecutionMode.RDD).withMetadata(getMetadata())
+                staticContext
         );
         objectItem.putLazyItemByKey("roc", it, context, true);
 

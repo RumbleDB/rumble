@@ -24,9 +24,9 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator mainIterator;
-    private RuntimeIterator locatorIterator;
-    private RuntimeIterator nameIterator;
+    private final RuntimeIterator mainIterator;
+    private final RuntimeIterator locatorIterator;
+    private final RuntimeIterator nameIterator;
 
     public RenameExpressionIterator(
             RuntimeIterator mainIterator,
@@ -34,12 +34,14 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator nameIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(mainIterator, locatorIterator, nameIterator), staticContext);
+        super(
+            Arrays.asList(mainIterator, locatorIterator, nameIterator),
+            staticContext.toBuilder().isUpdating(true).build()
+        );
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.nameIterator = nameIterator;
-        this.isUpdating = true;
     }
 
     @Override

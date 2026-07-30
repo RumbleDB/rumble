@@ -27,9 +27,9 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator mainIterator;
-    private RuntimeIterator toInsertIterator;
-    private RuntimeIterator positionIterator;
+    private final RuntimeIterator mainIterator;
+    private final RuntimeIterator toInsertIterator;
+    private final RuntimeIterator positionIterator;
 
     public InsertExpressionIterator(
             RuntimeIterator mainIterator,
@@ -41,13 +41,12 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
             positionIterator == null
                 ? Arrays.asList(mainIterator, toInsertIterator)
                 : Arrays.asList(mainIterator, toInsertIterator, positionIterator),
-            staticContext
+            staticContext.toBuilder().isUpdating(true).build()
         );
 
         this.mainIterator = mainIterator;
         this.toInsertIterator = toInsertIterator;
         this.positionIterator = positionIterator;
-        this.isUpdating = true;
     }
 
     public boolean hasPositionIterator() {

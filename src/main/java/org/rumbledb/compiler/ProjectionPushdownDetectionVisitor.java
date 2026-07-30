@@ -276,7 +276,7 @@ public class ProjectionPushdownDetectionVisitor
 
     public static class ReferenceMap {
 
-        private Map<Name, ReferenceMap> map;
+        private final Map<Name, ReferenceMap> map;
 
         public ReferenceMap() {
             this.map = new HashMap<>();

@@ -61,11 +61,11 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
         Item path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         try {
             URI uri = FileSystemUtil.resolveURI(
-                this.staticURI,
+                this.staticContext.getStaticURI(),
                 path.getStringValue(),
                 getMetadata()
             );

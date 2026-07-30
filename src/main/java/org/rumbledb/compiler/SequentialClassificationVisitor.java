@@ -52,7 +52,7 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
 public class SequentialClassificationVisitor extends AbstractNodeVisitor<DescendentSequentialProperties> {
     private final Prolog prolog;
     private int blockLevel;
-    private Map<Name, Integer> variableBlockLevel;
+    private final Map<Name, Integer> variableBlockLevel;
 
     public SequentialClassificationVisitor(Prolog prolog) {
         this.prolog = prolog;

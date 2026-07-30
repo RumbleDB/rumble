@@ -53,7 +53,7 @@ public class FollowingAxisIterator extends AxisIterator {
             }
         }
         for (int i = followingIndex; i > 0 && i < parentChildren.size(); ++i) {
-            followingNodes.addAll(getDescendants(parentChildren.get(i)));
+            followingNodes.addAll(getDescendantsOrSelf(parentChildren.get(i)));
         }
         followingNodes.addAll(getFollowingNodes(parent.parent(), parent));
         return followingNodes;

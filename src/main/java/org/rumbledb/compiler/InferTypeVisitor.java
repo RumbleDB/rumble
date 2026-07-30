@@ -168,7 +168,7 @@ import org.apache.spark.sql.SparkSession;
  */
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private final RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     /**
      * Builds a new visitor.
@@ -2645,7 +2645,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     inferredType = groupByVarExpr.getStaticSequenceType();
                     expectedType = inferredType;
                 } else {
-                    inferredType = ((TreatExpression) groupByVarExpr).getMainExpression().getStaticSequenceType();
+                    inferredType = groupByVarExpr.getStaticSequenceType();
                     expectedType = declaredType;
                 }
                 checkAndUpdateVariableStaticType(

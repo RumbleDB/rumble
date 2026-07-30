@@ -49,8 +49,8 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private long left;
     private long right;
     private long index;
@@ -109,6 +109,12 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         }
         if (left == null || right == null) {
             return false;
+        }
+        if (left.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createIntegerItem(left.castToIntegerValue());
+        }
+        if (right.isUntypedAtomic()) {
+            right = ItemFactory.getInstance().createIntegerItem(right.castToIntegerValue());
         }
         if (
             !(left.isInteger())

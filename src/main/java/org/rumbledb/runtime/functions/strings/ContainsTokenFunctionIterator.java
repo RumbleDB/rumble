@@ -3,12 +3,12 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnimplementedFunctionException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
+import java.util.Comparator;
 import java.util.List;
 
 public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -24,20 +24,26 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.children.size() == 3) {
-            throw new UnimplementedFunctionException("fn:contains-token#3", getMetadata());
-        }
-
         String token = getNormalizedToken(context);
         if (token.isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
 
-        return ItemFactory.getInstance().createBooleanItem(inputContainsToken(context, token));
+        Comparator<String> comparator = resolveComparator(context);
+        return ItemFactory.getInstance().createBooleanItem(inputContainsToken(context, token, comparator));
+    }
+
+    private Comparator<String> resolveComparator(DynamicContext context) {
+        if (this.getChildren().size() < 3) {
+            return null;
+        }
+        Item collationItem = this.getChild(2).materializeFirstItemOrNull(context);
+        String collationUri = collationItem == null ? null : collationItem.getStringValue();
+        return CollationResolver.resolve(collationUri, getMetadata());
     }
 
     private String getNormalizedToken(DynamicContext context) {
-        Item tokenItem = this.children.get(1).materializeFirstItemOrNull(context);
+        Item tokenItem = this.getChild(1).materializeFirstItemOrNull(context);
         return trimXmlWhitespace(tokenItem.getStringValue());
     }
 
@@ -57,29 +63,32 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
         return character == ' ' || character == '\t' || character == '\n' || character == '\r';
     }
 
-    private boolean inputContainsToken(DynamicContext context, String token) {
-        RuntimeIterator inputIterator = this.children.get(0);
+    private boolean inputContainsToken(DynamicContext context, String token, Comparator<String> comparator) {
+        RuntimeIterator inputIterator = this.getChild(0);
         inputIterator.open(context);
         try {
-            return iteratorContainsToken(inputIterator, token);
+            return iteratorContainsToken(inputIterator, token, comparator);
         } finally {
             inputIterator.close();
         }
     }
 
-    private boolean iteratorContainsToken(RuntimeIterator inputIterator, String token) {
+    private boolean iteratorContainsToken(RuntimeIterator inputIterator, String token, Comparator<String> comparator) {
         while (inputIterator.hasNext()) {
             Item inputItem = inputIterator.next();
             String[] inputTokens = inputItem.getStringValue().split("[\\t\\n\\r ]+");
-            if (isTokenInSequence(inputTokens, token))
+            if (isTokenInSequence(inputTokens, token, comparator))
                 return true;
         }
         return false;
     }
 
-    private static boolean isTokenInSequence(String[] inputTokens, String token) {
+    private static boolean isTokenInSequence(String[] inputTokens, String token, Comparator<String> comparator) {
         for (String inputToken : inputTokens) {
-            if (inputToken.equals(token)) {
+            boolean matches = comparator == null
+                ? inputToken.equals(token)
+                : comparator.compare(inputToken, token) == 0;
+            if (matches) {
                 return true;
             }
         }

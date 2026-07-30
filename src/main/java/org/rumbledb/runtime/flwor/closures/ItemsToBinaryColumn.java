@@ -36,7 +36,7 @@ public class ItemsToBinaryColumn implements Function<Item, Row> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private DataFrameContext dataFrameContext;
+    private final DataFrameContext dataFrameContext;
 
     public ItemsToBinaryColumn() {
         this.dataFrameContext = new DataFrameContext();

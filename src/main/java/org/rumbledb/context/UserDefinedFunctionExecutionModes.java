@@ -36,9 +36,9 @@ public class UserDefinedFunctionExecutionModes {
 
     // two maps for User defined function are needed as execution mode is known at static analysis phase
     // but functions items are fully known at runtimeIterator generation
-    private HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
-    private HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
-    private List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
+    private final HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
+    private final HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
+    private final List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
     private String queryLanguage;
 
     public UserDefinedFunctionExecutionModes() {
