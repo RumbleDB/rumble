@@ -23,7 +23,6 @@ package org.rumbledb.runtime.flwor.udfs;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.util.DefaultInstantiatorStrategy;
 
 import lombok.Getter;
 import org.apache.spark.sql.Row;
@@ -174,7 +173,7 @@ public class DataFrameContext implements Serializable {
     private void initializeKryo() {
         this.kryo = new Kryo();
         this.kryo.setInstantiatorStrategy(
-            new DefaultInstantiatorStrategy(new StdInstantiatorStrategy())
+            new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy())
         );
         this.kryo.setReferences(true);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
