@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.block;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
@@ -8,6 +9,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class BlockStatement extends Statement {
     private final List<Statement> blockStatements;
 
@@ -48,7 +50,4 @@ public class BlockStatement extends Statement {
         }
     }
 
-    public List<Statement> getBlockStatements() {
-        return this.blockStatements;
-    }
 }

@@ -1,5 +1,8 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
+import lombok.Getter;
+
+@Getter
 public class FormatIntegerPicture {
 
     private final PrimaryFormatToken primaryFormatToken;
@@ -13,11 +16,4 @@ public class FormatIntegerPicture {
         this.formatModifier = formatModifier;
     }
 
-    public PrimaryFormatToken getPrimaryFormatToken() {
-        return this.primaryFormatToken;
-    }
-
-    public IntegerFormatModifier getFormatModifier() {
-        return this.formatModifier;
-    }
 }

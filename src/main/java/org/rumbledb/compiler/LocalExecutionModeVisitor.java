@@ -34,9 +34,6 @@ public class LocalExecutionModeVisitor extends AbstractNodeVisitor<StaticContext
     LocalExecutionModeVisitor(RumbleConfiguration configuration) {
     }
 
-    void setVisitorConfig(VisitorConfig visitorConfig) {
-    }
-
     @Override
     protected StaticContext defaultAction(Node node, StaticContext argument) {
         visitDescendants(node, argument);

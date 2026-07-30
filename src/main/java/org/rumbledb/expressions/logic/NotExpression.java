@@ -23,6 +23,7 @@ package org.rumbledb.expressions.logic;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -30,6 +31,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
 
+@Getter
 public class NotExpression extends Expression {
 
     private Expression mainExpression;
@@ -45,10 +47,6 @@ public class NotExpression extends Expression {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitNotExpr(this, argument);
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
     }
 
     @Override

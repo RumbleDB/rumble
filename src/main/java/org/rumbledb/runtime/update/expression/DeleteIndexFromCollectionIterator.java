@@ -58,10 +58,6 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
         this.mode = mode;
     }
 
-    public boolean hasPositionIterator() {
-        return false;
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         return null;

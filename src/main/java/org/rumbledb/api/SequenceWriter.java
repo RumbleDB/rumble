@@ -40,7 +40,7 @@ import org.rumbledb.serialization.Serializers;
  * </ul>
  *
  * The serialization method (json, tyson, adaptive, xml-json-hybrid, yaml, delta, ...) is always taken from
- * {@link SerializationParameters#getMethod()}, which is the single source of truth for the output
+ * {@code SerializationParameters#getMethod()}, which is the single source of truth for the output
  * format.
  */
 public class SequenceWriter {

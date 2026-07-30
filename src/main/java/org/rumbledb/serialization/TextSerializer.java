@@ -13,6 +13,8 @@ public class TextSerializer implements Serializer, java.io.Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    @SuppressWarnings("unused")
     private final SerializationParameters params;
 
     public TextSerializer(SerializationParameters params) {

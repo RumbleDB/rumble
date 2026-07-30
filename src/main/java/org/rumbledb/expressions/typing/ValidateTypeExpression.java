@@ -3,6 +3,7 @@ package org.rumbledb.expressions.typing;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -10,6 +11,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
+@Getter
 public class ValidateTypeExpression extends Expression {
 
     private Expression mainExpression;
@@ -39,14 +41,6 @@ public class ValidateTypeExpression extends Expression {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitValidateTypeExpression(this, argument);
-    }
-
-    public SequenceType getSequenceType() {
-        return this.sequenceType;
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
     }
 
     @Override
@@ -89,7 +83,4 @@ public class ValidateTypeExpression extends Expression {
         sb.append(" as {" + this.sequenceType.toString() + "\n}\n");
     }
 
-    public boolean isValidate() {
-        return this.isValidate;
-    }
 }

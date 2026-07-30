@@ -1,5 +1,6 @@
 package org.rumbledb.spark.ml;
 
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -42,6 +43,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     @Serial
     private static final long serialVersionUID = 1L;
     private final String estimatorShortName;
+    @Getter
     private final Estimator<?> estimator;
 
     private JSoundDataFrame inputDataset;
@@ -55,10 +57,6 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         super(null, staticContext);
         this.estimatorShortName = estimatorShortName;
         this.estimator = estimator;
-    }
-
-    public Estimator<?> getEstimator() {
-        return this.estimator;
     }
 
     @Override

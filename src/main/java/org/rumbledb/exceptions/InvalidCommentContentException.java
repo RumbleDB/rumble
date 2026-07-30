@@ -41,12 +41,5 @@ public class InvalidCommentContentException extends RumbleException {
             metadata
         );
     }
-
-    public InvalidCommentContentException(String content) {
-        super(
-            "Dynamic error; invalid comment content: \"" + content + "\"",
-            ErrorCode.InvalidCommentContentErrorCode
-        );
-    }
 }
 

@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import lombok.Getter;
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -81,9 +82,12 @@ public class ForClauseIterator extends RuntimeTupleIterator {
     private static final long serialVersionUID = 1L;
 
     // Properties
+    @Getter
     private final Name variableName; // for efficient use in local iteration
+    @Getter
     private final Name positionalVariableName; // for efficient use in local iteration
     private final RuntimeIterator assignmentIterator;
+    @Getter
     private final boolean allowingEmpty;
     private final DataFrameContext dataFrameContext;
 
@@ -109,22 +113,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         this.allowingEmpty = allowingEmpty;
         this.assignmentIterator.getVariableDependencies();
         this.dataFrameContext = new DataFrameContext();
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public Name getPositionalVariableName() {
-        return this.positionalVariableName;
-    }
-
-    public RuntimeIterator getAssignmentIterator() {
-        return this.assignmentIterator;
-    }
-
-    public boolean isAllowingEmpty() {
-        return this.allowingEmpty;
     }
 
     @Override

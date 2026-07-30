@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -49,6 +50,11 @@ public class SequenceOfItems {
     private final RuntimeIterator iterator;
     private final DynamicContext dynamicContext;
     private final RumbleConfiguration configuration;
+
+    /**
+     * Checks whether the iterator is open.
+     */
+    @Getter
     private boolean isOpen;
     private List<Item> cachedItems;
 
@@ -81,15 +87,6 @@ public class SequenceOfItems {
         }
         this.iterator.open(this.dynamicContext);
         this.isOpen = true;
-    }
-
-    /**
-     * Checks whether the iterator is open.
-     *
-     * @return true if it is open, false if it is closed.
-     */
-    public boolean isOpen() {
-        return this.isOpen;
     }
 
     /**

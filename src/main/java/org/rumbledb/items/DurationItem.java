@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -14,13 +15,12 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
-public class DurationItem implements Item {
+@NoArgsConstructor // For Kryo serialization
+public class DurationItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -30,17 +30,11 @@ public class DurationItem implements Item {
         "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
     );
 
-    public DurationItem() {
-        super();
-    }
-
     public DurationItem(Duration value) {
-        super();
         this.durationValue = value;
     }
 
     public DurationItem(Period value) {
-        super();
         this.periodValue = value;
     }
 
@@ -60,20 +54,6 @@ public class DurationItem implements Item {
             return new DurationItem(this.periodValue);
         }
         throw new IllegalStateException("Invalid DurationItem state");
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
@@ -119,13 +99,6 @@ public class DurationItem implements Item {
     public boolean getEffectiveBooleanValue() {
         return false;
     }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.durationValue, this.periodValue);
-    }
-
-
 
     private void getDurationFromString(String durationPeriodString) {
         try {

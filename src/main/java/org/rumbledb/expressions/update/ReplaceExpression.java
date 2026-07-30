@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.update;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -9,6 +10,7 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class ReplaceExpression extends Expression {
 
     private Expression mainExpression;
@@ -39,18 +41,6 @@ public class ReplaceExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.mainExpression, this.locatorExpression, this.replacerExpression);
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
-
-    public Expression getLocatorExpression() {
-        return this.locatorExpression;
-    }
-
-    public Expression getReplacerExpression() {
-        return this.replacerExpression;
     }
 
     @Override

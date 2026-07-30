@@ -21,6 +21,7 @@
 package org.rumbledb.runtime;
 
 
+import lombok.Getter;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -47,12 +48,21 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
     @Serial
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+
+    @Getter
     private final RuntimeStaticContext staticContext;
     protected final RuntimeTupleIterator child;
+
+    /**
+     * Limit on how deep the evaluation occurs.
+     * If it is 0, the clause ignores its child (this is for join purposes).
+     */
+    @Getter
     protected int evaluationDepthLimit;
 
     protected transient DynamicContext currentDynamicContext;
     protected transient boolean hasNext;
+    @Getter
     protected transient boolean isOpen;
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
@@ -90,11 +100,6 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         this.child.close();
     }
 
-
-
-    public boolean isOpen() {
-        return this.isOpen;
-    }
 
     @Override
     public boolean hasNext() {
@@ -200,16 +205,6 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
      */
     public Set<Name> getOutputTupleVariableNames() {
         return new HashSet<Name>();
-    }
-
-    /**
-     * Returns the limit on how deep the evaluation occurs.
-     * If it is 0, the clause ignores its child (this is for join purposes).
-     * 
-     * @return The evaluation depth limit. -1 if none.
-     */
-    public int getEvaluationDepthLimit() {
-        return this.evaluationDepthLimit;
     }
 
     /**
@@ -392,12 +387,4 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         return NativeClauseContext.NoNativeQuery;
     }
 
-    /**
-     * Returns the runtime static context of the clause.
-     * 
-     * @return the static context of the clause.
-     */
-    public RuntimeStaticContext getStaticContext() {
-        return this.staticContext;
-    }
 }

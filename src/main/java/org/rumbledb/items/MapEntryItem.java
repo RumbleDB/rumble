@@ -37,7 +37,7 @@ import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
 
-public class MapEntryItem implements Item {
+public class MapEntryItem extends AbstractMapItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -47,11 +47,6 @@ public class MapEntryItem implements Item {
      */
     private final Item key;
     private final List<Item> value;
-
-    public MapEntryItem() {
-        this.key = null;
-        this.value = Collections.emptyList();
-    }
 
     public MapEntryItem(Item key, List<Item> value) {
         this.key = key;
@@ -107,7 +102,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
-        return new ItemSameKeyComparator().compare(this.key, key) == 0;
+        return AtomicItemEquivalence.equivalent(this.key, key);
     }
 
     @Override
@@ -127,7 +122,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (new ItemSameKeyComparator().compare(key, this.key) == 0) {
+        if (AtomicItemEquivalence.equivalent(key, this.key)) {
             if (this.value.size() != 1) {
                 throw new OurBadException("Map contains non-singleton values.");
             }
@@ -143,7 +138,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (new ItemSameKeyComparator().compare(key, this.key) == 0) {
+        if (AtomicItemEquivalence.equivalent(key, this.key)) {
             return this.value;
         }
         return null;
@@ -331,38 +326,4 @@ public class MapEntryItem implements Item {
         throw new OurBadException("Cannot change collection of a MapEntryItem, which is not mutable.");
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isObject()) {
-            return false;
-        }
-        List<Item> otherSequence = otherItem.getSequenceByKey(this.key);
-        if (otherSequence == null || this.value.size() != otherSequence.size()) {
-            return false;
-        }
-        for (int i = 0; i < this.value.size(); i++) {
-            if (!this.value.get(i).equals(otherSequence.get(i))) {
-                return false;
-            }
-        }
-        for (Item key : otherItem.getItemKeys()) {
-            if (getSequenceByKey(key) == null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = this.value.size();
-        result += this.key.hashCode();
-        for (Item value : this.value) {
-            result += value.hashCode();
-        }
-        return result;
-    }
 }

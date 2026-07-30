@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.util.ArrayList;
@@ -42,17 +43,13 @@ public class FlworKey {
 
     }
 
-    List<Item> getKeyItems() {
-        return this.keyItems;
-    }
-
     @Override
     public int hashCode() {
-        StringBuilder result = new StringBuilder();
+        int result = 1;
         for (Item key : this.keyItems) {
-            result.append(key.hashCode());
+            result = 31 * result + AtomicValueComparison.hash(key);
         }
-        return result.toString().hashCode();
+        return result;
     }
 
     @Override
@@ -91,13 +88,7 @@ public class FlworKey {
                 throw new OurBadException("Non atomic key not allowed");
             }
 
-            long comparison = ComparisonIterator.compareItems(
-                item1,
-                item2,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            if (comparison != 0) {
+            if (!AtomicValueComparison.equal(item1, item2)) {
                 return false;
             }
 

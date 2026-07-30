@@ -9,7 +9,6 @@ public class GeneratedRandomIntegersIterator extends GeneratedRandomsIterator {
     private final PrimitiveIterator.OfInt iterator;
 
     public GeneratedRandomIntegersIterator(int size, int low, int high) {
-        super();
         this.iterator = this.random.ints(size, low, high).iterator();
     }
 

@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.control;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
@@ -12,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Getter
 public class TryCatchStatement extends Statement {
     private final BlockStatement tryStatement;
     private final Map<CatchPattern, BlockStatement> catchStatements;
@@ -26,25 +28,8 @@ public class TryCatchStatement extends Statement {
         this.catchStatements = new LinkedHashMap<>(catchStatements);
     }
 
-    public BlockStatement getTryStatement() {
-        return this.tryStatement;
-    }
-
-    public Map<CatchPattern, BlockStatement> getCatchStatements() {
-        return this.catchStatements;
-    }
-
     public List<CatchPattern> getCatchPatterns() {
         return new ArrayList<>(this.catchStatements.keySet());
-    }
-
-    public boolean catchesAll() {
-        for (CatchPattern pattern : this.catchStatements.keySet()) {
-            if (pattern.isCatchAll()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public BlockStatement getCatchAllStatement() {

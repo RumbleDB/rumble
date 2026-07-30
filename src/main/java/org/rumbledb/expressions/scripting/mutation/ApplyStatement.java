@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.mutation;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -9,6 +10,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import java.util.Collections;
 import java.util.List;
 
+@Getter
 public class ApplyStatement extends Statement {
     private final Expression applyExpression;
 
@@ -35,7 +37,4 @@ public class ApplyStatement extends Statement {
         this.applyExpression.serializeToJSONiq(sb, 0);
     }
 
-    public Expression getApplyExpression() {
-        return this.applyExpression;
-    }
 }

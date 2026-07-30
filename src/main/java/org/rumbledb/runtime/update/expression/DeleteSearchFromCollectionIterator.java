@@ -32,10 +32,6 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
         this.contentIterator = contentIterator;
     }
 
-    public boolean hasPositionIterator() {
-        return false;
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         return null;

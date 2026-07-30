@@ -1,5 +1,6 @@
 package org.rumbledb.spark.ml;
 
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.linalg.VectorUDT;
@@ -35,6 +36,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     private final String transformerShortName;
+    @Getter
     private final Transformer transformer;
 
     private JSoundDataFrame inputDataset;
@@ -49,10 +51,6 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         super(null, staticContext);
         this.transformerShortName = transformerShortName;
         this.transformer = transformer;
-    }
-
-    public Transformer getTransformer() {
-        return this.transformer;
     }
 
     @Override

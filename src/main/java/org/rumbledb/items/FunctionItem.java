@@ -20,6 +20,8 @@
 
 package org.rumbledb.items;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +50,7 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // For Kryo serialization
 public class FunctionItem implements Item {
 
     @Serial
@@ -75,10 +78,6 @@ public class FunctionItem implements Item {
      * When true, this item was created for a builtin named function reference ({@code name#arity}).
      */
     private boolean isBuiltin;
-
-    protected FunctionItem() {
-        super();
-    }
 
     /**
      * Creates a new function value for a named-function lookup. The function body factory is immutable: ordinary
@@ -277,8 +276,8 @@ public class FunctionItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        // functions can not be compared
-        return false;
+        // XDM functions have no value equality, so Java collections use object identity.
+        return this == other;
     }
 
     @Override
@@ -333,9 +332,7 @@ public class FunctionItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.identifier.hashCode()
-            + String.join("", this.parameterNames.toString()).hashCode()
-            + this.signature.hashCode();
+        return System.identityHashCode(this);
     }
 
     @Override
@@ -414,11 +411,6 @@ public class FunctionItem implements Item {
             return coercionRuntimeIterator.getCallableItem().getTransformer();
         }
         throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
-    }
-
-
-    public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
-        this.dynamicModuleContext = dynamicModuleContext;
     }
 
     @Override

@@ -36,7 +36,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
 
-public class ArrayItem implements Item {
+public class ArrayItem extends AbstractArrayItem {
 
 
     @Serial
@@ -49,7 +49,6 @@ public class ArrayItem implements Item {
     private Collection collection;
 
     public ArrayItem() {
-        super();
         this.arrayItems = new ArrayList<>();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
@@ -59,7 +58,6 @@ public class ArrayItem implements Item {
     }
 
     public ArrayItem(List<Item> arrayItems) {
-        super();
         this.arrayItems = arrayItems;
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
@@ -79,24 +77,6 @@ public class ArrayItem implements Item {
             copy.setMutabilityLevel(0);
         }
         return copy;
-    }
-
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isArray()) {
-            return false;
-        }
-        if (getSize() != otherItem.getSize()) {
-            return false;
-        }
-        for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(otherItem.getItemAt(i))) {
-                return false;
-            }
-        }
-        return true;
     }
 
     // region arrays
@@ -208,14 +188,6 @@ public class ArrayItem implements Item {
     // endregion arrays
 
 
-
-    public int hashCode() {
-        int result = 1;
-        for (int i = 0; i < getSize(); ++i) {
-            result = 31 * result + getItemAt(i).hashCode();
-        }
-        return result;
-    }
 
     @Override
     public ItemType getDynamicType() {

@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.update;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -9,6 +10,7 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class InsertSearchIntoCollectionExpression extends Expression {
     private Expression targetExpression;
     private Expression contentExpression;
@@ -30,18 +32,6 @@ public class InsertSearchIntoCollectionExpression extends Expression {
         this.targetExpression = targetExpression;
         this.contentExpression = contentExpression;
         this.isBefore = isBefore;
-    }
-
-    public Expression getTargetExpression() {
-        return this.targetExpression;
-    }
-
-    public Expression getContentExpression() {
-        return this.contentExpression;
-    }
-
-    public boolean isBefore() {
-        return this.isBefore;
     }
 
     @Override

@@ -25,6 +25,8 @@ import java.io.Serializable;
 
 import lombok.EqualsAndHashCode;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.Name;
@@ -51,7 +53,10 @@ public class FlworDataFrameColumn implements Serializable {
         AVERAGE
     };
 
+    @Setter
+    @Getter
     private String tableName;
+    @Getter
     private Name variableName;
     private ColumnFormat columnFormat;
 
@@ -152,14 +157,6 @@ public class FlworDataFrameColumn implements Serializable {
         return "`" + getColumnName() + "`";
     }
 
-    public String getTableName() {
-        return this.tableName;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
     public String getColumnName() {
         switch (this.columnFormat) {
             case SERIALIZED_SEQUENCE:
@@ -212,10 +209,6 @@ public class FlworDataFrameColumn implements Serializable {
 
     public boolean isAverage() {
         return this.columnFormat.equals(ColumnFormat.AVERAGE);
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
     }
 
 }

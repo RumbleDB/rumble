@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.UDFRegistration;
@@ -20,7 +21,10 @@ public class FlworDataFrame implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @Getter
     private Dataset<Row> dataFrame;
+
+    @Getter
     private List<FlworDataFrameColumn> columns;
     private Map<Name, SequenceType> columnTypes;
 
@@ -35,14 +39,6 @@ public class FlworDataFrame implements Serializable {
         for (String c : schema.fieldNames()) {
             this.columns.add(new FlworDataFrameColumn(c, schema));
         }
-    }
-
-    public Dataset<Row> getDataFrame() {
-        return this.dataFrame;
-    }
-
-    public List<FlworDataFrameColumn> getColumns() {
-        return this.columns;
     }
 
     public List<Name> getVariableNames() {

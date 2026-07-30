@@ -1,8 +1,11 @@
 package org.rumbledb.context;
 
+import lombok.Getter;
+
 import java.io.Serial;
 import java.io.Serializable;
 
+@Getter
 public class DecimalFormatDefinition implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -79,50 +82,6 @@ public class DecimalFormatDefinition implements Serializable {
         this.optionalDigit = optionalDigit;
         this.patternSeparator = patternSeparator;
         this.exponentSeparator = exponentSeparator;
-    }
-
-    public int getDecimalSeparator() {
-        return this.decimalSeparator;
-    }
-
-    public String getInfinity() {
-        return this.infinity;
-    }
-
-    public int getGroupingSeparator() {
-        return this.groupingSeparator;
-    }
-
-    public String getNanSymbol() {
-        return this.nanSymbol;
-    }
-
-    public int getPercent() {
-        return this.percent;
-    }
-
-    public int getPerMille() {
-        return this.perMille;
-    }
-
-    public int getZeroDigit() {
-        return this.zeroDigit;
-    }
-
-    public int getOptionalDigit() {
-        return this.optionalDigit;
-    }
-
-    public int getPatternSeparator() {
-        return this.patternSeparator;
-    }
-
-    public int getMinusSign() {
-        return this.minusSign;
-    }
-
-    public int getExponentSeparator() {
-        return this.exponentSeparator;
     }
 
     @Override

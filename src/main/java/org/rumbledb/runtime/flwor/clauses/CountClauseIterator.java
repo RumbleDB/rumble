@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import lombok.Getter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
@@ -55,6 +56,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private final Name variableName;
     private FlworTuple nextLocalTupleResult;
     private int currentCountIndex;
@@ -67,10 +69,6 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         super(child, staticContext);
         this.variableName = variableName;
         this.currentCountIndex = 1; // indices start at 1 in JSONiq
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
     }
 
     @Override

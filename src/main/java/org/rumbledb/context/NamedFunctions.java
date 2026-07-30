@@ -62,10 +62,6 @@ public class NamedFunctions implements Serializable {
         this.userDefinedFunctions = new HashMap<>();
     }
 
-    public void clearUserDefinedFunctions() {
-        this.userDefinedFunctions.clear();
-    }
-
     /**
      * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()} (same as
      * {@link org.rumbledb.runtime.RuntimeIterator#getHighestExecutionMode()} for iterators constructed with that

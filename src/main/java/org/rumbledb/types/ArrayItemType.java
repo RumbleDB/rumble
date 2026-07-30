@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -12,7 +13,8 @@ import org.rumbledb.exceptions.OurBadException;
 import java.io.Serial;
 import java.util.*;
 
-public class ArrayItemType implements ItemType {
+@NoArgsConstructor
+public class ArrayItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -34,10 +36,6 @@ public class ArrayItemType implements ItemType {
     private ItemType content;
     private List<Item> enumeration;
     private Integer minLength, maxLength;
-
-    ArrayItemType() {
-        super();
-    }
 
     ArrayItemType(
             Name name,
@@ -76,18 +74,6 @@ public class ArrayItemType implements ItemType {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        if (itemType.isXQueryArrayItemType()) {
-            // delegate to the XQuery array item type equality check
-            return other.equals(this);
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
     public boolean isArrayItemType() {
         return true;
     }
@@ -113,7 +99,7 @@ public class ArrayItemType implements ItemType {
             );
             return xqueryArrayType.isSubtypeOf(superType);
         }
-        return ItemType.super.isSubtypeOf(superType);
+        return super.isSubtypeOf(superType);
     }
 
     @Override
