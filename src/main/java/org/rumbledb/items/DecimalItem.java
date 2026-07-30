@@ -47,7 +47,6 @@ public class DecimalItem extends AbstractAtomicItem {
     }
 
     public DecimalItem(BigDecimal decimal, String displayValue) {
-        super();
         this.value = decimal;
         this.displayValue = displayValue;
     }
