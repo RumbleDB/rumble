@@ -1,6 +1,7 @@
 package org.rumbledb.items;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -53,7 +54,14 @@ public class UntypedAtomicItem implements Item {
         if (trimmedValue.equals("NaN")) {
             return Double.NaN;
         }
-        return Double.parseDouble(this.getValue());
+        try {
+            return Double.parseDouble(trimmedValue);
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:double.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
     }
 
     @Override
@@ -68,25 +76,54 @@ public class UntypedAtomicItem implements Item {
         if (trimmedValue.equals("NaN")) {
             return Float.NaN;
         }
-        if (trimmedValue.startsWith("-") && Float.parseFloat(this.getValue()) == -0f) {
-            return -0f;
+        try {
+            float parsedValue = Float.parseFloat(trimmedValue);
+            if (trimmedValue.startsWith("-") && parsedValue == -0f) {
+                return -0f;
+            }
+            return parsedValue;
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:float.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
-        return Float.parseFloat(this.getValue());
     }
 
     @Override
     public BigDecimal castToDecimalValue() {
-        return new BigDecimal(this.value.trim());
+        try {
+            return new BigDecimal(this.value.trim());
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:decimal.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
     }
 
     @Override
     public BigInteger castToIntegerValue() {
-        return new BigInteger(this.value.trim());
+        try {
+            return new BigInteger(this.value.trim());
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:integer.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
     }
 
     @Override
     public int castToIntValue() {
-        return Integer.parseInt(this.value.trim());
+        try {
+            return Integer.parseInt(this.value.trim());
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:int.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
     }
 
     @Override
@@ -144,5 +181,4 @@ public class UntypedAtomicItem implements Item {
         return "STRING";
     }
 }
-
 
