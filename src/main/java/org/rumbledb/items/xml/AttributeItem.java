@@ -13,7 +13,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class AttributeItem implements Item {
+public class AttributeItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
     private Name dmNodeName;
@@ -153,20 +153,6 @@ public class AttributeItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof AttributeItem otherAttributeItem)) {
-            return false;
-        }
-        if (this.documentPos == null || otherAttributeItem.documentPos == null) {
-            return false;
-        }
-        return this.documentPos.equals(otherAttributeItem.documentPos);
-    }
-
-    @Override
     public boolean isNode() {
         return true;
     }
@@ -174,14 +160,6 @@ public class AttributeItem implements Item {
     @Override
     public boolean isAttributeNode() {
         return true;
-    }
-
-    @Override
-    public int hashCode() {
-        if (this.documentPos == null) {
-            return System.identityHashCode(this);
-        }
-        return this.documentPos.hashCode();
     }
 
     @Override

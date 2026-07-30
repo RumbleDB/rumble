@@ -27,7 +27,7 @@ import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
 
-public class BooleanItem implements Item {
+public class BooleanItem extends AbstractAtomicItem {
 
 
     @Serial
@@ -78,20 +78,6 @@ public class BooleanItem implements Item {
     }
 
 
-
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isBoolean()) {
-            return false;
-        }
-        return (getBooleanValue() == otherItem.getBooleanValue());
-    }
-
-    public int hashCode() {
-        return getBooleanValue() ? 1 : 0;
-    }
 
     @Override
     public ItemType getDynamicType() {

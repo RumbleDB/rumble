@@ -15,7 +15,7 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
-public class DerivedAtomicItemType implements ItemType {
+public class DerivedAtomicItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -99,22 +99,6 @@ public class DerivedAtomicItemType implements ItemType {
         // to baseType
         this(name, baseType, null, facets, isUserDefined);
     }
-
-
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name != null ? this.name.hashCode() : super.hashCode();
-    }
-
 
     @Override
     public boolean isAtomicItemType() {

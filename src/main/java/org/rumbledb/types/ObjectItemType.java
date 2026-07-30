@@ -21,7 +21,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
-public class ObjectItemType implements ItemType {
+public class ObjectItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -96,18 +96,6 @@ public class ObjectItemType implements ItemType {
 
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        if (itemType.isMapItemType()) {
-            // delegate to the map item type equality check
-            return other.equals(this);
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
     public boolean isObjectItemType() {
         return true;
     }
@@ -170,7 +158,7 @@ public class ObjectItemType implements ItemType {
             // js:object = map(xs:string, item)
             return this.getObjectAsMapType().isSubtypeOf(superType);
         }
-        return ItemType.super.isSubtypeOf(superType);
+        return super.isSubtypeOf(superType);
     }
 
     @Override
@@ -186,7 +174,7 @@ public class ObjectItemType implements ItemType {
             // js:object = map(xs:string, item)
             return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
         }
-        return ItemType.super.findLeastCommonSuperTypeWith(other);
+        return super.findLeastCommonSuperTypeWith(other);
     }
 
     private ItemType getObjectAsMapType() {

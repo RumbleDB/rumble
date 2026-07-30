@@ -37,7 +37,7 @@ import static org.rumbledb.types.BuiltinTypesCatalogue.yearMonthDurationItem;
 /**
  * This class describes all the primitive built-in atomic types in the JSONiq data model.
  */
-public class AtomicItemType implements ItemType {
+public class AtomicItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -104,19 +104,6 @@ public class AtomicItemType implements ItemType {
     }
 
 
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name != null ? this.name.hashCode() : super.hashCode();
-    }
 
     @Override
     public boolean isAtomicItemType() {

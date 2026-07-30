@@ -11,7 +11,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class NamespaceItem implements Item {
+public class NamespaceItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
     private String prefix;
@@ -129,19 +129,6 @@ public class NamespaceItem implements Item {
     @Override
     public String nodeKind() {
         return "namespace";
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof NamespaceItem otherNamespaceItem)) {
-            return false;
-        }
-        return this.getXmlDocumentPosition().equals(otherNamespaceItem.getXmlDocumentPosition());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.documentPos.hashCode();
     }
 
     @Override

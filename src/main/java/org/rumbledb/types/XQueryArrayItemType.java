@@ -10,7 +10,6 @@ import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serial;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -19,7 +18,7 @@ import java.util.Set;
  * The primitive array(*) type is modeled as a subtype of function(*)
  * by using {@link BuiltinTypesCatalogue#anyFunctionItem} as its base type.
  */
-public class XQueryArrayItemType implements ItemType {
+public class XQueryArrayItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -73,33 +72,20 @@ public class XQueryArrayItemType implements ItemType {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
+    protected Object equalityKey() {
+        if (
+            this.name == null
+                && BuiltinTypesCatalogue.xqueryArrayItem.equals(this.baseType)
+                && SequenceType.createSequenceType("item").equals(this.memberSequenceType)
+        ) {
+            return namedTypeKey(new Name(Name.JS_NS, "js", "array"));
         }
-        if (itemType instanceof XQueryArrayItemType arrayItemType) {
-            // structural equality check
-            return this.structurallyEqual(arrayItemType);
-        }
-        if (itemType.isArrayItemType() && other.equals(BuiltinTypesCatalogue.arrayItem)) {
-            // js:array() = array(item)
-            ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(
-                SequenceType.createSequenceType("item")
-            );
-            return this.equals(arrayItemType);
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.name, this.baseType, this.memberSequenceType);
-    }
-
-    boolean structurallyEqual(XQueryArrayItemType o) {
-        return Objects.equals(this.name, o.name)
-            && this.baseType.equals(o.baseType)
-            && this.memberSequenceType.equals(o.memberSequenceType);
+        return structuralTypeKey(
+            XQueryArrayItemType.class,
+            this.name,
+            this.baseType,
+            this.memberSequenceType
+        );
     }
 
     @Override

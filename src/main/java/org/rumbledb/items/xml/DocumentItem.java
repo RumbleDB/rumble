@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class DocumentItem implements Item {
+public class DocumentItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
     private String stringValue;
@@ -127,17 +127,6 @@ public class DocumentItem implements Item {
             return ItemTypeFactory.documentNodeItemType();
         }
         return ItemTypeFactory.documentNodeItemType(this.documentElement.getDynamicType());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof DocumentItem otherDocumentItem)) {
-            return false;
-        }
-        if (this.documentPos == null || otherDocumentItem.documentPos == null) {
-            return this == otherDocumentItem;
-        }
-        return this.getXmlDocumentPosition().equals(otherDocumentItem.getXmlDocumentPosition());
     }
 
     @Override
@@ -289,14 +278,6 @@ public class DocumentItem implements Item {
     @Override
     public List<Item> unparsedEntitySystemId(String name) {
         return Collections.emptyList();
-    }
-
-    @Override
-    public int hashCode() {
-        if (this.documentPos == null) {
-            return System.identityHashCode(this);
-        }
-        return this.documentPos.hashCode();
     }
 
     @Override

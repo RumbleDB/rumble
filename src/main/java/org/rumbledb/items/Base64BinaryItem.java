@@ -1,20 +1,16 @@
 package org.rumbledb.items;
 
 import java.io.Serial;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
-public class Base64BinaryItem implements Item {
+public class Base64BinaryItem extends AbstractAtomicItem {
 
     private static final String B64 = "[A-Za-z0-9+/]";
     private static final String B64S = B64 + "\\s?";
@@ -48,20 +44,6 @@ public class Base64BinaryItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new Base64BinaryItem(this.stringValue);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     public byte[] getValue() {
@@ -108,13 +90,6 @@ public class Base64BinaryItem implements Item {
     public boolean isBase64Binary() {
         return true;
     }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(this.getValue());
-    }
-
-
 
     @Override
     public ItemType getDynamicType() {

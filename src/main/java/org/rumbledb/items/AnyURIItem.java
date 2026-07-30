@@ -25,14 +25,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
-public class AnyURIItem implements Item {
+public class AnyURIItem extends AbstractAtomicItem {
 
 
     @Serial
@@ -58,20 +55,6 @@ public class AnyURIItem implements Item {
         return new AnyURIItem(this.lexicalValue);
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
     static URI parseAnyURIString(String anyURIString) throws IllegalArgumentException {
         if (anyURIString == null)
             throw new IllegalArgumentException();
@@ -90,11 +73,6 @@ public class AnyURIItem implements Item {
     @Override
     public boolean getEffectiveBooleanValue() {
         return !this.lexicalValue.isEmpty();
-    }
-
-    @Override
-    public int hashCode() {
-        return this.lexicalValue.hashCode();
     }
 
     public URI getValue() {

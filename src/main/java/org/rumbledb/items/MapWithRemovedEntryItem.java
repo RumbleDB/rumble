@@ -21,9 +21,9 @@ package org.rumbledb.items;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.rumbledb.api.Item;
@@ -36,7 +36,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
-public class MapWithRemovedEntryItem implements Item {
+public class MapWithRemovedEntryItem extends AbstractMapItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -54,7 +54,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     public MapWithRemovedEntryItem(Item original, List<Item> removedKeys) {
         this.original = original;
-        this.removedKeys = new TreeSet<>(new ItemSameKeyComparator());
+        this.removedKeys = new HashSet<>();
         for (Item key : removedKeys) {
             if (this.original.isObject()) {
                 if (!key.isString() && !key.isUntypedAtomic() && !key.isAnyURI()) {
@@ -237,13 +237,10 @@ public class MapWithRemovedEntryItem implements Item {
 
     // endregion maps
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.mapItem;
     }
-
 
     @Override
     public boolean getEffectiveBooleanValue() {
@@ -345,49 +342,4 @@ public class MapWithRemovedEntryItem implements Item {
         throw new OurBadException("Cannot change collection of a MapEntryItem, which is not mutable.");
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isObject()) {
-            return false;
-        }
-        for (Item key : this.original.getItemKeys()) {
-            if (this.removedKeys.contains(key)) {
-                continue;
-            }
-            List<Item> thisSequence = this.original.getSequenceByKey(key);
-            List<Item> otherSequence = otherItem.getSequenceByKey(key);
-            if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
-                return false;
-            }
-            for (int i = 0; i < thisSequence.size(); i++) {
-                if (!thisSequence.get(i).equals(otherSequence.get(i))) {
-                    return false;
-                }
-            }
-        }
-        for (Item key : otherItem.getItemKeys()) {
-            if (this.removedKeys.contains(key)) {
-                return false;
-            }
-            if (getSequenceByKey(key) == null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = this.getItemKeys().size();
-        for (Item key : this.getItemKeys()) {
-            result += key.hashCode();
-            for (Item value : this.getSequenceByKey(key)) {
-                result += value.hashCode();
-            }
-        }
-        return result;
-    }
 }
