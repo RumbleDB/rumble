@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.List;
 
 @NoArgsConstructor // For Kryo serialization
-public class NamespaceItem implements Item {
 public class NamespaceItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;

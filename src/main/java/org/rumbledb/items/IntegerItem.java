@@ -107,8 +107,6 @@ public class IntegerItem extends AbstractAtomicItem {
         return true;
     }
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.integerItem;
