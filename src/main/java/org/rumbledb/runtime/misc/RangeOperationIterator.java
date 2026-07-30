@@ -181,7 +181,11 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
      * @param right the right bound (inclusive).
      * @return
      */
-    public static HomogeneousItemDataFrame createLongInterval(long left, long right, RuntimeStaticContext staticContext) {
+    public static HomogeneousItemDataFrame createLongInterval(
+            long left,
+            long right,
+            RuntimeStaticContext staticContext
+    ) {
         List<Long> list = new ArrayList<>();
         for (long i = left; i <= right; i += PARTITION_SIZE) {
             list.add(i);
