@@ -61,38 +61,26 @@ public class DataFrameContext implements Serializable {
     private List<FlworDataFrameColumn> columns;
 
     /**
-     * -- GETTER --
-     * Gets the currently populated dynamic context. It is a child of the context passed to the constructor,
+     * Currently populated dynamic context. It is a child of the context passed to the constructor,
      * populated with the current input tuple with one of the two set* functions.
-     *
-     * @return the dynamic context, for evaluating and expression.
      */
     @Getter
     private DynamicContext context;
 
     /**
-     * -- GETTER --
-     * Gets a Kryo object that the caller can use for serialization and deserialization purposes.
-     *
-     * @return a Kryo.
+     * Kryo object that the caller can use for serialization and deserialization purposes.
      */
     @Getter
     private transient Kryo kryo;
 
     /**
-     * -- GETTER --
-     * Gets a Kryo output that the caller can use for serialization purposes.
-     *
-     * @return a Kryo output.
+     * Kryo output that the caller can use for serialization purposes.
      */
     @Getter
     private transient Output output;
 
     /**
-     * -- GETTER --
-     * Gets a Kryo input that the caller can use for deserialization purposes.
-     *
-     * @return a Kryo input.
+     * Kryo input that the caller can use for deserialization purposes.
      */
     @Getter
     private transient Input input;

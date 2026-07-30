@@ -41,17 +41,16 @@ public abstract class Node {
      * This is used for displaying informative error messages.
      */
     private ExceptionMetadata metadata;
+
     /**
-     * -- GETTER --
      * Gets the highest execution mode of this node, which determines
      * whether evaluation will be done locally, with RDDs or with DataFrames.
      * This method is used during the static analysis. It is meant to be
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
-     *
-     * @return the highest execution mode.
      */
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
+
     protected boolean isInSequentialBlock;
 
     protected Node(ExceptionMetadata metadata) {
