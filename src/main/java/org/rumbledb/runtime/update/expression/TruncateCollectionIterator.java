@@ -111,8 +111,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = factory.createTruncateCollectionPrimitive(
             collection,
-            this.getMetadata(),
-            context.getRumbleConfiguration()
+            this.getMetadata()
         );
 
         PendingUpdateList pul = new PendingUpdateList();
