@@ -22,11 +22,8 @@ package org.rumbledb.items;
 
 import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -35,8 +32,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @NoArgsConstructor // For Kryo serialization
-public class IntegerItem implements Item {
-
+public class IntegerItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -49,20 +45,6 @@ public class IntegerItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new IntegerItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
@@ -126,10 +108,6 @@ public class IntegerItem implements Item {
     }
 
 
-
-    public int hashCode() {
-        return this.value.hashCode();
-    }
 
     @Override
     public ItemType getDynamicType() {

@@ -5,9 +5,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
-import java.util.Objects;
-
-import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -16,8 +13,7 @@ import java.util.Set;
  * Wildcard processing-instruction() is represented with no target-name restriction.
  * processing-instruction(N) is represented with a normalized target-name restriction.
  */
-@EqualsAndHashCode
-public class PINodeItemType implements ItemType {
+public class PINodeItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -43,12 +39,12 @@ public class PINodeItemType implements ItemType {
     }
 
     @Override
-    public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof PINodeItemType other)) {
-            return false;
-        }
-        return Objects.equals(this.catalogueName, other.catalogueName)
-            && Objects.equals(this.normalizedTarget, other.normalizedTarget);
+    protected Object equalityKey() {
+        return structuralTypeKey(PINodeItemType.class, this.catalogueName, this.normalizedTarget);
+    }
+
+    public String getNormalizedTarget() {
+        return this.normalizedTarget;
     }
 
     @Override

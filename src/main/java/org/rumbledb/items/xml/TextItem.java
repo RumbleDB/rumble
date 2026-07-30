@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 @NoArgsConstructor // For Kryo serialization
-public class TextItem implements Item {
+public class TextItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
     private String content; // is also typed-value
@@ -60,17 +60,6 @@ public class TextItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof TextItem otherTextItem)) {
-            return false;
-        }
-        if (this.documentPos == null || otherTextItem.documentPos == null) {
-            return false;
-        }
-        return this.documentPos.equals(otherTextItem.documentPos);
-    }
-
-    @Override
     public String getTextValue() {
         return this.content;
     }
@@ -81,13 +70,6 @@ public class TextItem implements Item {
     }
 
 
-
-    public int hashCode() {
-        if (this.documentPos == null) {
-            return System.identityHashCode(this);
-        }
-        return this.documentPos.hashCode();
-    }
 
     @Override
     public String getStringValue() {

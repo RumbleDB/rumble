@@ -17,7 +17,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 @NoArgsConstructor(force = true)
-public class DerivedAtomicItemType implements ItemType {
+public class DerivedAtomicItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -88,19 +88,16 @@ public class DerivedAtomicItemType implements ItemType {
 
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
+    DerivedAtomicItemType(
+            Name name,
+            ItemType baseType,
+            Facets facets,
+            boolean isUserDefined
+    ) {
+        // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
+        // to baseType
+        this(name, baseType, null, facets, isUserDefined);
     }
-
-    @Override
-    public int hashCode() {
-        return this.name != null ? this.name.hashCode() : super.hashCode();
-    }
-
 
     @Override
     public boolean isAtomicItemType() {

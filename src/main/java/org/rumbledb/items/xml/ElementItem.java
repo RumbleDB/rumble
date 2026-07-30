@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @NoArgsConstructor // For Kryo serialization
-public class ElementItem implements Item {
+public class ElementItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
     private List<Item> children;
@@ -143,14 +143,6 @@ public class ElementItem implements Item {
     @Override
     public boolean isElementNode() {
         return true;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ElementItem otherElementItem)) {
-            return false;
-        }
-        return this.getXmlDocumentPosition().equals(otherElementItem.getXmlDocumentPosition());
     }
 
     @Override
@@ -456,11 +448,6 @@ public class ElementItem implements Item {
         return candidate;
     }
 
-
-    @Override
-    public int hashCode() {
-        return this.documentPos.hashCode();
-    }
 
     @Override
     public List<Item> atomizedValue() {

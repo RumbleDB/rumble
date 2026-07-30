@@ -14,7 +14,7 @@ import java.io.Serial;
 import java.util.*;
 
 @NoArgsConstructor
-public class ItemTypeReference implements ItemType {
+public class ItemTypeReference extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -108,11 +108,11 @@ public class ItemTypeReference implements ItemType {
     }
 
     @Override
-    public boolean equals(Object other) {
+    protected Object equalityKey() {
         if (this.resolvedItemType == null) {
-            throw new OurBadException("Unresolved type: " + this.name);
+            return namedTypeKey(this.name);
         }
-        return this.resolvedItemType.equals(other);
+        return equalityKeyOf(this.resolvedItemType);
     }
 
     @Override

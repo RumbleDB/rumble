@@ -86,6 +86,10 @@ public class ItemFactory {
         return new DecimalItem(d);
     }
 
+    public Item createDecimalItem(BigDecimal d, String displayValue) {
+        return new DecimalItem(d, displayValue);
+    }
+
     public Item createIntegerItem(BigInteger i) {
         return new IntegerItem(i);
     }

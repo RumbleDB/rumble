@@ -9,7 +9,7 @@ import org.rumbledb.context.Name;
 /**
  * Class representing the generic 'item' item type
  */
-public class ItemItemType implements ItemType {
+public class ItemItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -31,14 +31,6 @@ public class ItemItemType implements ItemType {
     }
 
 
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
 
     @Override
     public boolean hasName() {

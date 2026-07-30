@@ -277,8 +277,8 @@ public class FunctionItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        // functions can not be compared
-        return false;
+        // XDM functions have no value equality, so Java collections use object identity.
+        return this == other;
     }
 
     @Override
@@ -333,9 +333,7 @@ public class FunctionItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.identifier.hashCode()
-            + String.join("", this.parameterNames.toString()).hashCode()
-            + this.signature.hashCode();
+        return System.identityHashCode(this);
     }
 
     @Override

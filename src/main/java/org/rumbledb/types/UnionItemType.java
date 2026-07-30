@@ -13,7 +13,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
-public class UnionItemType implements ItemType {
+public class UnionItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -46,14 +46,6 @@ public class UnionItemType implements ItemType {
         this.typeTreeDepth = 1;
         this.types = types;
         this.userDefined = userDefined;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
     }
 
     @Override

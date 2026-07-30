@@ -11,7 +11,6 @@ import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serial;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -19,7 +18,7 @@ import java.util.Set;
  * map(*) is a subtype of function(*) (see base type chain).
  */
 @NoArgsConstructor
-public class MapItemType implements ItemType {
+public class MapItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -70,34 +69,22 @@ public class MapItemType implements ItemType {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
+    protected Object equalityKey() {
+        if (
+            this.name == null
+                && BuiltinTypesCatalogue.mapItem.equals(this.baseType)
+                && BuiltinTypesCatalogue.stringItem.equals(this.keyType)
+                && SequenceType.createSequenceType("item").equals(this.valueSequenceType)
+        ) {
+            return namedTypeKey(new Name(Name.JS_NS, "js", "object"));
         }
-        if (itemType instanceof MapItemType mapItemType) {
-            return this.structurallyEqual(mapItemType);
-        }
-        if (itemType.isObjectItemType() && other.equals(BuiltinTypesCatalogue.objectItem)) {
-            // a js:object = map(xs:string, item)
-            ItemType objectAsMap = ItemTypeFactory.mapOf(
-                BuiltinTypesCatalogue.stringItem,
-                SequenceType.createSequenceType("item")
-            );
-            return this.equals(objectAsMap);
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.name, this.keyType, this.valueSequenceType, this.baseType);
-    }
-
-    boolean structurallyEqual(MapItemType o) {
-        return Objects.equals(this.name, o.name)
-            && this.keyType.equals(o.keyType)
-            && this.valueSequenceType.equals(o.valueSequenceType)
-            && this.baseType.equals(o.baseType);
+        return structuralTypeKey(
+            MapItemType.class,
+            this.name,
+            this.baseType,
+            this.keyType,
+            this.valueSequenceType
+        );
     }
 
     @Override

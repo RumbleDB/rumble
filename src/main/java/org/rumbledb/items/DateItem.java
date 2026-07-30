@@ -13,14 +13,12 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
 @NoArgsConstructor // For Kryo serialization
-public class DateItem implements Item {
+public class DateItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -88,20 +86,6 @@ public class DateItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public String getStringValue() {
         String stringValue = this.value.format(
             this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE : DateTimeFormatter.ISO_LOCAL_DATE
@@ -123,16 +107,9 @@ public class DateItem implements Item {
     }
 
     @Override
-    public int hashCode() {
-        return this.value.hashCode();
-    }
-
-    @Override
     public boolean hasDateTime() {
         return true;
     }
-
-
 
     @Override
     public ItemType getDynamicType() {

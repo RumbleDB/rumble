@@ -25,12 +25,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 import java.io.Serial;
 
 @NoArgsConstructor // For Kryo serialization
-public class BooleanItem implements Item {
-
+public class BooleanItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -72,22 +70,6 @@ public class BooleanItem implements Item {
     @Override
     public boolean isBoolean() {
         return true;
-    }
-
-
-
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isBoolean()) {
-            return false;
-        }
-        return (getBooleanValue() == otherItem.getBooleanValue());
-    }
-
-    public int hashCode() {
-        return getBooleanValue() ? 1 : 0;
     }
 
     @Override

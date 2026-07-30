@@ -32,7 +32,7 @@ import org.rumbledb.types.ItemType;
  * Atomic item representing an {@code xs:QName} value as an expanded name ({@link Name}).
  */
 @NoArgsConstructor // For Kryo serialization
-public class QNameItem implements Item {
+public class QNameItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -46,22 +46,6 @@ public class QNameItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new QNameItem(this.name);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isQName()) {
-            return false;
-        }
-        return this.name.equals(otherItem.getQNameValue());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name.hashCode();
     }
 
     @Override

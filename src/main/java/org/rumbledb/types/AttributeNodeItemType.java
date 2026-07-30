@@ -5,9 +5,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
-import java.util.Objects;
-
-import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -16,8 +13,7 @@ import java.util.Set;
  * Wildcard attribute() is represented with no node-name restriction.
  * attribute(QName) is represented with a concrete node-name restriction.
  */
-@EqualsAndHashCode
-public class AttributeNodeItemType implements ItemType {
+public class AttributeNodeItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -43,15 +39,9 @@ public class AttributeNodeItemType implements ItemType {
         return this.nodeName == null;
     }
 
-
-
     @Override
-    public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof AttributeNodeItemType other)) {
-            return false;
-        }
-        return Objects.equals(this.catalogueName, other.catalogueName)
-            && Objects.equals(this.nodeName, other.nodeName);
+    protected Object equalityKey() {
+        return structuralTypeKey(AttributeNodeItemType.class, this.catalogueName, this.nodeName);
     }
 
     @Override
