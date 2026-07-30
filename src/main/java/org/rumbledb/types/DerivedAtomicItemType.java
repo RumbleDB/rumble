@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.util.List;
 import java.util.Set;
 
+import lombok.NoArgsConstructor;
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -15,28 +16,29 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
+@NoArgsConstructor(force = true)
 public class DerivedAtomicItemType implements ItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemType baseType;
+    private final ItemType baseType;
     private ItemType primitiveType;
     private int typeTreeDepth;
-    private boolean isUserDefined;
-    private Name name;
+    private final boolean isUserDefined;
+    private final Name name;
     private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;
-    private List<String> constraints;
+    private final List<String> constraints;
     private List<Item> enumeration;
-    private TimezoneFacet explicitTimezone;
+    private final TimezoneFacet explicitTimezone;
     private WhitespaceFacet whiteSpace;
     private List<String> pattern;
 
-    private OrderedFacetValue ordered;
-    private Boolean bounded;
-    private CardinalityFacetValue cardinality;
-    private Boolean numeric;
+    private final OrderedFacetValue ordered;
+    private final Boolean bounded;
+    private final CardinalityFacetValue cardinality;
+    private final Boolean numeric;
 
     DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets) {
         this(name, baseType, primitiveType, facets, true);
