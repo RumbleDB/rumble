@@ -1,6 +1,5 @@
 package org.rumbledb.context;
 
-import lombok.AllArgsConstructor;
 import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
@@ -20,7 +19,6 @@ import org.rumbledb.types.SequenceType;
 
 @Value
 @Builder(toBuilder = true)
-@AllArgsConstructor
 public class RuntimeStaticContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
