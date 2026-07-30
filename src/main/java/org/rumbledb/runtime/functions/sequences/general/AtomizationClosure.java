@@ -1,13 +1,11 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
-import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 
 import java.io.Serial;
 import java.util.Iterator;
 
-@NoArgsConstructor
 public class AtomizationClosure implements FlatMapFunction<Item, Item> {
 
     @Serial

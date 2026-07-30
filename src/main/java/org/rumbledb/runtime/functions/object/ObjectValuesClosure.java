@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 
@@ -29,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-@NoArgsConstructor
 public class ObjectValuesClosure implements FlatMapFunction<Item, Item> {
 
 

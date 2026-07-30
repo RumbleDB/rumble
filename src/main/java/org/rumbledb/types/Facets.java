@@ -1,7 +1,6 @@
 package org.rumbledb.types;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.rumbledb.api.Item;
 
@@ -13,7 +12,6 @@ import java.util.List;
  * will be passed to a DerivedAtomicType to indicate the specified facets
  */
 @Getter
-@NoArgsConstructor
 public class Facets {
 
     /**

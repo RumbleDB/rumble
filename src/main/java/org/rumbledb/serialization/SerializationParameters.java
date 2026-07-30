@@ -19,7 +19,6 @@ package org.rumbledb.serialization;
 
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serial;
@@ -43,7 +42,6 @@ import java.util.Set;
  *
  */
 @Setter
-@NoArgsConstructor
 public class SerializationParameters implements Serializable {
 
     @Serial

@@ -1,6 +1,5 @@
 package org.rumbledb.server;
 
-import lombok.NoArgsConstructor;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.apache.commons.io.IOUtils;
@@ -9,7 +8,6 @@ import org.rumbledb.cli.Main;
 import java.io.IOException;
 import java.io.OutputStream;
 
-@NoArgsConstructor
 public class ValidatorPageHandler implements HttpHandler {
 
 

@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.navigation;
 
-import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 
@@ -29,7 +28,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-@NoArgsConstructor
 public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
 
 

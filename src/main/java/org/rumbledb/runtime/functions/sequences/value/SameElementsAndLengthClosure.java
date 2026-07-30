@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
-import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.function.FlatMapFunction2;
 import org.rumbledb.api.Item;
 
@@ -29,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-@NoArgsConstructor
 public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> {
 
 
