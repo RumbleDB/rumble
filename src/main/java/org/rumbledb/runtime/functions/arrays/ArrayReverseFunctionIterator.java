@@ -108,7 +108,7 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
                 "array:reverse is currently supported only in local execution mode."
         );

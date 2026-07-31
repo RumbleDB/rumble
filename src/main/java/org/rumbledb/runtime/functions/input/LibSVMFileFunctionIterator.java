@@ -48,7 +48,7 @@ public class LibSVMFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> urlIterator = this.getChild(0);
         String url = urlIterator.materializeFirstOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());

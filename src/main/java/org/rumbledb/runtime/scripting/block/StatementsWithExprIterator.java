@@ -81,7 +81,7 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         int childIndex = 0;
         while (childIndex < this.getChildren().size() - 1) {
             org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(

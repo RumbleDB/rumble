@@ -27,7 +27,7 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
     // TODO: implement collection function
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         if (this.getChildren().isEmpty()) {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }

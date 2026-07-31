@@ -27,7 +27,7 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> collectionNameIterator = this.getChild(0);
         String collectionName = collectionNameIterator.materializeFirstOrNull(context).getStringValue();
 

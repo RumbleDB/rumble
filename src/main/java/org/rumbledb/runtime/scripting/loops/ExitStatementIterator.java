@@ -69,7 +69,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator
 
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
             .fromPlan(this.childIterator, dynamicContext);
         this.pendingUpdateList = new PendingUpdateList();

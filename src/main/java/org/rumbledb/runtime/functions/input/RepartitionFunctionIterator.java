@@ -74,7 +74,7 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
             .fromPlan(this.iterator, context);
         int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(context).getIntValue();

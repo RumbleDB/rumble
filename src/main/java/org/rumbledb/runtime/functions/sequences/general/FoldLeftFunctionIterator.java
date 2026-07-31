@@ -163,7 +163,7 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("fn:fold-left is currently supported only in local execution mode.");
     }
 }

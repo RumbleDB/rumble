@@ -197,7 +197,11 @@ public class VariableValues implements Serializable {
                 throw new JobWithinAJobException(metadata);
             }
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
-            return RuntimePlanConversions.collectRDDWithLimit(rdd, this.configuration, metadata);
+            return RuntimePlanConversions.collectRDDWithLimit(
+                rdd,
+                this.configuration.getMaterializationCap(),
+                metadata
+            );
         }
 
         if (this.dataFrameVariableValues.containsKey(varName)) {
@@ -207,7 +211,7 @@ public class VariableValues implements Serializable {
             HomogeneousItemDataFrame df = this.getDataFrameVariableValue(varName, metadata);
             return RuntimePlanConversions.collectRDDWithLimit(
                 df.toRDD(metadata),
-                this.configuration,
+                this.configuration.getMaterializationCap(),
                 metadata
             );
         }

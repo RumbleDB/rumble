@@ -111,7 +111,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
             this.iterator,
             dynamicContext

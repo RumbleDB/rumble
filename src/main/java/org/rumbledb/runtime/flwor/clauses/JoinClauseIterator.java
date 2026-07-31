@@ -417,7 +417,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworDataFrame getNativeDataFrame(DynamicContext context) {
+    public FlworDataFrame createNativeDataFrame(DynamicContext context) {
         // TODO Auto-generated method stub
         return null;
     }

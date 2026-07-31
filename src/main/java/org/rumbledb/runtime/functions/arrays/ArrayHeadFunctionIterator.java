@@ -89,7 +89,7 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
                 "array:head is currently supported only in local execution mode."
         );

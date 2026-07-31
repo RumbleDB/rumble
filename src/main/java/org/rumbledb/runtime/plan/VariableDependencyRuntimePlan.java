@@ -18,7 +18,16 @@ import org.rumbledb.context.Name;
  */
 public interface VariableDependencyRuntimePlan {
 
-    Map<Name, DynamicContext.VariableDependency> getVariableDependencies();
+    default Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        if (!(this instanceof RuntimePlan<?> plan)) {
+            return Collections.emptyMap();
+        }
+        Map<Name, DynamicContext.VariableDependency> result = new java.util.TreeMap<>();
+        for (RuntimePlan<?> child : plan.diagnosticChildren()) {
+            DynamicContext.mergeVariableDependencies(result, get(child));
+        }
+        return result;
+    }
 
     static Map<Name, DynamicContext.VariableDependency> get(RuntimePlan<?> plan) {
         return plan instanceof VariableDependencyRuntimePlan dependencyPlan

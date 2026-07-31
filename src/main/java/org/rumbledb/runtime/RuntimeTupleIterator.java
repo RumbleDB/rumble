@@ -21,11 +21,9 @@
 package org.rumbledb.runtime;
 
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -43,6 +41,7 @@ import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +59,6 @@ public abstract class RuntimeTupleIterator
     @Serial
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
-    private final RuntimeStaticContext staticContext;
     protected final RuntimeTupleIterator child;
     protected int evaluationDepthLimit;
 
@@ -73,7 +71,7 @@ public abstract class RuntimeTupleIterator
             RuntimeTupleIterator child,
             RuntimeStaticContext staticContext
     ) {
-        this.staticContext = staticContext;
+        super(child == null ? List.of() : List.of(child), staticContext);
         this.isOpen = false;
         this.child = child;
         this.evaluationDepthLimit = -1;
@@ -85,11 +83,6 @@ public abstract class RuntimeTupleIterator
 
     @Override
     public abstract Cursor<FlworTuple> createNativeCursor(DynamicContext context);
-
-    @Override
-    public final RuntimeStaticContext getRuntimeStaticContext() {
-        return this.staticContext;
-    }
 
     @Override
     public void open(DynamicContext context) {
@@ -137,18 +130,6 @@ public abstract class RuntimeTupleIterator
         return this.localCursor.next();
     }
 
-    public ExceptionMetadata getMetadata() {
-        return this.staticContext.getMetadata();
-    }
-
-    public ExecutionMode getHighestExecutionMode() {
-        return this.staticContext.getExecutionMode();
-    }
-
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return this.staticContext.getConfiguration();
-    }
-
     public boolean isDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
@@ -156,21 +137,8 @@ public abstract class RuntimeTupleIterator
         return this.staticContext.getExecutionMode().isDataFrame();
     }
 
-    /**
-     * Obtains the dataframe from the child clause.
-     * It is possible, with the second parameter, to specify the variables it needs to project the others away,
-     * or that only a count is needed for a specific variable, which allows projecting away the actual items.
-     *
-     * @param context the dynamic context in which the evaluate the child clause's dataframe.
-     * @return the DataFrame with the tuples returned by the child clause.
-     */
     @Override
-    public final FlworDataFrame getDataFrame(DynamicContext context) {
-        return (FlworDataFrame) super.getDataFrame(context);
-    }
-
-    @Override
-    public abstract FlworDataFrame getNativeDataFrame(DynamicContext context);
+    public abstract FlworDataFrame createNativeDataFrame(DynamicContext context);
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.

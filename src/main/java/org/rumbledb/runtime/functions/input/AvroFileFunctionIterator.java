@@ -51,7 +51,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         Item stringItem = this.getChild(0)
             .materializeFirstOrNull(context);
         String url = stringItem.getStringValue();

@@ -253,7 +253,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression = this.getChild(0);
         if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
@@ -345,27 +345,6 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
         }
         result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
-    }
-
-    @Override
-    public void print(StringBuilder buffer, int indent) {
-        for (int i = 0; i < indent; ++i) {
-            buffer.append("  ");
-        }
-        buffer.append(getClass().getSimpleName());
-        buffer.append(" | ");
-        buffer.append(getHighestExecutionMode());
-        buffer.append(" | ");
-
-        buffer.append("Variable dependencies: ");
-        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
-        for (Name v : dependencies.keySet()) {
-            buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
-        }
-        buffer.append("\n");
-
-        org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(this.child, buffer, indent + 1);
-        org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(this.expression, buffer, indent + 1);
     }
 
     @Serial

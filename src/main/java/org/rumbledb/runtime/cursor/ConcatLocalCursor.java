@@ -18,7 +18,6 @@
 package org.rumbledb.runtime.cursor;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import org.rumbledb.context.DynamicContext;
@@ -64,7 +63,7 @@ public final class ConcatLocalCursor<T> extends AbstractLocalCursor<T> {
     @Override
     protected T nextLocal() {
         if (!this.hasNext) {
-            throw new NoSuchElementException("Concatenating cursor is exhausted.");
+            throw invalidState("Concatenating cursor is exhausted.");
         }
         T result = this.nextValue;
         setNextValue();

@@ -14,7 +14,9 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
  */
 public interface NativeQueryRuntimePlan {
 
-    NativeClauseContext generateNativeQuery(NativeClauseContext context);
+    default NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return NativeClauseContext.NoNativeQuery;
+    }
 
     static NativeClauseContext generate(RuntimePlan<?> plan, NativeClauseContext context) {
         return plan instanceof NativeQueryRuntimePlan nativePlan

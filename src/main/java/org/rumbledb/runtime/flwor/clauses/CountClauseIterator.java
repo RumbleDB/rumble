@@ -130,7 +130,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworDataFrame getNativeDataFrame(
+    public FlworDataFrame createNativeDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {

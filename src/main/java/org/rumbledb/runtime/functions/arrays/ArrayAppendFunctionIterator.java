@@ -112,7 +112,7 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
                 "array:append is currently supported only in local execution mode."
         );

@@ -7,10 +7,10 @@
 
 package org.rumbledb.runtime.plan;
 
-import org.rumbledb.runtime.ItemRuntimePlan;
+import org.rumbledb.runtime.RuntimeTupleIterator;
 
 /**
- * Transitional diagnostics for plans while the legacy iterator hierarchy is being removed.
+ * Diagnostics kept outside the item runtime plan API.
  */
 public final class RuntimePlanDiagnostics {
 
@@ -18,17 +18,18 @@ public final class RuntimePlanDiagnostics {
     }
 
     public static boolean isSparkJobNeeded(RuntimePlan<?> plan) {
-        if (plan instanceof ItemRuntimePlan itemPlan) {
-            return itemPlan.isSparkJobNeeded();
+        if (plan instanceof RuntimeTupleIterator tuplePlan) {
+            return tuplePlan.isSparkJobNeeded();
         }
-        return plan.getRuntimeStaticContext()
-            .getExecutionMode()
-            .isRDDOrDataFrame();
+        if (plan.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            return true;
+        }
+        return plan.diagnosticChildren().stream().anyMatch(RuntimePlanDiagnostics::isSparkJobNeeded);
     }
 
     public static void print(RuntimePlan<?> plan, StringBuilder buffer, int indent) {
-        if (plan instanceof ItemRuntimePlan itemPlan) {
-            itemPlan.print(buffer, indent);
+        if (plan instanceof RuntimeTupleIterator tuplePlan) {
+            tuplePlan.print(buffer, indent);
             return;
         }
         for (int i = 0; i < indent; i++) {
@@ -40,5 +41,8 @@ public final class RuntimePlanDiagnostics {
             .append(" | ")
             .append(plan.getRuntimeStaticContext().getStaticType())
             .append('\n');
+        for (RuntimePlan<?> child : plan.diagnosticChildren()) {
+            print(child, buffer, indent + 1);
+        }
     }
 }

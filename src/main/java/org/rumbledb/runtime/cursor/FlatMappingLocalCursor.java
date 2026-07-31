@@ -9,6 +9,7 @@ package org.rumbledb.runtime.cursor;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Function;
 
 import lombok.NonNull;
@@ -48,7 +49,10 @@ public final class FlatMappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
     @Override
     protected boolean hasNextLocal() {
         while (!this.currentResults.hasNext() && this.inputCursor.hasNext()) {
-            this.currentResults = this.mapper.apply(this.inputCursor.next());
+            this.currentResults = Objects.requireNonNull(
+                this.mapper.apply(this.inputCursor.next()),
+                "flat-map function returned a null iterator"
+            );
         }
         return this.currentResults.hasNext();
     }

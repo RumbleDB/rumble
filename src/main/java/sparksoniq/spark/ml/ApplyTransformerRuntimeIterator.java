@@ -55,7 +55,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         this.inputDataset = getInputDataset(context);
         this.paramMapItem = getParamMapItem(context);
 

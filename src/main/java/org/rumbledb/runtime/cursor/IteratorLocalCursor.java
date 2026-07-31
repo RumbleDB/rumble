@@ -8,6 +8,7 @@
 package org.rumbledb.runtime.cursor;
 
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import lombok.NonNull;
@@ -33,7 +34,10 @@ public final class IteratorLocalCursor<T> extends AbstractLocalCursor<T> {
 
     @Override
     protected void openLocal() {
-        this.iterator = this.iteratorFactory.get();
+        this.iterator = Objects.requireNonNull(
+            this.iteratorFactory.get(),
+            "iterator factory returned null"
+        );
     }
 
     @Override

@@ -96,7 +96,7 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("Map function calls are currently supported only in local execution mode.");
     }
 

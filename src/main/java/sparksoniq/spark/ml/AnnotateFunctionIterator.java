@@ -27,7 +27,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputDataIterator = this.getChild(0);
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> schemaIterator = this.getChild(1);
         Item schemaItem = schemaIterator.materializeFirstOrNull(context);

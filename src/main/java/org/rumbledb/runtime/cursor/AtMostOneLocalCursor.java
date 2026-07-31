@@ -17,8 +17,6 @@
 
 package org.rumbledb.runtime.cursor;
 
-import java.util.NoSuchElementException;
-
 import lombok.NonNull;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
@@ -50,7 +48,7 @@ public abstract class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
     @Override
     protected final T nextLocal() {
         if (!this.hasNext) {
-            throw new NoSuchElementException("At-most-one cursor is exhausted.");
+            throw invalidState("At-most-one cursor is exhausted.");
         }
         this.hasNext = false;
         return this.result;

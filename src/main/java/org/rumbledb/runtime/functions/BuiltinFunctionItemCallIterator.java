@@ -132,7 +132,7 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> delegate = newBuiltinDelegate();
         return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(delegate, dynamicContext);
     }

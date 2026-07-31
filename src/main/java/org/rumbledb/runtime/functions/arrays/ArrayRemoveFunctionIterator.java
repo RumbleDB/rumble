@@ -150,7 +150,7 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
                 "array:remove is currently supported only in local execution mode."
         );

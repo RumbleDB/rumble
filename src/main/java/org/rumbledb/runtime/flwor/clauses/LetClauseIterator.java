@@ -219,11 +219,11 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworDataFrame getNativeDataFrame(
+    public FlworDataFrame createNativeDataFrame(
             DynamicContext context
     ) {
         if (this.child != null && this.evaluationDepthLimit != 0) {
-            FlworDataFrame df = this.child.getDataFrame(context);
+            FlworDataFrame df = (FlworDataFrame) this.child.getDataFrame(context);
 
             if (!this.outputTupleProjection.containsKey(this.variableName)) {
                 return df;

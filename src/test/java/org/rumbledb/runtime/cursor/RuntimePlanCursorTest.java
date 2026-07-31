@@ -84,12 +84,7 @@ public class RuntimePlanCursorTest {
         RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimeStaticContext staticContext = createStaticContext(configuration);
-        RuntimePlan<Item> planWithoutLocalCapability = new RuntimePlan<>() {
-            @Override
-            public RuntimeStaticContext getRuntimeStaticContext() {
-                return staticContext;
-            }
-        };
+        RuntimePlan<Item> planWithoutLocalCapability = new RuntimePlan<>(staticContext) {};
 
         OurBadException exception = assertThrows(
             OurBadException.class,
@@ -115,17 +110,62 @@ public class RuntimePlanCursorTest {
         assertEquals(0, plan.cursorCreationCount);
     }
 
+    @Test
+    public void cursorClosesAfterReadFailure() {
+        FailingCursor cursor = new FailingCursor();
+
+        assertThrows(IllegalStateException.class, cursor::hasNext);
+        assertEquals(1, cursor.closeCount);
+        assertThrows(IteratorFlowException.class, cursor::hasNext);
+        assertEquals(1, cursor.closeCount);
+    }
+
+    @Test
+    public void iteratorCursorRejectsNullFactoryResult() {
+        Cursor<Item> cursor = new IteratorLocalCursor<>(() -> null, ExceptionMetadata.EMPTY_METADATA);
+
+        assertThrows(NullPointerException.class, cursor::hasNext);
+        assertThrows(IteratorFlowException.class, cursor::hasNext);
+    }
+
+    private static final class FailingCursor extends AbstractLocalCursor<Item> {
+
+        private int closeCount;
+
+        private FailingCursor() {
+            super(ExceptionMetadata.EMPTY_METADATA);
+        }
+
+        @Override
+        protected void openLocal() {
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            throw new IllegalStateException("evaluation failed");
+        }
+
+        @Override
+        protected Item nextLocal() {
+            throw new IllegalStateException("evaluation failed");
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.closeCount++;
+        }
+    }
+
     private static final class DirectAtMostOnePlan extends RuntimePlan<Item>
             implements
                 AtMostOneLocalRuntimePlan<Item> {
 
-        private final RuntimeStaticContext staticContext;
         private final Item result;
         private int evaluationCount;
         private int cursorCreationCount;
 
         private DirectAtMostOnePlan(RuntimeStaticContext staticContext, Item result) {
-            this.staticContext = staticContext;
+            super(staticContext);
             this.result = result;
         }
 
@@ -138,12 +178,7 @@ public class RuntimePlanCursorTest {
         @Override
         public Cursor<Item> createNativeCursor(DynamicContext context) {
             this.cursorCreationCount++;
-            return new SingletonLocalCursor<>(this.result, this.staticContext.getMetadata());
-        }
-
-        @Override
-        public RuntimeStaticContext getRuntimeStaticContext() {
-            return this.staticContext;
+            return new SingletonLocalCursor<>(this.result, getRuntimeStaticContext().getMetadata());
         }
     }
 

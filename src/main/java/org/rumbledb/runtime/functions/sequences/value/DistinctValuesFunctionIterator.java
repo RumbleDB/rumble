@@ -91,7 +91,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         JavaRDD<Item> rdd = getRDDAux(dynamicContext);
         ItemType itemType = getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(getConfiguration())) {

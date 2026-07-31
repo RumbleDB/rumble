@@ -48,7 +48,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
 
         String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
 

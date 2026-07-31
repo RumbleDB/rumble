@@ -23,14 +23,22 @@ package org.rumbledb.runtime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class AtMostOneItemLocalRuntimeIterator extends ItemRuntimePlan
+public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimePlan<Item>
         implements
-            AtMostOneLocalRuntimePlan<Item> {
+            AtMostOneLocalRuntimePlan<Item>,
+            NativeQueryRuntimePlan,
+            VariableDependencyRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -39,7 +47,17 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends ItemRuntimePlan
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
-        super(children, staticContext);
+        super(children, staticContext, ItemRuntimeDataFrameFactory.INSTANCE);
+    }
+
+    @Override
+    public final Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new AtMostOneLocalCursor<>(getMetadata()) {
+            @Override
+            protected Item materializeOneItemOrNull() {
+                return AtMostOneItemLocalRuntimeIterator.this.evaluateAtMostOne(context);
+            }
+        };
     }
 
     @Override

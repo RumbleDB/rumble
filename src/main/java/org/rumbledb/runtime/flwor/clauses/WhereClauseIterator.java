@@ -146,7 +146,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworDataFrame getNativeDataFrame(
+    public FlworDataFrame createNativeDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {
@@ -170,7 +170,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
             return dataFrameIfJoinPossible;
         }
 
-        FlworDataFrame df = this.child.getDataFrame(context);
+        FlworDataFrame df = (FlworDataFrame) this.child.getDataFrame(context);
         // StructType inputSchema = df.schema();
 
         FlworDataFrame nativeQueryResult = null;
@@ -253,7 +253,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
             .info(
                 "Rumble detected a LIMIT in a count and where clause."
             );
-        FlworDataFrame df = this.child.getChildIterator().getDataFrame(context);
+        FlworDataFrame df = (FlworDataFrame) this.child.getChildIterator().getDataFrame(context);
         String input = df.createTempView();
         return df.sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
     }
@@ -324,7 +324,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
             .info("Rumble detected a join predicate in the where clause (limit=" + limit + " of " + height + ").");
 
         try {
-            FlworDataFrame leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
+            FlworDataFrame leftTuples = (FlworDataFrame) getSubtreeBeyondLimit(limit).getDataFrame(context);
             Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
             this.setEvaluationDepthLimit(limit);
             Map<Name, VariableDependency> temporaryInputProjection = new HashMap<>(this.inputTupleProjection);
@@ -332,7 +332,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
                 temporaryInputProjection.remove(key);
             }
             this.child.setInputAndOutputTupleVariableDependencies(temporaryInputProjection);
-            FlworDataFrame rightTuples = this.child.getDataFrame(context);
+            FlworDataFrame rightTuples = (FlworDataFrame) this.child.getDataFrame(context);
             this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
 
             Set<Name> rightVariables = this.child.getOutputTupleVariableNames();

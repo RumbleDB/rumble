@@ -17,7 +17,6 @@
 
 package org.rumbledb.runtime.cursor;
 
-import lombok.Getter;
 import lombok.NonNull;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -34,7 +33,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
  */
 public abstract class AbstractLocalCursor<T> implements Cursor<T> {
 
-    @Getter
     private final ExceptionMetadata metadata;
 
     private enum State {
@@ -60,12 +58,7 @@ public abstract class AbstractLocalCursor<T> implements Cursor<T> {
             this.openLocal();
             this.state = State.OPEN;
         } catch (RuntimeException | Error exception) {
-            this.state = State.CLOSED;
-            try {
-                this.closeLocal();
-            } catch (RuntimeException | Error closeException) {
-                exception.addSuppressed(closeException);
-            }
+            this.closeAfterFailure(exception);
             throw exception;
         }
     }
@@ -73,13 +66,23 @@ public abstract class AbstractLocalCursor<T> implements Cursor<T> {
     @Override
     public final boolean hasNext() {
         this.ensureOpen();
-        return this.hasNextLocal();
+        try {
+            return this.hasNextLocal();
+        } catch (RuntimeException | Error exception) {
+            this.closeAfterFailure(exception);
+            throw exception;
+        }
     }
 
     @Override
     public final T next() {
         this.ensureOpen();
-        return this.nextLocal();
+        try {
+            return this.nextLocal();
+        } catch (RuntimeException | Error exception) {
+            this.closeAfterFailure(exception);
+            throw exception;
+        }
     }
 
     @Override
@@ -102,15 +105,23 @@ public abstract class AbstractLocalCursor<T> implements Cursor<T> {
     /**
      * Creates the exception used for invalid lifecycle calls.
      *
-     * <p>
-     * Cursors constructed with query metadata preserve the legacy {@link IteratorFlowException}; generic cursors use
-     * {@link IllegalStateException}.
-     * </p>
-     *
      * @param message the lifecycle error
      * @return the exception to throw
      */
     protected final RuntimeException invalidState(String message) {
         return new IteratorFlowException(message, this.metadata);
+    }
+
+    protected final ExceptionMetadata getMetadata() {
+        return this.metadata;
+    }
+
+    private void closeAfterFailure(Throwable exception) {
+        this.state = State.CLOSED;
+        try {
+            this.closeLocal();
+        } catch (RuntimeException | Error closeException) {
+            exception.addSuppressed(closeException);
+        }
     }
 }

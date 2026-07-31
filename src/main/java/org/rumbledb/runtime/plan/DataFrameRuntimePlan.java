@@ -24,5 +24,5 @@ public interface DataFrameRuntimePlan<T> {
      * @param context the dynamic context for that evaluation
      * @return the resulting DataFrame
      */
-    RuntimeDataFrame<T> getNativeDataFrame(DynamicContext context);
+    RuntimeDataFrame<T> createNativeDataFrame(DynamicContext context);
 }

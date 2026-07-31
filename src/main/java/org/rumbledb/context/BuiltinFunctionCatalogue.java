@@ -1,6 +1,7 @@
 package org.rumbledb.context;
 
-import org.rumbledb.runtime.ItemRuntimePlan;
+import org.rumbledb.api.Item;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
@@ -393,7 +394,7 @@ public class BuiltinFunctionCatalogue {
             Name functionName,
             List<String> paramTypes,
             String returnType,
-            Class<? extends ItemRuntimePlan> functionIteratorClass,
+            Class<? extends RuntimePlan<Item>> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         List<SequenceType> parameterTypes = new ArrayList<>();
@@ -413,7 +414,7 @@ public class BuiltinFunctionCatalogue {
             Name functionName,
             List<SequenceType> parameterTypes,
             String returnType,
-            Class<? extends ItemRuntimePlan> functionIteratorClass,
+            Class<? extends RuntimePlan<Item>> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
@@ -4749,7 +4750,7 @@ public class BuiltinFunctionCatalogue {
             int arity,
             String parameterType,
             String returnType,
-            Class<? extends ItemRuntimePlan> functionIteratorClass,
+            Class<? extends RuntimePlan<Item>> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         if (arity < 0) {
@@ -4774,7 +4775,7 @@ public class BuiltinFunctionCatalogue {
             int maxArity,
             String parameterType,
             String returnType,
-            Class<? extends ItemRuntimePlan> functionIteratorClass,
+            Class<? extends RuntimePlan<Item>> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         if (minArity < 0) {

@@ -19,10 +19,13 @@ package org.rumbledb.runtime.functions;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.ItemRuntimePlan;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 
 import java.io.Serial;
 
@@ -32,13 +35,17 @@ import java.io.Serial;
  * {@link org.rumbledb.context.NamedFunctions#getBuiltInFunctionIterator}; this iterator
  * must not be evaluated as a normal function body.
  */
-public class BuiltinNamedFunctionReferenceMarkerIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
+public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimePlan<Item>
+        implements
+            LocalRuntimePlan<Item>,
+            NativeQueryRuntimePlan,
+            VariableDependencyRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public BuiltinNamedFunctionReferenceMarkerIterator(RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(null, staticContext, ItemRuntimeDataFrameFactory.INSTANCE);
     }
 
     @Override

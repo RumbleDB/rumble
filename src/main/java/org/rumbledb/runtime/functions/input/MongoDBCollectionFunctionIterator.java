@@ -47,7 +47,7 @@ public class MongoDBCollectionFunctionIterator extends DataFrameRuntimeIterator 
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
 
         String uri = this.getChild(0).materializeFirstOrNull(context).getStringValue();
         String collection = this.getChild(1).materializeFirstOrNull(context).getStringValue();

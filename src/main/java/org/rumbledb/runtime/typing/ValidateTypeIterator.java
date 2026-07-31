@@ -82,7 +82,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
         }

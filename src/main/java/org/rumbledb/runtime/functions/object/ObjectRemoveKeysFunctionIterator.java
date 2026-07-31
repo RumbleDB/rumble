@@ -185,7 +185,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         HomogeneousItemDataFrame dataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
             .fromPlan(this.iterator, context);
         List<Item> columnsToDropItems = this.getChild(1).materialize(context);

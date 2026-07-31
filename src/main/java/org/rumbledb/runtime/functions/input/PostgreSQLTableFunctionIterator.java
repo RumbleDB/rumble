@@ -48,7 +48,7 @@ public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
 
         String connectionString = this.getChild(0).materializeFirstOrNull(context).getStringValue();
         String table = this.getChild(1).materializeFirstOrNull(context).getStringValue();

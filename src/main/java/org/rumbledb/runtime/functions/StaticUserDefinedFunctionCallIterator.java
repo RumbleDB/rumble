@@ -97,7 +97,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         try {
             org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(

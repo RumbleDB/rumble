@@ -102,7 +102,7 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
                 "Array function calls are currently supported only in local execution mode."
         );

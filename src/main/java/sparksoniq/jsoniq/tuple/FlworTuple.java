@@ -123,7 +123,11 @@ public class FlworTuple implements Serializable {
         }
         if (this.rddVariables.containsKey(key)) {
             JavaRDD<Item> rdd = this.getRDDValue(key, metadata);
-            return RuntimePlanConversions.collectRDDWithLimit(rdd, this.configuration, metadata);
+            return RuntimePlanConversions.collectRDDWithLimit(
+                rdd,
+                this.configuration.getMaterializationCap(),
+                metadata
+            );
         }
 
         throw new OurBadException("Undeclared FLOWR variable", metadata);
