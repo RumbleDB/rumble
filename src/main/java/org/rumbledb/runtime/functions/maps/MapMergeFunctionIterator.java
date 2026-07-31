@@ -64,7 +64,7 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private final RuntimePlan<Item> mapsIterator;
     private final RuntimePlan<Item> optionsIterator; // may be null for
-                                                                                                // arity-1
+                                                     // arity-1
 
     public MapMergeFunctionIterator(
             List<RuntimePlan<Item>> arguments,
