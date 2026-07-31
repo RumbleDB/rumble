@@ -23,8 +23,6 @@ package org.rumbledb.runtime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 import java.io.Serial;
@@ -42,9 +40,6 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends ItemRuntimePlan
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
-        if (getHighestExecutionMode() != ExecutionMode.LOCAL) {
-            throw new OurBadException("At-most-one-item runtime iterators support only the local execution mode");
-        }
     }
 
     @Override

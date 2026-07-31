@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.TreeMap;
 
 import lombok.NonNull;
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -24,14 +23,10 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanConversions;
 import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.types.SequenceType;
 
@@ -57,6 +52,7 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item>
             List<? extends RuntimePlan<Item>> children,
             @NonNull RuntimeStaticContext staticContext
     ) {
+        super(ItemRuntimeDataFrameFactory.INSTANCE);
         this.staticContext = staticContext;
         if (staticContext.getStaticType() == null) {
             throw new OurBadException(
@@ -93,20 +89,6 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item>
     @Override
     public final RuntimeStaticContext getRuntimeStaticContext() {
         return this.staticContext;
-    }
-
-    @Override
-    protected final RuntimeDataFrame<Item> convertRDDToDataFrame(JavaRDD<Item> rdd, DynamicContext context) {
-        return ItemRuntimeDataFrameFactory.INSTANCE.fromRDD(rdd, context, this.staticContext);
-    }
-
-    @Override
-    protected final RuntimeDataFrame<Item> convertLocalToDataFrame(Cursor<Item> cursor, DynamicContext context) {
-        return ItemRuntimeDataFrameFactory.INSTANCE.fromList(
-            RuntimePlanConversions.materializeCursor(cursor),
-            context,
-            this.staticContext
-        );
     }
 
     public final boolean isUpdating() {
@@ -149,18 +131,4 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item>
         return this.staticContext.getExecutionMode().isRDDOrDataFrame();
     }
 
-    public static JavaRDD<Item> dataFrameToRDDOfItems(
-            HomogeneousItemDataFrame dataFrame,
-            ExceptionMetadata metadata
-    ) {
-        return dataFrame.toRDD(metadata);
-    }
-
-    private ExecutionMode checkedExecutionMode() {
-        ExecutionMode mode = this.staticContext.getExecutionMode();
-        if (mode == ExecutionMode.UNSET) {
-            throw new OurBadException("Execution mode is unset for " + this.getClass().getCanonicalName());
-        }
-        return mode;
-    }
 }

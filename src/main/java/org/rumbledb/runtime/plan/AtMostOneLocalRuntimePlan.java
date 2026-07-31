@@ -14,7 +14,7 @@ import org.rumbledb.context.DynamicContext;
  *
  * @param <T> the value type
  */
-public interface AtMostOneLocalRuntimePlan<T> {
+public interface AtMostOneLocalRuntimePlan<T> extends LocalRuntimePlan<T> {
 
     /**
      * Evaluates the plan without allocating a cursor.

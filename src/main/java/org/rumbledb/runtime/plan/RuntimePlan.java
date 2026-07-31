@@ -11,7 +11,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
@@ -25,6 +24,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrameFactory;
 
 /**
  * Immutable, reusable description of a runtime computation.
@@ -44,27 +44,26 @@ import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
  */
 public abstract class RuntimePlan<T> implements Serializable {
 
+    private final RuntimeDataFrameFactory<T> dataFrameFactory;
+
+    protected RuntimePlan() {
+        this(null);
+    }
+
+    protected RuntimePlan(RuntimeDataFrameFactory<T> dataFrameFactory) {
+        this.dataFrameFactory = dataFrameFactory;
+    }
+
     public Cursor<T> createNativeCursor(DynamicContext context) {
         if (this instanceof AtMostOneLocalRuntimePlan<?>) {
             return new AtMostOneLocalCursor<>(this.getRuntimeStaticContext().getMetadata()) {
                 @Override
                 protected T materializeOneItemOrNull() {
-                    return RuntimePlan.this.evaluateAtMostOne(context);
+                    return RuntimePlan.this.atMostOneCapability().evaluateAtMostOne(context);
                 }
             };
         }
         throw this.unsupportedRepresentation(ExecutionMode.LOCAL);
-    }
-
-    /**
-     * Direct native-local evaluation hook for {@link AtMostOneLocalRuntimePlan} implementations.
-     */
-    public T evaluateAtMostOne(DynamicContext context) {
-        throw new OurBadException(
-                "The runtime plan "
-                    + this.getClass().getCanonicalName()
-                    + " does not support direct at-most-one evaluation."
-        );
     }
 
     /**
@@ -73,7 +72,7 @@ public abstract class RuntimePlan<T> implements Serializable {
     public final Cursor<T> getCursor(@NonNull DynamicContext context) {
         return this.executeAs(
             context,
-            Function.identity(),
+            cursor -> cursor,
             rdd -> RuntimePlanConversions.rddToCursor(rdd, this.getRuntimeStaticContext()),
             dataFrame -> RuntimePlanConversions.rddToCursor(
                 dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()),
@@ -89,7 +88,7 @@ public abstract class RuntimePlan<T> implements Serializable {
         return this.executeAs(
             context,
             RuntimePlanConversions::cursorToRDD,
-            Function.identity(),
+            rdd -> rdd,
             dataFrame -> dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata())
         );
     }
@@ -102,44 +101,47 @@ public abstract class RuntimePlan<T> implements Serializable {
             context,
             cursor -> this.convertLocalToDataFrame(cursor, context),
             rdd -> this.convertRDDToDataFrame(rdd, context),
-            Function.identity()
+            dataFrame -> dataFrame
         );
     }
 
     protected RuntimeDataFrame<T> convertLocalToDataFrame(Cursor<T> cursor, DynamicContext context) {
-        throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
+        if (this.dataFrameFactory == null) {
+            throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
+        }
+        return this.dataFrameFactory.fromList(
+            RuntimePlanConversions.materializeCursor(cursor),
+            context,
+            this.getRuntimeStaticContext()
+        );
     }
 
     protected RuntimeDataFrame<T> convertRDDToDataFrame(JavaRDD<T> rdd, DynamicContext context) {
-        throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
+        if (this.dataFrameFactory == null) {
+            throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
+        }
+        return this.dataFrameFactory.fromRDD(rdd, context, this.getRuntimeStaticContext());
     }
 
-    protected JavaRDD<T> getNativeRDD(DynamicContext context) {
-        throw this.unsupportedRepresentation(ExecutionMode.RDD);
-    }
-
-    protected RuntimeDataFrame<T> getNativeDataFrame(DynamicContext context) {
-        throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
-    }
-
-    private <R> R executeAs(
+    private <R, E extends Exception> R executeAs(
             DynamicContext context,
-            Function<Cursor<T>, R> fromCursor,
-            Function<JavaRDD<T>, R> fromRDD,
-            Function<RuntimeDataFrame<T>, R> fromDataFrame
-    ) {
+            ExecutionAdapter<Cursor<T>, R, E> fromCursor,
+            ExecutionAdapter<JavaRDD<T>, R, E> fromRDD,
+            ExecutionAdapter<RuntimeDataFrame<T>, R, E> fromDataFrame
+    )
+            throws E {
         return switch (this.getRuntimeStaticContext().getExecutionMode()) {
             case LOCAL -> {
                 this.requireCapability(this instanceof LocalRuntimePlan<?>, ExecutionMode.LOCAL);
-                yield fromCursor.apply(this.createNativeCursor(context));
+                yield fromCursor.apply(this.localCapability().createNativeCursor(context));
             }
             case RDD -> {
                 this.requireCapability(this instanceof RDDRuntimePlan<?>, ExecutionMode.RDD);
-                yield fromRDD.apply(this.getNativeRDD(context));
+                yield fromRDD.apply(this.rddCapability().getNativeRDD(context));
             }
             case DATAFRAME -> {
                 this.requireCapability(this instanceof DataFrameRuntimePlan<?>, ExecutionMode.DATAFRAME);
-                yield fromDataFrame.apply(this.getNativeDataFrame(context));
+                yield fromDataFrame.apply(this.dataFrameCapability().getNativeDataFrame(context));
             }
             case UNSET -> throw new OurBadException("Cannot execute a runtime plan whose execution mode is unset.");
         };
@@ -201,7 +203,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final T materializeFirstOrNull(@NonNull DynamicContext context) {
         if (this.canEvaluateAtMostOneDirectly()) {
-            return this.evaluateAtMostOne(context);
+            return this.atMostOneCapability().evaluateAtMostOne(context);
         }
         return this.executeAs(
             context,
@@ -249,7 +251,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final T materializeAtMostOne(@NonNull DynamicContext context) throws MoreThanOneItemException {
         if (this.canEvaluateAtMostOneDirectly()) {
-            return this.evaluateAtMostOne(context);
+            return this.atMostOneCapability().evaluateAtMostOne(context);
         }
         return this.executeAs(
             context,
@@ -307,7 +309,7 @@ public abstract class RuntimePlan<T> implements Serializable {
 
     private List<T> materializeDirectAtMostOne(DynamicContext context) {
         List<T> result = new ArrayList<>(1);
-        T item = this.evaluateAtMostOne(context);
+        T item = this.atMostOneCapability().evaluateAtMostOne(context);
         if (item != null) {
             result.add(item);
         }
@@ -356,6 +358,31 @@ public abstract class RuntimePlan<T> implements Serializable {
             throw new MoreThanOneItemException(metadata);
         }
         return result.isEmpty() ? null : result.get(0);
+    }
+
+    @SuppressWarnings("unchecked")
+    private LocalRuntimePlan<T> localCapability() {
+        return (LocalRuntimePlan<T>) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private AtMostOneLocalRuntimePlan<T> atMostOneCapability() {
+        return (AtMostOneLocalRuntimePlan<T>) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private RDDRuntimePlan<T> rddCapability() {
+        return (RDDRuntimePlan<T>) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private DataFrameRuntimePlan<T> dataFrameCapability() {
+        return (DataFrameRuntimePlan<T>) this;
+    }
+
+    @FunctionalInterface
+    private interface ExecutionAdapter<I, O, E extends Exception> {
+        O apply(I input) throws E;
     }
 
     /**

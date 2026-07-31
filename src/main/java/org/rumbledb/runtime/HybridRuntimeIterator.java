@@ -51,5 +51,4 @@ public abstract class HybridRuntimeIterator extends ItemRuntimePlan
     }
 
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
-
 }
