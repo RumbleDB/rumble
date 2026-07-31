@@ -38,6 +38,8 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    static final int MAX_CHAIN_LENGTH = 32;
+
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
@@ -45,12 +47,20 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
     private final Item additionalKey;
     private final List<Item> additionalValue;
     private final int size;
+    private final int chainLength;
 
     public MapWithAdditionalEntryItem(Item original, Item additionalKey, List<Item> additionalValue) {
         this.original = original;
         this.additionalKey = additionalKey;
         this.additionalValue = additionalValue;
         this.size = original.getSize() + (original.hasKey(additionalKey) ? 0 : 1);
+        this.chainLength = original instanceof MapWithAdditionalEntryItem mapWithAdditionalEntry
+            ? mapWithAdditionalEntry.chainLength + 1
+            : 1;
+    }
+
+    int getChainLength() {
+        return this.chainLength;
     }
 
     @Override
