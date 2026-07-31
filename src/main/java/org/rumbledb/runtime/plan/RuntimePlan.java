@@ -9,13 +9,11 @@ package org.rumbledb.runtime.plan;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -26,7 +24,6 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrameFactory;
-import org.rumbledb.types.SequenceType;
 
 /**
  * Immutable, reusable description of a runtime computation.
@@ -50,14 +47,12 @@ public abstract class RuntimePlan<T> implements Serializable {
     private final ExceptionMetadata metadata;
     private final int materializationCap;
     private final RuntimeDataFrameFactory<T> dataFrameFactory;
-    private final List<RuntimePlan<T>> children;
 
     protected RuntimePlan(@NonNull RuntimeStaticContext staticContext) {
-        this(null, staticContext, null);
+        this(staticContext, null);
     }
 
     protected RuntimePlan(
-            List<? extends RuntimePlan<T>> children,
             @NonNull RuntimeStaticContext staticContext,
             RuntimeDataFrameFactory<T> dataFrameFactory
     ) {
@@ -65,46 +60,10 @@ public abstract class RuntimePlan<T> implements Serializable {
         this.metadata = staticContext.getMetadata();
         this.materializationCap = staticContext.getConfiguration().getMaterializationCap();
         this.dataFrameFactory = dataFrameFactory;
-        this.children = List.copyOf(Objects.requireNonNullElse(children, Collections.emptyList()));
-    }
-
-    protected RuntimePlan(
-            List<? extends RuntimePlan<T>> children,
-            @NonNull RuntimeStaticContext staticContext
-    ) {
-        this(children, staticContext, null);
-    }
-
-    protected final RuntimePlan<T> getChild(int index) {
-        return this.children.get(index);
-    }
-
-    protected final List<RuntimePlan<T>> getChildren() {
-        return this.children;
-    }
-
-    final List<? extends RuntimePlan<?>> diagnosticChildren() {
-        return this.children;
     }
 
     protected final ExceptionMetadata getMetadata() {
         return this.metadata;
-    }
-
-    protected final ExecutionMode getHighestExecutionMode() {
-        return this.staticContext.getExecutionMode();
-    }
-
-    protected final SequenceType getStaticType() {
-        return this.staticContext.getStaticType();
-    }
-
-    protected final RumbleRuntimeConfiguration getConfiguration() {
-        return this.staticContext.getConfiguration();
-    }
-
-    public final boolean isUpdating() {
-        return this.staticContext.isUpdating();
     }
 
     /**

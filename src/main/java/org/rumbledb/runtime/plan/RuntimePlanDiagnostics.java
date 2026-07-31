@@ -7,6 +7,8 @@
 
 package org.rumbledb.runtime.plan;
 
+import java.util.List;
+
 import org.rumbledb.runtime.RuntimeTupleIterator;
 
 /**
@@ -24,7 +26,7 @@ public final class RuntimePlanDiagnostics {
         if (plan.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return true;
         }
-        return plan.diagnosticChildren().stream().anyMatch(RuntimePlanDiagnostics::isSparkJobNeeded);
+        return childrenOf(plan).stream().anyMatch(RuntimePlanDiagnostics::isSparkJobNeeded);
     }
 
     public static void print(RuntimePlan<?> plan, StringBuilder buffer, int indent) {
@@ -41,8 +43,14 @@ public final class RuntimePlanDiagnostics {
             .append(" | ")
             .append(plan.getRuntimeStaticContext().getStaticType())
             .append('\n');
-        for (RuntimePlan<?> child : plan.diagnosticChildren()) {
+        for (RuntimePlan<?> child : childrenOf(plan)) {
             print(child, buffer, indent + 1);
         }
+    }
+
+    private static List<? extends RuntimePlan<?>> childrenOf(RuntimePlan<?> plan) {
+        return plan instanceof AbstractItemRuntimePlan itemPlan
+            ? itemPlan.diagnosticChildren()
+            : List.of();
     }
 }

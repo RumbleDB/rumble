@@ -25,16 +25,15 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimePlan<Item>
+public abstract class AtMostOneItemLocalRuntimeIterator extends AbstractItemRuntimePlan
         implements
             AtMostOneLocalRuntimePlan<Item>,
             NativeQueryRuntimePlan,
@@ -47,7 +46,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimePlan<Item
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
-        super(children, staticContext, ItemRuntimeDataFrameFactory.INSTANCE);
+        super(children, staticContext);
     }
 
     @Override

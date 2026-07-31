@@ -21,6 +21,7 @@
 package org.rumbledb.runtime;
 
 
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -41,7 +42,6 @@ import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
-import java.util.List;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -71,7 +71,7 @@ public abstract class RuntimeTupleIterator
             RuntimeTupleIterator child,
             RuntimeStaticContext staticContext
     ) {
-        super(child == null ? List.of() : List.of(child), staticContext);
+        super(staticContext);
         this.isOpen = false;
         this.child = child;
         this.evaluationDepthLimit = -1;
@@ -79,6 +79,18 @@ public abstract class RuntimeTupleIterator
 
     public RuntimeTupleIterator getChildIterator() {
         return this.child;
+    }
+
+    protected final ExecutionMode getHighestExecutionMode() {
+        return this.staticContext.getExecutionMode();
+    }
+
+    protected final RumbleRuntimeConfiguration getConfiguration() {
+        return this.staticContext.getConfiguration();
+    }
+
+    public final boolean isUpdating() {
+        return this.staticContext.isUpdating();
     }
 
     @Override

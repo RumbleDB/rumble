@@ -24,16 +24,15 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class DataFrameRuntimeIterator extends RuntimePlan<Item>
+public abstract class DataFrameRuntimeIterator extends AbstractItemRuntimePlan
         implements
             DataFrameRuntimePlan<Item>,
             NativeQueryRuntimePlan,
@@ -46,7 +45,7 @@ public abstract class DataFrameRuntimeIterator extends RuntimePlan<Item>
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
-        super(children, staticContext, ItemRuntimeDataFrameFactory.INSTANCE);
+        super(children, staticContext);
     }
 
     @Override

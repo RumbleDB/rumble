@@ -22,16 +22,15 @@ package org.rumbledb.runtime;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class LocalRuntimeIterator extends RuntimePlan<Item>
+public abstract class LocalRuntimeIterator extends AbstractItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             NativeQueryRuntimePlan,
@@ -44,7 +43,7 @@ public abstract class LocalRuntimeIterator extends RuntimePlan<Item>
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
-        super(children, staticContext, ItemRuntimeDataFrameFactory.INSTANCE);
+        super(children, staticContext);
     }
 
 }

@@ -19,7 +19,7 @@ import org.rumbledb.context.Name;
 public interface VariableDependencyRuntimePlan {
 
     default Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (!(this instanceof RuntimePlan<?> plan)) {
+        if (!(this instanceof AbstractItemRuntimePlan plan)) {
             return Collections.emptyMap();
         }
         Map<Name, DynamicContext.VariableDependency> result = new java.util.TreeMap<>();
