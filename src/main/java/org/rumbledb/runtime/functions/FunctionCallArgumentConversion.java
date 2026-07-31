@@ -16,6 +16,8 @@
  */
 package org.rumbledb.runtime.functions;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -36,10 +38,9 @@ import java.util.List;
  * Shared argument arity checks and type-promotion wrapping for dynamic calls on
  * {@link org.rumbledb.items.FunctionItem}s.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FunctionCallArgumentConversion {
 
-    private FunctionCallArgumentConversion() {
-    }
 
     public static void validateArity(
             Item functionItem,

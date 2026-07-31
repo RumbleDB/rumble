@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
@@ -30,10 +32,9 @@ import org.rumbledb.items.FunctionItemFactory;
 /**
  * Resolves a {@link FunctionIdentifier} against user-defined and built-in named functions in the dynamic context.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NamedFunctionLookup {
 
-    private NamedFunctionLookup() {
-    }
 
     /**
      * @return a {@link FunctionItem} bound to the current dynamic context, or {@code null} if none exists

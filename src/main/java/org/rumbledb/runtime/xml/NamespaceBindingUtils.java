@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import java.util.Map;
 
 import org.rumbledb.api.Item;
@@ -35,6 +37,7 @@ import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 
 import org.w3c.dom.Node;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NamespaceBindingUtils {
 
     /**
@@ -56,8 +59,6 @@ public final class NamespaceBindingUtils {
     public static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
     public static final String XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
 
-    private NamespaceBindingUtils() {
-    }
 
     /**
      * XML 1.0 / Namespaces in XML — NCName character checks (no colon).

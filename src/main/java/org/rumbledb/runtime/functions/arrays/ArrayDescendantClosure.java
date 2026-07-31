@@ -13,8 +13,6 @@ public class ArrayDescendantClosure implements FlatMapFunction<Item, Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ArrayDescendantClosure() {
-    }
 
     @Override
     public Iterator<Item> call(Item arg0) throws Exception {

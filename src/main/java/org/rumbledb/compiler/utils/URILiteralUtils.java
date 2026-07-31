@@ -7,6 +7,8 @@
 
 package org.rumbledb.compiler.utils;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidURILiteralException;
@@ -15,12 +17,11 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class URILiteralUtils {
 
     private static final String XML_WHITESPACE_SEQUENCE = "[\\t\\n\\r ]+";
 
-    private URILiteralUtils() {
-    }
 
     public static String normalizeAsAnyURI(String literal) {
         return literal.replaceAll(XML_WHITESPACE_SEQUENCE, " ").trim();

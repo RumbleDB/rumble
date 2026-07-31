@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
@@ -8,10 +10,9 @@ import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger.FormatIntegerPictureParser;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger.PrimaryFormatToken;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class TimezonePictureParser {
 
-    private TimezonePictureParser() {
-    }
 
     static ParsedTimezonePicture parse(
             char component,

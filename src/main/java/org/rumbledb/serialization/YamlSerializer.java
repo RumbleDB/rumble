@@ -117,5 +117,3 @@ public class YamlSerializer implements Serializer, Serializable {
         }
     }
 }
-
-

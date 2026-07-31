@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting.language;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import com.ibm.icu.util.ULocale;
 import org.rumbledb.config.FormattingLanguageSupport;
 
@@ -7,14 +9,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class LanguageSupport {
 
     public static final String DEFAULT_LANGUAGE = FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE;
 
     private static final Map<String, ULocale> ULOCALE_CACHE = new ConcurrentHashMap<>();
 
-    private LanguageSupport() {
-    }
 
     public static String normalizeLanguage(String language) {
         if (language == null || language.trim().isEmpty()) {

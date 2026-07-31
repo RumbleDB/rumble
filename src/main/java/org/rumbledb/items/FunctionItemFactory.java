@@ -17,6 +17,8 @@
 
 package org.rumbledb.items;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,10 +38,9 @@ import org.rumbledb.types.SequenceType;
 /**
  * Construction helpers for {@link FunctionItem} values used by the runtime.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FunctionItemFactory {
 
-    private FunctionItemFactory() {
-    }
 
     /**
      * Builds a function item for a builtin named function reference, using synthetic parameter names

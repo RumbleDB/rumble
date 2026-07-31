@@ -1,8 +1,10 @@
 package org.rumbledb.runtime.xml;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class XMLUtils {
-    private XMLUtils() {
-    }
 
     public static boolean isValidXmlCharacter(int codepoint, String xmlVersion) {
         boolean inCharRange = (0 <= codepoint && codepoint <= 0xD7FF)

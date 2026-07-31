@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -7,10 +9,9 @@ import java.util.*;
  * Locale-independent digit formatting: grouping and alphabetic. Locale-sensitive words and Roman numerals live in
  * {@link NumberWords}.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NumericFormattingSupport {
 
-    private NumericFormattingSupport() {
-    }
 
     public static String toDecimalString(BigInteger value) {
         return value.bitLength() < 63 ? Long.toString(value.longValueExact()) : value.toString();

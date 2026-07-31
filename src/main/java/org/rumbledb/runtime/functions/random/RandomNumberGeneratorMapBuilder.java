@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.random;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -19,14 +21,13 @@ import java.util.Random;
  * 4.9.1. Given the same seed, always builds an equal map (number and the seed chain reachable via next()
  * are a pure function of the seed).
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class RandomNumberGeneratorMapBuilder {
 
     static final Name PERMUTE_PARAM_NAME = Name.createVariableInDefaultFunctionNamespace(
         "random-number-generator-permute-arg-b3f6a3f0-6c39-4d3b-9c62-2a6e6b0f9a49"
     );
 
-    private RandomNumberGeneratorMapBuilder() {
-    }
 
     static Item build(
             long seed,

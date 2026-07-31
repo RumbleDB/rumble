@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
@@ -8,6 +10,7 @@ import org.rumbledb.exceptions.RumbleException;
 import java.util.ArrayList;
 import java.util.List;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NumericPictureParser {
 
     public static class NumericPictureKind {
@@ -18,8 +21,6 @@ public final class NumericPictureParser {
         public static final String INTEGER = "INTEGER";
     }
 
-    private NumericPictureParser() {
-    }
 
     private static NumericPicture parse(
             String picture,

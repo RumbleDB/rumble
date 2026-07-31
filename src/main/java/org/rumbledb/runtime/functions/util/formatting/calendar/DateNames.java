@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting.calendar;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import com.ibm.icu.text.DateFormatSymbols;
 import com.ibm.icu.util.Calendar;
 import com.ibm.icu.util.ULocale;
@@ -12,12 +14,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.EqualsAndHashCode;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DateNames {
 
     private static final Map<SymbolsKey, DateFormatSymbols> SYMBOLS_CACHE = new ConcurrentHashMap<>();
 
-    private DateNames() {
-    }
 
     public static String monthName(OffsetDateTime value, FormattingContext context, int min, int max) {
         Calendar cal = CalendarFields.calendar(value, context);

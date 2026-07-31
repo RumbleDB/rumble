@@ -1,5 +1,7 @@
 package org.rumbledb.items.parsing;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
@@ -7,10 +9,9 @@ import org.rumbledb.items.ItemFactory;
 
 import java.math.BigDecimal;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class JSONLiteralParsingUtils {
 
-    private JSONLiteralParsingUtils() {
-    }
 
     public static Item getItemFromJSONNumber(String number, String numberFormat) {
         if (JSONParsingOptions.NUMBER_FORMAT_DOUBLE.equals(numberFormat)) {

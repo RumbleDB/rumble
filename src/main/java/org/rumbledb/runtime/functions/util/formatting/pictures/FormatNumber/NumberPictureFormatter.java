@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -11,12 +13,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class NumberPictureFormatter {
 
     private static final Map<PictureKey, FormatNumberPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
 
-    private NumberPictureFormatter() {
-    }
 
     public static String format(
             Item valueItem,

@@ -20,7 +20,6 @@
 
 package org.rumbledb.context;
 
-import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -42,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@NoArgsConstructor(force = true)
 public class VariableValues implements Serializable {
 
     @Serial

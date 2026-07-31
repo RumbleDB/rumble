@@ -1,7 +1,6 @@
 package org.rumbledb.items.xml;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -13,7 +12,6 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-@NoArgsConstructor // For Kryo serialization
 public class NamespaceItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;

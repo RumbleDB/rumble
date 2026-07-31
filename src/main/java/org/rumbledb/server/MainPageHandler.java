@@ -11,8 +11,6 @@ import com.sun.net.httpserver.HttpHandler;
 
 public class MainPageHandler implements HttpHandler {
 
-    public MainPageHandler() {
-    }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {

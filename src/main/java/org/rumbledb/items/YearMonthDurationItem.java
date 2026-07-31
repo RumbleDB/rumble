@@ -1,6 +1,5 @@
 package org.rumbledb.items;
 
-import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.time.Duration;
@@ -15,7 +14,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-@NoArgsConstructor // For Kryo serialization
 public class YearMonthDurationItem extends AbstractAtomicItem {
 
     @Serial
