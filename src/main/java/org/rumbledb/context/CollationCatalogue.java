@@ -32,7 +32,7 @@ public final class CollationCatalogue {
 
 
     public static Set<String> defaultStaticallyKnownCollations() {
-        return DEFAULT_STATICALLY_KNOWN_COLLATIONS;
+        return new LinkedHashSet<>(DEFAULT_STATICALLY_KNOWN_COLLATIONS);
     }
 
     public static boolean isDefaultStaticallyKnownCollation(String uri) {

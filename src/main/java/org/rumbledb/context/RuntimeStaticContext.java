@@ -59,9 +59,7 @@ public class RuntimeStaticContext implements Serializable {
     private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
 
     @Builder.Default
-    private final Set<String> staticallyKnownCollations = new LinkedHashSet<>(
-            CollationCatalogue.defaultStaticallyKnownCollations()
-    );
+    private final Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
 
     private final SerializationParameters serializationParameters;
 
