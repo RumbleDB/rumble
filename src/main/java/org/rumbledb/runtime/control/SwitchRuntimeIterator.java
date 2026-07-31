@@ -133,7 +133,10 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
                     if (caseValue == null) {
                         return this.cases.get(caseKey);
                     }
-                    break;
+                    continue;
+                }
+                if (caseValue == null) {
+                    continue;
                 }
                 if (AtomicDeepEqual.deepEqual(testValue, caseValue)) {
                     return this.cases.get(caseKey);
@@ -193,8 +196,11 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
                 if (caseValue == null) {
                     return this.cases.get(caseKey);
                 } else {
-                    break;
+                    continue;
                 }
+            }
+            if (caseValue == null) {
+                continue;
             }
             if (AtomicDeepEqual.deepEqual(testValue, caseValue)) {
                 return this.cases.get(caseKey);
