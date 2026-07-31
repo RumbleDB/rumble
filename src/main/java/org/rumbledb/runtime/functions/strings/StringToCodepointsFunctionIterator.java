@@ -24,7 +24,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -38,9 +37,6 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item nextResult;
-    private String input;
-    private int currentPosition;
 
     public StringToCodepointsFunctionIterator(
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
@@ -56,51 +52,6 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
                 context,
                 getMetadata()
         );
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "string-to-codepoints function", getMetadata());
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.input = null;
-        this.currentPosition = -1;
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        if (this.input == null) {
-            // Getting first parameter
-            Item stringItem = this.getChild(0)
-                .materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
-
-            if (stringItem == null) {
-                this.hasNext = false;
-                return;
-            }
-            this.input = stringItem.getStringValue();
-            if (this.input.equals("")) {
-                this.hasNext = false;
-                return;
-            }
-
-            this.currentPosition = 0;
-        }
-        if (this.currentPosition < this.input.length()) {
-            this.nextResult = ItemFactory.getInstance().createIntItem(this.input.codePointAt(this.currentPosition));
-            this.currentPosition = this.input.offsetByCodePoints(this.currentPosition, 1);
-            this.hasNext = true;
-        } else {
-            this.hasNext = false;
-        }
     }
 
     private static final class StringToCodepointsLocalCursor extends AbstractLocalCursor<Item> {

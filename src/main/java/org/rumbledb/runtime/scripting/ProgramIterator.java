@@ -77,16 +77,6 @@ public class ProgramIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public boolean isSequential() {
-        return this.statementsAndExprIterator.getRuntimeStaticContext().isSequential();
-    }
-
-    @Override
-    public boolean isUpdating() {
-        return this.statementsAndExprIterator.getRuntimeStaticContext().isUpdating();
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!this.executionState.encounteredExitStatement) {
             return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.statementsAndExprIterator, context);

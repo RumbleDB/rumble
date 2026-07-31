@@ -22,21 +22,17 @@ package org.rumbledb.runtime;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class LocalRuntimeIterator extends RuntimeIterator implements LocalRuntimePlan<Item> {
+public abstract class LocalRuntimeIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private transient Cursor<Item> localCursor;
 
     protected LocalRuntimeIterator(
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
@@ -48,36 +44,4 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator implements Lo
         }
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        try {
-            this.localCursor = this.createNativeCursor(context);
-        } catch (RuntimeException exception) {
-            super.close();
-            throw exception;
-        }
-    }
-
-    @Override
-    public boolean hasNext() {
-        return this.localCursor != null && this.localCursor.hasNext();
-    }
-
-    @Override
-    public Item next() {
-        if (this.localCursor == null) {
-            throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
-        }
-        return this.localCursor.next();
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        if (this.localCursor != null) {
-            this.localCursor.close();
-            this.localCursor = null;
-        }
-    }
 }

@@ -7,7 +7,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -48,9 +47,6 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
 
     private final Axis axis;
     private final ResultOrder resultOrder;
-    private transient List<Item> results;
-    private transient int resultCounter = 0;
-    private transient Item nextResult;
 
     protected AxisIterator(RuntimeStaticContext staticContext, Axis axis) {
         this(staticContext, axis, ResultOrder.DOCUMENT_ORDER_DISTINCT);
@@ -63,12 +59,6 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        setNextResult();
-    }
-
-    @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new AxisLocalCursor(
                 this.axis,
@@ -76,17 +66,6 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
                 context,
                 getRuntimeStaticContext()
         );
-    }
-
-    private void setNextResult() {
-        if (this.results == null) {
-            this.results = prepareResults(this.currentDynamicContextForLocalExecution);
-        }
-        if (this.resultCounter < this.results.size()) {
-            this.nextResult = this.results.get(this.resultCounter++);
-        } else {
-            this.hasNext = false;
-        }
     }
 
     private List<Item> prepareResults(DynamicContext context) {
@@ -245,28 +224,6 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
         return new ArrayList<>(siblings.subList(0, end));
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item nextResult = this.nextResult;
-            setNextResult();
-            return nextResult;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in axis",
-                getMetadata()
-        );
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.hasNext = false;
-        this.nextResult = null;
-        this.results = null;
-        this.resultCounter = 0;
-    }
-
     private static final class AxisLocalCursor extends AbstractLocalCursor<Item> {
 
         private final Axis axis;
@@ -308,7 +265,7 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
         @Override
         protected Item nextLocal() {
             if (!hasNextLocal()) {
-                throw invalidState(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in axis");
+                throw invalidState(IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " in axis");
             }
             return this.results.get(this.position++);
         }

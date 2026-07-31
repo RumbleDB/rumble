@@ -145,4 +145,5 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
             .get(0);
     }
+
 }

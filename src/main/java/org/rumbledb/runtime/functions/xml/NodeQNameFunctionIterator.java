@@ -23,10 +23,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -72,8 +70,6 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Item resultItem;
-
     public NodeQNameFunctionIterator(
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
@@ -91,16 +87,6 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
         );
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        Item node = getContextNode();
-
-        this.resultItem = evaluate(node);
-        this.hasNext = this.resultItem != null;
-    }
-
     private Item evaluate(Item node) {
         if (node == null) {
             return null;
@@ -115,19 +101,6 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
         return nodeName == null ? null : ItemFactory.getInstance().createQNameItem(nodeName);
     }
 
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " node-name function",
-                    getMetadata()
-            );
-        }
-
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
     /**
      * Helper method to get the context node.
      * If no parameters are provided, uses the context item.
@@ -135,14 +108,4 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
      *
      * Spec: "If the argument is omitted, it defaults to the context item."
      */
-    private Item getContextNode() {
-        if (this.getChildren().isEmpty()) {
-            // No argument provided, use context item
-            return this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0);
-        }
-        // Argument provided, use first parameter (may materialize to the empty sequence).
-        return this.getChild(0).materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
-    }
 }

@@ -2,16 +2,13 @@ package org.rumbledb.runtime.functions.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.TextItem;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -40,21 +37,6 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
         );
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.hasNext = true;
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return evaluate(getContextNode());
-        }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " root function", getMetadata());
-    }
-
     private Item evaluate(Item node) {
         if (
             node instanceof DocumentItem
@@ -75,12 +57,4 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
         );
     }
 
-    private Item getContextNode() {
-        if (this.getChildren().isEmpty()) {
-            return this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0);
-        }
-        return this.getChild(0).materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
-    }
 }

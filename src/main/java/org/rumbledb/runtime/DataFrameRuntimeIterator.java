@@ -23,62 +23,22 @@ package org.rumbledb.runtime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class DataFrameRuntimeIterator extends RuntimeIterator implements DataFrameRuntimePlan<Item> {
+public abstract class DataFrameRuntimeIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private transient Cursor<Item> executionCursor;
 
     protected DataFrameRuntimeIterator(
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        try {
-            this.executionCursor = this.getCursor(context);
-        } catch (RuntimeException exception) {
-            this.executionCursor = null;
-            super.close();
-            throw exception;
-        }
-    }
-
-    @Override
-    public boolean hasNext() {
-        return this.executionCursor != null && this.executionCursor.hasNext();
-    }
-
-    @Override
-    public Item next() {
-        if (this.executionCursor == null) {
-            throw new IteratorFlowException(
-                    "Runtime iterator is not open",
-                    this.getRuntimeStaticContext().getMetadata()
-            );
-        }
-        return this.executionCursor.next();
-    }
-
-    @Override
-    public void close() {
-        if (this.executionCursor != null) {
-            this.executionCursor.close();
-            this.executionCursor = null;
-        }
-        super.close();
     }
 
     @Override

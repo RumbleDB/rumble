@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.control;
 
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -28,7 +27,6 @@ import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -47,9 +45,6 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tryExpression;
     private final Map<CatchPattern, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> catchExpressions;
-    private List<Item> results = null;
-    private Item nextResult = null;
-    private int nextPosition = 0;
 
     public TryCatchRuntimeIterator(
             org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tryExpression,
@@ -86,59 +81,6 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
             DynamicContext catchContext = new DynamicContext(context);
             ErrorVariables.injectDynamicContext(catchContext, exception);
             return catchingExpression.materialize(catchContext);
-        }
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        setNextResult();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item nextItem = this.nextResult;
-            setNextResult();
-            return nextItem;
-        }
-        throw new IteratorFlowException(
-                org.rumbledb.runtime.RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in try-catch statement",
-                getMetadata()
-        );
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.results = null;
-    }
-
-    private void setNextResult() {
-        if (this.results == null) {
-            this.nextPosition = 0;
-            this.results = new ArrayList<>();
-            try {
-                this.results.addAll(this.tryExpression.materialize(this.currentDynamicContextForLocalExecution));
-            } catch (Throwable throwable) {
-                RumbleException exception = RumbleException.unnestException(throwable);
-                this.results.clear();
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> catchingExpression = findMatchingCatch(
-                    exception
-                );
-                if (catchingExpression != null) {
-                    DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
-                    ErrorVariables.injectDynamicContext(context, exception);
-                    this.results.addAll(catchingExpression.materialize(context));
-                } else {
-                    throw throwable;
-                }
-            }
-        }
-        if (this.nextPosition < this.results.size()) {
-            this.nextResult = this.results.get(this.nextPosition++);
-        } else {
-            this.hasNext = false;
         }
     }
 

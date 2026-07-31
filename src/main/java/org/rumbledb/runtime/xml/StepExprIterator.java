@@ -5,7 +5,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
@@ -18,7 +17,6 @@ import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
@@ -32,9 +30,6 @@ public class StepExprIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> axisIterator;
     private final NodeTest nodeTest;
-    private List<Item> results;
-    private Item nextResult;
-    private int resultCounter = 0;
 
     public StepExprIterator(
             org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> axisIterator,
@@ -57,40 +52,6 @@ public class StepExprIterator extends LocalRuntimeIterator {
                 },
                 getMetadata()
         );
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        setNextResult();
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.results = null;
-        this.nextResult = null;
-        this.resultCounter = 0;
-    }
-
-    private void setNextResult() {
-        if (this.results == null) {
-            List<Item> axisResult = applyAxis();
-            this.results = applyNodeTest(axisResult);
-        }
-        storeNextResult();
-    }
-
-    private List<Item> applyAxis() {
-        return this.axisIterator.materialize(this.currentDynamicContextForLocalExecution);
-    }
-
-    private void storeNextResult() {
-        if (this.resultCounter < this.results.size()) {
-            this.nextResult = this.results.get(this.resultCounter++);
-        } else {
-            this.hasNext = false;
-        }
     }
 
     private List<Item> applyNodeTest(List<Item> axisResult) {
@@ -312,21 +273,4 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return null;
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.nextResult;
-            setNextResult();
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in step expr",
-                getMetadata()
-        );
-    }
-
-    @Override
-    public boolean hasNext() {
-        return super.hasNext();
-    }
 }

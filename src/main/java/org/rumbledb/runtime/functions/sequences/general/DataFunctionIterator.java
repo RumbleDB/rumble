@@ -33,7 +33,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.SingletonLocalCursor;
@@ -168,7 +167,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator
 
         private RuntimeException exhausted() {
             return new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atomization iterator",
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " atomization iterator",
                     this.metadata
             );
         }

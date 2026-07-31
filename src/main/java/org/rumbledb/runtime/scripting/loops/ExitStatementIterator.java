@@ -88,6 +88,13 @@ public class ExitStatementIterator extends HybridRuntimeIterator
         );
     }
 
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        return this.childIterator.getRuntimeStaticContext().isUpdating()
+            ? UpdatingRuntimePlan.get(this.childIterator, context)
+            : new PendingUpdateList();
+    }
+
     private static final class ExitLocalCursor extends AbstractLocalCursor<Item> {
 
         private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> childPlan;

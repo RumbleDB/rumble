@@ -33,7 +33,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -177,7 +176,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator
         protected Item nextLocal() {
             if (!hasNextLocal()) {
                 throw new IteratorFlowException(
-                        RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.variableName,
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + this.variableName,
                         this.metadata
                 );
             }

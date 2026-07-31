@@ -53,10 +53,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = this.getChild(0);
 
         if (!iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-            if (this.hasNext) {
-                this.hasNext = false;
-                return accumulate(iterator.materialize(context));
-            }
+            return accumulate(iterator.materialize(context));
         }
 
         JavaRDD<Item> childRDD = iterator.getRDD(context);

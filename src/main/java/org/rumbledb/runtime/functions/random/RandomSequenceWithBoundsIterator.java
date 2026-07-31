@@ -14,11 +14,6 @@ import java.util.List;
 public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item low;
-    private Item high;
-    private int size;
-    private Item type;
-    private GeneratedRandomsIterator generatedRandomsIterator;
 
     public RandomSequenceWithBoundsIterator(
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
@@ -35,15 +30,6 @@ public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
                 ),
                 getMetadata()
         );
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        this.low = this.getChild(0).materializeFirstOrNull(context);
-        this.high = this.getChild(1).materializeFirstOrNull(context);
-        this.size = this.getChild(2).materializeFirstOrNull(context).castToIntValue();
-        this.type = this.getChild(3).materializeFirstOrNull(context);
-        this.generatedRandomsIterator = createRandomNumberStream(this.low, this.high, this.size, this.type);
     }
 
     private GeneratedRandomsIterator createRandomNumberStream(DynamicContext context) {
@@ -72,13 +58,4 @@ public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
         }
     }
 
-    @Override
-    public Item next() {
-        return this.generatedRandomsIterator.getNextRandom();
-    }
-
-    @Override
-    public boolean hasNext() {
-        return this.generatedRandomsIterator.hasNext();
-    }
 }

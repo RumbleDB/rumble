@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -79,7 +79,7 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
     }
 
     private static List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> createChildList(
-            RuntimeIterator... iterators
+            RuntimePlan<Item>... iterators
     ) {
         List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children = new ArrayList<>();
         for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : iterators) {
@@ -99,7 +99,7 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
     }
 
     private Item createProcessingInstruction(
-            Function<RuntimeIterator, List<Item>> materialize,
+            Function<RuntimePlan<Item>, List<Item>> materialize,
             DynamicContext dynamicContext
     ) {
         String target;

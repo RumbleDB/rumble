@@ -23,28 +23,19 @@ package org.rumbledb.runtime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.List;
 
-public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator
+public abstract class AtMostOneItemLocalRuntimeIterator extends ItemRuntimePlan
         implements
             AtMostOneLocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item result;
 
     protected AtMostOneItemLocalRuntimeIterator(
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
@@ -60,87 +51,4 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator
     public abstract Item evaluateAtMostOne(
             DynamicContext context
     );
-
-    @Override
-    public void open(DynamicContext dynamicContext) {
-        super.open(dynamicContext);
-        this.result = evaluateAtMostOne(dynamicContext);
-        this.hasNext = this.result != null;
-    }
-
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasNext = false;
-        return this.result;
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.result = null;
-    }
-
-    @Override
-    public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
-        Item item = evaluateAtMostOne(dynamicContext);
-        if (item == null) {
-            return false;
-        }
-        if (item.isBoolean()) {
-            return item.getBooleanValue();
-        }
-        if (item.isNumeric()) {
-            if (position == null) {
-                if (item.isInt()) {
-                    return item.getIntValue() != 0;
-                } else if (item.isInteger()) {
-                    return !item.getIntegerValue().equals(BigInteger.ZERO);
-                } else if (item.isDouble()) {
-                    return !item.isNaN() && item.getDoubleValue() != 0;
-                } else if (item.isFloat()) {
-                    return !item.isNaN() && item.getFloatValue() != 0;
-                } else if (item.isDecimal()) {
-                    return !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
-                } else {
-                    throw new OurBadException(
-                            "Unexpected numeric type found while calculating effective boolean value."
-                    );
-                }
-            } else {
-                return ComparisonIterator.compareItems(item, position, ComparisonOperator.VC_EQ, getMetadata()) == 0;
-            }
-        }
-        if (item.isNull()) {
-            return false;
-        }
-        if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
-            return !item.getStringValue().isEmpty();
-        }
-        if (item.isNode()) {
-            return true;
-        }
-        if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
-            if (item.isObject() || item.isArray()) {
-                return true;
-            }
-        } else {
-            if (item.isObject() || item.isArray()) {
-                System.err.println(
-                    "Note: effective boolean value of "
-                        + (item.isObject() ? "Object " : "Array ")
-                        + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
-                );
-            }
-        }
-
-        throw new InvalidArgumentTypeException(
-                "Effective boolean value not defined for items of type "
-                    +
-                    item.getDynamicType().toString(),
-                getMetadata()
-        );
-    }
 }

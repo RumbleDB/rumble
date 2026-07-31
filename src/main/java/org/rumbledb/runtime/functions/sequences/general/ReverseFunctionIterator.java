@@ -53,8 +53,6 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
     private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
-    private List<Item> results;
-    private int currentIndex = 0;
 
     public ReverseFunctionIterator(
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
@@ -108,18 +106,6 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator
         return result;
     }
 
-
-
-    public Item getResult() {
-        if (this.results == null || this.results.size() == 0) {
-            throw new IteratorFlowException("getResult called on an empty list of results", getMetadata());
-        }
-        if (this.currentIndex == this.results.size() - 1) {
-            this.hasNext = false;
-        }
-        return this.results.get(this.currentIndex++);
-    }
-
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> sequencePlan;
@@ -158,7 +144,10 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator
         @Override
         protected Item nextLocal() {
             if (this.currentIndex < 0) {
-                throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "reverse function", this.metadata);
+                throw new IteratorFlowException(
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "reverse function",
+                        this.metadata
+                );
             }
             return this.results.get(this.currentIndex--);
         }

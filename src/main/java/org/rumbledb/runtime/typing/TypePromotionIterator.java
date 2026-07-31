@@ -14,7 +14,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -286,7 +285,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator
         @Override
         protected Item nextLocal() {
             if (this.nextResult == null) {
-                throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, this.metadata);
+                throw new IteratorFlowException(IteratorFlowException.FLOW_EXCEPTION_MESSAGE, this.metadata);
             }
             Item result = this.nextResult;
             setNextResult();

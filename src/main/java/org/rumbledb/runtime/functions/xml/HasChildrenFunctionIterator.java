@@ -45,4 +45,5 @@ public class HasChildrenFunctionIterator extends AtMostOneItemLocalRuntimeIterat
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
             .get(0);
     }
+
 }

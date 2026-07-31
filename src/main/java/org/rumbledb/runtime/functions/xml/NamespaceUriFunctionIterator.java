@@ -41,11 +41,12 @@ public class NamespaceUriFunctionIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     private Item getContextNode(DynamicContext context) {
-        if (this.getChildren().size() > 0) {
+        if (!this.getChildren().isEmpty()) {
             return this.getChild(0).materializeFirstOrNull(context);
         }
         return context.getVariableValues()
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
             .get(0);
     }
+
 }

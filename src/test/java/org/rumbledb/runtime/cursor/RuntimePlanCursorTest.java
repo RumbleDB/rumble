@@ -34,19 +34,18 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-public class LegacyRuntimeIteratorCursorTest {
+public class RuntimePlanCursorTest {
 
     @Test
     public void cursorsCreatedFromOnePrototypeExecuteIndependently() {
         RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
-        RuntimeIterator prototype = new ConstantRuntimeIterator(
+        RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
                 ItemFactory.getInstance().createIntItem(42),
                 createStaticContext(configuration)
         );
@@ -58,7 +57,6 @@ public class LegacyRuntimeIteratorCursorTest {
             assertEquals(42, second.next().getIntValue());
             assertFalse(first.hasNext());
             assertFalse(second.hasNext());
-            assertFalse(prototype.isOpen(), "The legacy prototype must never be opened directly.");
         } finally {
             first.close();
             second.close();
@@ -69,7 +67,7 @@ public class LegacyRuntimeIteratorCursorTest {
     public void cursorOpensOnFirstReadAndCloseIsIdempotent() {
         RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
-        RuntimeIterator prototype = new ConstantRuntimeIterator(
+        RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
                 ItemFactory.getInstance().createIntItem(1),
                 createStaticContext(configuration)
         );

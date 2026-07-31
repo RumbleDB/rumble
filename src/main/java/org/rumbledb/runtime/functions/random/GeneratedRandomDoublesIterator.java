@@ -35,4 +35,5 @@ public class GeneratedRandomDoublesIterator extends GeneratedRandomsIterator {
     public boolean hasNext() {
         return this.iterator.hasNext();
     }
+
 }

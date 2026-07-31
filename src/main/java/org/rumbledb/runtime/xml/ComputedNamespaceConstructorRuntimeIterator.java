@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -90,7 +90,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
     }
 
     private static List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> createChildList(
-            RuntimeIterator... iterators
+            RuntimePlan<Item>... iterators
     ) {
         List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children = new ArrayList<>();
         for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : iterators) {
@@ -107,7 +107,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
     }
 
     private Item createNamespace(
-            Function<RuntimeIterator, List<Item>> materialize,
+            Function<RuntimePlan<Item>, List<Item>> materialize,
             DynamicContext dynamicContext
     ) {
         // Spec: "A computed namespace constructor creates a new namespace node, with its own node identity."
@@ -127,7 +127,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
         return namespaceItem;
     }
 
-    private String resolvePrefix(Function<RuntimeIterator, List<Item>> materialize) {
+    private String resolvePrefix(Function<RuntimePlan<Item>, List<Item>> materialize) {
         // Spec: "If the constructor specifies a Prefix, it is used as the prefix for the namespace node."
         if (this.staticPrefix != null) {
             return this.staticPrefix;
@@ -171,7 +171,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
         return prefix;
     }
 
-    private String resolveUri(Function<RuntimeIterator, List<Item>> materialize) {
+    private String resolveUri(Function<RuntimePlan<Item>, List<Item>> materialize) {
         // Spec: "The content expression is evaluated, and the result is cast to xs:anyURI to create the URI property
         // for the newly created node. An implementation may raise a dynamic error [err:XQDY0074] if the URIExpr of a
         // computed namespace

@@ -91,7 +91,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator
         Item left;
         Item right;
         try {
-            left = this.leftIterator.materializeAtMostOne(this.currentDynamicContextForLocalExecution);
+            left = this.leftIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received more than one item",
@@ -99,7 +99,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator
             );
         }
         try {
-            right = this.rightIterator.materializeAtMostOne(this.currentDynamicContextForLocalExecution);
+            right = this.rightIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received more than one item",
@@ -145,7 +145,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        if (!init(this.currentDynamicContextForLocalExecution)) {
+        if (!init(context)) {
             return new HomogeneousItemDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                     BuiltinTypesCatalogue.item

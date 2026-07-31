@@ -70,27 +70,7 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        this.currentDynamicContextForLocalExecution = new DynamicContext(context);
-        materializeWithLocalTuple();
-        return null;
+        return executeLocally(context);
     }
 
-    private void materializeWithLocalTuple() {
-        this.clauseIterator.open(this.currentDynamicContextForLocalExecution);
-        while (this.clauseIterator.hasNext()) {
-            try {
-                FlworTuple tuple = this.clauseIterator.next();
-                this.currentDynamicContextForLocalExecution.getVariableValues().removeAllVariables(); // clear the
-                                                                                                      // previous
-                // variables
-                this.currentDynamicContextForLocalExecution.getVariableValues()
-                    .setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                this.expression.materialize(this.currentDynamicContextForLocalExecution);
-            } catch (BreakStatementException ignored) {
-                break;
-            } catch (ContinueStatementException ignored) {
-            }
-        }
-        this.clauseIterator.close();
-    }
 }

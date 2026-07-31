@@ -286,7 +286,10 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator
         }
 
         private RuntimeException exhausted() {
-            return new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", this.metadata);
+            return new IteratorFlowException(
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "subsequence function",
+                    this.metadata
+            );
         }
 
     }

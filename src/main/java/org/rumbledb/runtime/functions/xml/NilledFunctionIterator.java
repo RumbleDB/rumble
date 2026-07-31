@@ -21,11 +21,8 @@ package org.rumbledb.runtime.functions.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -66,9 +63,6 @@ public class NilledFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<Item> resultItems;
-    private int currentIndex;
-
     public NilledFunctionIterator(
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
@@ -86,17 +80,6 @@ public class NilledFunctionIterator extends LocalFunctionCallIterator {
         );
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.currentIndex = 0;
-
-        Item node = getContextNode();
-
-        this.resultItems = evaluate(node);
-        this.hasNext = this.resultItems != null && !this.resultItems.isEmpty();
-    }
-
     private List<Item> evaluate(Item node) {
         if (node == null) {
             return List.of();
@@ -110,36 +93,9 @@ public class NilledFunctionIterator extends LocalFunctionCallIterator {
         return node.nilled();
     }
 
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " nilled function",
-                    getMetadata()
-            );
-        }
-
-        Item result = this.resultItems.get(this.currentIndex);
-        this.currentIndex++;
-        if (this.currentIndex >= this.resultItems.size()) {
-            this.hasNext = false;
-        }
-        return result;
-    }
-
     /**
      * Helper method to get the context node.
      * If no parameters are provided, uses the context item.
      * If a parameter is provided, uses the first parameter.
      */
-    private Item getContextNode() {
-        if (this.getChildren().isEmpty()) {
-            // No argument provided, use context item
-            return this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0);
-        }
-        // Argument provided, use first parameter
-        return this.getChild(0).materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
-    }
 }

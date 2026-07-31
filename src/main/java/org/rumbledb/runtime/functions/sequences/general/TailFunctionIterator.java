@@ -101,7 +101,10 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected Item nextLocal() {
             if (!this.childCursor.hasNext()) {
-                throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "tail function", this.metadata);
+                throw new IteratorFlowException(
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "tail function",
+                        this.metadata
+                );
             }
             return this.childCursor.next();
         }

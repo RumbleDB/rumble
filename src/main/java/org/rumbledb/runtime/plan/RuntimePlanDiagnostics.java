@@ -7,7 +7,7 @@
 
 package org.rumbledb.runtime.plan;
 
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.ItemRuntimePlan;
 
 /**
  * Transitional diagnostics for plans while the legacy iterator hierarchy is being removed.
@@ -18,8 +18,8 @@ public final class RuntimePlanDiagnostics {
     }
 
     public static boolean isSparkJobNeeded(RuntimePlan<?> plan) {
-        if (plan instanceof RuntimeIterator iterator) {
-            return org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(iterator);
+        if (plan instanceof ItemRuntimePlan itemPlan) {
+            return itemPlan.isSparkJobNeeded();
         }
         return plan.getRuntimeStaticContext()
             .getExecutionMode()
@@ -27,8 +27,8 @@ public final class RuntimePlanDiagnostics {
     }
 
     public static void print(RuntimePlan<?> plan, StringBuilder buffer, int indent) {
-        if (plan instanceof RuntimeIterator iterator) {
-            org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(iterator, buffer, indent);
+        if (plan instanceof ItemRuntimePlan itemPlan) {
+            itemPlan.print(buffer, indent);
             return;
         }
         for (int i = 0; i < indent; i++) {

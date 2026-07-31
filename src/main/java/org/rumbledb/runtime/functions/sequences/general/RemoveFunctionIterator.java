@@ -135,7 +135,10 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
         }
 
         private RuntimeException exhausted() {
-            return new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "remove function", this.metadata);
+            return new IteratorFlowException(
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "remove function",
+                    this.metadata
+            );
         }
 
     }

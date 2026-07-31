@@ -24,7 +24,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
@@ -39,9 +38,6 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private String[] results;
-    private Item nextResult;
-    private int currentPosition;
 
     public TokenizeFunctionIterator(
             List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
@@ -53,83 +49,6 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new TokenizeLocalCursor(this.getChildren(), context, getMetadata());
-    }
-
-    @Override
-    public Item next() {
-        if (this.nextResult != null) {
-            Item result = this.nextResult;
-            setNextResult();
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "tokenize function", getMetadata());
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.results = null;
-        this.currentPosition = -1;
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        if (this.results == null) {
-            // Getting first parameter
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> stringIterator = this.getChild(0);
-            String input = null;
-            String separator = null;
-            Item stringItem = stringIterator.materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
-            if (stringItem == null) {
-                this.hasNext = false;
-                return;
-            }
-            input = stringItem.getStringValue();
-
-            // Getting second parameter
-            if (this.getChildren().size() == 1) {
-                this.results = RegexPatternUtils.tokenizeOnXmlWhitespace(input);
-                this.currentPosition = 0;
-            } else {
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> separatorIterator = this.getChild(1);
-                List<Item> separatorItems = separatorIterator.materializeAtMost(
-                    this.currentDynamicContextForLocalExecution,
-                    2
-                );
-                if (separatorItems.isEmpty()) {
-                    throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
-                }
-                stringItem = separatorItems.get(0);
-                if (separatorItems.size() > 1) {
-                    throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
-                }
-                if (!stringItem.isString()) {
-                    throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
-                }
-                try {
-                    separator = stringItem.getStringValue();
-                } catch (Exception e) {
-                    throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
-                }
-                String flags = null;
-                if (this.getChildren().size() == 3) {
-                    Item flagsItem = this.getChild(2)
-                        .materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
-                    if (flagsItem != null) {
-                        flags = flagsItem.getStringValue();
-                    }
-                }
-                this.results = tokenize(input, separator, flags, getMetadata());
-                this.currentPosition = 0;
-            }
-        }
-        if (this.currentPosition < this.results.length) {
-            this.nextResult = ItemFactory.getInstance().createStringItem(this.results[this.currentPosition]);
-            this.currentPosition++;
-            this.hasNext = true;
-        } else {
-            this.hasNext = false;
-        }
     }
 
     private static String[] tokenize(

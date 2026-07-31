@@ -54,4 +54,5 @@ public class GenerateIdFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
             .get(0);
     }
+
 }

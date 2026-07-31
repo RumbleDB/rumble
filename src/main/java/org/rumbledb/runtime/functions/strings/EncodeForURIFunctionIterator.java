@@ -23,10 +23,8 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -66,20 +64,6 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
             this::evaluate,
             getMetadata()
         );
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item inputItem = this.getChild(0).materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
-            return evaluate(inputItem);
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " translate function",
-                    getMetadata()
-            );
-        }
     }
 
     private Item evaluate(Item inputItem) {

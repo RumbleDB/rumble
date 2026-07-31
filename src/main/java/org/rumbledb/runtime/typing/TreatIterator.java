@@ -22,7 +22,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -191,7 +190,7 @@ public class TreatIterator extends HybridRuntimeIterator
         protected Item nextLocal() {
             if (this.nextResult == null) {
                 throw new IteratorFlowException(
-                        RuntimeIterator.FLOW_EXCEPTION_MESSAGE,
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE,
                         this.validator.getMetadata()
                 );
             }

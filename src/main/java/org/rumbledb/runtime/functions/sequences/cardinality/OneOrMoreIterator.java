@@ -31,7 +31,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.SequenceExceptionOneOrMore;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -120,7 +119,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator
         protected Item nextLocal() {
             if (!this.childCursor.hasNext()) {
                 throw new IteratorFlowException(
-                        RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
                         this.metadata
                 );
             }

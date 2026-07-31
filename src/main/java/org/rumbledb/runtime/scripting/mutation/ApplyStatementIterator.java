@@ -7,6 +7,7 @@ import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -41,5 +42,10 @@ public class ApplyStatementIterator
             org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.exprIterator, context)
                 .applyUpdates(this.getRuntimeStaticContext().getMetadata());
         }
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        return new PendingUpdateList();
     }
 }

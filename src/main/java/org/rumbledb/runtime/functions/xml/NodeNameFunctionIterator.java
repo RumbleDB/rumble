@@ -23,10 +23,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.StringItem;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -79,21 +77,6 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
         );
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.hasNext = true;
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return evaluate(getContextNode());
-        }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " name function", getMetadata());
-    }
-
     private Item evaluate(Item node) {
         if (node == null) {
             return new StringItem("");
@@ -113,14 +96,4 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
      * If no parameters are provided, uses the context item.
      * If a parameter is provided, uses the first parameter.
      */
-    private Item getContextNode() {
-        if (this.getChildren().isEmpty()) {
-            // No argument provided, use context item
-            return this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0);
-        }
-        // Argument provided, use first parameter
-        return this.getChild(0).materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
-    }
 }
