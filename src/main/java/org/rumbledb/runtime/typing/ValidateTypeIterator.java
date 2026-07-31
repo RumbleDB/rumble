@@ -31,7 +31,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -64,7 +64,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator inputDataIterator = this.getChild(0);
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
@@ -79,12 +79,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         try {
 
             if (inputDataIterator.isDataFrame()) {
-                JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
+                HomogeneousItemDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
                 ItemType actualType = inputDataAsDataFrame.getItemType();
                 if (actualType.isSubtypeOf(this.itemType)) {
                     return inputDataAsDataFrame;
                 }
-                JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
+                JavaRDD<Item> inputDataAsRDDOfItems = inputDataAsDataFrame.toRDD(getMetadata());
                 return convertRDDToValidDataFrame(
                     inputDataAsRDDOfItems,
                     this.itemType,
@@ -111,7 +111,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
     }
 
-    public static JSoundDataFrame convertRDDToValidDataFrame(
+    public static HomogeneousItemDataFrame convertRDDToValidDataFrame(
             JavaRDD<Item> itemRDD,
             ItemType itemType,
             DynamicContext context,
@@ -136,13 +136,13 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 }
             }
         );
-        return new JSoundDataFrame(
+        return new HomogeneousItemDataFrame(
                 SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
                 itemType
         );
     }
 
-    public static JSoundDataFrame convertRDDToVariantDataFrame(
+    public static HomogeneousItemDataFrame convertRDDToVariantDataFrame(
             JavaRDD<Item> itemRDD
     ) {
         StructType schema = new StructType(
@@ -166,7 +166,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
         );
 
-        return new JSoundDataFrame(
+        return new HomogeneousItemDataFrame(
                 SparkSessionManager.getInstance()
                     .getOrCreateSession()
                     .createDataFrame(rowRDD, schema)
@@ -260,7 +260,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return TypeMappings.getDataFrameDataTypeFromItemType(itemType, staticContext);
     }
 
-    public static JSoundDataFrame convertLocalItemsToDataFrame(
+    public static HomogeneousItemDataFrame convertLocalItemsToDataFrame(
             List<Item> items,
             ItemType itemType,
             DynamicContext context,
@@ -268,7 +268,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         if (items.isEmpty()) {
-            return new JSoundDataFrame(
+            return new HomogeneousItemDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                     itemType
             );
@@ -284,17 +284,17 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             Row row = convertLocalItemToRow(item, schema, context);
             rows.add(row);
         }
-        return new JSoundDataFrame(
+        return new HomogeneousItemDataFrame(
                 SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema),
                 itemType
         );
     }
 
-    public static JSoundDataFrame convertLocalItemsToVariantDataFrame(
+    public static HomogeneousItemDataFrame convertLocalItemsToVariantDataFrame(
             List<Item> items
     ) {
         if (items.isEmpty()) {
-            return new JSoundDataFrame(
+            return new HomogeneousItemDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                     BuiltinTypesCatalogue.item
             );
@@ -318,7 +318,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
         );
 
-        return new JSoundDataFrame(
+        return new HomogeneousItemDataFrame(
                 dataFrame,
                 BuiltinTypesCatalogue.item
         );

@@ -26,7 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -42,8 +42,6 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
 
 public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -113,7 +111,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public Item lookupDF(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         df = df.evaluateSQL(
             String.format(
@@ -123,10 +121,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             ),
             df.getItemType()
         );
-        JavaRDD<Item> rdd = dataFrameToRDDOfItems(
-            df,
-            this.getMetadata()
-        );
+        JavaRDD<Item> rdd = df.toRDD(this.getMetadata());
 
         List<Item> results = rdd.take(1);
         if (results.isEmpty()) {

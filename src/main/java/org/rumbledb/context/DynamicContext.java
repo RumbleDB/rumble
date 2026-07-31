@@ -30,7 +30,7 @@ import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serializable;
@@ -96,7 +96,7 @@ public class DynamicContext implements Serializable {
             DynamicContext parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, JSoundDataFrame> dataFrameVariableValues
+            Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues
     ) {
         if (parent == null) {
             throw new OurBadException("Dynamic context defined with null parent");

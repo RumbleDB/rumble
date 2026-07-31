@@ -34,7 +34,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -164,9 +164,9 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         if (!init(this.currentDynamicContextForLocalExecution)) {
-            return new JSoundDataFrame(
+            return new HomogeneousItemDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                     BuiltinTypesCatalogue.item
             );
@@ -181,7 +181,11 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
      * @param right the right bound (inclusive).
      * @return
      */
-    public static JSoundDataFrame createLongInterval(long left, long right, RuntimeStaticContext staticContext) {
+    public static HomogeneousItemDataFrame createLongInterval(
+            long left,
+            long right,
+            RuntimeStaticContext staticContext
+    ) {
         List<Long> list = new ArrayList<>();
         for (long i = left; i <= right; i += PARTITION_SIZE) {
             list.add(i);

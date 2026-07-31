@@ -38,8 +38,8 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -136,7 +136,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             resultTuple = new FlworTuple(inputTuple);
         }
         if (this.assignmentIterator.isDataFrame()) {
-            JSoundDataFrame df = this.assignmentIterator.getDataFrame(this.tupleContext);
+            HomogeneousItemDataFrame df = this.assignmentIterator.getDataFrame(this.tupleContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext);
             resultTuple.putValue(this.variableName, df);
         } else if (this.assignmentIterator.isRDDOrDataFrame()) {

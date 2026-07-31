@@ -29,7 +29,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -52,7 +52,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
@@ -96,7 +96,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                 }
             }
             Dataset<Row> dataFrame = dfr.format("avro").load(FileSystemUtil.convertURIToStringForSpark(uri));
-            return new JSoundDataFrame(dataFrame);
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof UnexpectedTypeException) {
                 RuntimeException f = new UnexpectedTypeException(e.getMessage(), this.getMetadata());

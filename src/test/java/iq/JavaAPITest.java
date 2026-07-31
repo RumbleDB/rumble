@@ -172,6 +172,19 @@ public class JavaAPITest {
 
     @Test
     @Timeout(1000)
+    public void testGetAsDataFrameFromRDD() throws Throwable {
+        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        SequenceOfItems iterator = rumble.runQuery("parallelize(({ \"x\" : 1 }, { \"x\" : 2 }))");
+
+        List<Row> rows = iterator.getAsDataFrame().collectAsList();
+
+        Assertions.assertEquals(2, rows.size());
+        Assertions.assertEquals(1, ((Number) rows.get(0).get(0)).intValue());
+        Assertions.assertEquals(2, ((Number) rows.get(1).get(0)).intValue());
+    }
+
+    @Test
+    @Timeout(1000)
     public void testHtmlSerializationRejectsEmptyMap() {
         Rumble rumble = new Rumble(
                 new RumbleRuntimeConfiguration(
