@@ -7,7 +7,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.AbstractTupleRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
@@ -22,11 +22,11 @@ import java.util.Set;
 public class ReturnStatementClauseIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeTupleIterator clauseIterator;
+    private final AbstractTupleRuntimePlan clauseIterator;
     private final RuntimePlan<Item> expression;
 
     public ReturnStatementClauseIterator(
-            RuntimeTupleIterator clauseIterator,
+            AbstractTupleRuntimePlan clauseIterator,
             RuntimePlan<Item> expression,
             RuntimeStaticContext context
     ) {

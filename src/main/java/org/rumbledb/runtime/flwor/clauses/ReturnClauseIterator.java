@@ -45,7 +45,7 @@ import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.AbstractTupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -85,12 +85,12 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeTupleIterator child;
+    private final AbstractTupleRuntimePlan child;
     private transient DynamicContext tupleContext;
     private final RuntimePlan<Item> expression;
 
     public ReturnClauseIterator(
-            RuntimeTupleIterator child,
+            AbstractTupleRuntimePlan child,
             RuntimePlan<Item> expression,
             RuntimeStaticContext staticContext
     ) {
@@ -212,23 +212,22 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
                         getMetadata()
                 );
 
-            this.child.open(context);
             JavaRDD<Item> result = null;
-            while (this.child.hasNext()) {
-                FlworTuple tuple = this.child.next();
-                // We need a fresh context every time, because the evaluation of RDD is lazy.
-                DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                                                                                               // from new tuple
+            try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+                while (cursor.hasNext()) {
+                    FlworTuple tuple = cursor.next();
+                    // We need a fresh context every time, because the evaluation of RDD is lazy.
+                    DynamicContext dynamicContext = new DynamicContext(context);
+                    dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
 
-                JavaRDD<Item> intermediateResult = this.expression.getRDD(dynamicContext);
-                if (result == null) {
-                    result = intermediateResult;
-                } else {
-                    result = result.union(intermediateResult);
+                    JavaRDD<Item> intermediateResult = this.expression.getRDD(dynamicContext);
+                    if (result == null) {
+                        result = intermediateResult;
+                    } else {
+                        result = result.union(intermediateResult);
+                    }
                 }
             }
-            this.child.close();
             if (result == null) {
                 return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
             }
@@ -269,28 +268,26 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
-            // context
-            this.child.open(context);
             HomogeneousItemDataFrame result = null;
-            while (this.child.hasNext()) {
-                FlworTuple tuple = this.child.next();
-                // We need a fresh context every time, because the evaluation of RDD is lazy.
-                DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                                                                                               // from new tuple
+            try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+                while (cursor.hasNext()) {
+                    FlworTuple tuple = cursor.next();
+                    // We need a fresh context every time, because the evaluation of RDD is lazy.
+                    DynamicContext dynamicContext = new DynamicContext(context);
+                    dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
 
-                HomogeneousItemDataFrame intermediateResult =
-                    ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-                        this.expression,
-                        dynamicContext
-                    );
-                if (result == null) {
-                    result = intermediateResult;
-                } else {
-                    result = result.union(intermediateResult);
+                    HomogeneousItemDataFrame intermediateResult =
+                        ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                            this.expression,
+                            dynamicContext
+                        );
+                    if (result == null) {
+                        result = intermediateResult;
+                    } else {
+                        result = result.union(intermediateResult);
+                    }
                 }
             }
-            this.child.close();
             if (result == null) {
                 return HomogeneousItemDataFrame.emptyDataFrame();
             }
@@ -613,22 +610,18 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
         PendingUpdateList result = new PendingUpdateList();
 
         if (!this.expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            this.child.open(context);
             this.tupleContext = new DynamicContext(context); // assign current context
-
-            while (this.child.hasNext()) {
-                FlworTuple tuple = this.child.next();
-                this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-                this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new
-                                                                                                  // variables
-                // from new tuple
-                result.mergeUpdates(
-                    UpdatingRuntimePlan.get(this.expression, this.tupleContext),
-                    this.getRuntimeStaticContext().getMetadata()
-                );
-
+            try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+                while (cursor.hasNext()) {
+                    FlworTuple tuple = cursor.next();
+                    this.tupleContext.getVariableValues().removeAllVariables();
+                    this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
+                    result.mergeUpdates(
+                        UpdatingRuntimePlan.get(this.expression, this.tupleContext),
+                        this.getRuntimeStaticContext().getMetadata()
+                    );
+                }
             }
-            this.child.close();
             return result;
 
             // execution reaches here when there are no more results
@@ -641,20 +634,19 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
-            // context
-            this.child.open(context);
-            while (this.child.hasNext()) {
-                FlworTuple tuple = this.child.next();
-                // We need a fresh context every time, because the evaluation of RDD is lazy.
-                DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                // from new tuple
+            try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+                while (cursor.hasNext()) {
+                    FlworTuple tuple = cursor.next();
+                    // We need a fresh context every time, because the evaluation of RDD is lazy.
+                    DynamicContext dynamicContext = new DynamicContext(context);
+                    dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
 
-                PendingUpdateList intermediateResult = UpdatingRuntimePlan.get(
-                    this.expression,
-                    dynamicContext
-                );
-                result.mergeUpdates(intermediateResult, this.getRuntimeStaticContext().getMetadata());
+                    PendingUpdateList intermediateResult = UpdatingRuntimePlan.get(
+                        this.expression,
+                        dynamicContext
+                    );
+                    result.mergeUpdates(intermediateResult, this.getRuntimeStaticContext().getMetadata());
+                }
             }
         }
         return result;

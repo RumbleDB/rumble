@@ -44,7 +44,7 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.AbstractTupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -82,7 +82,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 
-public class ForClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
+public class ForClauseIterator extends AbstractTupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
 
     @Serial
@@ -99,7 +99,7 @@ public class ForClauseIterator extends RuntimeTupleIterator implements DataFrame
     private final DataFrameContext dataFrameContext;
 
     public ForClauseIterator(
-            RuntimeTupleIterator child,
+            AbstractTupleRuntimePlan child,
             Name variableName,
             Name positionalVariableName,
             boolean allowingEmpty,
@@ -131,7 +131,7 @@ public class ForClauseIterator extends RuntimeTupleIterator implements DataFrame
 
     private static final class ForLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final RuntimeTupleIterator childPlan;
+        private final AbstractTupleRuntimePlan childPlan;
         private final int evaluationDepthLimit;
         private final RuntimePlan<Item> assignmentPlan;
         private final Name variableName;
@@ -148,7 +148,7 @@ public class ForClauseIterator extends RuntimeTupleIterator implements DataFrame
         private boolean firstItem;
 
         private ForLocalCursor(
-                RuntimeTupleIterator childPlan,
+                AbstractTupleRuntimePlan childPlan,
                 int evaluationDepthLimit,
                 RuntimePlan<Item> assignmentPlan,
                 Name variableName,
@@ -537,71 +537,74 @@ public class ForClauseIterator extends RuntimeTupleIterator implements DataFrame
             DynamicContext context
     ) {
         Dataset<Row> df = null;
-        this.child.open(context);
         StructType schema = null;
-        while (this.child.hasNext()) {
-            // We first compute the new tuple variable values
-            FlworTuple inputTuple = this.child.next();
-            DynamicContext tupleContext = new DynamicContext(context);
-            // IMPORTANT: this must be a new context object every time
-            // because of lazy evaluation.
-            tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
+        try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+            while (cursor.hasNext()) {
+                // We first compute the new tuple variable values
+                FlworTuple inputTuple = cursor.next();
+                DynamicContext tupleContext = new DynamicContext(context);
+                // IMPORTANT: this must be a new context object every time
+                // because of lazy evaluation.
+                tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
 
-            Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
-            if (this.outputTupleProjection.containsKey(this.variableName)) {
-                startingClauseDependencies.put(this.variableName, this.outputTupleProjection.get(this.variableName));
-            }
-            if (
-                this.positionalVariableName != null
-                    && this.outputTupleProjection.containsKey(this.positionalVariableName)
-            ) {
-                startingClauseDependencies.put(
-                    this.positionalVariableName,
-                    this.outputTupleProjection.get(this.positionalVariableName)
-                );
-            }
-            Dataset<Row> lateralView = getDataFrameStartingClause(tupleContext, startingClauseDependencies)
-                .getDataFrame();
-            String lateralViewString = FlworDataFrameUtils.createTempView(lateralView);
+                Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
+                if (this.outputTupleProjection.containsKey(this.variableName)) {
+                    startingClauseDependencies.put(
+                        this.variableName,
+                        this.outputTupleProjection.get(this.variableName)
+                    );
+                }
+                if (
+                    this.positionalVariableName != null
+                        && this.outputTupleProjection.containsKey(this.positionalVariableName)
+                ) {
+                    startingClauseDependencies.put(
+                        this.positionalVariableName,
+                        this.outputTupleProjection.get(this.positionalVariableName)
+                    );
+                }
+                Dataset<Row> lateralView = getDataFrameStartingClause(tupleContext, startingClauseDependencies)
+                    .getDataFrame();
+                String lateralViewString = FlworDataFrameUtils.createTempView(lateralView);
 
-            // We then get the (singleton) input tuple as a data frame
+                // We then get the (singleton) input tuple as a data frame
 
-            List<byte[]> serializedRowColumns = new ArrayList<>();
-            for (Name columnName : inputTuple.getLocalKeys()) {
-                serializedRowColumns.add(
-                    FlworDataFrameUtils.serializeItemList(
-                        inputTuple.getLocalValue(columnName, getMetadata()),
-                        this.dataFrameContext.getKryo(),
-                        this.dataFrameContext.getOutput()
-                    )
-                );
-            }
+                List<byte[]> serializedRowColumns = new ArrayList<>();
+                for (Name columnName : inputTuple.getLocalKeys()) {
+                    serializedRowColumns.add(
+                        FlworDataFrameUtils.serializeItemList(
+                            inputTuple.getLocalValue(columnName, getMetadata()),
+                            this.dataFrameContext.getKryo(),
+                            this.dataFrameContext.getOutput()
+                        )
+                    );
+                }
 
-            Row row = RowFactory.create(serializedRowColumns.toArray());
+                Row row = RowFactory.create(serializedRowColumns.toArray());
 
-            JavaRDD<Row> inputTupleRDD = JavaSparkContext.fromSparkContext(
-                lateralView.sparkSession()
-                    .sparkContext()
-            ).parallelize(Collections.singletonList(row), 1);
-            if (schema == null) {
-                schema = generateSchema(inputTuple);
-            }
-            Dataset<Row> inputTupleDataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .createDataFrame(inputTupleRDD, schema);
-            String inputTupleView = FlworDataFrameUtils.createTempView(inputTupleDataFrame);
+                JavaRDD<Row> inputTupleRDD = JavaSparkContext.fromSparkContext(
+                    lateralView.sparkSession()
+                        .sparkContext()
+                ).parallelize(Collections.singletonList(row), 1);
+                if (schema == null) {
+                    schema = generateSchema(inputTuple);
+                }
+                Dataset<Row> inputTupleDataFrame = SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .createDataFrame(inputTupleRDD, schema);
+                String inputTupleView = FlworDataFrameUtils.createTempView(inputTupleDataFrame);
 
-            // And we join.
-            inputTupleDataFrame = inputTupleDataFrame.sparkSession()
-                .sql(String.format("select * FROM %s JOIN %s", inputTupleView, lateralViewString));
+                // And we join.
+                inputTupleDataFrame = inputTupleDataFrame.sparkSession()
+                    .sql(String.format("select * FROM %s JOIN %s", inputTupleView, lateralViewString));
 
-            if (df == null) {
-                df = inputTupleDataFrame;
-            } else {
-                df = df.union(inputTupleDataFrame);
+                if (df == null) {
+                    df = inputTupleDataFrame;
+                } else {
+                    df = df.union(inputTupleDataFrame);
+                }
             }
         }
-        this.child.close();
         return new FlworDataFrame(df);
     }
 

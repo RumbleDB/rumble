@@ -25,7 +25,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
@@ -46,36 +45,31 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator
+public abstract class AbstractTupleRuntimePlan
         extends
             RuntimePlan<FlworTuple>
         implements
-            RuntimeIteratorInterface<FlworTuple>,
             LocalRuntimePlan<FlworTuple>,
             NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
-    protected final RuntimeTupleIterator child;
+    protected final AbstractTupleRuntimePlan child;
     protected int evaluationDepthLimit;
 
-    protected transient boolean isOpen;
-    private transient Cursor<FlworTuple> localCursor;
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
-    protected RuntimeTupleIterator(
-            RuntimeTupleIterator child,
+    protected AbstractTupleRuntimePlan(
+            AbstractTupleRuntimePlan child,
             RuntimeStaticContext staticContext
     ) {
         super(staticContext);
-        this.isOpen = false;
         this.child = child;
         this.evaluationDepthLimit = -1;
     }
 
-    public RuntimeTupleIterator getChildIterator() {
+    public AbstractTupleRuntimePlan getChildIterator() {
         return this.child;
     }
 
@@ -91,54 +85,7 @@ public abstract class RuntimeTupleIterator
         return this.staticContext.isUpdating();
     }
 
-    @Override
     public abstract Cursor<FlworTuple> createNativeCursor(DynamicContext context);
-
-    @Override
-    public void open(DynamicContext context) {
-        if (this.isOpen) {
-            throw new IteratorFlowException(
-                    "Runtime tuple iterator cannot be opened twice" + ", this: " + this.toString(),
-                    getMetadata()
-            );
-        }
-        this.isOpen = true;
-        try {
-            this.localCursor = getCursor(context);
-        } catch (RuntimeException exception) {
-            this.localCursor = null;
-            this.isOpen = false;
-            throw exception;
-        }
-    }
-
-    @Override
-    public void close() {
-        if (this.localCursor != null) {
-            this.localCursor.close();
-        }
-        this.localCursor = null;
-        this.isOpen = false;
-    }
-
-
-
-    public boolean isOpen() {
-        return this.isOpen;
-    }
-
-    @Override
-    public boolean hasNext() {
-        return this.localCursor != null && this.localCursor.hasNext();
-    }
-
-    @Override
-    public FlworTuple next() {
-        if (this.localCursor == null) {
-            throw new IteratorFlowException("Tuple iterator is not open.", getMetadata());
-        }
-        return this.localCursor.next();
-    }
 
     public boolean isDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
@@ -284,7 +231,7 @@ public abstract class RuntimeTupleIterator
      * 
      * @return The evaluation depth limit. -1 if none.
      */
-    public RuntimeTupleIterator getSubtreeBeyondLimit(int limit) {
+    public AbstractTupleRuntimePlan getSubtreeBeyondLimit(int limit) {
         if (this.child == null) {
             throw new OurBadException(
                     "Trying to get FLWOR clause subtree at depth " + limit + " but there are not further descendants."

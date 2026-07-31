@@ -9,7 +9,7 @@ package org.rumbledb.runtime.plan;
 
 import java.util.List;
 
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.AbstractTupleRuntimePlan;
 
 /**
  * Diagnostics kept outside the item runtime plan API.
@@ -20,7 +20,7 @@ public final class RuntimePlanDiagnostics {
     }
 
     public static boolean isSparkJobNeeded(RuntimePlan<?> plan) {
-        if (plan instanceof RuntimeTupleIterator tuplePlan) {
+        if (plan instanceof AbstractTupleRuntimePlan tuplePlan) {
             return tuplePlan.isSparkJobNeeded();
         }
         if (plan.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
@@ -30,7 +30,7 @@ public final class RuntimePlanDiagnostics {
     }
 
     public static void print(RuntimePlan<?> plan, StringBuilder buffer, int indent) {
-        if (plan instanceof RuntimeTupleIterator tuplePlan) {
+        if (plan instanceof AbstractTupleRuntimePlan tuplePlan) {
             tuplePlan.print(buffer, indent);
             return;
         }

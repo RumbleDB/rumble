@@ -38,7 +38,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.AbstractTupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -58,7 +58,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import java.io.Serial;
 import java.util.*;
 
-public class WhereClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
+public class WhereClauseIterator extends AbstractTupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
 
     @Serial
@@ -66,7 +66,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator implements DataFra
     private RuntimePlan<Item> expression;
 
     public WhereClauseIterator(
-            RuntimeTupleIterator child,
+            AbstractTupleRuntimePlan child,
             RuntimePlan<Item> whereExpression,
             RuntimeStaticContext staticContext
     ) {
@@ -82,7 +82,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator implements DataFra
 
     private static final class WhereLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final RuntimeTupleIterator childPlan;
+        private final AbstractTupleRuntimePlan childPlan;
         private final RuntimePlan<Item> expressionPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
@@ -91,7 +91,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator implements DataFra
         private FlworTuple nextTuple;
 
         private WhereLocalCursor(
-                RuntimeTupleIterator childPlan,
+                AbstractTupleRuntimePlan childPlan,
                 RuntimePlan<Item> expressionPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
@@ -287,7 +287,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator implements DataFra
                 // System.err.println("[DEBUG] Depth " + i + " does not work (because of a count clause).");
                 continue;
             }
-            RuntimeTupleIterator otherChild = this.getSubtreeBeyondLimit(i);
+            AbstractTupleRuntimePlan otherChild = this.getSubtreeBeyondLimit(i);
             if (!otherChild.getRuntimeStaticContext().getExecutionMode().equals(ExecutionMode.DATAFRAME)) {
                 // System.err.println(
                 // "[DEBUG] Depth " + i + " does not work (because the left does not have a DataFrame execution)."

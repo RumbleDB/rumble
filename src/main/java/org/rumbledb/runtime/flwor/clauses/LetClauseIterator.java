@@ -40,7 +40,7 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.AbstractTupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -75,7 +75,7 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class LetClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
+public class LetClauseIterator extends AbstractTupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
 
     @Serial
@@ -85,7 +85,7 @@ public class LetClauseIterator extends RuntimeTupleIterator implements DataFrame
     private RuntimePlan<Item> assignmentIterator;
 
     public LetClauseIterator(
-            RuntimeTupleIterator child,
+            AbstractTupleRuntimePlan child,
             Name variableName,
             SequenceType sequenceType,
             RuntimePlan<Item> assignmentIterator,
@@ -112,7 +112,7 @@ public class LetClauseIterator extends RuntimeTupleIterator implements DataFrame
 
     private static final class LetLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final RuntimeTupleIterator childPlan;
+        private final AbstractTupleRuntimePlan childPlan;
         private final Name variableName;
         private final RuntimePlan<Item> assignmentPlan;
         private final int evaluationDepthLimit;
@@ -125,7 +125,7 @@ public class LetClauseIterator extends RuntimeTupleIterator implements DataFrame
         private boolean startingClause;
 
         private LetLocalCursor(
-                RuntimeTupleIterator childPlan,
+                AbstractTupleRuntimePlan childPlan,
                 Name variableName,
                 RuntimePlan<Item> assignmentPlan,
                 int evaluationDepthLimit,
@@ -577,7 +577,7 @@ public class LetClauseIterator extends RuntimeTupleIterator implements DataFrame
 
     public static boolean isExpressionIndependentFromInputTuple(
             RuntimePlan<Item> sequenceIterator,
-            RuntimeTupleIterator tupleIterator
+            AbstractTupleRuntimePlan tupleIterator
     ) {
         // Check that the expression does not depend functionally on the input tuples
         Set<Name> intersection = new HashSet<>(

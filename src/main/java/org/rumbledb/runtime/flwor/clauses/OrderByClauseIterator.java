@@ -41,7 +41,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.AbstractTupleRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -67,7 +67,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import java.io.Serial;
 import java.util.*;
 
-public class OrderByClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
+public class OrderByClauseIterator extends AbstractTupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     public static final String StringFlagForEmptySequence = "empty-sequence";
     @Serial
@@ -77,7 +77,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
 
 
     public OrderByClauseIterator(
-            RuntimeTupleIterator child,
+            AbstractTupleRuntimePlan child,
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             boolean stable,
             RuntimeStaticContext staticContext

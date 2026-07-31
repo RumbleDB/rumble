@@ -34,7 +34,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.AbstractTupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -56,14 +56,14 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class CountClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
+public class CountClauseIterator extends AbstractTupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private Name variableName;
 
     public CountClauseIterator(
-            RuntimeTupleIterator child,
+            AbstractTupleRuntimePlan child,
             Name variableName,
             RuntimeStaticContext staticContext
     ) {
@@ -82,14 +82,14 @@ public class CountClauseIterator extends RuntimeTupleIterator implements DataFra
 
     private static final class CountLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final RuntimeTupleIterator childPlan;
+        private final AbstractTupleRuntimePlan childPlan;
         private final Name variableName;
         private final DynamicContext context;
         private Cursor<FlworTuple> childCursor;
         private int count;
 
         private CountLocalCursor(
-                RuntimeTupleIterator childPlan,
+                AbstractTupleRuntimePlan childPlan,
                 Name variableName,
                 DynamicContext context,
                 ExceptionMetadata metadata
