@@ -13,7 +13,7 @@ public class ContinueStatementIterator extends AtMostOneItemLocalRuntimeIterator
     private static final long serialVersionUID = 1L;
 
     public ContinueStatementIterator(RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
     }
 
     @Override

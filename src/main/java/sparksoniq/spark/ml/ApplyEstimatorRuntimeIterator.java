@@ -49,7 +49,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             Estimator<?> estimator,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.estimatorShortName = estimatorShortName;
         this.estimator = estimator;
     }

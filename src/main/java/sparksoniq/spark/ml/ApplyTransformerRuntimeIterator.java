@@ -49,7 +49,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
             Transformer transformer,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.transformerShortName = transformerShortName;
         this.transformer = transformer;
     }

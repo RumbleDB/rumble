@@ -40,7 +40,7 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
             FunctionIdentifier functionIdentifier,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.functionIdentifier = functionIdentifier;
     }
 

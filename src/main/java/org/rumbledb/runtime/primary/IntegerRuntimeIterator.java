@@ -40,7 +40,7 @@ public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             String lexicalValue,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.item = ItemFactory.getInstance().createIntegerItem(lexicalValue);
     }
 

@@ -47,7 +47,7 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.functionName = functionName;
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
         this.returnType = returnType;

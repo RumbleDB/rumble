@@ -98,30 +98,19 @@ public abstract class RuntimePlan<T> implements Serializable {
      * Executes this plan in its compiled representation and exposes the result as a typed runtime DataFrame.
      */
     public final RuntimeDataFrame<T> getDataFrame(@NonNull DynamicContext context) {
+        if (!this.staticContext.getExecutionMode().isDataFrame() && this.dataFrameFactory == null) {
+            throw this.unsupportedDataFrameConversion();
+        }
         return this.executeSelectedRepresentation(
             context,
-            cursor -> this.convertLocalToDataFrame(cursor, context),
-            rdd -> this.convertRDDToDataFrame(rdd, context),
+            cursor -> this.dataFrameFactory.fromList(
+                RuntimePlanConversions.materializeCursor(cursor),
+                context,
+                this.staticContext
+            ),
+            rdd -> this.dataFrameFactory.fromRDD(rdd, context, this.staticContext),
             dataFrame -> dataFrame
         );
-    }
-
-    protected RuntimeDataFrame<T> convertLocalToDataFrame(Cursor<T> cursor, DynamicContext context) {
-        if (this.dataFrameFactory == null) {
-            throw this.unsupportedDataFrameConversion();
-        }
-        return this.dataFrameFactory.fromList(
-            RuntimePlanConversions.materializeCursor(cursor),
-            context,
-            this.staticContext
-        );
-    }
-
-    protected RuntimeDataFrame<T> convertRDDToDataFrame(JavaRDD<T> rdd, DynamicContext context) {
-        if (this.dataFrameFactory == null) {
-            throw this.unsupportedDataFrameConversion();
-        }
-        return this.dataFrameFactory.fromRDD(rdd, context, this.staticContext);
     }
 
     private <R, E extends Exception> R executeSelectedRepresentation(

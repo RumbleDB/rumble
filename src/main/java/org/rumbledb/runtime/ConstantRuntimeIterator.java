@@ -36,7 +36,7 @@ public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             Item item,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.item = item;
     }
 

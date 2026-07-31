@@ -40,7 +40,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
             String exceptionMessage,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.callableItem = callableItem;
         this.parameterNames = parameterNames;
         this.expectedReturnType = expectedReturnType;

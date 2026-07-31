@@ -35,7 +35,7 @@ public class NullRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private final Item item;
 
     public NullRuntimeIterator(RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.item = ItemFactory.getInstance().createNullItem();
     }
 

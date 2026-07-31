@@ -44,7 +44,7 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends AbstractItemRun
     private static final long serialVersionUID = 1L;
 
     public BuiltinNamedFunctionReferenceMarkerIterator(RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
     }
 
     @Override

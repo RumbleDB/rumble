@@ -7,9 +7,7 @@
 
 package org.rumbledb.runtime.plan;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import lombok.NonNull;
 import org.rumbledb.api.Item;
@@ -27,11 +25,11 @@ public abstract class AbstractItemRuntimePlan extends RuntimePlan<Item> {
     private final List<RuntimePlan<Item>> children;
 
     protected AbstractItemRuntimePlan(
-            List<? extends RuntimePlan<Item>> children,
+            @NonNull List<? extends RuntimePlan<Item>> children,
             @NonNull RuntimeStaticContext staticContext
     ) {
         super(staticContext, ItemRuntimeDataFrameFactory.INSTANCE);
-        this.children = List.copyOf(Objects.requireNonNullElse(children, Collections.emptyList()));
+        this.children = List.copyOf(children);
     }
 
     protected final RuntimePlan<Item> getChild(int index) {

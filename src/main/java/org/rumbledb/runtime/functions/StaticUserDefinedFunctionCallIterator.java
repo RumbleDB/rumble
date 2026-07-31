@@ -63,7 +63,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             RuntimeStaticContext staticContext,
             boolean tailCallOptimization
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.functionIdentifier = functionIdentifier;
         this.functionArguments = functionArguments;
         this.tailCallOptimizationCandidate = tailCallOptimization;

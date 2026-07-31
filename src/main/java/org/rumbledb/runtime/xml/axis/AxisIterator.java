@@ -53,7 +53,7 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
     }
 
     protected AxisIterator(RuntimeStaticContext staticContext, Axis axis, ResultOrder resultOrder) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.axis = axis;
         this.resultOrder = resultOrder;
     }

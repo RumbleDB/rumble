@@ -50,7 +50,7 @@ public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             String content,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.content = content;
     }
 

@@ -40,7 +40,7 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
             JavaRDD<Item> items,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.items = items;
     }
 

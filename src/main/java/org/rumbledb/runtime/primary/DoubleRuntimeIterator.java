@@ -37,7 +37,7 @@ public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private final Item item;
 
     public DoubleRuntimeIterator(Double value, RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.item = ItemFactory.getInstance().createDoubleItem(value);
 
     }

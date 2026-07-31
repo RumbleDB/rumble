@@ -63,7 +63,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator
             Name variableName,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.variableName = variableName;
     }
 

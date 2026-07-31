@@ -37,7 +37,7 @@ public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private final Item item;
 
     public StringRuntimeIterator(String value, RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         // String unescaping is now handled in the translation visitor
         this.item = ItemFactory.getInstance().createStringItem(value);
     }

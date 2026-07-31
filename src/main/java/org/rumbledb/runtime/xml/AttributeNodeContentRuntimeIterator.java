@@ -40,7 +40,7 @@ public class AttributeNodeContentRuntimeIterator extends AtMostOneItemLocalRunti
     private final Item item;
 
     public AttributeNodeContentRuntimeIterator(String content, RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.item = ItemFactory.getInstance().createStringItem(content);
     }
 

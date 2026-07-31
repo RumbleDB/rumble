@@ -38,7 +38,7 @@ public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private final Item item;
 
     public DecimalRuntimeIterator(BigDecimal value, RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
         this.item = ItemFactory.getInstance().createDecimalItem(value);
 
     }

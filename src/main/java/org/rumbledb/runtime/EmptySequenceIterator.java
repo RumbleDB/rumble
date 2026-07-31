@@ -32,7 +32,7 @@ public class EmptySequenceIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public EmptySequenceIterator(RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(java.util.List.of(), staticContext);
     }
 
     @Override
