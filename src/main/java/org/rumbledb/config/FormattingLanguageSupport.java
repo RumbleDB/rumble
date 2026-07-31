@@ -1,5 +1,7 @@
 package org.rumbledb.config;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import com.ibm.icu.util.ULocale;
 
 import java.util.HashSet;
@@ -8,9 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FormattingLanguageSupport {
-    private FormattingLanguageSupport() {
-    }
 
     public static final String DEFAULT_FORMATTING_LANGUAGE = "en";
 

@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -13,7 +12,6 @@ import org.rumbledb.exceptions.OurBadException;
 import java.io.Serial;
 import java.util.*;
 
-@NoArgsConstructor
 public class ArrayItemType extends AbstractItemType {
 
     @Serial

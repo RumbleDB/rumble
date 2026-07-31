@@ -1,6 +1,5 @@
 package org.rumbledb.items;
 
-import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -19,7 +18,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
-@NoArgsConstructor // For Kryo serialization
 public class DurationItem extends AbstractAtomicItem {
 
     @Serial

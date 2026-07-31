@@ -16,6 +16,8 @@
  */
 package org.rumbledb.context;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -23,10 +25,9 @@ import org.rumbledb.expressions.ExecutionMode;
 /**
  * Resolves {@link ExecutionMode} for a builtin from its catalogue metadata and the first argument mode.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class BuiltinFunctionExecutionModes {
 
-    private BuiltinFunctionExecutionModes() {
-    }
 
     public static ExecutionMode resolve(
             BuiltinFunction builtinFunction,

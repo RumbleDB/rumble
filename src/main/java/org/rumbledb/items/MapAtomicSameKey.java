@@ -17,6 +17,8 @@
 
 package org.rumbledb.items;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -29,10 +31,9 @@ import java.math.BigDecimal;
  *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-same-key">op:same-key</a>
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MapAtomicSameKey {
 
-    private MapAtomicSameKey() {
-    }
 
     public static boolean sameKey(Item left, Item right) {
         if (left == null || right == null) {

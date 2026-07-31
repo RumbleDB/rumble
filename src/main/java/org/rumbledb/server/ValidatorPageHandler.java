@@ -10,8 +10,6 @@ import java.io.OutputStream;
 
 public class ValidatorPageHandler implements HttpHandler {
 
-    public ValidatorPageHandler() {
-    }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {

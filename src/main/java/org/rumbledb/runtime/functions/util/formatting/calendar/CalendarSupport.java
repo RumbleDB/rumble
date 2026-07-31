@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting.calendar;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.config.FormattingCalendarModeSupport;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
@@ -8,6 +10,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class CalendarSupport {
 
     public static final String DEFAULT_CALENDAR = FormattingCalendarModeSupport.DEFAULT;
@@ -15,8 +18,6 @@ public final class CalendarSupport {
     private static final Pattern EQNAME_PATTERN = Pattern.compile("^Q\\{([^}]*)}(.+)$");
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
-    private CalendarSupport() {
-    }
 
     /**
      * Normalizes a calendar argument if it matches a known calendar mode.

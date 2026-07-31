@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.DynamicContext;
@@ -15,12 +17,11 @@ import org.rumbledb.types.SequenceType;
 import java.util.ArrayList;
 import java.util.List;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FunctionCoercion {
 
     private static final String COERCED_FUNCTION_LOCAL_NAME = "coerced-function";
 
-    private FunctionCoercion() {
-    }
 
     public static boolean canBeFunctionCoercedTo(SequenceType sourceType, SequenceType targetType) {
         if (sourceType.isEmptySequence()) {

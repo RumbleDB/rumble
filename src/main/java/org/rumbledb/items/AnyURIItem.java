@@ -21,7 +21,6 @@
 package org.rumbledb.items;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,7 +30,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
-@NoArgsConstructor // For Kryo serialization
 public class AnyURIItem extends AbstractAtomicItem {
 
     @Serial

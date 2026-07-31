@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
@@ -8,9 +10,8 @@ import org.rumbledb.runtime.functions.util.formatting.GroupingPos;
 
 import java.util.List;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FormatNumberPictureParser {
-    private FormatNumberPictureParser() {
-    }
 
     public static FormatNumberPicture parse(
             String pictureString,

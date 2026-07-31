@@ -20,7 +20,6 @@
 
 package org.rumbledb.items;
 
-import lombok.NoArgsConstructor;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -28,7 +27,6 @@ import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
 
-@NoArgsConstructor // For Kryo serialization
 public class NullItem extends AbstractAtomicItem {
 
     @Serial

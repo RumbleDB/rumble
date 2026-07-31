@@ -20,8 +20,6 @@
 
 package org.rumbledb.items;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,7 +49,6 @@ import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
 import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
 import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
 
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // For Kryo serialization
 public class FunctionItem implements Item {
 
     @Serial

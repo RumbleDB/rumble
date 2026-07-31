@@ -96,10 +96,6 @@ public class Facets {
     private CardinalityFacetValue cardinality;
     private Boolean numeric;
 
-    public Facets() {
-
-    }
-
     /**
      * Creates a Facets with the given pattern regex strings.
      * Multiple patterns in a single derivation step are OR-ed per XSD 1.1 §4.3.4.2.
