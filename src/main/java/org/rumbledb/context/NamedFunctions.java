@@ -64,9 +64,7 @@ public class NamedFunctions implements Serializable {
     }
 
     /**
-     * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()} (same as
-     * {@link org.rumbledb.runtime.RuntimePlan<Item>#getHighestExecutionMode()} for iterators constructed with that
-     * context).
+     * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()}.
      */
     public RuntimePlan<Item> getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
