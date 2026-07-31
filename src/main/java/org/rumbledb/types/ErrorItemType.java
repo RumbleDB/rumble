@@ -5,10 +5,7 @@ import java.util.Set;
 
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * Bottom item type implementing {@code xs:error}.
@@ -106,16 +103,16 @@ public class ErrorItemType extends AbstractItemType {
 
     @Override
     public void resolve(
-            DynamicContext context,
-            ExceptionMetadata metadata
+            org.rumbledb.context.DynamicContext context,
+            org.rumbledb.exceptions.ExceptionMetadata metadata
     ) {
         // No resolution needed
     }
 
     @Override
     public void resolve(
-            StaticContext context,
-            ExceptionMetadata metadata
+            org.rumbledb.context.StaticContext context,
+            org.rumbledb.exceptions.ExceptionMetadata metadata
     ) {
         // No resolution needed
     }

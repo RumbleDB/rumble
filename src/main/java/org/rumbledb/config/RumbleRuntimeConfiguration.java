@@ -25,8 +25,6 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
-import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
-import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 import org.rumbledb.serialization.SerializationParameters;
 
 
@@ -804,7 +802,7 @@ public class RumbleRuntimeConfiguration implements Serializable {
      * @return the names of external variables read from DataFrames.
      */
     public List<Name> getExternalVariablesReadFromDataFrames() {
-        return new ArrayList<>(this.externalVariableValuesReadFromDataFrames.keySet());
+        return new java.util.ArrayList<>(this.externalVariableValuesReadFromDataFrames.keySet());
     }
 
     /**
@@ -813,7 +811,7 @@ public class RumbleRuntimeConfiguration implements Serializable {
      * @return the names of external variables read from lists of items.
      */
     public List<Name> getExternalVariablesReadFromListsOfItems() {
-        return new ArrayList<>(this.externalVariableValues.keySet());
+        return new java.util.ArrayList<>(this.externalVariableValues.keySet());
     }
 
     /**
@@ -1353,7 +1351,7 @@ public class RumbleRuntimeConfiguration implements Serializable {
     private void setDefaultFormattingCalendar(String calendar) {
         Objects.requireNonNull(calendar, "calendar");
 
-        String normalized = CalendarSupport
+        String normalized = org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport
             .normalizeKnownCalendarMode(calendar);
 
         if (!FormattingCalendarModeSupport.isValidFormattingCalendar(normalized)) {
@@ -1399,7 +1397,7 @@ public class RumbleRuntimeConfiguration implements Serializable {
     public void setDefaultFormattingLanguage(String language) {
         Objects.requireNonNull(language, "language");
 
-        String normalized = LanguageSupport.normalizeLanguage(
+        String normalized = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport.normalizeLanguage(
             language
         );
 
