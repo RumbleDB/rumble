@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,7 +59,9 @@ public class RuntimeStaticContext implements Serializable {
     private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
 
     @Builder.Default
-    private final Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
+    private final Set<String> staticallyKnownCollations = new LinkedHashSet<>(
+            CollationCatalogue.defaultStaticallyKnownCollations()
+    );
 
     private final SerializationParameters serializationParameters;
 
@@ -138,7 +141,7 @@ public class RuntimeStaticContext implements Serializable {
             .staticURIString(staticContext.getStaticBaseUriString())
             .queryLanguage(staticContext.getQueryLanguage())
             .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
-            .staticallyKnownCollations(staticContext.getStaticallyKnownCollations())
+            .staticallyKnownCollations(new LinkedHashSet<>(staticContext.getStaticallyKnownCollations()))
             .serializationParameters(staticContext.getSerializationParameters())
             .defaultCollation(staticContext.getDefaultCollation())
             .defaultDecimalFormat(staticContext.getDefaultDecimalFormat())
