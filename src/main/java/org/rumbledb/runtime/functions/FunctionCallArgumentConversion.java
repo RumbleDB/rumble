@@ -90,7 +90,9 @@ public final class FunctionCallArgumentConversion {
                     .executionMode(executionMode)
                     .metadata(functionArguments.get(i).getRuntimeStaticContext().getMetadata())
                     .build();
-                String exceptionMessage = "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ";
+                String exceptionMessage = "Invalid argument for "
+                    + functionItem.getIdentifier().getName()
+                    + " function. ";
                 if (isAtMostOne(sequenceType)) {
                     functionArguments.set(
                         i,

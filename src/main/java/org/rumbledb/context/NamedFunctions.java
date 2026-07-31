@@ -251,10 +251,10 @@ public class NamedFunctions implements Serializable {
                         arguments.set(
                             i,
                             FunctionCallArgumentConversion.wrapAtMostOneForFunctionConversion(
-                                    arguments.get(i),
-                                    sequenceType,
-                                    exceptionMessage,
-                                    argStaticContext
+                                arguments.get(i),
+                                sequenceType,
+                                exceptionMessage,
+                                argStaticContext
                             )
                         );
                     } else {
