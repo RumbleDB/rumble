@@ -195,14 +195,22 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                     getMetadata()
             );
         }
-        if (
-            key.isBoolean()
-                || key.isDecimal()
-                || key.isDouble()
-                || key.isInt()
-                || key.isInteger()
-                || key.isString()
-        ) {
+        if (key.isBoolean()) {
+            return Boolean.toString(key.getBooleanValue());
+        }
+        if (key.isDecimal()) {
+            return key.getDecimalValue().toString();
+        }
+        if (key.isDouble()) {
+            return Double.toString(key.getDoubleValue());
+        }
+        if (key.isInt()) {
+            return Integer.toString(key.getIntValue());
+        }
+        if (key.isInteger()) {
+            return key.getIntegerValue().toString();
+        }
+        if (key.isString()) {
             return key.getStringValue();
         }
         throw new UnexpectedTypeException(
