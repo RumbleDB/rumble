@@ -122,31 +122,53 @@ public abstract class RuntimePlan<T> implements Serializable {
             throws E {
         return switch (this.staticContext.getExecutionMode()) {
             case LOCAL -> {
-                this.requireCapability(this instanceof LocalRuntimePlan<?>, ExecutionMode.LOCAL);
-                yield fromCursor.apply(this.localCapability().createNativeCursor(context));
+                if (this instanceof LocalRuntimePlan<?>) {
+                    yield fromCursor.apply(this.localCapability().createNativeCursor(context));
+                }
+                if (this instanceof RDDRuntimePlan<?>) {
+                    yield fromRDD.apply(this.rddCapability().createNativeRDD(context));
+                }
+                if (this instanceof DataFrameRuntimePlan<?>) {
+                    yield fromDataFrame.apply(this.dataFrameCapability().createNativeDataFrame(context));
+                }
+                throw this.missingCapability(ExecutionMode.LOCAL);
             }
             case RDD -> {
-                this.requireCapability(this instanceof RDDRuntimePlan<?>, ExecutionMode.RDD);
-                yield fromRDD.apply(this.rddCapability().createNativeRDD(context));
+                if (this instanceof RDDRuntimePlan<?>) {
+                    yield fromRDD.apply(this.rddCapability().createNativeRDD(context));
+                }
+                if (this instanceof DataFrameRuntimePlan<?>) {
+                    yield fromDataFrame.apply(this.dataFrameCapability().createNativeDataFrame(context));
+                }
+                if (this instanceof LocalRuntimePlan<?>) {
+                    yield fromCursor.apply(this.localCapability().createNativeCursor(context));
+                }
+                throw this.missingCapability(ExecutionMode.RDD);
             }
             case DATAFRAME -> {
-                this.requireCapability(this instanceof DataFrameRuntimePlan<?>, ExecutionMode.DATAFRAME);
-                yield fromDataFrame.apply(this.dataFrameCapability().createNativeDataFrame(context));
+                if (this instanceof DataFrameRuntimePlan<?>) {
+                    yield fromDataFrame.apply(this.dataFrameCapability().createNativeDataFrame(context));
+                }
+                if (this instanceof RDDRuntimePlan<?>) {
+                    yield fromRDD.apply(this.rddCapability().createNativeRDD(context));
+                }
+                if (this instanceof LocalRuntimePlan<?>) {
+                    yield fromCursor.apply(this.localCapability().createNativeCursor(context));
+                }
+                throw this.missingCapability(ExecutionMode.DATAFRAME);
             }
             case UNSET -> throw new OurBadException("Cannot execute a runtime plan whose execution mode is unset.");
         };
     }
 
-    private void requireCapability(boolean supported, ExecutionMode mode) {
-        if (!supported) {
-            throw new OurBadException(
-                    "The runtime plan "
-                        + this.getClass().getCanonicalName()
-                        + " was compiled for "
-                        + mode
-                        + " execution but does not implement the corresponding capability."
-            );
-        }
+    private OurBadException missingCapability(ExecutionMode mode) {
+        return new OurBadException(
+                "The runtime plan "
+                    + this.getClass().getCanonicalName()
+                    + " was compiled for "
+                    + mode
+                    + " execution but does not implement the corresponding capability or any convertible capability."
+        );
     }
 
     private OurBadException unsupportedDataFrameConversion() {

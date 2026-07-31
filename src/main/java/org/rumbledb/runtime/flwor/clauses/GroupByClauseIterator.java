@@ -184,7 +184,9 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                             );
                         }
                         List<Item> atomized = new ArrayList<>();
-                        for (Item item : tupleContext.getVariableValues().getLocalVariableValue(variable, getMetadata())) {
+                        for (
+                            Item item : tupleContext.getVariableValues().getLocalVariableValue(variable, getMetadata())
+                        ) {
                             try {
                                 atomized.addAll(item.atomizedValue());
                             } catch (CannotAtomizeException e) {

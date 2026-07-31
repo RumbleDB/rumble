@@ -38,7 +38,7 @@ public class ReturnStatementClauseIterator extends AbstractAtMostOneItemRuntimeP
 
     private Item executeLocally(DynamicContext context) {
         DynamicContext tupleContext = new DynamicContext(context);
-        try (Cursor<FlworTuple> tuples = this.clauseIterator.getCursor(context)) {
+        try (Cursor<FlworTuple> tuples = this.clauseIterator.createNativeCursor(context)) {
             while (tuples.hasNext()) {
                 FlworTuple tuple = tuples.next();
                 tupleContext.getVariableValues().removeAllVariables();
