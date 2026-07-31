@@ -10,6 +10,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.FunctionCoercion;
+import org.rumbledb.runtime.functions.FunctionUntypedAtomicCastIterator;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
@@ -30,6 +31,7 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
     private final RuntimePlan<Item> iterator;
     private final SequenceType sequenceType;
     private final ItemType itemType;
+    private final FunctionUntypedAtomicCastIterator.UntypedAtomicCaster untypedAtomicCaster;
 
     public AtMostOneItemTypePromotionIterator(
             RuntimePlan<Item> iterator,
@@ -37,11 +39,33 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
             String exceptionMessage,
             RuntimeStaticContext staticContext
     ) {
+        this(iterator, sequenceType, exceptionMessage, staticContext, null);
+    }
+
+    /**
+     * Creates a scalar function-argument promotion. When {@code untypedAtomicTargetType} is set, untyped atomic
+     * values are converted directly during scalar evaluation instead of through an intermediate mapping cursor.
+     */
+    public AtMostOneItemTypePromotionIterator(
+            RuntimePlan<Item> iterator,
+            SequenceType sequenceType,
+            String exceptionMessage,
+            RuntimeStaticContext staticContext,
+            ItemType untypedAtomicTargetType
+    ) {
         super(Collections.singletonList(iterator), staticContext);
         this.exceptionMessage = exceptionMessage;
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
+        this.untypedAtomicCaster = untypedAtomicTargetType == null
+            ? null
+            : new FunctionUntypedAtomicCastIterator.UntypedAtomicCaster(
+                    untypedAtomicTargetType,
+                    exceptionMessage,
+                    staticContext,
+                    getMetadata()
+            );
         if (!getHighestExecutionMode().equals(ExecutionMode.LOCAL)) {
             throw new OurBadException(
                     "A promotion iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
@@ -66,6 +90,7 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
             this.itemType,
             this.exceptionMessage,
             getRuntimeStaticContext(),
+            this.untypedAtomicCaster,
             context
         );
     }
@@ -76,6 +101,7 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
             ItemType itemType,
             String exceptionMessage,
             RuntimeStaticContext staticContext,
+            FunctionUntypedAtomicCastIterator.UntypedAtomicCaster untypedAtomicCaster,
             DynamicContext context
     ) {
         if (!sequenceType.isResolved()) {
@@ -106,6 +132,10 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
         }
         if (item == null) {
             return null;
+        }
+
+        if (untypedAtomicCaster != null) {
+            item = untypedAtomicCaster.call(item);
         }
 
         if (!InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {

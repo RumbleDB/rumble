@@ -77,12 +77,11 @@ public final class FunctionCallArgumentConversion {
                         .equals(SequenceType.createSequenceType("item*"))
             ) {
                 SequenceType sequenceType = functionItem.getSignature().getParameterTypes().get(i);
+                if (functionArguments.get(i).getRuntimeStaticContext().getStaticType().isSubtypeOf(sequenceType)) {
+                    continue;
+                }
                 ExecutionMode executionMode = functionArguments.get(i).getRuntimeStaticContext().getExecutionMode();
-                if (
-                    sequenceType.isEmptySequence()
-                        || sequenceType.getArity().equals(Arity.One)
-                        || sequenceType.getArity().equals(Arity.OneOrZero)
-                ) {
+                if (isAtMostOne(sequenceType)) {
                     executionMode = ExecutionMode.LOCAL;
                 }
                 RuntimeStaticContext runtimeStaticContext = callerStaticContext
@@ -91,32 +90,29 @@ public final class FunctionCallArgumentConversion {
                     .executionMode(executionMode)
                     .metadata(functionArguments.get(i).getRuntimeStaticContext().getMetadata())
                     .build();
-                RuntimePlan<Item> argumentIterator =
-                    wrapForFunctionConversion(
+                String exceptionMessage = "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ";
+                if (isAtMostOne(sequenceType)) {
+                    functionArguments.set(
+                        i,
+                        wrapAtMostOneForFunctionConversion(
+                            functionArguments.get(i),
+                            sequenceType,
+                            exceptionMessage,
+                            runtimeStaticContext
+                        )
+                    );
+                } else {
+                    RuntimePlan<Item> argumentIterator = wrapForFunctionConversion(
                         functionArguments.get(i),
                         sequenceType,
-                        "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
+                        exceptionMessage,
                         runtimeStaticContext
                     );
-                if (
-                    sequenceType.isEmptySequence()
-                        || sequenceType.getArity().equals(Arity.One)
-                        || sequenceType.getArity().equals(Arity.OneOrZero)
-                ) {
-                    RuntimePlan<Item> typePromotionIterator =
-                        new AtMostOneItemTypePromotionIterator(
-                                argumentIterator,
-                                sequenceType,
-                                "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
-                                runtimeStaticContext
-                        );
-                    functionArguments.set(i, typePromotionIterator);
-                } else {
                     RuntimePlan<Item> typePromotionIterator =
                         new TypePromotionIterator(
                                 argumentIterator,
                                 sequenceType,
-                                "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
+                                exceptionMessage,
                                 runtimeStaticContext
                         );
                     functionArguments.set(i, typePromotionIterator);
@@ -150,5 +146,36 @@ public final class FunctionCallArgumentConversion {
             );
         }
         return argumentIterator;
+    }
+
+    public static RuntimePlan<Item> wrapAtMostOneForFunctionConversion(
+            RuntimePlan<Item> argumentIterator,
+            SequenceType sequenceType,
+            String exceptionMessage,
+            RuntimeStaticContext runtimeStaticContext
+    ) {
+        ItemType targetItemType = sequenceType.getItemType();
+        if (
+            targetItemType.isAtomicItemType()
+                && !argumentIterator.getRuntimeStaticContext().getStaticType().getItemType().isAtomicItemType()
+        ) {
+            argumentIterator = new DataFunctionIterator(
+                    Collections.singletonList(argumentIterator),
+                    runtimeStaticContext
+            );
+        }
+        return new AtMostOneItemTypePromotionIterator(
+                argumentIterator,
+                sequenceType,
+                exceptionMessage,
+                runtimeStaticContext,
+                targetItemType.isAtomicItemType() ? targetItemType : null
+        );
+    }
+
+    public static boolean isAtMostOne(SequenceType sequenceType) {
+        return sequenceType.isEmptySequence()
+            || sequenceType.getArity().equals(Arity.One)
+            || sequenceType.getArity().equals(Arity.OneOrZero);
     }
 }

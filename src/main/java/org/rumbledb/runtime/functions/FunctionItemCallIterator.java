@@ -220,75 +220,11 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
     }
 
     private void wrapArgumentIteratorsWithTypeCheckingIterators() {
-        if (this.functionItem.getSignature().getParameterTypes() != null) {
-            for (int i = 0; i < this.functionArguments.size(); i++) {
-                if (
-                    this.functionArguments.get(i) != null
-                        && !this.functionItem.getSignature()
-                            .getParameterTypes()
-                            .get(i)
-                            .equals(SequenceType.createSequenceType("item*"))
-                ) {
-                    SequenceType sequenceType = this.functionItem.getSignature().getParameterTypes().get(i);
-                    SequenceType argumentType = this.functionArguments.get(i)
-                        .getRuntimeStaticContext()
-                        .getStaticType();
-                    if (argumentType.isSubtypeOf(sequenceType)) {
-                        continue;
-                    }
-                    ExecutionMode executionMode = this.functionArguments.get(i)
-                        .getRuntimeStaticContext()
-                        .getExecutionMode();
-                    if (
-                        sequenceType.isEmptySequence()
-                            || sequenceType.getArity().equals(Arity.One)
-                            || sequenceType.getArity().equals(Arity.OneOrZero)
-                    ) {
-                        executionMode = ExecutionMode.LOCAL;
-                    }
-                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext()
-                        .toBuilder()
-                        .staticType(sequenceType)
-                        .executionMode(executionMode)
-                        .metadata(this.functionArguments.get(i).getRuntimeStaticContext().getMetadata())
-                        .build();
-                    RuntimePlan<Item> argumentIterator =
-                        FunctionCallArgumentConversion.wrapForFunctionConversion(
-                            this.functionArguments.get(i),
-                            sequenceType,
-                            "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
-                            runtimeStaticContext
-                        );
-                    if (
-                        sequenceType.isEmptySequence()
-                            || sequenceType.getArity().equals(Arity.One)
-                            || sequenceType.getArity().equals(Arity.OneOrZero)
-                    ) {
-                        RuntimePlan<Item> typePromotionIterator =
-                            new AtMostOneItemTypePromotionIterator(
-                                    argumentIterator,
-                                    sequenceType,
-                                    "Invalid argument for "
-                                        + this.functionItem.getIdentifier().getName()
-                                        + " function. ",
-                                    runtimeStaticContext
-                            );
-                        this.functionArguments.set(i, typePromotionIterator);
-                    } else {
-                        RuntimePlan<Item> typePromotionIterator =
-                            new TypePromotionIterator(
-                                    argumentIterator,
-                                    sequenceType,
-                                    "Invalid argument for "
-                                        + this.functionItem.getIdentifier().getName()
-                                        + " function. ",
-                                    runtimeStaticContext
-                            );
-                        this.functionArguments.set(i, typePromotionIterator);
-                    }
-                }
-            }
-        }
+        FunctionCallArgumentConversion.wrapAccordingToSignature(
+            this.functionItem,
+            this.functionArguments,
+            getRuntimeStaticContext()
+        );
     }
 
     /**

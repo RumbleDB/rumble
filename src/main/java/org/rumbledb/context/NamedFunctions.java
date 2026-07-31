@@ -236,39 +236,40 @@ public class NamedFunctions implements Serializable {
                         .equals(SequenceType.createSequenceType("item*"))
                 ) {
                     SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
+                    ExecutionMode executionMode = arguments.get(i).getRuntimeStaticContext().getExecutionMode();
+                    if (FunctionCallArgumentConversion.isAtMostOne(sequenceType)) {
+                        executionMode = ExecutionMode.LOCAL;
+                    }
                     RuntimeStaticContext argStaticContext = callerStaticContext
                         .toBuilder()
                         .staticType(sequenceType)
-                        .executionMode(arguments.get(i).getRuntimeStaticContext().getExecutionMode())
+                        .executionMode(executionMode)
                         .metadata(arguments.get(i).getRuntimeStaticContext().getMetadata())
                         .build();
-                    RuntimePlan<Item> argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
-                        arguments.get(i),
-                        sequenceType,
-                        "Invalid argument for function " + identifier.getName() + ". ",
-                        argStaticContext
-                    );
-                    if (
-                        sequenceType.isEmptySequence()
-                            || sequenceType.getArity().equals(Arity.One)
-                            || sequenceType.getArity().equals(Arity.OneOrZero)
-                    ) {
+                    String exceptionMessage = "Invalid argument for function " + identifier.getName() + ". ";
+                    if (FunctionCallArgumentConversion.isAtMostOne(sequenceType)) {
                         arguments.set(
                             i,
-                            new AtMostOneItemTypePromotionIterator(
-                                    argumentIterator,
+                            FunctionCallArgumentConversion.wrapAtMostOneForFunctionConversion(
+                                    arguments.get(i),
                                     sequenceType,
-                                    "Invalid argument for function " + identifier.getName() + ". ",
+                                    exceptionMessage,
                                     argStaticContext
                             )
                         );
                     } else {
+                        RuntimePlan<Item> argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
+                            arguments.get(i),
+                            sequenceType,
+                            exceptionMessage,
+                            argStaticContext
+                        );
                         arguments.set(
                             i,
                             new TypePromotionIterator(
                                     argumentIterator,
                                     sequenceType,
-                                    "Invalid argument for function " + identifier.getName() + ". ",
+                                    exceptionMessage,
                                     argStaticContext
                             )
                         );

@@ -85,7 +85,7 @@ public class FunctionUntypedAtomicCastIterator
         return NativeClauseContext.NoNativeQuery;
     }
 
-    private static final class UntypedAtomicCaster implements Function<Item, Item> {
+    public static final class UntypedAtomicCaster implements Function<Item, Item> {
 
         @Serial
         private static final long serialVersionUID = 1L;
@@ -95,7 +95,7 @@ public class FunctionUntypedAtomicCastIterator
         private final RuntimeStaticContext staticContext;
         private final ExceptionMetadata metadata;
 
-        private UntypedAtomicCaster(
+        public UntypedAtomicCaster(
                 @NonNull ItemType targetType,
                 @NonNull String exceptionMessage,
                 @NonNull RuntimeStaticContext staticContext,
