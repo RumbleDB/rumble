@@ -112,7 +112,7 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item>
     public final boolean isUpdating() {
         return this.staticContext.isUpdating();
     }
-    
+
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
