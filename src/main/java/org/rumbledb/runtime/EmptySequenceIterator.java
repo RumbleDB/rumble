@@ -25,6 +25,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 
 import java.io.Serial;
+import java.util.List;
 
 public class EmptySequenceIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -32,7 +33,7 @@ public class EmptySequenceIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public EmptySequenceIterator(RuntimeStaticContext staticContext) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
     }
 
     @Override

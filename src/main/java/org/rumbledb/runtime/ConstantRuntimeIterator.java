@@ -25,6 +25,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 
 import java.io.Serial;
+import java.util.List;
 
 public class ConstantRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -36,7 +37,7 @@ public class ConstantRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
             Item item,
             RuntimeStaticContext staticContext
     ) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.item = item;
     }
 

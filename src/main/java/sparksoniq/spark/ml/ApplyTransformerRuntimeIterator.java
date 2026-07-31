@@ -50,7 +50,7 @@ public class ApplyTransformerRuntimeIterator extends AbstractItemRuntimePlan imp
             Transformer transformer,
             RuntimeStaticContext staticContext
     ) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.transformerShortName = transformerShortName;
         this.transformer = transformer;
     }

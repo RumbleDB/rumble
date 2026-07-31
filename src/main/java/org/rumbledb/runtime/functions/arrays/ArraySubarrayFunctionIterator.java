@@ -17,6 +17,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 public class ArraySubarrayFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -29,12 +30,12 @@ public class ArraySubarrayFunctionIterator extends AbstractAtMostOneItemRuntimeP
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> startIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lengthIterator;
+    private final RuntimePlan<Item> arrayIterator;
+    private final RuntimePlan<Item> startIterator;
+    private final RuntimePlan<Item> lengthIterator;
 
     public ArraySubarrayFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -128,7 +129,7 @@ public class ArraySubarrayFunctionIterator extends AbstractAtMostOneItemRuntimeP
 
     private BigInteger materializeIntegerArgument(
             DynamicContext context,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             String label
     ) {
         Item item = null;

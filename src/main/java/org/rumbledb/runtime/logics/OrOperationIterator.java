@@ -28,7 +28,10 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -36,12 +39,12 @@ public class OrOperationIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
+    private final RuntimePlan<Item> leftIterator;
+    private final RuntimePlan<Item> rightIterator;
 
     public OrOperationIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
+            RuntimePlan<Item> leftIterator,
+            RuntimePlan<Item> rightIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
@@ -51,11 +54,11 @@ public class OrOperationIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        boolean leftEffectiveBooleanValue = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(
+        boolean leftEffectiveBooleanValue = EffectiveBooleanValue.evaluate(
             this.leftIterator,
             dynamicContext
         );
-        boolean rightEffectiveBooleanValue = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(
+        boolean rightEffectiveBooleanValue = EffectiveBooleanValue.evaluate(
             this.rightIterator,
             dynamicContext
         );
@@ -65,14 +68,14 @@ public class OrOperationIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(
             this.leftIterator,
             nativeClauseContext
         );
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext rightResult = NativeQueryRuntimePlan.generate(
             this.rightIterator,
             new NativeClauseContext(leftResult, null, null)
         );

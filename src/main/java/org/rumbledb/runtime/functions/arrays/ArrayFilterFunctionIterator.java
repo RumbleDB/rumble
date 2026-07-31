@@ -36,6 +36,7 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -53,11 +54,11 @@ public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePla
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator;
+    private final RuntimePlan<Item> arrayIterator;
+    private final RuntimePlan<Item> predicateIterator;
 
     public ArrayFilterFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -133,7 +134,7 @@ public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePla
             List<Item> memberSequence,
             DynamicContext context
     ) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> memberIterator = createSequenceIterator(
+        RuntimePlan<Item> memberIterator = createSequenceIterator(
             memberSequence
         );
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
@@ -142,9 +143,9 @@ public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePla
             .executionMode(ExecutionMode.LOCAL)
             .metadata(getMetadata())
             .build();
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments = new ArrayList<>(1);
+        List<RuntimePlan<Item>> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionCall = new DynamicFunctionCallIterator(
+        RuntimePlan<Item> functionCall = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(predicate, functionItemContext),
                 arguments,
                 functionItemContext
@@ -170,7 +171,7 @@ public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePla
         return value.getBooleanValue();
     }
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> createSequenceIterator(List<Item> items) {
+    private RuntimePlan<Item> createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -184,7 +185,7 @@ public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePla
             );
         }
 
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> childIterators = new ArrayList<>(
+        List<RuntimePlan<Item>> childIterators = new ArrayList<>(
                 items.size()
         );
         for (Item item : items) {

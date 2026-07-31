@@ -27,7 +27,7 @@ public class ArrayHeadFunctionIterator extends AbstractItemRuntimePlan
     private final RuntimePlan<Item> arrayIterator;
 
     public ArrayHeadFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

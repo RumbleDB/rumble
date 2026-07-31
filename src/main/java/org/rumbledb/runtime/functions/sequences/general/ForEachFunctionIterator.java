@@ -34,6 +34,7 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -59,11 +60,11 @@ public class ForEachFunctionIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionIterator;
+    private final RuntimePlan<Item> sequenceIterator;
+    private final RuntimePlan<Item> actionIterator;
 
     public ForEachFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -75,7 +76,7 @@ public class ForEachFunctionIterator extends AbstractItemRuntimePlan
     }
 
     private static Item resolveAction(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionIterator,
+            RuntimePlan<Item> actionIterator,
             DynamicContext context,
             RuntimeStaticContext staticContext
     ) {
@@ -109,7 +110,7 @@ public class ForEachFunctionIterator extends AbstractItemRuntimePlan
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> callbackArguments = new ArrayList<>(1);
+        List<RuntimePlan<Item>> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(new ConstantRuntimeIterator(item, argumentContext));
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
             .configuration(staticContext.getConfiguration())
@@ -117,7 +118,7 @@ public class ForEachFunctionIterator extends AbstractItemRuntimePlan
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> callback = new DynamicFunctionCallIterator(
+        RuntimePlan<Item> callback = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(function, functionItemContext),
                 callbackArguments,
                 functionItemContext
@@ -134,8 +135,8 @@ public class ForEachFunctionIterator extends AbstractItemRuntimePlan
 
     private static final class ForEachLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan;
+        private final RuntimePlan<Item> sequencePlan;
+        private final RuntimePlan<Item> actionPlan;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
         private Cursor<Item> sequenceCursor;
@@ -143,8 +144,8 @@ public class ForEachFunctionIterator extends AbstractItemRuntimePlan
         private Iterator<Item> currentResults;
 
         private ForEachLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan,
+                RuntimePlan<Item> sequencePlan,
+                RuntimePlan<Item> actionPlan,
                 DynamicContext context,
                 RuntimeStaticContext staticContext
         ) {

@@ -5,8 +5,10 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
+import java.util.Base64;
 import java.util.List;
 
 public class CollationKeyFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -14,7 +16,7 @@ public class CollationKeyFunctionIterator extends AbstractAtMostOneItemRuntimePl
     private static final long serialVersionUID = 1L;
 
     public CollationKeyFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -31,6 +33,6 @@ public class CollationKeyFunctionIterator extends AbstractAtMostOneItemRuntimePl
             collationUri = this.staticContext.getDefaultCollation();
         }
         byte[] bytes = CollationResolver.collationKeyBytes(keyItem.getStringValue(), collationUri, getMetadata());
-        return ItemFactory.getInstance().createBase64BinaryItem(java.util.Base64.getEncoder().encodeToString(bytes));
+        return ItemFactory.getInstance().createBase64BinaryItem(Base64.getEncoder().encodeToString(bytes));
     }
 }

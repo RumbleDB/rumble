@@ -25,6 +25,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -35,7 +37,7 @@ public class NotFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public NotFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -43,8 +45,8 @@ public class NotFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = this.getChild(0);
-        boolean effectiveBooleanValue = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(iterator, context);
+        RuntimePlan<Item> iterator = this.getChild(0);
+        boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(iterator, context);
         return ItemFactory.getInstance().createBooleanItem(!effectiveBooleanValue);
     }
 

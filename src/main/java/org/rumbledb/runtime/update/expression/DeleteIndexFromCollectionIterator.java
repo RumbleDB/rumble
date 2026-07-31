@@ -8,6 +8,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.Mode;
@@ -23,13 +24,13 @@ public class DeleteIndexFromCollectionIterator extends UpdatingExpressionIterato
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> numDeleteIterator;
+    private final RuntimePlan<Item> targetIterator;
+    private final RuntimePlan<Item> numDeleteIterator;
     private final boolean isFirst;
     private final Mode mode;
 
     public DeleteIndexFromCollectionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator,
+            RuntimePlan<Item> targetIterator,
             boolean isFirst,
             Mode mode,
             RuntimeStaticContext staticContext
@@ -42,8 +43,8 @@ public class DeleteIndexFromCollectionIterator extends UpdatingExpressionIterato
     }
 
     public DeleteIndexFromCollectionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> numDeleteIterator,
+            RuntimePlan<Item> targetIterator,
+            RuntimePlan<Item> numDeleteIterator,
             boolean isFirst,
             Mode mode,
             RuntimeStaticContext staticContext

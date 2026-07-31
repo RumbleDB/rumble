@@ -35,12 +35,14 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
+import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
 
 import java.io.Serial;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -54,7 +56,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     }
 
     public DeepEqualFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -62,8 +64,8 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator1 = this.getChild(0);
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator2 = this.getChild(1);
+        RuntimePlan<Item> sequenceIterator1 = this.getChild(0);
+        RuntimePlan<Item> sequenceIterator2 = this.getChild(1);
         validateCollation(
             this.getChildren().size() == 3
                 ? this.getChild(2).materializeFirstOrNull(context)
@@ -294,7 +296,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return node.children()
             .stream()
             .filter(child -> child.isElementNode() || child.isTextNode())
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
     }
 
     /**

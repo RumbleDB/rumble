@@ -30,6 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -48,7 +49,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public CountFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -56,7 +57,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = this.getChild(0);
+        RuntimePlan<Item> iterator = this.getChild(0);
 
         // the count($x) case is treated separately because we can short-circuit the
         // count, e.g., if it comes from the group-by aggregation of a non-grouping
@@ -75,7 +76,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     public static Item computeCount(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -111,7 +112,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private static Item computeRDD(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -124,7 +125,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private static Item computeDataFrame(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -150,7 +151,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext nativeChildQuery = NativeQueryRuntimePlan.generate(
             this.getChild(0),
             nativeClauseContext
         );

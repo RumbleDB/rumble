@@ -25,12 +25,14 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.*;
 import java.net.URI;
@@ -43,7 +45,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
 
     public LocalTextFileFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -82,11 +84,11 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
         private final InputStream input;
         private final Iterator<String> lines;
-        private final org.rumbledb.exceptions.ExceptionMetadata metadata;
+        private final ExceptionMetadata metadata;
 
         private TextLineResourceIterator(
                 InputStream input,
-                org.rumbledb.exceptions.ExceptionMetadata metadata
+                ExceptionMetadata metadata
         ) {
             this.input = input;
             this.lines = new BufferedReader(new InputStreamReader(input)).lines().iterator();

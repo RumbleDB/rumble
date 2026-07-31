@@ -26,9 +26,11 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
+import java.util.List;
 import java.util.Map;
 
 public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -38,16 +40,16 @@ public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     private final Name functionName;
     private final Map<Name, SequenceType> paramNameToSequenceTypes;
     final SequenceType returnType;
-    final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator;
+    final RuntimePlan<Item> bodyIterator;
 
     public FunctionRuntimeIterator(
             Name functionName,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator,
+            RuntimePlan<Item> bodyIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.functionName = functionName;
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
         this.returnType = returnType;

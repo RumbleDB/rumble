@@ -51,7 +51,7 @@ public class MapKeysFunctionIterator extends AbstractItemRuntimePlan
     private final RuntimePlan<Item> mapIterator;
 
     public MapKeysFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

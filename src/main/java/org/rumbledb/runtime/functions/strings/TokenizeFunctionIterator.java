@@ -30,6 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -40,7 +41,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
 
     public TokenizeFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -76,14 +77,14 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final class TokenizeLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments;
+        private final List<RuntimePlan<Item>> arguments;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private String[] results;
         private int position;
 
         private TokenizeLocalCursor(
-                List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+                List<RuntimePlan<Item>> arguments,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

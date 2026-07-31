@@ -16,6 +16,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import scala.Tuple2;
@@ -26,7 +27,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AbstractAtMostO
     private static final long serialVersionUID = 1L;
 
     public BinaryClassificationMetricsFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -65,7 +66,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AbstractAtMostO
             .metadata(getMetadata())
             .build();
 
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> it = new ConstantRDDRuntimeIterator(
+        RuntimePlan<Item> it = new ConstantRDDRuntimeIterator(
                 rdd,
                 staticContext
         );

@@ -29,6 +29,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -40,12 +42,12 @@ import java.util.Collections;
 public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private final boolean negated;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child;
+    private final RuntimePlan<Item> child;
     @Serial
     private static final long serialVersionUID = 1L;
 
     public UnaryOperationIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
+            RuntimePlan<Item> child,
             boolean negated,
             RuntimeStaticContext staticContext
     ) {
@@ -114,7 +116,7 @@ public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(
             this.child,
             nativeClauseContext
         );

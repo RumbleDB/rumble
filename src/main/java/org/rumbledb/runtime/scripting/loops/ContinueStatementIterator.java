@@ -7,13 +7,14 @@ import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
+import java.util.List;
 
 public class ContinueStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public ContinueStatementIterator(RuntimeStaticContext staticContext) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
     }
 
     @Override

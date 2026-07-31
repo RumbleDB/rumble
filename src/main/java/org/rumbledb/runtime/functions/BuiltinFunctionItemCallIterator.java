@@ -16,6 +16,8 @@
  */
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -50,11 +52,11 @@ public class BuiltinFunctionItemCallIterator extends AbstractItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     private final Item functionItem;
-    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
+    private final List<RuntimePlan<Item>> functionArguments;
 
     public BuiltinFunctionItemCallIterator(
             Item functionItem,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -85,13 +87,13 @@ public class BuiltinFunctionItemCallIterator extends AbstractItemRuntimePlan
 
     private static final class BuiltinCallLocalCursor extends AbstractDelegatingLocalCursor<Item> {
         private final Item functionItem;
-        private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
+        private final List<RuntimePlan<Item>> functionArguments;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
 
         private BuiltinCallLocalCursor(
                 Item functionItem,
-                List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+                List<RuntimePlan<Item>> functionArguments,
                 RuntimeStaticContext staticContext,
                 DynamicContext context
         ) {
@@ -112,13 +114,13 @@ public class BuiltinFunctionItemCallIterator extends AbstractItemRuntimePlan
         }
     }
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> newBuiltinDelegate() {
+    private RuntimePlan<Item> newBuiltinDelegate() {
         return newBuiltinDelegate(this.functionItem, this.functionArguments, this.staticContext);
     }
 
-    private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> newBuiltinDelegate(
+    private static RuntimePlan<Item> newBuiltinDelegate(
             Item functionItem,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             RuntimeStaticContext staticContext
     ) {
         return NamedFunctions.getBuiltInFunctionIterator(
@@ -131,14 +133,14 @@ public class BuiltinFunctionItemCallIterator extends AbstractItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> delegate = newBuiltinDelegate();
+        RuntimePlan<Item> delegate = newBuiltinDelegate();
         return delegate.getRDD(dynamicContext);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> delegate = newBuiltinDelegate();
-        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(delegate, dynamicContext);
+        RuntimePlan<Item> delegate = newBuiltinDelegate();
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(delegate, dynamicContext);
     }
 
     @Override
@@ -146,7 +148,7 @@ public class BuiltinFunctionItemCallIterator extends AbstractItemRuntimePlan
         if (!isUpdating()) {
             return new PendingUpdateList();
         }
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> delegate = newBuiltinDelegate();
-        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(delegate, context);
+        RuntimePlan<Item> delegate = newBuiltinDelegate();
+        return UpdatingRuntimePlan.get(delegate, context);
     }
 }

@@ -2,6 +2,7 @@ package org.rumbledb.runtime.scripting.mutation;
 
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -19,10 +20,10 @@ public class ApplyStatementIterator
             UpdatingRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator;
+    private final RuntimePlan<Item> exprIterator;
 
     public ApplyStatementIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator,
+            RuntimePlan<Item> exprIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(exprIterator), staticContext);
@@ -39,7 +40,7 @@ public class ApplyStatementIterator
     private void applyUpdates(DynamicContext context) {
         // Immediately apply pul if applicable
         if (this.exprIterator.getRuntimeStaticContext().isUpdating()) {
-            org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.exprIterator, context)
+            UpdatingRuntimePlan.get(this.exprIterator, context)
                 .applyUpdates(this.getRuntimeStaticContext().getMetadata());
         }
     }

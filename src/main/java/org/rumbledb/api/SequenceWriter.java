@@ -11,6 +11,7 @@ import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
+import org.apache.spark.sql.util.CaseInsensitiveStringMap;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.CliException;
@@ -150,7 +151,7 @@ public class SequenceWriter {
         }
     }
 
-    public SequenceWriter mode(org.apache.spark.sql.SaveMode saveMode) {
+    public SequenceWriter mode(SaveMode saveMode) {
         if (this.dataFrameWriter != null) {
             return createNewInstance(
                 this.dataFrameWriter.mode(saveMode),
@@ -217,7 +218,7 @@ public class SequenceWriter {
         return option(key, Double.toString(value));
     }
 
-    public SequenceWriter options(java.util.Map<String, String> options) {
+    public SequenceWriter options(Map<String, String> options) {
         SerializationParameters newParams = SerializationParameters.copy(this.serializationParameters);
         newParams.getSparkOptions().putAll(options);
         DataFrameWriter<Row> newWriter = (this.dataFrameWriter != null)
@@ -226,7 +227,7 @@ public class SequenceWriter {
         return createNewInstance(newWriter, this.mode, newParams);
     }
 
-    public SequenceWriter options(org.apache.spark.sql.util.CaseInsensitiveStringMap options) {
+    public SequenceWriter options(CaseInsensitiveStringMap options) {
         SerializationParameters newParams = SerializationParameters.copy(this.serializationParameters);
         newParams.getSparkOptions().putAll(options);
         DataFrameWriter<Row> newWriter = (this.dataFrameWriter != null)

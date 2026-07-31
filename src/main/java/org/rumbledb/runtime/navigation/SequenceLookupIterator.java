@@ -29,7 +29,10 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
 
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -45,12 +48,12 @@ public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final RuntimePlan<Item> iterator;
     private final int position;
     private final int optimizationThreshold = 10_000_000; // do optimization only if position is above this threshold
 
     public SequenceLookupIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequence,
+            RuntimePlan<Item> sequence,
             int position,
             RuntimeStaticContext staticContext
     ) {
@@ -94,7 +97,7 @@ public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     public Item lookupDF(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
             this.iterator,
             dynamicContext
         );
@@ -140,14 +143,14 @@ public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan {
             nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE
                 && this.iterator instanceof CommaExpressionIterator childIterator
         ) {
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children = childIterator.getOperands();
+            List<RuntimePlan<Item>> children = childIterator.getOperands();
             if (
                 children.size() == 2
                     && children.get(0) instanceof ComparisonIterator
                     && children.get(1) instanceof BooleanRuntimeIterator
                     && this.position == 1
             ) {
-                NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
                     children.get(0),
                     nativeClauseContext
                 );
@@ -161,7 +164,7 @@ public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan {
                 );
             }
         }
-        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
             this.iterator,
             nativeClauseContext
         );

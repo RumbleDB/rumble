@@ -24,6 +24,7 @@ package org.rumbledb.types;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -528,7 +529,7 @@ public interface ItemType extends Serializable {
      *         is modeled.
      */
     default List<String> getLexicalSpacePatterns() {
-        return java.util.Collections.emptyList();
+        return Collections.emptyList();
     }
 
     // region fundamental facets (XSD 1.1 §4.2)

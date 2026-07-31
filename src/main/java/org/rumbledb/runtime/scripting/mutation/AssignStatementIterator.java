@@ -5,6 +5,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -13,11 +14,11 @@ import java.util.List;
 public class AssignStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> assignExpression;
+    private final RuntimePlan<Item> assignExpression;
     private final Name variableName;
 
     public AssignStatementIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> assignExpression,
+            RuntimePlan<Item> assignExpression,
             Name variableName,
             RuntimeStaticContext staticContext
     ) {

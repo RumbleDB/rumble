@@ -7,6 +7,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 
 import java.io.Serial;
 import java.util.List;
@@ -17,20 +19,20 @@ public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
     private static final long serialVersionUID = 1L;
 
     private final DataFrameContext dataFrameContext;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
+    private final RuntimePlan<Item> expression;
     private String classSimpleName;
 
     private List<T> results;
 
     public GenericForClauseUDF(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
+            RuntimePlan<Item> expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columnNames,
             String classSimpleName
     ) {
         this.dataFrameContext = new DataFrameContext(context, columnNames);
         this.expression = expression;
-        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
                     this.expression.getRuntimeStaticContext().getMetadata()

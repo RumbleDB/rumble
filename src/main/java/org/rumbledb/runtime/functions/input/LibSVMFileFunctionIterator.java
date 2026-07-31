@@ -32,6 +32,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
+import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
@@ -44,7 +45,7 @@ public class LibSVMFileFunctionIterator extends AbstractItemRuntimePlan implemen
     private static final long serialVersionUID = 1L;
 
     public LibSVMFileFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -52,7 +53,7 @@ public class LibSVMFileFunctionIterator extends AbstractItemRuntimePlan implemen
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> urlIterator = this.getChild(0);
+        RuntimePlan<Item> urlIterator = this.getChild(0);
         String url = urlIterator.materializeFirstOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {

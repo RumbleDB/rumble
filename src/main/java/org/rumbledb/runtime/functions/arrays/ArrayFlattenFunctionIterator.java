@@ -33,6 +33,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class ArrayFlattenFunctionIterator extends AbstractItemRuntimePlan
     private final RuntimePlan<Item> iterator;
 
     public ArrayFlattenFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -68,13 +69,13 @@ public class ArrayFlattenFunctionIterator extends AbstractItemRuntimePlan
         );
     }
 
-    private static void flatten(List<Item> items, java.util.Collection<Item> results) {
+    private static void flatten(List<Item> items, Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
                 if (item.isArrayOfItems()) {
                     flatten(item.getItemMembers(), results);
                 } else {
-                    for (java.util.List<Item> member : item.getSequenceMembers()) {
+                    for (List<Item> member : item.getSequenceMembers()) {
                         flatten(member, results);
                     }
                 }

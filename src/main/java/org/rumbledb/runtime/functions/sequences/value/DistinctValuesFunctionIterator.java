@@ -22,6 +22,7 @@ package org.rumbledb.runtime.functions.sequences.value;
 
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -37,6 +38,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.AtomicValueComparisonKey;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
@@ -54,10 +56,10 @@ public class DistinctValuesFunctionIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
+    private final RuntimePlan<Item> sequenceIterator;
 
     public DistinctValuesFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -116,7 +118,7 @@ public class DistinctValuesFunctionIterator extends AbstractItemRuntimePlan
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext sequenceQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext sequenceQuery = NativeQueryRuntimePlan.generate(
             this.sequenceIterator,
             nativeClauseContext
         );
@@ -131,8 +133,8 @@ public class DistinctValuesFunctionIterator extends AbstractItemRuntimePlan
 
     private static final class DistinctLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> collationPlan;
+        private final RuntimePlan<Item> sequencePlan;
+        private final RuntimePlan<Item> collationPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private final List<Item> seen = new ArrayList<>();
@@ -141,8 +143,8 @@ public class DistinctValuesFunctionIterator extends AbstractItemRuntimePlan
         private String activeCollation;
 
         private DistinctLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> collationPlan,
+                RuntimePlan<Item> sequencePlan,
+                RuntimePlan<Item> collationPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

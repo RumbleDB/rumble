@@ -52,6 +52,10 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
@@ -91,7 +95,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator implements DataF
         for (GroupByClauseSparkIteratorExpression e : this.groupingExpressions) {
             if (e.getExpression() != null) {
                 this.dependencies.putAll(
-                    org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(e.getExpression())
+                    VariableDependencyRuntimePlan.get(e.getExpression())
                 );
             } else {
                 this.dependencies.put(
@@ -120,7 +124,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator implements DataF
                 for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
                     tupleContext.getVariableValues().removeAllVariables();
                     tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
-                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyExpression = expression
+                    RuntimePlan<Item> keyExpression = expression
                         .getExpression();
                     if (keyExpression != null) {
                         if (tuple.contains(expression.getVariableName())) {
@@ -484,7 +488,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator implements DataF
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
             if (iterator.getExpression() != null) {
-                result.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(iterator.getExpression()));
+                result.putAll(VariableDependencyRuntimePlan.get(iterator.getExpression()));
             } else {
                 result.put(iterator.getVariableName(), DynamicContext.VariableDependency.FULL);
             }
@@ -515,7 +519,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator implements DataF
             }
             buffer.append("Variable ").append(iterator.getVariableName()).append("\n");
             if (iterator.getExpression() != null) {
-                org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(iterator.getExpression(), buffer, indent + 1);
+                RuntimePlanDiagnostics.print(iterator.getExpression(), buffer, indent + 1);
             }
         }
     }
@@ -542,7 +546,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator implements DataF
                 continue;
             }
             Map<Name, DynamicContext.VariableDependency> exprDependency =
-                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(iterator.getExpression());
+                VariableDependencyRuntimePlan.get(iterator.getExpression());
             for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {
@@ -690,12 +694,12 @@ public class GroupByClauseIterator extends RuntimeTupleIterator implements DataF
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
         for (GroupByClauseSparkIteratorExpression i : this.groupingExpressions) {
             if (i.getExpression() != null) {
-                if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(i.getExpression())) {
+                if (RuntimePlanDiagnostics.isSparkJobNeeded(i.getExpression())) {
                     return true;
                 }
             }
@@ -727,7 +731,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator implements DataF
             null,
             null
         );
-        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
             this.child,
             nativeClauseContext
         );
@@ -748,7 +752,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator implements DataF
         groupingVars.add(nativeClauseContext.getRowIdField());
         for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
             if (expression.getExpression() != null) {
-                NativeClauseContext expressionContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                NativeClauseContext expressionContext = NativeQueryRuntimePlan.generate(
                     expression.getExpression(),
                     childContext
                 );

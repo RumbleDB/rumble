@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import java.io.Serial;
@@ -55,6 +56,10 @@ import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -115,7 +120,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator implements DataFram
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             List<Name> variablesInLeftInputTuple, // really needed?
             List<Name> variablesInRightInputTuple, // really needed?
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator,
+            RuntimePlan<Item> predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata,
@@ -140,9 +145,9 @@ public class JoinClauseIterator extends RuntimeTupleIterator implements DataFram
         // TODO project away from the left all variables from the right
 
         // Is this a join that we can optimize as an actual Spark join?
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> leftTupleSideEqualityCriteria =
+        List<RuntimePlan<Item>> leftTupleSideEqualityCriteria =
             new ArrayList<>();
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> rightTupleSideEqualityCriteria =
+        List<RuntimePlan<Item>> rightTupleSideEqualityCriteria =
             new ArrayList<>();
 
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
@@ -163,7 +168,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator implements DataFram
         // System.out.println(sb.toString());
         // }
 
-        Map<Name, VariableDependency> predicateDependencies = org.rumbledb.runtime.plan.VariableDependencyRuntimePlan
+        Map<Name, VariableDependency> predicateDependencies = VariableDependencyRuntimePlan
             .get(predicateIterator);
         if (
             newRightSideVariableName != null
@@ -198,8 +203,8 @@ public class JoinClauseIterator extends RuntimeTupleIterator implements DataFram
 
 
         // Now we prepare the iterators for the two sides of the equality criterion.
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightHandSideEqualityCriterion;
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftHandSideEqualityCriterion;
+        RuntimePlan<Item> rightHandSideEqualityCriterion;
+        RuntimePlan<Item> leftHandSideEqualityCriterion;
 
         if (rightTupleSideEqualityCriteria.size() == 1) {
             rightHandSideEqualityCriterion = rightTupleSideEqualityCriteria.get(0);
@@ -304,7 +309,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator implements DataFram
         variablesInJointTuple.addAll(variablesInRightInputTuple);
         List<FlworDataFrameColumn> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumns(
             jointSchema,
-            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(predicateIterator),
+            VariableDependencyRuntimePlan.get(predicateIterator),
             variablesInJointTuple,
             null
         );
@@ -366,33 +371,33 @@ public class JoinClauseIterator extends RuntimeTupleIterator implements DataFram
     }
 
     private static boolean extractEqualityComparisonsForHashing(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> leftTupleSideEqualityCriteria,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> rightTupleSideEqualityCriteria,
+            RuntimePlan<Item> predicateIterator,
+            List<RuntimePlan<Item>> leftTupleSideEqualityCriteria,
+            List<RuntimePlan<Item>> rightTupleSideEqualityCriteria,
             List<Name> leftTupleSideVariableNames,
             List<Name> rightTupleSideVariableNames
     ) {
         boolean optimizableJoin = false;
-        Stack<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> candidateIterators = new Stack<>();
+        Stack<RuntimePlan<Item>> candidateIterators = new Stack<>();
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = candidateIterators.pop();
+            RuntimePlan<Item> iterator = candidateIterators.pop();
             if (iterator instanceof AndOperationIterator andOperationIterator) {
                 AndOperationIterator andIterator = andOperationIterator;
                 candidateIterators.push(andIterator.getLeftIterator());
                 candidateIterators.push(andIterator.getRightIterator());
             } else if (iterator instanceof ComparisonIterator comparisonIterator) {
                 if (comparisonIterator.isValueEquality()) {
-                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lhs = comparisonIterator
+                    RuntimePlan<Item> lhs = comparisonIterator
                         .getLeftIterator();
-                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rhs = comparisonIterator
+                    RuntimePlan<Item> rhs = comparisonIterator
                         .getRightIterator();
 
                     Set<Name> leftComparisonDependencies = new HashSet<>(
-                            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(lhs).keySet()
+                            VariableDependencyRuntimePlan.get(lhs).keySet()
                     );
                     Set<Name> rightComparisonDependencies = new HashSet<>(
-                            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(rhs).keySet()
+                            VariableDependencyRuntimePlan.get(rhs).keySet()
                     );
                     // TODO it would be nice to be more generic and also allow dependencies on the
                     // dynamic context on any side.
@@ -454,7 +459,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator implements DataFram
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator,
+            RuntimePlan<Item> predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata
@@ -469,7 +474,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator implements DataFram
         StructType rightSchema = rightInputTuple.schema();
         StructType unionSchema = FlworDataFrameUtils.schemaUnion(leftSchema, rightSchema);
         NativeClauseContext nativeContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, unionSchema, context);
-        NativeClauseContext nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(
             predicateIterator,
             nativeContext
         );
@@ -512,7 +517,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator implements DataFram
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
         switch (getHighestExecutionMode()) {

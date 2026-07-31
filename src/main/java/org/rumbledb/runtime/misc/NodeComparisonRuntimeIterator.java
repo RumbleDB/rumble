@@ -31,6 +31,7 @@ import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -40,19 +41,19 @@ import java.util.Arrays;
  * 
  * Node comparisons are used to compare two nodes, by their identity or by their document order.
  * 
- * @see org.rumbledb.expressions.comparison.NodeComparisonExpression
+ * @see NodeComparisonExpression
  */
 public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     private final NodeComparisonExpression.NodeComparisonOperator operator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
+    private final RuntimePlan<Item> leftIterator;
+    private final RuntimePlan<Item> rightIterator;
 
     public NodeComparisonRuntimeIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
+            RuntimePlan<Item> leftIterator,
+            RuntimePlan<Item> rightIterator,
             NodeComparisonExpression.NodeComparisonOperator operator,
             RuntimeStaticContext staticContext
     ) {
@@ -66,11 +67,11 @@ public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimeP
         return this.operator;
     }
 
-    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> getLeftIterator() {
+    public RuntimePlan<Item> getLeftIterator() {
         return this.leftIterator;
     }
 
-    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> getRightIterator() {
+    public RuntimePlan<Item> getRightIterator() {
         return this.rightIterator;
     }
 

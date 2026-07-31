@@ -67,7 +67,7 @@ public class VariableReferenceIterator extends AbstractItemRuntimePlan
             Name variableName,
             RuntimeStaticContext staticContext
     ) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.variableName = variableName;
     }
 

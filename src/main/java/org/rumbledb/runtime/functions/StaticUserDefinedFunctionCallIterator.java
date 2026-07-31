@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -38,6 +40,7 @@ import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -58,16 +61,16 @@ public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePl
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private final FunctionIdentifier functionIdentifier;
-    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
+    private final List<RuntimePlan<Item>> functionArguments;
     private final boolean tailCallOptimizationCandidate;
 
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             RuntimeStaticContext staticContext,
             boolean tailCallOptimization
     ) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.functionIdentifier = functionIdentifier;
         this.functionArguments = functionArguments;
         this.tailCallOptimizationCandidate = tailCallOptimization;
@@ -87,7 +90,7 @@ public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePl
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         try {
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = dynamicContext.getNamedFunctions()
+            RuntimePlan<Item> call = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
@@ -103,14 +106,14 @@ public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePl
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         try {
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = dynamicContext.getNamedFunctions()
+            RuntimePlan<Item> call = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
                     this.functionArguments,
                     false
                 );
-            return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
+            return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
         } catch (ExitStatementException exitStatementException) {
             return exitStatementException.getDataFrameResult();
         }
@@ -120,11 +123,11 @@ public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePl
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(super.getVariableDependencies());
-        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : this.functionArguments) {
+        for (RuntimePlan<Item> iterator : this.functionArguments) {
             if (iterator == null) {
                 continue;
             }
-            result.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(iterator));
+            result.putAll(VariableDependencyRuntimePlan.get(iterator));
         }
         return result;
     }
@@ -134,20 +137,20 @@ public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePl
         if (!isUpdating()) {
             return new PendingUpdateList();
         }
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = context.getNamedFunctions()
+        RuntimePlan<Item> call = context.getNamedFunctions()
             .getUserDefinedFunctionCallIterator(
                 this.functionIdentifier,
                 this.staticContext,
                 this.functionArguments,
                 false
             );
-        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(call, context);
+        return UpdatingRuntimePlan.get(call, context);
     }
 
     private static final class UserDefinedCallLocalCursor extends AbstractLocalCursor<Item> {
 
         private final FunctionIdentifier functionIdentifier;
-        private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
+        private final List<RuntimePlan<Item>> functionArguments;
         private final boolean tailCallOptimizationCandidate;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
@@ -158,7 +161,7 @@ public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePl
 
         private UserDefinedCallLocalCursor(
                 FunctionIdentifier functionIdentifier,
-                List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+                List<RuntimePlan<Item>> functionArguments,
                 boolean tailCallOptimizationCandidate,
                 RuntimeStaticContext staticContext,
                 DynamicContext context
@@ -173,7 +176,7 @@ public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePl
 
         @Override
         protected void openLocal() {
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = this.context.getNamedFunctions()
+            RuntimePlan<Item> call = this.context.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
@@ -187,7 +190,7 @@ public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePl
                     && isTailCall(this.nextResult)
             ) {
                 closeDelegate();
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tailCall = NamedFunctions
+                RuntimePlan<Item> tailCall = NamedFunctions
                     .buildFunctionItemCallIterator(
                         this.nextResult,
                         this.staticContext,
@@ -207,7 +210,7 @@ public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePl
                 && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName());
         }
 
-        private void openDelegate(org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call) {
+        private void openDelegate(RuntimePlan<Item> call) {
             this.delegate = call.getCursor(this.context);
             try {
             } catch (ExitStatementException e) {

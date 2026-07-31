@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -37,6 +38,7 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -58,16 +60,16 @@ public class ObjectProjectFunctionIterator extends AbstractItemRuntimePlan
 
     private static final class ProjectionLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keysPlan;
+        private final RuntimePlan<Item> inputPlan;
+        private final RuntimePlan<Item> keysPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> inputCursor;
         private List<Item> keys;
 
         private ProjectionLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keysPlan,
+                RuntimePlan<Item> inputPlan,
+                RuntimePlan<Item> keysPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -132,10 +134,10 @@ public class ObjectProjectFunctionIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private RuntimePlan<Item> iterator;
 
     public ObjectProjectFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -181,7 +183,7 @@ public class ObjectProjectFunctionIterator extends AbstractItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
             .fromPlan(this.getChild(0), context);
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (!childDataFrame.getItemType().isObjectItemType()) {

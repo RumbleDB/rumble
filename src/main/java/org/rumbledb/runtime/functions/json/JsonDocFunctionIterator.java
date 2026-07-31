@@ -24,6 +24,7 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.functions.io.TextResourceUtil;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -31,7 +32,7 @@ public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public JsonDocFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

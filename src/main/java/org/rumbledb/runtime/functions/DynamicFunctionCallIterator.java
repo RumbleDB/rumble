@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -48,6 +49,7 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
@@ -61,13 +63,13 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemIterator;
-    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
+    private final RuntimePlan<Item> functionItemIterator;
+    private final List<RuntimePlan<Item>> functionArguments;
     private final boolean isPartialApplication;
 
     public DynamicFunctionCallIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemIterator,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            RuntimePlan<Item> functionItemIterator,
+            List<RuntimePlan<Item>> functionArguments,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -109,8 +111,8 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
     }
 
     private static FunctionCall resolveFunctionCall(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemPlan,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            RuntimePlan<Item> functionItemPlan,
+            List<RuntimePlan<Item>> functionArguments,
             boolean partialApplication,
             ExecutionMode callerExecutionMode,
             RuntimeStaticContext staticContext,
@@ -144,7 +146,7 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
                         staticContext.getMetadata()
                 );
             }
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator = functionArguments.get(0);
+            RuntimePlan<Item> keyIterator = functionArguments.get(0);
             RuntimeStaticContext callStaticContext = RuntimeStaticContext.builder()
                 .configuration(staticContext.getConfiguration())
                 .staticType(SequenceType.createSequenceType("item*"))
@@ -173,7 +175,7 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
                         staticContext.getMetadata()
                 );
             }
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator = functionArguments.get(0);
+            RuntimePlan<Item> keyIterator = functionArguments.get(0);
             RuntimeStaticContext callStaticContext = RuntimeStaticContext.builder()
                 .configuration(staticContext.getConfiguration())
                 .staticType(SequenceType.createSequenceType("item*"))
@@ -225,7 +227,7 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
 
     private static ExecutionMode getCalleeExecutionModeForFunctionItemCall(
             Item functionItem,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             boolean partialApplication,
             RuntimeStaticContext staticContext
     ) {
@@ -240,7 +242,7 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
                 );
             // assume that the passed builtin function is valid
             ExecutionMode firstArgumentMode = ExecutionMode.LOCAL;
-            for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arg : functionArguments) {
+            for (RuntimePlan<Item> arg : functionArguments) {
                 if (arg != null) {
                     firstArgumentMode = arg.getRuntimeStaticContext().getExecutionMode();
                     break;
@@ -273,7 +275,7 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         try {
-            return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
                 resolveFunctionCall(dynamicContext).iterator,
                 dynamicContext
             );
@@ -287,9 +289,9 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
 
     private static final class FunctionCall {
         private final Item functionItem;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+        private final RuntimePlan<Item> iterator;
 
-        private FunctionCall(Item functionItem, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator) {
+        private FunctionCall(Item functionItem, RuntimePlan<Item> iterator) {
             this.functionItem = functionItem;
             this.iterator = iterator;
         }
@@ -297,8 +299,8 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
 
     private static final class DynamicCallLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemPlan;
-        private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
+        private final RuntimePlan<Item> functionItemPlan;
+        private final List<RuntimePlan<Item>> functionArguments;
         private final boolean partialApplication;
         private final ExecutionMode callerExecutionMode;
         private final RuntimeStaticContext staticContext;
@@ -309,8 +311,8 @@ public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
         private int exitIndex;
 
         private DynamicCallLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemPlan,
-                List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+                RuntimePlan<Item> functionItemPlan,
+                List<RuntimePlan<Item>> functionArguments,
                 boolean partialApplication,
                 ExecutionMode callerExecutionMode,
                 RuntimeStaticContext staticContext,

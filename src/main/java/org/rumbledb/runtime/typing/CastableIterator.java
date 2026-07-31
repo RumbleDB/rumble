@@ -10,6 +10,7 @@ import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -21,11 +22,11 @@ import java.util.Collections;
 public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child;
+    private final RuntimePlan<Item> child;
     private final SequenceType sequenceType;
 
     public CastableIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
+            RuntimePlan<Item> child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -42,7 +43,7 @@ public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private static Item evaluate(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
+            RuntimePlan<Item> child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext,
             ExceptionMetadata metadata,

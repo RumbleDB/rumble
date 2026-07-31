@@ -1,7 +1,9 @@
 package org.rumbledb.runtime.control;
 
 import lombok.Getter;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -14,12 +16,12 @@ public class TypeswitchRuntimeIteratorCase implements Serializable {
     private static final long serialVersionUID = 1L;
     private final Name variableName;
     private final List<SequenceType> sequenceTypeUnion;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnIterator;
+    private final RuntimePlan<Item> returnIterator;
 
     public TypeswitchRuntimeIteratorCase(
             Name variableName,
             List<SequenceType> sequenceTypeUnion,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnIterator
+            RuntimePlan<Item> returnIterator
     ) {
         this.variableName = variableName;
         this.sequenceTypeUnion = sequenceTypeUnion;
@@ -28,7 +30,7 @@ public class TypeswitchRuntimeIteratorCase implements Serializable {
 
     public TypeswitchRuntimeIteratorCase(
             Name variableName,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnIterator
+            RuntimePlan<Item> returnIterator
     ) {
         this.variableName = variableName;
         this.sequenceTypeUnion = null;

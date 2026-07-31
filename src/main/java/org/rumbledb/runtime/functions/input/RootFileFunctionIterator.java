@@ -32,6 +32,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
+import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
@@ -44,7 +45,7 @@ public class RootFileFunctionIterator extends AbstractItemRuntimePlan implements
     private static final long serialVersionUID = 1L;
 
     public RootFileFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -52,10 +53,10 @@ public class RootFileFunctionIterator extends AbstractItemRuntimePlan implements
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> urlIterator = this.getChild(0);
+        RuntimePlan<Item> urlIterator = this.getChild(0);
         String path = null;
         if (this.getChildren().size() > 1) {
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> pathIterator = this.getChild(1);
+            RuntimePlan<Item> pathIterator = this.getChild(1);
             Item pathItem = pathIterator.materializeFirstOrNull(context);
             path = pathItem.getStringValue();
         }

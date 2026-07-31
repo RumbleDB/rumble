@@ -6,8 +6,10 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -21,7 +23,7 @@ public class AnnotateFunctionIterator extends AbstractItemRuntimePlan implements
     private static final long serialVersionUID = 1L;
 
     public AnnotateFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -29,8 +31,8 @@ public class AnnotateFunctionIterator extends AbstractItemRuntimePlan implements
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputDataIterator = this.getChild(0);
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> schemaIterator = this.getChild(1);
+        RuntimePlan<Item> inputDataIterator = this.getChild(0);
+        RuntimePlan<Item> schemaIterator = this.getChild(1);
         Item schemaItem = schemaIterator.materializeFirstOrNull(context);
         ItemType schemaType = ItemTypeFactory.createItemTypeFromJSoundCompactItem(null, schemaItem, null);
         schemaType.resolve(context, getMetadata());
@@ -38,7 +40,7 @@ public class AnnotateFunctionIterator extends AbstractItemRuntimePlan implements
 
             if (inputDataIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
                 HomogeneousItemDataFrame inputDataAsDataFrame =
-                    org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                    ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
                         inputDataIterator,
                         context
                     );

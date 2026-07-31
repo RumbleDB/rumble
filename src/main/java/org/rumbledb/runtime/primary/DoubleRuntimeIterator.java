@@ -29,6 +29,7 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
+import java.util.List;
 
 public class DoubleRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -37,7 +38,7 @@ public class DoubleRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     private final Item item;
 
     public DoubleRuntimeIterator(Double value, RuntimeStaticContext staticContext) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.item = ItemFactory.getInstance().createDoubleItem(value);
 
     }

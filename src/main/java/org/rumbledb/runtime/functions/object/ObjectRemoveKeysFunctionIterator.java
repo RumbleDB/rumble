@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -37,6 +38,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -55,16 +57,16 @@ public class ObjectRemoveKeysFunctionIterator extends AbstractItemRuntimePlan
 
     private static final class RemovalLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keysPlan;
+        private final RuntimePlan<Item> inputPlan;
+        private final RuntimePlan<Item> keysPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> inputCursor;
         private List<String> keys;
 
         private RemovalLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keysPlan,
+                RuntimePlan<Item> inputPlan,
+                RuntimePlan<Item> keysPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -134,10 +136,10 @@ public class ObjectRemoveKeysFunctionIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private RuntimePlan<Item> iterator;
 
     public ObjectRemoveKeysFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -190,7 +192,7 @@ public class ObjectRemoveKeysFunctionIterator extends AbstractItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame dataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+        HomogeneousItemDataFrame dataFrame = ItemRuntimeDataFrameFactory.INSTANCE
             .fromPlan(this.iterator, context);
         List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {

@@ -37,6 +37,7 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
@@ -380,7 +381,7 @@ public abstract class RuntimeTupleIterator
         buffer.append("\n");
 
         if (this.child != null) {
-            org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(this.child, buffer, indent + 1);
+            RuntimePlanDiagnostics.print(this.child, buffer, indent + 1);
         }
     }
 

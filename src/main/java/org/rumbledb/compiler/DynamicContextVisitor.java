@@ -46,6 +46,7 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.plan.RuntimePlanBindings;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -141,7 +142,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
             RuntimePlan<Item> iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            org.rumbledb.runtime.plan.RuntimePlanBindings.bind(iterator, argument, name, argument);
+            RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }
 
@@ -335,7 +336,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         Expression expression = variableDeclaration.getExpression();
         if (expression != null) {
             RuntimePlan<Item> iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            org.rumbledb.runtime.plan.RuntimePlanBindings.bind(iterator, argument, name, argument);
+            RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }
 

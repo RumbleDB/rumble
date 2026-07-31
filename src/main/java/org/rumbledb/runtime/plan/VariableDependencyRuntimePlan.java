@@ -9,6 +9,7 @@ package org.rumbledb.runtime.plan;
 
 import java.util.Map;
 import java.util.Collections;
+import java.util.TreeMap;
 
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -22,7 +23,7 @@ public interface VariableDependencyRuntimePlan {
         if (!(this instanceof AbstractItemRuntimePlan plan)) {
             return Collections.emptyMap();
         }
-        Map<Name, DynamicContext.VariableDependency> result = new java.util.TreeMap<>();
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (RuntimePlan<?> child : plan.diagnosticChildren()) {
             DynamicContext.mergeVariableDependencies(result, get(child));
         }

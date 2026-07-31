@@ -1,5 +1,8 @@
 package org.rumbledb.runtime.control;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -31,12 +34,12 @@ public class TypeswitchRuntimeIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testField;
+    private final RuntimePlan<Item> testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
 
     public TypeswitchRuntimeIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> test,
+            RuntimePlan<Item> test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
             RuntimeStaticContext staticContext
@@ -63,18 +66,18 @@ public class TypeswitchRuntimeIterator extends AbstractItemRuntimePlan
     }
 
     private static final class TypeswitchLocalCursor extends AbstractLocalCursor<Item> {
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testPlan;
+        private final RuntimePlan<Item> testPlan;
         private final List<TypeswitchRuntimeIteratorCase> cases;
         private final TypeswitchRuntimeIteratorCase defaultCase;
         private final DynamicContext context;
         private Cursor<Item> selected;
 
         private TypeswitchLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testPlan,
+                RuntimePlan<Item> testPlan,
                 List<TypeswitchRuntimeIteratorCase> cases,
                 TypeswitchRuntimeIteratorCase defaultCase,
                 DynamicContext context,
-                org.rumbledb.exceptions.ExceptionMetadata metadata
+                ExceptionMetadata metadata
         ) {
             super(metadata);
             this.testPlan = testPlan;
@@ -180,14 +183,14 @@ public class TypeswitchRuntimeIterator extends AbstractItemRuntimePlan
         }
         Match match = selectMatch(context);
         bindMatch(match, context);
-        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(match.typeSwitchCase.getReturnIterator(), context);
+        return UpdatingRuntimePlan.get(match.typeSwitchCase.getReturnIterator(), context);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         Match match = selectMatch(context);
         bindMatch(match, context);
-        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
             match.typeSwitchCase.getReturnIterator(),
             context
         );

@@ -31,10 +31,12 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,7 +59,7 @@ public class GetTransformerFunctionIterator extends AbstractAtMostOneItemRuntime
     );
 
     public GetTransformerFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -119,7 +121,7 @@ public class GetTransformerFunctionIterator extends AbstractAtMostOneItemRuntime
                     }
                 }
             }
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator =
+            RuntimePlan<Item> bodyIterator =
                 new ApplyTransformerRuntimeIterator(
                         transformerShortName,
                         transformer,
@@ -157,7 +159,7 @@ public class GetTransformerFunctionIterator extends AbstractAtMostOneItemRuntime
         } catch (
                 InstantiationException
                 | IllegalAccessException
-                | java.lang.reflect.InvocationTargetException
+                | InvocationTargetException
                 | NoSuchMethodException e
         ) {
             throw new OurBadException(

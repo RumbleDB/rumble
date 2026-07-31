@@ -6,6 +6,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -13,12 +15,12 @@ import java.util.Arrays;
 public class WhileStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testConditionIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator;
+    private final RuntimePlan<Item> testConditionIterator;
+    private final RuntimePlan<Item> bodyIterator;
 
     public WhileStatementIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testConditionIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator,
+            RuntimePlan<Item> testConditionIterator,
+            RuntimePlan<Item> bodyIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -31,7 +33,7 @@ public class WhileStatementIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        while (org.rumbledb.runtime.EffectiveBooleanValue.evaluate(this.testConditionIterator, context)) {
+        while (EffectiveBooleanValue.evaluate(this.testConditionIterator, context)) {
             try {
                 DynamicContext childContext = new DynamicContext(context);
                 this.bodyIterator.materialize(childContext);

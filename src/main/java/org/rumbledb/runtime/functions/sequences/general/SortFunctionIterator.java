@@ -19,6 +19,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -43,12 +44,12 @@ public class SortFunctionIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> collationIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator;
+    private final RuntimePlan<Item> inputIterator;
+    private final RuntimePlan<Item> collationIterator;
+    private final RuntimePlan<Item> keyIterator;
 
     public SortFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -177,9 +178,9 @@ public class SortFunctionIterator extends AbstractItemRuntimePlan
             Item item,
             DynamicContext context
     ) {
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments = new ArrayList<>(1);
+        List<RuntimePlan<Item>> arguments = new ArrayList<>(1);
         arguments.add(new ConstantRuntimeIterator(item, localStaticContext()));
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = NamedFunctions
+        RuntimePlan<Item> call = NamedFunctions
             .buildFunctionItemCallIterator(
                 functionItem,
                 this.staticContext,
@@ -197,7 +198,7 @@ public class SortFunctionIterator extends AbstractItemRuntimePlan
                     getMetadata()
             );
         }
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> indexIterator = new ConstantRuntimeIterator(
+        RuntimePlan<Item> indexIterator = new ConstantRuntimeIterator(
                 item,
                 localStaticContext()
         );
@@ -217,7 +218,7 @@ public class SortFunctionIterator extends AbstractItemRuntimePlan
                     getMetadata()
             );
         }
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator = new ConstantRuntimeIterator(
+        RuntimePlan<Item> keyIterator = new ConstantRuntimeIterator(
                 atomized.get(0),
                 localStaticContext()
         );
@@ -230,14 +231,14 @@ public class SortFunctionIterator extends AbstractItemRuntimePlan
     }
 
     private List<Item> materializeIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             DynamicContext context
     ) {
         return iterator.materialize(context);
     }
 
     private List<Item> materializeKeyIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             DynamicContext context
     ) {
         List<Item> rawItems = materializeIterator(iterator, context);

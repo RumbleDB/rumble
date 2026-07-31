@@ -21,6 +21,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
@@ -42,7 +43,7 @@ public final class FunctionCallArgumentConversion {
 
     public static void validateArity(
             Item functionItem,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             ExceptionMetadata metadata
     ) {
         if (functionItem.getParameterNames().size() != functionArguments.size()) {
@@ -60,7 +61,7 @@ public final class FunctionCallArgumentConversion {
 
     public static void wrapAccordingToSignature(
             Item functionItem,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             RuntimeStaticContext callerStaticContext
     ) {
         if (functionItem.getSignature().getParameterTypes() == null) {
@@ -89,7 +90,7 @@ public final class FunctionCallArgumentConversion {
                     .executionMode(executionMode)
                     .metadata(functionArguments.get(i).getRuntimeStaticContext().getMetadata())
                     .build();
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argumentIterator =
+                RuntimePlan<Item> argumentIterator =
                     wrapForFunctionConversion(
                         functionArguments.get(i),
                         sequenceType,
@@ -101,7 +102,7 @@ public final class FunctionCallArgumentConversion {
                         || sequenceType.getArity().equals(Arity.One)
                         || sequenceType.getArity().equals(Arity.OneOrZero)
                 ) {
-                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> typePromotionIterator =
+                    RuntimePlan<Item> typePromotionIterator =
                         new AtMostOneItemTypePromotionIterator(
                                 argumentIterator,
                                 sequenceType,
@@ -110,7 +111,7 @@ public final class FunctionCallArgumentConversion {
                         );
                     functionArguments.set(i, typePromotionIterator);
                 } else {
-                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> typePromotionIterator =
+                    RuntimePlan<Item> typePromotionIterator =
                         new TypePromotionIterator(
                                 argumentIterator,
                                 sequenceType,
@@ -123,8 +124,8 @@ public final class FunctionCallArgumentConversion {
         }
     }
 
-    public static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> wrapForFunctionConversion(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argumentIterator,
+    public static RuntimePlan<Item> wrapForFunctionConversion(
+            RuntimePlan<Item> argumentIterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext runtimeStaticContext

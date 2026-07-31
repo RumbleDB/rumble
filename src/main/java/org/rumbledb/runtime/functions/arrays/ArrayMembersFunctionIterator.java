@@ -47,7 +47,7 @@ public class ArrayMembersFunctionIterator extends AbstractItemRuntimePlan
     private final RuntimePlan<Item> iterator;
 
     public ArrayMembersFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

@@ -95,7 +95,7 @@ public class Rumble {
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
      * @param location the JSONiq main module location.
-     * @throws java.io.IOException if there was an issue reading a module.
+     * @throws IOException if there was an issue reading a module.
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(URI location) throws IOException {
@@ -117,7 +117,7 @@ public class Rumble {
      * declared in the static context.
      *
      * @param location the JSONiq main module location.
-     * @throws java.io.IOException if there was an issue reading a module.
+     * @throws IOException if there was an issue reading a module.
      * @return the serialized query result.
      */
     public String runQueryToString(URI location) throws IOException {

@@ -55,7 +55,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
     private static final long serialVersionUID = 1L;
     private final Name staticElementName;
     private final DataFunctionIterator nameIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator;
+    private final RuntimePlan<Item> contentIterator;
 
     /**
      * Constructor for static element name: element elementName { content }
@@ -66,7 +66,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
      */
     public ComputedElementConstructorRuntimeIterator(
             Name staticElementName,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator,
+            RuntimePlan<Item> contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(contentIterator), staticContext);
@@ -84,7 +84,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
      */
     public ComputedElementConstructorRuntimeIterator(
             DataFunctionIterator nameIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator,
+            RuntimePlan<Item> contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(createChildList(nameIterator, contentIterator), staticContext);
@@ -93,11 +93,11 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         this.contentIterator = contentIterator;
     }
 
-    private static List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> createChildList(
+    private static List<RuntimePlan<Item>> createChildList(
             RuntimePlan<Item>... iterators
     ) {
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children = new ArrayList<>();
-        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : iterators) {
+        List<RuntimePlan<Item>> children = new ArrayList<>();
+        for (RuntimePlan<Item> iterator : iterators) {
             if (iterator != null) {
                 children.add(iterator);
             }

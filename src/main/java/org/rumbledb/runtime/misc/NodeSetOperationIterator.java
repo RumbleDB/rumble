@@ -57,13 +57,13 @@ public class NodeSetOperationIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
+    private RuntimePlan<Item> leftIterator;
+    private RuntimePlan<Item> rightIterator;
     private NodeSetExpression.NodeSetOperator operator;
 
     public NodeSetOperationIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
+            RuntimePlan<Item> leftIterator,
+            RuntimePlan<Item> rightIterator,
             NodeSetExpression.NodeSetOperator operator,
             RuntimeStaticContext staticContext
     ) {

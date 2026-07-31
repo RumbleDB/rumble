@@ -9,6 +9,7 @@ import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -20,12 +21,12 @@ public class EditCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator;
+    private final RuntimePlan<Item> targetIterator;
+    private final RuntimePlan<Item> contentIterator;
 
     public EditCollectionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator,
+            RuntimePlan<Item> targetIterator,
+            RuntimePlan<Item> contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

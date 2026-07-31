@@ -20,12 +20,14 @@
 
 package org.rumbledb.runtime;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -59,7 +61,7 @@ public class CommaExpressionIterator extends AbstractItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     public CommaExpressionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> childIterators,
+            List<RuntimePlan<Item>> childIterators,
             RuntimeStaticContext staticContext
     ) {
         super(childIterators, staticContext);
@@ -70,7 +72,7 @@ public class CommaExpressionIterator extends AbstractItemRuntimePlan
         return new ConcatLocalCursor<>(getChildren(), context, getMetadata());
     }
 
-    public List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> getOperands() {
+    public List<RuntimePlan<Item>> getOperands() {
         // This method is currently used in SequenceLookupIterator and ObjectConstructorRuntimeIterator
         // Because getChildren is protected and not visible from there
         return getChildren();
@@ -80,7 +82,7 @@ public class CommaExpressionIterator extends AbstractItemRuntimePlan
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty()) {
             int childIndex = 0;
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> currentChild = this.getChild(childIndex);
+            RuntimePlan<Item> currentChild = this.getChild(childIndex);
 
             JavaRDD<Item> childRDD = currentChild.getRDD(dynamicContext);
             childIndex++;
@@ -101,8 +103,8 @@ public class CommaExpressionIterator extends AbstractItemRuntimePlan
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         List<NativeClauseContext> childClauses = new ArrayList<>();
-        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : this.getChildren()) {
-            NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        for (RuntimePlan<Item> iterator : this.getChildren()) {
+            NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
                 iterator,
                 nativeClauseContext
             );
@@ -185,9 +187,9 @@ public class CommaExpressionIterator extends AbstractItemRuntimePlan
         }
 
         PendingUpdateList pul = new PendingUpdateList();
-        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child : this.getChildren()) {
+        for (RuntimePlan<Item> child : this.getChildren()) {
             pul.mergeUpdates(
-                org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(child, context),
+                UpdatingRuntimePlan.get(child, context),
                 this.getRuntimeStaticContext().getMetadata()
             );
         }

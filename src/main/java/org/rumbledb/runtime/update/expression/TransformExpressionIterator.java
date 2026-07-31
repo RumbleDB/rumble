@@ -31,16 +31,16 @@ public class TransformExpressionIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final Map<Name, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> copyDeclMap;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> modifyIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnIterator;
+    private final Map<Name, RuntimePlan<Item>> copyDeclMap;
+    private final RuntimePlan<Item> modifyIterator;
+    private final RuntimePlan<Item> returnIterator;
     private final boolean mutable;
     private final int mutabilityLevel;
 
     public TransformExpressionIterator(
-            Map<Name, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> copyDeclMap,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> modifyIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnIterator,
+            Map<Name, RuntimePlan<Item>> copyDeclMap,
+            RuntimePlan<Item> modifyIterator,
+            RuntimePlan<Item> returnIterator,
             RuntimeStaticContext staticContext,
             int mutabilityLevel,
             boolean resultMutable
@@ -85,12 +85,12 @@ public class TransformExpressionIterator extends AbstractItemRuntimePlan
         bindCopyDeclarations(context);
         DynamicContext newCtx = new DynamicContext(context);
         newCtx.setCurrentMutabilityLevel(this.mutabilityLevel);
-        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.modifyIterator, newCtx);
+        return UpdatingRuntimePlan.get(this.modifyIterator, newCtx);
     }
 
     private void bindCopyDeclarations(DynamicContext context) {
         for (Name copyVar : this.copyDeclMap.keySet()) {
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> copyIterator = this.copyDeclMap.get(copyVar);
+            RuntimePlan<Item> copyIterator = this.copyDeclMap.get(copyVar);
             List<Item> toCopy = copyIterator.materialize(context);
             List<Item> copy = new ArrayList<>();
             Item temp;
@@ -107,9 +107,9 @@ public class TransformExpressionIterator extends AbstractItemRuntimePlan
 
     private static final class TransformLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final Map<Name, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> copyDeclarations;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> modifyPlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnPlan;
+        private final Map<Name, RuntimePlan<Item>> copyDeclarations;
+        private final RuntimePlan<Item> modifyPlan;
+        private final RuntimePlan<Item> returnPlan;
         private final int mutabilityLevel;
         private final boolean resultMutable;
         private final DynamicContext context;
@@ -117,9 +117,9 @@ public class TransformExpressionIterator extends AbstractItemRuntimePlan
         private Cursor<Item> returnCursor;
 
         private TransformLocalCursor(
-                Map<Name, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> copyDeclarations,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> modifyPlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnPlan,
+                Map<Name, RuntimePlan<Item>> copyDeclarations,
+                RuntimePlan<Item> modifyPlan,
+                RuntimePlan<Item> returnPlan,
                 int mutabilityLevel,
                 boolean resultMutable,
                 DynamicContext context,
@@ -171,7 +171,7 @@ public class TransformExpressionIterator extends AbstractItemRuntimePlan
             bindCopyDeclarations();
             DynamicContext modifyContext = new DynamicContext(this.context);
             modifyContext.setCurrentMutabilityLevel(this.mutabilityLevel);
-            return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.modifyPlan, modifyContext);
+            return UpdatingRuntimePlan.get(this.modifyPlan, modifyContext);
         }
 
         private void bindCopyDeclarations() {

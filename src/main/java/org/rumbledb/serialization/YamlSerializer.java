@@ -9,14 +9,16 @@ import org.rumbledb.exceptions.OurBadException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
 
-public class YamlSerializer implements Serializer, java.io.Serializable {
+public class YamlSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     @SuppressWarnings("unused")
-    private final org.rumbledb.serialization.SerializationParameters params;
+    private final SerializationParameters params;
 
     public YamlSerializer(SerializationParameters params) {
         this.params = params;
@@ -82,7 +84,7 @@ public class YamlSerializer implements Serializer, java.io.Serializable {
     }
 
     private void appendMapValue(Item mapItem, Item key, YAMLGenerator yamlGenerator) throws IOException {
-        java.util.List<Item> sequence = mapItem.getSequenceByKey(key);
+        List<Item> sequence = mapItem.getSequenceByKey(key);
         if (sequence == null || sequence.isEmpty()) {
             yamlGenerator.writeStartArray();
             yamlGenerator.writeEndArray();

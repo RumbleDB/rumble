@@ -12,18 +12,19 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testField;
+    private final RuntimePlan<Item> testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
 
     public TypeSwitchStatementIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testField,
+            RuntimePlan<Item> testField,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
             RuntimeStaticContext staticContext
@@ -54,19 +55,19 @@ public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePla
     private Item execute(
             Item value,
             DynamicContext childContext,
-            java.util.function.BiConsumer<RuntimePlan<Item>, DynamicContext> materialize
+            BiConsumer<RuntimePlan<Item>, DynamicContext> materialize
     ) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selected = selectIterator(value, childContext);
+        RuntimePlan<Item> selected = selectIterator(value, childContext);
         materialize.accept(selected, childContext);
         return null;
     }
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selectIterator(
+    private RuntimePlan<Item> selectIterator(
             Item value,
             DynamicContext childContext
     ) {
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selected =
+            RuntimePlan<Item> selected =
                 testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase, value);
             if (selected != null) {
                 if (typeSwitchCase.getVariableName() != null) {
@@ -90,7 +91,7 @@ public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePla
         return this.defaultCase.getReturnIterator();
     }
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testTypeMatchAndReturnCorrespondingIterator(
+    private RuntimePlan<Item> testTypeMatchAndReturnCorrespondingIterator(
             TypeswitchRuntimeIteratorCase typeSwitchCase,
             Item value
     ) {

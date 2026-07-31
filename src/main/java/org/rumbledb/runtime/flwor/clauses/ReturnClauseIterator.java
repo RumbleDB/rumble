@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.log4j.LogManager;
@@ -50,6 +53,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
@@ -83,11 +87,11 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
     private static final long serialVersionUID = 1L;
     private final RuntimeTupleIterator child;
     private transient DynamicContext tupleContext;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
+    private final RuntimePlan<Item> expression;
 
     public ReturnClauseIterator(
             RuntimeTupleIterator child,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
+            RuntimePlan<Item> expression,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(expression), staticContext);
@@ -111,7 +115,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
         private final RuntimePlan<FlworTuple> tuplePlan;
         private final RuntimePlan<Item> expressionPlan;
         private final DynamicContext context;
-        private final org.rumbledb.exceptions.ExceptionMetadata metadata;
+        private final ExceptionMetadata metadata;
         private Cursor<FlworTuple> tupleCursor;
         private Cursor<Item> expressionCursor;
         private DynamicContext tupleContext;
@@ -122,7 +126,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
                 RuntimePlan<FlworTuple> tuplePlan,
                 RuntimePlan<Item> expressionPlan,
                 DynamicContext context,
-                org.rumbledb.exceptions.ExceptionMetadata metadata
+                ExceptionMetadata metadata
         ) {
             super(metadata);
             this.tuplePlan = tuplePlan;
@@ -200,7 +204,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression = this.getChild(0);
+        RuntimePlan<Item> expression = this.getChild(0);
         if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
@@ -234,7 +238,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
         StructType oldSchema = df.schema();
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             oldSchema,
-            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.expression),
+            VariableDependencyRuntimePlan.get(this.expression),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
@@ -243,7 +247,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
-        Map<Name, VariableDependency> dependencies = org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(
+        Map<Name, VariableDependency> dependencies = VariableDependencyRuntimePlan.get(
             this.expression
         );
         Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
@@ -258,7 +262,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression = this.getChild(0);
+        RuntimePlan<Item> expression = this.getChild(0);
         if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
@@ -276,7 +280,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
                                                                                                // from new tuple
 
                 HomogeneousItemDataFrame intermediateResult =
-                    org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                    ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
                         this.expression,
                         dynamicContext
                     );
@@ -343,7 +347,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.expression));
+            new TreeMap<>(VariableDependencyRuntimePlan.get(this.expression));
         for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }
@@ -374,14 +378,14 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
      */
     public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             StructType inputSchema,
             DynamicContext context
     ) {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.RETURN, inputSchema, context);
         letContext.setView(input);
-        NativeClauseContext nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(
             iterator,
             letContext
         );
@@ -446,7 +450,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
         );
         subQueryContext.setRowId(rowIdField);
         // get child query
-        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
             this.child,
             subQueryContext
         );
@@ -455,7 +459,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
         }
         // get expression
         childContext.setClauseType(FLWOR_CLAUSES.RETURN);
-        NativeClauseContext expressionContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext expressionContext = NativeQueryRuntimePlan.generate(
             this.expression,
             childContext
         );
@@ -619,7 +623,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
                                                                                                   // variables
                 // from new tuple
                 result.mergeUpdates(
-                    org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.expression, this.tupleContext),
+                    UpdatingRuntimePlan.get(this.expression, this.tupleContext),
                     this.getRuntimeStaticContext().getMetadata()
                 );
 
@@ -630,7 +634,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
             // execution reaches here when there are no more results
         }
 
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression = this.getChild(0);
+        RuntimePlan<Item> expression = this.getChild(0);
         if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
@@ -646,7 +650,7 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
                 dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                 // from new tuple
 
-                PendingUpdateList intermediateResult = org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(
+                PendingUpdateList intermediateResult = UpdatingRuntimePlan.get(
                     this.expression,
                     dynamicContext
                 );

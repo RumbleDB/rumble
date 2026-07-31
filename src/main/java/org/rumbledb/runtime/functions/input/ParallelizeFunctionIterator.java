@@ -49,11 +49,11 @@ public class ParallelizeFunctionIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> partitionsIterator;
+    private final RuntimePlan<Item> sequenceIterator;
+    private final RuntimePlan<Item> partitionsIterator;
 
     public ParallelizeFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            List<RuntimePlan<Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

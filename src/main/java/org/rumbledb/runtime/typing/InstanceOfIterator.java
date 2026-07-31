@@ -32,7 +32,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -42,11 +44,11 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child;
+    private final RuntimePlan<Item> child;
     private final SequenceType sequenceType;
 
     public InstanceOfIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
+            RuntimePlan<Item> child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -63,7 +65,7 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private static Item evaluate(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
+            RuntimePlan<Item> child,
             SequenceType sequenceType,
             ExceptionMetadata metadata,
             DynamicContext dynamicContext
@@ -75,7 +77,7 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
             return evaluateLocal(child, sequenceType, metadata, dynamicContext);
         }
         if (child.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-            HomogeneousItemDataFrame childDF = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+            HomogeneousItemDataFrame childDF = ItemRuntimeDataFrameFactory.INSTANCE
                 .fromPlan(child, dynamicContext);
             if (isInvalidArity(childDF.take(2).size(), sequenceType)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
@@ -95,7 +97,7 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private static Item evaluateLocal(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
+            RuntimePlan<Item> child,
             SequenceType sequenceType,
             ExceptionMetadata metadata,
             DynamicContext dynamicContext

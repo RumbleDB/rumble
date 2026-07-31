@@ -48,7 +48,7 @@ public class ContextExpressionIterator extends AbstractAtMostOneItemRuntimePlan 
     private static final long serialVersionUID = 1L;
 
     public ContextExpressionIterator(RuntimeStaticContext staticContext) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
     }
 
     @Override

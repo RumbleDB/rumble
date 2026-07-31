@@ -27,6 +27,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -34,6 +35,7 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Map;
@@ -48,14 +50,14 @@ public class SwitchRuntimeIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testField;
-    private final Map<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> cases;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> defaultReturn;
+    private final RuntimePlan<Item> testField;
+    private final Map<RuntimePlan<Item>, RuntimePlan<Item>> cases;
+    private final RuntimePlan<Item> defaultReturn;
 
     public SwitchRuntimeIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> test,
-            Map<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> cases,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> defaultReturn,
+            RuntimePlan<Item> test,
+            Map<RuntimePlan<Item>, RuntimePlan<Item>> cases,
+            RuntimePlan<Item> defaultReturn,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -76,17 +78,17 @@ public class SwitchRuntimeIterator extends AbstractItemRuntimePlan
     }
 
     private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testPlan;
-        private final Map<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> cases;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> defaultPlan;
+        private final RuntimePlan<Item> testPlan;
+        private final Map<RuntimePlan<Item>, RuntimePlan<Item>> cases;
+        private final RuntimePlan<Item> defaultPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> selected;
 
         private SwitchLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testPlan,
-                Map<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> cases,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> defaultPlan,
+                RuntimePlan<Item> testPlan,
+                Map<RuntimePlan<Item>, RuntimePlan<Item>> cases,
+                RuntimePlan<Item> defaultPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -121,10 +123,10 @@ public class SwitchRuntimeIterator extends AbstractItemRuntimePlan
             }
         }
 
-        private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selectApplicablePlan() {
+        private RuntimePlan<Item> selectApplicablePlan() {
             Item testValue = this.testPlan.materializeFirstOrNull(this.context);
             validateAtomic(testValue, "Switch condition");
-            for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> caseKey : this.cases.keySet()) {
+            for (RuntimePlan<Item> caseKey : this.cases.keySet()) {
                 Item caseValue = caseKey.materializeFirstOrNull(this.context);
                 validateAtomic(caseValue, "Switch case");
                 if (testValue == null) {
@@ -150,7 +152,7 @@ public class SwitchRuntimeIterator extends AbstractItemRuntimePlan
         }
     }
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selectApplicableIterator(
+    private RuntimePlan<Item> selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
         Item testValue = this.testField.materializeFirstOrNull(dynamicContext);
@@ -169,7 +171,7 @@ public class SwitchRuntimeIterator extends AbstractItemRuntimePlan
             }
         }
 
-        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> caseKey : this.cases.keySet()) {
+        for (RuntimePlan<Item> caseKey : this.cases.keySet()) {
             Item caseValue = caseKey.materializeFirstOrNull(dynamicContext);
 
             if (caseValue != null) {
@@ -204,7 +206,7 @@ public class SwitchRuntimeIterator extends AbstractItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = selectApplicableIterator(
+        RuntimePlan<Item> iterator = selectApplicableIterator(
             dynamicContext
         );
 
@@ -213,10 +215,10 @@ public class SwitchRuntimeIterator extends AbstractItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = selectApplicableIterator(
+        RuntimePlan<Item> iterator = selectApplicableIterator(
             dynamicContext
         );
 
-        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, dynamicContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, dynamicContext);
     }
 }

@@ -20,8 +20,10 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.log4j.LogManager;
@@ -45,6 +47,8 @@ import org.rumbledb.runtime.cursor.Cursor;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -64,12 +68,12 @@ public class ArrayLookupIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final RuntimePlan<Item> iterator;
     private int lookup;
 
     public ArrayLookupIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> array,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> array,
+            RuntimePlan<Item> iterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(array, iterator), staticContext);
@@ -100,7 +104,7 @@ public class ArrayLookupIterator extends AbstractItemRuntimePlan
 
 
     private void initLookupPosition(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator = this.getChild(1);
+        RuntimePlan<Item> lookupIterator = this.getChild(1);
 
         try {
             Item lookupExpression = lookupIterator.materializeExactlyOne(context);
@@ -160,7 +164,7 @@ public class ArrayLookupIterator extends AbstractItemRuntimePlan
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext newContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext newContext = NativeQueryRuntimePlan.generate(
             this.iterator,
             nativeClauseContext
         );
@@ -171,7 +175,7 @@ public class ArrayLookupIterator extends AbstractItemRuntimePlan
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
             Map<Name, DynamicContext.VariableDependency> keyDependencies =
-                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.getChild(1));
+                VariableDependencyRuntimePlan.get(this.getChild(1));
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;
@@ -236,7 +240,7 @@ public class ArrayLookupIterator extends AbstractItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
             .fromPlan(this.getChild(0), context);
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());

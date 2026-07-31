@@ -15,6 +15,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
+import java.math.BigInteger;
 import java.util.List;
 
 public class ArrayGetFunctionIterator extends AbstractItemRuntimePlan
@@ -28,7 +29,7 @@ public class ArrayGetFunctionIterator extends AbstractItemRuntimePlan
     private final RuntimePlan<Item> positionIterator;
 
     public ArrayGetFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -82,16 +83,16 @@ public class ArrayGetFunctionIterator extends AbstractItemRuntimePlan
             );
         }
 
-        java.math.BigInteger positionInteger;
+        BigInteger positionInteger;
         if (positionItem.isInteger()) {
             positionInteger = positionItem.castToIntegerValue();
         } else {
-            positionInteger = java.math.BigInteger.valueOf(positionItem.castToIntValue());
+            positionInteger = BigInteger.valueOf(positionItem.castToIntValue());
         }
 
         if (
-            positionInteger.compareTo(java.math.BigInteger.ONE) < 0
-                || positionInteger.compareTo(java.math.BigInteger.valueOf(arrayItem.getSize())) > 0
+            positionInteger.compareTo(BigInteger.ONE) < 0
+                || positionInteger.compareTo(BigInteger.valueOf(arrayItem.getSize())) > 0
         ) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: "

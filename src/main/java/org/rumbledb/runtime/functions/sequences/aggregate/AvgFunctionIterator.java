@@ -45,7 +45,7 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public AvgFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -53,7 +53,7 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child = this.getChild(0);
+        RuntimePlan<Item> child = this.getChild(0);
         if (!child.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return computeLocalAverage(child, context, getMetadata());
         }

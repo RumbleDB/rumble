@@ -27,6 +27,7 @@ import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 
 import java.io.Serial;
+import java.util.List;
 
 /**
  * Placeholder body iterator for {@link org.rumbledb.items.FunctionItem}s that represent
@@ -44,7 +45,7 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends AbstractItemRun
     private static final long serialVersionUID = 1L;
 
     public BuiltinNamedFunctionReferenceMarkerIterator(RuntimeStaticContext staticContext) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
     }
 
     @Override

@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import org.apache.log4j.LogManager;
@@ -51,6 +52,9 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -82,7 +86,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
         this.expressionsWithIterator = expressionsWithIterator;
         this.dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
-            this.dependencies.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(e.getIterator()));
+            this.dependencies.putAll(VariableDependencyRuntimePlan.get(e.getIterator()));
         }
     }
 
@@ -169,7 +173,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
     public static Item normalizeOrderKeyAtomic(
             Item atomizedItem,
             String collationUri,
-            org.rumbledb.exceptions.ExceptionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         if (atomizedItem != null && atomizedItem.isUntypedAtomic()) {
             atomizedItem = ItemFactory.getInstance().createStringItem(atomizedItem.getStringValue());
@@ -444,7 +448,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             result.putAll(
-                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(expressionWithIterator.getIterator())
+                VariableDependencyRuntimePlan.get(expressionWithIterator.getIterator())
             );
         }
         for (Name var : this.child.getOutputTupleVariableNames()) {
@@ -463,7 +467,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
-            org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(iterator.getIterator(), buffer, indent + 1);
+            RuntimePlanDiagnostics.print(iterator.getIterator(), buffer, indent + 1);
         }
     }
 
@@ -478,7 +482,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
         // add the variable dependencies needed by this for clause's expression.
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
             Map<Name, DynamicContext.VariableDependency> exprDependency =
-                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(iterator.getIterator());
+                VariableDependencyRuntimePlan.get(iterator.getIterator());
             for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {
@@ -543,7 +547,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
         StringBuilder orderSql = new StringBuilder();
         String orderSeparator = "";
         for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
-            NativeClauseContext nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(
                 orderIterator.getIterator(),
                 orderContext
             );
@@ -593,7 +597,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
             Map<String, Boolean> sortingColumns
     ) {
         for (OrderByClauseAnnotatedChildIterator orderIterator : this.expressionsWithIterator) {
-            orderContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            orderContext = NativeQueryRuntimePlan.generate(
                 orderIterator.getIterator(),
                 orderContext
             );
@@ -646,11 +650,11 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
         for (OrderByClauseAnnotatedChildIterator i : this.expressionsWithIterator) {
-            if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(i.getIterator())) {
+            if (RuntimePlanDiagnostics.isSparkJobNeeded(i.getIterator())) {
                 return true;
             }
         }
@@ -670,7 +674,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator implements DataF
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
             this.child,
             nativeClauseContext
         );

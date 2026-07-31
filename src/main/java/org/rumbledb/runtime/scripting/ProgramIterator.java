@@ -1,9 +1,11 @@
 package org.rumbledb.runtime.scripting;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -41,11 +43,11 @@ public class ProgramIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> statementsAndExprIterator;
+    private final RuntimePlan<Item> statementsAndExprIterator;
     private final ProgramExecutionState executionState;
 
     public ProgramIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> statementsAndExprIterator,
+            RuntimePlan<Item> statementsAndExprIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(statementsAndExprIterator), staticContext);
@@ -66,7 +68,7 @@ public class ProgramIterator extends AbstractItemRuntimePlan
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         try {
-            return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
                 this.statementsAndExprIterator,
                 dynamicContext
             );
@@ -83,14 +85,14 @@ public class ProgramIterator extends AbstractItemRuntimePlan
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!this.executionState.encounteredExitStatement) {
-            return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.statementsAndExprIterator, context);
+            return UpdatingRuntimePlan.get(this.statementsAndExprIterator, context);
         }
         return this.executionState.pendingUpdateList;
     }
 
     private static final class ProgramLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> statementsAndExprPlan;
+        private final RuntimePlan<Item> statementsAndExprPlan;
         private final ProgramExecutionState executionState;
         private final DynamicContext context;
         private Cursor<Item> delegate;
@@ -98,7 +100,7 @@ public class ProgramIterator extends AbstractItemRuntimePlan
         private int exitIndex;
 
         private ProgramLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> statementsAndExprPlan,
+                RuntimePlan<Item> statementsAndExprPlan,
                 ProgramExecutionState executionState,
                 DynamicContext context,
                 RuntimeStaticContext staticContext

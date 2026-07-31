@@ -1,7 +1,9 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import java.io.Serial;
@@ -40,6 +42,7 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.MappingLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
@@ -57,13 +60,13 @@ public class ValidateTypeIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final RuntimePlan<Item> iterator;
     private final ItemType itemType;
     private final boolean isValidate;
     private final ItemValidator validator;
 
     public ValidateTypeIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> instance,
+            RuntimePlan<Item> instance,
             ItemType itemType,
             boolean isValidate,
             RuntimeStaticContext staticContext
@@ -101,7 +104,7 @@ public class ValidateTypeIterator extends AbstractItemRuntimePlan
 
             if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
                 HomogeneousItemDataFrame inputDataAsDataFrame =
-                    org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                    ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
                         this.iterator,
                         context
                     );
@@ -863,7 +866,7 @@ public class ValidateTypeIterator extends AbstractItemRuntimePlan
         if (this.isValidate) {
             return NativeClauseContext.NoNativeQuery;
         }
-        return org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
+        return NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
     }
 
 

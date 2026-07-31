@@ -34,6 +34,7 @@ import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
+import java.util.List;
 
 public class ConstantRDDRuntimeIterator extends AbstractItemRuntimePlan
         implements
@@ -49,7 +50,7 @@ public class ConstantRDDRuntimeIterator extends AbstractItemRuntimePlan
             JavaRDD<Item> items,
             RuntimeStaticContext staticContext
     ) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.items = items;
     }
 

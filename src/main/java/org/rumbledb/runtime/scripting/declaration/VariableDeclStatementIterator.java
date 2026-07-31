@@ -7,6 +7,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanBindings;
 
 import java.io.Serial;
 import java.util.List;
@@ -18,7 +20,7 @@ public class VariableDeclStatementIterator extends AbstractAtMostOneItemRuntimeP
 
     public VariableDeclStatementIterator(
             Name variableName,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
+            List<RuntimePlan<Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
@@ -50,7 +52,7 @@ public class VariableDeclStatementIterator extends AbstractAtMostOneItemRuntimeP
         if (variableValues.containsLocally(variableValues, this.variableName)) {
             throw new VariableAlreadyExistsException(this.variableName, this.getRuntimeStaticContext().getMetadata());
         }
-        org.rumbledb.runtime.plan.RuntimePlanBindings.bind(
+        RuntimePlanBindings.bind(
             this.getChild(0),
             dynamicContext,
             this.variableName,

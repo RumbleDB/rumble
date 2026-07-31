@@ -27,6 +27,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
+import java.util.List;
 
 public class NullRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -35,7 +36,7 @@ public class NullRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     private final Item item;
 
     public NullRuntimeIterator(RuntimeStaticContext staticContext) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.item = ItemFactory.getInstance().createNullItem();
     }
 

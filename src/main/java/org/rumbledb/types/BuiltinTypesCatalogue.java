@@ -73,7 +73,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.COUNTABLY_INFINITE,
             true,
             // XSD 1.1 §4.3.5 decimal lexical representation
-            java.util.Collections.singletonList("[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)")
+            Collections.singletonList("[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)")
     );
     public static final ItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double"),
@@ -94,7 +94,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.FINITE,
             true,
             // XSD 1.1 §4.3.6 double lexical representation
-            java.util.Arrays.asList(
+            Arrays.asList(
                 "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?",
                 "INF",
                 "\\+INF",
@@ -121,7 +121,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.FINITE,
             true,
             // Same lexical space as xs:double
-            java.util.Arrays.asList(
+            Arrays.asList(
                 "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?",
                 "INF",
                 "\\+INF",
@@ -152,7 +152,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.FINITE,
             false,
-            java.util.Arrays.asList("true", "false", "0", "1")
+            Arrays.asList("true", "false", "0", "1")
     );
     public static final ItemType nullItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "null"),
@@ -177,7 +177,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
             // Simplified duration lexical pattern
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "[-+]?P(?!$)([0-9]+Y)?([0-9]+M)?([0-9]+D)?(T([0-9]+H)?([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?)?"
             )
     );
@@ -214,7 +214,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "-?[0-9]{4,}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})?"
             )
     );
@@ -244,7 +244,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "-?[0-9]{4,}-[0-9]{2}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"
             )
     );
@@ -267,7 +267,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})?"
             )
     );
@@ -290,7 +290,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "---[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"
             )
     );
@@ -313,7 +313,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "--[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"
             )
     );
@@ -336,7 +336,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "-?[0-9]{4,}(Z|[+-][0-9]{2}:[0-9]{2})?"
             )
     );
@@ -359,7 +359,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "--[0-9]{2}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"
             )
     );
@@ -382,7 +382,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "-?[0-9]{4,}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"
             )
     );
@@ -403,7 +403,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList("[0-9a-fA-F]*")
+            Collections.singletonList("[0-9a-fA-F]*")
     );
     public static final ItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI"),
@@ -442,7 +442,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
             // Simplified base64 lexical pattern
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                 "((([A-Za-z0-9+/] ?){4})*(([A-Za-z0-9+/] ?){3}[A-Za-z0-9+/]|([A-Za-z0-9+/] ?){2}[AEIMQUYcgkosw048] ?=|[A-Za-z0-9+/] ?[AQgw] ?= ?=))?"
             )
     );

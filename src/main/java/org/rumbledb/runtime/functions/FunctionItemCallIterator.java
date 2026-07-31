@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import java.io.Serial;
@@ -65,7 +67,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
 
     // parametrized fields
     private final Item functionItem;
-    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
+    private final List<RuntimePlan<Item>> functionArguments;
 
     // calculated fields
     private boolean isPartialApplication;
@@ -73,7 +75,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
 
     public FunctionItemCallIterator(
             Item functionItem,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             RuntimeStaticContext staticContext,
             boolean isTailOptimization
     ) {
@@ -110,7 +112,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
 
     private static final class FunctionCallLocalCursor extends AbstractLocalCursor<Item> {
         private final Item functionItem;
-        private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
+        private final List<RuntimePlan<Item>> functionArguments;
         private final boolean partialApplication;
         private final boolean tailOptimization;
         private final RuntimeStaticContext staticContext;
@@ -119,7 +121,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
 
         private FunctionCallLocalCursor(
                 Item functionItem,
-                List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+                List<RuntimePlan<Item>> functionArguments,
                 boolean partialApplication,
                 boolean tailOptimization,
                 RuntimeStaticContext staticContext,
@@ -136,7 +138,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
 
         @Override
         protected void openLocal() {
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyPlan;
+            RuntimePlan<Item> bodyPlan;
             DynamicContext bodyContext;
             if (this.partialApplication) {
                 bodyPlan = generatePartiallyAppliedFunction(
@@ -179,7 +181,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
 
     private static DynamicContext createCallContext(
             Item functionItem,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             DynamicContext context
     ) {
         // A call context belongs to one invocation. Reusing it would retain parameters and function-local variables.
@@ -244,7 +246,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
                         .executionMode(executionMode)
                         .metadata(this.functionArguments.get(i).getRuntimeStaticContext().getMetadata())
                         .build();
-                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argumentIterator =
+                    RuntimePlan<Item> argumentIterator =
                         FunctionCallArgumentConversion.wrapForFunctionConversion(
                             this.functionArguments.get(i),
                             sequenceType,
@@ -256,7 +258,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
                             || sequenceType.getArity().equals(Arity.One)
                             || sequenceType.getArity().equals(Arity.OneOrZero)
                     ) {
-                        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> typePromotionIterator =
+                        RuntimePlan<Item> typePromotionIterator =
                             new AtMostOneItemTypePromotionIterator(
                                     argumentIterator,
                                     sequenceType,
@@ -267,7 +269,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
                             );
                         this.functionArguments.set(i, typePromotionIterator);
                     } else {
-                        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> typePromotionIterator =
+                        RuntimePlan<Item> typePromotionIterator =
                             new TypePromotionIterator(
                                     argumentIterator,
                                     sequenceType,
@@ -293,15 +295,15 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
      *
      * @return a one-item iterator containing the partially applied function item
      */
-    private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> generatePartiallyAppliedFunction(
+    private static RuntimePlan<Item> generatePartiallyAppliedFunction(
             Item functionItem,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             boolean tailOptimization,
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
         Name argName;
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argIterator;
+        RuntimePlan<Item> argIterator;
 
         Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 functionItem.getLocalVariablesInClosure()
@@ -327,7 +329,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
                 if (argIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
                     DFArgumentValues.put(
                         argName,
-                        org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                        ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
                             argIterator,
                             context
                         )
@@ -374,12 +376,12 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
 
     private static void populateDynamicContextWithArguments(
             Item functionItem,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             DynamicContext context,
             DynamicContext callContext
     ) {
         Name argName;
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argIterator;
+        RuntimePlan<Item> argIterator;
 
         for (int i = 0; i < functionArguments.size(); i++) {
             argName = functionItem.getParameterNames().get(i);
@@ -389,7 +391,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
                 callContext.getVariableValues()
                     .addVariableValue(
                         argName,
-                        org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                        ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
                             argIterator,
                             context
                         )
@@ -412,7 +414,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
         }
 
         DynamicContext callContext = createCallContext(dynamicContext);
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator = this.functionItem.getBodyIterator();
+        RuntimePlan<Item> bodyIterator = this.functionItem.getBodyIterator();
         return bodyIterator.getRDD(callContext);
     }
 
@@ -425,8 +427,8 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
         }
 
         DynamicContext callContext = createCallContext(dynamicContext);
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator = this.functionItem.getBodyIterator();
-        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(bodyIterator, callContext);
+        RuntimePlan<Item> bodyIterator = this.functionItem.getBodyIterator();
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(bodyIterator, callContext);
     }
 
     @Override
@@ -437,7 +439,7 @@ public class FunctionItemCallIterator extends AbstractItemRuntimePlan
         DynamicContext callContext = createCallContext(context);
         DynamicContext contextForUpdates = new DynamicContext(callContext);
         contextForUpdates.setCurrentMutabilityLevel(context.getCurrentMutabilityLevel());
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator = this.functionItem.getBodyIterator();
-        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(bodyIterator, contextForUpdates);
+        RuntimePlan<Item> bodyIterator = this.functionItem.getBodyIterator();
+        return UpdatingRuntimePlan.get(bodyIterator, contextForUpdates);
     }
 }

@@ -20,8 +20,10 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.log4j.LogManager;
@@ -43,6 +45,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -60,10 +63,10 @@ public class ArrayUnboxingIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final RuntimePlan<Item> iterator;
 
     public ArrayUnboxingIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayIterator,
+            RuntimePlan<Item> arrayIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(arrayIterator), staticContext);
@@ -102,7 +105,7 @@ public class ArrayUnboxingIterator extends AbstractItemRuntimePlan
             // unboxing only available for the FOR clause
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext newContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext newContext = NativeQueryRuntimePlan.generate(
             this.iterator,
             nativeClauseContext
         );
@@ -150,12 +153,12 @@ public class ArrayUnboxingIterator extends AbstractItemRuntimePlan
     }
 
     public NativeClauseContext generateArrayReferenceQuery(NativeClauseContext nativeClauseContext) {
-        return org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
+        return NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
             .fromPlan(this.getChild(0), context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();

@@ -27,6 +27,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
+import java.util.List;
 
 /**
  * Runtime iterator for text nodes in a direct element constructor.
@@ -50,7 +51,7 @@ public class TextNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
             String content,
             RuntimeStaticContext staticContext
     ) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.content = content;
     }
 

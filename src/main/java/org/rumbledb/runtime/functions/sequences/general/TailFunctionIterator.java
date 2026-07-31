@@ -49,7 +49,7 @@ public class TailFunctionIterator extends AbstractItemRuntimePlan
     private final RuntimePlan<Item> iterator;
 
     public TailFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            List<RuntimePlan<Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

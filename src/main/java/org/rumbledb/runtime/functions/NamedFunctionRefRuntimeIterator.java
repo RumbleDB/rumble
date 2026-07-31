@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
+import java.util.List;
 
 public class NamedFunctionRefRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -40,7 +41,7 @@ public class NamedFunctionRefRuntimeIterator extends AbstractAtMostOneItemRuntim
             FunctionIdentifier functionIdentifier,
             RuntimeStaticContext staticContext
     ) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.functionIdentifier = functionIdentifier;
     }
 

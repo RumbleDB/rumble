@@ -11,6 +11,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.JSONLiteralParsingUtils;
 import org.rumbledb.items.parsing.JSONParsingOptions;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
@@ -32,7 +33,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         Pattern.compile("[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
 
     public XMLToJsonFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

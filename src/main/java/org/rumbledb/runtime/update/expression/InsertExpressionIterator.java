@@ -16,6 +16,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.ObjectInsertContentIsNotObjectSeqException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -24,14 +25,14 @@ public class InsertExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mainIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> toInsertIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> positionIterator;
+    private final RuntimePlan<Item> mainIterator;
+    private final RuntimePlan<Item> toInsertIterator;
+    private final RuntimePlan<Item> positionIterator;
 
     public InsertExpressionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mainIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> toInsertIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> positionIterator,
+            RuntimePlan<Item> mainIterator,
+            RuntimePlan<Item> toInsertIterator,
+            RuntimePlan<Item> positionIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

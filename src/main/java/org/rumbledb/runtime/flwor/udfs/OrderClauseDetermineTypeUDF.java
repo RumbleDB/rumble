@@ -30,6 +30,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -67,7 +68,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     }
 
     private void populateFromExpression(OrderByClauseAnnotatedChildIterator expressionWithIterator) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = expressionWithIterator.getIterator();
+        RuntimePlan<Item> iterator = expressionWithIterator.getIterator();
         try {
             // apply expression in the dynamic context
             this.nextItem = iterator.materializeAtMostOne(this.dataFrameContext.getContext());

@@ -37,6 +37,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -54,12 +55,12 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayIterator1;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayIterator2;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionIterator;
+    private final RuntimePlan<Item> arrayIterator1;
+    private final RuntimePlan<Item> arrayIterator2;
+    private final RuntimePlan<Item> functionIterator;
 
     public ArrayForEachPairFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -155,7 +156,7 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
             .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> createSequenceIterator(List<Item> items) {
+    private RuntimePlan<Item> createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -166,7 +167,7 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> childIterators = new ArrayList<>(
+        List<RuntimePlan<Item>> childIterators = new ArrayList<>(
                 items.size()
         );
         for (Item item : items) {
@@ -194,16 +195,16 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
             List<Item> memberSequence2,
             DynamicContext context
     ) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> firstArg = createSequenceIterator(memberSequence1);
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> secondArg = createSequenceIterator(
+        RuntimePlan<Item> firstArg = createSequenceIterator(memberSequence1);
+        RuntimePlan<Item> secondArg = createSequenceIterator(
             memberSequence2
         );
 
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments = new ArrayList<>(2);
+        List<RuntimePlan<Item>> arguments = new ArrayList<>(2);
         arguments.add(firstArg);
         arguments.add(secondArg);
 
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionCall = NamedFunctions
+        RuntimePlan<Item> functionCall = NamedFunctions
             .buildFunctionItemCallIterator(
                 functionItem,
                 this.staticContext,

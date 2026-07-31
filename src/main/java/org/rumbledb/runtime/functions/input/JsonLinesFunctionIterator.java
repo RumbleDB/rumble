@@ -25,6 +25,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
@@ -37,6 +38,7 @@ import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 
 import com.google.gson.stream.JsonReader;
 
+import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.*;
@@ -79,10 +81,10 @@ public class JsonLinesFunctionIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final RuntimePlan<Item> iterator;
 
     public JsonLinesFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -158,14 +160,14 @@ public class JsonLinesFunctionIterator extends AbstractItemRuntimePlan
                 ResourceLocalCursor.ResourceIterator<Item> {
         private final BufferedReader reader;
         private final String path;
-        private final org.rumbledb.exceptions.ExceptionMetadata metadata;
+        private final ExceptionMetadata metadata;
         private final boolean querySideEffecting;
         private Item next;
 
         private JsonLinesResourceIterator(
                 BufferedReader reader,
                 String path,
-                org.rumbledb.exceptions.ExceptionMetadata metadata,
+                ExceptionMetadata metadata,
                 boolean querySideEffecting
         ) {
             this.reader = reader;

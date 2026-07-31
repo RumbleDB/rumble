@@ -32,6 +32,7 @@ import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -132,7 +133,7 @@ public class LazyObjectItem extends AbstractMapItem {
     public List<List<Item>> getSequenceValues() {
         List<List<Item>> result = new ArrayList<>(this.keys.size());
         for (String key : this.keys) {
-            result.add(java.util.Collections.singletonList(getItemByKey(key)));
+            result.add(Collections.singletonList(getItemByKey(key)));
         }
         return result;
     }
@@ -169,7 +170,7 @@ public class LazyObjectItem extends AbstractMapItem {
         if (value == null) {
             return null;
         }
-        return java.util.Collections.singletonList(value);
+        return Collections.singletonList(value);
     }
 
     @Override

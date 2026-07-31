@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.scripting.block;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -30,8 +32,8 @@ public class StatementsWithExprIterator extends AbstractItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     public StatementsWithExprIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> statements,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator,
+            List<RuntimePlan<Item>> statements,
+            RuntimePlan<Item> exprIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -55,8 +57,8 @@ public class StatementsWithExprIterator extends AbstractItemRuntimePlan
     }
 
     private static boolean isSequential(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> statements,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator
+            List<RuntimePlan<Item>> statements,
+            RuntimePlan<Item> exprIterator
     ) {
         return exprIterator.getRuntimeStaticContext().isSequential()
             || statements.stream().anyMatch(statement -> statement.getRuntimeStaticContext().isSequential());
@@ -66,7 +68,7 @@ public class StatementsWithExprIterator extends AbstractItemRuntimePlan
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty()) {
             int childIndex = 0;
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> currentChild = this.getChild(childIndex);
+            RuntimePlan<Item> currentChild = this.getChild(childIndex);
 
             JavaRDD<Item> childRDD = currentChild.getRDD(dynamicContext);
             childIndex++;
@@ -88,14 +90,14 @@ public class StatementsWithExprIterator extends AbstractItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         int childIndex = 0;
         while (childIndex < this.getChildren().size() - 1) {
-            org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
                 this.getChild(childIndex),
                 dynamicContext
             );
             ++childIndex;
         }
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator = this.getChild(childIndex);
-        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+        RuntimePlan<Item> exprIterator = this.getChild(childIndex);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
             exprIterator,
             dynamicContext
         );
@@ -103,11 +105,11 @@ public class StatementsWithExprIterator extends AbstractItemRuntimePlan
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator = this.getChild(
+        RuntimePlan<Item> exprIterator = this.getChild(
             this.getChildren().size() - 1
         );
         if (exprIterator.getRuntimeStaticContext().isUpdating()) {
-            return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(exprIterator, context);
+            return UpdatingRuntimePlan.get(exprIterator, context);
         }
         return new PendingUpdateList();
     }

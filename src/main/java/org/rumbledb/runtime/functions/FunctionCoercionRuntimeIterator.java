@@ -9,6 +9,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -18,6 +19,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -46,7 +48,7 @@ public class FunctionCoercionRuntimeIterator extends AbstractItemRuntimePlan
             String exceptionMessage,
             RuntimeStaticContext staticContext
     ) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.callableItem = callableItem;
         this.parameterNames = parameterNames;
         this.expectedReturnType = expectedReturnType;
@@ -118,7 +120,7 @@ public class FunctionCoercionRuntimeIterator extends AbstractItemRuntimePlan
         return callableItem.getBodyIterator().getRuntimeStaticContext().getExecutionMode();
     }
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildDelegate(DynamicContext context) {
+    private RuntimePlan<Item> buildDelegate(DynamicContext context) {
         return buildDelegate(
             this.callableItem,
             this.parameterNames,
@@ -129,7 +131,7 @@ public class FunctionCoercionRuntimeIterator extends AbstractItemRuntimePlan
         );
     }
 
-    private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildDelegate(
+    private static RuntimePlan<Item> buildDelegate(
             Item callableItem,
             List<Name> parameterNames,
             SequenceType expectedReturnType,
@@ -137,7 +139,7 @@ public class FunctionCoercionRuntimeIterator extends AbstractItemRuntimePlan
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments = new ArrayList<>(
+        List<RuntimePlan<Item>> arguments = new ArrayList<>(
                 parameterNames.size()
         );
         for (Name parameterName : parameterNames) {
@@ -163,7 +165,7 @@ public class FunctionCoercionRuntimeIterator extends AbstractItemRuntimePlan
                     staticContext.getMetadata()
             );
         }
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> callIterator = NamedFunctions
+        RuntimePlan<Item> callIterator = NamedFunctions
             .buildFunctionItemCallIterator(
                 callableItem,
                 callStaticContext,
@@ -179,7 +181,7 @@ public class FunctionCoercionRuntimeIterator extends AbstractItemRuntimePlan
         );
     }
 
-    private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildArgumentIterator(
+    private static RuntimePlan<Item> buildArgumentIterator(
             Name parameterName,
             DynamicContext context,
             RuntimeStaticContext staticContext
@@ -207,14 +209,14 @@ public class FunctionCoercionRuntimeIterator extends AbstractItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = buildDelegate(context);
+        RuntimePlan<Item> call = buildDelegate(context);
         return call.getRDD(context);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = buildDelegate(dynamicContext);
-        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
+        RuntimePlan<Item> call = buildDelegate(dynamicContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
     }
 
     @Override

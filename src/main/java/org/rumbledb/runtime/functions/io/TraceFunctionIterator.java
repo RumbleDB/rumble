@@ -30,6 +30,7 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.net.URI;
@@ -42,7 +43,7 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
 
     public TraceFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -84,8 +85,8 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
     private static final class TraceLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> valuePlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> labelPlan;
+        private final RuntimePlan<Item> valuePlan;
+        private final RuntimePlan<Item> labelPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> valueCursor;
@@ -93,8 +94,8 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
         private int position;
 
         private TraceLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> valuePlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> labelPlan,
+                RuntimePlan<Item> valuePlan,
+                RuntimePlan<Item> labelPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

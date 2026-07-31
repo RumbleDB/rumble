@@ -38,6 +38,8 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import java.math.BigDecimal;
@@ -55,12 +57,12 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private final ComparisonExpression.ComparisonOperator comparisonOperator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
+    private final RuntimePlan<Item> leftIterator;
+    private final RuntimePlan<Item> rightIterator;
 
     public ComparisonIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
+            RuntimePlan<Item> leftIterator,
+            RuntimePlan<Item> rightIterator,
             ComparisonExpression.ComparisonOperator comparisonOperator,
             RuntimeStaticContext staticContext
     ) {
@@ -79,11 +81,11 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan {
             || this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.GC_EQ);
     }
 
-    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> getLeftIterator() {
+    public RuntimePlan<Item> getLeftIterator() {
         return this.leftIterator;
     }
 
-    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> getRightIterator() {
+    public RuntimePlan<Item> getRightIterator() {
         return this.rightIterator;
     }
 
@@ -635,14 +637,14 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.comparisonOperator.isValueComparison()) {
-            NativeClauseContext leftResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(
                 this.leftIterator,
                 nativeClauseContext
             );
             if (leftResult == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-            NativeClauseContext rightResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            NativeClauseContext rightResult = NativeQueryRuntimePlan.generate(
                 this.rightIterator,
                 new NativeClauseContext(leftResult, null, null)
             );

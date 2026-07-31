@@ -30,6 +30,7 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class DecimalRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -38,7 +39,7 @@ public class DecimalRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     private final Item item;
 
     public DecimalRuntimeIterator(BigDecimal value, RuntimeStaticContext staticContext) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.item = ItemFactory.getInstance().createDecimalItem(value);
 
     }

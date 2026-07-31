@@ -12,6 +12,8 @@ import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -30,11 +32,11 @@ import java.util.regex.Pattern;
 public class CastIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child;
+    private final RuntimePlan<Item> child;
     private final SequenceType sequenceType;
 
     public CastIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
+            RuntimePlan<Item> child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -51,7 +53,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private static Item evaluate(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
+            RuntimePlan<Item> child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext,
             ExceptionMetadata metadata,
@@ -847,7 +849,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan {
      */
     private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
         ItemType primitive = targetType.getCastingPrimitiveType();
-        java.util.List<String> patterns = primitive.getLexicalSpacePatterns();
+        List<String> patterns = primitive.getLexicalSpacePatterns();
         String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null) {
@@ -1216,7 +1218,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(
             this.child,
             nativeClauseContext
         );

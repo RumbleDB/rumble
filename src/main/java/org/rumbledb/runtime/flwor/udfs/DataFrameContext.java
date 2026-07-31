@@ -40,6 +40,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.ItemType;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -169,7 +170,7 @@ public class DataFrameContext implements Serializable {
     }
 
     @Serial
-    private void readObject(java.io.ObjectInputStream in)
+    private void readObject(ObjectInputStream in)
             throws IOException,
                 ClassNotFoundException {
         in.defaultReadObject();

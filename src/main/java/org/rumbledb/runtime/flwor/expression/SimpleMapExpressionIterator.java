@@ -20,8 +20,12 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.log4j.LogManager;
@@ -44,6 +48,8 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 
 import scala.Tuple2;
@@ -68,13 +74,13 @@ public class SimpleMapExpressionIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
+    private final RuntimePlan<Item> leftIterator;
+    private final RuntimePlan<Item> rightIterator;
 
 
     public SimpleMapExpressionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequence,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapExpression,
+            RuntimePlan<Item> sequence,
+            RuntimePlan<Item> mapExpression,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(sequence, mapExpression), staticContext);
@@ -83,19 +89,19 @@ public class SimpleMapExpressionIterator extends AbstractItemRuntimePlan
     }
 
     private static final class SimpleMapLocalCursor extends AbstractLocalCursor<Item> {
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftPlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightPlan;
+        private final RuntimePlan<Item> leftPlan;
+        private final RuntimePlan<Item> rightPlan;
         private final DynamicContext context;
-        private final org.rumbledb.exceptions.ExceptionMetadata metadata;
+        private final ExceptionMetadata metadata;
         private List<Item> inputs;
         private int inputIndex;
         private Cursor<Item> currentResults;
 
         private SimpleMapLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftPlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightPlan,
+                RuntimePlan<Item> leftPlan,
+                RuntimePlan<Item> rightPlan,
                 DynamicContext context,
-                org.rumbledb.exceptions.ExceptionMetadata metadata
+                ExceptionMetadata metadata
         ) {
             super(metadata);
             this.leftPlan = leftPlan;
@@ -134,7 +140,7 @@ public class SimpleMapExpressionIterator extends AbstractItemRuntimePlan
         @Override
         protected Item nextLocal() {
             if (!hasNextLocal()) {
-                throw new org.rumbledb.exceptions.IteratorFlowException(
+                throw new IteratorFlowException(
                         "Invalid next() call in simple map expression",
                         this.metadata
                 );
@@ -174,15 +180,15 @@ public class SimpleMapExpressionIterator extends AbstractItemRuntimePlan
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.rightIterator));
+        result.putAll(VariableDependencyRuntimePlan.get(this.rightIterator));
         result.remove(Name.CONTEXT_ITEM);
-        result.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.leftIterator));
+        result.putAll(VariableDependencyRuntimePlan.get(this.leftIterator));
         return result;
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
             this.leftIterator,
             context
         );
@@ -194,7 +200,7 @@ public class SimpleMapExpressionIterator extends AbstractItemRuntimePlan
                 df.getDataFrame().schema(),
                 context
         );
-        NativeClauseContext nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(
             this.rightIterator,
             forContext
         );

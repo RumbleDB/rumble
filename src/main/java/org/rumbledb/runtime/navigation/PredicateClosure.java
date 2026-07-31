@@ -25,6 +25,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -34,15 +37,15 @@ public class PredicateClosure implements Function<Item, Boolean> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
+    private final RuntimePlan<Item> expression;
     private final DynamicContext dynamicContext;
 
     public PredicateClosure(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
+            RuntimePlan<Item> expression,
             DynamicContext dynamicContext
     ) {
         this.expression = expression;
-        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
             throw new JobWithinAJobException(
                     "The expression in this predicate requires parallel execution, but the predicate is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
                     this.expression.getRuntimeStaticContext().getMetadata()
@@ -58,7 +61,7 @@ public class PredicateClosure implements Function<Item, Boolean> {
         DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
         dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
 
-        boolean result = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(this.expression, dynamicContext);
+        boolean result = EffectiveBooleanValue.evaluate(this.expression, dynamicContext);
         return result;
 
     }

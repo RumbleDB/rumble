@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.xml;
 
 import java.io.Serial;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +40,7 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * Postfix lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
@@ -62,8 +64,8 @@ public class PostfixLookupIterator extends AbstractItemRuntimePlan
 
     private static final class LookupLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupPlan;
+        private final RuntimePlan<Item> inputPlan;
+        private final RuntimePlan<Item> lookupPlan;
         private final boolean wildcard;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
@@ -72,8 +74,8 @@ public class PostfixLookupIterator extends AbstractItemRuntimePlan
         private Iterator<Item> currentResults;
 
         private LookupLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupPlan,
+                RuntimePlan<Item> inputPlan,
+                RuntimePlan<Item> lookupPlan,
                 boolean wildcard,
                 DynamicContext context,
                 RuntimeStaticContext staticContext
@@ -133,7 +135,7 @@ public class PostfixLookupIterator extends AbstractItemRuntimePlan
             boolean wildcard,
             RuntimeStaticContext staticContext
     ) {
-        List<Item> results = new java.util.ArrayList<>();
+        List<Item> results = new ArrayList<>();
         if (item.isMap()) {
             if (wildcard) {
                 if (item.isObject()) {
@@ -207,13 +209,13 @@ public class PostfixLookupIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator;
+    private final RuntimePlan<Item> iterator;
+    private final RuntimePlan<Item> lookupIterator;
     private boolean wildcard;
 
     public PostfixLookupIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> object,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator,
+            RuntimePlan<Item> object,
+            RuntimePlan<Item> lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

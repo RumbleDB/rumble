@@ -34,6 +34,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ArrayDescendantFunctionIterator extends AbstractItemRuntimePlan
@@ -48,7 +49,7 @@ public class ArrayDescendantFunctionIterator extends AbstractItemRuntimePlan
 
 
     public ArrayDescendantFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -69,14 +70,14 @@ public class ArrayDescendantFunctionIterator extends AbstractItemRuntimePlan
         );
     }
 
-    private static void getDescendantArrays(List<Item> items, java.util.Collection<Item> results) {
+    private static void getDescendantArrays(List<Item> items, Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
                 results.add(item);
                 if (item.isArrayOfItems()) {
                     getDescendantArrays(item.getItemMembers(), results);
                 } else {
-                    for (java.util.List<Item> member : item.getSequenceMembers()) {
+                    for (List<Item> member : item.getSequenceMembers()) {
                         getDescendantArrays(member, results);
                     }
                 }

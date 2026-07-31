@@ -88,11 +88,11 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
         this.contentExpression = contentExpression;
     }
 
-    private static List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> createChildList(
+    private static List<RuntimePlan<Item>> createChildList(
             RuntimePlan<Item>... iterators
     ) {
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children = new ArrayList<>();
-        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : iterators) {
+        List<RuntimePlan<Item>> children = new ArrayList<>();
+        for (RuntimePlan<Item> iterator : iterators) {
             if (iterator != null) {
                 children.add(iterator);
             }

@@ -20,9 +20,12 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -47,27 +50,27 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      * The iterator that produces the items to be windowed.
      * For example, {@code for sliding window in (1, 2, 3)}
      */
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sourceIterator;
+    private final RuntimePlan<Item> sourceIterator;
 
     /**
      * The iterator that evaluates the start condition of the window.
      * For example, {@code start $x when $x > 1}
      */
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> startCondition;
+    private final RuntimePlan<Item> startCondition;
 
     /**
      * The iterator that evaluates the end condition of the window.
      * It is {@code null} for a tumbling window without an explicit end clause.
      * For example, {@code end $y when $y < 3}
      */
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> endCondition;
+    private final RuntimePlan<Item> endCondition;
 
     public WindowClauseIterator(
             RuntimeTupleIterator child,
             WindowClause clause,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sourceIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> startCondition,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> endCondition,
+            RuntimePlan<Item> sourceIterator,
+            RuntimePlan<Item> startCondition,
+            RuntimePlan<Item> endCondition,
             RuntimeStaticContext staticContext
     ) {
         this(
@@ -93,9 +96,9 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             WindowClause.WindowVars startVariables,
             WindowClause.WindowVars endVariables,
             boolean endConditionOnly,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sourceIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> startCondition,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> endCondition,
+            RuntimePlan<Item> sourceIterator,
+            RuntimePlan<Item> startCondition,
+            RuntimePlan<Item> endCondition,
             RuntimeStaticContext staticContext
     ) {
         super(child, staticContext);
@@ -108,10 +111,10 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         this.sourceIterator = sourceIterator;
         this.startCondition = startCondition;
         this.endCondition = endCondition;
-        org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.sourceIterator);
-        org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.startCondition);
+        VariableDependencyRuntimePlan.get(this.sourceIterator);
+        VariableDependencyRuntimePlan.get(this.startCondition);
         if (this.endCondition != null) {
-            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.endCondition);
+            VariableDependencyRuntimePlan.get(this.endCondition);
         }
     }
 
@@ -318,7 +321,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             WindowSpec spec,
             DynamicContext context,
             FlworTuple inputTuple,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> condition,
+            RuntimePlan<Item> condition,
             WindowClause.WindowVars variables,
             boolean isEndCondition,
             List<Item> items,
@@ -341,7 +344,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             bindTupleContext(conditionContext, items, startPosition, spec.startVariables);
         }
         bindTupleContext(conditionContext, items, position, variables);
-        return org.rumbledb.runtime.EffectiveBooleanValue.evaluate(condition, conditionContext);
+        return EffectiveBooleanValue.evaluate(condition, conditionContext);
     }
 
     private static final class WindowSpec {
@@ -354,9 +357,9 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         private final WindowClause.WindowVars startVariables;
         private final WindowClause.WindowVars endVariables;
         private final boolean endConditionOnly;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sourcePlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> startCondition;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> endCondition;
+        private final RuntimePlan<Item> sourcePlan;
+        private final RuntimePlan<Item> startCondition;
+        private final RuntimePlan<Item> endCondition;
         private final RuntimeStaticContext staticContext;
 
         private WindowSpec(
@@ -368,9 +371,9 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
                 WindowClause.WindowVars startVariables,
                 WindowClause.WindowVars endVariables,
                 boolean endConditionOnly,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sourcePlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> startCondition,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> endCondition,
+                RuntimePlan<Item> sourcePlan,
+                RuntimePlan<Item> startCondition,
+                RuntimePlan<Item> endCondition,
                 RuntimeStaticContext staticContext
         ) {
             this.childPlan = childPlan;
@@ -542,7 +545,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         // outer binding.
         mergeDependencies(
             result,
-            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.sourceIterator),
+            VariableDependencyRuntimePlan.get(this.sourceIterator),
             Collections.emptySet()
         );
         // Start variables are supplied by the iterator for each candidate start item and are therefore not dynamic
@@ -550,7 +553,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         // window variable, must be preserved.
         mergeDependencies(
             result,
-            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.startCondition),
+            VariableDependencyRuntimePlan.get(this.startCondition),
             startBoundVariables
         );
 
@@ -560,7 +563,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             conditionBoundVariables.addAll(this.endVariables.names());
             mergeDependencies(
                 result,
-                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.endCondition),
+                VariableDependencyRuntimePlan.get(this.endCondition),
                 conditionBoundVariables
             );
         }
@@ -619,13 +622,13 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         this.getWindowVariables().forEach(result::remove);
         this.addDependencies(
             result,
-            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.sourceIterator),
+            VariableDependencyRuntimePlan.get(this.sourceIterator),
             Collections.emptySet(),
             childVariables
         );
         this.addDependencies(
             result,
-            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.startCondition),
+            VariableDependencyRuntimePlan.get(this.startCondition),
             startBoundVariables,
             childVariables
         );
@@ -634,7 +637,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             conditionBoundVariables.addAll(endBoundVariables);
             this.addDependencies(
                 result,
-                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.endCondition),
+                VariableDependencyRuntimePlan.get(this.endCondition),
                 conditionBoundVariables,
                 childVariables
             );

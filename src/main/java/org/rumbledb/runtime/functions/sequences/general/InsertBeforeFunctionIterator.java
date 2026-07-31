@@ -54,7 +54,7 @@ public class InsertBeforeFunctionIterator extends AbstractItemRuntimePlan
     private int insertPosition; // position to start inserting
 
     public InsertBeforeFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            List<RuntimePlan<Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

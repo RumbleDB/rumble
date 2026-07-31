@@ -13,6 +13,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -21,14 +22,14 @@ public class RenameExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mainIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> locatorIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> nameIterator;
+    private final RuntimePlan<Item> mainIterator;
+    private final RuntimePlan<Item> locatorIterator;
+    private final RuntimePlan<Item> nameIterator;
 
     public RenameExpressionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mainIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> locatorIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> nameIterator,
+            RuntimePlan<Item> mainIterator,
+            RuntimePlan<Item> locatorIterator,
+            RuntimePlan<Item> nameIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

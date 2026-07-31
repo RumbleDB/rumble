@@ -12,6 +12,7 @@ import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.Mode;
@@ -27,17 +28,17 @@ public class InsertIndexIntoCollectionIterator extends UpdatingExpressionIterato
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> posIterator;
+    private final RuntimePlan<Item> targetIterator;
+    private final RuntimePlan<Item> contentIterator;
+    private final RuntimePlan<Item> posIterator;
     private final Mode mode;
     private final boolean isFirst;
     private final boolean isLast;
 
     public InsertIndexIntoCollectionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> posIterator,
+            RuntimePlan<Item> targetIterator,
+            RuntimePlan<Item> contentIterator,
+            RuntimePlan<Item> posIterator,
             Mode mode,
             boolean isFirst,
             boolean isLast,
@@ -58,8 +59,8 @@ public class InsertIndexIntoCollectionIterator extends UpdatingExpressionIterato
     }
 
     public InsertIndexIntoCollectionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator,
+            RuntimePlan<Item> targetIterator,
+            RuntimePlan<Item> contentIterator,
             Mode mode,
             boolean isFirst,
             boolean isLast,

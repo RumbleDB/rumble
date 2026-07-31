@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import org.apache.spark.sql.Dataset;
@@ -42,6 +43,8 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
@@ -89,7 +92,7 @@ public class CountClauseIterator extends RuntimeTupleIterator implements DataFra
                 RuntimeTupleIterator childPlan,
                 Name variableName,
                 DynamicContext context,
-                org.rumbledb.exceptions.ExceptionMetadata metadata
+                ExceptionMetadata metadata
         ) {
             super(metadata);
             this.childPlan = childPlan;
@@ -249,7 +252,7 @@ public class CountClauseIterator extends RuntimeTupleIterator implements DataFra
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
         switch (getHighestExecutionMode()) {
@@ -271,7 +274,7 @@ public class CountClauseIterator extends RuntimeTupleIterator implements DataFra
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
-        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
             this.child,
             nativeClauseContext
         );

@@ -8,16 +8,18 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public ThrowErrorIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
+            List<RuntimePlan<Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
@@ -35,7 +37,7 @@ public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private Item raiseError(
             DynamicContext context,
-            java.util.function.Supplier<List<Item>> errorValue
+            Supplier<List<Item>> errorValue
     ) {
         if (this.getChildren().isEmpty()) {
             // No argument case.

@@ -54,7 +54,7 @@ public abstract class AxisIterator extends AbstractItemRuntimePlan implements Lo
     }
 
     protected AxisIterator(RuntimeStaticContext staticContext, Axis axis, ResultOrder resultOrder) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.axis = axis;
         this.resultOrder = resultOrder;
     }

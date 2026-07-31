@@ -30,10 +30,12 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,7 +57,7 @@ public class GetEstimatorFunctionIterator extends AbstractAtMostOneItemRuntimePl
     );
 
     public GetEstimatorFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -110,7 +112,7 @@ public class GetEstimatorFunctionIterator extends AbstractAtMostOneItemRuntimePl
                 }
             }
 
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator =
+            RuntimePlan<Item> bodyIterator =
                 new ApplyEstimatorRuntimeIterator(
                         estimatorShortName,
                         estimator,
@@ -148,7 +150,7 @@ public class GetEstimatorFunctionIterator extends AbstractAtMostOneItemRuntimePl
         } catch (
                 InstantiationException
                 | IllegalAccessException
-                | java.lang.reflect.InvocationTargetException
+                | InvocationTargetException
                 | NoSuchMethodException e
         ) {
             throw new OurBadException(

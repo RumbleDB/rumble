@@ -32,6 +32,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
+import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
@@ -44,7 +45,7 @@ public class PostgreSQLTableFunctionIterator extends AbstractItemRuntimePlan imp
     private static final long serialVersionUID = 1L;
 
     public PostgreSQLTableFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -61,7 +62,7 @@ public class PostgreSQLTableFunctionIterator extends AbstractItemRuntimePlan imp
         }
 
         try {
-            Properties properties = new java.util.Properties();
+            Properties properties = new Properties();
             properties.setProperty("Driver", "org.postgresql.Driver");
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
                 .getOrCreateSession()

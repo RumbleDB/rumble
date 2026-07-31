@@ -44,12 +44,12 @@ public class TryCatchRuntimeIterator extends AbstractItemRuntimePlan implements 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tryExpression;
-    private final Map<CatchPattern, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> catchExpressions;
+    private final RuntimePlan<Item> tryExpression;
+    private final Map<CatchPattern, RuntimePlan<Item>> catchExpressions;
 
     public TryCatchRuntimeIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tryExpression,
-            Map<CatchPattern, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> catchExpressions,
+            RuntimePlan<Item> tryExpression,
+            Map<CatchPattern, RuntimePlan<Item>> catchExpressions,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -73,7 +73,7 @@ public class TryCatchRuntimeIterator extends AbstractItemRuntimePlan implements 
             return this.tryExpression.materialize(context);
         } catch (Throwable throwable) {
             RumbleException exception = RumbleException.unnestException(throwable);
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> catchingExpression = findMatchingCatch(
+            RuntimePlan<Item> catchingExpression = findMatchingCatch(
                 exception
             );
             if (catchingExpression == null) {
@@ -85,7 +85,7 @@ public class TryCatchRuntimeIterator extends AbstractItemRuntimePlan implements 
         }
     }
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> findMatchingCatch(RumbleException exception) {
+    private RuntimePlan<Item> findMatchingCatch(RumbleException exception) {
         for (Map.Entry<CatchPattern, RuntimePlan<Item>> entry : this.catchExpressions.entrySet()) {
             if (entry.getKey().matches(exception.getErrorCode())) {
                 return entry.getValue();

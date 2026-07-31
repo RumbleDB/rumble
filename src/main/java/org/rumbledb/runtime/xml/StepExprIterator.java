@@ -20,6 +20,7 @@ import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
 
 import java.io.Serial;
@@ -29,11 +30,11 @@ import java.util.List;
 public class StepExprIterator extends AbstractItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> axisIterator;
+    private final RuntimePlan<Item> axisIterator;
     private final NodeTest nodeTest;
 
     public StepExprIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> axisIterator,
+            RuntimePlan<Item> axisIterator,
             NodeTest nodeTest,
             RuntimeStaticContext staticContext
     ) {

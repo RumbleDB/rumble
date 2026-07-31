@@ -29,6 +29,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
+import java.util.List;
 
 public class StringRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -37,7 +38,7 @@ public class StringRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     private final Item item;
 
     public StringRuntimeIterator(String value, RuntimeStaticContext staticContext) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         // String unescaping is now handled in the translation visitor
         this.item = ItemFactory.getInstance().createStringItem(value);
     }

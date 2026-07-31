@@ -27,6 +27,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * Shared plan for extracting one component from a date, time, dateTime, or duration value.
@@ -86,11 +87,11 @@ public abstract class TemporalComponentFunctionIterator extends AbstractAtMostOn
         abstract Item evaluate(Item item);
     }
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argument;
+    private final RuntimePlan<Item> argument;
     private final Component component;
 
     protected TemporalComponentFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext,
             Component component
     ) {

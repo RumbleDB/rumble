@@ -24,6 +24,7 @@ package org.rumbledb.runtime.functions.io;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.parsing.ItemParser;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -35,6 +36,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,7 +51,7 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
 
     public YamlDocFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -86,12 +88,12 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
                 ResourceLocalCursor.ResourceIterator<Item> {
 
         private final YAMLParser parser;
-        private final org.rumbledb.exceptions.ExceptionMetadata metadata;
+        private final ExceptionMetadata metadata;
         private Item next;
 
         private YamlResourceIterator(
                 YAMLParser parser,
-                org.rumbledb.exceptions.ExceptionMetadata metadata
+                ExceptionMetadata metadata
         ) {
             this.parser = parser;
             this.metadata = metadata;

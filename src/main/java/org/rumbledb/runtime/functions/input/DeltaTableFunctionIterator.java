@@ -10,6 +10,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.lit;
@@ -24,7 +25,7 @@ public class DeltaTableFunctionIterator extends AbstractItemRuntimePlan implemen
     private static final long serialVersionUID = 1L;
 
     public DeltaTableFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -32,7 +33,7 @@ public class DeltaTableFunctionIterator extends AbstractItemRuntimePlan implemen
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> collectionNameIterator = this.getChild(0);
+        RuntimePlan<Item> collectionNameIterator = this.getChild(0);
         String collectionName = collectionNameIterator.materializeFirstOrNull(context).getStringValue();
 
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);
@@ -42,7 +43,7 @@ public class DeltaTableFunctionIterator extends AbstractItemRuntimePlan implemen
     public static HomogeneousItemDataFrame postProcess(Dataset<Row> dataFrame, String collectionName) {
         StructField[] fields = dataFrame.schema().fields();
         boolean hasLongRowId = false;
-        for (org.apache.spark.sql.types.StructField field : fields) {
+        for (StructField field : fields) {
             if (
                 field.name().equals(SparkSessionManager.rowIdColumnName) && field.dataType().typeName().equals("long")
             ) {
@@ -51,7 +52,7 @@ public class DeltaTableFunctionIterator extends AbstractItemRuntimePlan implemen
             }
         }
         boolean hasDoubleRowOrder = false;
-        for (org.apache.spark.sql.types.StructField field : fields) {
+        for (StructField field : fields) {
             if (
                 field.name().equals(SparkSessionManager.rowOrderColumnName)
                     && field.dataType().typeName().equals("double")

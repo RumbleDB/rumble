@@ -32,10 +32,12 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -59,11 +61,11 @@ public class MapForEachFunctionIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionIterator;
+    private final RuntimePlan<Item> mapIterator;
+    private final RuntimePlan<Item> actionIterator;
 
     public MapForEachFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -75,8 +77,8 @@ public class MapForEachFunctionIterator extends AbstractItemRuntimePlan
     }
 
     private static Invocation resolveInvocation(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapPlan,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan,
+            RuntimePlan<Item> mapPlan,
+            RuntimePlan<Item> actionPlan,
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
@@ -119,12 +121,12 @@ public class MapForEachFunctionIterator extends AbstractItemRuntimePlan
         return new Invocation(mapItem, actionFunction, keyArgumentContext, valueArgumentContext);
     }
 
-    private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildCallback(
+    private static RuntimePlan<Item> buildCallback(
             Invocation invocation,
             Item key,
             RuntimeStaticContext staticContext
     ) {
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> valueChildren = new ArrayList<>();
+        List<RuntimePlan<Item>> valueChildren = new ArrayList<>();
         List<Item> values = invocation.map.getSequenceByKey(key);
         if (values != null) {
             for (Item value : values) {
@@ -164,17 +166,17 @@ public class MapForEachFunctionIterator extends AbstractItemRuntimePlan
 
     private static final class MapForEachLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapPlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan;
+        private final RuntimePlan<Item> mapPlan;
+        private final RuntimePlan<Item> actionPlan;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private Invocation invocation;
-        private java.util.Iterator<Item> keys;
+        private Iterator<Item> keys;
         private Cursor<Item> callbackCursor;
 
         private MapForEachLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapPlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan,
+                RuntimePlan<Item> mapPlan,
+                RuntimePlan<Item> actionPlan,
                 RuntimeStaticContext staticContext,
                 DynamicContext context
         ) {
@@ -203,7 +205,7 @@ public class MapForEachFunctionIterator extends AbstractItemRuntimePlan
                 if (!this.keys.hasNext()) {
                     return false;
                 }
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> callback = buildCallback(
+                RuntimePlan<Item> callback = buildCallback(
                     this.invocation,
                     this.keys.next(),
                     this.staticContext

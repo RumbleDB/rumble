@@ -12,6 +12,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -25,12 +27,12 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
     @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final RuntimePlan<Item> iterator;
     private final SequenceType sequenceType;
     private final ItemType itemType;
 
     public AtMostOneItemTypePromotionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext staticContext
@@ -69,7 +71,7 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
     }
 
     private static Item evaluate(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             SequenceType sequenceType,
             ItemType itemType,
             String exceptionMessage,
@@ -163,7 +165,7 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext value = NativeQueryRuntimePlan.generate(
             this.getChild(0),
             nativeClauseContext
         );

@@ -45,7 +45,7 @@ public class ArrayTailFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private final RuntimePlan<Item> arrayIterator;
 
     public ArrayTailFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

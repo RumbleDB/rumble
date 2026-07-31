@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.xml.XMLUtils;
 
 import java.io.Serial;
@@ -39,7 +41,7 @@ public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRun
     private static final long serialVersionUID = 1L;
 
     public CodepointsToStringFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -48,9 +50,9 @@ public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRun
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         String xmlVersion = getConfiguration().getXmlVersion();
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argumentIterator = this.getChild(0);
+        RuntimePlan<Item> argumentIterator = this.getChild(0);
 
-        try (org.rumbledb.runtime.cursor.Cursor<Item> cursor = argumentIterator.getCursor(context)) {
+        try (Cursor<Item> cursor = argumentIterator.getCursor(context)) {
             return ItemFactory.getInstance()
                 .createStringItem(
                     buildStringFromCodepoints(cursor::hasNext, cursor::next, xmlVersion)

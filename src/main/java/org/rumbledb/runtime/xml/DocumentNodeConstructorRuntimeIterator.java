@@ -48,7 +48,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator;
+    private final RuntimePlan<Item> contentIterator;
 
     /**
      * Constructor for document node constructor runtime iterator
@@ -57,7 +57,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
      * @param staticContext The static context
      */
     public DocumentNodeConstructorRuntimeIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator,
+            RuntimePlan<Item> contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

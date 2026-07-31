@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.Mode;
@@ -22,11 +23,11 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator;
+    private final RuntimePlan<Item> targetIterator;
     private final Mode mode;
 
     public TruncateCollectionIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator,
+            RuntimePlan<Item> targetIterator,
             Mode mode,
             RuntimeStaticContext staticContext
     ) {

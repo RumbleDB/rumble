@@ -40,6 +40,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -51,12 +53,12 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
     private static final long serialVersionUID = 1L;
 
     private final boolean isMinus;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
+    private final RuntimePlan<Item> leftIterator;
+    private final RuntimePlan<Item> rightIterator;
 
     public AdditiveOperationIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
+            RuntimePlan<Item> leftIterator,
+            RuntimePlan<Item> rightIterator,
             boolean isMinus,
             RuntimeStaticContext staticContext
     ) {
@@ -379,7 +381,7 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(
             this.leftIterator,
             nativeClauseContext
         );
@@ -389,7 +391,7 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
         if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext rightResult = NativeQueryRuntimePlan.generate(
             this.rightIterator,
             nativeClauseContext
         );

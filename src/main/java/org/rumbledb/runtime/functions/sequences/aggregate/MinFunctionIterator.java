@@ -35,8 +35,10 @@ import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.SequenceType;
@@ -50,10 +52,10 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final String CODEPOINT_COLLATION =
         "http://www.w3.org/2005/xpath-functions/collation/codepoint";
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final RuntimePlan<Item> iterator;
 
     public MinFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -73,7 +75,7 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         validateCollation(context);
 
         if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-            HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
                 this.iterator,
                 context
             );
@@ -138,7 +140,7 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         if (this.getChildren().size() > 1) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext nativeChildQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+        NativeClauseContext nativeChildQuery = NativeQueryRuntimePlan.generate(
             this.getChild(0),
             nativeClauseContext
         );

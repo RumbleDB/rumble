@@ -20,8 +20,10 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -32,6 +34,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -45,11 +48,11 @@ public class RepartitionFunctionIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> partitionCountIterator;
+    private final RuntimePlan<Item> iterator;
+    private final RuntimePlan<Item> partitionCountIterator;
 
     public RepartitionFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> inputIterators,
+            List<RuntimePlan<Item>> inputIterators,
             RuntimeStaticContext staticContext
     ) {
         super(inputIterators, staticContext);
@@ -74,12 +77,12 @@ public class RepartitionFunctionIterator extends AbstractItemRuntimePlan
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
+        return NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
             .fromPlan(this.iterator, context);
         int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(context).getIntValue();
         return childDataFrame.repartition(numberPartitions);

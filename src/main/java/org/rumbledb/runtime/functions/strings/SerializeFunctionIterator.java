@@ -28,6 +28,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.serialization.Serializer;
@@ -43,7 +44,7 @@ public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private static final long serialVersionUID = 1L;
 
     public SerializeFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

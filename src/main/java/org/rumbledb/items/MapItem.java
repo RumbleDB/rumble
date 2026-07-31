@@ -21,6 +21,7 @@ package org.rumbledb.items;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -278,12 +279,12 @@ public class MapItem extends AbstractMapItem {
 
     @Override
     public void putItemByKey(String key, Item value) {
-        putSequenceByKey(ItemFactory.getInstance().createStringItem(key), java.util.Collections.singletonList(value));
+        putSequenceByKey(ItemFactory.getInstance().createStringItem(key), Collections.singletonList(value));
     }
 
     @Override
     public void putItemByKey(Item key, Item value) {
-        putSequenceByKey(key, java.util.Collections.singletonList(value));
+        putSequenceByKey(key, Collections.singletonList(value));
     }
 
     @Override

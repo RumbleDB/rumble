@@ -34,6 +34,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -57,12 +58,12 @@ public class ForEachPairFunctionIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator1;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator2;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionIterator;
+    private final RuntimePlan<Item> sequenceIterator1;
+    private final RuntimePlan<Item> sequenceIterator2;
+    private final RuntimePlan<Item> actionIterator;
 
     public ForEachPairFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -75,7 +76,7 @@ public class ForEachPairFunctionIterator extends AbstractItemRuntimePlan
     }
 
     private static Item resolveAction(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan,
+            RuntimePlan<Item> actionPlan,
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
@@ -106,7 +107,7 @@ public class ForEachPairFunctionIterator extends AbstractItemRuntimePlan
             .build();
     }
 
-    private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildCallback(
+    private static RuntimePlan<Item> buildCallback(
             Item action,
             Item first,
             Item second,
@@ -127,9 +128,9 @@ public class ForEachPairFunctionIterator extends AbstractItemRuntimePlan
 
     private static final class ForEachPairLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> firstPlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> secondPlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan;
+        private final RuntimePlan<Item> firstPlan;
+        private final RuntimePlan<Item> secondPlan;
+        private final RuntimePlan<Item> actionPlan;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private List<Item> firstItems;
@@ -140,9 +141,9 @@ public class ForEachPairFunctionIterator extends AbstractItemRuntimePlan
         private Cursor<Item> callbackCursor;
 
         private ForEachPairLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> firstPlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> secondPlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan,
+                RuntimePlan<Item> firstPlan,
+                RuntimePlan<Item> secondPlan,
+                RuntimePlan<Item> actionPlan,
                 RuntimeStaticContext staticContext,
                 DynamicContext context
         ) {
@@ -170,7 +171,7 @@ public class ForEachPairFunctionIterator extends AbstractItemRuntimePlan
                 if (this.pairIndex >= Math.min(this.firstItems.size(), this.secondItems.size())) {
                     return false;
                 }
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> callback = buildCallback(
+                RuntimePlan<Item> callback = buildCallback(
                     this.action,
                     this.firstItems.get(this.pairIndex),
                     this.secondItems.get(this.pairIndex),

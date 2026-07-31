@@ -6,13 +6,14 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.items.xml.NamespaceItem;
 
 import java.io.Serial;
+import java.io.Serializable;
 
-public class TysonSerializer implements Serializer, java.io.Serializable {
+public class TysonSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.serialization.SerializationParameters params;
+    private final SerializationParameters params;
 
     public TysonSerializer(SerializationParameters params) {
         this.params = params;

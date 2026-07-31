@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -57,7 +58,7 @@ public class SubsequenceFunctionIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
+    private final RuntimePlan<Item> sequenceIterator;
     private final RuntimePlan<Item> positionIterator;
     private final RuntimePlan<Item> lengthIterator;
     private int startPosition;
@@ -66,7 +67,7 @@ public class SubsequenceFunctionIterator extends AbstractItemRuntimePlan
                                                           // threshold
 
     public SubsequenceFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            List<RuntimePlan<Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -118,7 +119,7 @@ public class SubsequenceFunctionIterator extends AbstractItemRuntimePlan
      * Old implementation of getDataFrame, it is faster for low starting positions
      */
     private HomogeneousItemDataFrame getDataFrameOld(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
             this.sequenceIterator,
             dynamicContext
         );
@@ -165,7 +166,7 @@ public class SubsequenceFunctionIterator extends AbstractItemRuntimePlan
      * for small values
      */
     private HomogeneousItemDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
             this.sequenceIterator,
             dynamicContext
         );

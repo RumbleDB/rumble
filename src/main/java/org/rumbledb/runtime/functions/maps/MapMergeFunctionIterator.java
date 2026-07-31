@@ -16,6 +16,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -61,12 +62,12 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
     }
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapsIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> optionsIterator; // may be null for
+    private final RuntimePlan<Item> mapsIterator;
+    private final RuntimePlan<Item> optionsIterator; // may be null for
                                                                                                 // arity-1
 
     public MapMergeFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

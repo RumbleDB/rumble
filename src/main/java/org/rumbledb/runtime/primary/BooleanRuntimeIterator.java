@@ -30,6 +30,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
+import java.util.List;
 
 public class BooleanRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -38,7 +39,7 @@ public class BooleanRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     private final Item item;
 
     public BooleanRuntimeIterator(boolean value, RuntimeStaticContext staticContext) {
-        super(java.util.List.of(), staticContext);
+        super(List.of(), staticContext);
         this.item = ItemFactory.getInstance().createBooleanItem(value);
 
     }

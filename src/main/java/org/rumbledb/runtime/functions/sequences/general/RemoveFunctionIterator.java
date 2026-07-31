@@ -52,7 +52,7 @@ public class RemoveFunctionIterator extends AbstractItemRuntimePlan
 
 
     public RemoveFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            List<RuntimePlan<Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
@@ -40,13 +41,13 @@ public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimeP
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> keys;
-    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> values;
+    private final List<RuntimePlan<Item>> keys;
+    private final List<RuntimePlan<Item>> values;
     private final boolean mutable;
 
     public MapConstructorRuntimeIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> keys,
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> values,
+            List<RuntimePlan<Item>> keys,
+            List<RuntimePlan<Item>> values,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -58,7 +59,7 @@ public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimeP
 
     private static Item atomizeSingleMapKey(
             List<Item> keySequence,
-            org.rumbledb.exceptions.ExceptionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         List<Item> atomized = new ArrayList<>();
         for (Item item : keySequence) {

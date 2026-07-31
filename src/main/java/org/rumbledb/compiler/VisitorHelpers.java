@@ -31,6 +31,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.resources.ResolvedResource;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 
 import java.io.IOException;
 import java.net.URI;
@@ -44,7 +45,7 @@ public class VisitorHelpers {
         RuntimePlan<Item> result = new RuntimeIteratorVisitor(conf).visit(node, null);
         if (conf.isPrintIteratorTree() || conf.debug()) {
             StringBuilder sb = new StringBuilder();
-            org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(result, sb, 0);
+            RuntimePlanDiagnostics.print(result, sb, 0);
             System.err.println(sb);
         }
         return result;

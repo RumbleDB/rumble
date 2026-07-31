@@ -34,6 +34,7 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -53,12 +54,12 @@ public class ArrayFoldRightFunctionIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> zeroIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionIterator;
+    private final RuntimePlan<Item> arrayIterator;
+    private final RuntimePlan<Item> zeroIterator;
+    private final RuntimePlan<Item> functionIterator;
 
     public ArrayFoldRightFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -119,7 +120,7 @@ public class ArrayFoldRightFunctionIterator extends AbstractItemRuntimePlan
         return accumulator;
     }
 
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> createSequenceIterator(List<Item> items) {
+    private RuntimePlan<Item> createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -130,7 +131,7 @@ public class ArrayFoldRightFunctionIterator extends AbstractItemRuntimePlan
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> childIterators = new ArrayList<>(
+        List<RuntimePlan<Item>> childIterators = new ArrayList<>(
                 items.size()
         );
         for (Item item : items) {
@@ -158,16 +159,16 @@ public class ArrayFoldRightFunctionIterator extends AbstractItemRuntimePlan
             List<Item> accumulator,
             DynamicContext context
     ) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> memberIterator = createSequenceIterator(
+        RuntimePlan<Item> memberIterator = createSequenceIterator(
             memberSequence
         );
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> accIterator = createSequenceIterator(accumulator);
+        RuntimePlan<Item> accIterator = createSequenceIterator(accumulator);
 
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments = new ArrayList<>(2);
+        List<RuntimePlan<Item>> arguments = new ArrayList<>(2);
         arguments.add(memberIterator);
         arguments.add(accIterator);
 
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionCall = NamedFunctions
+        RuntimePlan<Item> functionCall = NamedFunctions
             .buildFunctionItemCallIterator(
                 functionItem,
                 this.staticContext,

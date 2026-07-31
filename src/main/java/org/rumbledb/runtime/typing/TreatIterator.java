@@ -1,7 +1,9 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
@@ -53,11 +55,11 @@ public class TreatIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final RuntimePlan<Item> iterator;
     private final TreatTypeValidator validator;
 
     public TreatIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            RuntimePlan<Item> iterator,
             SequenceType sequenceType,
             ErrorCode errorCode,
             RuntimeStaticContext staticContext
@@ -108,7 +110,7 @@ public class TreatIterator extends AbstractItemRuntimePlan
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         this.validator.resolve(dynamicContext);
-        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
             this.iterator,
             dynamicContext
         );
@@ -125,7 +127,7 @@ public class TreatIterator extends AbstractItemRuntimePlan
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.iterator, context);
+        return UpdatingRuntimePlan.get(this.iterator, context);
     }
 
     /**
@@ -236,6 +238,6 @@ public class TreatIterator extends AbstractItemRuntimePlan
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
+        return NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
     }
 }

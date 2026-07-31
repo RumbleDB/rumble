@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 
+import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
@@ -14,6 +15,7 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -37,11 +39,11 @@ public class FilterFunctionIterator extends AbstractItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
-    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator;
+    private final RuntimePlan<Item> sequenceIterator;
+    private final RuntimePlan<Item> predicateIterator;
 
     public FilterFunctionIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -53,7 +55,7 @@ public class FilterFunctionIterator extends AbstractItemRuntimePlan
     }
 
     private static Item resolvePredicate(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator,
+            RuntimePlan<Item> predicateIterator,
             DynamicContext context,
             RuntimeStaticContext staticContext
     ) {
@@ -87,7 +89,7 @@ public class FilterFunctionIterator extends AbstractItemRuntimePlan
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> callbackArguments = new ArrayList<>(1);
+        List<RuntimePlan<Item>> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(new ConstantRuntimeIterator(item, argumentContext));
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
             .configuration(staticContext.getConfiguration())
@@ -95,12 +97,12 @@ public class FilterFunctionIterator extends AbstractItemRuntimePlan
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> callback = new DynamicFunctionCallIterator(
+        RuntimePlan<Item> callback = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(predicate, functionItemContext),
                 callbackArguments,
                 functionItemContext
         );
-        return org.rumbledb.runtime.EffectiveBooleanValue.evaluate(callback, context);
+        return EffectiveBooleanValue.evaluate(callback, context);
     }
 
     private static boolean acceptsSingleArgument(Item item) {
@@ -112,8 +114,8 @@ public class FilterFunctionIterator extends AbstractItemRuntimePlan
 
     private static final class FilterLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan;
-        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicatePlan;
+        private final RuntimePlan<Item> sequencePlan;
+        private final RuntimePlan<Item> predicatePlan;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
         private Cursor<Item> sequenceCursor;
@@ -121,8 +123,8 @@ public class FilterFunctionIterator extends AbstractItemRuntimePlan
         private Item nextResult;
 
         private FilterLocalCursor(
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan,
-                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicatePlan,
+                RuntimePlan<Item> sequencePlan,
+                RuntimePlan<Item> predicatePlan,
                 DynamicContext context,
                 RuntimeStaticContext staticContext
         ) {

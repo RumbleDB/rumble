@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.control;
 
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -47,12 +50,12 @@ public class IfRuntimeIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selectedIterator = null;
+    private RuntimePlan<Item> selectedIterator = null;
 
     public IfRuntimeIterator(
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> condition,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> branch,
-            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> elseBranch,
+            RuntimePlan<Item> condition,
+            RuntimePlan<Item> branch,
+            RuntimePlan<Item> elseBranch,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -78,11 +81,11 @@ public class IfRuntimeIterator extends AbstractItemRuntimePlan
 
 
 
-    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selectApplicableIterator(
+    public RuntimePlan<Item> selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> condition = this.getChild(0);
-        boolean effectiveBooleanValue = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(condition, dynamicContext);
+        RuntimePlan<Item> condition = this.getChild(0);
+        boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(condition, dynamicContext);
         if (effectiveBooleanValue) {
             return this.getChild(1);
         } else {
@@ -92,7 +95,7 @@ public class IfRuntimeIterator extends AbstractItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = selectApplicableIterator(
+        RuntimePlan<Item> iterator = selectApplicableIterator(
             dynamicContext
         );
         return iterator.getRDD(dynamicContext);
@@ -100,11 +103,11 @@ public class IfRuntimeIterator extends AbstractItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = selectApplicableIterator(
+        RuntimePlan<Item> iterator = selectApplicableIterator(
             dynamicContext
         );
 
-        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, dynamicContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, dynamicContext);
     }
 
     @Override
@@ -113,7 +116,7 @@ public class IfRuntimeIterator extends AbstractItemRuntimePlan
             return new PendingUpdateList();
         }
 
-        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = selectApplicableIterator(context);
-        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(iterator, context);
+        RuntimePlan<Item> iterator = selectApplicableIterator(context);
+        return UpdatingRuntimePlan.get(iterator, context);
     }
 }

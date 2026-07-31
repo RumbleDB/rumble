@@ -4,6 +4,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -16,7 +17,7 @@ public class CommaVariableDeclStatementIterator extends AbstractAtMostOneItemRun
     private static final long serialVersionUID = 1L;
 
     public CommaVariableDeclStatementIterator(
-            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
+            List<RuntimePlan<Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
@@ -24,7 +25,7 @@ public class CommaVariableDeclStatementIterator extends AbstractAtMostOneItemRun
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        for (org.rumbledb.runtime.plan.RuntimePlan<Item> child : this.getChildren()) {
+        for (RuntimePlan<Item> child : this.getChildren()) {
             child.materialize(context);
         }
         return null;
