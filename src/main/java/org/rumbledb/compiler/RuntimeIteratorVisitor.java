@@ -1891,7 +1891,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     @Override
     public RuntimePlan<Item> visitVariableDeclStatement(VariableDeclStatement statement, RuntimePlan<Item> argument) {
         Name varName = statement.getVariableName();
-        List<RuntimePlan<Item>> exprIterator = null;
+        List<RuntimePlan<Item>> exprIterator = Collections.emptyList();
         if (statement.getVariableExpression() != null) {
             exprIterator = Collections.singletonList(this.visit(statement.getVariableExpression(), argument));
         }
