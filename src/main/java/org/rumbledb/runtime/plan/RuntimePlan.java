@@ -128,7 +128,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             Function<JavaRDD<T>, R> fromRDD,
             Function<RuntimeDataFrame<T>, R> fromDataFrame
     ) {
-        return switch (this.getExecutionMode()) {
+        return switch (this.getRuntimeStaticContext().getExecutionMode()) {
             case LOCAL -> {
                 this.requireCapability(this instanceof LocalRuntimePlan<?>, ExecutionMode.LOCAL);
                 yield fromCursor.apply(this.createNativeCursor(context));
@@ -141,7 +141,7 @@ public abstract class RuntimePlan<T> implements Serializable {
                 this.requireCapability(this instanceof DataFrameRuntimePlan<?>, ExecutionMode.DATAFRAME);
                 yield fromDataFrame.apply(this.getNativeDataFrame(context));
             }
-            case UNSET -> throw this.unsetExecutionMode();
+            case UNSET -> throw new OurBadException("Cannot execute a runtime plan whose execution mode is unset.");
         };
     }
 
@@ -155,14 +155,6 @@ public abstract class RuntimePlan<T> implements Serializable {
                         + " execution but does not implement the corresponding capability."
             );
         }
-    }
-
-    private ExecutionMode getExecutionMode() {
-        return this.getRuntimeStaticContext().getExecutionMode();
-    }
-
-    private OurBadException unsetExecutionMode() {
-        return new OurBadException("Cannot execute a runtime plan whose execution mode is unset.");
     }
 
     private OurBadException unsupportedRepresentation(ExecutionMode representation) {
@@ -259,7 +251,21 @@ public abstract class RuntimePlan<T> implements Serializable {
         if (this.canEvaluateAtMostOneDirectly()) {
             return this.evaluateAtMostOne(context);
         }
-        return this.executeAtMostOne(context);
+        return this.executeAs(
+            context,
+            (cursor) -> RuntimePlan.materializeAtMostOneFromCursor(
+                cursor,
+                this.getRuntimeStaticContext().getMetadata()
+            ),
+            rdd -> RuntimePlan.materializeAtMostOneFromRDD(
+                rdd,
+                this.getRuntimeStaticContext().getMetadata()
+            ),
+            dataFrame -> RuntimePlan.materializeAtMostOneFromRDD(
+                dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()),
+                this.getRuntimeStaticContext().getMetadata()
+            )
+        );
     }
 
     /**
@@ -295,7 +301,8 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     private boolean canEvaluateAtMostOneDirectly() {
-        return this.getExecutionMode() == ExecutionMode.LOCAL && this instanceof AtMostOneLocalRuntimePlan<?>;
+        return this.getRuntimeStaticContext().getExecutionMode() == ExecutionMode.LOCAL
+            && this instanceof AtMostOneLocalRuntimePlan<?>;
     }
 
     private List<T> materializeDirectAtMostOne(DynamicContext context) {
@@ -321,24 +328,6 @@ public abstract class RuntimePlan<T> implements Serializable {
             }
         }
         return result;
-    }
-
-    private T executeAtMostOne(DynamicContext context) throws MoreThanOneItemException {
-        return this.executeAs(
-            context,
-            (cursor) -> RuntimePlan.materializeAtMostOneFromCursor(
-                cursor,
-                this.getRuntimeStaticContext().getMetadata()
-            ),
-            rdd -> RuntimePlan.materializeAtMostOneFromRDD(
-                rdd,
-                this.getRuntimeStaticContext().getMetadata()
-            ),
-            dataFrame -> RuntimePlan.materializeAtMostOneFromRDD(
-                dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()),
-                this.getRuntimeStaticContext().getMetadata()
-            )
-        );
     }
 
     private static <T> T materializeAtMostOneFromCursor(Cursor<T> cursor, ExceptionMetadata metadata)
