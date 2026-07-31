@@ -17,6 +17,7 @@ import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -323,34 +324,32 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     private T executeAtMostOne(DynamicContext context) throws MoreThanOneItemException {
-        return switch (this.getExecutionMode()) {
-            case LOCAL -> {
-                this.requireCapability(this instanceof LocalRuntimePlan<?>, ExecutionMode.LOCAL);
-                yield materializeAtMostOneFromCursor(this.createNativeCursor(context));
-            }
-            case RDD -> {
-                this.requireCapability(this instanceof RDDRuntimePlan<?>, ExecutionMode.RDD);
-                yield materializeAtMostOneFromRDD(this.getNativeRDD(context));
-            }
-            case DATAFRAME -> {
-                this.requireCapability(this instanceof DataFrameRuntimePlan<?>, ExecutionMode.DATAFRAME);
-                yield materializeAtMostOneFromRDD(
-                    this.getNativeDataFrame(context)
-                        .toRDD(this.getRuntimeStaticContext().getMetadata())
-                );
-            }
-            case UNSET -> throw this.unsetExecutionMode();
-        };
+        return this.executeAs(
+            context,
+            (cursor) -> RuntimePlan.materializeAtMostOneFromCursor(
+                cursor,
+                this.getRuntimeStaticContext().getMetadata()
+            ),
+            rdd -> RuntimePlan.materializeAtMostOneFromRDD(
+                rdd,
+                this.getRuntimeStaticContext().getMetadata()
+            ),
+            dataFrame -> RuntimePlan.materializeAtMostOneFromRDD(
+                dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()),
+                this.getRuntimeStaticContext().getMetadata()
+            )
+        );
     }
 
-    private static <T> T materializeAtMostOneFromCursor(Cursor<T> cursor) throws MoreThanOneItemException {
+    private static <T> T materializeAtMostOneFromCursor(Cursor<T> cursor, ExceptionMetadata metadata)
+            throws MoreThanOneItemException {
         try (cursor) {
             if (!cursor.hasNext()) {
                 return null;
             }
             T result = cursor.next();
             if (cursor.hasNext()) {
-                throw new MoreThanOneItemException();
+                throw new MoreThanOneItemException(metadata);
             }
             return result;
         }
@@ -361,10 +360,11 @@ public abstract class RuntimePlan<T> implements Serializable {
         return result.isEmpty() ? null : result.get(0);
     }
 
-    private static <T> T materializeAtMostOneFromRDD(JavaRDD<T> rdd) throws MoreThanOneItemException {
+    private static <T> T materializeAtMostOneFromRDD(JavaRDD<T> rdd, ExceptionMetadata metadata)
+            throws MoreThanOneItemException {
         List<T> result = rdd.take(2);
         if (result.size() > 1) {
-            throw new MoreThanOneItemException();
+            throw new MoreThanOneItemException(metadata);
         }
         return result.isEmpty() ? null : result.get(0);
     }
