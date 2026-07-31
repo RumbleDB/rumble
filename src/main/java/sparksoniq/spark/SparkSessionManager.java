@@ -204,6 +204,7 @@ public class SparkSessionManager {
     private void initializeKryoSerialization() {
         if (!this.configuration.contains("spark.serializer")) {
             this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+            this.configuration.set("spark.kryo.registrator", RumbleKryoRegistrator.class.getCanonicalName());
             // this.configuration.set("spark.kryo.registrationRequired", "true");
             Class<?>[] serializedClasses = new Class[] {
                 Item.class,

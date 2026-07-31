@@ -56,10 +56,23 @@ public abstract class RuntimePlan<T> implements Serializable {
             @NonNull RuntimeStaticContext staticContext,
             RuntimeDataFrameFactory<T> dataFrameFactory
     ) {
-        this.staticContext = staticContext;
-        this.metadata = staticContext.getMetadata();
-        this.materializationCap = staticContext.getConfiguration().getMaterializationCap();
+        this.staticContext = this.resolveCompiledExecutionMode(staticContext);
+        this.metadata = this.staticContext.getMetadata();
+        this.materializationCap = this.staticContext.getConfiguration().getMaterializationCap();
         this.dataFrameFactory = dataFrameFactory;
+    }
+
+    private RuntimeStaticContext resolveCompiledExecutionMode(RuntimeStaticContext context) {
+        if (context.getExecutionMode() != ExecutionMode.DATAFRAME || this instanceof DataFrameRuntimePlan<?>) {
+            return context;
+        }
+        if (this instanceof RDDRuntimePlan<?>) {
+            return context.toBuilder().executionMode(ExecutionMode.RDD).build();
+        }
+        if (this instanceof LocalRuntimePlan<?>) {
+            return context.toBuilder().executionMode(ExecutionMode.LOCAL).build();
+        }
+        return context;
     }
 
     protected final ExceptionMetadata getMetadata() {

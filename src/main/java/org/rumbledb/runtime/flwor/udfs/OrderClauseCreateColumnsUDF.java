@@ -30,7 +30,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -97,6 +99,29 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                 continue;
             }
             for (Item nextItem : items) {
+                List<Item> atomized = nextItem.atomizedValue();
+                if (atomized.size() > 1) {
+                    throw new OurBadException(
+                            "Invalid sort key: order by expression must atomize to at most one item."
+                    );
+                }
+                if (atomized.isEmpty()) {
+                    if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.GREATEST) {
+                        this.results.add(emptySequenceOrderIndexLast);
+                    } else {
+                        this.results.add(emptySequenceOrderIndexFirst);
+                    }
+                    this.results.add(null);
+                    continue;
+                }
+                nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(
+                    atomized.get(0),
+                    CollationSupport.resolveCollation(
+                        expressionWithIterator.getUri(),
+                        expressionWithIterator.getIterator().getRuntimeStaticContext()
+                    ),
+                    expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata()
+                );
                 createColumnsForItem(nextItem, expressionIndex);
             }
 
