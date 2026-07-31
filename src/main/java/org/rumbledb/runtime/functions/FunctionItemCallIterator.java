@@ -230,6 +230,12 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
                             .equals(SequenceType.createSequenceType("item*"))
                 ) {
                     SequenceType sequenceType = this.functionItem.getSignature().getParameterTypes().get(i);
+                    SequenceType argumentType = this.functionArguments.get(i)
+                        .getRuntimeStaticContext()
+                        .getStaticType();
+                    if (argumentType.isSubtypeOf(sequenceType)) {
+                        continue;
+                    }
                     ExecutionMode executionMode = this.functionArguments.get(i)
                         .getRuntimeStaticContext()
                         .getExecutionMode();
