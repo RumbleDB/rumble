@@ -27,7 +27,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlanConversions;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -123,7 +123,11 @@ public class FlworTuple implements Serializable {
         }
         if (this.rddVariables.containsKey(key)) {
             JavaRDD<Item> rdd = this.getRDDValue(key, metadata);
-            return HybridRuntimeIterator.collectRDDwithLimit(rdd, this.configuration, metadata);
+            return RuntimePlanConversions.collectRDDWithLimit(
+                rdd,
+                this.configuration.getMaterializationCap(),
+                metadata
+            );
         }
 
         throw new OurBadException("Undeclared FLOWR variable", metadata);

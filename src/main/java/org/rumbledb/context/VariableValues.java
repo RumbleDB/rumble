@@ -27,7 +27,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlanConversions;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -195,7 +195,11 @@ public class VariableValues implements Serializable {
                 throw new JobWithinAJobException(metadata);
             }
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
-            return HybridRuntimeIterator.collectRDDwithLimit(rdd, this.configuration, metadata);
+            return RuntimePlanConversions.collectRDDWithLimit(
+                rdd,
+                this.configuration.getMaterializationCap(),
+                metadata
+            );
         }
 
         if (this.dataFrameVariableValues.containsKey(varName)) {
@@ -203,9 +207,9 @@ public class VariableValues implements Serializable {
                 throw new JobWithinAJobException(metadata);
             }
             HomogeneousItemDataFrame df = this.getDataFrameVariableValue(varName, metadata);
-            return HybridRuntimeIterator.collectRDDwithLimit(
+            return RuntimePlanConversions.collectRDDWithLimit(
                 df.toRDD(metadata),
-                this.configuration,
+                this.configuration.getMaterializationCap(),
                 metadata
             );
         }

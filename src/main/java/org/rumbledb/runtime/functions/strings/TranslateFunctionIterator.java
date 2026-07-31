@@ -20,38 +20,40 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class TranslateFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public TranslateFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
-        Item mapStringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
-        Item transStringItem = this.getChild(2)
-            .materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
+
+    private Item evaluate(DynamicContext context) {
+        Item inputItem = this.getChild(0).materializeFirstOrNull(context);
+        Item mapStringItem = this.getChild(1).materializeFirstOrNull(context);
+        Item transStringItem = this.getChild(2).materializeFirstOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");

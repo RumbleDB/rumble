@@ -20,13 +20,14 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidNormalizationException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.text.Normalizer;
@@ -34,7 +35,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-public class NormalizeUnicodeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class NormalizeUnicodeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -126,26 +127,28 @@ public class NormalizeUnicodeFunctionIterator extends AtMostOneItemLocalRuntimeI
     );
 
     public NormalizeUnicodeFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
+
+    private Item evaluate(DynamicContext context) {
         boolean fullyNormalized = false;
         Normalizer.Form normalizationForm = Normalizer.Form.NFC;
-        Item inputItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
 
         if (this.getChildren().size() > 1) {
-            Item normalizationFormItem = this.getChild(1)
-                .materializeFirstItemOrNull(context);
+            Item normalizationFormItem = this.getChild(1).materializeFirstOrNull(context);
 
             String normalizationFormRaw = normalizationFormItem.getStringValue();
             if (normalizationFormRaw.length() == 0) {

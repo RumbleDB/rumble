@@ -20,39 +20,42 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
 
-public class CompareFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class CompareFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public CompareFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
+
+    private Item evaluate(DynamicContext context) {
         String collation = this.getChildren().size() == 3
-            ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
+            ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
             : getRuntimeStaticContext().getDefaultCollation();
-        Item firstStringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
-        Item secondStringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        Item firstStringItem = this.getChild(0).materializeFirstOrNull(context);
+        Item secondStringItem = this.getChild(1).materializeFirstOrNull(context);
         if (firstStringItem == null || secondStringItem == null) {
             return null;
         }

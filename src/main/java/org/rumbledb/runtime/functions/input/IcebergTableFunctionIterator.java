@@ -1,12 +1,15 @@
 package org.rumbledb.runtime.functions.input;
 
+import org.rumbledb.api.Item;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
@@ -15,22 +18,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
+public class IcebergTableFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public IcebergTableFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator collectionNameIterator = this.getChild(0);
-        String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        RuntimePlan<Item> collectionNameIterator = this.getChild(0);
+        String collectionName = collectionNameIterator.materializeFirstOrNull(context).getStringValue();
 
         String metadataName = qualifyForMetadata(collectionName);
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);

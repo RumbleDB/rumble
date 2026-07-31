@@ -24,40 +24,44 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.util.List;
 
-public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class ArraySizeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public ArraySizeFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item array = this.getChild(0).materializeFirstItemOrNull(context);
-        if (array == null) {
-            return null;
-        }
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item array = this.getChild(0).materializeFirstOrNull(context);
+        return array == null ? null : size(array);
+    }
+
+    private static Item size(Item array) {
         return ItemFactory.getInstance().createIntItem(array.getSize());
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             return new NativeClauseContext(
                     nativeClauseContext,

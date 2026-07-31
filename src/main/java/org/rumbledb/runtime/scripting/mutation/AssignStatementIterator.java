@@ -4,21 +4,21 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+public class AssignStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator assignExpression;
+    private final RuntimePlan<Item> assignExpression;
     private final Name variableName;
 
     public AssignStatementIterator(
-            RuntimeIterator assignExpression,
+            RuntimePlan<Item> assignExpression,
             Name variableName,
             RuntimeStaticContext staticContext
     ) {
@@ -27,10 +27,12 @@ public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
         this.variableName = variableName;
     }
 
-
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        List<Item> exprItems = this.assignExpression.materialize(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return assign(this.assignExpression.materialize(context), context);
+    }
+
+    private Item assign(List<Item> exprItems, DynamicContext context) {
         context.getVariableValues()
             .changeVariableValue(
                 this.variableName,

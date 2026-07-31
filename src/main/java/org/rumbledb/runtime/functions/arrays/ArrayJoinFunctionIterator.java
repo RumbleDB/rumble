@@ -17,17 +17,16 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.RuntimePlan;
+
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -36,17 +35,15 @@ import java.util.List;
 /**
  * F&amp;O 3.1 array:join — concatenates the members of a sequence of arrays in order into one array.
  */
-public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
+public class ArrayJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arraysIterator;
-    private Item resultItem;
-    private boolean hasProducedResult;
+    private final RuntimePlan<Item> arraysIterator;
 
     public ArrayJoinFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -54,19 +51,15 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
             throw new OurBadException("array:join must have exactly one argument.");
         }
         this.arraysIterator = arguments.get(0);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
+
 
     @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return createResult(this.arraysIterator.materialize(context));
     }
 
-    private void initializeResult(DynamicContext context) {
-        List<Item> arrays = this.arraysIterator.materialize(context);
+    private Item createResult(List<Item> arrays) {
         List<List<Item>> joined = new ArrayList<>();
         for (Item arrayItem : arrays) {
             if (!arrayItem.isArray()) {
@@ -81,49 +74,6 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
             }
         }
         // when joining, we always create a sequence array for now
-        this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(joined, false);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arraysIterator.isOpen()) {
-            this.arraysIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:join is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:join is currently supported only in local execution mode."
-        );
+        return ItemFactory.getInstance().createSequenceArrayItem(joined, false);
     }
 }

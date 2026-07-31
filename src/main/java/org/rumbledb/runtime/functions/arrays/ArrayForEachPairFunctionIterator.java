@@ -17,49 +17,50 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code array:for-each-pair}:
  * {@code array:for-each-pair($array1 as array(*), $array2 as array(*), $function as function(item()*, item()*) as item()*) as array(*)}.
  */
-public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
+public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return computeResult(context);
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator1;
-    private final RuntimeIterator arrayIterator2;
-    private final RuntimeIterator functionIterator;
-
-    private Item resultItem;
-    private boolean hasProducedResult;
+    private final RuntimePlan<Item> arrayIterator1;
+    private final RuntimePlan<Item> arrayIterator2;
+    private final RuntimePlan<Item> functionIterator;
 
     public ArrayForEachPairFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -69,29 +70,20 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         this.arrayIterator1 = arguments.get(0);
         this.arrayIterator2 = arguments.get(1);
         this.functionIterator = arguments.get(2);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
+    private Item computeResult(DynamicContext context) {
         Item arrayItem1;
         try {
-            arrayItem1 = this.arrayIterator1.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem1 = this.arrayIterator1.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:for-each-pair expects exactly one array as the first argument.",
                     getMetadata()
             );
+        }
+        if (arrayItem1 == null) {
+            return null;
         }
 
         if (!arrayItem1.isArray()) {
@@ -103,15 +95,15 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
         Item arrayItem2;
         try {
-            arrayItem2 = this.arrayIterator2.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem2 = this.arrayIterator2.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:for-each-pair expects exactly one array as the second argument.",
                     getMetadata()
             );
+        }
+        if (arrayItem2 == null) {
+            return null;
         }
 
         if (!arrayItem2.isArray()) {
@@ -157,15 +149,14 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : resultMemberSequences) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        return ItemFactory.getInstance()
+            .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
-    private RuntimeIterator createSequenceIterator(List<Item> items) {
+    private RuntimePlan<Item> createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -176,7 +167,9 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
-        List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
+        List<RuntimePlan<Item>> childIterators = new ArrayList<>(
+                items.size()
+        );
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -202,69 +195,23 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
             List<Item> memberSequence2,
             DynamicContext context
     ) {
-        RuntimeIterator firstArg = createSequenceIterator(memberSequence1);
-        RuntimeIterator secondArg = createSequenceIterator(memberSequence2);
+        RuntimePlan<Item> firstArg = createSequenceIterator(memberSequence1);
+        RuntimePlan<Item> secondArg = createSequenceIterator(
+            memberSequence2
+        );
 
-        List<RuntimeIterator> arguments = new ArrayList<>(2);
+        List<RuntimePlan<Item>> arguments = new ArrayList<>(2);
         arguments.add(firstArg);
         arguments.add(secondArg);
 
-        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
-        );
+        RuntimePlan<Item> functionCall = NamedFunctions
+            .buildFunctionItemCallIterator(
+                functionItem,
+                this.staticContext,
+                ExecutionMode.LOCAL,
+                arguments,
+                false
+            );
         return functionCall.materialize(context);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator1.isOpen()) {
-            this.arrayIterator1.close();
-        }
-        if (this.arrayIterator2.isOpen()) {
-            this.arrayIterator2.close();
-        }
-        if (this.functionIterator.isOpen()) {
-            this.functionIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:for-each-pair is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:for-each-pair is currently supported only in local execution mode."
-        );
     }
 }

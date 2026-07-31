@@ -20,6 +20,12 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -30,15 +36,16 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -46,19 +53,20 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
-public class ArrayUnboxingIterator extends HybridRuntimeIterator {
+public class ArrayUnboxingIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private final RuntimePlan<Item> iterator;
 
     public ArrayUnboxingIterator(
-            RuntimeIterator arrayIterator,
+            RuntimePlan<Item> arrayIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(arrayIterator), staticContext);
@@ -66,70 +74,29 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next call in Array Unboxing", getMetadata());
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    private void setNextResult() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isArray()) {
-                if (0 < item.getSize()) {
-                    if (item.isArrayOfItems()) {
-                        this.nextResults.addAll(item.getItemMembers());
-                    } else {
-                        for (java.util.List<Item> member : item.getSequenceMembers()) {
-                            this.nextResults.addAll(member);
-                        }
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isArray()) {
+                        return List.<Item>of().iterator();
                     }
-                    break;
-                }
-            }
-        }
-
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
+                    if (item.isArrayOfItems()) {
+                        return item.getItemMembers().iterator();
+                    }
+                    return item.getSequenceMembers().stream().flatMap(List::stream).iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
-    }
-
-    @Override
-    public boolean implementsDataFrames() {
-        return true;
     }
 
     @Override
@@ -138,7 +105,10 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             // unboxing only available for the FOR clause
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext newContext = NativeQueryRuntimePlan.generate(
+            this.iterator,
+            nativeClauseContext
+        );
         if (newContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -183,12 +153,13 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     }
 
     public NativeClauseContext generateArrayReferenceQuery(NativeClauseContext nativeClauseContext) {
-        return this.iterator.generateNativeQuery(nativeClauseContext);
+        return NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject

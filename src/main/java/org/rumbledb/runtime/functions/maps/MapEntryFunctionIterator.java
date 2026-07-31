@@ -1,15 +1,14 @@
 package org.rumbledb.runtime.functions.maps;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:entry}:
@@ -19,16 +18,16 @@ import org.rumbledb.runtime.RuntimeIterator;
  * <li>returns a map containing a single key/value binding</li>
  * </ul>
  */
-public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapEntryFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator keyIterator;
-    private final RuntimeIterator valueIterator;
+    private final RuntimePlan<Item> keyIterator;
+    private final RuntimePlan<Item> valueIterator;
 
     public MapEntryFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -37,12 +36,15 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item key = this.keyIterator.materializeFirstItemOrNull(dynamicContext);
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Item key = this.keyIterator.materializeFirstOrNull(dynamicContext);
 
-        List<Item> valueSequence = new ArrayList<>();
-        this.valueIterator.materialize(dynamicContext, valueSequence);
+        List<Item> valueSequence = this.valueIterator.materialize(dynamicContext);
 
+        return createEntry(key, valueSequence);
+    }
+
+    private Item createEntry(Item key, List<Item> valueSequence) {
         return ItemFactory.getInstance()
             .createMapItem(
                 key,
@@ -51,4 +53,3 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             );
     }
 }
-

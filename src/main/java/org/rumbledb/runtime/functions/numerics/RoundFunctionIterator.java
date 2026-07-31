@@ -26,9 +26,10 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -36,22 +37,32 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.function.IntSupplier;
 
-public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public RoundFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Item value = this.getChild(0).materializeFirstOrNull(dynamicContext);
+        return evaluate(
+            value,
+            () -> this.getChildren().size() > 1
+                ? this.getChild(1).materializeFirstOrNull(dynamicContext).getIntValue()
+                : 0
+        );
+    }
+
+    private Item evaluate(Item value, IntSupplier precisionSupplier) {
         if (value == null) {
             return null;
         }
@@ -73,16 +84,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         ) {
             return value;
         }
-        int precision;
-        if (this.getChildren().size() > 1) {
-            precision = this.getChild(1)
-                .materializeFirstItemOrNull(dynamicContext)
-                .getIntValue();
-        }
-        // if second param is not given precision is set as 0 (rounds to a whole number)
-        else {
-            precision = 0;
-        }
+        int precision = precisionSupplier.getAsInt();
         try {
             if (value.isInt()) {
                 BigDecimal bd = new BigDecimal(value.getIntValue()).setScale(precision, RoundingMode.HALF_UP);
@@ -142,7 +144,10 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext value = NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

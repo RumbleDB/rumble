@@ -24,31 +24,40 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Map;
 import java.util.stream.Stream;
 
 
-public class SwitchRuntimeIterator extends HybridRuntimeIterator {
+public class SwitchRuntimeIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator testField;
-    private final Map<RuntimeIterator, RuntimeIterator> cases;
-    private final RuntimeIterator defaultReturn;
-    private RuntimeIterator matchingIterator = null;
+    private final RuntimePlan<Item> testField;
+    private final Map<RuntimePlan<Item>, RuntimePlan<Item>> cases;
+    private final RuntimePlan<Item> defaultReturn;
 
     public SwitchRuntimeIterator(
-            RuntimeIterator test,
-            Map<RuntimeIterator, RuntimeIterator> cases,
-            RuntimeIterator defaultReturn,
+            RuntimePlan<Item> test,
+            Map<RuntimePlan<Item>, RuntimePlan<Item>> cases,
+            RuntimePlan<Item> defaultReturn,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -64,34 +73,92 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal() {
-        this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.matchingIterator.hasNext();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new SwitchLocalCursor(this.testField, this.cases, this.defaultReturn, context, getMetadata());
     }
 
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item nextItem = this.matchingIterator.next();
-            this.hasNext = this.matchingIterator.hasNext();
-            return nextItem;
+    private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
+        private final RuntimePlan<Item> testPlan;
+        private final Map<RuntimePlan<Item>, RuntimePlan<Item>> cases;
+        private final RuntimePlan<Item> defaultPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> selected;
+
+        private SwitchLocalCursor(
+                RuntimePlan<Item> testPlan,
+                Map<RuntimePlan<Item>, RuntimePlan<Item>> cases,
+                RuntimePlan<Item> defaultPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.testPlan = testPlan;
+            this.cases = cases;
+            this.defaultPlan = defaultPlan;
+            this.context = context;
+            this.metadata = metadata;
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in switch statement",
-                getMetadata()
-        );
+
+        @Override
+        protected void openLocal() {
+            this.selected = selectApplicablePlan().getCursor(this.context);
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.selected.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            return this.selected.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.selected != null) {
+                this.selected.close();
+                this.selected = null;
+            }
+        }
+
+        private RuntimePlan<Item> selectApplicablePlan() {
+            Item testValue = this.testPlan.materializeFirstOrNull(this.context);
+            validateAtomic(testValue, "Switch condition");
+            for (RuntimePlan<Item> caseKey : this.cases.keySet()) {
+                Item caseValue = caseKey.materializeFirstOrNull(this.context);
+                validateAtomic(caseValue, "Switch case");
+                if (testValue == null) {
+                    if (caseValue == null) {
+                        return this.cases.get(caseKey);
+                    }
+                    continue;
+                }
+                if (caseValue == null) {
+                    continue;
+                }
+                if (AtomicDeepEqual.deepEqual(testValue, caseValue)) {
+                    return this.cases.get(caseKey);
+                }
+            }
+            return this.defaultPlan;
+        }
+
+        private void validateAtomic(Item item, String role) {
+            if (item != null && item.isArray()) {
+                throw new NonAtomicKeyException("Invalid args. " + role + " cannot be an array type", this.metadata);
+            }
+            if (item != null && item.isObject()) {
+                throw new NonAtomicKeyException("Invalid args. " + role + " cannot be an object type", this.metadata);
+            }
+        }
     }
 
-    @Override
-    public void closeLocal() {
-        this.matchingIterator.close();
-    }
-
-    private RuntimeIterator selectApplicableIterator(
+    private RuntimePlan<Item> selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
-        Item testValue = this.testField.materializeFirstItemOrNull(dynamicContext);
+        Item testValue = this.testField.materializeFirstOrNull(dynamicContext);
 
         if (testValue != null) {
             if (testValue.isArray()) {
@@ -107,8 +174,8 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             }
         }
 
-        for (RuntimeIterator caseKey : this.cases.keySet()) {
-            Item caseValue = caseKey.materializeFirstItemOrNull(dynamicContext);
+        for (RuntimePlan<Item> caseKey : this.cases.keySet()) {
+            Item caseValue = caseKey.materializeFirstOrNull(dynamicContext);
 
             if (caseValue != null) {
                 if (caseValue.isArray()) {
@@ -144,26 +211,20 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
+        RuntimePlan<Item> iterator = selectApplicableIterator(
+            dynamicContext
+        );
 
         return iterator.getRDD(dynamicContext);
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
+        RuntimePlan<Item> iterator = selectApplicableIterator(
+            dynamicContext
+        );
 
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
-
-        return iterator.getDataFrame(dynamicContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, dynamicContext);
     }
 }

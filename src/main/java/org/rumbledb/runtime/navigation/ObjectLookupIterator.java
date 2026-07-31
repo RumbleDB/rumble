@@ -20,10 +20,17 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.LogManager;
@@ -41,7 +48,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.InvalidSelectorException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
@@ -49,10 +55,13 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -63,33 +72,61 @@ import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class ObjectLookupIterator extends HybridRuntimeIterator {
+public class ObjectLookupIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final RuntimePlan<Item> iterator;
     private Item lookupKey;
     private boolean contextLookup;
-    private Item nextResult;
 
     public ObjectLookupIterator(
-            RuntimeIterator object,
-            RuntimeIterator lookupIterator,
+            RuntimePlan<Item> object,
+            RuntimePlan<Item> lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(object, lookupIterator), staticContext);
         this.iterator = object;
     }
 
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        String key;
+        if (this.getChild(1) instanceof ContextExpressionIterator) {
+            key = context.getVariableValues()
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0)
+                .getStringValue();
+        } else {
+            key = requireLookupKey(this.getChild(1).materialize(context));
+        }
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isObject()) {
+                        return List.<Item>of().iterator();
+                    }
+                    Item result = item.getItemByKey(key);
+                    return result == null ? List.<Item>of().iterator() : List.of(result).iterator();
+                },
+                getMetadata()
+        );
+    }
+
     private void initLookupKey(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.getChild(1);
+        RuntimePlan<Item> lookupIterator = this.getChild(1);
 
         this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
         if (!this.contextLookup) {
 
             try {
-                this.lookupKey = lookupIterator.materializeExactlyOneItem(context);
+                this.lookupKey = lookupIterator.materializeExactlyOne(context);
             } catch (NoItemException e) {
                 throw new InvalidSelectorException(
                         "Invalid Lookup Key; Object lookup can't be performed with no key.",
@@ -138,66 +175,44 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         }
     }
 
-    @Override
-    public void openLocal() {
-        initLookupKey(this.currentDynamicContextForLocalExecution);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
+    private String requireLookupKey(List<Item> values) {
+        if (values.isEmpty()) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Object lookup can't be performed with no key.",
+                    getMetadata()
+            );
         }
-        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isObject()) {
-                if (!this.contextLookup) {
-                    Item result = item.getItemByKey(this.lookupKey.getStringValue());
-                    if (result != null) {
-                        this.nextResult = result;
-                        break;
-                    }
-                } else {
-                    Item contextItem = this.currentDynamicContextForLocalExecution.getVariableValues()
-                        .getLocalVariableValue(
-                            Name.CONTEXT_ITEM,
-                            getMetadata()
-                        )
-                        .get(0);
-                    this.nextResult = item.getItemByKey(contextItem.getStringValue());
-                }
-            }
+        if (values.size() > 1) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Object lookup can't be performed with multiple keys.",
+                    getMetadata()
+            );
         }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
+        Item key = values.get(0);
+        if (key.isNull() || key.isObject() || key.isArray()) {
+            throw new UnexpectedTypeException(
+                    "Type error; Object selector can't be converted to a string: " + key.serialize(),
+                    getMetadata()
+            );
         }
+        if (
+            key.isBoolean()
+                || key.isDecimal()
+                || key.isDouble()
+                || key.isInt()
+                || key.isInteger()
+                || key.isString()
+        ) {
+            return key.getStringValue();
+        }
+        throw new UnexpectedTypeException(
+                "Non string object lookup for " + key.serialize(),
+                getMetadata()
+        );
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         initLookupKey(dynamicContext);
         String key;
@@ -219,16 +234,11 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
-        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
-            .getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> keyDependencies =
+            VariableDependencyRuntimePlan.get(this.getChild(1));
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
@@ -274,7 +284,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 );
             }
         } else {
-            newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+            newContext = NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
             if (newContext != NativeClauseContext.NoNativeQuery) {
                 leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(
                     newContext.getResultingType().getItemType(),
@@ -382,8 +392,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         initLookupKey(context);
         String key;
         if (this.contextLookup) {

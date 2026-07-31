@@ -21,21 +21,22 @@
 package org.rumbledb.runtime;
 
 
-import lombok.Getter;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
@@ -44,83 +45,47 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple> {
+public abstract class TupleRuntimePlan
+        extends
+            RuntimePlan<FlworTuple>
+        implements
+            LocalRuntimePlan<FlworTuple>,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
-
-    @Getter
-    private final RuntimeStaticContext staticContext;
-    protected final RuntimeTupleIterator child;
-
-    /**
-     * Limit on how deep the evaluation occurs.
-     * If it is 0, the clause ignores its child (this is for join purposes).
-     */
-    @Getter
+    protected final TupleRuntimePlan child;
     protected int evaluationDepthLimit;
 
-    protected transient DynamicContext currentDynamicContext;
-    protected transient boolean hasNext;
-    @Getter
-    protected transient boolean isOpen;
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
-    protected RuntimeTupleIterator(
-            RuntimeTupleIterator child,
+    protected TupleRuntimePlan(
+            TupleRuntimePlan child,
             RuntimeStaticContext staticContext
     ) {
-        this.staticContext = staticContext;
-        this.isOpen = false;
+        super(staticContext);
         this.child = child;
         this.evaluationDepthLimit = -1;
     }
 
-    public RuntimeTupleIterator getChildIterator() {
+    public TupleRuntimePlan getChildIterator() {
         return this.child;
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        if (this.isOpen) {
-            throw new IteratorFlowException(
-                    "Runtime tuple iterator cannot be opened twice" + ", this: " + this.toString(),
-                    getMetadata()
-            );
-        }
-        this.isOpen = true;
-        this.hasNext = true;
-        this.currentDynamicContext = context;
-    }
-
-    @Override
-    public void close() {
-        this.isOpen = false;
-        this.child.close();
-    }
-
-
-    @Override
-    public boolean hasNext() {
-        return this.hasNext;
-    }
-
-    @Override
-    public abstract FlworTuple next();
-
-    public ExceptionMetadata getMetadata() {
-        return this.staticContext.getMetadata();
-    }
-
-    public ExecutionMode getHighestExecutionMode() {
+    protected final ExecutionMode getHighestExecutionMode() {
         return this.staticContext.getExecutionMode();
     }
 
-    public RumbleRuntimeConfiguration getConfiguration() {
+    protected final RumbleRuntimeConfiguration getConfiguration() {
         return this.staticContext.getConfiguration();
     }
+
+    public final boolean isUpdating() {
+        return this.staticContext.isUpdating();
+    }
+
+    public abstract Cursor<FlworTuple> createNativeCursor(DynamicContext context);
 
     public boolean isDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
@@ -128,18 +93,6 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         }
         return this.staticContext.getExecutionMode().isDataFrame();
     }
-
-    /**
-     * Obtains the dataframe from the child clause.
-     * It is possible, with the second parameter, to specify the variables it needs to project the others away,
-     * or that only a count is needed for a specific variable, which allows projecting away the actual items.
-     *
-     * @param context the dynamic context in which the evaluate the child clause's dataframe.
-     * @return the DataFrame with the tuples returned by the child clause.
-     */
-    public abstract FlworDataFrame getDataFrame(
-            DynamicContext context
-    );
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.
@@ -209,6 +162,16 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
     }
 
     /**
+     * Returns the limit on how deep the evaluation occurs.
+     * If it is 0, the clause ignores its child (this is for join purposes).
+     * 
+     * @return The evaluation depth limit. -1 if none.
+     */
+    public int getEvaluationDepthLimit() {
+        return this.evaluationDepthLimit;
+    }
+
+    /**
      * Sets the limit on how deep the evaluation occurs.
      * 0 to stop here.
      * 
@@ -268,7 +231,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
      * 
      * @return The evaluation depth limit. -1 if none.
      */
-    public RuntimeTupleIterator getSubtreeBeyondLimit(int limit) {
+    public TupleRuntimePlan getSubtreeBeyondLimit(int limit) {
         if (this.child == null) {
             throw new OurBadException(
                     "Trying to get FLWOR clause subtree at depth " + limit + " but there are not further descendants."
@@ -365,7 +328,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         buffer.append("\n");
 
         if (this.child != null) {
-            this.child.print(buffer, indent + 1);
+            RuntimePlanDiagnostics.print(this.child, buffer, indent + 1);
         }
     }
 
@@ -388,4 +351,12 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         return NativeClauseContext.NoNativeQuery;
     }
 
+    /**
+     * Returns the runtime static context of the clause.
+     * 
+     * @return the static context of the clause.
+     */
+    public RuntimeStaticContext getStaticContext() {
+        return this.staticContext;
+    }
 }

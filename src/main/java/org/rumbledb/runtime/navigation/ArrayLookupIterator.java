@@ -20,6 +20,12 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -35,11 +41,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -47,21 +56,24 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
-public class ArrayLookupIterator extends HybridRuntimeIterator {
+public class ArrayLookupIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final RuntimePlan<Item> iterator;
     private int lookup;
-    private Item nextResult;
-    private java.util.Queue<Item> lookupResultQueue;
 
     public ArrayLookupIterator(
-            RuntimeIterator array,
-            RuntimeIterator iterator,
+            RuntimePlan<Item> array,
+            RuntimePlan<Item> iterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(array, iterator), staticContext);
@@ -69,39 +81,33 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            if (this.lookupResultQueue != null && !this.lookupResultQueue.isEmpty()) {
-                Item result = this.lookupResultQueue.poll();
-                if (this.lookupResultQueue.isEmpty()) {
-                    this.lookupResultQueue = null;
-                    setNextResult();
-                }
-                return result;
-            }
-            Item result = this.nextResult;
-            setNextResult();
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        int position = requireLookupPosition(
+            this.getChild(1).materialize(context)
+        );
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isArray() || position <= 0 || position > item.getSize()) {
+                        return List.<Item>of().iterator();
+                    }
+                    if (item.isArrayOfItems()) {
+                        return List.of(item.getItemAt(position - 1)).iterator();
+                    }
+                    return item.getSequenceAt(position - 1).iterator();
+                },
+                getMetadata()
+        );
     }
 
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
 
     private void initLookupPosition(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.getChild(1);
+        RuntimePlan<Item> lookupIterator = this.getChild(1);
 
         try {
-            Item lookupExpression = lookupIterator.materializeExactlyOneItem(context);
+            Item lookupExpression = lookupIterator.materializeExactlyOne(context);
             if (!lookupExpression.isNumeric()) {
                 throw new UnexpectedTypeException(
                         "Type error; Non numeric array lookup for : "
@@ -123,50 +129,31 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         }
     }
 
-    @Override
-    public void openLocal() {
-        initLookupPosition(this.currentDynamicContextForLocalExecution);
-        this.lookupResultQueue = null;
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isArray()) {
-                if (this.lookup > 0 && this.lookup <= item.getSize()) {
-                    if (item.isArrayOfItems()) {
-                        this.nextResult = item.getItemAt(this.lookup - 1);
-                    } else {
-                        java.util.List<Item> memberSeq = item.getSequenceAt(this.lookup - 1);
-                        if (!memberSeq.isEmpty()) {
-                            this.nextResult = memberSeq.get(0);
-                            if (memberSeq.size() > 1) {
-                                this.lookupResultQueue = new java.util.LinkedList<>(
-                                        memberSeq.subList(1, memberSeq.size())
-                                );
-                            }
-                        }
-                    }
-                    if (this.nextResult != null) {
-                        break;
-                    }
-                }
-            }
+    private int requireLookupPosition(List<Item> values) {
+        if (values.isEmpty()) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Array lookup can't be performed with no key.",
+                    getMetadata()
+            );
         }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
+        if (values.size() > 1) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Array lookup can't be performed with multiple keys.",
+                    getMetadata()
+            );
         }
+        Item lookupExpression = values.get(0);
+        if (!lookupExpression.isNumeric()) {
+            throw new UnexpectedTypeException(
+                    "Type error; Non numeric array lookup for : " + lookupExpression.serialize(),
+                    getMetadata()
+            );
+        }
+        return lookupExpression.castToIntValue();
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         initLookupPosition(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this.lookup);
@@ -176,21 +163,19 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext newContext = NativeQueryRuntimePlan.generate(
+            this.iterator,
+            nativeClauseContext
+        );
         if (newContext != NativeClauseContext.NoNativeQuery) {
             if (SequenceType.Arity.OneOrMore.isSubtypeOf(newContext.getResultingType().getArity())) {
                 return NativeClauseContext.NoNativeQuery;
             }
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
-            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
-                .getVariableDependencies();
+            Map<Name, DynamicContext.VariableDependency> keyDependencies =
+                VariableDependencyRuntimePlan.get(this.getChild(1));
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;
@@ -254,8 +239,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();

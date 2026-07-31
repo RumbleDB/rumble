@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -18,24 +17,23 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
-public class ReplaceExpressionIterator extends HybridRuntimeIterator {
+public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator mainIterator;
-    private final RuntimeIterator locatorIterator;
-    private final RuntimeIterator replacerIterator;
+    private final RuntimePlan<Item> mainIterator;
+    private final RuntimePlan<Item> locatorIterator;
+    private final RuntimePlan<Item> replacerIterator;
 
     public ReplaceExpressionIterator(
-            RuntimeIterator mainIterator,
-            RuntimeIterator locatorIterator,
-            RuntimeIterator replacerIterator,
+            RuntimePlan<Item> mainIterator,
+            RuntimePlan<Item> locatorIterator,
+            RuntimePlan<Item> replacerIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -49,41 +47,19 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
-    }
-
-    @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
         Item target;
         Item locator;
         Item content;
         try {
-            target = this.mainIterator.materializeExactlyOneItem(context);
-            locator = this.locatorIterator.materializeExactlyOneItem(context);
+            target = this.mainIterator.materializeExactlyOne(context);
+            locator = this.locatorIterator.materializeExactlyOne(context);
         } catch (NoItemException e) {
-            throw new UpdateTargetIsEmptySeqException("Target of replace expression is empty", this.getMetadata());
+            throw new UpdateTargetIsEmptySeqException(
+                    "Target of replace expression is empty",
+                    this.getRuntimeStaticContext().getMetadata()
+            );
         } catch (MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }
@@ -108,40 +84,56 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
             if (!locator.isString()) {
                 throw new CannotCastUpdateSelectorException(
                         "Replace expression selection cannot be cast to String type",
-                        this.getMetadata()
+                        this.getRuntimeStaticContext().getMetadata()
                 );
             }
             if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+                throw new ModifiesImmutableValueException(
+                        "Attempt to modify immutable target",
+                        this.getRuntimeStaticContext().getMetadata()
+                );
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
-                        this.getMetadata()
+                        this.getRuntimeStaticContext().getMetadata()
                 );
             }
-            up = factory.createReplaceInObjectPrimitive(target, locator, content, this.getMetadata());
+            up = factory.createReplaceInObjectPrimitive(
+                target,
+                locator,
+                content,
+                this.getRuntimeStaticContext().getMetadata()
+            );
         } else if (target.isArray()) {
             if (!locator.isInt()) {
                 throw new CannotCastUpdateSelectorException(
                         "Replace expression selection cannot be cast to Int type",
-                        this.getMetadata()
+                        this.getRuntimeStaticContext().getMetadata()
                 );
             }
             if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+                throw new ModifiesImmutableValueException(
+                        "Attempt to modify immutable target",
+                        this.getRuntimeStaticContext().getMetadata()
+                );
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
-                        this.getMetadata()
+                        this.getRuntimeStaticContext().getMetadata()
                 );
             }
-            up = factory.createReplaceInArrayPrimitive(target, locator, content, this.getMetadata());
+            up = factory.createReplaceInArrayPrimitive(
+                target,
+                locator,
+                content,
+                this.getRuntimeStaticContext().getMetadata()
+            );
         } else {
             throw new InvalidUpdateTargetException(
                     "Replace expression target must be a single array or object",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 

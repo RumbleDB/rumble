@@ -22,8 +22,9 @@ package org.rumbledb.runtime.flwor.expression;
 
 
 import lombok.Getter;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -36,12 +37,12 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private final Name variableName;
-    private final RuntimeIterator expression;
+    private final RuntimePlan<Item> expression;
     private final String collationURI;
     private final SequenceType sequenceType;
 
     public GroupByClauseSparkIteratorExpression(
-            RuntimeIterator expression,
+            RuntimePlan<Item> expression,
             Name variableName,
             String collationURI,
             SequenceType sequenceType

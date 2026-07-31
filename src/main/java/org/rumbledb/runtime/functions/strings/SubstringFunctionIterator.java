@@ -20,39 +20,42 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class SubstringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public SubstringFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
+
+    private Item evaluate(DynamicContext context) {
         String result;
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        Item indexItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        Item indexItem = this.getChild(1).materializeFirstOrNull(context);
         if (indexItem == null) {
             throw new UnexpectedTypeException(
                     "Type error; Start index parameter can't be empty sequence ",
@@ -64,8 +67,7 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return ItemFactory.getInstance().createStringItem("");
         }
         if (this.getChildren().size() > 2) {
-            Item endIndexItem = this.getChild(2)
-                .materializeFirstItemOrNull(context);
+            Item endIndexItem = this.getChild(2).materializeFirstOrNull(context);
             if (endIndexItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; End index parameter can't be empty sequence ",

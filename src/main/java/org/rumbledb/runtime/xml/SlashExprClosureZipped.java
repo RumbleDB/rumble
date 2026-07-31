@@ -5,7 +5,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import scala.Tuple2;
 
 import java.io.Serial;
@@ -18,20 +19,20 @@ public class SlashExprClosureZipped implements FlatMapFunction<Tuple2<Item, Long
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator rightIterator;
+    private final RuntimePlan<Item> rightIterator;
     private final DynamicContext dynamicContext;
     private final long contextSize;
 
     public SlashExprClosureZipped(
-            RuntimeIterator rightIterator,
+            RuntimePlan<Item> rightIterator,
             DynamicContext dynamicContext,
             long contextSize
     ) {
         this.rightIterator = rightIterator;
-        if (this.rightIterator.isSparkJobNeeded()) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.rightIterator)) {
             throw new JobWithinAJobException(
                     "The right-hand side of this slash expression requires parallel execution, but the slash expression is itself executed in parallel.",
-                    this.rightIterator.getMetadata()
+                    this.rightIterator.getRuntimeStaticContext().getMetadata()
             );
         }
         this.dynamicContext = dynamicContext;

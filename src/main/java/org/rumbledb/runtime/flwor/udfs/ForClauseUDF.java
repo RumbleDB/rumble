@@ -25,9 +25,10 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -39,22 +40,22 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
     private static final long serialVersionUID = 1L;
 
     private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private final RuntimePlan<Item> expression;
 
     private List<Item> nextResult;
     private List<byte[]> results;
 
     public ForClauseUDF(
-            RuntimeIterator expression,
+            RuntimePlan<Item> expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columnNames
     ) {
         this.dataFrameContext = new DataFrameContext(context, columnNames);
         this.expression = expression;
-        if (this.expression.isSparkJobNeeded()) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -68,10 +69,8 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
 
         this.results.clear();
         // apply expression in the dynamic context
-        this.expression.open(this.dataFrameContext.getContext());
-        while (this.expression.hasNext()) {
+        for (Item nextItem : this.expression.materialize(this.dataFrameContext.getContext())) {
             this.nextResult.clear();
-            Item nextItem = this.expression.next();
             this.nextResult.add(nextItem);
             this.results.add(
                 FlworDataFrameUtils.serializeItemList(
@@ -81,7 +80,6 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
                 )
             );
         }
-        this.expression.close();
 
         return this.results;
     }

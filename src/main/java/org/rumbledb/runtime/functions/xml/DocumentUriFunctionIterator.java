@@ -21,12 +21,12 @@ package org.rumbledb.runtime.functions.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -62,56 +62,34 @@ public class DocumentUriFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<Item> resultItems;
-    private int currentIndex;
-
-    public DocumentUriFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public DocumentUriFunctionIterator(
+            List<RuntimePlan<Item>> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.currentIndex = 0;
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.flatMapFirstArgumentOrContext(
+            this.getChildren(),
+            context,
+            this::evaluate,
+            getMetadata()
+        );
+    }
 
-        Item node = getContextNode();
-
-        // If the argument is supplied and is the empty sequence, return the empty sequence.
+    private List<Item> evaluate(Item node) {
         if (node == null) {
-            this.resultItems = null;
-            this.hasNext = false;
-            return;
+            return List.of();
         }
-
-        // Check if the item is an XML node; otherwise, raise a type error.
         if (!node.isNode()) {
             throw new UnexpectedTypeException(
                     "The argument must be a reference to an XML node",
                     getMetadata()
             );
         }
-
-        // Delegate to the XDM 3.1 dm:document-uri accessor implemented by XML node item classes.
-        // See Item.documentUri() and XDM 3.1 Section 5.4.
-        this.resultItems = node.documentUri();
-        this.hasNext = this.resultItems != null && !this.resultItems.isEmpty();
-    }
-
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " document-uri function",
-                    getMetadata()
-            );
-        }
-
-        Item result = this.resultItems.get(this.currentIndex);
-        this.currentIndex++;
-        if (this.currentIndex >= this.resultItems.size()) {
-            this.hasNext = false;
-        }
-        return result;
+        return node.documentUri();
     }
 
     /**
@@ -119,16 +97,4 @@ public class DocumentUriFunctionIterator extends LocalFunctionCallIterator {
      * If no parameters are provided, uses the context item.
      * If a parameter is provided, uses the first parameter.
      */
-    private Item getContextNode() {
-        if (this.getChildren().isEmpty()) {
-            // No argument provided, use context item
-            return this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0);
-        }
-        // Argument provided, use first parameter
-        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-    }
 }
-
-

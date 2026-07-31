@@ -20,37 +20,32 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.RuntimePlan;
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
-public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
+public class ArrayTailFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private Item resultItem;
-    private boolean hasProducedResult;
+    private final RuntimePlan<Item> arrayIterator;
 
     public ArrayTailFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -58,32 +53,18 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
             throw new OurBadException("array:tail must have exactly one argument.");
         }
         this.arrayIterator = arguments.get(0);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
+
 
     @Override
-    protected void openLocal() {
-        this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return tailArgument(this.arrayIterator.materialize(context));
     }
 
-    private void initializeResult(DynamicContext context) {
-        Item arrayItem;
-        try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:tail expects exactly one array argument.",
-                    getMetadata()
-            );
+    private Item tail(Item arrayItem) {
+        if (arrayItem == null) {
+            return null;
         }
-
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; argument to array:tail must be an array.",
@@ -100,65 +81,30 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
         }
 
         if (size == 1) {
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(Collections.emptyList(), false);
-            return;
         }
 
         if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createSequenceArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+    private Item tailArgument(List<Item> items) {
+        if (items.size() > 1) {
+            throw new UnexpectedTypeException(
+                    "array:tail expects exactly one array argument.",
+                    getMetadata()
+            );
         }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:tail is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:tail is currently supported only in local execution mode."
-        );
+        return tail(items.isEmpty() ? null : items.get(0));
     }
 }
-

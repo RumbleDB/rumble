@@ -6,8 +6,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -19,23 +20,23 @@ public class GenericLetClauseUDF<T> implements UDF1<Row, T> {
     private static final long serialVersionUID = 1L;
 
     private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private final RuntimePlan<Item> expression;
     private String classSimpleName;
 
     private List<Item> nextResult;
 
     public GenericLetClauseUDF(
-            RuntimeIterator expression,
+            RuntimePlan<Item> expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columns,
             String classSimpleName
     ) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
-        if (this.expression.isSparkJobNeeded()) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -47,7 +48,8 @@ public class GenericLetClauseUDF<T> implements UDF1<Row, T> {
     public T call(Row row) {
         this.dataFrameContext.setFromRow(row);
 
-        this.expression.materialize(this.dataFrameContext.getContext(), this.nextResult);
+        this.nextResult.clear();
+        this.nextResult.addAll(this.expression.materialize(this.dataFrameContext.getContext()));
 
         return toDFValue();
     }

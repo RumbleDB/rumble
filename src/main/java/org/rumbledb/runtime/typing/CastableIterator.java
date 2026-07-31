@@ -9,8 +9,8 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -19,15 +19,14 @@ import org.rumbledb.types.SequenceType.Arity;
 import java.io.Serial;
 import java.util.Collections;
 
-
-public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
+public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
+    private final RuntimePlan<Item> child;
     private final SequenceType sequenceType;
 
     public CastableIterator(
-            RuntimeIterator child,
+            RuntimePlan<Item> child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -37,13 +36,23 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
+    public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(dynamicContext, getMetadata());
+        return evaluate(this.child, this.sequenceType, this.staticContext, getMetadata(), dynamicContext);
+    }
+
+    private static Item evaluate(
+            RuntimePlan<Item> child,
+            SequenceType sequenceType,
+            RuntimeStaticContext staticContext,
+            ExceptionMetadata metadata,
+            DynamicContext dynamicContext
+    ) {
+        if (!sequenceType.isResolved()) {
+            sequenceType.resolve(dynamicContext, metadata);
         }
-        ItemType targetItemType = this.sequenceType.getItemType();
+        ItemType targetItemType = sequenceType.getItemType();
         boolean validCastTarget =
             targetItemType.isAtomicItemType()
                 || (targetItemType.isUnionType()
@@ -53,14 +62,14 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
                     "The type "
                         + targetItemType.getIdentifierString()
                         + " is not atomic. Castable can only be used with atomic types.",
-                    getMetadata()
+                    metadata
             );
         }
         Item item;
         try {
-            item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
+            item = child.materializeAtMostOne(dynamicContext);
             if (item != null && !item.getDynamicType().isResolved()) {
-                item.getDynamicType().resolve(dynamicContext, getMetadata());
+                item.getDynamicType().resolve(dynamicContext, metadata);
             }
         } catch (MoreThanOneItemException e) {
             return ItemFactory.getInstance().createBooleanItem(false);
@@ -68,16 +77,16 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
 
         if (item == null) {
             return ItemFactory.getInstance()
-                .createBooleanItem(this.sequenceType.getArity().equals(Arity.OneOrZero));
+                .createBooleanItem(sequenceType.getArity().equals(Arity.OneOrZero));
         }
 
-        checkInvalidCastable(item, getMetadata(), this.sequenceType.getItemType());
+        checkInvalidCastable(item, metadata, sequenceType.getItemType());
         try {
             Item res = CastIterator.castItemToType(
                 item,
-                this.sequenceType.getItemType(),
-                getMetadata(),
-                this.staticContext
+                sequenceType.getItemType(),
+                metadata,
+                staticContext
             );
             return ItemFactory.getInstance()
                 .createBooleanItem(res != null);

@@ -20,8 +20,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -29,25 +29,25 @@ import java.util.List;
 /**
  * W3C map:size function.
  */
-public class MapSizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapSizeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public MapSizeFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item map = this.getChild(0).materializeFirstItemOrNull(context);
-        if (map == null) {
-            return null;
-        }
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item map = this.getChild(0).materializeFirstOrNull(context);
+        return map == null ? null : size(map);
+    }
+
+    private static Item size(Item map) {
         return ItemFactory.getInstance().createIntItem(map.getSize());
     }
 }
-

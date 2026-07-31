@@ -24,26 +24,27 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
+import java.util.List;
 
-public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class StringRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private final Item item;
 
     public StringRuntimeIterator(String value, RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
         // String unescaping is now handled in the translation visitor
         this.item = ItemFactory.getInstance().createStringItem(value);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return this.item;
     }
 

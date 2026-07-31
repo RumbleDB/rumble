@@ -20,43 +20,45 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 import java.util.regex.Matcher;
 
-public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MatchesFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public MatchesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item regexpItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
+
+    private Item evaluate(DynamicContext context) {
+        Item regexpItem = this.getChild(1).materializeFirstOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         if (stringItem == null) {
             stringItem = ItemFactory.getInstance().createStringItem("");
         }
         String pattern = regexpItem.getStringValue();
         String flags = null;
         if (this.getChildren().size() == 3) {
-            Item flagsItem = this.getChild(2)
-                .materializeFirstItemOrNull(context);
+            Item flagsItem = this.getChild(2).materializeFirstOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }

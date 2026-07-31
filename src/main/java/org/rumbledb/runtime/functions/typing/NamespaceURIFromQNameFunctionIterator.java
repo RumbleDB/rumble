@@ -6,26 +6,30 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.QNameItem;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class NamespaceURIFromQNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class NamespaceURIFromQNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public NamespaceURIFromQNameFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        QNameItem qnameItem = (QNameItem) this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(this.getChild(0).materializeFirstOrNull(context));
+    }
+
+    private static Item evaluate(Item item) {
+        QNameItem qnameItem = (QNameItem) item;
         if (qnameItem == null) {
             return null;
         }

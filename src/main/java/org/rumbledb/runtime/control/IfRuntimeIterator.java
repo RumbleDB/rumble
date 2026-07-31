@@ -20,30 +20,42 @@
 
 package org.rumbledb.runtime.control;
 
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
 import java.util.List;
 
-public class IfRuntimeIterator extends HybridRuntimeIterator {
+public class IfRuntimeIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator selectedIterator = null;
+    private RuntimePlan<Item> selectedIterator = null;
 
     public IfRuntimeIterator(
-            RuntimeIterator condition,
-            RuntimeIterator branch,
-            RuntimeIterator elseBranch,
+            RuntimePlan<Item> condition,
+            RuntimePlan<Item> branch,
+            RuntimePlan<Item> elseBranch,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -57,35 +69,23 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal() {
-        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.selectedIterator.hasNext();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new ConditionalLocalCursor<>(
+                getChild(0),
+                getChild(1),
+                getChild(2),
+                context,
+                this.getRuntimeStaticContext().getMetadata()
+        );
     }
 
-    @Override
-    public void closeLocal() {
-        this.selectedIterator.close();
-    }
 
-    @Override
-    public Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException("No next item.");
-        }
-        Item result = this.selectedIterator.next();
-        this.hasNext = this.selectedIterator.hasNext();
-        return result;
-    }
 
-    @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    public RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
-        RuntimeIterator condition = this.getChild(0);
-        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
+    public RuntimePlan<Item> selectApplicableIterator(
+            DynamicContext dynamicContext
+    ) {
+        RuntimePlan<Item> condition = this.getChild(0);
+        boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(condition, dynamicContext);
         if (effectiveBooleanValue) {
             return this.getChild(1);
         } else {
@@ -94,21 +94,20 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
+        RuntimePlan<Item> iterator = selectApplicableIterator(
+            dynamicContext
+        );
         return iterator.getRDD(dynamicContext);
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
+        RuntimePlan<Item> iterator = selectApplicableIterator(
+            dynamicContext
+        );
 
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
-
-        return iterator.getDataFrame(dynamicContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, dynamicContext);
     }
 
     @Override
@@ -117,7 +116,7 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             return new PendingUpdateList();
         }
 
-        RuntimeIterator iterator = selectApplicableIterator(context);
-        return iterator.getPendingUpdateList(context);
+        RuntimePlan<Item> iterator = selectApplicableIterator(context);
+        return UpdatingRuntimePlan.get(iterator, context);
     }
 }

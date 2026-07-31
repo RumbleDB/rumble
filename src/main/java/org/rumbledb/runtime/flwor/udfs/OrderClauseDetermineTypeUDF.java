@@ -26,11 +26,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -68,14 +68,14 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     }
 
     private void populateFromExpression(OrderByClauseAnnotatedChildIterator expressionWithIterator) {
-        RuntimeIterator iterator = expressionWithIterator.getIterator();
+        RuntimePlan<Item> iterator = expressionWithIterator.getIterator();
         try {
             // apply expression in the dynamic context
-            this.nextItem = iterator.materializeAtMostOneItemOrNull(this.dataFrameContext.getContext());
+            this.nextItem = iterator.materializeAtMostOne(this.dataFrameContext.getContext());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Can not order by variables with sequences of multiple items.",
-                    expressionWithIterator.getIterator().getMetadata()
+                    expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -87,7 +87,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
         if (atomized.size() > 1) {
             throw new UnexpectedTypeException(
                     "Order by variable must atomize to at most one item.",
-                    expressionWithIterator.getIterator().getMetadata()
+                    expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata()
             );
         }
         if (atomized.isEmpty()) {
@@ -98,7 +98,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
         if (!this.nextItem.isAtomic()) {
             throw new UnexpectedTypeException(
                     "Order by variable must atomize to an atomic value.",
-                    expressionWithIterator.getIterator().getMetadata()
+                    expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata()
             );
         }
         this.nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(
@@ -107,7 +107,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
                 expressionWithIterator.getUri(),
                 expressionWithIterator.getIterator().getRuntimeStaticContext()
             ),
-            expressionWithIterator.getIterator().getMetadata()
+            expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata()
         );
         this.result.add(this.nextItem.getDynamicType().getName().getLocalName());
     }

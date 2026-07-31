@@ -18,8 +18,8 @@
  *
  */
 
-
 package org.rumbledb.runtime.functions.json;
+
 
 import com.google.gson.stream.JsonReader;
 import org.rumbledb.api.Item;
@@ -27,32 +27,34 @@ import org.rumbledb.cli.ConsoleOutput;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.items.parsing.JSONParsingOptions;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.io.StringReader;
 import java.util.List;
 
-public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ParseJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public ParseJsonFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item optionsItem = this.getChildren().size() > 1
-            ? this.getChild(1).materializeFirstItemOrNull(context)
-            : null;
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
+
+    private Item evaluate(DynamicContext context) {
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
+        Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstOrNull(context) : null;
         if (stringItem == null) {
             return null;
         }

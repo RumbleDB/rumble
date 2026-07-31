@@ -6,26 +6,29 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class HasChildrenFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class HasChildrenFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public HasChildrenFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item node = getContextNode(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(getContextNode(context));
+    }
+
+    private Item evaluate(Item node) {
         if (node == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
@@ -37,10 +40,11 @@ public class HasChildrenFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     private Item getContextNode(DynamicContext context) {
         if (!this.getChildren().isEmpty()) {
-            return this.getChild(0).materializeFirstItemOrNull(context);
+            return this.getChild(0).materializeFirstOrNull(context);
         }
         return context.getVariableValues()
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
             .get(0);
     }
+
 }

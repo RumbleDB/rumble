@@ -1,40 +1,41 @@
 package org.rumbledb.runtime.functions.arrays;
 
+
+
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.ArrayInvalidSubarrayLengthException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
-public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
+public class ArraySubarrayFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return computeResult(context);
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator startIterator;
-    private final RuntimeIterator lengthIterator;
-
-    private Item resultItem;
-    private boolean hasProducedResult;
+    private final RuntimePlan<Item> arrayIterator;
+    private final RuntimePlan<Item> startIterator;
+    private final RuntimePlan<Item> lengthIterator;
 
     public ArraySubarrayFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -44,36 +45,21 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
         this.arrayIterator = arguments.get(0);
         this.startIterator = arguments.get(1);
         this.lengthIterator = arguments.size() == 3 ? arguments.get(2) : null;
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
-    @Override
-    protected void openLocal() {
-        this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
-        this.startIterator.open(this.currentDynamicContextForLocalExecution);
-        if (this.lengthIterator != null) {
-            this.lengthIterator.open(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        Item arrayItem;
+    private Item computeResult(DynamicContext context) {
+        Item arrayItem = null;
         try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:subarray expects exactly one array argument.",
                     getMetadata()
             );
         }
-
+        if (arrayItem == null) {
+            return null;
+        }
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to array:subarray must be an array.",
@@ -129,31 +115,34 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
             }
             // TODO: optimization: if the subarray contains only singleton members, we can create an array of items
             // instead.
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
-            List<List<Item>> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
-            for (int i = fromIndex; i < toIndex; i++) {
-                slicedMembers.add(originalMembers.get(i));
-            }
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
+        List<List<Item>> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
+        for (int i = fromIndex; i < toIndex; i++) {
+            slicedMembers.add(originalMembers.get(i));
+        }
+        return ItemFactory.getInstance()
+            .createSequenceArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
-    private BigInteger materializeIntegerArgument(DynamicContext context, RuntimeIterator iterator, String label) {
-        Item item;
+    private BigInteger materializeIntegerArgument(
+            DynamicContext context,
+            RuntimePlan<Item> iterator,
+            String label
+    ) {
+        Item item = null;
         try {
-            item = iterator.materializeExactlyOneItem(context);
-        } catch (NoItemException | MoreThanOneItemException e) {
+            item = iterator.materializeAtMostOne(context);
+        } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:subarray expects exactly one " + label + " argument.",
                     getMetadata()
             );
         }
 
-        if (!item.isNumeric()) {
+        if (item == null || !item.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; " + label + " argument to array:subarray must be numeric.",
                     getMetadata()
@@ -165,54 +154,4 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
         }
         return BigInteger.valueOf(item.castToIntValue());
     }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        if (this.startIterator.isOpen()) {
-            this.startIterator.close();
-        }
-        if (this.lengthIterator != null && this.lengthIterator.isOpen()) {
-            this.lengthIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:subarray is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:subarray is currently supported only in local execution mode."
-        );
-    }
 }
-

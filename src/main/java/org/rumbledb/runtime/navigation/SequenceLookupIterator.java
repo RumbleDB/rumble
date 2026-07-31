@@ -27,10 +27,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
 
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -39,20 +41,19 @@ import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
+public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final RuntimePlan<Item> iterator;
     private final int position;
     private final int optimizationThreshold = 10_000_000; // do optimization only if position is above this threshold
 
     public SequenceLookupIterator(
-            RuntimeIterator sequence,
+            RuntimePlan<Item> sequence,
             int position,
             RuntimeStaticContext staticContext
     ) {
@@ -62,7 +63,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         if (this.position <= 0) {
             return null;
         }
@@ -71,38 +72,23 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             return lookupSmallPosition(dynamicContext);
         }
 
-        if (this.iterator.isDataFrame()) {
+        if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             return lookupDF(dynamicContext);
         }
 
-        if (this.iterator.isRDD()) {
+        if (this.iterator.getRuntimeStaticContext().getExecutionMode().isRDD()) {
             return lookupRDD(dynamicContext);
         }
 
         if (this.position <= 0) {
             return null;
         }
-        this.iterator.open(dynamicContext);
-        int currentPosition = 0;
-        Item result = null;
-        while (this.iterator.hasNext() && currentPosition < this.position) {
-            result = this.iterator.next();
-            ++currentPosition;
-        }
-        this.iterator.close();
-        if (currentPosition == this.position) {
-            return result;
-        }
-        return null;
+        List<Item> items = this.iterator.materializeAtMost(dynamicContext, this.position);
+        return items.size() == this.position ? items.get(this.position - 1) : null;
     }
 
     public Item lookupSmallPosition(DynamicContext dynamicContext) {
-        List<Item> materializedItems = new ArrayList<>();
-        this.iterator.materializeNFirstItems(
-            dynamicContext,
-            materializedItems,
-            this.position
-        );
+        List<Item> materializedItems = this.iterator.materializeAtMost(dynamicContext, this.position);
         if (materializedItems.size() >= this.position) {
             return materializedItems.get(this.position - 1);
         } else {
@@ -111,7 +97,10 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public Item lookupDF(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.iterator,
+            dynamicContext
+        );
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         df = df.evaluateSQL(
             String.format(
@@ -121,7 +110,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             ),
             df.getItemType()
         );
-        JavaRDD<Item> rdd = df.toRDD(this.getMetadata());
+        JavaRDD<Item> rdd = df.toRDD(this.getRuntimeStaticContext().getMetadata());
 
         List<Item> results = rdd.take(1);
         if (results.isEmpty()) {
@@ -154,16 +143,17 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE
                 && this.iterator instanceof CommaExpressionIterator childIterator
         ) {
-            List<RuntimeIterator> children = childIterator.getOperands();
+            List<RuntimePlan<Item>> children = childIterator.getOperands();
             if (
                 children.size() == 2
                     && children.get(0) instanceof ComparisonIterator
                     && children.get(1) instanceof BooleanRuntimeIterator
                     && this.position == 1
             ) {
-                NativeClauseContext childContext = children
-                    .get(0)
-                    .generateNativeQuery(nativeClauseContext);
+                NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
+                    children.get(0),
+                    nativeClauseContext
+                );
                 if (childContext == NativeClauseContext.NoNativeQuery) {
                     return NativeClauseContext.NoNativeQuery;
                 }
@@ -174,7 +164,10 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
                 );
             }
         }
-        NativeClauseContext childContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
+            this.iterator,
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

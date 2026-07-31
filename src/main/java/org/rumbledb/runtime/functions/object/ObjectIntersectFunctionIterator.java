@@ -27,9 +27,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -37,16 +36,16 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ObjectIntersectFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     /**
      *
      */
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final RuntimePlan<Item> iterator;
 
     public ObjectIntersectFunctionIterator(
-            List<RuntimeIterator> children,
+            List<RuntimePlan<Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
@@ -54,45 +53,9 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (!this.iterator.isRDDOrDataFrame()) {
-            List<Item> items = this.iterator.materialize(context);
-            LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
-            boolean firstItem = true;
-            for (Item item : items) {
-                // ignore non-object items
-                if (item.isObject()) {
-                    if (firstItem) {
-                        // add all key-value pairs of the first item
-                        for (String key : item.getStringKeys()) {
-                            Item value = item.getItemByKey(key);
-                            ArrayList<Item> valueList = new ArrayList<>();
-                            valueList.add(value);
-                            keyValuePairs.put(key, valueList);
-                        }
-                        firstItem = false;
-                    } else {
-                        // iterate over existing keys in the map of results
-                        Iterator<String> keyIterator = keyValuePairs.keySet().iterator();
-                        while (keyIterator.hasNext()) {
-                            String key = keyIterator.next();
-                            // if the new item doesn't contain the same keys
-                            if (!item.getStringKeys().contains(key)) {
-                                // remove the key from the map
-                                keyIterator.remove();
-                            } else {
-                                // add the matching key's value to the list
-                                Item value = item.getItemByKey(key);
-                                keyValuePairs.get(key).add(value);
-                            }
-                        }
-                    }
-                }
-            }
-
-            Item result = ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
-
-            return result;
+    public Item evaluateAtMostOne(DynamicContext context) {
+        if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            return intersect(this.iterator.materialize(context));
         }
 
         // Enclose object values into arrays.
@@ -110,5 +73,31 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     }
 
+    private Item intersect(List<Item> items) {
+        LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
+        boolean firstItem = true;
+        for (Item item : items) {
+            if (!item.isObject()) {
+                continue;
+            }
+            if (firstItem) {
+                for (String key : item.getStringKeys()) {
+                    keyValuePairs.put(key, new ArrayList<>(List.of(item.getItemByKey(key))));
+                }
+                firstItem = false;
+                continue;
+            }
+            Iterator<String> keyIterator = keyValuePairs.keySet().iterator();
+            while (keyIterator.hasNext()) {
+                String key = keyIterator.next();
+                if (!item.getStringKeys().contains(key)) {
+                    keyIterator.remove();
+                } else {
+                    keyValuePairs.get(key).add(item.getItemByKey(key));
+                }
+            }
+        }
+        return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
+    }
 
 }

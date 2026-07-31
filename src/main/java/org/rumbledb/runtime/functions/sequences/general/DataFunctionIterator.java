@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
@@ -27,49 +32,59 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.SingletonLocalCursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.exceptions.OurBadException;
 
+import lombok.NonNull;
 import java.io.Serial;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
-public class DataFunctionIterator extends HybridRuntimeIterator {
+public class DataFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private List<Item> nextResults;
-    private int nextIndex;
-    private boolean usedContext = false;
+    private final RuntimePlan<Item> sequenceIterator;
 
     public DataFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<RuntimePlan<Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        if (!this.getChildren().isEmpty())
-            this.sequenceIterator = this.getChild(0);
+        this.sequenceIterator = this.getChildren().isEmpty() ? null : this.getChild(0);
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.sequenceIterator, context, getMetadata());
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         FlatMapFunction<Item, Item> transformation = new AtomizationClosure();
         return childRDD.flatMap(transformation);
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame childDF = this.sequenceIterator.getDataFrame(dynamicContext);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame childDF = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.sequenceIterator,
+            dynamicContext
+        );
         if (childDF.getItemType().isAtomicItemType()) {
             return childDF;
         }
@@ -85,79 +100,82 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
         throw new CannotAtomizeException("Cannot atomize. Type: " + childDF.getItemType(), getMetadata());
     }
 
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.get(this.nextIndex); // save the result to be returned
-            ++this.nextIndex;
-            if (this.nextIndex >= this.nextResults.size()) {
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atomization iterator",
-                getMetadata()
-        );
-    }
+        private final RuntimePlan<Item> sequencePlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> inputCursor;
+        private Iterator<Item> atomizedValues;
 
-    @Override
-    public void openLocal() {
-        if (this.sequenceIterator != null) {
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+        private EvaluationCursor(
+                RuntimePlan<Item> sequencePlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.context = context;
+            this.metadata = metadata;
         }
-        this.usedContext = false;
-        setNextResult();
-    }
 
-    public void setNextResult() {
-        if (this.sequenceIterator != null) {
-            if (!this.sequenceIterator.hasNext()) {
-                this.hasNext = false;
-                return;
-            }
-            try {
-                this.nextResults = this.sequenceIterator.next().atomizedValue();
-                if (this.nextResults.isEmpty()) {
-                    this.hasNext = false;
-                } else {
-                    this.nextIndex = 0;
-                    this.hasNext = true;
-                }
-                return;
-            } catch (CannotAtomizeException e) {
-                throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
-            }
-        }
-        if (!this.usedContext) {
-            this.usedContext = true;
-            List<Item> items = this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            if (items.size() != 1) {
-                throw new OurBadException("The context item is not a singleton.", getMetadata());
-            }
-            this.nextResults = items.get(0).atomizedValue();
-            if (this.nextResults.isEmpty()) {
-                this.hasNext = false;
+        @Override
+        protected void openLocal() {
+            this.atomizedValues = Collections.emptyIterator();
+            if (this.sequencePlan != null) {
+                this.inputCursor = this.sequencePlan.getCursor(this.context);
             } else {
-                this.nextIndex = 0;
-                this.hasNext = true;
+                List<Item> contextItems = this.context.getVariableValues()
+                    .getLocalVariableValue(Name.CONTEXT_ITEM, this.metadata);
+                if (contextItems.size() != 1) {
+                    throw new OurBadException("The context item is not a singleton.", this.metadata);
+                }
+                this.inputCursor = new SingletonLocalCursor<>(contextItems.get(0), this.metadata);
             }
-            return;
         }
-        this.hasNext = false;
-    }
 
-    @Override
-    protected void closeLocal() {
-        if (this.sequenceIterator != null) {
-            this.sequenceIterator.close();
+        @Override
+        protected boolean hasNextLocal() {
+            while (!this.atomizedValues.hasNext() && this.inputCursor.hasNext()) {
+                this.atomizedValues = atomize(this.inputCursor.next()).iterator();
+            }
+            return this.atomizedValues.hasNext();
         }
-    }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw exhausted();
+            }
+            return this.atomizedValues.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.inputCursor != null) {
+                this.inputCursor.close();
+                this.inputCursor = null;
+            }
+            this.atomizedValues = Collections.emptyIterator();
+        }
+
+        private List<Item> atomize(Item item) {
+            try {
+                return item.atomizedValue();
+            } catch (CannotAtomizeException exception) {
+                if (this.sequencePlan == null) {
+                    throw exception;
+                }
+                throw new CannotAtomizeException("The sequence cannot be atomized.", this.metadata);
+            }
+        }
+
+        private RuntimeException exhausted() {
+            return new IteratorFlowException(
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " atomization iterator",
+                    this.metadata
+            );
+        }
+
     }
 }

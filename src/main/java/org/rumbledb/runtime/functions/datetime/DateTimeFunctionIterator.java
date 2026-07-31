@@ -8,28 +8,40 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.time.OffsetTime;
 import java.util.List;
 
-public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DateTimeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DateTimeFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    private final RuntimePlan<Item> dateIterator;
+    private final RuntimePlan<Item> timeIterator;
+
+    public DateTimeFunctionIterator(
+            List<RuntimePlan<Item>> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
+        this.dateIterator = arguments.get(0);
+        this.timeIterator = arguments.get(1);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item dateItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item timeItem = this.getChild(1).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item dateItem = this.dateIterator.materializeFirstOrNull(context);
+        Item timeItem = this.timeIterator.materializeFirstOrNull(context);
         if (dateItem == null || timeItem == null) {
             return null;
         }
+        return evaluate(dateItem, timeItem, getMetadata());
+    }
+
+    private static Item evaluate(Item dateItem, Item timeItem, ExceptionMetadata metadata) {
         OffsetDateTime dt;
         OffsetDateTime dateDt = dateItem.getDateTimeValue();
         OffsetTime timeDt = timeItem.getTimeValue();
@@ -41,7 +53,7 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             } else {
                 throw new InconsistentTimezonesException(
                         "The two arguments have inconsistent timezones",
-                        getMetadata()
+                        metadata
                 );
             }
         } else if (dateItem.hasTimeZone() && !timeItem.hasTimeZone()) {

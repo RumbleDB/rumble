@@ -21,16 +21,17 @@
 package org.rumbledb.runtime.xml;
 
 import java.io.Serial;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 /**
@@ -38,7 +39,7 @@ import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
  * 
  * @see org.rumbledb.expressions.xml.AttributeNodeExpression
  */
-public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class AttributeNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -55,20 +56,25 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         this.atomizedValues = atomizedValues;
     }
 
-    private static List<RuntimeIterator> createChildList(List<DataFunctionIterator> atomizedValues) {
-        return Arrays.asList(atomizedValues.toArray(new RuntimeIterator[0]));
+    private static List<RuntimePlan<Item>> createChildList(
+            List<DataFunctionIterator> atomizedValues
+    ) {
+        return new ArrayList<>(atomizedValues);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        return createAttribute(iterator -> iterator.materialize(dynamicContext));
+    }
+
+    private Item createAttribute(Function<RuntimePlan<Item>, List<Item>> materialize) {
         StringBuilder sb = new StringBuilder();
         // follow the spec as defined in https://www.w3.org/TR/xquery-31/#id-attributes
         // 2. Each enclosed expression is converted to a string as follows:
         for (DataFunctionIterator atomizedValueIterator : this.atomizedValues) {
 
             // 2.a Atomization is applied to each enclosed expression, converting it to a sequence of atomic values.
-            List<Item> atomizedItems = atomizedValueIterator.materialize(dynamicContext);
-
+            List<Item> atomizedItems = materialize.apply(atomizedValueIterator);
 
             // 2.b If the result of atomization is an empty sequence, the result is the zero-length string.
             if (atomizedItems.isEmpty()) {
@@ -93,7 +99,6 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         // this is performed by using the same StringBuilder for all the attribute components
 
         // Create and return the attribute
-        this.hasNext = false;
         return ItemFactory.getInstance()
             .createXmlAttributeNode(
                 this.attributeName,
@@ -101,4 +106,3 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
             );
     }
 }
-

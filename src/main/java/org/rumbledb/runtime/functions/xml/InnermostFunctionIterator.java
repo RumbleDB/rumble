@@ -1,41 +1,45 @@
 package org.rumbledb.runtime.functions.xml;
 
-import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class InnermostFunctionIterator extends HybridRuntimeIterator {
+public class InnermostFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item> {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> computeResults(context).iterator(),
+                getMetadata()
+        );
+    }
+
     private static final long serialVersionUID = 1L;
 
-    private List<Item> results;
-    private int currentIndex;
-
     public InnermostFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
-    @Override
-    protected void openLocal() {
-        computeResults();
-    }
-
-    private void computeResults() {
-        List<Item> nodes = this.getChild(0).materialize(this.currentDynamicContextForLocalExecution);
+    private List<Item> computeResults(DynamicContext context) {
+        List<Item> nodes = this.getChild(0).materialize(context);
         for (Item node : nodes) {
             if (!node.isNode()) {
                 throw new UnexpectedTypeException("fn:innermost requires a sequence of nodes", getMetadata());
@@ -60,42 +64,6 @@ public class InnermostFunctionIterator extends HybridRuntimeIterator {
             }
         }
         distinctResult.sort((a, b) -> a.getXmlDocumentPosition().compareTo(b.getXmlDocumentPosition()));
-        this.results = distinctResult;
-        this.currentIndex = 0;
-        this.hasNext = !this.results.isEmpty();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " fn:innermost", getMetadata());
-        }
-        Item result = this.results.get(this.currentIndex++);
-        this.hasNext = this.currentIndex < this.results.size();
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("fn:innermost is currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("fn:innermost is currently supported only in local execution mode.");
+        return distinctResult;
     }
 }

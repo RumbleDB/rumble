@@ -20,77 +20,71 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class RepartitionFunctionIterator extends HybridRuntimeIterator {
+public class RepartitionFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private int numberPartitions;
+
+    private final RuntimePlan<Item> iterator;
+    private final RuntimePlan<Item> partitionCountIterator;
 
     public RepartitionFunctionIterator(
-            List<RuntimeIterator> inputIterators,
+            List<RuntimePlan<Item>> inputIterators,
             RuntimeStaticContext staticContext
     ) {
         super(inputIterators, staticContext);
         this.iterator = inputIterators.get(0);
+        this.partitionCountIterator = inputIterators.get(1);
     }
 
     @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return this.iterator.getCursor(context);
     }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.iterator.hasNext();
-    }
+
 
     @Override
-    public Item nextLocal() {
-        return this.iterator.next();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
-        this.numberPartitions = this.getChild(1).materializeFirstItemOrNull(dynamicContext).getIntValue();
-        JavaRDD<Item> resultRDD = childRDD.repartition(this.numberPartitions);
-        return resultRDD;
-    }
-
-    @Override
-    public boolean implementsDataFrames() {
-        return true;
+        int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(dynamicContext)
+            .getIntValue();
+        return childRDD.repartition(numberPartitions);
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return this.iterator.generateNativeQuery(nativeClauseContext);
+        return NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
-        this.numberPartitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
-        HomogeneousItemDataFrame result = childDataFrame.repartition(this.numberPartitions);
-        return result;
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.iterator, context);
+        int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(context).getIntValue();
+        return childDataFrame.repartition(numberPartitions);
     }
 }

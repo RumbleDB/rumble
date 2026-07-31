@@ -36,29 +36,26 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.MultiplicativeOperator;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-
-public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class MultiplicativeOperationIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    Item left;
-    Item right;
-    final MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
+    private final RuntimePlan<Item> leftIterator;
+    private final RuntimePlan<Item> rightIterator;
 
     public MultiplicativeOperationIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            RuntimePlan<Item> leftIterator,
+            RuntimePlan<Item> rightIterator,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             RuntimeStaticContext staticContext
     ) {
@@ -69,10 +66,11 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item left;
+        Item right;
         try {
-            this.left = this.leftIterator.materializeAtMostOneItemOrNull(context);
+            left = this.leftIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Multiplication expression requires at most one item in its left input sequence.",
@@ -80,41 +78,49 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             );
         }
         try {
-            this.right = this.rightIterator.materializeAtMostOneItemOrNull(context);
+            right = this.rightIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Multiplication expression requires at most one item in its right input sequence.",
                     getMetadata()
             );
         }
+        return applyOperator(left, right, this.multiplicativeOperator, getMetadata());
+    }
 
+    private static Item applyOperator(
+            Item left,
+            Item right,
+            MultiplicativeOperator operator,
+            ExceptionMetadata metadata
+    ) {
         // if left or right equals empty sequence, return empty sequence
-        if (this.left == null || this.right == null) {
+        if (left == null || right == null) {
             return null;
         }
-        if (!this.left.isAtomic()) {
+        if (!left.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                this.left.getDynamicType().toString()
+                left.getDynamicType().toString()
             );
-            throw new NonAtomicKeyException(message, getMetadata());
+            throw new NonAtomicKeyException(message, metadata);
         }
-        if (!this.right.isAtomic()) {
+        if (!right.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                this.right.getDynamicType().toString()
+                right.getDynamicType().toString()
             );
-            throw new NonAtomicKeyException(message, getMetadata());
+            throw new NonAtomicKeyException(message, metadata);
         }
-        if (this.left.isUntypedAtomic()) {
-            this.left = ItemFactory.getInstance().createDoubleItem(this.left.castToDoubleValue());
+        if (left.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createDoubleItem(left.castToDoubleValue());
         }
-        if (this.right.isUntypedAtomic()) {
-            this.right = ItemFactory.getInstance().createDoubleItem(this.right.castToDoubleValue());
+        if (right.isUntypedAtomic()) {
+            right = ItemFactory.getInstance().createDoubleItem(right.castToDoubleValue());
         }
-        return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
+        return processItem(left, right, operator, metadata);
     }
 
     public static Item processItem(
@@ -565,14 +571,20 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(
+            this.leftIterator,
+            nativeClauseContext
+        );
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext rightResult = NativeQueryRuntimePlan.generate(
+            this.rightIterator,
+            nativeClauseContext
+        );
         if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -640,9 +652,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (resultingArity.equals(Arity.OneOrMore) || resultingArity.equals(Arity.ZeroOrMore)) {
             throw new UnexpectedTypeException(
                     " \"+\": operation not possible with parameters of type \""
-                        + this.left.getDynamicType().toString()
+                        + leftResult.getResultingType().getItemType()
                         + "\" and \""
-                        + this.right.getDynamicType().toString()
+                        + rightResult.getResultingType().getItemType()
                         + "\"",
                     getMetadata()
             );

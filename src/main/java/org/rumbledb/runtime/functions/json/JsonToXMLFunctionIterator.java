@@ -16,8 +16,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -44,15 +44,15 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     private static final String DUPLICATES_RETAIN = "retain";
 
     public JsonToXMLFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item jsonText = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item jsonText = this.getChild(0).materializeFirstOrNull(context);
         if (jsonText == null) {
             return null;
         }
@@ -61,7 +61,7 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         boolean escape = false;
         String duplicates = DUPLICATES_RETAIN;
         if (this.getChildren().size() > 1) {
-            Item optionsItem = this.getChild(1).materializeFirstItemOrNull(context);
+            Item optionsItem = this.getChild(1).materializeFirstOrNull(context);
             if (optionsItem == null || !optionsItem.isMap()) {
                 throw new UnexpectedTypeException(
                         "The options argument of fn:json-to-xml must be a map item [err:XPTY0004].",

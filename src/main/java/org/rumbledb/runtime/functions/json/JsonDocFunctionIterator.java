@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.json;
 
+
 import com.google.gson.stream.JsonReader;
 
 import java.io.Serial;
@@ -20,34 +21,31 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnavailableResourceException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.functions.io.TextResourceUtil;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
-
-public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public JsonDocFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator pathIterator = this.getChild(0);
-        RuntimeIterator optionsIterator = this.getChildren().size() > 1 ? this.getChild(1) : null;
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
 
-        Item pathItem = pathIterator.materializeFirstItemOrNull(context);
-        Item optionsItem = optionsIterator != null
-            ? optionsIterator.materializeFirstItemOrNull(context)
-            : null;
-
+    private Item evaluate(DynamicContext context) {
+        Item pathItem = this.getChild(0).materializeFirstOrNull(context);
+        Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstOrNull(context) : null;
         if (pathItem == null) {
             return null;
         }
@@ -121,8 +119,6 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             throw ex;
         }
     }
-
-
 
     private static String readJsonResource(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
         try {

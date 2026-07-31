@@ -24,34 +24,41 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.util.List;
 
-public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class TanFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final RuntimePlan<Item> argument;
+
     public TanFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+        this.argument = arguments.get(0);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item value = this.argument.materializeFirstOrNull(context);
         if (value == null) {
             return null;
         }
+        return evaluate(value);
+    }
+
+    private static Item evaluate(Item value) {
         double dvalue = value.getDoubleValue();
         if (Double.isNaN(dvalue) || Double.isInfinite(dvalue)) {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
@@ -62,7 +69,10 @@ public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(
+            this.argument,
+            nativeClauseContext
+        );
         if (childQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

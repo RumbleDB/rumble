@@ -23,7 +23,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
@@ -44,7 +44,7 @@ public final class FunctionCallArgumentConversion {
 
     public static void validateArity(
             Item functionItem,
-            List<RuntimeIterator> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             ExceptionMetadata metadata
     ) {
         if (functionItem.getParameterNames().size() != functionArguments.size()) {
@@ -62,7 +62,7 @@ public final class FunctionCallArgumentConversion {
 
     public static void wrapAccordingToSignature(
             Item functionItem,
-            List<RuntimeIterator> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             RuntimeStaticContext callerStaticContext
     ) {
         if (functionItem.getSignature().getParameterTypes() == null) {
@@ -77,7 +77,7 @@ public final class FunctionCallArgumentConversion {
                         .equals(SequenceType.createSequenceType("item*"))
             ) {
                 SequenceType sequenceType = functionItem.getSignature().getParameterTypes().get(i);
-                ExecutionMode executionMode = functionArguments.get(i).getHighestExecutionMode();
+                ExecutionMode executionMode = functionArguments.get(i).getRuntimeStaticContext().getExecutionMode();
                 if (
                     sequenceType.isEmptySequence()
                         || sequenceType.getArity().equals(Arity.One)
@@ -89,41 +89,44 @@ public final class FunctionCallArgumentConversion {
                     .toBuilder()
                     .staticType(sequenceType)
                     .executionMode(executionMode)
-                    .metadata(functionArguments.get(i).getMetadata())
+                    .metadata(functionArguments.get(i).getRuntimeStaticContext().getMetadata())
                     .build();
-                RuntimeIterator argumentIterator = wrapForFunctionConversion(
-                    functionArguments.get(i),
-                    sequenceType,
-                    "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
-                    runtimeStaticContext
-                );
+                RuntimePlan<Item> argumentIterator =
+                    wrapForFunctionConversion(
+                        functionArguments.get(i),
+                        sequenceType,
+                        "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
+                        runtimeStaticContext
+                    );
                 if (
                     sequenceType.isEmptySequence()
                         || sequenceType.getArity().equals(Arity.One)
                         || sequenceType.getArity().equals(Arity.OneOrZero)
                 ) {
-                    RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
-                            argumentIterator,
-                            sequenceType,
-                            "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
-                            runtimeStaticContext
-                    );
+                    RuntimePlan<Item> typePromotionIterator =
+                        new AtMostOneItemTypePromotionIterator(
+                                argumentIterator,
+                                sequenceType,
+                                "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
+                                runtimeStaticContext
+                        );
                     functionArguments.set(i, typePromotionIterator);
                 } else {
-                    RuntimeIterator typePromotionIterator = new TypePromotionIterator(
-                            argumentIterator,
-                            sequenceType,
-                            "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
-                            runtimeStaticContext
-                    );
+                    RuntimePlan<Item> typePromotionIterator =
+                        new TypePromotionIterator(
+                                argumentIterator,
+                                sequenceType,
+                                "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
+                                runtimeStaticContext
+                        );
                     functionArguments.set(i, typePromotionIterator);
                 }
             }
         }
     }
 
-    public static RuntimeIterator wrapForFunctionConversion(
-            RuntimeIterator argumentIterator,
+    public static RuntimePlan<Item> wrapForFunctionConversion(
+            RuntimePlan<Item> argumentIterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext runtimeStaticContext
@@ -131,7 +134,7 @@ public final class FunctionCallArgumentConversion {
         ItemType targetItemType = sequenceType.getItemType();
         if (
             targetItemType.isAtomicItemType()
-                && !argumentIterator.getStaticType().getItemType().isAtomicItemType()
+                && !argumentIterator.getRuntimeStaticContext().getStaticType().getItemType().isAtomicItemType()
         ) {
             argumentIterator = new DataFunctionIterator(
                     Collections.singletonList(argumentIterator),

@@ -6,32 +6,32 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 import java.io.Serial;
 import java.util.List;
 
-public class ResolveQNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ResolveQNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public ResolveQNameFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item qnameItem = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item qnameItem = this.getChild(0).materializeFirstOrNull(context);
         if (qnameItem == null) {
             return null;
         }
 
-        Item element = this.getChild(1).materializeFirstItemOrNull(context);
+        Item element = this.getChild(1).materializeFirstOrNull(context);
         if (element == null || !element.isElementNode()) {
             throw new UnexpectedTypeException(
                     "The second argument to fn:resolve-QName must be an element node",

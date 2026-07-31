@@ -6,8 +6,10 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -15,29 +17,33 @@ import org.rumbledb.types.ItemTypeFactory;
 import java.io.Serial;
 import java.util.List;
 
-public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
+public class AnnotateFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public AnnotateFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator inputDataIterator = this.getChild(0);
-        RuntimeIterator schemaIterator = this.getChild(1);
-        Item schemaItem = schemaIterator.materializeFirstItemOrNull(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        RuntimePlan<Item> inputDataIterator = this.getChild(0);
+        RuntimePlan<Item> schemaIterator = this.getChild(1);
+        Item schemaItem = schemaIterator.materializeFirstOrNull(context);
         ItemType schemaType = ItemTypeFactory.createItemTypeFromJSoundCompactItem(null, schemaItem, null);
         schemaType.resolve(context, getMetadata());
         try {
 
-            if (inputDataIterator.isDataFrame()) {
-                HomogeneousItemDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
+            if (inputDataIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+                HomogeneousItemDataFrame inputDataAsDataFrame =
+                    ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                        inputDataIterator,
+                        context
+                    );
                 ItemType actualSchemaType = ItemTypeFactory.createItemType(
                     inputDataAsDataFrame.getDataFrame().schema()
                 );
@@ -54,7 +60,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                 );
             }
 
-            if (inputDataIterator.isRDDOrDataFrame()) {
+            if (inputDataIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
                 return ValidateTypeIterator.convertRDDToValidDataFrame(
                     rdd,

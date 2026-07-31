@@ -13,32 +13,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
  */
 
-package org.rumbledb.runtime;
+package org.rumbledb.runtime.cursor;
 
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
-import java.io.Serial;
-import java.util.List;
+/**
+ * Cursor over an empty local sequence.
+ *
+ * @param <T> the value type
+ */
+public final class EmptyLocalCursor<T> extends AtMostOneLocalCursor<T> {
 
-public abstract class LocalRuntimeIterator extends RuntimeIterator {
+    public EmptyLocalCursor(ExceptionMetadata metadata) {
+        super(metadata);
+    }
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    protected LocalRuntimeIterator(
-            List<RuntimeIterator> children,
-            RuntimeStaticContext staticContext
-    ) {
-        super(children, staticContext);
-        if (getHighestExecutionMode() != ExecutionMode.LOCAL) {
-            throw new OurBadException("Local runtime iterators support only the local execution mode");
-        }
+    @Override
+    protected T materializeOneItemOrNull() {
+        return null;
     }
 }

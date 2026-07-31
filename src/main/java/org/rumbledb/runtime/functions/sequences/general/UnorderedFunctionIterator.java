@@ -20,28 +20,36 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class UnorderedFunctionIterator extends HybridRuntimeIterator {
+public class UnorderedFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private Item nextResult;
+    private final RuntimePlan<Item> iterator;
 
     public UnorderedFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<RuntimePlan<Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -49,64 +57,22 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "unordered function", getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return this.iterator.getCursor(context);
     }
 
     @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-
-        if (!this.iterator.hasNext()) {
-            this.hasNext = false;
-        } else {
-            setNextResult();
-        }
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        if (this.iterator.hasNext()) {
-            this.nextResult = this.iterator.next();
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         return childRDD;
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame df = this.iterator.getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.iterator,
+            context
+        );
         return df;
     }
 

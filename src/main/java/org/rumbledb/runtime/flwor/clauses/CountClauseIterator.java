@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import lombok.Getter;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
@@ -29,21 +31,23 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.TupleRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -52,70 +56,86 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class CountClauseIterator extends RuntimeTupleIterator {
+public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    @Getter
-    private final Name variableName;
-    private FlworTuple nextLocalTupleResult;
-    private int currentCountIndex;
+    private Name variableName;
 
     public CountClauseIterator(
-            RuntimeTupleIterator child,
+            TupleRuntimePlan child,
             Name variableName,
             RuntimeStaticContext staticContext
     ) {
         super(child, staticContext);
         this.variableName = variableName;
-        this.currentCountIndex = 1; // indices start at 1 in JSONiq
+    }
+
+    public Name getVariableName() {
+        return this.variableName;
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        if (this.child != null) {
-            this.child.open(this.currentDynamicContext);
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
+        return new CountLocalCursor(this.child, this.variableName, context, getMetadata());
+    }
 
-            setNextLocalTupleResult();
-        } else {
-            throw new OurBadException("Invalid count clause.");
+    private static final class CountLocalCursor extends AbstractLocalCursor<FlworTuple> {
+
+        private final TupleRuntimePlan childPlan;
+        private final Name variableName;
+        private final DynamicContext context;
+        private Cursor<FlworTuple> childCursor;
+        private int count;
+
+        private CountLocalCursor(
+                TupleRuntimePlan childPlan,
+                Name variableName,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.childPlan = childPlan;
+            this.variableName = variableName;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            if (this.childPlan == null) {
+                throw new OurBadException("Invalid count clause.");
+            }
+            this.childCursor = this.childPlan.createNativeCursor(this.context);
+            this.count = 1;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.childCursor.hasNext();
+        }
+
+        @Override
+        protected FlworTuple nextLocal() {
+            if (!this.childCursor.hasNext()) {
+                throw invalidState("No more count-clause tuples are available.");
+            }
+            FlworTuple tuple = this.childCursor.next();
+            List<Item> value = Collections.singletonList(ItemFactory.getInstance().createIntItem(this.count++));
+            return new FlworTuple(tuple).putValue(this.variableName, value);
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+            this.count = 1;
         }
     }
 
     @Override
-    public void close() {
-        super.close();
-        this.currentCountIndex = 1;
-    }
-
-    @Override
-    public FlworTuple next() {
-        if (this.hasNext) {
-            FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
-            setNextLocalTupleResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in count flwor clause", getMetadata());
-    }
-
-    private void setNextLocalTupleResult() {
-        if (this.child.hasNext()) {
-            FlworTuple inputTuple = this.child.next();
-
-            List<Item> results = new ArrayList<>();
-            results.add(ItemFactory.getInstance().createIntItem(this.currentCountIndex++));
-
-            this.nextLocalTupleResult = new FlworTuple(inputTuple).putValue(this.variableName, results);
-            this.hasNext = true;
-        } else {
-            this.child.close();
-            this.hasNext = false;
-        }
-    }
-
-    @Override
-    public FlworDataFrame getDataFrame(
+    public FlworDataFrame createNativeDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {
@@ -232,7 +252,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (this.child.isSparkJobNeeded()) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
         switch (getHighestExecutionMode()) {
@@ -254,7 +274,10 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
-        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
+            this.child,
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

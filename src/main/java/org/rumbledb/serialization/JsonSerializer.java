@@ -8,18 +8,19 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 
 import java.io.Serial;
+import java.io.Serializable;
 import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class JsonSerializer implements Serializer, java.io.Serializable {
+public class JsonSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.serialization.SerializationParameters params;
+    private final SerializationParameters params;
 
     public JsonSerializer(SerializationParameters params) {
         this.params = params;

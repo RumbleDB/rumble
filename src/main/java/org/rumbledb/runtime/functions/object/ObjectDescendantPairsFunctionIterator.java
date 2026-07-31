@@ -23,89 +23,49 @@ package org.rumbledb.runtime.functions.object;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
     public ObjectDescendantPairsFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        this.iterator = this.getChild(0);
-        this.iterator.open(context);
-        this.nextResults = new LinkedList<>();
-
-        setNextResult();
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " DESCENDANT-PAIRS function",
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.getChild(0),
+                context,
+                item -> {
+                    List<Item> results = new ArrayList<>();
+                    getDescendantPairs(List.of(item), results);
+                    return results.iterator();
+                },
                 getMetadata()
         );
     }
 
-    public void setNextResult() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            List<Item> singleItemList = new ArrayList<>();
-            singleItemList.add(item);
-
-            getDescendantPairs(singleItemList);
-            if (!(this.nextResults.isEmpty())) {
-                break;
-            }
-        }
-
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    private void getDescendantPairs(List<Item> items) {
+    private void getDescendantPairs(List<Item> items, Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
-                getDescendantPairs(item.getItemMembers());
+                getDescendantPairs(item.getItemMembers(), results);
             } else if (item.isObject()) {
                 List<String> keys = item.getStringKeys();
                 for (String key : keys) {
@@ -116,8 +76,8 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
 
                     Item result = ItemFactory.getInstance()
                         .createObjectItem(keyList, valueList, getMetadata(), true);
-                    this.nextResults.add(result);
-                    getDescendantPairs(valueList);
+                    results.add(result);
+                    getDescendantPairs(valueList, results);
                 }
             } else {
                 // do nothing

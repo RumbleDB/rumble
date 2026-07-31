@@ -20,18 +20,25 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.AtomicValueComparisonKey;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
@@ -41,116 +48,57 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
+public class DistinctValuesFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private Item nextResult;
-    private List<Item> prevResults;
-    private String activeCollation;
+    private final RuntimePlan<Item> sequenceIterator;
 
     public DistinctValuesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
         this.sequenceIterator = arguments.get(0);
     }
 
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new DistinctLocalCursor(
+                this.sequenceIterator,
+                this.getChildren().size() == 2 ? this.getChild(1) : null,
+                context,
+                getMetadata()
+        );
+    }
+
     private String resolveCollation(DynamicContext context) {
-        String explicitCollation = null;
-        if (this.getChildren().size() == 2) {
-            explicitCollation = this.getChild(1)
-                .materializeFirstItemOrNull(context)
-                .getStringValue();
-        }
+        String explicitCollation = this.getChildren().size() == 2
+            ? this.getChild(1).materializeFirstOrNull(context).getStringValue()
+            : null;
         String collation = CollationSupport.resolveCollation(explicitCollation, getRuntimeStaticContext());
         CollationSupport.checkCollationSupported(collation, getMetadata());
         return collation;
     }
 
     @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "distinct-values function", getMetadata());
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-    }
-
-
-    @Override
-    public void openLocal() {
-        this.prevResults = new ArrayList<>();
-        this.activeCollation = resolveCollation(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        while (this.sequenceIterator.hasNext()) {
-            Item item = this.sequenceIterator.next();
-            if (!containsEquivalentValue(item)) {
-                this.prevResults.add(item);
-                this.nextResult = item;
-                break;
-            }
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.sequenceIterator.close();
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    private boolean containsEquivalentValue(Item candidate) {
-        for (Item previous : this.prevResults) {
-            if (AtomicValueComparison.equal(previous, candidate, this.activeCollation, getMetadata())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         String collation = resolveCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        return childRDD.map(item -> new AtomicValueComparisonKey(item, collation, this.getMetadata()))
+        return childRDD.map(
+            item -> new AtomicValueComparisonKey(item, collation, this.getRuntimeStaticContext().getMetadata())
+        )
             .distinct()
             .map(AtomicValueComparisonKey::getItem);
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        // Spark SQL DISTINCT cannot be used here because its equality semantics differ from XDM for values such as
-        // promoted numerics and NaN.
-        // Compute distinctness with AtomicValueComparisonKey through the RDD path, then
-        // convert the result back to a DataFrame.
-        // Since distinct-values commonly has the static type xs:anyAtomicType,
-        // infer the concrete runtime type when the static type cannot be represented by a Spark schema.
-        JavaRDD<Item> rdd = getRDDAux(dynamicContext);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
+        JavaRDD<Item> rdd = createNativeRDD(dynamicContext);
         ItemType itemType = getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(getConfiguration())) {
             itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
@@ -170,7 +118,10 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext sequenceQuery = this.sequenceIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext sequenceQuery = NativeQueryRuntimePlan.generate(
+            this.sequenceIterator,
+            nativeClauseContext
+        );
         if (sequenceQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -178,5 +129,90 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
             + sequenceQuery.getResultingQuery()
             + " )";
         return new NativeClauseContext(sequenceQuery, resultingQuery, sequenceQuery.getResultingType());
+    }
+
+    private static final class DistinctLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<Item> sequencePlan;
+        private final RuntimePlan<Item> collationPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private final List<Item> seen = new ArrayList<>();
+        private Cursor<Item> sequenceCursor;
+        private Item nextResult;
+        private String activeCollation;
+
+        private DistinctLocalCursor(
+                RuntimePlan<Item> sequencePlan,
+                RuntimePlan<Item> collationPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.collationPlan = collationPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            String explicitCollation = this.collationPlan == null
+                ? null
+                : this.collationPlan.materializeFirstOrNull(this.context).getStringValue();
+            this.activeCollation = CollationSupport.resolveCollation(
+                explicitCollation,
+                this.sequencePlan.getRuntimeStaticContext()
+            );
+            CollationSupport.checkCollationSupported(this.activeCollation, this.metadata);
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
+            advance();
+        }
+
+        private void advance() {
+            this.nextResult = null;
+            while (this.sequenceCursor.hasNext()) {
+                Item item = this.sequenceCursor.next();
+                if (!containsEquivalentValue(item)) {
+                    this.seen.add(item);
+                    this.nextResult = item;
+                    return;
+                }
+            }
+        }
+
+        private boolean containsEquivalentValue(Item candidate) {
+            for (Item previous : this.seen) {
+                if (AtomicValueComparison.equal(previous, candidate, this.activeCollation, this.metadata)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextResult != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.nextResult == null) {
+                throw invalidState("No more distinct values are available.");
+            }
+            Item result = this.nextResult;
+            advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+            this.seen.clear();
+            this.nextResult = null;
+        }
     }
 }

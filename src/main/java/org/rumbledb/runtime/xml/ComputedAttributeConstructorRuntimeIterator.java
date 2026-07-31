@@ -29,21 +29,22 @@ import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Runtime iterator for computed attribute constructors.
  * 
  * @see org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression
  */
-public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -87,9 +88,11 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
         this.contentExpression = contentExpression;
     }
 
-    private static List<RuntimeIterator> createChildList(RuntimeIterator... iterators) {
-        List<RuntimeIterator> children = new ArrayList<>();
-        for (RuntimeIterator iterator : iterators) {
+    private static List<RuntimePlan<Item>> createChildList(
+            RuntimePlan<Item>... iterators
+    ) {
+        List<RuntimePlan<Item>> children = new ArrayList<>();
+        for (RuntimePlan<Item> iterator : iterators) {
             if (iterator != null) {
                 children.add(iterator);
             }
@@ -98,7 +101,14 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        return createAttribute(iterator -> iterator.materialize(dynamicContext), dynamicContext);
+    }
+
+    private Item createAttribute(
+            Function<RuntimePlan<Item>, List<Item>> materialize,
+            DynamicContext dynamicContext
+    ) {
         Item attributeName;
         if (this.staticAttributeName != null) {
             attributeName = ItemFactory.getInstance()
@@ -111,7 +121,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             // 1. Atomization is applied to the result of the name expression. If the result of
             // atomization is not a single atomic value of type xs:QName, xs:string, or
             // xs:untypedAtomic, a type error is raised [err:XPTY0004].
-            List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
+            List<Item> atomizedNameItems = materialize.apply(this.nameIterator);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
@@ -178,7 +188,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             // converting it to a sequence of atomic values. (If the content expression
             // is absent, the result of this step is an empty sequence.)
             // Note: contentExpression is already an AtomizationIterator
-            List<Item> atomizedContentItems = this.contentExpression.materialize(dynamicContext);
+            List<Item> atomizedContentItems = materialize.apply(this.contentExpression);
 
             // 2: If the result of atomization is an empty sequence, the value of
             // the attribute is the zero-length string. Otherwise, each atomic value in
@@ -215,7 +225,6 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
 
         // Create and return the attribute item
         // 4: The parent property of the attribute node is set to empty.
-        this.hasNext = false;
         Item attributeItem = ItemFactory.getInstance()
             .createXmlAttributeNode(
                 attributeName.getQNameValue(),

@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.strings;
 
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
@@ -7,8 +8,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayDeque;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 
-public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final Name ANALYZE_STRING_RESULT_NAME = new Name(Name.FN_NS, "fn", "analyze-string-result");
@@ -30,23 +31,27 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
     private static final Name NR_ATTRIBUTE_NAME = new Name(null, null, "nr");
 
     public AnalyzeStringFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
+
+    private Item evaluate(DynamicContext context) {
         ItemFactory factory = ItemFactory.getInstance();
 
-        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstOrNull(context);
         String input = inputItem == null ? "" : inputItem.getStringValue();
 
-        String pattern = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+        String pattern = this.getChild(1).materializeFirstOrNull(context).getStringValue();
         String flags = null;
         if (this.getChildren().size() == 3) {
-            Item flagsItem = this.getChild(2).materializeFirstItemOrNull(context);
+            Item flagsItem = this.getChild(2).materializeFirstOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }

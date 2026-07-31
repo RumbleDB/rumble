@@ -1,21 +1,29 @@
 package org.rumbledb.runtime.scripting.mutation;
 
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
 import java.util.Collections;
 
-public class ApplyStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ApplyStatementIterator
+        extends
+            AbstractAtMostOneItemRuntimePlan
+        implements
+            UpdatingRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator exprIterator;
+    private final RuntimePlan<Item> exprIterator;
 
     public ApplyStatementIterator(
-            RuntimeIterator exprIterator,
+            RuntimePlan<Item> exprIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(exprIterator), staticContext);
@@ -23,12 +31,22 @@ public class ApplyStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         this.exprIterator.materialize(context);
-        // Immediately apply pul if applicable
-        if (this.exprIterator.isUpdating()) {
-            this.exprIterator.getPendingUpdateList(context).applyUpdates(this.getMetadata());
-        }
+        applyUpdates(context);
         return null;
+    }
+
+    private void applyUpdates(DynamicContext context) {
+        // Immediately apply pul if applicable
+        if (this.exprIterator.getRuntimeStaticContext().isUpdating()) {
+            UpdatingRuntimePlan.get(this.exprIterator, context)
+                .applyUpdates(this.getRuntimeStaticContext().getMetadata());
+        }
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        return new PendingUpdateList();
     }
 }

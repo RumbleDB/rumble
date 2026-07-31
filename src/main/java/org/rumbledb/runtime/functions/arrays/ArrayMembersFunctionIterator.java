@@ -25,91 +25,55 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.navigation.ArrayMembersClosure;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
-public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
+public class ArrayMembersFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private final Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private final RuntimePlan<Item> iterator;
 
     public ArrayMembersFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
-        this.nextResults = new LinkedList<>();
-    }
-
-
-    @Override
-    protected void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults.clear();
-        setNextResult();
     }
 
     @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "MEMBERS function",
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isArray()) {
+                        return List.<Item>of().iterator();
+                    }
+                    if (item.isArrayOfItems()) {
+                        return item.getItemMembers().iterator();
+                    }
+                    return item.getSequenceMembers().stream().flatMap(List::stream).iterator();
+                },
                 getMetadata()
         );
     }
 
-    public void setNextResult() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isArray()) {
-                if (item.isArrayOfItems()) {
-                    this.nextResults.addAll(item.getItemMembers());
-                } else {
-                    for (java.util.List<Item> member : item.getSequenceMembers()) {
-                        this.nextResults.addAll(member);
-                    }
-                }
-            }
-        }
-
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         FlatMapFunction<Item, Item> transformation = new ArrayMembersClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);

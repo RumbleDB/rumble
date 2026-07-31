@@ -14,8 +14,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -46,7 +47,7 @@ import org.rumbledb.runtime.RuntimeIterator;
  * This implementation stays local-only and mirrors that behaviour using the existing MapItem
  * representation and {@code MapAtomicSameKey} key equality via {@code MapItem.getSequenceByKey()}.
  */
-public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -61,11 +62,12 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         }
     }
 
-    private final RuntimeIterator mapsIterator;
-    private final RuntimeIterator optionsIterator; // may be null for arity-1
+    private final RuntimePlan<Item> mapsIterator;
+    private final RuntimePlan<Item> optionsIterator; // may be null for
+                                                     // arity-1
 
     public MapMergeFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -89,7 +91,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         ExceptionMetadata metadata = getMetadata();
 
         // 2. Resolve options and duplicates policy.
@@ -148,10 +150,9 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         boolean sawAnyMap = false;
         boolean allKeysString = true;
         boolean allValuesSingletons = true;
-        this.mapsIterator.open(context);
-        try {
-            while (this.mapsIterator.hasNext()) {
-                Item mapItem = this.mapsIterator.next();
+        try (Cursor<Item> maps = this.mapsIterator.getCursor(context)) {
+            while (maps.hasNext()) {
+                Item mapItem = maps.next();
                 if (!mapItem.isMap()) {
                     throw new UnexpectedTypeException(
                             "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].",
@@ -216,8 +217,6 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                     }
                 }
             }
-        } finally {
-            this.mapsIterator.close();
         }
 
         // Empty input -> empty map.

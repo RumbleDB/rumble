@@ -16,15 +16,22 @@
  */
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -34,25 +41,27 @@ import java.util.List;
 /**
  * Dynamic invocation of a function item that represents a builtin named function reference.
  */
-public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
+public class BuiltinFunctionItemCallIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     private final Item functionItem;
-    private final List<RuntimeIterator> functionArguments;
-
-    private RuntimeIterator builtinDelegate;
-    private Item nextResult;
+    private final List<RuntimePlan<Item>> functionArguments;
 
     public BuiltinFunctionItemCallIterator(
             Item functionItem,
-            List<RuntimeIterator> functionArguments,
+            List<RuntimePlan<Item>> functionArguments,
             RuntimeStaticContext staticContext
     ) {
         super(
             functionArguments.stream().filter(arg -> arg != null).toList(),
-            staticContext.toBuilder().isUpdating(functionItem.getSignature().isUpdating()).build()
+            staticContext.toBuilder().isUpdating(true).build()
         );
 
         this.functionItem = functionItem;
@@ -66,78 +75,72 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
         );
     }
 
-    private RuntimeIterator newBuiltinDelegate() {
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new BuiltinCallLocalCursor(
+                this.functionItem,
+                this.functionArguments,
+                this.staticContext,
+                context
+        );
+    }
+
+    private static final class BuiltinCallLocalCursor extends AbstractDelegatingLocalCursor<Item> {
+        private final Item functionItem;
+        private final List<RuntimePlan<Item>> functionArguments;
+        private final RuntimeStaticContext staticContext;
+        private final DynamicContext context;
+
+        private BuiltinCallLocalCursor(
+                Item functionItem,
+                List<RuntimePlan<Item>> functionArguments,
+                RuntimeStaticContext staticContext,
+                DynamicContext context
+        ) {
+            super(staticContext.getMetadata());
+            this.functionItem = functionItem;
+            this.functionArguments = functionArguments;
+            this.staticContext = staticContext;
+            this.context = context;
+        }
+
+        @Override
+        protected Cursor<Item> createDelegateCursor() {
+            return newBuiltinDelegate(
+                this.functionItem,
+                this.functionArguments,
+                this.staticContext
+            ).getCursor(this.context);
+        }
+    }
+
+    private RuntimePlan<Item> newBuiltinDelegate() {
+        return newBuiltinDelegate(this.functionItem, this.functionArguments, this.staticContext);
+    }
+
+    private static RuntimePlan<Item> newBuiltinDelegate(
+            Item functionItem,
+            List<RuntimePlan<Item>> functionArguments,
+            RuntimeStaticContext staticContext
+    ) {
         return NamedFunctions.getBuiltInFunctionIterator(
-            this.functionItem.getIdentifier(),
-            new ArrayList<>(this.functionArguments),
-            this.staticContext,
+            functionItem.getIdentifier(),
+            new ArrayList<>(functionArguments),
+            staticContext,
             true
         );
     }
 
     @Override
-    public void openLocal() {
-        this.builtinDelegate = newBuiltinDelegate();
-        this.builtinDelegate.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult;
-            setNextResult();
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE
-                    + " in "
-                    + this.functionItem.getIdentifier().getName()
-                    + "  function",
-                getMetadata()
-        );
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.builtinDelegate != null && this.builtinDelegate.isOpen()) {
-            this.builtinDelegate.close();
-        }
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-        if (this.builtinDelegate.hasNext()) {
-            this.nextResult = this.builtinDelegate.next();
-        }
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.builtinDelegate.close();
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator delegate = newBuiltinDelegate();
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
+        RuntimePlan<Item> delegate = newBuiltinDelegate();
         return delegate.getRDD(dynamicContext);
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        RuntimeIterator delegate = newBuiltinDelegate();
-        return delegate.getDataFrame(dynamicContext);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
+        RuntimePlan<Item> delegate = newBuiltinDelegate();
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(delegate, dynamicContext);
     }
 
     @Override
@@ -145,7 +148,7 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
         if (!isUpdating()) {
             return new PendingUpdateList();
         }
-        RuntimeIterator delegate = newBuiltinDelegate();
-        return delegate.getPendingUpdateList(context);
+        RuntimePlan<Item> delegate = newBuiltinDelegate();
+        return UpdatingRuntimePlan.get(delegate, context);
     }
 }

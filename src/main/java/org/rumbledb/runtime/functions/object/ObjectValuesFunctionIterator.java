@@ -25,24 +25,27 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
-public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
+public class ObjectValuesFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private final RuntimePlan<Item> iterator;
 
     public ObjectValuesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -50,59 +53,17 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
-
-        setNextResult();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " VALUES function",
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> item.isObject() ? item.getItemValues().iterator() : List.<Item>of().iterator(),
                 getMetadata()
         );
     }
 
     @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    public void setNextResult() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isObject()) {
-                this.nextResults.addAll(item.getItemValues());
-                if (!(this.nextResults.isEmpty())) {
-                    break;
-                }
-            }
-        }
-
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ObjectValuesClosure();
         return childRDD.flatMap(transformation);

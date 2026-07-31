@@ -1,13 +1,16 @@
 package org.rumbledb.runtime.functions.input;
 
+import org.rumbledb.api.Item;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructField;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.lit;
@@ -16,22 +19,22 @@ import java.io.Serial;
 import java.util.List;
 
 
-public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
+public class DeltaTableFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public DeltaTableFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator collectionNameIterator = this.getChild(0);
-        String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        RuntimePlan<Item> collectionNameIterator = this.getChild(0);
+        String collectionName = collectionNameIterator.materializeFirstOrNull(context).getStringValue();
 
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);
         return postProcess(dataFrame, collectionName);
@@ -40,7 +43,7 @@ public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
     public static HomogeneousItemDataFrame postProcess(Dataset<Row> dataFrame, String collectionName) {
         StructField[] fields = dataFrame.schema().fields();
         boolean hasLongRowId = false;
-        for (org.apache.spark.sql.types.StructField field : fields) {
+        for (StructField field : fields) {
             if (
                 field.name().equals(SparkSessionManager.rowIdColumnName) && field.dataType().typeName().equals("long")
             ) {
@@ -49,7 +52,7 @@ public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
             }
         }
         boolean hasDoubleRowOrder = false;
-        for (org.apache.spark.sql.types.StructField field : fields) {
+        for (StructField field : fields) {
             if (
                 field.name().equals(SparkSessionManager.rowOrderColumnName)
                     && field.dataType().typeName().equals("double")

@@ -24,30 +24,29 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class NotFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class NotFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public NotFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator iterator = this.getChild(0);
-        boolean effectiveBooleanValue = iterator.getEffectiveBooleanValue(
-            context
-        );
+    public Item evaluateAtMostOne(DynamicContext context) {
+        RuntimePlan<Item> iterator = this.getChild(0);
+        boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(iterator, context);
         return ItemFactory.getInstance().createBooleanItem(!effectiveBooleanValue);
     }
 

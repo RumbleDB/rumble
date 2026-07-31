@@ -8,39 +8,46 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.util.List;
 
-public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class FunctionNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public FunctionNameFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator functionIterator = this.getChild(0);
-        /*
-         * TODO remove...
-         * Currently used for debugging, this guard fails when given an if statement
-         */
-        if (!functionIterator.getStaticType().isSubtypeOf(SequenceType.createSequenceType("function"))) {
+    public Item evaluateAtMostOne(DynamicContext context) {
+        validateStaticType();
+        return evaluate(this.getChild(0).materializeFirstOrNull(context));
+    }
+
+    private void validateStaticType() {
+        if (
+            !this.getChild(0)
+                .getRuntimeStaticContext()
+                .getStaticType()
+                .isSubtypeOf(SequenceType.createSequenceType("function"))
+        ) {
             throw new UnexpectedTypeException(
-                    "fn:function-name expects a function item, found " + functionIterator.getStaticType(),
+                    "fn:function-name expects a function item, found "
+                        + this.getChild(0).getRuntimeStaticContext().getStaticType(),
                     getMetadata()
             );
         }
-        System.err.println("Item is of type function");
-        Item functionItem = functionIterator.materializeFirstItemOrNull(context);
+    }
+
+    private Item evaluate(Item functionItem) {
         if (!(functionItem instanceof FunctionItem function)) {
             throw new OurBadException("Expected argument to be of type function and not be null");
         }

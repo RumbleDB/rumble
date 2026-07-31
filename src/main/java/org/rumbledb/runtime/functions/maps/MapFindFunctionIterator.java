@@ -17,40 +17,42 @@
 
 package org.rumbledb.runtime.functions.maps;
 
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
  */
-public class MapFindFunctionIterator extends HybridRuntimeIterator {
+public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return computeResult(context);
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator inputIterator;
-    private final RuntimeIterator keyIterator;
-    private Item resultItem;
-    private boolean hasProducedResult;
+    private final RuntimePlan<Item> inputIterator;
+    private final RuntimePlan<Item> keyIterator;
 
     public MapFindFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -59,22 +61,13 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
         }
         this.inputIterator = arguments.get(0);
         this.keyIterator = arguments.get(1);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        Item keyItem;
+    private Item computeResult(DynamicContext context) {
+        Item keyItem = null;
         try {
-            keyItem = this.keyIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException | MoreThanOneItemException e) {
+            keyItem = this.keyIterator.materializeAtMostOne(context);
+        } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "map:find expects exactly one atomic key as second argument.",
                     getMetadata()
@@ -90,7 +83,7 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
         List<Item> inputItems = this.inputIterator.materialize(context);
         List<List<Item>> foundMembers = new ArrayList<>();
         scanItems(inputItems, keyItem, foundMembers);
-        this.resultItem = ItemFactory.getInstance()
+        return ItemFactory.getInstance()
             .createSequenceArrayItem(foundMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
@@ -127,41 +120,5 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
         if (item.isArray()) {
             scanItems(item.getItemMembers(), lookupKey, foundMembers);
         }
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("map:find is currently supported only in local execution mode.");
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("map:find is currently supported only in local execution mode.");
     }
 }

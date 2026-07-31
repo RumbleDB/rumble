@@ -68,8 +68,8 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -204,6 +204,7 @@ public class SparkSessionManager {
     private void initializeKryoSerialization() {
         if (!this.configuration.contains("spark.serializer")) {
             this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+            this.configuration.set("spark.kryo.registrator", RumbleKryoRegistrator.class.getCanonicalName());
             // this.configuration.set("spark.kryo.registrationRequired", "true");
             Class<?>[] serializedClasses = new Class[] {
                 Item.class,
@@ -245,8 +246,8 @@ public class SparkSessionManager {
                 DynamicContext.class,
                 FlworTuple.class,
                 FlworKey.class,
-                RuntimeIterator.class,
-                RuntimeTupleIterator.class,
+                RuntimePlan.class,
+                TupleRuntimePlan.class,
                 StructType.class,
                 StructType[].class,
                 StructField.class,

@@ -26,22 +26,23 @@ import java.util.Arrays;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
-public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
+public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final RuntimePlan<Item> leftIterator;
+    private final RuntimePlan<Item> rightIterator;
 
     public StringConcatIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            RuntimePlan<Item> leftIterator,
+            RuntimePlan<Item> rightIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
@@ -50,10 +51,10 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         Item left = null;
         try {
-            left = this.leftIterator.materializeAtMostOneItemOrDefault(
+            left = this.leftIterator.materializeAtMostOneOrDefault(
                 dynamicContext,
                 ItemFactory.getInstance().createStringItem("")
             );
@@ -65,7 +66,7 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Item right = null;
         try {
-            right = this.rightIterator.materializeAtMostOneItemOrDefault(
+            right = this.rightIterator.materializeAtMostOneOrDefault(
                 dynamicContext,
                 ItemFactory.getInstance().createStringItem("")
             );
@@ -75,14 +76,18 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
                     getMetadata()
             );
         }
-        if (!(left.isAtomic()) || !(right.isAtomic())) {
+        return concatenate(left, right, getMetadata());
+    }
+
+    private static Item concatenate(Item left, Item right, ExceptionMetadata metadata) {
+        if (!left.isAtomic() || !right.isAtomic()) {
             throw new UnexpectedTypeException(
                     "String concat expression has arguments that can't be converted to a string "
                         +
                         left.serialize()
                         + ", "
                         + right.serialize(),
-                    getMetadata()
+                    metadata
             );
         }
 

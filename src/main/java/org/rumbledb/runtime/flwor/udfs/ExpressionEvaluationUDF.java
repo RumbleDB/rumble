@@ -25,11 +25,13 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,21 +42,21 @@ public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
     private static final long serialVersionUID = 1L;
 
     private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private final RuntimePlan<Item> expression;
 
     private transient List<byte[]> results;
 
     public ExpressionEvaluationUDF(
-            RuntimeIterator expression,
+            RuntimePlan<Item> expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columns
     ) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
-        if (this.expression.isSparkJobNeeded()) {
+        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -67,9 +69,7 @@ public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
 
         this.results.clear();
         // apply expression in the dynamic context
-        this.expression.open(this.dataFrameContext.getContext());
-        while (this.expression.hasNext()) {
-            Item nextItem = this.expression.next();
+        for (Item nextItem : this.expression.materialize(this.dataFrameContext.getContext())) {
             this.results.add(
                 FlworDataFrameUtils.serializeItem(
                     nextItem,
@@ -78,13 +78,12 @@ public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
                 )
             );
         }
-        this.expression.close();
 
         return this.results;
     }
 
     @Serial
-    private void readObject(java.io.ObjectInputStream in)
+    private void readObject(ObjectInputStream in)
             throws IOException,
                 ClassNotFoundException {
         in.defaultReadObject();

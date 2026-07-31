@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -36,13 +41,19 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
@@ -65,18 +76,22 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class ReturnClauseIterator extends HybridRuntimeIterator {
+public class ReturnClauseIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeTupleIterator child;
-    private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
-    private final RuntimeIterator expression;
-    private Item nextResult;
+    private final TupleRuntimePlan child;
+    private transient DynamicContext tupleContext;
+    private final RuntimePlan<Item> expression;
 
     public ReturnClauseIterator(
-            RuntimeTupleIterator child,
-            RuntimeIterator expression,
+            TupleRuntimePlan child,
+            RuntimePlan<Item> expression,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(expression), staticContext);
@@ -86,32 +101,133 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator expression = this.getChild(0);
-        if (expression.isRDDOrDataFrame()) {
-            if (this.child.isDataFrame())
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new ReturnLocalCursor(
+                this.child,
+                this.expression,
+                context,
+                getMetadata()
+        );
+    }
+
+    private static final class ReturnLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<FlworTuple> tuplePlan;
+        private final RuntimePlan<Item> expressionPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<FlworTuple> tupleCursor;
+        private Cursor<Item> expressionCursor;
+        private DynamicContext tupleContext;
+        private Item nextResult;
+        private boolean hasNext;
+
+        private ReturnLocalCursor(
+                RuntimePlan<FlworTuple> tuplePlan,
+                RuntimePlan<Item> expressionPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.tuplePlan = tuplePlan;
+            this.expressionPlan = expressionPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.tupleCursor = this.tuplePlan.getCursor(this.context);
+            this.tupleContext = new DynamicContext(this.context);
+            advance();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.hasNext;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!this.hasNext) {
+                throw new IteratorFlowException("Invalid next() call in return clause", this.metadata);
+            }
+            Item result = this.nextResult;
+            advance();
+            return result;
+        }
+
+        private void advance() {
+            if (this.expressionCursor != null) {
+                if (this.expressionCursor.hasNext()) {
+                    this.nextResult = this.expressionCursor.next();
+                    this.hasNext = true;
+                    return;
+                }
+                this.expressionCursor.close();
+                this.expressionCursor = null;
+            }
+
+            while (this.tupleCursor.hasNext()) {
+                FlworTuple tuple = this.tupleCursor.next();
+                this.tupleContext.getVariableValues().removeAllVariables();
+                this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, this.metadata);
+                this.expressionCursor = this.expressionPlan.getCursor(this.tupleContext);
+                if (this.expressionCursor.hasNext()) {
+                    this.nextResult = this.expressionCursor.next();
+                    this.hasNext = true;
+                    return;
+                }
+                this.expressionCursor.close();
+                this.expressionCursor = null;
+            }
+
+            this.nextResult = null;
+            this.hasNext = false;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.expressionCursor != null) {
+                this.expressionCursor.close();
+                this.expressionCursor = null;
+            }
+            if (this.tupleCursor != null) {
+                this.tupleCursor.close();
+                this.tupleCursor = null;
+            }
+            this.tupleContext = null;
+            this.nextResult = null;
+            this.hasNext = false;
+        }
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        RuntimePlan<Item> expression = this.getChild(0);
+        if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
 
-            this.child.open(context);
             JavaRDD<Item> result = null;
-            while (this.child.hasNext()) {
-                FlworTuple tuple = this.child.next();
-                // We need a fresh context every time, because the evaluation of RDD is lazy.
-                DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                                                                                               // from new tuple
+            try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
+                while (cursor.hasNext()) {
+                    FlworTuple tuple = cursor.next();
+                    // We need a fresh context every time, because the evaluation of RDD is lazy.
+                    DynamicContext dynamicContext = new DynamicContext(context);
+                    dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
 
-                JavaRDD<Item> intermediateResult = this.expression.getRDD(dynamicContext);
-                if (result == null) {
-                    result = intermediateResult;
-                } else {
-                    result = result.union(intermediateResult);
+                    JavaRDD<Item> intermediateResult = this.expression.getRDD(dynamicContext);
+                    if (result == null) {
+                        result = intermediateResult;
+                    } else {
+                        result = result.union(intermediateResult);
+                    }
                 }
             }
-            this.child.close();
             if (result == null) {
                 return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
             }
@@ -121,7 +237,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         StructType oldSchema = df.schema();
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             oldSchema,
-            this.expression.getVariableDependencies(),
+            VariableDependencyRuntimePlan.get(this.expression),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
@@ -130,7 +246,9 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
-        Map<Name, VariableDependency> dependencies = this.expression.getVariableDependencies();
+        Map<Name, VariableDependency> dependencies = VariableDependencyRuntimePlan.get(
+            this.expression
+        );
         Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
         Map<Name, VariableDependency> projection = new HashMap<>();
         for (Name n : dependencies.keySet()) {
@@ -142,43 +260,40 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator expression = this.getChild(0);
-        if (expression.isRDDOrDataFrame()) {
-            if (this.child.isDataFrame())
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        RuntimePlan<Item> expression = this.getChild(0);
+        if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
-            // context
-            this.child.open(context);
             HomogeneousItemDataFrame result = null;
-            while (this.child.hasNext()) {
-                FlworTuple tuple = this.child.next();
-                // We need a fresh context every time, because the evaluation of RDD is lazy.
-                DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                                                                                               // from new tuple
+            try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
+                while (cursor.hasNext()) {
+                    FlworTuple tuple = cursor.next();
+                    // We need a fresh context every time, because the evaluation of RDD is lazy.
+                    DynamicContext dynamicContext = new DynamicContext(context);
+                    dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
 
-                HomogeneousItemDataFrame intermediateResult = this.expression.getDataFrame(dynamicContext);
-                if (result == null) {
-                    result = intermediateResult;
-                } else {
-                    result = result.union(intermediateResult);
+                    HomogeneousItemDataFrame intermediateResult =
+                        ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                            this.expression,
+                            dynamicContext
+                        );
+                    if (result == null) {
+                        result = intermediateResult;
+                    } else {
+                        result = result.union(intermediateResult);
+                    }
                 }
             }
-            this.child.close();
             if (result == null) {
                 return HomogeneousItemDataFrame.emptyDataFrame();
             }
             return result;
         }
-        if (!this.child.isDataFrame()) {
+        if (!this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             throw new OurBadException(
                     "Unexpected application state: a dataframe was expected even though the previous tuple does not produce one.",
                     getMetadata()
@@ -197,7 +312,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             );
         }
         if (nativeQueryResult != null) {
-            if (this.expression.getStaticType().getItemType().isObjectItemType()) {
+            if (this.expression.getRuntimeStaticContext().getStaticType().getItemType().isObjectItemType()) {
                 String input = FlworDataFrameUtils.createTempView(nativeQueryResult);
                 nativeQueryResult =
                     nativeQueryResult.sparkSession()
@@ -211,15 +326,15 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             }
             HomogeneousItemDataFrame result = new HomogeneousItemDataFrame(
                     nativeQueryResult,
-                    this.expression.getStaticType().getItemType()
+                    this.expression.getRuntimeStaticContext().getStaticType().getItemType()
             );
             return result;
         }
 
-        JavaRDD<Item> rdd = getRDDAux(context);
+        JavaRDD<Item> rdd = createNativeRDD(context);
         return ValidateTypeIterator.convertRDDToValidDataFrame(
             rdd,
-            this.expression.getStaticType().getItemType(),
+            this.expression.getRuntimeStaticContext().getStaticType().getItemType(),
             context,
             true,
             this.staticContext
@@ -227,107 +342,14 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
-    }
-
-    @Override
-    protected void openLocal() {
-        this.child.open(this.currentDynamicContextForLocalExecution);
-        this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
-        // as parent
-        setNextResult();
-    }
-
-    private void setNextResult() {
-        if (this.expression.isOpen()) {
-            boolean isResultSet = setResultFromExpression();
-            if (isResultSet) {
-                return;
-            }
-        }
-
-        while (this.child.hasNext()) {
-            FlworTuple tuple = this.child.next();
-            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                                                                                              // from new tuple
-
-            this.expression.open(this.tupleContext);
-            boolean isResultSet = setResultFromExpression();
-            if (isResultSet) {
-                return;
-            }
-        }
-
-        // execution reaches here when there are no more results
-        this.hasNext = false;
-    }
-
-    /**
-     * expression has to be open prior to call.
-     *
-     * @return true if nextResult is set and hasNext is true, false otherwise
-     */
-    private boolean setResultFromExpression() {
-        if (this.expression.hasNext()) { // if expression returns a value, set it as next
-            this.nextResult = this.expression.next();
-            this.hasNext = true;
-            return true;
-        } else { // if not, keep iterating
-            this.expression.close();
-            return false;
-        }
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.child.close();
-        if (this.expression.isOpen()) {
-            this.expression.close();
-        }
-    }
-
-    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(this.expression.getVariableDependencies());
+            new TreeMap<>(VariableDependencyRuntimePlan.get(this.expression));
         for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }
         result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
-    }
-
-    @Override
-    public void print(StringBuilder buffer, int indent) {
-        for (int i = 0; i < indent; ++i) {
-            buffer.append("  ");
-        }
-        buffer.append(getClass().getSimpleName());
-        buffer.append(" | ");
-        buffer.append(getHighestExecutionMode());
-        buffer.append(" | ");
-
-        buffer.append("Variable dependencies: ");
-        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
-        for (Name v : dependencies.keySet()) {
-            buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
-        }
-        buffer.append("\n");
-
-        this.child.print(buffer, indent + 1);
-        this.expression.print(buffer, indent + 1);
     }
 
     @Serial
@@ -353,14 +375,17 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
      */
     public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
-            RuntimeIterator iterator,
+            RuntimePlan<Item> iterator,
             StructType inputSchema,
             DynamicContext context
     ) {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.RETURN, inputSchema, context);
         letContext.setView(input);
-        NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(
+            iterator,
+            letContext
+        );
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
@@ -422,13 +447,19 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         );
         subQueryContext.setRowId(rowIdField);
         // get child query
-        NativeClauseContext childContext = this.child.generateNativeQuery(subQueryContext);
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
+            this.child,
+            subQueryContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         // get expression
         childContext.setClauseType(FLWOR_CLAUSES.RETURN);
-        NativeClauseContext expressionContext = this.expression.generateNativeQuery(childContext);
+        NativeClauseContext expressionContext = NativeQueryRuntimePlan.generate(
+            this.expression,
+            childContext
+        );
         if (expressionContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -578,43 +609,44 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         }
         PendingUpdateList result = new PendingUpdateList();
 
-        if (!this.expression.isRDDOrDataFrame()) {
-            this.child.open(context);
+        if (!this.expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             this.tupleContext = new DynamicContext(context); // assign current context
-
-            while (this.child.hasNext()) {
-                FlworTuple tuple = this.child.next();
-                this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-                this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new
-                                                                                                  // variables
-                // from new tuple
-                result.mergeUpdates(this.expression.getPendingUpdateList(this.tupleContext), this.getMetadata());
-
+            try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
+                while (cursor.hasNext()) {
+                    FlworTuple tuple = cursor.next();
+                    this.tupleContext.getVariableValues().removeAllVariables();
+                    this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
+                    result.mergeUpdates(
+                        UpdatingRuntimePlan.get(this.expression, this.tupleContext),
+                        this.getRuntimeStaticContext().getMetadata()
+                    );
+                }
             }
-            this.child.close();
             return result;
 
             // execution reaches here when there are no more results
         }
 
-        RuntimeIterator expression = this.getChild(0);
-        if (expression.isRDDOrDataFrame()) {
-            if (this.child.isDataFrame())
+        RuntimePlan<Item> expression = this.getChild(0);
+        if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
-            // context
-            this.child.open(context);
-            while (this.child.hasNext()) {
-                FlworTuple tuple = this.child.next();
-                // We need a fresh context every time, because the evaluation of RDD is lazy.
-                DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                // from new tuple
+            try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
+                while (cursor.hasNext()) {
+                    FlworTuple tuple = cursor.next();
+                    // We need a fresh context every time, because the evaluation of RDD is lazy.
+                    DynamicContext dynamicContext = new DynamicContext(context);
+                    dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
 
-                PendingUpdateList intermediateResult = this.expression.getPendingUpdateList(dynamicContext);
-                result.mergeUpdates(intermediateResult, this.getMetadata());
+                    PendingUpdateList intermediateResult = UpdatingRuntimePlan.get(
+                        this.expression,
+                        dynamicContext
+                    );
+                    result.mergeUpdates(intermediateResult, this.getRuntimeStaticContext().getMetadata());
+                }
             }
         }
         return result;
