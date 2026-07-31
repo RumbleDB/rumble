@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -53,8 +55,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SimpleMapExpressionIterator extends HybridRuntimeIterator
+public class SimpleMapExpressionIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Override
@@ -154,7 +158,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
         long count = childRDD.count();
@@ -195,7 +199,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator
             forContext
         );
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
-            JavaRDD<Item> rdd = getRDDAux(context);
+            JavaRDD<Item> rdd = createNativeRDD(context);
             JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));
             StructType schema = ValidateTypeIterator.convertToDataFrameSchema(
                 getStaticType().getItemType(),

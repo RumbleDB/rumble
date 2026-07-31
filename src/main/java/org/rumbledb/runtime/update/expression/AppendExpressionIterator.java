@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -39,11 +38,6 @@ public class AppendExpressionIterator extends UpdatingExpressionIterator {
 
         this.arrayIterator = arrayIterator;
         this.toAppendIterator = toAppendIterator;
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
     }
 
     @Override

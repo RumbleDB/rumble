@@ -27,7 +27,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.XmlSyntaxToItemMapper;
-import org.rumbledb.runtime.RDDRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -37,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
+public class XmlFilesFunctionIterator extends AbstractItemRuntimePlan implements RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -50,7 +51,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 

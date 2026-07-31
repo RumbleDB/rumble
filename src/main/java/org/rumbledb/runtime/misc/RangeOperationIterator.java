@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.misc;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -50,8 +51,9 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
-public class RangeOperationIterator extends HybridRuntimeIterator
+public class RangeOperationIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
 
@@ -135,12 +137,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
         return true;
-    }
-
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
     }
 
     @Override

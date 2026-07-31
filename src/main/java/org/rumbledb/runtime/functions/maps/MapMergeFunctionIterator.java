@@ -14,7 +14,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 
 /**
@@ -46,7 +46,7 @@ import org.rumbledb.runtime.cursor.Cursor;
  * This implementation stays local-only and mirrors that behaviour using the existing MapItem
  * representation and {@code MapAtomicSameKey} key equality via {@code MapItem.getSequenceByKey()}.
  */
-public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

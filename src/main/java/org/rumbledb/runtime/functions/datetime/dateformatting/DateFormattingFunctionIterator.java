@@ -6,14 +6,14 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.io.Serial;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+abstract class DateFormattingFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

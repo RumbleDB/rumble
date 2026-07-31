@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,7 +62,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
 
-public class JoinClauseIterator extends RuntimeTupleIterator {
+public class JoinClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;

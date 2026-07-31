@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.DuplicateAttributeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 
@@ -45,7 +45,7 @@ import java.util.function.BiFunction;
  * 
  * @see org.rumbledb.expressions.xml.DirElemConstructorExpression
  */
-public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

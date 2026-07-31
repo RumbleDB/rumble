@@ -38,7 +38,9 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -70,8 +72,10 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class ReturnClauseIterator extends HybridRuntimeIterator
+public class ReturnClauseIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item>,
             UpdatingRuntimePlan {
 
@@ -195,7 +199,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression = this.getChild(0);
         if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
@@ -326,7 +330,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
             return result;
         }
 
-        JavaRDD<Item> rdd = getRDDAux(context);
+        JavaRDD<Item> rdd = createNativeRDD(context);
         return ValidateTypeIterator.convertRDDToValidDataFrame(
             rdd,
             this.expression.getRuntimeStaticContext().getStaticType().getItemType(),

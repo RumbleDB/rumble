@@ -30,11 +30,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
@@ -53,7 +51,6 @@ public abstract class RuntimeTupleIterator
         implements
             RuntimeIteratorInterface<FlworTuple>,
             LocalRuntimePlan<FlworTuple>,
-            DataFrameRuntimePlan<FlworTuple>,
             NativeQueryRuntimePlan {
 
     @Serial
@@ -148,9 +145,6 @@ public abstract class RuntimeTupleIterator
         }
         return this.staticContext.getExecutionMode().isDataFrame();
     }
-
-    @Override
-    public abstract FlworDataFrame createNativeDataFrame(DynamicContext context);
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.

@@ -17,20 +17,16 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -39,10 +35,7 @@ import java.util.List;
 /**
  * F&amp;O 3.1 array:join — concatenates the members of a sequence of arrays in order into one array.
  */
-public class ArrayJoinFunctionIterator extends HybridRuntimeIterator
-        implements
-            DataFrameRuntimePlan<Item>,
-            AtMostOneLocalRuntimePlan<Item> {
+public class ArrayJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -82,19 +75,5 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator
         }
         // when joining, we always create a sequence array for now
         return ItemFactory.getInstance().createSequenceArrayItem(joined, false);
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:join is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:join is currently supported only in local execution mode."
-        );
     }
 }

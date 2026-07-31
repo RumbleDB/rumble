@@ -5,7 +5,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
-import org.rumbledb.runtime.RDDRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -14,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
+public class UnparsedTextLinesFunctionIterator extends AbstractItemRuntimePlan implements RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -28,7 +29,7 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> hrefIterator = this.getChild(0);
         Item hrefItem = hrefIterator.materializeFirstOrNull(context);
         if (hrefItem == null) {

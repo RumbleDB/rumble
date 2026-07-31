@@ -1,6 +1,6 @@
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 
 import org.rumbledb.api.Item;
@@ -26,7 +26,7 @@ import java.util.List;
  * The `DocFunctionIterator` class implements the `doc` function from XQuery.
  * It retrieves and parses an XML document from a given URI.
  */
-public class DocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 

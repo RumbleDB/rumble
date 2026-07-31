@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 
 import org.rumbledb.api.Item;
@@ -37,7 +37,7 @@ import org.rumbledb.serialization.SerializerUtils;
 import java.io.Serial;
 import java.util.List;
 
-public class SerializeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

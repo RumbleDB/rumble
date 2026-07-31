@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+
 import lombok.Getter;
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
@@ -75,7 +77,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 
-public class ForClauseIterator extends RuntimeTupleIterator {
+public class ForClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
 
 
     @Serial

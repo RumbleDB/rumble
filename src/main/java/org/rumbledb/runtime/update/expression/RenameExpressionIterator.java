@@ -3,7 +3,6 @@ package org.rumbledb.runtime.update.expression;
 import java.io.Serial;
 import java.util.Arrays;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -40,11 +39,6 @@ public class RenameExpressionIterator extends UpdatingExpressionIterator {
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.nameIterator = nameIterator;
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
     }
 
     @Override

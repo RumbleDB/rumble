@@ -1,16 +1,15 @@
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -18,9 +17,9 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public class ArrayGetFunctionIterator extends HybridRuntimeIterator
+public class ArrayGetFunctionIterator extends AbstractItemRuntimePlan
         implements
-            DataFrameRuntimePlan<Item> {
+            LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -109,19 +108,5 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator
             return List.of(arrayItem.getItemAt(lookup - 1));
         }
         return arrayItem.getSequenceAt(lookup - 1);
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:get is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:get is currently supported only in local execution mode."
-        );
     }
 }

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -61,7 +63,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import java.io.Serial;
 import java.util.*;
 
-public class OrderByClauseIterator extends RuntimeTupleIterator {
+public class OrderByClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
 
     public static final String StringFlagForEmptySequence = "empty-sequence";
     @Serial

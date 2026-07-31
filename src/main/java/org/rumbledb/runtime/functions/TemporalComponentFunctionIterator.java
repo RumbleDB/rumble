@@ -26,12 +26,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 /**
  * Shared plan for extracting one component from a date, time, dateTime, or duration value.
  */
-public abstract class TemporalComponentFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public abstract class TemporalComponentFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

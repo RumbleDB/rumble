@@ -1,8 +1,9 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
@@ -12,9 +13,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
@@ -32,9 +31,9 @@ import java.util.List;
  * {@code fn:sort($input)}, {@code fn:sort($input, $collation?)},
  * {@code fn:sort($input, $collation?, $key)}.
  */
-public class SortFunctionIterator extends HybridRuntimeIterator
+public class SortFunctionIterator extends AbstractItemRuntimePlan
         implements
-            DataFrameRuntimePlan<Item> {
+            LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -256,16 +255,6 @@ public class SortFunctionIterator extends HybridRuntimeIterator
             .executionMode(ExecutionMode.LOCAL)
             .metadata(getMetadata())
             .build();
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("fn:sort is currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("fn:sort is currently supported only in local execution mode.");
     }
 
     @FunctionalInterface

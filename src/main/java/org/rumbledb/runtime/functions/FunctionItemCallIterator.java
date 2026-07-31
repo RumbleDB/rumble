@@ -40,7 +40,9 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -51,8 +53,10 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-public class FunctionItemCallIterator extends HybridRuntimeIterator
+public class FunctionItemCallIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item>,
             UpdatingRuntimePlan {
 
@@ -400,7 +404,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         if (this.isPartialApplication) {
             throw new OurBadException(
                     "Unexpected program state reached. Partially applied function calls must be evaluated locally."

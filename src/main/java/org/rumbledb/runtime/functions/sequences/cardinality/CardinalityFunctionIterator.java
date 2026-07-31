@@ -21,12 +21,12 @@
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class CardinalityFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public abstract class CardinalityFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

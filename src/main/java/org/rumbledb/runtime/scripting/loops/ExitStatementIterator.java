@@ -9,7 +9,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -19,8 +21,10 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ExitStatementIterator extends HybridRuntimeIterator
+public class ExitStatementIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item>,
             UpdatingRuntimePlan {
     @Serial
@@ -42,7 +46,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.childIterator.getRDD(dynamicContext);
         this.pendingUpdateList = new PendingUpdateList();
         if (this.childIterator.getRuntimeStaticContext().isUpdating()) {

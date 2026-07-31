@@ -1,14 +1,13 @@
 package org.rumbledb.runtime.functions.xml;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.NodeNotInDocumentException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -19,7 +18,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class IdRefFunctionIterator extends HybridRuntimeIterator {
+public class IdRefFunctionIterator extends AbstractItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -106,10 +107,5 @@ public class IdRefFunctionIterator extends HybridRuntimeIterator {
         return context.getVariableValues()
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
             .get(0);
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("fn:idref is currently supported only in local execution mode.");
     }
 }

@@ -27,7 +27,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -35,8 +37,10 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import java.io.Serial;
 import java.util.List;
 
-public class IfRuntimeIterator extends HybridRuntimeIterator
+public class IfRuntimeIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item>,
             UpdatingRuntimePlan {
 
@@ -87,7 +91,7 @@ public class IfRuntimeIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = selectApplicableIterator(
             dynamicContext
         );

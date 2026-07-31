@@ -1,6 +1,8 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
@@ -21,8 +23,10 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-public class TransformExpressionIterator extends HybridRuntimeIterator
+public class TransformExpressionIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             UpdatingRuntimePlan {
 
     @Serial
@@ -70,7 +74,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         PendingUpdateList pul = getPendingUpdateList(context);
         pul.applyUpdates(this.getRuntimeStaticContext().getMetadata());
         return this.returnIterator.getRDD(context);

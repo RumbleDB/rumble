@@ -7,7 +7,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.InvalidXmlDocumentException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -20,7 +20,7 @@ import java.io.Serial;
 import java.io.StringReader;
 import java.util.List;
 
-public class ParseXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 

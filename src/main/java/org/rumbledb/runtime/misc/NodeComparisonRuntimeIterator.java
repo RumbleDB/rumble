@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -42,7 +42,7 @@ import java.util.Arrays;
  * 
  * @see org.rumbledb.expressions.comparison.NodeComparisonExpression
  */
-public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 

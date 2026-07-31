@@ -23,7 +23,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -531,14 +530,6 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
                 position + 1 >= items.size() ? Collections.emptyList() : List.of(items.get(position + 1))
             );
         }
-    }
-
-    @Override
-    public FlworDataFrame createNativeDataFrame(DynamicContext context) {
-        throw new UnsupportedFeatureException(
-                "Window clauses require local execution.",
-                this.getRuntimeStaticContext().getMetadata()
-        );
     }
 
     @Override

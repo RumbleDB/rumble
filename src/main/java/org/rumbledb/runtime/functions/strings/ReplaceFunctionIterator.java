@@ -27,14 +27,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

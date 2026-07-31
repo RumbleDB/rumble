@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.navigation;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
@@ -50,8 +52,10 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
-public class ArrayUnboxingIterator extends HybridRuntimeIterator
+public class ArrayUnboxingIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Serial
@@ -85,7 +89,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);

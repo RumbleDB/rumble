@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import org.rumbledb.api.Item;
+
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -27,7 +29,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -35,7 +38,7 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
+public class ParquetFileFunctionIterator extends AbstractItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

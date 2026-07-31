@@ -17,16 +17,14 @@
 
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -38,9 +36,9 @@ import java.util.List;
 /**
  * Dynamic function call when the function item is an XDM map ({@code $map($key)}), equivalent to {@code map:get}.
  */
-public class MapFunctionCallIterator extends HybridRuntimeIterator
+public class MapFunctionCallIterator extends AbstractItemRuntimePlan
         implements
-            DataFrameRuntimePlan<Item> {
+            LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -88,16 +86,6 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator
         );
         this.mapItem = mapItem;
         this.keyIterator = keyIterator;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("Map function calls are currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("Map function calls are currently supported only in local execution mode.");
     }
 
     @Override

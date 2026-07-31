@@ -13,7 +13,7 @@ import org.rumbledb.items.parsing.JSONLiteralParsingUtils;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final String FUNCTIONS_NAMESPACE = "http://www.w3.org/2005/xpath-functions";

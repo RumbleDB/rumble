@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import org.rumbledb.api.Item;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
@@ -27,14 +29,15 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.List;
 
-public class MongoDBCollectionFunctionIterator extends DataFrameRuntimeIterator {
+public class MongoDBCollectionFunctionIterator extends AbstractItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

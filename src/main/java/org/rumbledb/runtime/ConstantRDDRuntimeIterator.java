@@ -20,6 +20,12 @@
 
 package org.rumbledb.runtime;
 
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,7 +35,10 @@ import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 
-public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
+public class ConstantRDDRuntimeIterator extends AbstractItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -50,7 +59,7 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         return this.items;
     }
 

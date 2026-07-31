@@ -7,7 +7,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:entry}:
@@ -17,7 +17,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
  * <li>returns a map containing a single key/value binding</li>
  * </ul>
  */
-public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapEntryFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

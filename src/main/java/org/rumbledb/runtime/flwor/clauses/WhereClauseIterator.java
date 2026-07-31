@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
@@ -51,7 +53,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import java.io.Serial;
 import java.util.*;
 
-public class WhereClauseIterator extends RuntimeTupleIterator {
+public class WhereClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
 
 
     @Serial

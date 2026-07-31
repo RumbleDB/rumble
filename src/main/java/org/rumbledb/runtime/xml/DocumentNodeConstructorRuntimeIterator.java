@@ -26,7 +26,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
@@ -44,7 +44,7 @@ import java.util.function.BiFunction;
  * 
  * @see org.rumbledb.expressions.xml.DocumentNodeConstructorExpression
  */
-public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

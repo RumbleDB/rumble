@@ -3,7 +3,7 @@ package org.rumbledb.runtime.scripting.declaration;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
 /*
  * It is expected that no results are returned for this iterator.
  */
-public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+public class CommaVariableDeclStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 

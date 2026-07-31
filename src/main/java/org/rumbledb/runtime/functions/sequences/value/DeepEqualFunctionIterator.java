@@ -32,7 +32,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import scala.Tuple2;
@@ -42,7 +42,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

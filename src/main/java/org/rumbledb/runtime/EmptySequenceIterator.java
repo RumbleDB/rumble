@@ -26,7 +26,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 
 import java.io.Serial;
 
-public class EmptySequenceIterator extends AtMostOneItemLocalRuntimeIterator {
+public class EmptySequenceIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

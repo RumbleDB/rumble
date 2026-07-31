@@ -7,7 +7,8 @@
 
 package org.rumbledb.runtime.update.expression;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import java.util.List;
 
@@ -21,8 +22,9 @@ import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 /**
  * Base plan for updating expressions whose local value is always the empty sequence.
  */
-abstract class UpdatingExpressionIterator extends HybridRuntimeIterator
+abstract class UpdatingExpressionIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
             UpdatingRuntimePlan {
 
     protected UpdatingExpressionIterator(

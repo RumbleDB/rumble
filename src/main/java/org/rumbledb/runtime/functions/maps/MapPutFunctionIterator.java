@@ -12,7 +12,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:put}:
@@ -24,7 +24,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
  *
  * This built-in is local execution only.
  */
-public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

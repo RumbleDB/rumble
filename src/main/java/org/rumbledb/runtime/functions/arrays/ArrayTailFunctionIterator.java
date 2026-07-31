@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 
@@ -29,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -37,14 +35,9 @@ import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
-public class ArrayTailFunctionIterator extends HybridRuntimeIterator
-        implements
-            DataFrameRuntimePlan<Item>,
-            AtMostOneLocalRuntimePlan<Item> {
+public class ArrayTailFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -113,19 +106,5 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator
             );
         }
         return tail(items.isEmpty() ? null : items.get(0));
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:tail is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:tail is currently supported only in local execution mode."
-        );
     }
 }

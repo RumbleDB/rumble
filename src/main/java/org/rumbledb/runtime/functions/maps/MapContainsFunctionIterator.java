@@ -21,7 +21,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * XPath/XQuery map:contains($map, $key) implementation.
  */
-public class MapContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapContainsFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

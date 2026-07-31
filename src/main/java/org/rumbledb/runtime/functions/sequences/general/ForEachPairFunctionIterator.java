@@ -20,9 +20,10 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
@@ -30,9 +31,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.SequenceType;
@@ -40,9 +39,9 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.List;
 
-public class ForEachPairFunctionIterator extends HybridRuntimeIterator
+public class ForEachPairFunctionIterator extends AbstractItemRuntimePlan
         implements
-            DataFrameRuntimePlan<Item> {
+            LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -124,16 +123,6 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator
             ),
             false
         );
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("fn:for-each-pair is currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("fn:for-each-pair is currently supported only in local execution mode.");
     }
 
     private static final class ForEachPairLocalCursor extends AbstractLocalCursor<Item> {

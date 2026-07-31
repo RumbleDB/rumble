@@ -1,6 +1,8 @@
 package org.rumbledb.runtime.typing;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -32,8 +34,10 @@ import lombok.NonNull;
 import java.io.Serial;
 import java.util.Collections;
 
-public class TypePromotionIterator extends HybridRuntimeIterator
+public class TypePromotionIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Serial
@@ -97,7 +101,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
 
         int count = childRDD.take(2).size();

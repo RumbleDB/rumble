@@ -17,14 +17,12 @@
 
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -33,17 +31,12 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
  */
-public class MapFindFunctionIterator extends HybridRuntimeIterator
-        implements
-            DataFrameRuntimePlan<Item>,
-            AtMostOneLocalRuntimePlan<Item> {
+public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
 
     @Override
@@ -126,15 +119,5 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator
         if (item.isArray()) {
             scanItems(item.getItemMembers(), lookupKey, foundMembers);
         }
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("map:find is currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("map:find is currently supported only in local execution mode.");
     }
 }

@@ -25,13 +25,13 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.util.Map;
 
-public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

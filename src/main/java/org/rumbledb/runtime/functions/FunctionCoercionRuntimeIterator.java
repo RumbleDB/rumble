@@ -9,7 +9,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -23,7 +25,11 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class FunctionCoercionRuntimeIterator extends AbstractItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -200,7 +206,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = buildDelegate(context);
         return call.getRDD(context);
     }

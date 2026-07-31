@@ -26,7 +26,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -34,7 +34,7 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.function.IntSupplier;
 
-public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class RoundHalfToEvenFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

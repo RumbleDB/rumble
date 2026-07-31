@@ -20,6 +20,12 @@
 
 package org.rumbledb.runtime;
 
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -43,8 +49,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CommaExpressionIterator extends HybridRuntimeIterator
+public class CommaExpressionIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             UpdatingRuntimePlan {
 
     @Serial
@@ -69,7 +77,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty()) {
             int childIndex = 0;
             org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> currentChild = this.getChild(childIndex);

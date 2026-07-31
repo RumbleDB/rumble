@@ -24,7 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 
@@ -33,7 +33,7 @@ import java.io.Serial;
  * 
  * @see org.rumbledb.expressions.xml.AttributeNodeContentExpression
  */
-public class AttributeNodeContentRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class AttributeNodeContentRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

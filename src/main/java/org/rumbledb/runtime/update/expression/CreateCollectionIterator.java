@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -44,11 +43,6 @@ public class CreateCollectionIterator extends UpdatingExpressionIterator {
         this.contentIterator = contentIterator;
         this.mode = mode;
 
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
     }
 
     @Override

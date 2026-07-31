@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -40,8 +42,10 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator
+public class ObjectRemoveKeysFunctionIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Override
@@ -174,7 +178,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         List<String> removalKeys = getRemovalKeys(context);
         FlatMapFunction<Item, Item> transformation = new ObjectRemoveKeysClosure(

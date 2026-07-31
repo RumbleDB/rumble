@@ -20,13 +20,16 @@
 
 package org.rumbledb.runtime.functions.base;
 
+import org.rumbledb.api.Item;
+
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class LocalFunctionCallIterator extends LocalRuntimeIterator {
+public abstract class LocalFunctionCallIterator extends AbstractItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -17,7 +17,6 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 
 import java.io.Serial;
@@ -25,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -34,9 +32,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
@@ -45,10 +41,7 @@ import org.rumbledb.types.SequenceType;
  * XPath and XQuery Functions and Operators 3.1 {@code array:for-each}:
  * {@code array:for-each($array as array(*), $action as function(item()*) as item()*) as array(*)}.
  */
-public class ArrayForEachFunctionIterator extends HybridRuntimeIterator
-        implements
-            DataFrameRuntimePlan<Item>,
-            AtMostOneLocalRuntimePlan<Item> {
+public class ArrayForEachFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
 
     @Override
@@ -202,19 +195,5 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator
                 functionItemContext
         );
         return functionCall.materialize(context);
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:for-each is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:for-each is currently supported only in local execution mode."
-        );
     }
 }

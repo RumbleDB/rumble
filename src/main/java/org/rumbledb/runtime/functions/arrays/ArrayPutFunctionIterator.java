@@ -17,10 +17,8 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,9 +27,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -42,10 +38,7 @@ import java.util.List;
  * F&amp;O 3.1 array:put — returns a new array with the member at a 1-based position replaced
  * by a given sequence (FOAY0001 if position is out of bounds).
  */
-public class ArrayPutFunctionIterator extends HybridRuntimeIterator
-        implements
-            DataFrameRuntimePlan<Item>,
-            AtMostOneLocalRuntimePlan<Item> {
+public class ArrayPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
 
     @Override
@@ -147,19 +140,5 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator
         }
         return ItemFactory.getInstance()
             .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:put is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:put is currently supported only in local execution mode."
-        );
     }
 }

@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -44,8 +46,10 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DistinctValuesFunctionIterator extends HybridRuntimeIterator
+public class DistinctValuesFunctionIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Serial
@@ -80,7 +84,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         String collation = resolveCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
         return childRDD.map(
@@ -92,7 +96,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        JavaRDD<Item> rdd = getRDDAux(dynamicContext);
+        JavaRDD<Item> rdd = createNativeRDD(dynamicContext);
         ItemType itemType = getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(getConfiguration())) {
             itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(

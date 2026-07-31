@@ -24,7 +24,7 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -36,7 +36,7 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-function-lookup">XPath and XQuery Functions and
  *      Operators 3.1</a>
  */
-public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

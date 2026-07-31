@@ -17,9 +17,10 @@
 
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
@@ -27,10 +28,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.types.SequenceType;
@@ -43,9 +42,9 @@ import java.util.List;
  * FO 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*)
  * as item()*.
  */
-public class MapForEachFunctionIterator extends HybridRuntimeIterator
+public class MapForEachFunctionIterator extends AbstractItemRuntimePlan
         implements
-            DataFrameRuntimePlan<Item> {
+            LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -118,16 +117,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator
             .metadata(staticContext.getMetadata())
             .build();
         return new Invocation(mapItem, actionFunction, keyArgumentContext, valueArgumentContext);
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("map:for-each is currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("map:for-each is currently supported only in local execution mode.");
     }
 
     private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildCallback(

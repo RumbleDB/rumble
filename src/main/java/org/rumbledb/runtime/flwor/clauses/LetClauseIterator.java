@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -67,7 +69,7 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class LetClauseIterator extends RuntimeTupleIterator {
+public class LetClauseIterator extends RuntimeTupleIterator implements DataFrameRuntimePlan<FlworTuple> {
 
 
     @Serial

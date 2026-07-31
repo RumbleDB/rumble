@@ -1,15 +1,14 @@
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -28,9 +27,9 @@ import java.util.List;
  *
  * This built-in is local execution only (consistent with map/array accessors).
  */
-public class MapGetFunctionIterator extends HybridRuntimeIterator
+public class MapGetFunctionIterator extends AbstractItemRuntimePlan
         implements
-            DataFrameRuntimePlan<Item> {
+            LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -92,15 +91,5 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator
         Item key = atomized.get(0);
         List<Item> seq = mapItem.getSequenceByKey(key);
         return seq == null ? List.of() : seq;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("map:get is currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("map:get is currently supported only in local execution mode.");
     }
 }

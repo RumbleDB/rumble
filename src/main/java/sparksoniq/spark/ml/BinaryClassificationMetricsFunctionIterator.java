@@ -14,13 +14,13 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
 import scala.Tuple2;
 
-public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class BinaryClassificationMetricsFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

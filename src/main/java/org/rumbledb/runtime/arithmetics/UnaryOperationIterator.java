@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -37,7 +37,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 
-public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
+public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private final boolean negated;
     private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child;

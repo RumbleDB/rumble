@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.InvalidComputedNamespaceConstructorException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  *
  * @see org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression
  */
-public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

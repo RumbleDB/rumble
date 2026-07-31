@@ -30,7 +30,8 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -38,7 +39,7 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
+public class AvroFileFunctionIterator extends AbstractItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

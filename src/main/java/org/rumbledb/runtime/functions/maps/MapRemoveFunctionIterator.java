@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 
 import java.io.Serial;
@@ -8,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -17,9 +15,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:remove}:
@@ -28,10 +24,7 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
  * Removes all entries whose key is the same-key as any supplied key (op:same-key).
  * This built-in is local execution only (consistent with other map/array accessors).
  */
-public class MapRemoveFunctionIterator extends HybridRuntimeIterator
-        implements
-            DataFrameRuntimePlan<Item>,
-            AtMostOneLocalRuntimePlan<Item> {
+public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
 
     @Override
@@ -149,15 +142,5 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator
             }
         }
         return false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException("map:remove is currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("map:remove is currently supported only in local execution mode.");
     }
 }

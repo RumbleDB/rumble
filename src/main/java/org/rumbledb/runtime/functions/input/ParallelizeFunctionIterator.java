@@ -27,7 +27,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
@@ -39,7 +41,10 @@ import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
-public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
+public class ParallelizeFunctionIterator extends AbstractItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -70,7 +75,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         if (this.sequenceIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             RuntimeDataFrame<Item> dataFrame = this.sequenceIterator.getDataFrame(context);
             JavaRDD<Item> rdd = dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata());

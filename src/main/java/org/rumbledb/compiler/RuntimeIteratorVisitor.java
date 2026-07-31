@@ -153,7 +153,7 @@ import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.EmptySequenceIterator;
 import org.rumbledb.api.Item;
@@ -1789,9 +1789,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         RuntimePlan<Item> elseIterator = this.visit(expression.getElseBranch(), argument);
         RuntimePlan<Item> runtimeIterator = null;
         if (
-            thenIterator instanceof AtMostOneItemLocalRuntimeIterator
+            thenIterator instanceof AbstractAtMostOneItemRuntimePlan
                 &&
-                elseIterator instanceof AtMostOneItemLocalRuntimeIterator
+                elseIterator instanceof AbstractAtMostOneItemRuntimePlan
         ) {
             runtimeIterator = new AtMostOneItemIfRuntimeIterator(
                     conditionIterator,

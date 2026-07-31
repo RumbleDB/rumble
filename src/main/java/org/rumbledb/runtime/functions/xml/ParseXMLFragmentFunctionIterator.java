@@ -8,7 +8,7 @@ import org.rumbledb.exceptions.InvalidXmlDocumentException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -24,7 +24,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ParseXMLFragmentFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ParseXMLFragmentFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 

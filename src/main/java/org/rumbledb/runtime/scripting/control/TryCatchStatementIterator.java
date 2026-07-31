@@ -9,14 +9,14 @@ import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+public class TryCatchStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tryStatementIterator;

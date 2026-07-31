@@ -1,11 +1,10 @@
 package org.rumbledb.runtime.functions.random;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -18,7 +17,9 @@ import java.util.Random;
  * Body of the "permute" entry of a random-number-generator map: a seed-deterministic Fisher-Yates shuffle
  * of the bound "arg" parameter.
  */
-public class RandomNumberGeneratorPermuteBodyIterator extends HybridRuntimeIterator {
+public class RandomNumberGeneratorPermuteBodyIterator extends AbstractItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -47,12 +48,5 @@ public class RandomNumberGeneratorPermuteBodyIterator extends HybridRuntimeItera
             items.set(j, temp);
         }
         return items;
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException(
-                "random-number-generator permute is currently supported only in local execution mode."
-        );
     }
 }

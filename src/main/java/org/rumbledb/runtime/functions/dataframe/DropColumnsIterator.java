@@ -1,8 +1,8 @@
 package org.rumbledb.runtime.functions.dataframe;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -16,8 +16,9 @@ import org.rumbledb.runtime.cursor.Cursor;
 import java.io.Serial;
 import java.util.List;
 
-public class DropColumnsIterator extends HybridRuntimeIterator
+public class DropColumnsIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Override
@@ -33,11 +34,6 @@ public class DropColumnsIterator extends HybridRuntimeIterator
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
     }
 
     @Override

@@ -25,7 +25,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -38,7 +39,7 @@ import java.util.List;
  * Unary lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
  * per XPath and XQuery Functions 3.1.
  */
-public class UnaryLookupIterator extends LocalRuntimeIterator {
+public class UnaryLookupIterator extends AbstractItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

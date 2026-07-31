@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -33,8 +35,10 @@ import org.rumbledb.runtime.cursor.Cursor;
 import java.io.Serial;
 import java.util.List;
 
-public class UnorderedFunctionIterator extends HybridRuntimeIterator
+public class UnorderedFunctionIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
 
@@ -56,7 +60,7 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         return childRDD;
     }

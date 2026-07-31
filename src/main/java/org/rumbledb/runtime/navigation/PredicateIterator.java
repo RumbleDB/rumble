@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.navigation;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -61,8 +63,10 @@ import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class PredicateIterator extends HybridRuntimeIterator
+public class PredicateIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Override
@@ -251,7 +255,7 @@ public class PredicateIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = this.getChild(0);
         org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> filter = this.getChild(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);

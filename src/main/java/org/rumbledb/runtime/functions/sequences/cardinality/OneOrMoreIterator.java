@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -39,8 +41,10 @@ import java.io.Serial;
 import java.util.List;
 import java.util.Objects;
 
-public class OneOrMoreIterator extends HybridRuntimeIterator
+public class OneOrMoreIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Serial
@@ -61,7 +65,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         if (!childRDD.isEmpty()) {
             return childRDD;

@@ -21,7 +21,8 @@
 package org.rumbledb.runtime.control;
 
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -38,7 +39,7 @@ import org.rumbledb.errorcodes.ErrorVariables;
 import org.rumbledb.expressions.control.CatchPattern;
 
 
-public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
+public class TryCatchRuntimeIterator extends AbstractItemRuntimePlan implements LocalRuntimePlan<Item> {
 
 
     @Serial

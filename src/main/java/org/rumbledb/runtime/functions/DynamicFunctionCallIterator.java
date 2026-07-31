@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.functions;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -48,8 +50,10 @@ import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
-public class DynamicFunctionCallIterator extends HybridRuntimeIterator
+public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
@@ -258,7 +262,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         try {
             return resolveFunctionCall(dynamicContext).iterator.getRDD(dynamicContext);
         } catch (ExitStatementException exitStatementException) {

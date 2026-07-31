@@ -1,15 +1,14 @@
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -17,9 +16,9 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ArrayFunctionCallIterator extends HybridRuntimeIterator
+public class ArrayFunctionCallIterator extends AbstractItemRuntimePlan
         implements
-            DataFrameRuntimePlan<Item> {
+            LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -92,19 +91,5 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator
         super(indexIterator == null ? null : Collections.singletonList(indexIterator), staticContext);
         this.arrayItem = arrayItem;
         this.indexIterator = indexIterator;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "Array function calls are currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "Array function calls are currently supported only in local execution mode."
-        );
     }
 }

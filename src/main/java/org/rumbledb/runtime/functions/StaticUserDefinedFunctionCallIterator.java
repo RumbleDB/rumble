@@ -32,7 +32,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -44,8 +46,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
+public class StaticUserDefinedFunctionCallIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item>,
             UpdatingRuntimePlan {
     // static: functionIdentifier known at compile time
@@ -81,7 +85,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         try {
             org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(

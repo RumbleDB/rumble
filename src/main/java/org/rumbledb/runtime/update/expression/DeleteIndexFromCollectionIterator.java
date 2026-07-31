@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
@@ -57,11 +56,6 @@ public class DeleteIndexFromCollectionIterator extends UpdatingExpressionIterato
         this.numDeleteIterator = numDeleteIterator;
         this.isFirst = isFirst;
         this.mode = mode;
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
     }
 
     @Override

@@ -27,7 +27,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     /**
      *
      */

@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.functions.input;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -34,8 +36,10 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import java.io.Serial;
 import java.util.List;
 
-public class RepartitionFunctionIterator extends HybridRuntimeIterator
+public class RepartitionFunctionIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Serial
@@ -61,7 +65,7 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator
 
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
         int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(dynamicContext)
             .getIntValue();

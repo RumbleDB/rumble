@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -44,11 +43,6 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.replacerIterator = replacerIterator;
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
     }
 
     @Override

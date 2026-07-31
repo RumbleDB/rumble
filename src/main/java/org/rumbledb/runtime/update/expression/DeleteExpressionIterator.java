@@ -4,7 +4,6 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,11 +35,6 @@ public class DeleteExpressionIterator extends UpdatingExpressionIterator {
         );
         this.mainIterator = mainIterator;
         this.lookupIterator = lookupIterator;
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
     }
 
     @Override

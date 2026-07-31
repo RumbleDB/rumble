@@ -1,6 +1,8 @@
 package org.rumbledb.runtime.typing;
 
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -46,8 +48,10 @@ import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class ValidateTypeIterator extends HybridRuntimeIterator
+public class ValidateTypeIterator extends AbstractItemRuntimePlan
         implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
     @Serial
@@ -494,7 +498,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator
 
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         return this.iterator.getRDD(context).map(this.validator);
     }
 

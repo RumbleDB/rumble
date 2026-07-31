@@ -5,14 +5,14 @@ import org.rumbledb.context.*;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidDecimalFormatName;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber.NumberPictureFormatter;
 
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 
-public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class FormatNumberFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

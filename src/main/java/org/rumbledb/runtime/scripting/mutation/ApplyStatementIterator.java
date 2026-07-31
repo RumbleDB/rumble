@@ -1,6 +1,6 @@
 package org.rumbledb.runtime.scripting.mutation;
 
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
@@ -14,7 +14,7 @@ import java.util.Collections;
 
 public class ApplyStatementIterator
         extends
-            AtMostOneItemLocalRuntimeIterator
+            AbstractAtMostOneItemRuntimePlan
         implements
             UpdatingRuntimePlan {
     @Serial
