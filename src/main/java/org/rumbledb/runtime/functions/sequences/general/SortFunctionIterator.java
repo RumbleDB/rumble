@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -32,7 +32,7 @@ import java.util.List;
  * {@code fn:sort($input)}, {@code fn:sort($input, $collation?)},
  * {@code fn:sort($input, $collation?, $key)}.
  */
-public class SortFunctionIterator extends AbstractItemRuntimePlan
+public class SortFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item> {
 

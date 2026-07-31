@@ -18,7 +18,7 @@
 package org.rumbledb.runtime.functions.maps;
 
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * Dynamic function call when the function item is an XDM map ({@code $map($key)}), equivalent to {@code map:get}.
  */
-public class MapFunctionCallIterator extends AbstractItemRuntimePlan
+public class MapFunctionCallIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item> {
 

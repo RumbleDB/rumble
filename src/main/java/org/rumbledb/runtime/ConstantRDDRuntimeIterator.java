@@ -24,7 +24,7 @@ import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -36,7 +36,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import java.io.Serial;
 import java.util.List;
 
-public class ConstantRDDRuntimeIterator extends AbstractItemRuntimePlan
+public class ConstantRDDRuntimeIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item> {

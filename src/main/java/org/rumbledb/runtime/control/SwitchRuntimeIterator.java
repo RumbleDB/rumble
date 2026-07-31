@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 
-public class SwitchRuntimeIterator extends AbstractItemRuntimePlan
+public class SwitchRuntimeIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

@@ -41,11 +41,11 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.AbstractTupleRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -76,7 +76,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class ReturnClauseIterator extends AbstractItemRuntimePlan
+public class ReturnClauseIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
@@ -85,12 +85,12 @@ public class ReturnClauseIterator extends AbstractItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final AbstractTupleRuntimePlan child;
+    private final TupleRuntimePlan child;
     private transient DynamicContext tupleContext;
     private final RuntimePlan<Item> expression;
 
     public ReturnClauseIterator(
-            AbstractTupleRuntimePlan child,
+            TupleRuntimePlan child,
             RuntimePlan<Item> expression,
             RuntimeStaticContext staticContext
     ) {

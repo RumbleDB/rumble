@@ -17,7 +17,7 @@
 package org.rumbledb.runtime.functions.maps;
 
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -41,7 +41,7 @@ import java.util.List;
  *
  * This built-in is local execution only (consistent with map/array accessors).
  */
-public class MapKeysFunctionIterator extends AbstractItemRuntimePlan
+public class MapKeysFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item> {
 

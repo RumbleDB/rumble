@@ -21,7 +21,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
@@ -49,7 +49,7 @@ import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
-public class SubsequenceFunctionIterator extends AbstractItemRuntimePlan
+public class SubsequenceFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

@@ -29,7 +29,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
@@ -40,7 +40,7 @@ import scala.Tuple2;
 import java.io.Serial;
 import java.util.*;
 
-public class SlashExprIterator extends AbstractItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
+public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {

@@ -44,7 +44,7 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.AbstractTupleRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -82,7 +82,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 
-public class ForClauseIterator extends AbstractTupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
+public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
 
     @Serial
@@ -99,7 +99,7 @@ public class ForClauseIterator extends AbstractTupleRuntimePlan implements DataF
     private final DataFrameContext dataFrameContext;
 
     public ForClauseIterator(
-            AbstractTupleRuntimePlan child,
+            TupleRuntimePlan child,
             Name variableName,
             Name positionalVariableName,
             boolean allowingEmpty,
@@ -131,7 +131,7 @@ public class ForClauseIterator extends AbstractTupleRuntimePlan implements DataF
 
     private static final class ForLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final AbstractTupleRuntimePlan childPlan;
+        private final TupleRuntimePlan childPlan;
         private final int evaluationDepthLimit;
         private final RuntimePlan<Item> assignmentPlan;
         private final Name variableName;
@@ -148,7 +148,7 @@ public class ForClauseIterator extends AbstractTupleRuntimePlan implements DataF
         private boolean firstItem;
 
         private ForLocalCursor(
-                AbstractTupleRuntimePlan childPlan,
+                TupleRuntimePlan childPlan,
                 int evaluationDepthLimit,
                 RuntimePlan<Item> assignmentPlan,
                 Name variableName,

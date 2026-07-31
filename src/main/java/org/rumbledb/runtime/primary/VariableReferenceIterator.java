@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class VariableReferenceIterator extends AbstractItemRuntimePlan
+public class VariableReferenceIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

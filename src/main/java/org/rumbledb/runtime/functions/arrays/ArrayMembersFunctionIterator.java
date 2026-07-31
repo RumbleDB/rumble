@@ -25,7 +25,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
@@ -36,7 +36,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public class ArrayMembersFunctionIterator extends AbstractItemRuntimePlan
+public class ArrayMembersFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item> {

@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.functions.arrays;
 
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -17,7 +17,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public class ArrayHeadFunctionIterator extends AbstractItemRuntimePlan
+public class ArrayHeadFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item> {
 

@@ -35,7 +35,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -46,7 +46,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
  * Postfix lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
  * per XPath and XQuery Functions 3.1.
  */
-public class PostfixLookupIterator extends AbstractItemRuntimePlan
+public class PostfixLookupIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item> {

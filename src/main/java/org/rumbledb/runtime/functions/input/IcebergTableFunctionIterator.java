@@ -7,7 +7,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class IcebergTableFunctionIterator extends AbstractItemRuntimePlan implements DataFrameRuntimePlan<Item> {
+public class IcebergTableFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

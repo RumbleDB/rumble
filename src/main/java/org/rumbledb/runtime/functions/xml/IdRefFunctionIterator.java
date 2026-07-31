@@ -6,7 +6,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.NodeNotInDocumentException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class IdRefFunctionIterator extends AbstractItemRuntimePlan
+public class IdRefFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item> {
     @Serial

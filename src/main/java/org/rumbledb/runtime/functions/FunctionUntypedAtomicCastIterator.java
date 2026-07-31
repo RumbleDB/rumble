@@ -11,7 +11,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -32,7 +32,7 @@ import java.util.Collections;
  */
 public class FunctionUntypedAtomicCastIterator
         extends
-            AbstractItemRuntimePlan
+            ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

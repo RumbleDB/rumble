@@ -20,14 +20,14 @@ import org.rumbledb.types.SequenceType;
 /**
  * Shared immutable compilation state for plans that produce items.
  */
-public abstract class AbstractItemRuntimePlan extends RuntimePlan<Item>
+public abstract class ItemRuntimePlan extends RuntimePlan<Item>
         implements
             NativeQueryRuntimePlan,
             VariableDependencyRuntimePlan {
 
     private final List<RuntimePlan<Item>> children;
 
-    protected AbstractItemRuntimePlan(
+    protected ItemRuntimePlan(
             @NonNull List<? extends RuntimePlan<Item>> children,
             @NonNull RuntimeStaticContext staticContext
     ) {

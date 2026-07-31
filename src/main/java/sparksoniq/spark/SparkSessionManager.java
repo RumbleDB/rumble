@@ -67,7 +67,7 @@ import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.AbstractTupleRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -245,7 +245,7 @@ public class SparkSessionManager {
                 FlworTuple.class,
                 FlworKey.class,
                 RuntimePlan.class,
-                AbstractTupleRuntimePlan.class,
+                TupleRuntimePlan.class,
                 StructType.class,
                 StructType[].class,
                 StructField.class,

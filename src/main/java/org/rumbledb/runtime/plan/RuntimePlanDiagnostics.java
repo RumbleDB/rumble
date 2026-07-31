@@ -9,7 +9,7 @@ package org.rumbledb.runtime.plan;
 
 import java.util.List;
 
-import org.rumbledb.runtime.AbstractTupleRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
 
 /**
  * Diagnostics kept outside the item runtime plan API.
@@ -20,7 +20,7 @@ public final class RuntimePlanDiagnostics {
     }
 
     public static boolean isSparkJobNeeded(RuntimePlan<?> plan) {
-        if (plan instanceof AbstractTupleRuntimePlan tuplePlan) {
+        if (plan instanceof TupleRuntimePlan tuplePlan) {
             return tuplePlan.isSparkJobNeeded();
         }
         if (plan.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
@@ -30,7 +30,7 @@ public final class RuntimePlanDiagnostics {
     }
 
     public static void print(RuntimePlan<?> plan, StringBuilder buffer, int indent) {
-        if (plan instanceof AbstractTupleRuntimePlan tuplePlan) {
+        if (plan instanceof TupleRuntimePlan tuplePlan) {
             tuplePlan.print(buffer, indent);
             return;
         }
@@ -49,7 +49,7 @@ public final class RuntimePlanDiagnostics {
     }
 
     private static List<? extends RuntimePlan<?>> childrenOf(RuntimePlan<?> plan) {
-        return plan instanceof AbstractItemRuntimePlan itemPlan
+        return plan instanceof ItemRuntimePlan itemPlan
             ? itemPlan.diagnosticChildren()
             : List.of();
     }

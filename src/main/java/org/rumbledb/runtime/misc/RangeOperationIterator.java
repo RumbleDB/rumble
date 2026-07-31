@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.misc;
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import java.io.Serial;
@@ -52,7 +52,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
-public class RangeOperationIterator extends AbstractItemRuntimePlan
+public class RangeOperationIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {

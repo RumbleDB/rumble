@@ -27,7 +27,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.XmlSyntaxToItemMapper;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class XmlFilesFunctionIterator extends AbstractItemRuntimePlan implements RDDRuntimePlan<Item> {
+public class XmlFilesFunctionIterator extends ItemRuntimePlan implements RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

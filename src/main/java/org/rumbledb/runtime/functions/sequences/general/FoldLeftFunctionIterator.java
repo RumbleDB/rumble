@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class FoldLeftFunctionIterator extends AbstractItemRuntimePlan
+public class FoldLeftFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item> {
 

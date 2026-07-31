@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -48,7 +48,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DistinctValuesFunctionIterator extends AbstractItemRuntimePlan
+public class DistinctValuesFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

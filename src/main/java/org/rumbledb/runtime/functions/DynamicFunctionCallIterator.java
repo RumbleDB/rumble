@@ -21,7 +21,7 @@
 package org.rumbledb.runtime.functions;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
@@ -52,7 +52,7 @@ import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
-public class DynamicFunctionCallIterator extends AbstractItemRuntimePlan
+public class DynamicFunctionCallIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

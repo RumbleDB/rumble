@@ -40,7 +40,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.AbstractTupleRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -77,7 +77,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class GroupByClauseIterator extends AbstractTupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
+public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -85,7 +85,7 @@ public class GroupByClauseIterator extends AbstractTupleRuntimePlan implements D
     private Map<Name, DynamicContext.VariableDependency> dependencies;
 
     public GroupByClauseIterator(
-            AbstractTupleRuntimePlan child,
+            TupleRuntimePlan child,
             List<GroupByClauseSparkIteratorExpression> groupingExpressions,
             RuntimeStaticContext staticContext
     ) {

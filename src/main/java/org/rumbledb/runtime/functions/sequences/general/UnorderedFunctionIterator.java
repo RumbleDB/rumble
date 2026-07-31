@@ -21,7 +21,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
@@ -37,7 +37,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public class UnorderedFunctionIterator extends AbstractItemRuntimePlan
+public class UnorderedFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

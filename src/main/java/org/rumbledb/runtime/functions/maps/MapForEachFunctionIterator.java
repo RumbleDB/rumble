@@ -18,7 +18,7 @@
 package org.rumbledb.runtime.functions.maps;
 
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -44,7 +44,7 @@ import java.util.List;
  * FO 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*)
  * as item()*.
  */
-public class MapForEachFunctionIterator extends AbstractItemRuntimePlan
+public class MapForEachFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item> {
 

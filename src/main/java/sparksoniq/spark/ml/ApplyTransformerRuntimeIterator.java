@@ -17,7 +17,7 @@ import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
-public class ApplyTransformerRuntimeIterator extends AbstractItemRuntimePlan implements DataFrameRuntimePlan<Item> {
+public class ApplyTransformerRuntimeIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

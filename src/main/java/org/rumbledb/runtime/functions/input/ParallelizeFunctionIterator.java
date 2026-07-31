@@ -27,7 +27,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -41,7 +41,7 @@ import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
-public class ParallelizeFunctionIterator extends AbstractItemRuntimePlan
+public class ParallelizeFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item> {

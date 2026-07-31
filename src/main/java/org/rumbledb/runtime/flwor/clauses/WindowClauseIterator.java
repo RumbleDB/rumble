@@ -21,7 +21,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.EffectiveBooleanValue;
-import org.rumbledb.runtime.AbstractTupleRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -31,7 +31,7 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
-public class WindowClauseIterator extends AbstractTupleRuntimePlan {
+public class WindowClauseIterator extends TupleRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -66,7 +66,7 @@ public class WindowClauseIterator extends AbstractTupleRuntimePlan {
     private final RuntimePlan<Item> endCondition;
 
     public WindowClauseIterator(
-            AbstractTupleRuntimePlan child,
+            TupleRuntimePlan child,
             WindowClause clause,
             RuntimePlan<Item> sourceIterator,
             RuntimePlan<Item> startCondition,
@@ -89,7 +89,7 @@ public class WindowClauseIterator extends AbstractTupleRuntimePlan {
     }
 
     private WindowClauseIterator(
-            AbstractTupleRuntimePlan child,
+            TupleRuntimePlan child,
             WindowClause.WindowType windowType,
             Name windowVariable,
             SequenceType declaredWindowType,
@@ -349,7 +349,7 @@ public class WindowClauseIterator extends AbstractTupleRuntimePlan {
 
     private static final class WindowSpec {
 
-        private final AbstractTupleRuntimePlan childPlan;
+        private final TupleRuntimePlan childPlan;
         private final int evaluationDepthLimit;
         private final WindowClause.WindowType windowType;
         private final Name windowVariable;
@@ -363,7 +363,7 @@ public class WindowClauseIterator extends AbstractTupleRuntimePlan {
         private final RuntimeStaticContext staticContext;
 
         private WindowSpec(
-                AbstractTupleRuntimePlan childPlan,
+                TupleRuntimePlan childPlan,
                 int evaluationDepthLimit,
                 WindowClause.WindowType windowType,
                 Name windowVariable,

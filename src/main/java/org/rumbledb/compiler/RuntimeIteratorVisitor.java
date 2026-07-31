@@ -159,7 +159,7 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.EmptySequenceIterator;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.AbstractTupleRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.arithmetics.UnaryOperationIterator;
@@ -323,7 +323,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     // region FLOWR
     @Override
     public RuntimePlan<Item> visitFlowrExpression(FlworExpression expression, RuntimePlan<Item> argument) {
-        AbstractTupleRuntimePlan previous = this.visitFlowrClause(
+        TupleRuntimePlan previous = this.visitFlowrClause(
             expression.getReturnClause().getPreviousClause(),
             argument
         );
@@ -343,11 +343,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         return runtimeIterator;
     }
 
-    private AbstractTupleRuntimePlan visitFlowrClause(
+    private TupleRuntimePlan visitFlowrClause(
             Clause clause,
             RuntimePlan<Item> argument
     ) {
-        AbstractTupleRuntimePlan previousIterator = null;
+        TupleRuntimePlan previousIterator = null;
         if (clause.getPreviousClause() != null) {
             previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
         }
@@ -2118,7 +2118,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
 
     @Override
     public RuntimePlan<Item> visitFlowrStatement(FlowrStatement statement, RuntimePlan<Item> argument) {
-        AbstractTupleRuntimePlan previous = this.visitFlowrClause(
+        TupleRuntimePlan previous = this.visitFlowrClause(
             statement.getReturnStatementClause().getPreviousClause(),
             argument
         );

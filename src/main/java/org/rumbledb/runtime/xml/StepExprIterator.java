@@ -16,7 +16,7 @@ import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -27,7 +27,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StepExprIterator extends AbstractItemRuntimePlan implements LocalRuntimePlan<Item> {
+public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimePlan<Item> axisIterator;

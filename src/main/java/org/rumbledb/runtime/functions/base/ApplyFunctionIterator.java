@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.functions.base;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
@@ -29,7 +29,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApplyFunctionIterator extends AbstractItemRuntimePlan
+public class ApplyFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

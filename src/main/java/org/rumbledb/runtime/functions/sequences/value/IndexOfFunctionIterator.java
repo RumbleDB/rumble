@@ -27,7 +27,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -38,7 +38,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public class IndexOfFunctionIterator extends AbstractItemRuntimePlan
+public class IndexOfFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item> {

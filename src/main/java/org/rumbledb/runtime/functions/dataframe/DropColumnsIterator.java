@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.functions.dataframe;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -18,7 +18,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public class DropColumnsIterator extends AbstractItemRuntimePlan
+public class DropColumnsIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {

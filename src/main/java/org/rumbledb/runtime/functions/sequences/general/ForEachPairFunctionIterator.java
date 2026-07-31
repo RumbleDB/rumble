@@ -21,7 +21,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -40,7 +40,7 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.List;
 
-public class ForEachPairFunctionIterator extends AbstractItemRuntimePlan
+public class ForEachPairFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item> {
 

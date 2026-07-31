@@ -29,7 +29,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -39,7 +39,7 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class LibSVMFileFunctionIterator extends AbstractItemRuntimePlan implements DataFrameRuntimePlan<Item> {
+public class LibSVMFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

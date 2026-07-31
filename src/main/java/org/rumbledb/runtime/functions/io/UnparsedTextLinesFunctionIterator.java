@@ -5,7 +5,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class UnparsedTextLinesFunctionIterator extends AbstractItemRuntimePlan implements RDDRuntimePlan<Item> {
+public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implements RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

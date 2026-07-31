@@ -18,7 +18,7 @@
 package org.rumbledb.runtime.functions.arrays;
 
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ArrayFoldLeftFunctionIterator extends AbstractItemRuntimePlan
+public class ArrayFoldLeftFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item> {
 

@@ -21,7 +21,7 @@
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
@@ -42,7 +42,7 @@ import java.io.Serial;
 import java.util.List;
 import java.util.Objects;
 
-public class OneOrMoreIterator extends AbstractItemRuntimePlan
+public class OneOrMoreIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

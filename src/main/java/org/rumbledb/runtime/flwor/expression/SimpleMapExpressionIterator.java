@@ -23,7 +23,7 @@ package org.rumbledb.runtime.flwor.expression;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -61,7 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SimpleMapExpressionIterator extends AbstractItemRuntimePlan
+public class SimpleMapExpressionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

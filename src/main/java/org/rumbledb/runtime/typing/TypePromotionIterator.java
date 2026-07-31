@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.typing;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -36,7 +36,7 @@ import lombok.NonNull;
 import java.io.Serial;
 import java.util.Collections;
 
-public class TypePromotionIterator extends AbstractItemRuntimePlan
+public class TypePromotionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,

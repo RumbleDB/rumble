@@ -45,7 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class AbstractTupleRuntimePlan
+public abstract class TupleRuntimePlan
         extends
             RuntimePlan<FlworTuple>
         implements
@@ -54,14 +54,14 @@ public abstract class AbstractTupleRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    protected final AbstractTupleRuntimePlan child;
+    protected final TupleRuntimePlan child;
     protected int evaluationDepthLimit;
 
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
-    protected AbstractTupleRuntimePlan(
-            AbstractTupleRuntimePlan child,
+    protected TupleRuntimePlan(
+            TupleRuntimePlan child,
             RuntimeStaticContext staticContext
     ) {
         super(staticContext);
@@ -69,7 +69,7 @@ public abstract class AbstractTupleRuntimePlan
         this.evaluationDepthLimit = -1;
     }
 
-    public AbstractTupleRuntimePlan getChildIterator() {
+    public TupleRuntimePlan getChildIterator() {
         return this.child;
     }
 
@@ -231,7 +231,7 @@ public abstract class AbstractTupleRuntimePlan
      * 
      * @return The evaluation depth limit. -1 if none.
      */
-    public AbstractTupleRuntimePlan getSubtreeBeyondLimit(int limit) {
+    public TupleRuntimePlan getSubtreeBeyondLimit(int limit) {
         if (this.child == null) {
             throw new OurBadException(
                     "Trying to get FLWOR clause subtree at depth " + limit + " but there are not further descendants."

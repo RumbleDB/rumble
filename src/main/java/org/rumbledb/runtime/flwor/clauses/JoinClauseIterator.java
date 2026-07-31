@@ -45,7 +45,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.AbstractTupleRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -67,7 +67,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
 
-public class JoinClauseIterator extends AbstractTupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
+public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -79,8 +79,8 @@ public class JoinClauseIterator extends AbstractTupleRuntimePlan implements Data
     private final DataFrameContext dataFrameContext;
 
     public JoinClauseIterator(
-            AbstractTupleRuntimePlan leftChild,
-            AbstractTupleRuntimePlan rightChild,
+            TupleRuntimePlan leftChild,
+            TupleRuntimePlan rightChild,
             boolean isLeftOuterJoin,
             RuntimeStaticContext staticContext
     ) {

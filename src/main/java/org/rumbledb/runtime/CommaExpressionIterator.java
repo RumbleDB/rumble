@@ -25,7 +25,7 @@ import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
-import org.rumbledb.runtime.plan.AbstractItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
@@ -51,7 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CommaExpressionIterator extends AbstractItemRuntimePlan
+public class CommaExpressionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
