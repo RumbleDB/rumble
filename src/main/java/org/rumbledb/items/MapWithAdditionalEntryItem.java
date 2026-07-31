@@ -44,11 +44,13 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
     private final Item original;
     private final Item additionalKey;
     private final List<Item> additionalValue;
+    private final int size;
 
     public MapWithAdditionalEntryItem(Item original, Item additionalKey, List<Item> additionalValue) {
         this.original = original;
         this.additionalKey = additionalKey;
         this.additionalValue = additionalValue;
+        this.size = original.getSize() + (original.hasKey(additionalKey) ? 0 : 1);
     }
 
     @Override
@@ -114,10 +116,7 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Override
     public int getSize() {
-        if (this.original.hasKey(this.additionalKey)) {
-            return this.original.getSize();
-        }
-        return this.original.getSize() + 1;
+        return this.size;
     }
 
     @Override
