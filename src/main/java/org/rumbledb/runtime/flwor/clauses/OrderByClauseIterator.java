@@ -119,13 +119,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
                                 expression.getIterator().getRuntimeStaticContext().getMetadata()
                         );
                     }
-                    if (key != null && !key.isAtomic()) {
-                        throw new UnexpectedTypeException(
-                                "Keys in an order-by clause must be atomics.",
-                                expression.getIterator().getRuntimeStaticContext().getMetadata()
-                        );
-                    }
-                    keys.add(key);
+                    keys.add(atomizeOrderKey(key, expression));
                 }
                 tuplesByKey.computeIfAbsent(new FlworKey(keys), ignored -> new ArrayList<>()).add(tuple);
             }

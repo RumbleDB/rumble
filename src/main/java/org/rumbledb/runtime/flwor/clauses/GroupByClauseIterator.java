@@ -71,6 +71,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -117,7 +118,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         if (this.child == null) {
             throw new OurBadException("Invalid groupby clause.");
         }
-        Map<FlworKey, List<FlworTuple>> tuplesByKey = new HashMap<>();
+        Map<FlworKey, List<FlworTuple>> tuplesByKey = new LinkedHashMap<>();
         DynamicContext tupleContext = new DynamicContext(context);
         try (Cursor<FlworTuple> childCursor = this.child.createNativeCursor(context)) {
             while (childCursor.hasNext()) {
