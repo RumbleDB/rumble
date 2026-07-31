@@ -155,7 +155,7 @@ public class WindowClauseIterator extends TupleRuntimePlan {
         @Override
         protected void openLocal() {
             if (this.spec.hasActiveChild()) {
-                this.childCursor = this.spec.childPlan.getCursor(this.context);
+                this.childCursor = this.spec.childPlan.createNativeCursor(this.context);
                 fillPending();
             } else {
                 this.pending.addAll(generateWindows(this.spec, this.context, null));

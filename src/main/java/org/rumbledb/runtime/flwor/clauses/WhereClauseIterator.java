@@ -108,7 +108,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
             if (this.childPlan == null) {
                 throw new OurBadException("Invalid where clause.");
             }
-            this.childCursor = this.childPlan.getCursor(this.context);
+            this.childCursor = this.childPlan.createNativeCursor(this.context);
             this.tupleContext = new DynamicContext(this.context);
             advance();
         }

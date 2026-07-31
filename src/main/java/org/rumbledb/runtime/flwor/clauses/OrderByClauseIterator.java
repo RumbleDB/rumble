@@ -103,7 +103,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
                 new FlworKeyComparator(this.expressionsWithIterator, getMetadata())
         );
         DynamicContext tupleContext = new DynamicContext(context);
-        try (Cursor<FlworTuple> childCursor = this.child.getCursor(context)) {
+        try (Cursor<FlworTuple> childCursor = this.child.createNativeCursor(context)) {
             while (childCursor.hasNext()) {
                 FlworTuple tuple = childCursor.next();
                 List<Item> keys = new ArrayList<>();

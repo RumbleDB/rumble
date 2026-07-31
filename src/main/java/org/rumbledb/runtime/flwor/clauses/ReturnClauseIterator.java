@@ -213,7 +213,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
                 );
 
             JavaRDD<Item> result = null;
-            try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+            try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
                 while (cursor.hasNext()) {
                     FlworTuple tuple = cursor.next();
                     // We need a fresh context every time, because the evaluation of RDD is lazy.
@@ -269,7 +269,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
                         getMetadata()
                 );
             HomogeneousItemDataFrame result = null;
-            try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+            try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
                 while (cursor.hasNext()) {
                     FlworTuple tuple = cursor.next();
                     // We need a fresh context every time, because the evaluation of RDD is lazy.
@@ -611,7 +611,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
 
         if (!this.expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             this.tupleContext = new DynamicContext(context); // assign current context
-            try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+            try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
                 while (cursor.hasNext()) {
                     FlworTuple tuple = cursor.next();
                     this.tupleContext.getVariableValues().removeAllVariables();
@@ -634,7 +634,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
-            try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+            try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
                 while (cursor.hasNext()) {
                     FlworTuple tuple = cursor.next();
                     // We need a fresh context every time, because the evaluation of RDD is lazy.

@@ -33,6 +33,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -56,6 +57,7 @@ import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
@@ -117,7 +119,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         }
         Map<FlworKey, List<FlworTuple>> tuplesByKey = new HashMap<>();
         DynamicContext tupleContext = new DynamicContext(context);
-        try (Cursor<FlworTuple> childCursor = this.child.getCursor(context)) {
+        try (Cursor<FlworTuple> childCursor = this.child.createNativeCursor(context)) {
             while (childCursor.hasNext()) {
                 FlworTuple tuple = childCursor.next();
                 List<Item> keys = new ArrayList<>();
@@ -142,17 +144,37 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                                     getMetadata()
                             );
                         }
-                        if (key != null && !key.isAtomic()) {
-                            throw new UnexpectedTypeException(
-                                    "Group by variable must atomize to a supported atomic value.",
-                                    getMetadata()
-                            );
+                        List<Item> value = Collections.emptyList();
+                        if (key != null) {
+                            List<Item> atomized;
+                            try {
+                                atomized = key.atomizedValue();
+                            } catch (CannotAtomizeException e) {
+                                throw new UnexpectedTypeException(
+                                        "Group by variable must atomize to a supported atomic value.",
+                                        getMetadata()
+                                );
+                            }
+                            if (atomized.size() > 1) {
+                                throw new UnexpectedTypeException(
+                                        "Keys in a group-by clause must atomize to at most one item.",
+                                        getMetadata()
+                                );
+                            }
+                            if (!atomized.isEmpty()) {
+                                Item atomizedKey = atomized.get(0);
+                                if (!atomizedKey.isAtomic()) {
+                                    throw new UnexpectedTypeException(
+                                            "Keys in a group-by clause must atomize to atomic values.",
+                                            getMetadata()
+                                    );
+                                }
+                                value = Collections.singletonList(atomizedKey);
+                                keys.add(normalizeGroupingKey(atomizedKey, expression));
+                            }
                         }
-                        List<Item> value = key == null
-                            ? Collections.emptyList()
-                            : Collections.singletonList(key);
+                        validateGroupingKeySequenceType(expression.getSequenceType(), value, tupleContext);
                         tuple.putValue(expression.getVariableName(), value);
-                        keys.addAll(value);
                     } else {
                         Name variable = expression.getVariableName();
                         if (!tuple.contains(variable)) {
@@ -162,10 +184,15 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                             );
                         }
                         List<Item> atomized = new ArrayList<>();
-                        for (
-                            Item item : tupleContext.getVariableValues().getLocalVariableValue(variable, getMetadata())
-                        ) {
-                            atomized.addAll(item.atomizedValue());
+                        for (Item item : tupleContext.getVariableValues().getLocalVariableValue(variable, getMetadata())) {
+                            try {
+                                atomized.addAll(item.atomizedValue());
+                            } catch (CannotAtomizeException e) {
+                                throw new UnexpectedTypeException(
+                                        "Group by variable must atomize to a supported atomic value.",
+                                        getMetadata()
+                                );
+                            }
                         }
                         if (atomized.size() > 1) {
                             throw new UnexpectedTypeException(
@@ -173,8 +200,11 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                                     getMetadata()
                             );
                         }
+                        validateGroupingKeySequenceType(expression.getSequenceType(), atomized, tupleContext);
                         tuple.putValue(variable, atomized);
-                        keys.addAll(atomized);
+                        if (atomized.size() == 1) {
+                            keys.add(normalizeGroupingKey(atomized.get(0), expression));
+                        }
                     }
                 }
                 tuplesByKey.computeIfAbsent(new FlworKey(keys), ignored -> new ArrayList<>()).add(tuple);
@@ -183,6 +213,16 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         List<FlworTuple> results = new ArrayList<>();
         tuplesByKey.values().forEach(group -> linearizeTuples(group, results));
         return results;
+    }
+
+    private Item normalizeGroupingKey(Item key, GroupByClauseSparkIteratorExpression expression) {
+        return CollationSupport.normalizeItemForCollation(
+            key,
+            expression.getCollationURI() == null
+                ? getRuntimeStaticContext().getDefaultCollation()
+                : expression.getCollationURI(),
+            getMetadata()
+        );
     }
 
     private void validateGroupingKeySequenceType(

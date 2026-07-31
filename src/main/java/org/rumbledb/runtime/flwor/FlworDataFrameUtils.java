@@ -54,6 +54,8 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.SourcePosition;
+import org.rumbledb.exceptions.SourceRange;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.AnyURIItem;
@@ -91,6 +93,7 @@ import org.rumbledb.types.SequenceType;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.serializers.JavaSerializer;
 
 import scala.collection.immutable.ArraySeq;
 import scala.collection.Iterator;
@@ -106,6 +109,9 @@ public class FlworDataFrameUtils {
     private static final ThreadLocal<List<Item>> lastObjectItemCache = ThreadLocal.withInitial(() -> null);
 
     public static void registerKryoClassesKryo(Kryo kryo) {
+        // Kryo 4's FieldSerializer cannot construct Java records on recent JDKs.
+        kryo.register(SourcePosition.class, new JavaSerializer());
+        kryo.register(SourceRange.class, new JavaSerializer());
         kryo.register(Item.class);
         kryo.register(AnnotatedItem.class);
 

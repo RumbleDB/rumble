@@ -152,7 +152,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 this.nextTuple = generateTuple(null);
                 return;
             }
-            this.childCursor = this.childPlan.getCursor(this.context);
+            this.childCursor = this.childPlan.createNativeCursor(this.context);
             this.tupleContext = new DynamicContext(this.context);
             advance();
         }

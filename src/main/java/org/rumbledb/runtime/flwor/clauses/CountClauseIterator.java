@@ -105,7 +105,7 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
             if (this.childPlan == null) {
                 throw new OurBadException("Invalid count clause.");
             }
-            this.childCursor = this.childPlan.getCursor(this.context);
+            this.childCursor = this.childPlan.createNativeCursor(this.context);
             this.count = 1;
         }
 

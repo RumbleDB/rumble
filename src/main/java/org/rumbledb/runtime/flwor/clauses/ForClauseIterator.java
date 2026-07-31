@@ -177,7 +177,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             this.position = 1;
             this.firstItem = true;
             if (hasActiveChild()) {
-                this.childCursor = this.childPlan.getCursor(this.context);
+                this.childCursor = this.childPlan.createNativeCursor(this.context);
                 this.tupleContext = new DynamicContext(this.context);
                 advanceTuple();
             } else {
@@ -538,7 +538,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     ) {
         Dataset<Row> df = null;
         StructType schema = null;
-        try (Cursor<FlworTuple> cursor = this.child.getCursor(context)) {
+        try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
             while (cursor.hasNext()) {
                 // We first compute the new tuple variable values
                 FlworTuple inputTuple = cursor.next();
