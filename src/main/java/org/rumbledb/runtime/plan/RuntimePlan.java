@@ -52,7 +52,6 @@ public abstract class RuntimePlan<T> implements Serializable {
     private final ExceptionMetadata metadata;
     private final int materializationCap;
     private final RuntimeDataFrameFactory<T> dataFrameFactory;
-    private final ExecutionMode nativeExecutionMode;
 
     protected RuntimePlan(@NonNull RuntimeStaticContext staticContext) {
         this(staticContext, null);
@@ -62,11 +61,13 @@ public abstract class RuntimePlan<T> implements Serializable {
             @NonNull RuntimeStaticContext staticContext,
             RuntimeDataFrameFactory<T> dataFrameFactory
     ) {
-        this.staticContext = staticContext;
+        ExecutionMode nativeExecutionMode = this.selectNativeExecutionMode(staticContext.getExecutionMode());
+        this.staticContext = nativeExecutionMode == staticContext.getExecutionMode()
+            ? staticContext
+            : staticContext.toBuilder().executionMode(nativeExecutionMode).build();
         this.metadata = this.staticContext.getMetadata();
         this.materializationCap = this.staticContext.getConfiguration().getMaterializationCap();
         this.dataFrameFactory = dataFrameFactory;
-        this.nativeExecutionMode = this.selectNativeExecutionMode();
     }
 
     protected final ExceptionMetadata getMetadata() {
@@ -110,7 +111,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      * Executes this plan in its selected native representation and exposes the result as a typed runtime DataFrame.
      */
     public final RuntimeDataFrame<T> getDataFrame(@NonNull DynamicContext context) {
-        if (!this.nativeExecutionMode.isDataFrame() && this.dataFrameFactory == null) {
+        if (!this.staticContext.getExecutionMode().isDataFrame() && this.dataFrameFactory == null) {
             throw this.unsupportedDataFrameConversion();
         }
         return this.executeSelectedRepresentation(
@@ -132,7 +133,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             ExecutionAdapter<RuntimeDataFrame<T>, R, E> fromDataFrame
     )
             throws E {
-        return switch (this.nativeExecutionMode) {
+        return switch (this.staticContext.getExecutionMode()) {
             case LOCAL -> {
                 if (this instanceof LocalRuntimePlan<?>) {
                     yield fromCursor.apply(this.localCapability().createNativeCursor(context));
@@ -155,8 +156,7 @@ public abstract class RuntimePlan<T> implements Serializable {
         };
     }
 
-    private ExecutionMode selectNativeExecutionMode() {
-        ExecutionMode preferredMode = this.staticContext.getExecutionMode();
+    private ExecutionMode selectNativeExecutionMode(ExecutionMode preferredMode) {
         boolean supportsLocal = this instanceof LocalRuntimePlan<?>;
         boolean supportsRDD = this instanceof RDDRuntimePlan<?>;
         boolean supportsDataFrame = this instanceof DataFrameRuntimePlan<?>;
@@ -311,7 +311,7 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     private boolean canEvaluateAtMostOneDirectly() {
-        return this.nativeExecutionMode == ExecutionMode.LOCAL
+        return this.staticContext.getExecutionMode() == ExecutionMode.LOCAL
             && this instanceof AtMostOneLocalRuntimePlan<?>;
     }
 
