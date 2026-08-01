@@ -109,7 +109,11 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final RuntimeDataFrame<T> getDataFrame(@NonNull DynamicContext context) {
         if (!(this instanceof DataFrameRuntimePlan<?>) && this.dataFrameFactory == null) {
-            throw this.unsupportedDataFrameConversion();
+            throw new OurBadException(
+                    "The runtime plan "
+                        + this.getClass().getCanonicalName()
+                        + " has no native DataFrame capability or DataFrame conversion factory."
+            );
         }
         return this.execute(
             ExecutionMode.DATAFRAME,
@@ -174,14 +178,6 @@ public abstract class RuntimePlan<T> implements Serializable {
                     + " prefers "
                     + mode
                     + " execution but does not implement any local, RDD, or DataFrame execution capability."
-        );
-    }
-
-    private OurBadException unsupportedDataFrameConversion() {
-        return new OurBadException(
-                "The runtime plan "
-                    + this.getClass().getCanonicalName()
-                    + " has no native DataFrame capability or DataFrame conversion factory."
         );
     }
 
