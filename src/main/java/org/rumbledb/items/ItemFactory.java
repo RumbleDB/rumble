@@ -378,6 +378,17 @@ public class ItemFactory {
             Item keyToAdd,
             List<Item> valueToAdd
     ) {
+        if (
+            original instanceof MapWithAdditionalEntryItem mapWithAdditionalEntry
+                && mapWithAdditionalEntry.getChainLength() >= MapWithAdditionalEntryItem.MAX_CHAIN_LENGTH
+        ) {
+            original = createMapItem(
+                original.getItemKeys(),
+                original.getSequenceValues(),
+                ExceptionMetadata.EMPTY_METADATA,
+                false
+            );
+        }
         return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
     }
 
