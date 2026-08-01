@@ -54,10 +54,10 @@ public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         Item left = null;
         try {
-            left = this.leftIterator.materializeAtMostOneOrDefault(
-                dynamicContext,
-                ItemFactory.getInstance().createStringItem("")
-            );
+            left = this.leftIterator.materializeAtMostOne(dynamicContext);
+            if (left == null) {
+                left = ItemFactory.getInstance().createStringItem("");
+            }
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "String concatenation expression requires at most one item in its left input sequence.",
@@ -66,10 +66,10 @@ public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         Item right = null;
         try {
-            right = this.rightIterator.materializeAtMostOneOrDefault(
-                dynamicContext,
-                ItemFactory.getInstance().createStringItem("")
-            );
+            right = this.rightIterator.materializeAtMostOne(dynamicContext);
+            if (right == null) {
+                right = ItemFactory.getInstance().createStringItem("");
+            }
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "String concatenation expression requires at most one item in its right input sequence.",

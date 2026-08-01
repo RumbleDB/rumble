@@ -11,7 +11,6 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
@@ -57,27 +56,14 @@ public abstract class RuntimePlan<T> implements Serializable {
         this(staticContext, null);
     }
 
-    protected RuntimePlan(
+    RuntimePlan(
             @NonNull RuntimeStaticContext staticContext,
             RuntimeDataFrameFactory<T> dataFrameFactory
     ) {
-        this.staticContext = this.resolveCompiledExecutionMode(staticContext);
+        this.staticContext = staticContext;
         this.metadata = this.staticContext.getMetadata();
         this.materializationCap = this.staticContext.getConfiguration().getMaterializationCap();
         this.dataFrameFactory = dataFrameFactory;
-    }
-
-    private RuntimeStaticContext resolveCompiledExecutionMode(RuntimeStaticContext context) {
-        if (context.getExecutionMode() != ExecutionMode.DATAFRAME || this instanceof DataFrameRuntimePlan<?>) {
-            return context;
-        }
-        if (this instanceof RDDRuntimePlan<?>) {
-            return context.toBuilder().executionMode(ExecutionMode.RDD).build();
-        }
-        if (this instanceof LocalRuntimePlan<?>) {
-            return context.toBuilder().executionMode(ExecutionMode.LOCAL).build();
-        }
-        return context;
     }
 
     protected final ExceptionMetadata getMetadata() {
@@ -147,35 +133,17 @@ public abstract class RuntimePlan<T> implements Serializable {
                 if (this instanceof LocalRuntimePlan<?>) {
                     yield fromCursor.apply(this.localCapability().createNativeCursor(context));
                 }
-                if (this instanceof RDDRuntimePlan<?>) {
-                    yield fromRDD.apply(this.rddCapability().createNativeRDD(context));
-                }
-                if (this instanceof DataFrameRuntimePlan<?>) {
-                    yield fromDataFrame.apply(this.dataFrameCapability().createNativeDataFrame(context));
-                }
                 throw this.missingCapability(ExecutionMode.LOCAL);
             }
             case RDD -> {
                 if (this instanceof RDDRuntimePlan<?>) {
                     yield fromRDD.apply(this.rddCapability().createNativeRDD(context));
                 }
-                if (this instanceof DataFrameRuntimePlan<?>) {
-                    yield fromDataFrame.apply(this.dataFrameCapability().createNativeDataFrame(context));
-                }
-                if (this instanceof LocalRuntimePlan<?>) {
-                    yield fromCursor.apply(this.localCapability().createNativeCursor(context));
-                }
                 throw this.missingCapability(ExecutionMode.RDD);
             }
             case DATAFRAME -> {
                 if (this instanceof DataFrameRuntimePlan<?>) {
                     yield fromDataFrame.apply(this.dataFrameCapability().createNativeDataFrame(context));
-                }
-                if (this instanceof RDDRuntimePlan<?>) {
-                    yield fromRDD.apply(this.rddCapability().createNativeRDD(context));
-                }
-                if (this instanceof LocalRuntimePlan<?>) {
-                    yield fromCursor.apply(this.localCapability().createNativeCursor(context));
                 }
                 throw this.missingCapability(ExecutionMode.DATAFRAME);
             }
@@ -254,12 +222,11 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @param limit the maximum number of results to materialize
      */
     public final List<T> materializeAtMost(@NonNull DynamicContext context, int limit) {
-        Objects.requireNonNull(context, "dynamic context cannot be null");
         if (limit < 0) {
             throw new IllegalArgumentException("limit cannot be negative");
         }
         if (limit == 0) {
-            return new ArrayList<>();
+            return List.of();
         }
         if (this.canEvaluateAtMostOneDirectly()) {
             return this.materializeDirectAtMostOne(context);
@@ -317,20 +284,6 @@ public abstract class RuntimePlan<T> implements Serializable {
             throw new NoItemException();
         }
         return result;
-    }
-
-    /**
-     * Evaluates this plan locally and substitutes a default value for an empty sequence.
-     *
-     * @param context the dynamic context for the evaluation
-     * @param defaultValue the value returned for an empty sequence
-     * @return the only result or {@code defaultValue}
-     * @throws MoreThanOneItemException if more than one result is produced
-     */
-    public final T materializeAtMostOneOrDefault(@NonNull DynamicContext context, @NonNull T defaultValue)
-            throws MoreThanOneItemException {
-        T result = this.materializeAtMostOne(context);
-        return result == null ? defaultValue : result;
     }
 
     private boolean canEvaluateAtMostOneDirectly() {
@@ -417,7 +370,7 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     /**
-     * Returns the immutable metadata determined while compiling this plan.
+     * Returns the immutable static context determined while compiling this plan.
      *
      * @return the non-null runtime static context
      */
