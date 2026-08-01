@@ -88,7 +88,7 @@ public final class ConcatLocalCursor<T> extends AbstractLocalCursor<T> {
                     this.hasNext = false;
                     return;
                 }
-                this.currentChild = this.childPlans.get(this.childIndex).getExecutionCursor(this.context);
+                this.currentChild = this.childPlans.get(this.childIndex).getCursor(this.context);
                 this.childIndex++;
             }
             if (this.currentChild.hasNext()) {
@@ -100,5 +100,4 @@ public final class ConcatLocalCursor<T> extends AbstractLocalCursor<T> {
             this.currentChild = null;
         }
     }
-
 }

@@ -91,7 +91,7 @@ public class SequenceOfItems {
         if (this.availableAsPUL()) {
             return;
         }
-        this.cursor = this.plan.getExecutionCursor(this.dynamicContext);
+        this.cursor = this.plan.getCursor(this.dynamicContext);
         this.isOpen = true;
     }
 
