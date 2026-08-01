@@ -54,7 +54,7 @@ import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -112,9 +112,9 @@ public class PredicateIterator extends ItemRuntimePlan
     }
 
     private boolean isBooleanOnlyFilter() {
-        return !VariableDependencyRuntimePlan.get(this.filter)
+        return !RuntimePlanDependencies.get(this.filter)
             .containsKey(Name.CONTEXT_POSITION)
-            && !VariableDependencyRuntimePlan.get(this.filter).containsKey(Name.CONTEXT_COUNT)
+            && !RuntimePlanDependencies.get(this.filter).containsKey(Name.CONTEXT_COUNT)
             && (this.filter instanceof BooleanRuntimeIterator
                 || this.filter instanceof AndOperationIterator
                 || this.filter instanceof OrOperationIterator
@@ -151,7 +151,7 @@ public class PredicateIterator extends ItemRuntimePlan
         protected void openLocal() {
             this.filterContext = new DynamicContext(this.context);
             if (
-                VariableDependencyRuntimePlan.get(this.filterPlan)
+                RuntimePlanDependencies.get(this.filterPlan)
                     .containsKey(Name.CONTEXT_COUNT)
             ) {
                 this.filterContext.getVariableValues().setLast(countInput());
@@ -271,7 +271,7 @@ public class PredicateIterator extends ItemRuntimePlan
         } else {
             JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
             long last = 0;
-            if (VariableDependencyRuntimePlan.get(filter).containsKey(Name.CONTEXT_COUNT)) {
+            if (RuntimePlanDependencies.get(filter).containsKey(Name.CONTEXT_COUNT)) {
                 last = childRDD.count();
             }
             Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(
@@ -392,9 +392,9 @@ public class PredicateIterator extends ItemRuntimePlan
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(VariableDependencyRuntimePlan.get(this.filter));
+        result.putAll(RuntimePlanDependencies.get(this.filter));
         result.remove(Name.CONTEXT_ITEM);
-        result.putAll(VariableDependencyRuntimePlan.get(this.iterator));
+        result.putAll(RuntimePlanDependencies.get(this.iterator));
         return result;
     }
 

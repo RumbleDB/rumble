@@ -50,7 +50,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -72,7 +72,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
     ) {
         super(child, staticContext);
         this.expression = whereExpression;
-        VariableDependencyRuntimePlan.get(this.expression);
+        RuntimePlanDependencies.get(this.expression);
     }
 
     @Override
@@ -195,7 +195,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
 
         // was not possible, we use let udf
         List<FlworDataFrameColumn> UDFcolumns = df.getColumns(
-            VariableDependencyRuntimePlan.get(this.expression),
+            RuntimePlanDependencies.get(this.expression),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
@@ -242,7 +242,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
             return null;
         }
         RuntimePlan<Item> right = comparisonIterator.getRightIterator();
-        Set<Name> usedVariables = VariableDependencyRuntimePlan.get(right).keySet();
+        Set<Name> usedVariables = RuntimePlanDependencies.get(right).keySet();
         Set<Name> tuples = countClauseIterator.getOutputTupleVariableNames();
         usedVariables.retainAll(tuples);
         if (!usedVariables.isEmpty()) {
@@ -375,7 +375,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(
-                VariableDependencyRuntimePlan.get(this.expression)
+                RuntimePlanDependencies.get(this.expression)
         );
         for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
@@ -404,7 +404,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
 
         // add the variable dependencies needed by this for clause's expression.
         Map<Name, DynamicContext.VariableDependency> exprDependency =
-            VariableDependencyRuntimePlan.get(this.expression);
+            RuntimePlanDependencies.get(this.expression);
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {

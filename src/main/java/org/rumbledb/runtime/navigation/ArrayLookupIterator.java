@@ -48,7 +48,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -176,7 +176,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
             Map<Name, DynamicContext.VariableDependency> keyDependencies =
-                VariableDependencyRuntimePlan.get(this.getChild(1));
+                RuntimePlanDependencies.get(this.getChild(1));
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;

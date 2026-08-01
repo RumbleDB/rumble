@@ -59,7 +59,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -168,7 +168,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         // System.out.println(sb.toString());
         // }
 
-        Map<Name, VariableDependency> predicateDependencies = VariableDependencyRuntimePlan
+        Map<Name, VariableDependency> predicateDependencies = RuntimePlanDependencies
             .get(predicateIterator);
         if (
             newRightSideVariableName != null
@@ -309,7 +309,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         variablesInJointTuple.addAll(variablesInRightInputTuple);
         List<FlworDataFrameColumn> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumns(
             jointSchema,
-            VariableDependencyRuntimePlan.get(predicateIterator),
+            RuntimePlanDependencies.get(predicateIterator),
             variablesInJointTuple,
             null
         );
@@ -394,10 +394,10 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
                         .getRightIterator();
 
                     Set<Name> leftComparisonDependencies = new HashSet<>(
-                            VariableDependencyRuntimePlan.get(lhs).keySet()
+                            RuntimePlanDependencies.get(lhs).keySet()
                     );
                     Set<Name> rightComparisonDependencies = new HashSet<>(
-                            VariableDependencyRuntimePlan.get(rhs).keySet()
+                            RuntimePlanDependencies.get(rhs).keySet()
                     );
                     // TODO it would be nice to be more generic and also allow dependencies on the
                     // dynamic context on any side.

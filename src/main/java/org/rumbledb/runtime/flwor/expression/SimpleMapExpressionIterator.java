@@ -49,7 +49,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 
 import scala.Tuple2;
@@ -180,9 +180,9 @@ public class SimpleMapExpressionIterator extends ItemRuntimePlan
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(VariableDependencyRuntimePlan.get(this.rightIterator));
+        result.putAll(RuntimePlanDependencies.get(this.rightIterator));
         result.remove(Name.CONTEXT_ITEM);
-        result.putAll(VariableDependencyRuntimePlan.get(this.leftIterator));
+        result.putAll(RuntimePlanDependencies.get(this.leftIterator));
         return result;
     }
 

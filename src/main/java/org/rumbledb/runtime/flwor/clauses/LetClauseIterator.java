@@ -58,7 +58,7 @@ import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -314,7 +314,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
-        Map<Name, VariableDependency> predicateDependencies = VariableDependencyRuntimePlan
+        Map<Name, VariableDependency> predicateDependencies = RuntimePlanDependencies
             .get(predicateIterator);
         if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
             throw new UnsupportedFeatureException(
@@ -544,11 +544,11 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             RuntimePlan<Item> rightHandSideOfJoinEqualityCriterion =
                 comparisonIterator.getRightIterator();
             Set<Name> leftDependencies = new HashSet<>(
-                    VariableDependencyRuntimePlan.get(leftHandSideOfJoinEqualityCriterion)
+                    RuntimePlanDependencies.get(leftHandSideOfJoinEqualityCriterion)
                         .keySet()
             );
             Set<Name> rightDependencies = new HashSet<>(
-                    VariableDependencyRuntimePlan.get(rightHandSideOfJoinEqualityCriterion)
+                    RuntimePlanDependencies.get(rightHandSideOfJoinEqualityCriterion)
                         .keySet()
             );
 
@@ -581,7 +581,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     ) {
         // Check that the expression does not depend functionally on the input tuples
         Set<Name> intersection = new HashSet<>(
-                VariableDependencyRuntimePlan.get(sequenceIterator).keySet()
+                RuntimePlanDependencies.get(sequenceIterator).keySet()
         );
         intersection.retainAll(tupleIterator.getOutputTupleVariableNames());
         return intersection.isEmpty();
@@ -590,7 +590,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(VariableDependencyRuntimePlan.get(this.assignmentIterator));
+            new TreeMap<>(RuntimePlanDependencies.get(this.assignmentIterator));
         if (this.child != null && this.evaluationDepthLimit != 0) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
@@ -639,7 +639,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         // add the variable dependencies needed by this for clause's expression.
         Map<Name, DynamicContext.VariableDependency> exprDependency =
-            VariableDependencyRuntimePlan.get(this.assignmentIterator);
+            RuntimePlanDependencies.get(this.assignmentIterator);
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
@@ -722,9 +722,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             }
         }
 
-        // for (Name n : org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(newVariableExpression).keySet()) {
+        // for (Name n : org.rumbledb.runtime.plan.RuntimePlanDependencies.get(newVariableExpression).keySet()) {
         // System.out.println(n.toString() + " -> " +
-        // org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(newVariableExpression).get(n));
+        // org.rumbledb.runtime.plan.RuntimePlanDependencies.get(newVariableExpression).get(n));
         // }
         //
         // for (Name n : variablesInInputTuple) {
@@ -734,7 +734,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         // was not possible, we use let udf
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
-            VariableDependencyRuntimePlan.get(newVariableExpression),
+            RuntimePlanDependencies.get(newVariableExpression),
             variablesInInputTuple,
             null
         );

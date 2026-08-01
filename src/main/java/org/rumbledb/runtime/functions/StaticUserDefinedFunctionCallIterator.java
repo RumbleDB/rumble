@@ -40,7 +40,7 @@ import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -127,7 +127,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
             if (iterator == null) {
                 continue;
             }
-            result.putAll(VariableDependencyRuntimePlan.get(iterator));
+            result.putAll(RuntimePlanDependencies.get(iterator));
         }
         return result;
     }

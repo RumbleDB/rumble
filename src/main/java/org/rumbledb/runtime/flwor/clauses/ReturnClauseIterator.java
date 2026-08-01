@@ -53,7 +53,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
@@ -238,7 +238,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
         StructType oldSchema = df.schema();
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             oldSchema,
-            VariableDependencyRuntimePlan.get(this.expression),
+            RuntimePlanDependencies.get(this.expression),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
@@ -247,7 +247,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
-        Map<Name, VariableDependency> dependencies = VariableDependencyRuntimePlan.get(
+        Map<Name, VariableDependency> dependencies = RuntimePlanDependencies.get(
             this.expression
         );
         Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
@@ -345,7 +345,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(VariableDependencyRuntimePlan.get(this.expression));
+            new TreeMap<>(RuntimePlanDependencies.get(this.expression));
         for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }

@@ -61,7 +61,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -247,7 +247,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
         Map<Name, DynamicContext.VariableDependency> keyDependencies =
-            VariableDependencyRuntimePlan.get(this.getChild(1));
+            RuntimePlanDependencies.get(this.getChild(1));
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.

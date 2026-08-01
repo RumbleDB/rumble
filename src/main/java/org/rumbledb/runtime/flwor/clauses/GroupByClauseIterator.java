@@ -56,7 +56,7 @@ import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -98,7 +98,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         for (GroupByClauseSparkIteratorExpression e : this.groupingExpressions) {
             if (e.getExpression() != null) {
                 this.dependencies.putAll(
-                    VariableDependencyRuntimePlan.get(e.getExpression())
+                    RuntimePlanDependencies.get(e.getExpression())
                 );
             } else {
                 this.dependencies.put(
@@ -531,7 +531,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
             if (iterator.getExpression() != null) {
-                result.putAll(VariableDependencyRuntimePlan.get(iterator.getExpression()));
+                result.putAll(RuntimePlanDependencies.get(iterator.getExpression()));
             } else {
                 result.put(iterator.getVariableName(), DynamicContext.VariableDependency.FULL);
             }
@@ -589,7 +589,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                 continue;
             }
             Map<Name, DynamicContext.VariableDependency> exprDependency =
-                VariableDependencyRuntimePlan.get(iterator.getExpression());
+                RuntimePlanDependencies.get(iterator.getExpression());
             for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {

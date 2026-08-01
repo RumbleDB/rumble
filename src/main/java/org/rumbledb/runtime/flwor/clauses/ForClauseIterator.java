@@ -60,7 +60,7 @@ import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -111,7 +111,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         this.positionalVariableName = positionalVariableName;
         this.assignmentIterator = assignmentIterator;
         this.allowingEmpty = allowingEmpty;
-        VariableDependencyRuntimePlan.get(this.assignmentIterator);
+        RuntimePlanDependencies.get(this.assignmentIterator);
         this.dataFrameContext = new DataFrameContext();
     }
 
@@ -444,7 +444,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         Dataset<Row> expressionDF;
 
 
-        Map<Name, VariableDependency> predicateDependencies = VariableDependencyRuntimePlan
+        Map<Name, VariableDependency> predicateDependencies = RuntimePlanDependencies
             .get(predicateIterator);
 
         if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
@@ -655,7 +655,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         if (this.child != null && this.evaluationDepthLimit != 0) {
             UDFcolumns = FlworDataFrameUtils.getColumns(
                 inputSchema,
-                VariableDependencyRuntimePlan.get(this.assignmentIterator),
+                RuntimePlanDependencies.get(this.assignmentIterator),
                 new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                 null
             );
@@ -927,7 +927,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(VariableDependencyRuntimePlan.get(this.assignmentIterator));
+            new TreeMap<>(RuntimePlanDependencies.get(this.assignmentIterator));
         if (this.child != null && this.evaluationDepthLimit != 0) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
@@ -988,7 +988,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         // add the variable dependencies needed by this for clause's expression.
         Map<Name, DynamicContext.VariableDependency> exprDependency =
-            VariableDependencyRuntimePlan.get(this.assignmentIterator);
+            RuntimePlanDependencies.get(this.assignmentIterator);
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
