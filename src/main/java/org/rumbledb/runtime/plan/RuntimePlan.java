@@ -75,14 +75,31 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     /**
-     * Exposes this plan as a cursor while preserving the execution mode selected by the compiler.
-     *
-     * <p>
-     * Local plan composition uses this method when a parent needs to stream a child. The child may still execute
-     * natively as an RDD or DataFrame and only convert its result to a cursor at the boundary.
-     * </p>
+     * Exposes this plan as a cursor, using its native local capability when available.
      */
     public final Cursor<T> getCursor(@NonNull DynamicContext context) {
+        return this.execute(
+            ExecutionMode.LOCAL,
+            context,
+            cursor -> cursor,
+            rdd -> RuntimePlanConversions.rddToCursor(rdd, this.materializationCap, this.metadata),
+            dataFrame -> RuntimePlanConversions.rddToCursor(
+                dataFrame.toRDD(this.metadata),
+                this.materializationCap,
+                this.metadata
+            )
+        );
+    }
+
+    /**
+     * Exposes this plan as a cursor while retaining the execution mode selected by the compiler.
+     *
+     * <p>
+     * This is intended for transparent runtime composition, where a parent relays a child's sequence without
+     * imposing local execution. Local semantic operators should use {@link #getCursor(DynamicContext)} instead.
+     * </p>
+     */
+    public final Cursor<T> getExecutionCursor(@NonNull DynamicContext context) {
         return this.execute(
             this.staticContext.getExecutionMode(),
             context,
