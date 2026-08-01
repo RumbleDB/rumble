@@ -8,7 +8,6 @@
 package org.rumbledb.runtime.plan;
 
 import java.io.Serial;
-import java.util.Collections;
 import java.util.List;
 
 import lombok.NonNull;
@@ -45,7 +44,7 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item>
     }
 
     protected final List<RuntimePlan<Item>> getChildren() {
-        return Collections.unmodifiableList(this.children);
+        return this.children;
     }
 
     final List<? extends RuntimePlan<?>> diagnosticChildren() {
