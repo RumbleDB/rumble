@@ -4220,7 +4220,7 @@ public class BuiltinFunctionCatalogue {
         List.of(),
         "item*",
         CollectionFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
 
     static final BuiltinFunction collection1 = createBuiltinFunction(
@@ -4228,7 +4228,7 @@ public class BuiltinFunctionCatalogue {
         List.of("string?"),
         "item*",
         CollectionFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
 
     static final BuiltinFunction doc_available = createBuiltinFunction(
