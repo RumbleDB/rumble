@@ -21,6 +21,9 @@ import lombok.NoArgsConstructor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 /**
  * Resolves {@link ExecutionMode} for a builtin from its catalogue metadata and the first argument mode.
@@ -45,16 +48,13 @@ public final class BuiltinFunctionExecutionModes {
             return ExecutionMode.RDD;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME) {
-            return ExecutionMode.DATAFRAME;
+            return configuration.dataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
-            if (firstMode.isDataFrame()) {
-                return dataFrameIfConfigurationAllows(configuration);
-            }
-            if (firstMode.isRDDOrDataFrame()) {
-                return ExecutionMode.RDD;
-            }
-            return ExecutionMode.LOCAL;
+            ExecutionMode preferredMode = firstMode.isDataFrame()
+                ? configuration.dataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD
+                : firstMode.isRDDOrDataFrame() ? ExecutionMode.RDD : ExecutionMode.LOCAL;
+            return selectSupportedExecutionMode(builtinFunction, preferredMode);
         }
         if (
             functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
@@ -69,10 +69,26 @@ public final class BuiltinFunctionExecutionModes {
         );
     }
 
-    public static ExecutionMode dataFrameIfConfigurationAllows(RumbleRuntimeConfiguration configuration) {
-        if (configuration.dataFrameExecution()) {
-            return ExecutionMode.DATAFRAME;
-        }
-        return ExecutionMode.RDD;
+    private static ExecutionMode selectSupportedExecutionMode(
+            BuiltinFunction builtinFunction,
+            ExecutionMode preferredMode
+    ) {
+        Class<?> planClass = builtinFunction.getFunctionIteratorClass();
+        boolean supportsLocal = LocalRuntimePlan.class.isAssignableFrom(planClass);
+        boolean supportsRDD = RDDRuntimePlan.class.isAssignableFrom(planClass);
+        boolean supportsDataFrame = DataFrameRuntimePlan.class.isAssignableFrom(planClass);
+
+        return switch (preferredMode) {
+            case LOCAL -> supportsLocal
+                ? ExecutionMode.LOCAL
+                : supportsRDD ? ExecutionMode.RDD : supportsDataFrame ? ExecutionMode.DATAFRAME : preferredMode;
+            case RDD -> supportsRDD
+                ? ExecutionMode.RDD
+                : supportsDataFrame ? ExecutionMode.DATAFRAME : supportsLocal ? ExecutionMode.LOCAL : preferredMode;
+            case DATAFRAME -> supportsDataFrame
+                ? ExecutionMode.DATAFRAME
+                : supportsRDD ? ExecutionMode.RDD : supportsLocal ? ExecutionMode.LOCAL : preferredMode;
+            case UNSET -> preferredMode;
+        };
     }
 }
