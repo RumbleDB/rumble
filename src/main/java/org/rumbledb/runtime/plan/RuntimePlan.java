@@ -192,7 +192,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             return this.materializeDirectAtMostOne(context);
         }
         return this.execute(
-            ExecutionMode.LOCAL,
+            staticContext.getExecutionMode(),
             context,
             RuntimePlanConversions::materializeCursor,
             rdd -> RuntimePlanConversions.collectRDDWithLimit(
@@ -219,7 +219,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             return this.atMostOneCapability().evaluateAtMostOne(context);
         }
         return this.execute(
-            ExecutionMode.LOCAL,
+            staticContext.getExecutionMode(),
             context,
             RuntimePlan::materializeFirstFromCursor,
             RuntimePlan::firstOrNull,
@@ -246,7 +246,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             return this.materializeDirectAtMostOne(context);
         }
         return this.execute(
-            ExecutionMode.LOCAL,
+            staticContext.getExecutionMode(),
             context,
             cursor -> materializeAtMostFromCursor(cursor, limit),
             rdd -> rdd.take(limit),
@@ -267,7 +267,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             return this.atMostOneCapability().evaluateAtMostOne(context);
         }
         return this.execute(
-            ExecutionMode.LOCAL,
+            staticContext.getExecutionMode(),
             context,
             (cursor) -> RuntimePlan.materializeAtMostOneFromCursor(
                 cursor,
