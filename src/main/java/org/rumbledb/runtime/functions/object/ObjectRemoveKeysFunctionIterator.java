@@ -165,20 +165,6 @@ public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
         return result;
     }
 
-    private Item removeKeys(Item objItem, List<String> removalKeys) {
-        ArrayList<String> finalKeylist = new ArrayList<>();
-        ArrayList<Item> finalValueList = new ArrayList<>();
-
-        for (String objectKey : objItem.getStringKeys()) {
-            if (!removalKeys.contains(objectKey)) {
-                finalKeylist.add(objectKey);
-                finalValueList.add(objItem.getItemByKey(objectKey));
-            }
-        }
-        return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, getMetadata(), true);
-    }
-
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);

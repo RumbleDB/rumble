@@ -87,22 +87,13 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
             RuntimePlan<Item> contentIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(nameIterator, contentIterator), staticContext);
+        super(
+            List.of(nameIterator, contentIterator),
+            staticContext
+        );
         this.staticElementName = null;
         this.nameIterator = nameIterator;
         this.contentIterator = contentIterator;
-    }
-
-    private static List<RuntimePlan<Item>> createChildList(
-            RuntimePlan<Item>... iterators
-    ) {
-        List<RuntimePlan<Item>> children = new ArrayList<>();
-        for (RuntimePlan<Item> iterator : iterators) {
-            if (iterator != null) {
-                children.add(iterator);
-            }
-        }
-        return children;
     }
 
     @Override

@@ -33,7 +33,6 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -83,22 +82,13 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
             DataFunctionIterator uriIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(prefixIterator, uriIterator), staticContext);
+        super(
+            List.of(prefixIterator, uriIterator),
+            staticContext
+        );
         this.staticPrefix = null;
         this.prefixIterator = prefixIterator;
         this.uriIterator = uriIterator;
-    }
-
-    private static List<RuntimePlan<Item>> createChildList(
-            RuntimePlan<Item>... iterators
-    ) {
-        List<RuntimePlan<Item>> children = new ArrayList<>();
-        for (RuntimePlan<Item> iterator : iterators) {
-            if (iterator != null) {
-                children.add(iterator);
-            }
-        }
-        return children;
     }
 
     @Override

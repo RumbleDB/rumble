@@ -154,7 +154,6 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                 .metadata(staticContext.getMetadata())
                 .build();
             return new FunctionCall(
-                    functionItem,
                     new ArrayFunctionCallIterator(
                             functionItem,
                             keyIterator,
@@ -183,7 +182,6 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                 .metadata(staticContext.getMetadata())
                 .build();
             return new FunctionCall(
-                    functionItem,
                     new MapFunctionCallIterator(
                             functionItem,
                             keyIterator,
@@ -214,7 +212,6 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
             );
         }
         return new FunctionCall(
-                functionItem,
                 NamedFunctions.buildFunctionItemCallIterator(
                     functionItem,
                     staticContext,
@@ -288,11 +285,9 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
     }
 
     private static final class FunctionCall {
-        private final Item functionItem;
         private final RuntimePlan<Item> iterator;
 
-        private FunctionCall(Item functionItem, RuntimePlan<Item> iterator) {
-            this.functionItem = functionItem;
+        private FunctionCall(RuntimePlan<Item> iterator) {
             this.iterator = iterator;
         }
     }

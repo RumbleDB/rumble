@@ -106,37 +106,6 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return indentOption.get(0).getBooleanValue();
     }
 
-    private Item materializeWithCursors(DynamicContext context) {
-        Item input;
-        try {
-            input = this.getChild(0).materializeAtMostOne(context);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "fn:xml-to-json expects at most one input item [err:XPTY0004].",
-                    getMetadata()
-            );
-        }
-        if (input == null) {
-            return null;
-        }
-
-        boolean indent = false;
-        if (this.getChildren().size() >= 2) {
-            Item options;
-            try {
-                options = this.getChild(1).materializeAtMostOne(context);
-            } catch (MoreThanOneItemException e) {
-                throw new UnexpectedTypeException(
-                        "The options argument of fn:xml-to-json must be a single map item [err:XPTY0004].",
-                        getMetadata()
-                );
-            }
-            indent = resolveIndentOption(options);
-        }
-        Item value = parseInputItem(input);
-        return ItemFactory.getInstance().createStringItem(serializeAsJson(value, indent));
-    }
-
     private Item parseInputItem(Item input) {
         if (input.isDocumentNode()) {
             Item root = extractDocumentElement(input);

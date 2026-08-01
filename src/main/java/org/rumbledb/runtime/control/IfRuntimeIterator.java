@@ -50,7 +50,6 @@ public class IfRuntimeIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimePlan<Item> selectedIterator = null;
 
     public IfRuntimeIterator(
             RuntimePlan<Item> condition,

@@ -72,22 +72,13 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
             DataFunctionIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(nameIterator, contentIterator), staticContext);
+        super(
+            List.of(nameIterator, contentIterator),
+            staticContext
+        );
         this.staticTarget = null;
         this.nameIterator = nameIterator;
         this.contentIterator = contentIterator;
-    }
-
-    private static List<RuntimePlan<Item>> createChildList(
-            RuntimePlan<Item>... iterators
-    ) {
-        List<RuntimePlan<Item>> children = new ArrayList<>();
-        for (RuntimePlan<Item> iterator : iterators) {
-            if (iterator != null) {
-                children.add(iterator);
-            }
-        }
-        return children;
     }
 
     @Override

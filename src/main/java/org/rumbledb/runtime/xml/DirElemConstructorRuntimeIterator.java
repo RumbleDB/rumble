@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 /**
  * Runtime iterator for direct element constructors.
@@ -61,7 +62,10 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             List<NamespaceDeclaration> namespaceDeclarations,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(content, attributes), staticContext);
+        super(
+            Stream.concat(attributes.stream().<RuntimePlan<Item>>map(iterator -> iterator), content.stream()).toList(),
+            staticContext
+        );
         this.content = content;
         this.attributes = attributes;
         this.namespaceDeclarations = namespaceDeclarations;
@@ -248,17 +252,6 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             }
             attributeNames.add(expanded);
         }
-    }
-
-    private static List<RuntimePlan<Item>> createChildList(
-            List<RuntimePlan<Item>> content,
-            List<AttributeNodeRuntimeIterator> attributes
-    ) {
-        List<RuntimePlan<Item>> children = new ArrayList<>();
-        // first add attributes, then content
-        children.addAll(attributes);
-        children.addAll(content);
-        return children;
     }
 
 }

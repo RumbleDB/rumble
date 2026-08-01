@@ -21,7 +21,6 @@
 package org.rumbledb.runtime.xml;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -51,15 +50,9 @@ public class AttributeNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePl
             List<DataFunctionIterator> atomizedValues,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(atomizedValues), staticContext);
+        super(atomizedValues, staticContext);
         this.attributeName = attributeName;
         this.atomizedValues = atomizedValues;
-    }
-
-    private static List<RuntimePlan<Item>> createChildList(
-            List<DataFunctionIterator> atomizedValues
-    ) {
-        return new ArrayList<>(atomizedValues);
     }
 
     @Override

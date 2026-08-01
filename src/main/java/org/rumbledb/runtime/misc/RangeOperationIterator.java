@@ -64,7 +64,6 @@ public class RangeOperationIterator extends ItemRuntimePlan
     private final RuntimePlan<Item> rightIterator;
     private long left;
     private long right;
-    private long index;
     public static final int PARTITION_SIZE = 1000000;
 
     public RangeOperationIterator(

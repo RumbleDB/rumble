@@ -7,6 +7,7 @@
 
 package org.rumbledb.runtime.update.expression;
 
+import java.io.Serial;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
@@ -27,6 +28,9 @@ abstract class UpdatingExpressionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             UpdatingRuntimePlan {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     protected UpdatingExpressionIterator(
             List<RuntimePlan<Item>> children,

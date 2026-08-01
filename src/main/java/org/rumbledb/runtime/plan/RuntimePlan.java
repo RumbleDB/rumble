@@ -7,6 +7,7 @@
 
 package org.rumbledb.runtime.plan;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,9 @@ import org.rumbledb.runtime.dataframe.RuntimeDataFrameFactory;
  * @param <T> the logical value produced by this plan
  */
 public abstract class RuntimePlan<T> implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     protected final RuntimeStaticContext staticContext;
     private final ExceptionMetadata metadata;

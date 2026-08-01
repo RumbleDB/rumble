@@ -7,6 +7,7 @@
 
 package org.rumbledb.runtime.plan;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,9 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item>
         implements
             NativeQueryRuntimePlan,
             VariableDependencyRuntimePlan {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private final List<RuntimePlan<Item>> children;
 

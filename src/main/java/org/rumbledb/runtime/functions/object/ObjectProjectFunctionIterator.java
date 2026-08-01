@@ -155,21 +155,6 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
         return keys;
     }
 
-    private Item getProjection(Item objItem, List<Item> keys) {
-        ArrayList<String> finalKeylist = new ArrayList<>();
-        ArrayList<Item> finalValueList = new ArrayList<>();
-        for (Item keyItem : keys) {
-            String key = keyItem.getStringValue();
-            Item value = objItem.getItemByKey(key);
-            if (value != null) {
-                finalKeylist.add(key);
-                finalValueList.add(value);
-            }
-        }
-        return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, getMetadata(), true);
-    }
-
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);

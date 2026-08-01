@@ -56,17 +56,6 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
         );
     }
 
-    private List<Item> applyNodeTest(List<Item> axisResult) {
-        List<Item> nodeTestResults = new ArrayList<>();
-        for (Item node : axisResult) {
-            Item nodeTestResult = nodeTestItem(node, this.nodeTest);
-            if (nodeTestResult != null) {
-                nodeTestResults.add(nodeTestResult);
-            }
-        }
-        return nodeTestResults;
-    }
-
     private static String nodeNameLexical(Item node) {
         Name n = node.nodeName();
         return n == null ? "" : n.toString();

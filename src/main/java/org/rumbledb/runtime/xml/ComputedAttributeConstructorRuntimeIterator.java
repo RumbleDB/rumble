@@ -82,22 +82,13 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
             DataFunctionIterator contentExpression,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(nameIterator, contentExpression), staticContext);
+        super(
+            List.of(nameIterator, contentExpression),
+            staticContext
+        );
         this.staticAttributeName = null;
         this.nameIterator = nameIterator;
         this.contentExpression = contentExpression;
-    }
-
-    private static List<RuntimePlan<Item>> createChildList(
-            RuntimePlan<Item>... iterators
-    ) {
-        List<RuntimePlan<Item>> children = new ArrayList<>();
-        for (RuntimePlan<Item> iterator : iterators) {
-            if (iterator != null) {
-                children.add(iterator);
-            }
-        }
-        return children;
     }
 
     @Override

@@ -60,8 +60,6 @@ public class VariableReferenceIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
     @Getter
     private final Name variableName;
-    private List<Item> items = null;
-    private int currentIndex = 0;
 
     public VariableReferenceIterator(
             Name variableName,

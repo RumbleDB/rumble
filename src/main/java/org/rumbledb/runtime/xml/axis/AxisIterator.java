@@ -69,10 +69,6 @@ public abstract class AxisIterator extends ItemRuntimePlan implements LocalRunti
         );
     }
 
-    private List<Item> prepareResults(DynamicContext context) {
-        return prepareResults(this.axis, this.resultOrder, context, getRuntimeStaticContext());
-    }
-
     private static List<Item> prepareResults(
             Axis axis,
             ResultOrder resultOrder,

@@ -43,6 +43,7 @@ import sparksoniq.spark.SparkSessionManager;
 import lombok.NonNull;
 import java.io.Serial;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.List;
 
 
@@ -171,9 +172,9 @@ public class TreatIterator extends ItemRuntimePlan
         private EvaluationCursor(
                 @NonNull RuntimePlan<Item> childPlan,
                 @NonNull DynamicContext context,
-                @NonNull TreatTypeValidator validator
+                TreatTypeValidator validator
         ) {
-            super(validator.getMetadata());
+            super(Objects.requireNonNull(validator, "validator").getMetadata());
             this.childPlan = childPlan;
             this.context = context;
             this.validator = validator;
