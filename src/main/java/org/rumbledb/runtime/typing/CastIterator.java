@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class CastIterator extends AbstractAtMostOneItemRuntimePlan {
+public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimePlan<Item> child;

@@ -21,7 +21,6 @@
 package org.rumbledb.runtime;
 
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -71,18 +70,6 @@ public abstract class TupleRuntimePlan
 
     public TupleRuntimePlan getChildIterator() {
         return this.child;
-    }
-
-    protected final ExecutionMode getHighestExecutionMode() {
-        return this.staticContext.getExecutionMode();
-    }
-
-    protected final RumbleRuntimeConfiguration getConfiguration() {
-        return this.staticContext.getConfiguration();
-    }
-
-    public final boolean isUpdating() {
-        return this.staticContext.isUpdating();
     }
 
     public abstract Cursor<FlworTuple> createNativeCursor(DynamicContext context);

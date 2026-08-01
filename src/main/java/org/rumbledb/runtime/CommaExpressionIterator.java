@@ -55,7 +55,8 @@ public class CommaExpressionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
-            UpdatingRuntimePlan {
+            UpdatingRuntimePlan,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -182,7 +183,7 @@ public class CommaExpressionIterator extends ItemRuntimePlan
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (!isUpdating()) {
+        if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
 

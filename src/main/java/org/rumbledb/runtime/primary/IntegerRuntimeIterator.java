@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,7 +33,7 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public class IntegerRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+public class IntegerRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

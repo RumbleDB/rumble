@@ -1420,7 +1420,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         if (RuntimePlanDiagnostics.isSparkJobNeeded(this.assignmentIterator)) {
             return true;
         }
-        switch (getHighestExecutionMode()) {
+        switch (this.staticContext.getExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

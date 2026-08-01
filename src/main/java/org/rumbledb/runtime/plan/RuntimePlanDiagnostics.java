@@ -50,7 +50,7 @@ public final class RuntimePlanDiagnostics {
 
     private static List<? extends RuntimePlan<?>> childrenOf(RuntimePlan<?> plan) {
         return plan instanceof ItemRuntimePlan itemPlan
-            ? itemPlan.diagnosticChildren()
+            ? itemPlan.getChildren()
             : List.of();
     }
 }

@@ -36,7 +36,7 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.List;
 
-public class PowFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+public class PowFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

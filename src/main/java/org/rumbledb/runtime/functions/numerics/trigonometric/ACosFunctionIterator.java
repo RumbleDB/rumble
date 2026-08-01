@@ -34,7 +34,7 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.List;
 
-public class ACosFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+public class ACosFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

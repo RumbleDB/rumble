@@ -652,7 +652,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
                 return true;
             }
         }
-        switch (getHighestExecutionMode()) {
+        switch (this.staticContext.getExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

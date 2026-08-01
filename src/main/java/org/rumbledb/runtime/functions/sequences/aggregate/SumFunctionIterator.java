@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -39,7 +39,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 
-public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan {
+public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     private final boolean negated;
     private final RuntimePlan<Item> child;

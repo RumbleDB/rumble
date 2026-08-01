@@ -37,7 +37,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-public class FloorFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+public class FloorFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

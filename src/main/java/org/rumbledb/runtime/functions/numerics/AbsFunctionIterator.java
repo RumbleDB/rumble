@@ -35,7 +35,7 @@ import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
 
-public class AbsFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+public class AbsFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

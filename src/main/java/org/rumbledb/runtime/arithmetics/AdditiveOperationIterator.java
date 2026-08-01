@@ -47,7 +47,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan {
+public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

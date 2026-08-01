@@ -81,7 +81,8 @@ public class ReturnClauseIterator extends ItemRuntimePlan
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item>,
-            UpdatingRuntimePlan {
+            UpdatingRuntimePlan,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -604,7 +605,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (!isUpdating()) {
+        if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
         PendingUpdateList result = new PendingUpdateList();

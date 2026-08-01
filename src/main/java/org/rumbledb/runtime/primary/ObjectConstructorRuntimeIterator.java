@@ -46,7 +46,9 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan
+        implements
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

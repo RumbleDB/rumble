@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -53,7 +55,8 @@ public class VariableReferenceIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
 
     @Serial

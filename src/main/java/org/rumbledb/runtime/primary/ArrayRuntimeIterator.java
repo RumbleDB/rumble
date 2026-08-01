@@ -38,7 +38,7 @@ import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-public class ArrayRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+public class ArrayRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

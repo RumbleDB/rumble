@@ -23,7 +23,9 @@ import org.rumbledb.types.SequenceType.Arity;
 import java.io.Serial;
 import java.util.Collections;
 
-public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRuntimePlan {
+public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRuntimePlan
+        implements
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -66,7 +68,7 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
                     staticContext,
                     getMetadata()
             );
-        if (!getHighestExecutionMode().equals(ExecutionMode.LOCAL)) {
+        if (!this.staticContext.getExecutionMode().equals(ExecutionMode.LOCAL)) {
             throw new OurBadException(
                     "A promotion iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
             );

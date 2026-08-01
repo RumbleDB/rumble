@@ -12,9 +12,7 @@ import java.util.List;
 
 import lombok.NonNull;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.types.SequenceType;
 
@@ -23,7 +21,6 @@ import org.rumbledb.types.SequenceType;
  */
 public abstract class ItemRuntimePlan extends RuntimePlan<Item>
         implements
-            NativeQueryRuntimePlan,
             VariableDependencyRuntimePlan {
 
     @Serial
@@ -47,23 +44,7 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item>
         return this.children;
     }
 
-    final List<? extends RuntimePlan<?>> diagnosticChildren() {
-        return this.children;
-    }
-
-    protected final ExecutionMode getHighestExecutionMode() {
-        return this.staticContext.getExecutionMode();
-    }
-
     protected final SequenceType getStaticType() {
         return this.staticContext.getStaticType();
-    }
-
-    protected final RumbleRuntimeConfiguration getConfiguration() {
-        return this.staticContext.getConfiguration();
-    }
-
-    public final boolean isUpdating() {
-        return this.staticContext.isUpdating();
     }
 }

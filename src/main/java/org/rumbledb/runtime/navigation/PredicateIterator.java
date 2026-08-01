@@ -71,7 +71,8 @@ public class PredicateIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {

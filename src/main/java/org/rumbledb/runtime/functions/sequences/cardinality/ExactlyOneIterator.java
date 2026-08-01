@@ -33,7 +33,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public class ExactlyOneIterator extends AbstractAtMostOneItemRuntimePlan {
+public class ExactlyOneIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

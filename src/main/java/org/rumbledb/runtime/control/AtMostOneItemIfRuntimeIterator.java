@@ -34,7 +34,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-public class AtMostOneItemIfRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+public class AtMostOneItemIfRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

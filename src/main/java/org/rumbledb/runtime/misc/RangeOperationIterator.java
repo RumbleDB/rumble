@@ -55,7 +55,8 @@ import sparksoniq.spark.SparkSessionManager;
 public class RangeOperationIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
 
     @Serial

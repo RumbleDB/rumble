@@ -63,7 +63,8 @@ public class ArrayLookupIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
 
     @Serial

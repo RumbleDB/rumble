@@ -134,7 +134,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (!isUpdating()) {
+        if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
         RuntimePlan<Item> call = context.getNamedFunctions()

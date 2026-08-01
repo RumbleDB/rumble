@@ -39,7 +39,7 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.function.IntSupplier;
 
-public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

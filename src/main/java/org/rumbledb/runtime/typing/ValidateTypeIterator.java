@@ -55,7 +55,8 @@ public class ValidateTypeIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

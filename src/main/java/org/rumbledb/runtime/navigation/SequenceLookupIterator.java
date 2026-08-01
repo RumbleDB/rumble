@@ -44,7 +44,7 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
-public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan {
+public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

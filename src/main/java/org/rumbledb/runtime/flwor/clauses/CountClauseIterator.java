@@ -255,7 +255,7 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
         if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
-        switch (getHighestExecutionMode()) {
+        switch (this.staticContext.getExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

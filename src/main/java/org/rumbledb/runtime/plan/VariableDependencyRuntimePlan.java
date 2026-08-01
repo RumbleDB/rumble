@@ -24,7 +24,7 @@ public interface VariableDependencyRuntimePlan {
             return Collections.emptyMap();
         }
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
-        for (RuntimePlan<?> child : plan.diagnosticChildren()) {
+        for (RuntimePlan<?> child : plan.getChildren()) {
             DynamicContext.mergeVariableDependencies(result, get(child));
         }
         return result;

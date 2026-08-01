@@ -52,7 +52,7 @@ import java.util.Arrays;
  * The existential quantification logic for general comparison is not handled in this iterator, but in the
  * ComparisonVisitor.
  */
-public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan {
+public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

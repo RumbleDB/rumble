@@ -520,7 +520,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
-        switch (getHighestExecutionMode()) {
+        switch (this.staticContext.getExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

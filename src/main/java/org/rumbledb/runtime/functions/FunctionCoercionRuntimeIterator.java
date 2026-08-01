@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -31,7 +33,8 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

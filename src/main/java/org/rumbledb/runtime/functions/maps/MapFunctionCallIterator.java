@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions.maps;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
 
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
@@ -40,7 +42,8 @@ import java.util.List;
  */
 public class MapFunctionCallIterator extends ItemRuntimePlan
         implements
-            LocalRuntimePlan<Item> {
+            LocalRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {

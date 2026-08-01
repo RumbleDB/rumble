@@ -747,7 +747,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                 }
             }
         }
-        switch (getHighestExecutionMode()) {
+        switch (this.staticContext.getExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

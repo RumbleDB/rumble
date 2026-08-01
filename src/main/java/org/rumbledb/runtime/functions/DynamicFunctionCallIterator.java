@@ -93,7 +93,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                 this.functionItemIterator,
                 this.functionArguments,
                 this.isPartialApplication,
-                getHighestExecutionMode(),
+                this.staticContext.getExecutionMode(),
                 this.staticContext,
                 context
         );
@@ -104,7 +104,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
             this.functionItemIterator,
             this.functionArguments,
             this.isPartialApplication,
-            getHighestExecutionMode(),
+            this.staticContext.getExecutionMode(),
             this.staticContext,
             context
         );

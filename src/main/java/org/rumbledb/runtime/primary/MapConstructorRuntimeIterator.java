@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +39,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 /**
  * XQuery 3.1 map constructor: atomized single-atomic keys and general- sequence values.
  */
-public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -42,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class ContextExpressionIterator extends AbstractAtMostOneItemRuntimePlan {
+public class ContextExpressionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

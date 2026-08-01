@@ -52,7 +52,8 @@ public class TreatIterator extends ItemRuntimePlan
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item>,
-            UpdatingRuntimePlan {
+            UpdatingRuntimePlan,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -69,7 +70,7 @@ public class TreatIterator extends ItemRuntimePlan
         this.iterator = iterator;
         this.validator = new TreatTypeValidator(sequenceType, errorCode, getMetadata());
         if (
-            !getHighestExecutionMode().equals(ExecutionMode.LOCAL)
+            !this.staticContext.getExecutionMode().equals(ExecutionMode.LOCAL)
                 && (sequenceType.isEmptySequence()
                     || sequenceType.getArity().equals(Arity.One)
                     || sequenceType.getArity().equals(Arity.OneOrZero))

@@ -15,6 +15,7 @@ import java.util.Objects;
 
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -81,6 +82,10 @@ public abstract class RuntimePlan<T> implements Serializable {
 
     protected final ExceptionMetadata getMetadata() {
         return this.metadata;
+    }
+
+    protected final RumbleRuntimeConfiguration getConfiguration() {
+        return this.staticContext.getConfiguration();
     }
 
     /**
