@@ -8,6 +8,7 @@
 package org.rumbledb.runtime.plan;
 
 import java.io.Serial;
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.NonNull;
@@ -33,7 +34,7 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item>
             @NonNull RuntimeStaticContext staticContext
     ) {
         super(staticContext, ItemRuntimeDataFrameFactory.INSTANCE);
-        this.children = List.copyOf(children);
+        this.children = new ArrayList<>(children);
     }
 
     protected final RuntimePlan<Item> getChild(int index) {
