@@ -45,7 +45,7 @@ public final class BuiltinFunctionExecutionModes {
             return ExecutionMode.RDD;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME) {
-            return dataFrameIfConfigurationAllows(configuration);
+            return ExecutionMode.DATAFRAME;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
             if (firstMode.isDataFrame()) {
