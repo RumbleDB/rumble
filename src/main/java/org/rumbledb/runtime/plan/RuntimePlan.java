@@ -61,8 +61,11 @@ public abstract class RuntimePlan<T> implements Serializable {
             @NonNull RuntimeStaticContext staticContext,
             RuntimeDataFrameFactory<T> dataFrameFactory
     ) {
-        ExecutionMode nativeExecutionMode = this.selectNativeExecutionMode(staticContext.getExecutionMode());
-        this.staticContext = nativeExecutionMode == staticContext.getExecutionMode()
+        // Compiler configuration may prefer a representation this plan cannot produce natively, so select the
+        // closest supported capability and make it authoritative for all runtime consumers.
+        ExecutionMode requestedExecutionMode = staticContext.getExecutionMode();
+        ExecutionMode nativeExecutionMode = this.selectNativeExecutionMode(requestedExecutionMode);
+        this.staticContext = nativeExecutionMode == requestedExecutionMode
             ? staticContext
             : staticContext.toBuilder().executionMode(nativeExecutionMode).build();
         this.metadata = this.staticContext.getMetadata();
@@ -156,22 +159,26 @@ public abstract class RuntimePlan<T> implements Serializable {
         };
     }
 
-    private ExecutionMode selectNativeExecutionMode(ExecutionMode preferredMode) {
+    private ExecutionMode selectNativeExecutionMode(ExecutionMode requestedExecutionMode) {
         boolean supportsLocal = this instanceof LocalRuntimePlan<?>;
         boolean supportsRDD = this instanceof RDDRuntimePlan<?>;
         boolean supportsDataFrame = this instanceof DataFrameRuntimePlan<?>;
 
-        return switch (preferredMode) {
+        return switch (requestedExecutionMode) {
             case LOCAL -> supportsLocal
                 ? ExecutionMode.LOCAL
-                : supportsRDD ? ExecutionMode.RDD : supportsDataFrame ? ExecutionMode.DATAFRAME : preferredMode;
+                : supportsRDD
+                    ? ExecutionMode.RDD
+                    : supportsDataFrame ? ExecutionMode.DATAFRAME : requestedExecutionMode;
             case RDD -> supportsRDD
                 ? ExecutionMode.RDD
-                : supportsDataFrame ? ExecutionMode.DATAFRAME : supportsLocal ? ExecutionMode.LOCAL : preferredMode;
+                : supportsDataFrame
+                    ? ExecutionMode.DATAFRAME
+                    : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
             case DATAFRAME -> supportsDataFrame
                 ? ExecutionMode.DATAFRAME
-                : supportsRDD ? ExecutionMode.RDD : supportsLocal ? ExecutionMode.LOCAL : preferredMode;
-            case UNSET -> preferredMode;
+                : supportsRDD ? ExecutionMode.RDD : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
+            case UNSET -> requestedExecutionMode;
         };
     }
 
