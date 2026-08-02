@@ -40,11 +40,11 @@ import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -61,12 +61,12 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private final FunctionIdentifier functionIdentifier;
-    private final List<RuntimePlan<Item>> functionArguments;
+    private final List<ItemRuntimePlan> functionArguments;
     private final boolean tailCallOptimizationCandidate;
 
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
-            List<RuntimePlan<Item>> functionArguments,
+            List<ItemRuntimePlan> functionArguments,
             RuntimeStaticContext staticContext,
             boolean tailCallOptimization
     ) {
@@ -90,11 +90,11 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         try {
-            RuntimePlan<Item> call = dynamicContext.getNamedFunctions()
+            ItemRuntimePlan call = (ItemRuntimePlan) dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
-                    this.functionArguments,
+                    new ArrayList<RuntimePlan<Item>>(this.functionArguments),
                     false
                 );
             return call.getRDD(dynamicContext);
@@ -106,11 +106,11 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         try {
-            RuntimePlan<Item> call = dynamicContext.getNamedFunctions()
+            ItemRuntimePlan call = (ItemRuntimePlan) dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
-                    this.functionArguments,
+                    new ArrayList<RuntimePlan<Item>>(this.functionArguments),
                     false
                 );
             return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
@@ -123,11 +123,11 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(super.getVariableDependencies());
-        for (RuntimePlan<Item> iterator : this.functionArguments) {
+        for (ItemRuntimePlan iterator : this.functionArguments) {
             if (iterator == null) {
                 continue;
             }
-            result.putAll(RuntimePlanDependencies.get(iterator));
+            result.putAll(iterator.getVariableDependencies());
         }
         return result;
     }
@@ -137,11 +137,11 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
         if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
-        RuntimePlan<Item> call = context.getNamedFunctions()
+        ItemRuntimePlan call = (ItemRuntimePlan) context.getNamedFunctions()
             .getUserDefinedFunctionCallIterator(
                 this.functionIdentifier,
                 this.staticContext,
-                this.functionArguments,
+                new ArrayList<RuntimePlan<Item>>(this.functionArguments),
                 false
             );
         return UpdatingRuntimePlan.get(call, context);
@@ -150,7 +150,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     private static final class UserDefinedCallLocalCursor extends AbstractLocalCursor<Item> {
 
         private final FunctionIdentifier functionIdentifier;
-        private final List<RuntimePlan<Item>> functionArguments;
+        private final List<ItemRuntimePlan> functionArguments;
         private final boolean tailCallOptimizationCandidate;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
@@ -161,7 +161,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
 
         private UserDefinedCallLocalCursor(
                 FunctionIdentifier functionIdentifier,
-                List<RuntimePlan<Item>> functionArguments,
+                List<ItemRuntimePlan> functionArguments,
                 boolean tailCallOptimizationCandidate,
                 RuntimeStaticContext staticContext,
                 DynamicContext context
@@ -176,11 +176,11 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
 
         @Override
         protected void openLocal() {
-            RuntimePlan<Item> call = this.context.getNamedFunctions()
+            ItemRuntimePlan call = (ItemRuntimePlan) this.context.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
-                    this.functionArguments,
+                    new ArrayList<RuntimePlan<Item>>(this.functionArguments),
                     this.tailCallOptimizationCandidate
                 );
             openDelegate(call);
@@ -190,7 +190,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
                     && isTailCall(this.nextResult)
             ) {
                 closeDelegate();
-                RuntimePlan<Item> tailCall = NamedFunctions
+                ItemRuntimePlan tailCall = (ItemRuntimePlan) NamedFunctions
                     .buildFunctionItemCallIterator(
                         this.nextResult,
                         this.staticContext,
@@ -210,7 +210,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
                 && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName());
         }
 
-        private void openDelegate(RuntimePlan<Item> call) {
+        private void openDelegate(ItemRuntimePlan call) {
             this.delegate = call.getCursor(this.context);
             try {
             } catch (ExitStatementException e) {

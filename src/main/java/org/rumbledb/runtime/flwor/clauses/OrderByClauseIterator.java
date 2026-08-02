@@ -54,7 +54,6 @@ import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -86,7 +85,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         this.expressionsWithIterator = expressionsWithIterator;
         this.dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
-            this.dependencies.putAll(RuntimePlanDependencies.get(e.getIterator()));
+            this.dependencies.putAll(e.getIterator().getVariableDependencies());
         }
     }
 
@@ -442,7 +441,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             result.putAll(
-                RuntimePlanDependencies.get(expressionWithIterator.getIterator())
+                expressionWithIterator.getIterator().getVariableDependencies()
             );
         }
         for (Name var : this.child.getOutputTupleVariableNames()) {
@@ -476,7 +475,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         // add the variable dependencies needed by this for clause's expression.
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
             Map<Name, DynamicContext.VariableDependency> exprDependency =
-                RuntimePlanDependencies.get(iterator.getIterator());
+                iterator.getIterator().getVariableDependencies();
             for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {

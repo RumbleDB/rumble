@@ -49,8 +49,8 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -63,16 +63,16 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimePlan<Item> expression;
+    private ItemRuntimePlan expression;
 
     public WhereClauseIterator(
             TupleRuntimePlan child,
-            RuntimePlan<Item> whereExpression,
+            ItemRuntimePlan whereExpression,
             RuntimeStaticContext staticContext
     ) {
         super(child, staticContext);
         this.expression = whereExpression;
-        RuntimePlanDependencies.get(this.expression);
+        this.expression.getVariableDependencies();
     }
 
     @Override
@@ -83,7 +83,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
     private static final class WhereLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
         private final TupleRuntimePlan childPlan;
-        private final RuntimePlan<Item> expressionPlan;
+        private final ItemRuntimePlan expressionPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<FlworTuple> childCursor;
@@ -92,7 +92,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
 
         private WhereLocalCursor(
                 TupleRuntimePlan childPlan,
-                RuntimePlan<Item> expressionPlan,
+                ItemRuntimePlan expressionPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -195,7 +195,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
 
         // was not possible, we use let udf
         List<FlworDataFrameColumn> UDFcolumns = df.getColumns(
-            RuntimePlanDependencies.get(this.expression),
+            this.expression.getVariableDependencies(),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
@@ -234,15 +234,15 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
         ) {
             return null;
         }
-        RuntimePlan<Item> left = comparisonIterator.getLeftIterator();
+        ItemRuntimePlan left = (ItemRuntimePlan) comparisonIterator.getLeftIterator();
         if (!(left instanceof VariableReferenceIterator varRef)) {
             return null;
         }
         if (!varRef.getVariableName().equals(countVariable)) {
             return null;
         }
-        RuntimePlan<Item> right = comparisonIterator.getRightIterator();
-        Set<Name> usedVariables = RuntimePlanDependencies.get(right).keySet();
+        ItemRuntimePlan right = (ItemRuntimePlan) comparisonIterator.getRightIterator();
+        Set<Name> usedVariables = right.getVariableDependencies().keySet();
         Set<Name> tuples = countClauseIterator.getOutputTupleVariableNames();
         usedVariables.retainAll(tuples);
         if (!usedVariables.isEmpty()) {
@@ -375,7 +375,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(
-                RuntimePlanDependencies.get(this.expression)
+                this.expression.getVariableDependencies()
         );
         for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
@@ -404,7 +404,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
 
         // add the variable dependencies needed by this for clause's expression.
         Map<Name, DynamicContext.VariableDependency> exprDependency =
-            RuntimePlanDependencies.get(this.expression);
+            this.expression.getVariableDependencies();
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
@@ -433,7 +433,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
      */
     public static FlworDataFrame tryNativeQuery(
             FlworDataFrame dataFrame,
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {

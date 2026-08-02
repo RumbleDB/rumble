@@ -54,7 +54,6 @@ import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -87,14 +86,14 @@ public class PredicateIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
-    private final RuntimePlan<Item> filter;
+    private final ItemRuntimePlan iterator;
+    private final ItemRuntimePlan filter;
     private final boolean isBooleanOnlyFilter;
 
 
     public PredicateIterator(
-            RuntimePlan<Item> sequence,
-            RuntimePlan<Item> filterExpression,
+            ItemRuntimePlan sequence,
+            ItemRuntimePlan filterExpression,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(sequence, filterExpression), staticContext);
@@ -103,18 +102,18 @@ public class PredicateIterator extends ItemRuntimePlan
         this.isBooleanOnlyFilter = isBooleanOnlyFilter();
     }
 
-    public RuntimePlan<Item> sequenceIterator() {
+    public ItemRuntimePlan sequenceIterator() {
         return this.iterator;
     }
 
-    public RuntimePlan<Item> predicateIterator() {
+    public ItemRuntimePlan predicateIterator() {
         return this.filter;
     }
 
     private boolean isBooleanOnlyFilter() {
-        return !RuntimePlanDependencies.get(this.filter)
+        return !this.filter.getVariableDependencies()
             .containsKey(Name.CONTEXT_POSITION)
-            && !RuntimePlanDependencies.get(this.filter).containsKey(Name.CONTEXT_COUNT)
+            && !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)
             && (this.filter instanceof BooleanRuntimeIterator
                 || this.filter instanceof AndOperationIterator
                 || this.filter instanceof OrOperationIterator
@@ -124,8 +123,8 @@ public class PredicateIterator extends ItemRuntimePlan
 
     private static final class PredicateLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> inputPlan;
-        private final RuntimePlan<Item> filterPlan;
+        private final ItemRuntimePlan inputPlan;
+        private final ItemRuntimePlan filterPlan;
         private final boolean booleanOnlyFilter;
         private final DynamicContext context;
         private DynamicContext filterContext;
@@ -134,8 +133,8 @@ public class PredicateIterator extends ItemRuntimePlan
         private long position;
 
         private PredicateLocalCursor(
-                RuntimePlan<Item> inputPlan,
-                RuntimePlan<Item> filterPlan,
+                ItemRuntimePlan inputPlan,
+                ItemRuntimePlan filterPlan,
                 boolean booleanOnlyFilter,
                 DynamicContext context,
                 ExceptionMetadata metadata
@@ -151,7 +150,7 @@ public class PredicateIterator extends ItemRuntimePlan
         protected void openLocal() {
             this.filterContext = new DynamicContext(this.context);
             if (
-                RuntimePlanDependencies.get(this.filterPlan)
+                this.filterPlan.getVariableDependencies()
                     .containsKey(Name.CONTEXT_COUNT)
             ) {
                 this.filterContext.getVariableValues().setLast(countInput());
@@ -261,8 +260,8 @@ public class PredicateIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        RuntimePlan<Item> iterator = this.getChild(0);
-        RuntimePlan<Item> filter = this.getChild(1);
+        ItemRuntimePlan iterator = this.iterator;
+        ItemRuntimePlan filter = this.filter;
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
         if (this.isBooleanOnlyFilter) {
             Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
@@ -271,7 +270,7 @@ public class PredicateIterator extends ItemRuntimePlan
         } else {
             JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
             long last = 0;
-            if (RuntimePlanDependencies.get(filter).containsKey(Name.CONTEXT_COUNT)) {
+            if (filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
                 last = childRDD.count();
             }
             Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(
@@ -287,8 +286,8 @@ public class PredicateIterator extends ItemRuntimePlan
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
-            .fromPlan(this.getChild(0), context);
-        RuntimePlan<Item> filter = this.getChild(1);
+            .fromPlan(this.iterator, context);
+        ItemRuntimePlan filter = this.filter;
         NativeClauseContext nativeClauseContext = new NativeClauseContext(
                 FLWOR_CLAUSES.FILTER,
                 childDataFrame.getDataFrame().schema(),
@@ -392,9 +391,9 @@ public class PredicateIterator extends ItemRuntimePlan
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(RuntimePlanDependencies.get(this.filter));
+        result.putAll(this.filter.getVariableDependencies());
         result.remove(Name.CONTEXT_ITEM);
-        result.putAll(RuntimePlanDependencies.get(this.iterator));
+        result.putAll(this.iterator.getVariableDependencies());
         return result;
     }
 

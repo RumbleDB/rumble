@@ -59,8 +59,8 @@ import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -93,7 +93,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     private final Name variableName; // for efficient use in local iteration
     @Getter
     private final Name positionalVariableName; // for efficient use in local iteration
-    private final RuntimePlan<Item> assignmentIterator;
+    private final ItemRuntimePlan assignmentIterator;
     @Getter
     private final boolean allowingEmpty;
     private final DataFrameContext dataFrameContext;
@@ -103,7 +103,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             Name variableName,
             Name positionalVariableName,
             boolean allowingEmpty,
-            RuntimePlan<Item> assignmentIterator,
+            ItemRuntimePlan assignmentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(child, staticContext);
@@ -111,7 +111,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         this.positionalVariableName = positionalVariableName;
         this.assignmentIterator = assignmentIterator;
         this.allowingEmpty = allowingEmpty;
-        RuntimePlanDependencies.get(this.assignmentIterator);
+        this.assignmentIterator.getVariableDependencies();
         this.dataFrameContext = new DataFrameContext();
     }
 
@@ -133,7 +133,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         private final TupleRuntimePlan childPlan;
         private final int evaluationDepthLimit;
-        private final RuntimePlan<Item> assignmentPlan;
+        private final ItemRuntimePlan assignmentPlan;
         private final Name variableName;
         private final Name positionalVariableName;
         private final boolean allowingEmpty;
@@ -150,7 +150,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         private ForLocalCursor(
                 TupleRuntimePlan childPlan,
                 int evaluationDepthLimit,
-                RuntimePlan<Item> assignmentPlan,
+                ItemRuntimePlan assignmentPlan,
                 Name variableName,
                 Name positionalVariableName,
                 boolean allowingEmpty,
@@ -416,9 +416,9 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                     getMetadata()
             );
         }
-        RuntimePlan<Item> sequenceIterator = predicateAssignmentIterator
+        ItemRuntimePlan sequenceIterator = predicateAssignmentIterator
             .sequenceIterator();
-        RuntimePlan<Item> predicateIterator = predicateAssignmentIterator
+        ItemRuntimePlan predicateIterator = predicateAssignmentIterator
             .predicateIterator();
 
         // If the left hand side depends on the input tuple, we do not how to handle it.
@@ -444,8 +444,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         Dataset<Row> expressionDF;
 
 
-        Map<Name, VariableDependency> predicateDependencies = RuntimePlanDependencies
-            .get(predicateIterator);
+        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
 
         if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
             Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
@@ -655,7 +654,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         if (this.child != null && this.evaluationDepthLimit != 0) {
             UDFcolumns = FlworDataFrameUtils.getColumns(
                 inputSchema,
-                RuntimePlanDependencies.get(this.assignmentIterator),
+                this.assignmentIterator.getVariableDependencies(),
                 new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                 null
             );
@@ -792,7 +791,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
      * @return the resulting DataFrame.
      */
     public static FlworDataFrame getDataFrameStartingClause(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             Name variableName,
             Name positionalVariableName,
             boolean allowingEmpty,
@@ -927,7 +926,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(RuntimePlanDependencies.get(this.assignmentIterator));
+            new TreeMap<>(this.assignmentIterator.getVariableDependencies());
         if (this.child != null && this.evaluationDepthLimit != 0) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
@@ -988,7 +987,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         // add the variable dependencies needed by this for clause's expression.
         Map<Name, DynamicContext.VariableDependency> exprDependency =
-            RuntimePlanDependencies.get(this.assignmentIterator);
+            this.assignmentIterator.getVariableDependencies();
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
@@ -1034,7 +1033,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             Name newVariableName,
             Name positionalVariableName,
             boolean allowingEmpty,
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             List<FlworDataFrameColumn> allColumns,
             StructType inputSchema,
             DynamicContext context
@@ -1320,7 +1319,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
     public static void registerForClauseUDF(
             Dataset<Row> dataFrame,
-            RuntimePlan<Item> newVariableExpression,
+            ItemRuntimePlan newVariableExpression,
             DynamicContext context,
             StructType inputSchema,
             List<FlworDataFrameColumn> UDFcolumns,

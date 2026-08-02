@@ -159,6 +159,8 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.EmptySequenceIterator;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
@@ -267,7 +269,7 @@ import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item>> {
+public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan> {
 
     private final VisitorConfig visitorConfig;
     private final RumbleRuntimeConfiguration config;
@@ -277,14 +279,34 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         this.config = config;
     }
 
+    private static List<RuntimePlan<Item>> asRuntimePlans(List<? extends ItemRuntimePlan> plans) {
+        return new ArrayList<>(plans);
+    }
+
+    private static Map<RuntimePlan<Item>, RuntimePlan<Item>> asRuntimePlanMap(
+            Map<? extends ItemRuntimePlan, ? extends ItemRuntimePlan> plans
+    ) {
+        Map<RuntimePlan<Item>, RuntimePlan<Item>> result = new HashMap<>();
+        result.putAll(plans);
+        return result;
+    }
+
+    private static <K> Map<K, RuntimePlan<Item>> asRuntimePlanValues(
+            Map<K, ? extends ItemRuntimePlan> plans
+    ) {
+        Map<K, RuntimePlan<Item>> result = new HashMap<>();
+        result.putAll(plans);
+        return result;
+    }
+
     @Override
-    public RuntimePlan<Item> visit(Node node, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visit(Node node, ItemRuntimePlan argument) {
         return node.accept(this, argument);
     }
 
     @Override
-    public RuntimePlan<Item> visitDescendants(Node node, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> result = argument;
+    public ItemRuntimePlan visitDescendants(Node node, ItemRuntimePlan argument) {
+        ItemRuntimePlan result = argument;
         for (Node child : node.getChildren()) {
             result = visit(child, argument);
         }
@@ -292,20 +314,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitProlog(Prolog expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitProlog(Prolog expression, ItemRuntimePlan argument) {
         return argument;
     }
 
     @Override
-    public RuntimePlan<Item> visitCommaExpression(CommaExpression expression, RuntimePlan<Item> argument) {
-        List<RuntimePlan<Item>> result = new ArrayList<>();
+    public ItemRuntimePlan visitCommaExpression(CommaExpression expression, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> result = new ArrayList<>();
         for (Expression childExpr : expression.getExpressions()) {
             result.add(this.visit(childExpr, argument));
         }
         if (result.size() == 1) {
             return result.get(0);
         } else {
-            RuntimePlan<Item> runtimeIterator = new CommaExpressionIterator(
+            ItemRuntimePlan runtimeIterator = new CommaExpressionIterator(
                     result,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -314,26 +336,27 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     // region module
+
     @Override
-    public RuntimePlan<Item> visitMainModule(MainModule expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitMainModule(MainModule expression, ItemRuntimePlan argument) {
         return super.visitMainModule(expression, argument);
     }
     // endregion
 
     // region FLOWR
     @Override
-    public RuntimePlan<Item> visitFlowrExpression(FlworExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitFlowrExpression(FlworExpression expression, ItemRuntimePlan argument) {
         TupleRuntimePlan previous = this.visitFlowrClause(
             expression.getReturnClause().getPreviousClause(),
             argument
         );
         ReturnClause returnClause = expression.getReturnClause();
-        RuntimePlan<Item> runtimeIterator = new ReturnClauseIterator(
+        ItemRuntimePlan runtimeIterator = new ReturnClauseIterator(
                 previous,
-                this.visit(
+                (this.visit(
                     returnClause.getReturnExpr(),
                     argument
-                ),
+                )),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
                     .toBuilder()
                     .executionMode(returnClause.getHighestExecutionMode(this.visitorConfig))
@@ -345,14 +368,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
 
     private TupleRuntimePlan visitFlowrClause(
             Clause clause,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
         TupleRuntimePlan previousIterator = null;
         if (clause.getPreviousClause() != null) {
             previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
         }
         if (clause instanceof ForClause forClause) {
-            RuntimePlan<Item> assignmentIterator = this.visit(forClause.getExpression(), argument);
+            ItemRuntimePlan assignmentIterator = (this.visit(forClause.getExpression(), argument));
             return new ForClauseIterator(
                     previousIterator,
                     forClause.getVariableName(),
@@ -362,7 +385,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                     forClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof LetClause letClause) {
-            RuntimePlan<Item> assignmentIterator = this.visit(letClause.getExpression(), argument);
+            ItemRuntimePlan assignmentIterator = (this.visit(letClause.getExpression(), argument));
             return new LetClauseIterator(
                     previousIterator,
                     letClause.getVariableName(),
@@ -371,11 +394,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                     letClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof WindowClause windowClause) {
-            RuntimePlan<Item> sourceIterator = this.visit(windowClause.getExpression(), argument);
-            RuntimePlan<Item> startIterator = this.visit(windowClause.getStartCondition().expression(), argument);
-            RuntimePlan<Item> endIterator = windowClause.getEndCondition() == null
+            ItemRuntimePlan sourceIterator = (this.visit(windowClause.getExpression(), argument));
+            ItemRuntimePlan startIterator = (this.visit(windowClause.getStartCondition().expression(), argument));
+            ItemRuntimePlan endIterator = windowClause.getEndCondition() == null
                 ? null
-                : this.visit(windowClause.getEndCondition().expression(), argument);
+                : (this.visit(windowClause.getEndCondition().expression(), argument));
             return new WindowClauseIterator(
                     previousIterator,
                     windowClause,
@@ -388,9 +411,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
             for (GroupByVariableDeclaration var : groupByClause.getGroupVariables()) {
                 Expression groupByExpression = var.getExpression();
-                RuntimePlan<Item> groupByExpressionIterator = null;
+                ItemRuntimePlan groupByExpressionIterator = null;
                 if (groupByExpression != null) {
-                    groupByExpressionIterator = this.visit(groupByExpression, argument);
+                    groupByExpressionIterator = (this.visit(groupByExpression, argument));
                 }
 
                 Name variableName = var.getVariableName();
@@ -422,7 +445,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                 }
                 expressionsWithIterator.add(
                     new OrderByClauseAnnotatedChildIterator(
-                            this.visit(orderExpr.getExpression(), argument),
+                            (this.visit(orderExpr.getExpression(), argument)),
                             orderExpr.isAscending(),
                             orderExpr.getUri(),
                             emptyOrder
@@ -438,7 +461,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         } else if (clause instanceof WhereClause whereClause) {
             return new WhereClauseIterator(
                     previousIterator,
-                    this.visit(whereClause.getWhereExpression(), argument),
+                    (this.visit(whereClause.getWhereExpression(), argument)),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof CountClause countClause) {
@@ -452,11 +475,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitVariableReference(
+    public ItemRuntimePlan visitVariableReference(
             VariableReferenceExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> runtimeIterator = new VariableReferenceIterator(
+        ItemRuntimePlan runtimeIterator = new VariableReferenceIterator(
                 expression.getVariableName(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -467,12 +490,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     // region updating
 
     @Override
-    public RuntimePlan<Item> visitDeleteExpression(DeleteExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitDeleteExpression(DeleteExpression expression, ItemRuntimePlan argument) {
 
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> lookupIterator = this.visit(expression.getLocatorExpression(), argument);
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan lookupIterator = this.visit(expression.getLocatorExpression(), argument);
 
-        RuntimePlan<Item> runtimeIterator = new DeleteExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new DeleteExpressionIterator(
                 mainIterator,
                 lookupIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -482,13 +505,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitRenameExpression(RenameExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitRenameExpression(RenameExpression expression, ItemRuntimePlan argument) {
 
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> lookupIterator = this.visit(expression.getLocatorExpression(), argument);
-        RuntimePlan<Item> nameIterator = this.visit(expression.getNameExpression(), argument);
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan lookupIterator = this.visit(expression.getLocatorExpression(), argument);
+        ItemRuntimePlan nameIterator = this.visit(expression.getNameExpression(), argument);
 
-        RuntimePlan<Item> runtimeIterator = new RenameExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new RenameExpressionIterator(
                 mainIterator,
                 lookupIterator,
                 nameIterator,
@@ -499,13 +522,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitReplaceExpression(ReplaceExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitReplaceExpression(ReplaceExpression expression, ItemRuntimePlan argument) {
 
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> lookupIterator = this.visit(expression.getLocatorExpression(), argument);
-        RuntimePlan<Item> replacerIterator = this.visit(expression.getReplacerExpression(), argument);
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan lookupIterator = this.visit(expression.getLocatorExpression(), argument);
+        ItemRuntimePlan replacerIterator = this.visit(expression.getReplacerExpression(), argument);
 
-        RuntimePlan<Item> runtimeIterator = new ReplaceExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new ReplaceExpressionIterator(
                 mainIterator,
                 lookupIterator,
                 replacerIterator,
@@ -516,15 +539,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitInsertExpression(InsertExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitInsertExpression(InsertExpression expression, ItemRuntimePlan argument) {
 
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> toInsertIterator = this.visit(expression.getToInsertExpression(), argument);
-        RuntimePlan<Item> positionIterator = expression.hasPositionExpression()
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan toInsertIterator = this.visit(expression.getToInsertExpression(), argument);
+        ItemRuntimePlan positionIterator = expression.hasPositionExpression()
             ? this.visit(expression.getPositionExpression(), argument)
             : null;
 
-        RuntimePlan<Item> runtimeIterator = new InsertExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new InsertExpressionIterator(
                 mainIterator,
                 toInsertIterator,
                 positionIterator,
@@ -535,12 +558,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitAppendExpression(AppendExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitAppendExpression(AppendExpression expression, ItemRuntimePlan argument) {
 
-        RuntimePlan<Item> arrayIterator = this.visit(expression.getArrayExpression(), argument);
-        RuntimePlan<Item> toAppendIterator = this.visit(expression.getToAppendExpression(), argument);
+        ItemRuntimePlan arrayIterator = this.visit(expression.getArrayExpression(), argument);
+        ItemRuntimePlan toAppendIterator = this.visit(expression.getToAppendExpression(), argument);
 
-        RuntimePlan<Item> runtimeIterator = new AppendExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new AppendExpressionIterator(
                 arrayIterator,
                 toAppendIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -550,18 +573,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitTransformExpression(TransformExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitTransformExpression(TransformExpression expression, ItemRuntimePlan argument) {
 
-        // List<RuntimePlan<Item>> copyDeclIterators = new ArrayList<>();
-        Map<Name, RuntimePlan<Item>> copyDeclMap = new HashMap<>();
+        // List<ItemRuntimePlan> copyDeclIterators = new ArrayList<>();
+        Map<Name, ItemRuntimePlan> copyDeclMap = new HashMap<>();
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             copyDeclMap.put(copyDecl.getVariableName(), this.visit(copyDecl.getSourceExpression(), argument));
         }
-        RuntimePlan<Item> modifyIterator = this.visit(expression.getModifyExpression(), argument);
-        RuntimePlan<Item> returnIterator = this.visit(expression.getReturnExpression(), argument);
+        ItemRuntimePlan modifyIterator = this.visit(expression.getModifyExpression(), argument);
+        ItemRuntimePlan returnIterator = this.visit(expression.getReturnExpression(), argument);
 
-        RuntimePlan<Item> runtimeIterator = new TransformExpressionIterator(
-                copyDeclMap,
+        ItemRuntimePlan runtimeIterator = new TransformExpressionIterator(
+                asRuntimePlanValues(copyDeclMap),
                 modifyIterator,
                 returnIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
@@ -573,15 +596,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitCreateCollectionExpression(
+    public ItemRuntimePlan visitCreateCollectionExpression(
             CreateCollectionExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> contentIterator = this.visit(expression.getContentExpression(), argument);
-        RuntimePlan<Item> targetIterator = this.visit(expression.getCollection(), argument);
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan targetIterator = this.visit(expression.getCollection(), argument);
         Mode mode = expression.getMode();
 
-        RuntimePlan<Item> runtimeIterator = new CreateCollectionIterator(
+        ItemRuntimePlan runtimeIterator = new CreateCollectionIterator(
                 targetIterator,
                 contentIterator,
                 mode,
@@ -592,17 +615,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitDeleteIndexFromCollectionExpression(
+    public ItemRuntimePlan visitDeleteIndexFromCollectionExpression(
             DeleteIndexFromCollectionExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> targetIterator = this.visit(expression.getCollection(), argument);
+        ItemRuntimePlan targetIterator = this.visit(expression.getCollection(), argument);
         Mode mode = expression.getMode();
         boolean isFirst = expression.isFirst();
 
-        RuntimePlan<Item> runtimeIterator = null;
+        ItemRuntimePlan runtimeIterator = null;
         if (expression.getNumDelete() != null) {
-            RuntimePlan<Item> numDelete = this.visit(expression.getNumDelete(), argument);
+            ItemRuntimePlan numDelete = this.visit(expression.getNumDelete(), argument);
             runtimeIterator = new DeleteIndexFromCollectionIterator(
                     targetIterator,
                     numDelete,
@@ -623,12 +646,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitDeleteSearchFromCollectionExpression(
+    public ItemRuntimePlan visitDeleteSearchFromCollectionExpression(
             DeleteSearchFromCollectionExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> contentIterator = this.visit(expression.getContentExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new DeleteSearchFromCollectionIterator(
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new DeleteSearchFromCollectionIterator(
                 contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -637,14 +660,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitEditCollectionExpression(
+    public ItemRuntimePlan visitEditCollectionExpression(
             EditCollectionExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> targetIterator = this.visit(expression.getTargetExpression(), argument);
-        RuntimePlan<Item> contentIterator = this.visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan targetIterator = this.visit(expression.getTargetExpression(), argument);
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
 
-        RuntimePlan<Item> runtimeIterator = new EditCollectionIterator(
+        ItemRuntimePlan runtimeIterator = new EditCollectionIterator(
                 targetIterator,
                 contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -654,19 +677,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitInsertIndexIntoCollectionExpression(
+    public ItemRuntimePlan visitInsertIndexIntoCollectionExpression(
             InsertIndexIntoCollectionExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> contentIterator = this.visit(expression.getContentExpression(), argument);
-        RuntimePlan<Item> targetIterator = this.visit(expression.getCollection(), argument);
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan targetIterator = this.visit(expression.getCollection(), argument);
         Mode mode = expression.getMode();
         boolean isFirst = expression.isFirst();
         boolean isLast = expression.isLast();
 
-        RuntimePlan<Item> runtimeIterator = null;
+        ItemRuntimePlan runtimeIterator = null;
         if (expression.getPosition() != null) {
-            RuntimePlan<Item> pos = this.visit(expression.getPosition(), argument);
+            ItemRuntimePlan pos = this.visit(expression.getPosition(), argument);
             runtimeIterator = new InsertIndexIntoCollectionIterator(
                     targetIterator,
                     contentIterator,
@@ -691,15 +714,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitInsertSearchIntoCollectionExpression(
+    public ItemRuntimePlan visitInsertSearchIntoCollectionExpression(
             InsertSearchIntoCollectionExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> targetIterator = this.visit(expression.getTargetExpression(), argument);
-        RuntimePlan<Item> contentIterator = this.visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan targetIterator = this.visit(expression.getTargetExpression(), argument);
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
         boolean isBefore = expression.isBefore();
 
-        RuntimePlan<Item> runtimeIterator = new InsertSearchIntoCollectionIterator(
+        ItemRuntimePlan runtimeIterator = new InsertSearchIntoCollectionIterator(
                 targetIterator,
                 contentIterator,
                 isBefore,
@@ -710,13 +733,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitTruncateCollectionExpression(
+    public ItemRuntimePlan visitTruncateCollectionExpression(
             TruncateCollectionExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> targetIterator = this.visit(expression.getCollectionName(), argument);
+        ItemRuntimePlan targetIterator = this.visit(expression.getCollectionName(), argument);
         Mode mode = expression.getMode();
-        RuntimePlan<Item> runtimeIterator = new TruncateCollectionIterator(
+        ItemRuntimePlan runtimeIterator = new TruncateCollectionIterator(
                 targetIterator,
                 mode,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -729,8 +752,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
 
     // region primary
     @Override
-    public RuntimePlan<Item> visitFilterExpression(FilterExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
+    public ItemRuntimePlan visitFilterExpression(FilterExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
         Expression predicateExpression = expression.getPredicateExpression();
 
         // if we have a int in the predicate we can optimize to a SequenceLookupIterator
@@ -792,9 +815,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         }
 
         // fallback for alll other cases
-        RuntimePlan<Item> filterIterator = this.visit(predicateExpression, argument);
-        RuntimePlan<Item> runtimeIterator = new PredicateIterator(
-                mainIterator,
+        ItemRuntimePlan filterIterator = (this.visit(predicateExpression, argument));
+        ItemRuntimePlan runtimeIterator = new PredicateIterator(
+                (mainIterator),
                 filterIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -802,12 +825,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         return runtimeIterator;
     }
 
-    private RuntimePlan<Item> getSequenceLookupIterator(
+    private ItemRuntimePlan getSequenceLookupIterator(
             FilterExpression expression,
-            RuntimePlan<Item> mainIterator,
+            ItemRuntimePlan mainIterator,
             int n
     ) {
-        RuntimePlan<Item> iterator = new SequenceLookupIterator(
+        ItemRuntimePlan iterator = new SequenceLookupIterator(
                 mainIterator,
                 n,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -817,10 +840,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitArrayLookupExpression(ArrayLookupExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> lookupIterator = this.visit(expression.getLookupExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new ArrayLookupIterator(
+    public ItemRuntimePlan visitArrayLookupExpression(ArrayLookupExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan mainIterator = (this.visit(expression.getMainExpression(), argument));
+        ItemRuntimePlan lookupIterator = (this.visit(expression.getLookupExpression(), argument));
+        ItemRuntimePlan runtimeIterator = new ArrayLookupIterator(
                 mainIterator,
                 lookupIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -830,13 +853,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitObjectLookupExpression(
+    public ItemRuntimePlan visitObjectLookupExpression(
             ObjectLookupExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> lookupIterator = this.visit(expression.getLookupExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new ObjectLookupIterator(
+        ItemRuntimePlan mainIterator = (this.visit(expression.getMainExpression(), argument));
+        ItemRuntimePlan lookupIterator = (this.visit(expression.getLookupExpression(), argument));
+        ItemRuntimePlan runtimeIterator = new ObjectLookupIterator(
                 mainIterator,
                 lookupIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -846,18 +869,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitPostfixLookupExpression(
+    public ItemRuntimePlan visitPostfixLookupExpression(
             PostfixLookupExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
         Expression lookup = expression.getLookupExpression(); // null if wildcard
-        RuntimePlan<Item> lookupIterator = (lookup == null)
+        ItemRuntimePlan lookupIterator = (lookup == null)
             ? null
             : this.visit(expression.getLookupExpression(), argument);
         RuntimeStaticContext staticContextForRuntime =
             expression.getStaticContextForRuntime(this.config, this.visitorConfig);
-        RuntimePlan<Item> runtimeIterator = new PostfixLookupIterator(
+        ItemRuntimePlan runtimeIterator = new PostfixLookupIterator(
                 mainIterator,
                 lookupIterator,
                 staticContextForRuntime
@@ -866,14 +889,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitUnaryLookupExpression(UnaryLookupExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitUnaryLookupExpression(UnaryLookupExpression expression, ItemRuntimePlan argument) {
         Expression lookup = expression.getLookupExpression(); // null if wildcard
-        RuntimePlan<Item> lookupIterator = (lookup == null)
+        ItemRuntimePlan lookupIterator = (lookup == null)
             ? null
             : this.visit(expression.getLookupExpression(), argument);
         RuntimeStaticContext staticContextForRuntime =
             expression.getStaticContextForRuntime(this.config, this.visitorConfig);
-        RuntimePlan<Item> runtimeIterator = new UnaryLookupIterator(
+        ItemRuntimePlan runtimeIterator = new UnaryLookupIterator(
                 lookupIterator,
                 staticContextForRuntime
         );
@@ -882,12 +905,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitDynamicFunctionCallExpression(
+    public ItemRuntimePlan visitDynamicFunctionCallExpression(
             DynamicFunctionCallExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
-        List<RuntimePlan<Item>> arguments = new ArrayList<>();
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        List<ItemRuntimePlan> arguments = new ArrayList<>();
         for (Expression arg : expression.getArguments()) {
             if (arg == null) { // check ArgumentPlaceholder
                 arguments.add(null);
@@ -895,9 +918,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                 arguments.add(this.visit(arg, argument));
             }
         }
-        RuntimePlan<Item> runtimeIterator = new DynamicFunctionCallIterator(
+        ItemRuntimePlan runtimeIterator = new DynamicFunctionCallIterator(
                 mainIterator,
-                arguments,
+                asRuntimePlans(arguments),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
@@ -905,12 +928,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitArrayUnboxingExpression(
+    public ItemRuntimePlan visitArrayUnboxingExpression(
             ArrayUnboxingExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new ArrayUnboxingIterator(
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new ArrayUnboxingIterator(
                 mainIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -919,23 +942,23 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitArrayConstructor(ArrayConstructorExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator;
+    public ItemRuntimePlan visitArrayConstructor(ArrayConstructorExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator;
         if (expression.isFixedSlotsArrayConstructor()) {
-            List<RuntimePlan<Item>> memberIterators = new ArrayList<>();
+            List<ItemRuntimePlan> memberIterators = new ArrayList<>();
             if (expression.getMemberExpressions() != null) {
                 for (Expression memberExpr : expression.getMemberExpressions()) {
                     memberIterators.add(this.visit(memberExpr, argument));
                 }
             }
             runtimeIterator = new ArrayRuntimeIterator(
-                    memberIterators,
+                    asRuntimePlans(memberIterators),
                     true,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
         } else {
-            RuntimePlan<Item> result = null;
+            ItemRuntimePlan result = null;
             if (expression.getExpression() != null) {
                 result = this.visit(expression.getExpression(), argument);
             }
@@ -950,34 +973,34 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitObjectConstructor(
+    public ItemRuntimePlan visitObjectConstructor(
             ObjectConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> runtimeIterator;
+        ItemRuntimePlan runtimeIterator;
         if (expression.isMergedConstructor()) {
             runtimeIterator = new ObjectConstructorRuntimeIterator(
-                    expression.getChildren()
+                    asRuntimePlans(expression.getChildren()
                         .stream()
                         .map(arg -> this.visit(arg, argument))
-                        .collect(Collectors.toList()),
+                        .collect(Collectors.toList())),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
 
             return runtimeIterator;
         } else {
-            List<RuntimePlan<Item>> keys = expression.getKeys()
+            List<ItemRuntimePlan> keys = expression.getKeys()
                 .stream()
                 .map(arg -> this.visit(arg, argument))
                 .collect(Collectors.toList());
-            List<RuntimePlan<Item>> values = expression.getValues()
+            List<ItemRuntimePlan> values = expression.getValues()
                 .stream()
                 .map(arg -> this.visit(arg, argument))
                 .collect(Collectors.toList());
             runtimeIterator = new ObjectConstructorRuntimeIterator(
-                    keys,
-                    values,
+                    asRuntimePlans(keys),
+                    asRuntimePlans(values),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
@@ -987,12 +1010,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitMapConstructor(MapConstructorExpression expression, RuntimePlan<Item> argument) {
-        List<RuntimePlan<Item>> keys = expression.getKeys()
+    public ItemRuntimePlan visitMapConstructor(MapConstructorExpression expression, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> keys = expression.getKeys()
             .stream()
             .map(arg -> this.visit(arg, argument))
             .collect(Collectors.toList());
-        List<RuntimePlan<Item>> values = expression.getValues()
+        List<ItemRuntimePlan> values = expression.getValues()
             .stream()
             .map(arg -> this.visit(arg, argument))
             .collect(Collectors.toList());
@@ -1012,18 +1035,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
             )
             .collect(Collectors.toList());
         if (keyTypes.isEmpty() && valueTypes.isEmpty()) {
-            RuntimePlan<Item> runtimeIterator = new ObjectConstructorRuntimeIterator(
-                    keys,
-                    values,
+            ItemRuntimePlan runtimeIterator = new ObjectConstructorRuntimeIterator(
+                    asRuntimePlans(keys),
+                    asRuntimePlans(values),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
 
             return runtimeIterator;
         }
-        RuntimePlan<Item> runtimeIterator = new MapConstructorRuntimeIterator(
-                keys,
-                values,
+        ItemRuntimePlan runtimeIterator = new MapConstructorRuntimeIterator(
+                asRuntimePlans(keys),
+                asRuntimePlans(values),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                 expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
         );
@@ -1032,11 +1055,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitDirElemConstructor(
+    public ItemRuntimePlan visitDirElemConstructor(
             DirElemConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> runtimeIterator = new DirElemConstructorRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new DirElemConstructorRuntimeIterator(
                 expression.getNodeName(),
                 expression.getContent()
                     .stream()
@@ -1054,18 +1077,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitDirPIConstructor(DirPIConstructorExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitDirPIConstructor(DirPIConstructorExpression expression, ItemRuntimePlan argument) {
         Expression contentExpression = expression.getContentExpression();
         DataFunctionIterator contentIterator = null;
         if (contentExpression != null) {
-            RuntimePlan<Item> contentExpressionIterator = this.visit(contentExpression, argument);
+            ItemRuntimePlan contentExpressionIterator = this.visit(contentExpression, argument);
             contentIterator = new DataFunctionIterator(
                     Collections.singletonList(contentExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
 
-        RuntimePlan<Item> runtimeIterator = new DirPIConstructorRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new DirPIConstructorRuntimeIterator(
                 expression.getTarget(),
                 contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1075,14 +1098,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitComputedElementConstructor(
+    public ItemRuntimePlan visitComputedElementConstructor(
             ComputedElementConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
         Expression contentExpression = expression.getContentExpression();
-        RuntimePlan<Item> contentIterator = contentExpression != null ? this.visit(contentExpression, argument) : null;
+        ItemRuntimePlan contentIterator = contentExpression != null ? this.visit(contentExpression, argument) : null;
 
-        RuntimePlan<Item> runtimeIterator;
+        ItemRuntimePlan runtimeIterator;
         if (expression.hasStaticName()) {
             // Static element name: element elementName { content }
             runtimeIterator = new ComputedElementConstructorRuntimeIterator(
@@ -1092,7 +1115,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
             );
         } else {
             // Dynamic element name: element { nameExpression } { content }
-            RuntimePlan<Item> nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
+            ItemRuntimePlan nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
             DataFunctionIterator nameIterator = new DataFunctionIterator(
                     Collections.singletonList(nameExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1108,14 +1131,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitDocumentNodeConstructor(
+    public ItemRuntimePlan visitDocumentNodeConstructor(
             DocumentNodeConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> contentIterator = expression.getContentExpression() != null
+        ItemRuntimePlan contentIterator = expression.getContentExpression() != null
             ? this.visit(expression.getContentExpression(), argument)
             : null;
-        RuntimePlan<Item> runtimeIterator = new DocumentNodeConstructorRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new DocumentNodeConstructorRuntimeIterator(
                 contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1124,20 +1147,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitComputedPIConstructor(
+    public ItemRuntimePlan visitComputedPIConstructor(
             ComputedPIConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
         DataFunctionIterator contentIterator = null;
         if (expression.getContentExpression() != null) {
-            RuntimePlan<Item> contentExpressionIterator = this.visit(expression.getContentExpression(), argument);
+            ItemRuntimePlan contentExpressionIterator = this.visit(expression.getContentExpression(), argument);
             contentIterator = new DataFunctionIterator(
                     Collections.singletonList(contentExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
 
-        RuntimePlan<Item> runtimeIterator;
+        ItemRuntimePlan runtimeIterator;
         if (expression.hasStaticTarget()) {
             runtimeIterator = new ComputedPIConstructorRuntimeIterator(
                     expression.getTarget(),
@@ -1145,7 +1168,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else {
-            RuntimePlan<Item> nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
+            ItemRuntimePlan nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
             DataFunctionIterator nameIterator = new DataFunctionIterator(
                     Collections.singletonList(nameExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1161,17 +1184,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitComputedNamespaceConstructor(
+    public ItemRuntimePlan visitComputedNamespaceConstructor(
             ComputedNamespaceConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> uriExpressionIterator = this.visit(expression.getUriExpression(), argument);
+        ItemRuntimePlan uriExpressionIterator = this.visit(expression.getUriExpression(), argument);
         DataFunctionIterator uriIterator = new DataFunctionIterator(
                 Collections.singletonList(uriExpressionIterator),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
-        RuntimePlan<Item> runtimeIterator;
+        ItemRuntimePlan runtimeIterator;
         if (expression.hasStaticPrefix()) {
             runtimeIterator = new ComputedNamespaceConstructorRuntimeIterator(
                     expression.getPrefix(),
@@ -1179,7 +1202,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else {
-            RuntimePlan<Item> prefixExpressionIterator = this.visit(expression.getPrefixExpression(), argument);
+            ItemRuntimePlan prefixExpressionIterator = this.visit(expression.getPrefixExpression(), argument);
             DataFunctionIterator prefixIterator = new DataFunctionIterator(
                     Collections.singletonList(prefixExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1195,13 +1218,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitComputedAttributeConstructor(
+    public ItemRuntimePlan visitComputedAttributeConstructor(
             ComputedAttributeConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> runtimeIterator;
+        ItemRuntimePlan runtimeIterator;
         // create atomized iterator for the content expression
-        RuntimePlan<Item> contentExpressionIterator = this.visit(expression.getValueExpression(), argument);
+        ItemRuntimePlan contentExpressionIterator = this.visit(expression.getValueExpression(), argument);
         DataFunctionIterator atomizedContentIterator = new DataFunctionIterator(
                 Collections.singletonList(contentExpressionIterator),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1216,7 +1239,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         } else {
             // Dynamic attribute name: attribute { nameExpression } { content }
             // create atomized iterator for the name expression
-            RuntimePlan<Item> nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
+            ItemRuntimePlan nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
             DataFunctionIterator atomizedNameIterator = new DataFunctionIterator(
                     Collections.singletonList(nameExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1232,11 +1255,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitCommentNodeConstructor(
+    public ItemRuntimePlan visitCommentNodeConstructor(
             CommentNodeConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> contentIterator = visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan contentIterator = visit(expression.getContentExpression(), argument);
         CommentNodeConstructorRuntimeIterator result = new CommentNodeConstructorRuntimeIterator(
                 new DataFunctionIterator(
                         Collections.singletonList(contentIterator),
@@ -1249,9 +1272,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitDirectCommentConstructor(
+    public ItemRuntimePlan visitDirectCommentConstructor(
             DirectCommentConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
         DirectCommentConstructorRuntimeIterator result = new DirectCommentConstructorRuntimeIterator(
                 expression.getContent(),
@@ -1262,11 +1285,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitTextNodeConstructor(
+    public ItemRuntimePlan visitTextNodeConstructor(
             TextNodeConstructorExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> contentIterator = visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan contentIterator = visit(expression.getContentExpression(), argument);
 
         TextNodeConstructorRuntimeIterator result = new TextNodeConstructorRuntimeIterator(
                 new DataFunctionIterator(
@@ -1280,8 +1303,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitTextNode(TextNodeExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator = new TextNodeRuntimeIterator(
+    public ItemRuntimePlan visitTextNode(TextNodeExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new TextNodeRuntimeIterator(
                 expression.getContent(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1290,7 +1313,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitAttributeNode(AttributeNodeExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitAttributeNode(AttributeNodeExpression expression, ItemRuntimePlan argument) {
         List<DataFunctionIterator> atomizedValues = expression.getValue()
             .stream()
             .map(
@@ -1301,7 +1324,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
             )
             .collect(Collectors.toList());
 
-        RuntimePlan<Item> runtimeIterator = new AttributeNodeRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new AttributeNodeRuntimeIterator(
                 expression.getNodeName(),
                 atomizedValues,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1311,11 +1334,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitAttributeNodeContent(
+    public ItemRuntimePlan visitAttributeNodeContent(
             AttributeNodeContentExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> runtimeIterator = new AttributeNodeContentRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new AttributeNodeContentRuntimeIterator(
                 expression.getContent(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1324,8 +1347,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitContextExpr(ContextItemExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator = new ContextExpressionIterator(
+    public ItemRuntimePlan visitContextExpr(ContextItemExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new ContextExpressionIterator(
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
@@ -1333,14 +1356,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitInlineFunctionExpr(InlineFunctionExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitInlineFunctionExpr(InlineFunctionExpression expression, ItemRuntimePlan argument) {
         Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
-        RuntimePlan<Item> bodyIterator = this.visit(expression.getBody(), argument);
-        RuntimePlan<Item> runtimeIterator = new FunctionRuntimeIterator(
+        ItemRuntimePlan bodyIterator = this.visit(expression.getBody(), argument);
+        ItemRuntimePlan runtimeIterator = new FunctionRuntimeIterator(
                 expression.getName(),
                 paramNameToSequenceTypes,
                 returnType,
@@ -1352,13 +1375,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitFunctionCall(FunctionCallExpression expression, RuntimePlan<Item> argument) {
-        List<RuntimePlan<Item>> arguments = new ArrayList<>();
+    public ItemRuntimePlan visitFunctionCall(FunctionCallExpression expression, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> arguments = new ArrayList<>();
         for (Expression arg : expression.getArguments()) {
             if (arg == null) {
                 arguments.add(null);
             } else {
-                RuntimePlan<Item> argumentIterator = this.visit(arg, argument);
+                ItemRuntimePlan argumentIterator = this.visit(arg, argument);
                 arguments.add(argumentIterator);
             }
         }
@@ -1367,11 +1390,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
         String queryLanguage = expression.getStaticContext().getQueryLanguage();
 
-        RuntimePlan<Item> runtimeIterator = null;
+        ItemRuntimePlan runtimeIterator = null;
         if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
-            runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
+            runtimeIterator = (ItemRuntimePlan) NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
-                arguments,
+                asRuntimePlans(arguments),
                 // Note: passing the static context of the function call expression makes
                 // all builtin functions static-context-dependent.
                 // This might be worth a more fine-grained adjustment later.
@@ -1391,11 +1414,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitNamedFunctionRef(
+    public ItemRuntimePlan visitNamedFunctionRef(
             NamedFunctionReferenceExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> runtimeIterator = new NamedFunctionRefRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new NamedFunctionRefRuntimeIterator(
                 expression.getIdentifier(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1406,8 +1429,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
 
     // region literal
     @Override
-    public RuntimePlan<Item> visitInteger(IntegerLiteralExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator = new IntegerRuntimeIterator(
+    public ItemRuntimePlan visitInteger(IntegerLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new IntegerRuntimeIterator(
                 expression.getLexicalValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1416,8 +1439,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitString(StringLiteralExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator = new StringRuntimeIterator(
+    public ItemRuntimePlan visitString(StringLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new StringRuntimeIterator(
                 expression.getValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1426,8 +1449,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitDouble(DoubleLiteralExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator = new DoubleRuntimeIterator(
+    public ItemRuntimePlan visitDouble(DoubleLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new DoubleRuntimeIterator(
                 expression.getValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1436,8 +1459,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitDecimal(DecimalLiteralExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator = new DecimalRuntimeIterator(
+    public ItemRuntimePlan visitDecimal(DecimalLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new DecimalRuntimeIterator(
                 expression.getValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1446,8 +1469,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitNull(NullLiteralExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator = new NullRuntimeIterator(
+    public ItemRuntimePlan visitNull(NullLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new NullRuntimeIterator(
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
@@ -1455,8 +1478,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitBoolean(BooleanLiteralExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator = new BooleanRuntimeIterator(
+    public ItemRuntimePlan visitBoolean(BooleanLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new BooleanRuntimeIterator(
                 expression.getValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1467,17 +1490,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
 
     // region operational
     @Override
-    public RuntimePlan<Item> visitAdditiveExpr(AdditiveExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitAdditiveExpr(AdditiveExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimePlan<Item> left = this.visit(
+        ItemRuntimePlan left = (this.visit(
             leftExpression,
             argument
-        );
-        RuntimePlan<Item> right = this.visit(
+        ));
+        ItemRuntimePlan right = (this.visit(
             rightExpression,
             argument
-        );
+        ));
         if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
             left = new DataFunctionIterator(
                     Collections.singletonList(left),
@@ -1491,7 +1514,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
             );
         }
 
-        RuntimePlan<Item> runtimeIterator = new AdditiveOperationIterator(
+        ItemRuntimePlan runtimeIterator = new AdditiveOperationIterator(
                 left,
                 right,
                 expression.isMinus(),
@@ -1502,17 +1525,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitMultiplicativeExpr(MultiplicativeExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitMultiplicativeExpr(MultiplicativeExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimePlan<Item> left = this.visit(
+        ItemRuntimePlan left = (this.visit(
             leftExpression,
             argument
-        );
-        RuntimePlan<Item> right = this.visit(
+        ));
+        ItemRuntimePlan right = (this.visit(
             rightExpression,
             argument
-        );
+        ));
         if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
             left = new DataFunctionIterator(
                     Collections.singletonList(left),
@@ -1526,7 +1549,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
             );
         }
 
-        RuntimePlan<Item> runtimeIterator = new MultiplicativeOperationIterator(
+        ItemRuntimePlan runtimeIterator = new MultiplicativeOperationIterator(
                 left,
                 right,
                 expression.getMultiplicativeOperator(),
@@ -1537,19 +1560,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitSimpleMapExpr(SimpleMapExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitSimpleMapExpr(SimpleMapExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimePlan<Item> left = this.visit(
+        ItemRuntimePlan left = (this.visit(
             leftExpression,
             argument
-        );
-        RuntimePlan<Item> right = this.visit(
+        ));
+        ItemRuntimePlan right = (this.visit(
             rightExpression,
             argument
-        );
+        ));
 
-        RuntimePlan<Item> runtimeIterator = new SimpleMapExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new SimpleMapExpressionIterator(
                 left,
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1559,19 +1582,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitAndExpr(AndExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitAndExpr(AndExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimePlan<Item> left = this.visit(
+        ItemRuntimePlan left = this.visit(
             leftExpression,
             argument
         );
-        RuntimePlan<Item> right = this.visit(
+        ItemRuntimePlan right = this.visit(
             rightExpression,
             argument
         );
 
-        RuntimePlan<Item> runtimeIterator = new AndOperationIterator(
+        ItemRuntimePlan runtimeIterator = new AndOperationIterator(
                 left,
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1581,19 +1604,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitOrExpr(OrExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitOrExpr(OrExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimePlan<Item> left = this.visit(
+        ItemRuntimePlan left = this.visit(
             leftExpression,
             argument
         );
-        RuntimePlan<Item> right = this.visit(
+        ItemRuntimePlan right = this.visit(
             rightExpression,
             argument
         );
 
-        RuntimePlan<Item> runtimeIterator = new OrOperationIterator(
+        ItemRuntimePlan runtimeIterator = new OrOperationIterator(
                 left,
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1603,8 +1626,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitNotExpr(NotExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> runtimeIterator = new NotOperationIterator(
+    public ItemRuntimePlan visitNotExpr(NotExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new NotOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1613,9 +1636,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitUnaryExpr(UnaryExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitUnaryExpr(UnaryExpression expression, ItemRuntimePlan argument) {
         // compute +- final result
-        RuntimePlan<Item> runtimeIterator = new UnaryOperationIterator(
+        ItemRuntimePlan runtimeIterator = new UnaryOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
                 expression.isNegated(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1625,10 +1648,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitRangeExpr(RangeExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> left = this.visit(expression.getChildren().get(0), argument);
-        RuntimePlan<Item> right = this.visit(expression.getChildren().get(1), argument);
-        RuntimePlan<Item> runtimeIterator = new RangeOperationIterator(
+    public ItemRuntimePlan visitRangeExpr(RangeExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan left = this.visit(expression.getChildren().get(0), argument);
+        ItemRuntimePlan right = this.visit(expression.getChildren().get(1), argument);
+        ItemRuntimePlan runtimeIterator = new RangeOperationIterator(
                 left,
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1638,10 +1661,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitNodeSetExpr(NodeSetExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> left = this.visit(expression.getLeftExpression(), argument);
-        RuntimePlan<Item> right = this.visit(expression.getRightExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new NodeSetOperationIterator(
+    public ItemRuntimePlan visitNodeSetExpr(NodeSetExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan left = this.visit(expression.getLeftExpression(), argument);
+        ItemRuntimePlan right = this.visit(expression.getRightExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new NodeSetOperationIterator(
                 left,
                 right,
                 expression.getOperator(),
@@ -1652,12 +1675,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitComparisonExpr(ComparisonExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitComparisonExpr(ComparisonExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
 
-        RuntimePlan<Item> left = this.visit(leftExpression, argument);
-        RuntimePlan<Item> right = this.visit(rightExpression, argument);
+        ItemRuntimePlan left = this.visit(leftExpression, argument);
+        ItemRuntimePlan right = this.visit(rightExpression, argument);
         if (!(leftExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
             // Atomic comparison operators require atomized operands. If the operands are not atomic, we need to wrap
             // them in a DataFunctionIterator to atomize them.
@@ -1672,7 +1695,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-        RuntimePlan<Item> runtimeIterator = new ComparisonIterator(
+        ItemRuntimePlan runtimeIterator = new ComparisonIterator(
                 left,
                 right,
                 expression.getComparisonOperator(),
@@ -1683,10 +1706,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitNodeComparisonExpr(NodeComparisonExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> left = this.visit(expression.getLeftExpression(), argument);
-        RuntimePlan<Item> right = this.visit(expression.getRightExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new NodeComparisonRuntimeIterator(
+    public ItemRuntimePlan visitNodeComparisonExpr(NodeComparisonExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan left = this.visit(expression.getLeftExpression(), argument);
+        ItemRuntimePlan right = this.visit(expression.getRightExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new NodeComparisonRuntimeIterator(
                 left,
                 right,
                 expression.getOperator(),
@@ -1697,10 +1720,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitStringConcatExpr(StringConcatExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> left = this.visit(expression.getChildren().get(0), argument);
-        RuntimePlan<Item> right = this.visit(expression.getChildren().get(1), argument);
-        RuntimePlan<Item> runtimeIterator = new StringConcatIterator(
+    public ItemRuntimePlan visitStringConcatExpr(StringConcatExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan left = this.visit(expression.getChildren().get(0), argument);
+        ItemRuntimePlan right = this.visit(expression.getChildren().get(1), argument);
+        ItemRuntimePlan runtimeIterator = new StringConcatIterator(
                 left,
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1710,9 +1733,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitInstanceOfExpression(InstanceOfExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new InstanceOfIterator(
+    public ItemRuntimePlan visitInstanceOfExpression(InstanceOfExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new InstanceOfIterator(
                 childExpression,
                 expression.getSequenceType(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1722,19 +1745,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitValidateTypeExpression(
+    public ItemRuntimePlan visitValidateTypeExpression(
             ValidateTypeExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        RuntimePlan<Item> childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new ValidateTypeIterator(
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new ValidateTypeIterator(
                 childExpression,
                 expression.getSequenceType().getItemType(),
                 expression.isValidate(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
-        RuntimePlan<Item> resultIterator = new TreatIterator(
+        ItemRuntimePlan resultIterator = new TreatIterator(
                 runtimeIterator,
                 new SequenceType(BuiltinTypesCatalogue.item, expression.getSequenceType().getArity()),
                 ErrorCode.InvalidInstance,
@@ -1745,9 +1768,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitTreatExpression(TreatExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new TreatIterator(
+    public ItemRuntimePlan visitTreatExpression(TreatExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new TreatIterator(
                 childExpression,
                 expression.getSequenceType(),
                 expression.errorCodeThatShouldBeThrown(),
@@ -1758,9 +1781,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitCastableExpression(CastableExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new CastableIterator(
+    public ItemRuntimePlan visitCastableExpression(CastableExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new CastableIterator(
                 childExpression,
                 expression.getSequenceType(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1770,9 +1793,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitCastExpression(CastExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimePlan<Item> runtimeIterator = new CastIterator(
+    public ItemRuntimePlan visitCastExpression(CastExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new CastIterator(
                 childExpression,
                 expression.getSequenceType(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1784,11 +1807,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
 
     // region control
     @Override
-    public RuntimePlan<Item> visitConditionalExpression(ConditionalExpression expression, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> conditionIterator = this.visit(expression.getCondition(), argument);
-        RuntimePlan<Item> thenIterator = this.visit(expression.getBranch(), argument);
-        RuntimePlan<Item> elseIterator = this.visit(expression.getElseBranch(), argument);
-        RuntimePlan<Item> runtimeIterator = null;
+    public ItemRuntimePlan visitConditionalExpression(ConditionalExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan conditionIterator = this.visit(expression.getCondition(), argument);
+        ItemRuntimePlan thenIterator = this.visit(expression.getBranch(), argument);
+        ItemRuntimePlan elseIterator = this.visit(expression.getElseBranch(), argument);
+        ItemRuntimePlan runtimeIterator = null;
         if (
             thenIterator instanceof AbstractAtMostOneItemRuntimePlan
                 &&
@@ -1813,18 +1836,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitSwitchExpression(SwitchExpression expression, RuntimePlan<Item> argument) {
-        Map<RuntimePlan<Item>, RuntimePlan<Item>> cases = new LinkedHashMap<>();
+    public ItemRuntimePlan visitSwitchExpression(SwitchExpression expression, ItemRuntimePlan argument) {
+        Map<ItemRuntimePlan, ItemRuntimePlan> cases = new LinkedHashMap<>();
         for (SwitchCase caseExpression : expression.getCases()) {
-            RuntimePlan<Item> caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
+            ItemRuntimePlan caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
             for (Expression conditionExpr : caseExpression.getConditionExpressions()) {
-                RuntimePlan<Item> condition = this.visit(conditionExpr, argument);
+                ItemRuntimePlan condition = this.visit(conditionExpr, argument);
                 cases.put(condition, caseExpr);
             }
         }
-        RuntimePlan<Item> runtimeIterator = new SwitchRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new SwitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
-                cases,
+                asRuntimePlanMap(cases),
                 this.visit(expression.getDefaultExpression(), argument),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1834,7 +1857,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     // endregion
 
     @Override
-    public RuntimePlan<Item> visitTypeSwitchExpression(TypeSwitchExpression expression, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitTypeSwitchExpression(TypeSwitchExpression expression, ItemRuntimePlan argument) {
         List<TypeswitchRuntimeIteratorCase> cases = new ArrayList<>();
         for (TypeswitchCase caseExpression : expression.getCases()) {
             cases.add(
@@ -1851,7 +1874,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                 this.visit(expression.getDefaultCase().getReturnExpression(), argument)
         );
 
-        RuntimePlan<Item> runtimeIterator = new TypeswitchRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new TypeswitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 defaultCase,
@@ -1862,8 +1885,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitTryCatchExpression(TryCatchExpression expression, RuntimePlan<Item> argument) {
-        Map<CatchPattern, RuntimePlan<Item>> cases = new LinkedHashMap<>();
+    public ItemRuntimePlan visitTryCatchExpression(TryCatchExpression expression, ItemRuntimePlan argument) {
+        Map<CatchPattern, ItemRuntimePlan> cases = new LinkedHashMap<>();
         for (CatchPattern pattern : expression.getCatchPatterns()) {
             cases.put(
                 pattern,
@@ -1872,15 +1895,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         }
         return new TryCatchRuntimeIterator(
                 this.visit(expression.getTryExpression(), argument),
-                cases,
+                asRuntimePlanValues(cases),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
 
     @Override
-    public RuntimePlan<Item> visitWhileStatement(WhileStatement statement, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> testConditionIterator = this.visit(statement.getTestCondition(), argument);
-        RuntimePlan<Item> statementIterator = this.visit(statement.getStatement(), argument);
+    public ItemRuntimePlan visitWhileStatement(WhileStatement statement, ItemRuntimePlan argument) {
+        ItemRuntimePlan testConditionIterator = this.visit(statement.getTestCondition(), argument);
+        ItemRuntimePlan statementIterator = this.visit(statement.getStatement(), argument);
         return new WhileStatementIterator(
                 testConditionIterator,
                 statementIterator,
@@ -1889,36 +1912,36 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitVariableDeclStatement(VariableDeclStatement statement, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitVariableDeclStatement(VariableDeclStatement statement, ItemRuntimePlan argument) {
         Name varName = statement.getVariableName();
-        List<RuntimePlan<Item>> exprIterator = Collections.emptyList();
+        List<ItemRuntimePlan> exprIterator = Collections.emptyList();
         if (statement.getVariableExpression() != null) {
             exprIterator = Collections.singletonList(this.visit(statement.getVariableExpression(), argument));
         }
         return new VariableDeclStatementIterator(
                 varName,
-                exprIterator,
+                asRuntimePlans(exprIterator),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
 
     @Override
-    public RuntimePlan<Item> visitCommaVariableDeclStatement(
+    public ItemRuntimePlan visitCommaVariableDeclStatement(
             CommaVariableDeclStatement statement,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        List<RuntimePlan<Item>> children = new ArrayList<>();
+        List<ItemRuntimePlan> children = new ArrayList<>();
         for (VariableDeclStatement varDecl : statement.getVariables()) {
             children.add(this.visit(varDecl, argument));
         }
         return new CommaVariableDeclStatementIterator(
-                children,
+                asRuntimePlans(children),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
 
     @Override
-    public RuntimePlan<Item> visitAssignStatement(AssignStatement statement, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitAssignStatement(AssignStatement statement, ItemRuntimePlan argument) {
         return new AssignStatementIterator(
                 this.visit(statement.getAssignExpression(), argument),
                 statement.getName(),
@@ -1927,7 +1950,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitApplyStatement(ApplyStatement statement, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitApplyStatement(ApplyStatement statement, ItemRuntimePlan argument) {
         return new ApplyStatementIterator(
                 this.visit(statement.getApplyExpression(), argument),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1935,17 +1958,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitBreakStatement(BreakStatement statement, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitBreakStatement(BreakStatement statement, ItemRuntimePlan argument) {
         return new BreakStatementIterator(statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimePlan<Item> visitContinueStatement(ContinueStatement statement, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitContinueStatement(ContinueStatement statement, ItemRuntimePlan argument) {
         return new ContinueStatementIterator(statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimePlan<Item> visitExitStatement(ExitStatement statement, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitExitStatement(ExitStatement statement, ItemRuntimePlan argument) {
         return new ExitStatementIterator(
                 this.visit(statement.getExitExpression(), argument),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -1956,8 +1979,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitTryCatchStatement(TryCatchStatement statement, RuntimePlan<Item> argument) {
-        Map<CatchPattern, RuntimePlan<Item>> cases = new LinkedHashMap<>();
+    public ItemRuntimePlan visitTryCatchStatement(TryCatchStatement statement, ItemRuntimePlan argument) {
+        Map<CatchPattern, ItemRuntimePlan> cases = new LinkedHashMap<>();
         for (CatchPattern pattern : statement.getCatchPatterns()) {
             cases.put(
                 pattern,
@@ -1966,39 +1989,39 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         }
         return new TryCatchStatementIterator(
                 this.visit(statement.getTryStatement(), argument),
-                cases,
+                asRuntimePlanValues(cases),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
 
     @Override
-    public RuntimePlan<Item> visitBlockStatement(BlockStatement statement, RuntimePlan<Item> argument) {
-        List<RuntimePlan<Item>> result = new ArrayList<>();
+    public ItemRuntimePlan visitBlockStatement(BlockStatement statement, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> result = new ArrayList<>();
         for (Statement stmt : statement.getBlockStatements()) {
-            RuntimePlan<Item> childIterator = this.visit(stmt, argument);
+            ItemRuntimePlan childIterator = this.visit(stmt, argument);
             if (childIterator != null) {
                 result.add(childIterator);
             }
         }
         return new StatementsOnlyIterator(
-                result,
+                asRuntimePlans(result),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
 
     @Override
-    public RuntimePlan<Item> visitSwitchStatement(SwitchStatement statement, RuntimePlan<Item> argument) {
-        Map<RuntimePlan<Item>, RuntimePlan<Item>> cases = new LinkedHashMap<>();
+    public ItemRuntimePlan visitSwitchStatement(SwitchStatement statement, ItemRuntimePlan argument) {
+        Map<ItemRuntimePlan, ItemRuntimePlan> cases = new LinkedHashMap<>();
         for (SwitchCaseStatement caseExpression : statement.getCases()) {
-            RuntimePlan<Item> caseExpr = this.visit(caseExpression.getReturnStatement(), argument);
+            ItemRuntimePlan caseExpr = this.visit(caseExpression.getReturnStatement(), argument);
             for (Expression conditionExpr : caseExpression.getConditionExpressions()) {
-                RuntimePlan<Item> condition = this.visit(conditionExpr, argument);
+                ItemRuntimePlan condition = this.visit(conditionExpr, argument);
                 cases.put(condition, caseExpr);
             }
         }
-        RuntimePlan<Item> runtimeIterator = new SwitchStatementIterator(
+        ItemRuntimePlan runtimeIterator = new SwitchStatementIterator(
                 this.visit(statement.getTestCondition(), argument),
-                cases,
+                asRuntimePlanMap(cases),
                 this.visit(statement.getDefaultStatement(), argument),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -2007,7 +2030,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitTypeSwitchStatement(TypeSwitchStatement statement, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitTypeSwitchStatement(TypeSwitchStatement statement, ItemRuntimePlan argument) {
         List<TypeswitchRuntimeIteratorCase> cases = new ArrayList<>();
         for (TypeSwitchStatementCase caseExpression : statement.getCases()) {
             cases.add(
@@ -2024,7 +2047,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                 this.visit(statement.getDefaultCase().getReturnStatement(), argument)
         );
 
-        RuntimePlan<Item> runtimeIterator = new TypeSwitchStatementIterator(
+        ItemRuntimePlan runtimeIterator = new TypeSwitchStatementIterator(
                 this.visit(statement.getTestCondition(), argument),
                 cases,
                 defaultCase,
@@ -2035,34 +2058,34 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, RuntimePlan<Item> argument) {
-        List<RuntimePlan<Item>> result = new ArrayList<>();
+    public ItemRuntimePlan visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> result = new ArrayList<>();
         for (Statement statement : statementsAndExpr.getStatements()) {
-            RuntimePlan<Item> childIterator = this.visit(statement, argument);
+            ItemRuntimePlan childIterator = this.visit(statement, argument);
             if (childIterator != null) {
                 result.add(childIterator);
             }
         }
-        RuntimePlan<Item> exprIterator = this.visit(statementsAndExpr.getExpression(), argument);
+        ItemRuntimePlan exprIterator = this.visit(statementsAndExpr.getExpression(), argument);
         // if (result.isEmpty()) {
         // return exprIterator;
         // }
         return new StatementsWithExprIterator(
-                result,
+                asRuntimePlans(result),
                 exprIterator,
                 statementsAndExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
 
     @Override
-    public RuntimePlan<Item> visitStatementsAndOptionalExpr(
+    public ItemRuntimePlan visitStatementsAndOptionalExpr(
             StatementsAndOptionalExpr statementsAndOptionalExpr,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
-        List<RuntimePlan<Item>> result = new ArrayList<>();
-        RuntimePlan<Item> exprIterator = null;
+        List<ItemRuntimePlan> result = new ArrayList<>();
+        ItemRuntimePlan exprIterator = null;
         for (Statement statement : statementsAndOptionalExpr.getStatements()) {
-            RuntimePlan<Item> childIterator = this.visit(statement, argument);
+            ItemRuntimePlan childIterator = this.visit(statement, argument);
             if (childIterator != null) {
                 result.add(childIterator);
             }
@@ -2075,20 +2098,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
         // }
         if (exprIterator != null) {
             return new StatementsWithExprIterator(
-                    result,
+                    asRuntimePlans(result),
                     exprIterator,
                     statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
 
         }
         return new StatementsOnlyIterator(
-                result,
+                asRuntimePlans(result),
                 statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
 
     @Override
-    public RuntimePlan<Item> visitProgram(Program program, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitProgram(Program program, ItemRuntimePlan argument) {
         if (program.isSequential() || program.isUpdating()) {
             program.getStatementsAndOptionalExpr().getStaticContext().setIsQuerySideEffecting(true);
         }
@@ -2099,16 +2122,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitConditionalStatement(ConditionalStatement statement, RuntimePlan<Item> argument) {
-        RuntimePlan<Item> conditionIterator = this.visit(statement.getCondition(), argument);
-        RuntimePlan<Item> thenIterator = this.visit(statement.getBranch(), argument);
-        RuntimePlan<Item> elseIterator = this.visit(statement.getElseBranch(), argument);
-        List<RuntimePlan<Item>> result = new ArrayList<>();
+    public ItemRuntimePlan visitConditionalStatement(ConditionalStatement statement, ItemRuntimePlan argument) {
+        ItemRuntimePlan conditionIterator = this.visit(statement.getCondition(), argument);
+        ItemRuntimePlan thenIterator = this.visit(statement.getBranch(), argument);
+        ItemRuntimePlan elseIterator = this.visit(statement.getElseBranch(), argument);
+        List<ItemRuntimePlan> result = new ArrayList<>();
         result.add(conditionIterator);
         result.add(thenIterator);
         result.add(elseIterator);
-        RuntimePlan<Item> runtimeIterator = new ConditionalStatementIterator(
-                result,
+        ItemRuntimePlan runtimeIterator = new ConditionalStatementIterator(
+                asRuntimePlans(result),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
@@ -2117,18 +2140,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitFlowrStatement(FlowrStatement statement, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitFlowrStatement(FlowrStatement statement, ItemRuntimePlan argument) {
         TupleRuntimePlan previous = this.visitFlowrClause(
             statement.getReturnStatementClause().getPreviousClause(),
             argument
         );
         ReturnStatementClause returnClause = statement.getReturnStatementClause();
-        RuntimePlan<Item> runtimeIterator = new ReturnStatementClauseIterator(
+        ItemRuntimePlan runtimeIterator = new ReturnStatementClauseIterator(
                 previous,
-                this.visit(
+                (this.visit(
                     returnClause.getReturnStatement(),
                     argument
-                ),
+                )),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
@@ -2136,10 +2159,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitSlashExpr(SlashExpr slashExpr, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitSlashExpr(SlashExpr slashExpr, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) slashExpr.getChildren().get(0);
         Expression rightExpression = (Expression) slashExpr.getChildren().get(1);
-        RuntimePlan<Item> left = this.visit(
+        ItemRuntimePlan left = this.visit(
             leftExpression,
             argument
         );
@@ -2151,12 +2174,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
                     slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-        RuntimePlan<Item> right = this.visit(
+        ItemRuntimePlan right = this.visit(
             rightExpression,
             argument
         );
 
-        RuntimePlan<Item> runtimeIterator = new SlashExprIterator(
+        ItemRuntimePlan runtimeIterator = new SlashExprIterator(
                 left,
                 right,
                 slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -2172,7 +2195,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitStepExpr(StepExpr stepExpr, RuntimePlan<Item> argument) {
+    public ItemRuntimePlan visitStepExpr(StepExpr stepExpr, ItemRuntimePlan argument) {
         AxisIterator axisIterator = this.visitAxisStep(stepExpr, stepExpr.getMetadata());
         NodeTest nodeTest = stepExpr.getNodeTest();
         return new StepExprIterator(
@@ -2186,12 +2209,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimePlan<Item
     }
 
     @Override
-    public RuntimePlan<Item> visitPathRootExpr(
+    public ItemRuntimePlan visitPathRootExpr(
             PathRootExpression expression,
-            RuntimePlan<Item> argument
+            ItemRuntimePlan argument
     ) {
         this.config.setOptimizeParentPointers(false);
-        RuntimePlan<Item> runtimeIterator = new PathRootRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new PathRootRuntimeIterator(
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 

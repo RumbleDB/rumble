@@ -61,7 +61,6 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -81,13 +80,13 @@ public class ObjectLookupIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
     private Item lookupKey;
     private boolean contextLookup;
 
     public ObjectLookupIterator(
-            RuntimePlan<Item> object,
-            RuntimePlan<Item> lookupIterator,
+            ItemRuntimePlan object,
+            ItemRuntimePlan lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(object, lookupIterator), staticContext);
@@ -120,7 +119,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     }
 
     private void initLookupKey(DynamicContext context) {
-        RuntimePlan<Item> lookupIterator = this.getChild(1);
+        ItemRuntimePlan lookupIterator = this.iterator;
 
         this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
@@ -247,7 +246,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
         Map<Name, DynamicContext.VariableDependency> keyDependencies =
-            RuntimePlanDependencies.get(this.getChild(1));
+            this.iterator.getVariableDependencies();
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.

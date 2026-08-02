@@ -62,7 +62,7 @@ public class CommaExpressionIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     public CommaExpressionIterator(
-            List<RuntimePlan<Item>> childIterators,
+            List<? extends RuntimePlan<Item>> childIterators,
             RuntimeStaticContext staticContext
     ) {
         super(childIterators, staticContext);

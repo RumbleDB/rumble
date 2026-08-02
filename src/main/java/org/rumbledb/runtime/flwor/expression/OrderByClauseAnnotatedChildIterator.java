@@ -23,7 +23,7 @@ package org.rumbledb.runtime.flwor.expression;
 import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
-import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -33,14 +33,14 @@ public class OrderByClauseAnnotatedChildIterator implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
     private final boolean ascending;
     private final String uri;
     private final OrderByClauseSortingKey.EMPTY_ORDER emptyOrder;
 
 
     public OrderByClauseAnnotatedChildIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             boolean ascending,
             String uri,
             OrderByClauseSortingKey.EMPTY_ORDER empty_order

@@ -18,6 +18,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.types.SequenceType;
 
@@ -54,7 +55,10 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item> {
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (RuntimePlan<Item> child : this.children) {
-            DynamicContext.mergeVariableDependencies(result, RuntimePlanDependencies.get(child));
+            if (!(child instanceof ItemRuntimePlan itemPlan)) {
+                throw new OurBadException("Item runtime plans can only have item runtime plan children.");
+            }
+            DynamicContext.mergeVariableDependencies(result, itemPlan.getVariableDependencies());
         }
         return result;
     }

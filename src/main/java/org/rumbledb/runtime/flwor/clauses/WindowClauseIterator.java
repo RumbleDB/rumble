@@ -25,7 +25,7 @@ import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -50,27 +50,27 @@ public class WindowClauseIterator extends TupleRuntimePlan {
      * The iterator that produces the items to be windowed.
      * For example, {@code for sliding window in (1, 2, 3)}
      */
-    private final RuntimePlan<Item> sourceIterator;
+    private final ItemRuntimePlan sourceIterator;
 
     /**
      * The iterator that evaluates the start condition of the window.
      * For example, {@code start $x when $x > 1}
      */
-    private final RuntimePlan<Item> startCondition;
+    private final ItemRuntimePlan startCondition;
 
     /**
      * The iterator that evaluates the end condition of the window.
      * It is {@code null} for a tumbling window without an explicit end clause.
      * For example, {@code end $y when $y < 3}
      */
-    private final RuntimePlan<Item> endCondition;
+    private final ItemRuntimePlan endCondition;
 
     public WindowClauseIterator(
             TupleRuntimePlan child,
             WindowClause clause,
-            RuntimePlan<Item> sourceIterator,
-            RuntimePlan<Item> startCondition,
-            RuntimePlan<Item> endCondition,
+            ItemRuntimePlan sourceIterator,
+            ItemRuntimePlan startCondition,
+            ItemRuntimePlan endCondition,
             RuntimeStaticContext staticContext
     ) {
         this(
@@ -96,9 +96,9 @@ public class WindowClauseIterator extends TupleRuntimePlan {
             WindowClause.WindowVars startVariables,
             WindowClause.WindowVars endVariables,
             boolean endConditionOnly,
-            RuntimePlan<Item> sourceIterator,
-            RuntimePlan<Item> startCondition,
-            RuntimePlan<Item> endCondition,
+            ItemRuntimePlan sourceIterator,
+            ItemRuntimePlan startCondition,
+            ItemRuntimePlan endCondition,
             RuntimeStaticContext staticContext
     ) {
         super(child, staticContext);
@@ -111,10 +111,10 @@ public class WindowClauseIterator extends TupleRuntimePlan {
         this.sourceIterator = sourceIterator;
         this.startCondition = startCondition;
         this.endCondition = endCondition;
-        RuntimePlanDependencies.get(this.sourceIterator);
-        RuntimePlanDependencies.get(this.startCondition);
+        this.sourceIterator.getVariableDependencies();
+        this.startCondition.getVariableDependencies();
         if (this.endCondition != null) {
-            RuntimePlanDependencies.get(this.endCondition);
+            this.endCondition.getVariableDependencies();
         }
     }
 
@@ -321,7 +321,7 @@ public class WindowClauseIterator extends TupleRuntimePlan {
             WindowSpec spec,
             DynamicContext context,
             FlworTuple inputTuple,
-            RuntimePlan<Item> condition,
+            ItemRuntimePlan condition,
             WindowClause.WindowVars variables,
             boolean isEndCondition,
             List<Item> items,
@@ -357,9 +357,9 @@ public class WindowClauseIterator extends TupleRuntimePlan {
         private final WindowClause.WindowVars startVariables;
         private final WindowClause.WindowVars endVariables;
         private final boolean endConditionOnly;
-        private final RuntimePlan<Item> sourcePlan;
-        private final RuntimePlan<Item> startCondition;
-        private final RuntimePlan<Item> endCondition;
+        private final ItemRuntimePlan sourcePlan;
+        private final ItemRuntimePlan startCondition;
+        private final ItemRuntimePlan endCondition;
         private final RuntimeStaticContext staticContext;
 
         private WindowSpec(
@@ -371,9 +371,9 @@ public class WindowClauseIterator extends TupleRuntimePlan {
                 WindowClause.WindowVars startVariables,
                 WindowClause.WindowVars endVariables,
                 boolean endConditionOnly,
-                RuntimePlan<Item> sourcePlan,
-                RuntimePlan<Item> startCondition,
-                RuntimePlan<Item> endCondition,
+                ItemRuntimePlan sourcePlan,
+                ItemRuntimePlan startCondition,
+                ItemRuntimePlan endCondition,
                 RuntimeStaticContext staticContext
         ) {
             this.childPlan = childPlan;
@@ -545,7 +545,7 @@ public class WindowClauseIterator extends TupleRuntimePlan {
         // outer binding.
         mergeDependencies(
             result,
-            RuntimePlanDependencies.get(this.sourceIterator),
+            this.sourceIterator.getVariableDependencies(),
             Collections.emptySet()
         );
         // Start variables are supplied by the iterator for each candidate start item and are therefore not dynamic
@@ -553,7 +553,7 @@ public class WindowClauseIterator extends TupleRuntimePlan {
         // window variable, must be preserved.
         mergeDependencies(
             result,
-            RuntimePlanDependencies.get(this.startCondition),
+            this.startCondition.getVariableDependencies(),
             startBoundVariables
         );
 
@@ -563,7 +563,7 @@ public class WindowClauseIterator extends TupleRuntimePlan {
             conditionBoundVariables.addAll(this.endVariables.names());
             mergeDependencies(
                 result,
-                RuntimePlanDependencies.get(this.endCondition),
+                this.endCondition.getVariableDependencies(),
                 conditionBoundVariables
             );
         }
@@ -622,13 +622,13 @@ public class WindowClauseIterator extends TupleRuntimePlan {
         this.getWindowVariables().forEach(result::remove);
         this.addDependencies(
             result,
-            RuntimePlanDependencies.get(this.sourceIterator),
+            this.sourceIterator.getVariableDependencies(),
             Collections.emptySet(),
             childVariables
         );
         this.addDependencies(
             result,
-            RuntimePlanDependencies.get(this.startCondition),
+            this.startCondition.getVariableDependencies(),
             startBoundVariables,
             childVariables
         );
@@ -637,7 +637,7 @@ public class WindowClauseIterator extends TupleRuntimePlan {
             conditionBoundVariables.addAll(endBoundVariables);
             this.addDependencies(
                 result,
-                RuntimePlanDependencies.get(this.endCondition),
+                this.endCondition.getVariableDependencies(),
                 conditionBoundVariables,
                 childVariables
             );

@@ -48,7 +48,6 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -69,12 +68,12 @@ public class ArrayLookupIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
     private int lookup;
 
     public ArrayLookupIterator(
-            RuntimePlan<Item> array,
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan array,
+            ItemRuntimePlan iterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(array, iterator), staticContext);
@@ -105,7 +104,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
 
 
     private void initLookupPosition(DynamicContext context) {
-        RuntimePlan<Item> lookupIterator = this.getChild(1);
+        ItemRuntimePlan lookupIterator = this.iterator;
 
         try {
             Item lookupExpression = lookupIterator.materializeExactlyOne(context);
@@ -176,7 +175,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
             Map<Name, DynamicContext.VariableDependency> keyDependencies =
-                RuntimePlanDependencies.get(this.getChild(1));
+                this.iterator.getVariableDependencies();
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;

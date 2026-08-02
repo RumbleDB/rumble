@@ -53,7 +53,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
@@ -88,11 +87,11 @@ public class ReturnClauseIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
     private final TupleRuntimePlan child;
     private transient DynamicContext tupleContext;
-    private final RuntimePlan<Item> expression;
+    private final ItemRuntimePlan expression;
 
     public ReturnClauseIterator(
             TupleRuntimePlan child,
-            RuntimePlan<Item> expression,
+            ItemRuntimePlan expression,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(expression), staticContext);
@@ -114,7 +113,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
     private static final class ReturnLocalCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<FlworTuple> tuplePlan;
-        private final RuntimePlan<Item> expressionPlan;
+        private final ItemRuntimePlan expressionPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<FlworTuple> tupleCursor;
@@ -125,7 +124,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
 
         private ReturnLocalCursor(
                 RuntimePlan<FlworTuple> tuplePlan,
-                RuntimePlan<Item> expressionPlan,
+                ItemRuntimePlan expressionPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -205,7 +204,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        RuntimePlan<Item> expression = this.getChild(0);
+        ItemRuntimePlan expression = this.expression;
         if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
@@ -238,7 +237,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
         StructType oldSchema = df.schema();
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             oldSchema,
-            RuntimePlanDependencies.get(this.expression),
+            this.expression.getVariableDependencies(),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
@@ -247,9 +246,9 @@ public class ReturnClauseIterator extends ItemRuntimePlan
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
-        Map<Name, VariableDependency> dependencies = RuntimePlanDependencies.get(
+        Map<Name, VariableDependency> dependencies =
             this.expression
-        );
+        .getVariableDependencies();
         Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
         Map<Name, VariableDependency> projection = new HashMap<>();
         for (Name n : dependencies.keySet()) {
@@ -262,7 +261,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        RuntimePlan<Item> expression = this.getChild(0);
+        ItemRuntimePlan expression = this.expression;
         if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
@@ -345,7 +344,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(RuntimePlanDependencies.get(this.expression));
+            new TreeMap<>(this.expression.getVariableDependencies());
         for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }
@@ -376,7 +375,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
      */
     public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             StructType inputSchema,
             DynamicContext context
     ) {
@@ -628,7 +627,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
             // execution reaches here when there are no more results
         }
 
-        RuntimePlan<Item> expression = this.getChild(0);
+        ItemRuntimePlan expression = this.expression;
         if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(

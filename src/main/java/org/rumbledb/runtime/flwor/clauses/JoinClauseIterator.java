@@ -58,8 +58,8 @@ import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -120,7 +120,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             List<Name> variablesInLeftInputTuple, // really needed?
             List<Name> variablesInRightInputTuple, // really needed?
-            RuntimePlan<Item> predicateIterator,
+            ItemRuntimePlan predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata,
@@ -145,9 +145,9 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         // TODO project away from the left all variables from the right
 
         // Is this a join that we can optimize as an actual Spark join?
-        List<RuntimePlan<Item>> leftTupleSideEqualityCriteria =
+        List<ItemRuntimePlan> leftTupleSideEqualityCriteria =
             new ArrayList<>();
-        List<RuntimePlan<Item>> rightTupleSideEqualityCriteria =
+        List<ItemRuntimePlan> rightTupleSideEqualityCriteria =
             new ArrayList<>();
 
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
@@ -168,8 +168,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         // System.out.println(sb.toString());
         // }
 
-        Map<Name, VariableDependency> predicateDependencies = RuntimePlanDependencies
-            .get(predicateIterator);
+        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
         if (
             newRightSideVariableName != null
                 && outputTupleVariableDependencies.containsKey(newRightSideVariableName)
@@ -203,8 +202,8 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
 
 
         // Now we prepare the iterators for the two sides of the equality criterion.
-        RuntimePlan<Item> rightHandSideEqualityCriterion;
-        RuntimePlan<Item> leftHandSideEqualityCriterion;
+        ItemRuntimePlan rightHandSideEqualityCriterion;
+        ItemRuntimePlan leftHandSideEqualityCriterion;
 
         if (rightTupleSideEqualityCriteria.size() == 1) {
             rightHandSideEqualityCriterion = rightTupleSideEqualityCriteria.get(0);
@@ -309,7 +308,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         variablesInJointTuple.addAll(variablesInRightInputTuple);
         List<FlworDataFrameColumn> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumns(
             jointSchema,
-            RuntimePlanDependencies.get(predicateIterator),
+            predicateIterator.getVariableDependencies(),
             variablesInJointTuple,
             null
         );
@@ -371,33 +370,31 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
     }
 
     private static boolean extractEqualityComparisonsForHashing(
-            RuntimePlan<Item> predicateIterator,
-            List<RuntimePlan<Item>> leftTupleSideEqualityCriteria,
-            List<RuntimePlan<Item>> rightTupleSideEqualityCriteria,
+            ItemRuntimePlan predicateIterator,
+            List<ItemRuntimePlan> leftTupleSideEqualityCriteria,
+            List<ItemRuntimePlan> rightTupleSideEqualityCriteria,
             List<Name> leftTupleSideVariableNames,
             List<Name> rightTupleSideVariableNames
     ) {
         boolean optimizableJoin = false;
-        Stack<RuntimePlan<Item>> candidateIterators = new Stack<>();
+        Stack<ItemRuntimePlan> candidateIterators = new Stack<>();
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
-            RuntimePlan<Item> iterator = candidateIterators.pop();
+            ItemRuntimePlan iterator = candidateIterators.pop();
             if (iterator instanceof AndOperationIterator andOperationIterator) {
                 AndOperationIterator andIterator = andOperationIterator;
-                candidateIterators.push(andIterator.getLeftIterator());
-                candidateIterators.push(andIterator.getRightIterator());
+                candidateIterators.push((ItemRuntimePlan) andIterator.getLeftIterator());
+                candidateIterators.push((ItemRuntimePlan) andIterator.getRightIterator());
             } else if (iterator instanceof ComparisonIterator comparisonIterator) {
                 if (comparisonIterator.isValueEquality()) {
-                    RuntimePlan<Item> lhs = comparisonIterator
-                        .getLeftIterator();
-                    RuntimePlan<Item> rhs = comparisonIterator
-                        .getRightIterator();
+                    ItemRuntimePlan lhs = (ItemRuntimePlan) comparisonIterator.getLeftIterator();
+                    ItemRuntimePlan rhs = (ItemRuntimePlan) comparisonIterator.getRightIterator();
 
                     Set<Name> leftComparisonDependencies = new HashSet<>(
-                            RuntimePlanDependencies.get(lhs).keySet()
+                            lhs.getVariableDependencies().keySet()
                     );
                     Set<Name> rightComparisonDependencies = new HashSet<>(
-                            RuntimePlanDependencies.get(rhs).keySet()
+                            rhs.getVariableDependencies().keySet()
                     );
                     // TODO it would be nice to be more generic and also allow dependencies on the
                     // dynamic context on any side.
@@ -459,7 +456,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
-            RuntimePlan<Item> predicateIterator,
+            ItemRuntimePlan predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata

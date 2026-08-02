@@ -57,8 +57,8 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -82,13 +82,13 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     private static final long serialVersionUID = 1L;
     private Name variableName; // for efficient use in local iteration
     private SequenceType sequenceType;
-    private RuntimePlan<Item> assignmentIterator;
+    private ItemRuntimePlan assignmentIterator;
 
     public LetClauseIterator(
             TupleRuntimePlan child,
             Name variableName,
             SequenceType sequenceType,
-            RuntimePlan<Item> assignmentIterator,
+            ItemRuntimePlan assignmentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(child, staticContext);
@@ -114,7 +114,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         private final TupleRuntimePlan childPlan;
         private final Name variableName;
-        private final RuntimePlan<Item> assignmentPlan;
+        private final ItemRuntimePlan assignmentPlan;
         private final int evaluationDepthLimit;
         private final RumbleRuntimeConfiguration configuration;
         private final DynamicContext context;
@@ -127,7 +127,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         private LetLocalCursor(
                 TupleRuntimePlan childPlan,
                 Name variableName,
-                RuntimePlan<Item> assignmentPlan,
+                ItemRuntimePlan assignmentPlan,
                 int evaluationDepthLimit,
                 RumbleRuntimeConfiguration configuration,
                 DynamicContext context,
@@ -277,9 +277,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             );
         }
 
-        RuntimePlan<Item> sequenceIterator = predicateAssignmentIterator
+        ItemRuntimePlan sequenceIterator = predicateAssignmentIterator
             .sequenceIterator();
-        RuntimePlan<Item> predicateIterator = predicateAssignmentIterator
+        ItemRuntimePlan predicateIterator = predicateAssignmentIterator
             .predicateIterator();
 
         // Is the left-hand-side of this predicate expression independent from input tuples?
@@ -290,9 +290,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             );
         }
 
-        List<RuntimePlan<Item>> contextItemEqualityCriteria =
+        List<ItemRuntimePlan> contextItemEqualityCriteria =
             new ArrayList<>();
-        List<RuntimePlan<Item>> inputTupleEqualityCriteria =
+        List<ItemRuntimePlan> inputTupleEqualityCriteria =
             new ArrayList<>();
         String failureMessage = extractEqualityComparisonsForConjunction(
             predicateIterator,
@@ -314,8 +314,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
-        Map<Name, VariableDependency> predicateDependencies = RuntimePlanDependencies
-            .get(predicateIterator);
+        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
         if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
             throw new UnsupportedFeatureException(
                     "Rumble detected an equi-join, but does not support yet position() in the join predicate.",
@@ -343,7 +342,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         ).getDataFrame();
 
         // We compute the hashes for both sides of the equality predicate.
-        RuntimePlan<Item> contextItemValueExpression = getJoinKeyExpression(
+        ItemRuntimePlan contextItemValueExpression = getJoinKeyExpression(
             contextItemEqualityCriteria,
             getMetadata()
         );
@@ -359,7 +358,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             getConfiguration()
         );
 
-        RuntimePlan<Item> inputTupleValueExpression = getJoinKeyExpression(
+        ItemRuntimePlan inputTupleValueExpression = getJoinKeyExpression(
             inputTupleEqualityCriteria,
             getMetadata()
         );
@@ -470,7 +469,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             .metadata(getMetadata())
             .build();
 
-        RuntimePlan<Item> filteringPredicateIterator = new PredicateIterator(
+        ItemRuntimePlan filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(
                         this.variableName,
                         staticContext
@@ -493,8 +492,8 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         return new FlworDataFrame(inputDF);
     }
 
-    private RuntimePlan<Item> getJoinKeyExpression(
-            List<RuntimePlan<Item>> equalityCriteria,
+    private ItemRuntimePlan getJoinKeyExpression(
+            List<ItemRuntimePlan> equalityCriteria,
             ExceptionMetadata metadata
     ) {
         if (equalityCriteria.size() == 1) {
@@ -519,17 +518,17 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     }
 
     private static String extractEqualityComparisonsForConjunction(
-            RuntimePlan<Item> predicateIterator,
-            List<RuntimePlan<Item>> contextItemEqualityCriteria,
-            List<RuntimePlan<Item>> inputTupleEqualityCriteria
+            ItemRuntimePlan predicateIterator,
+            List<ItemRuntimePlan> contextItemEqualityCriteria,
+            List<ItemRuntimePlan> inputTupleEqualityCriteria
     ) {
-        Stack<RuntimePlan<Item>> candidateIterators = new Stack<>();
+        Stack<ItemRuntimePlan> candidateIterators = new Stack<>();
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
-            RuntimePlan<Item> iterator = candidateIterators.pop();
+            ItemRuntimePlan iterator = candidateIterators.pop();
             if (iterator instanceof AndOperationIterator andIterator) {
-                candidateIterators.push(andIterator.getLeftIterator());
-                candidateIterators.push(andIterator.getRightIterator());
+                candidateIterators.push((ItemRuntimePlan) andIterator.getLeftIterator());
+                candidateIterators.push((ItemRuntimePlan) andIterator.getRightIterator());
                 continue;
             }
             if (!(iterator instanceof ComparisonIterator comparisonIterator)) {
@@ -539,16 +538,16 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 return "We did detect a predicate expression, but the criterion inside the predicate is not a value equality comparison.";
             }
 
-            RuntimePlan<Item> leftHandSideOfJoinEqualityCriterion =
-                comparisonIterator.getLeftIterator();
-            RuntimePlan<Item> rightHandSideOfJoinEqualityCriterion =
-                comparisonIterator.getRightIterator();
+            ItemRuntimePlan leftHandSideOfJoinEqualityCriterion =
+                (ItemRuntimePlan) comparisonIterator.getLeftIterator();
+            ItemRuntimePlan rightHandSideOfJoinEqualityCriterion =
+                (ItemRuntimePlan) comparisonIterator.getRightIterator();
             Set<Name> leftDependencies = new HashSet<>(
-                    RuntimePlanDependencies.get(leftHandSideOfJoinEqualityCriterion)
+                    leftHandSideOfJoinEqualityCriterion.getVariableDependencies()
                         .keySet()
             );
             Set<Name> rightDependencies = new HashSet<>(
-                    RuntimePlanDependencies.get(rightHandSideOfJoinEqualityCriterion)
+                    rightHandSideOfJoinEqualityCriterion.getVariableDependencies()
                         .keySet()
             );
 
@@ -576,12 +575,12 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     }
 
     public static boolean isExpressionIndependentFromInputTuple(
-            RuntimePlan<Item> sequenceIterator,
+            ItemRuntimePlan sequenceIterator,
             TupleRuntimePlan tupleIterator
     ) {
         // Check that the expression does not depend functionally on the input tuples
         Set<Name> intersection = new HashSet<>(
-                RuntimePlanDependencies.get(sequenceIterator).keySet()
+                sequenceIterator.getVariableDependencies().keySet()
         );
         intersection.retainAll(tupleIterator.getOutputTupleVariableNames());
         return intersection.isEmpty();
@@ -590,7 +589,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(RuntimePlanDependencies.get(this.assignmentIterator));
+            new TreeMap<>(this.assignmentIterator.getVariableDependencies());
         if (this.child != null && this.evaluationDepthLimit != 0) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
@@ -639,7 +638,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         // add the variable dependencies needed by this for clause's expression.
         Map<Name, DynamicContext.VariableDependency> exprDependency =
-            RuntimePlanDependencies.get(this.assignmentIterator);
+            this.assignmentIterator.getVariableDependencies();
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
@@ -682,7 +681,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             Dataset<Row> dataFrame,
             Name newVariableName,
             SequenceType sequenceType,
-            RuntimePlan<Item> newVariableExpression,
+            ItemRuntimePlan newVariableExpression,
             DynamicContext context,
             List<Name> variablesInInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
@@ -722,9 +721,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             }
         }
 
-        // for (Name n : org.rumbledb.runtime.plan.RuntimePlanDependencies.get(newVariableExpression).keySet()) {
+        // for (Name n : org.rumbledb.runtime.plan.newVariableExpression.getVariableDependencies().keySet()) {
         // System.out.println(n.toString() + " -> " +
-        // org.rumbledb.runtime.plan.RuntimePlanDependencies.get(newVariableExpression).get(n));
+        // org.rumbledb.runtime.plan.newVariableExpression.getVariableDependencies().get(n));
         // }
         //
         // for (Name n : variablesInInputTuple) {
@@ -734,7 +733,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         // was not possible, we use let udf
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
-            RuntimePlanDependencies.get(newVariableExpression),
+            newVariableExpression.getVariableDependencies(),
             variablesInInputTuple,
             null
         );
@@ -800,7 +799,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
     public static boolean registerLetClauseUDF(
             Dataset<Row> dataFrame,
-            RuntimePlan<Item> newVariableExpression,
+            ItemRuntimePlan newVariableExpression,
             DynamicContext context,
             StructType inputSchema,
             List<FlworDataFrameColumn> UDFcolumns,
@@ -921,7 +920,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
             Name newVariableName,
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             List<FlworDataFrameColumn> allColumns,
             StructType inputSchema,
             DynamicContext context

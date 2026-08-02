@@ -49,7 +49,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 
 import scala.Tuple2;
@@ -74,13 +73,13 @@ public class SimpleMapExpressionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> leftIterator;
-    private final RuntimePlan<Item> rightIterator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
 
     public SimpleMapExpressionIterator(
-            RuntimePlan<Item> sequence,
-            RuntimePlan<Item> mapExpression,
+            ItemRuntimePlan sequence,
+            ItemRuntimePlan mapExpression,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(sequence, mapExpression), staticContext);
@@ -89,8 +88,8 @@ public class SimpleMapExpressionIterator extends ItemRuntimePlan
     }
 
     private static final class SimpleMapLocalCursor extends AbstractLocalCursor<Item> {
-        private final RuntimePlan<Item> leftPlan;
-        private final RuntimePlan<Item> rightPlan;
+        private final ItemRuntimePlan leftPlan;
+        private final ItemRuntimePlan rightPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private List<Item> inputs;
@@ -98,8 +97,8 @@ public class SimpleMapExpressionIterator extends ItemRuntimePlan
         private Cursor<Item> currentResults;
 
         private SimpleMapLocalCursor(
-                RuntimePlan<Item> leftPlan,
-                RuntimePlan<Item> rightPlan,
+                ItemRuntimePlan leftPlan,
+                ItemRuntimePlan rightPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -180,9 +179,9 @@ public class SimpleMapExpressionIterator extends ItemRuntimePlan
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(RuntimePlanDependencies.get(this.rightIterator));
+        result.putAll(this.rightIterator.getVariableDependencies());
         result.remove(Name.CONTEXT_ITEM);
-        result.putAll(RuntimePlanDependencies.get(this.leftIterator));
+        result.putAll(this.leftIterator.getVariableDependencies());
         return result;
     }
 

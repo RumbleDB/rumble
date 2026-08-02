@@ -55,8 +55,8 @@ import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
-import org.rumbledb.runtime.plan.RuntimePlanDependencies;
 import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -98,7 +98,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         for (GroupByClauseSparkIteratorExpression e : this.groupingExpressions) {
             if (e.getExpression() != null) {
                 this.dependencies.putAll(
-                    RuntimePlanDependencies.get(e.getExpression())
+                    e.getExpression().getVariableDependencies()
                 );
             } else {
                 this.dependencies.put(
@@ -127,7 +127,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                 for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
                     tupleContext.getVariableValues().removeAllVariables();
                     tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
-                    RuntimePlan<Item> keyExpression = expression
+                    ItemRuntimePlan keyExpression = expression
                         .getExpression();
                     if (keyExpression != null) {
                         if (tuple.contains(expression.getVariableName())) {
@@ -531,7 +531,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
             if (iterator.getExpression() != null) {
-                result.putAll(RuntimePlanDependencies.get(iterator.getExpression()));
+                result.putAll(iterator.getExpression().getVariableDependencies());
             } else {
                 result.put(iterator.getVariableName(), DynamicContext.VariableDependency.FULL);
             }
@@ -589,7 +589,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                 continue;
             }
             Map<Name, DynamicContext.VariableDependency> exprDependency =
-                RuntimePlanDependencies.get(iterator.getExpression());
+                iterator.getExpression().getVariableDependencies();
             for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {
