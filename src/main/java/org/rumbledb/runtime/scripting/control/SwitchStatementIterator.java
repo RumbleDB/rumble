@@ -5,7 +5,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import java.io.Serial;
@@ -16,14 +16,14 @@ import java.util.stream.Stream;
 public class SwitchStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> testField;
-    private final Map<RuntimePlan<Item>, RuntimePlan<Item>> cases;
-    private final RuntimePlan<Item> defaultReturn;
+    private final ItemRuntimePlan testField;
+    private final Map<ItemRuntimePlan, ItemRuntimePlan> cases;
+    private final ItemRuntimePlan defaultReturn;
 
     public SwitchStatementIterator(
-            RuntimePlan<Item> testField,
-            Map<RuntimePlan<Item>, RuntimePlan<Item>> cases,
-            RuntimePlan<Item> defaultReturn,
+            ItemRuntimePlan testField,
+            Map<ItemRuntimePlan, ItemRuntimePlan> cases,
+            ItemRuntimePlan defaultReturn,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -38,7 +38,7 @@ public class SwitchStatementIterator extends AbstractAtMostOneItemRuntimePlan {
         this.defaultReturn = defaultReturn;
     }
 
-    private RuntimePlan<Item> selectApplicableIterator(
+    private ItemRuntimePlan selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
         return selectApplicableIterator(
@@ -46,8 +46,8 @@ public class SwitchStatementIterator extends AbstractAtMostOneItemRuntimePlan {
         );
     }
 
-    private RuntimePlan<Item> selectApplicableIterator(
-            Function<RuntimePlan<Item>, Item> materializeFirst
+    private ItemRuntimePlan selectApplicableIterator(
+            Function<ItemRuntimePlan, Item> materializeFirst
     ) {
         Item testValue = materializeFirst.apply(this.testField);
 
@@ -65,7 +65,7 @@ public class SwitchStatementIterator extends AbstractAtMostOneItemRuntimePlan {
             }
         }
 
-        for (RuntimePlan<Item> caseKey : this.cases.keySet()) {
+        for (ItemRuntimePlan caseKey : this.cases.keySet()) {
             Item caseValue = materializeFirst.apply(caseKey);
 
             if (caseValue != null) {
@@ -100,7 +100,7 @@ public class SwitchStatementIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        RuntimePlan<Item> matchingIterator = this.selectApplicableIterator(
+        ItemRuntimePlan matchingIterator = this.selectApplicableIterator(
             dynamicContext
         );
         DynamicContext childContext = new DynamicContext(dynamicContext);

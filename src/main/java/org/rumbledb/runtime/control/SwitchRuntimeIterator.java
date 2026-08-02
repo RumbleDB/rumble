@@ -35,7 +35,6 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Map;
@@ -50,14 +49,14 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> testField;
-    private final Map<RuntimePlan<Item>, RuntimePlan<Item>> cases;
-    private final RuntimePlan<Item> defaultReturn;
+    private final ItemRuntimePlan testField;
+    private final Map<ItemRuntimePlan, ItemRuntimePlan> cases;
+    private final ItemRuntimePlan defaultReturn;
 
     public SwitchRuntimeIterator(
-            RuntimePlan<Item> test,
-            Map<RuntimePlan<Item>, RuntimePlan<Item>> cases,
-            RuntimePlan<Item> defaultReturn,
+            ItemRuntimePlan test,
+            Map<ItemRuntimePlan, ItemRuntimePlan> cases,
+            ItemRuntimePlan defaultReturn,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -78,17 +77,17 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
     }
 
     private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
-        private final RuntimePlan<Item> testPlan;
-        private final Map<RuntimePlan<Item>, RuntimePlan<Item>> cases;
-        private final RuntimePlan<Item> defaultPlan;
+        private final ItemRuntimePlan testPlan;
+        private final Map<ItemRuntimePlan, ItemRuntimePlan> cases;
+        private final ItemRuntimePlan defaultPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> selected;
 
         private SwitchLocalCursor(
-                RuntimePlan<Item> testPlan,
-                Map<RuntimePlan<Item>, RuntimePlan<Item>> cases,
-                RuntimePlan<Item> defaultPlan,
+                ItemRuntimePlan testPlan,
+                Map<ItemRuntimePlan, ItemRuntimePlan> cases,
+                ItemRuntimePlan defaultPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -123,10 +122,10 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
             }
         }
 
-        private RuntimePlan<Item> selectApplicablePlan() {
+        private ItemRuntimePlan selectApplicablePlan() {
             Item testValue = this.testPlan.materializeFirstOrNull(this.context);
             validateAtomic(testValue, "Switch condition");
-            for (RuntimePlan<Item> caseKey : this.cases.keySet()) {
+            for (ItemRuntimePlan caseKey : this.cases.keySet()) {
                 Item caseValue = caseKey.materializeFirstOrNull(this.context);
                 validateAtomic(caseValue, "Switch case");
                 if (testValue == null) {
@@ -155,7 +154,7 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         }
     }
 
-    private RuntimePlan<Item> selectApplicableIterator(
+    private ItemRuntimePlan selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
         Item testValue = this.testField.materializeFirstOrNull(dynamicContext);
@@ -174,7 +173,7 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
             }
         }
 
-        for (RuntimePlan<Item> caseKey : this.cases.keySet()) {
+        for (ItemRuntimePlan caseKey : this.cases.keySet()) {
             Item caseValue = caseKey.materializeFirstOrNull(dynamicContext);
 
             if (caseValue != null) {
@@ -212,7 +211,7 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        RuntimePlan<Item> iterator = selectApplicableIterator(
+        ItemRuntimePlan iterator = selectApplicableIterator(
             dynamicContext
         );
 
@@ -221,7 +220,7 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        RuntimePlan<Item> iterator = selectApplicableIterator(
+        ItemRuntimePlan iterator = selectApplicableIterator(
             dynamicContext
         );
 

@@ -283,18 +283,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         return new ArrayList<>(plans);
     }
 
-    private static Map<RuntimePlan<Item>, RuntimePlan<Item>> asRuntimePlanMap(
-            Map<? extends ItemRuntimePlan, ? extends ItemRuntimePlan> plans
-    ) {
-        Map<RuntimePlan<Item>, RuntimePlan<Item>> result = new HashMap<>();
-        result.putAll(plans);
-        return result;
-    }
-
     private static <K> Map<K, RuntimePlan<Item>> asRuntimePlanValues(
             Map<K, ? extends ItemRuntimePlan> plans
     ) {
-        Map<K, RuntimePlan<Item>> result = new HashMap<>();
+        Map<K, RuntimePlan<Item>> result = new LinkedHashMap<>();
         result.putAll(plans);
         return result;
     }
@@ -1849,7 +1841,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         }
         ItemRuntimePlan runtimeIterator = new SwitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
-                asRuntimePlanMap(cases),
+                cases,
                 this.visit(expression.getDefaultExpression(), argument),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -2023,7 +2015,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         }
         ItemRuntimePlan runtimeIterator = new SwitchStatementIterator(
                 this.visit(statement.getTestCondition(), argument),
-                asRuntimePlanMap(cases),
+                cases,
                 this.visit(statement.getDefaultStatement(), argument),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
