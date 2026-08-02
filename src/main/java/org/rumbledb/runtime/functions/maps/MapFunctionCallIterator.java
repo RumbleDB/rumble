@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -78,11 +77,11 @@ public class MapFunctionCallIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     private final Item mapItem;
-    private final RuntimePlan<Item> keyIterator;
+    private final ItemRuntimePlan keyIterator;
 
     public MapFunctionCallIterator(
             Item mapItem,
-            RuntimePlan<Item> keyIterator,
+            ItemRuntimePlan keyIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

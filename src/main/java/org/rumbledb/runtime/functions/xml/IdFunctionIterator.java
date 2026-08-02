@@ -10,7 +10,6 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ public class IdFunctionIterator extends ItemRuntimePlan
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
     public IdFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

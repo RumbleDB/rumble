@@ -1,10 +1,11 @@
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -16,11 +17,11 @@ public class SlashExprClosure implements FlatMapFunction<Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> rightIterator;
+    private final ItemRuntimePlan rightIterator;
     private final DynamicContext dynamicContext;
 
     public SlashExprClosure(
-            RuntimePlan<Item> rightIterator,
+            ItemRuntimePlan rightIterator,
             DynamicContext dynamicContext
     ) {
         this.rightIterator = rightIterator;

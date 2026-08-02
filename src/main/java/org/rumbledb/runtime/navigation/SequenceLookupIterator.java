@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -32,7 +34,6 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
 
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -48,12 +49,12 @@ public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan imp
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
     private final int position;
     private final int optimizationThreshold = 10_000_000; // do optimization only if position is above this threshold
 
     public SequenceLookupIterator(
-            RuntimePlan<Item> sequence,
+            ItemRuntimePlan sequence,
             int position,
             RuntimeStaticContext staticContext
     ) {
@@ -143,7 +144,7 @@ public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan imp
             nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE
                 && this.iterator instanceof CommaExpressionIterator childIterator
         ) {
-            List<RuntimePlan<Item>> children = childIterator.getOperands();
+            List<ItemRuntimePlan> children = childIterator.getOperands();
             if (
                 children.size() == 2
                     && children.get(0) instanceof ComparisonIterator

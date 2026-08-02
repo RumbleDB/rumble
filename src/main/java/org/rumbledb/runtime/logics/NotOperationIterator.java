@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.logics;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.Collections;
 
@@ -31,7 +33,6 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -39,10 +40,10 @@ public class NotOperationIterator extends AbstractAtMostOneItemRuntimePlan imple
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> child;
+    private final ItemRuntimePlan child;
 
     public NotOperationIterator(
-            RuntimePlan<Item> child,
+            ItemRuntimePlan child,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(child), staticContext);

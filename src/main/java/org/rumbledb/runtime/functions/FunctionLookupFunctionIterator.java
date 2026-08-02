@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -25,7 +27,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -43,7 +44,7 @@ public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntime
     private static final long serialVersionUID = 1L;
 
     public FunctionLookupFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

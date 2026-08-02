@@ -1,8 +1,9 @@
 package org.rumbledb.runtime.scripting.mutation;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -20,10 +21,10 @@ public class ApplyStatementIterator
             UpdatingRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> exprIterator;
+    private final ItemRuntimePlan exprIterator;
 
     public ApplyStatementIterator(
-            RuntimePlan<Item> exprIterator,
+            ItemRuntimePlan exprIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(exprIterator), staticContext);

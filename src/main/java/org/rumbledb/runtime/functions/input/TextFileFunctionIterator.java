@@ -29,7 +29,6 @@ import org.rumbledb.items.parsing.StringToStringItemMapper;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.*;
@@ -44,7 +43,7 @@ public class TextFileFunctionIterator extends ItemRuntimePlan implements RDDRunt
     public static final int MIN_PARTITIONS = 10;
 
     public TextFileFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -52,7 +51,7 @@ public class TextFileFunctionIterator extends ItemRuntimePlan implements RDDRunt
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        RuntimePlan<Item> urlIterator = this.getChild(0);
+        ItemRuntimePlan urlIterator = this.getChild(0);
         Item url = urlIterator.materializeFirstOrNull(context);
         if (url == null) {
             return SparkSessionManager.getInstance()

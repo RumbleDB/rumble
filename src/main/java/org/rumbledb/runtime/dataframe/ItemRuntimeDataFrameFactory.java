@@ -7,6 +7,8 @@
 
 package org.rumbledb.runtime.dataframe;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.List;
 
@@ -16,7 +18,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
@@ -71,7 +72,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
         return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
     }
 
-    public HomogeneousItemDataFrame fromPlan(RuntimePlan<Item> plan, DynamicContext context) {
+    public HomogeneousItemDataFrame fromPlan(ItemRuntimePlan plan, DynamicContext context) {
         RuntimeDataFrame<Item> dataFrame = plan.getDataFrame(context);
         if (dataFrame instanceof HomogeneousItemDataFrame homogeneousDataFrame) {
             return homogeneousDataFrame;

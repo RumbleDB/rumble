@@ -30,7 +30,6 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -57,11 +56,11 @@ public class TreatIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
     private final TreatTypeValidator validator;
 
     public TreatIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             SequenceType sequenceType,
             ErrorCode errorCode,
             RuntimeStaticContext staticContext
@@ -162,7 +161,7 @@ public class TreatIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> childPlan;
+        private final ItemRuntimePlan childPlan;
         private final DynamicContext context;
         private final TreatTypeValidator validator;
 
@@ -171,7 +170,7 @@ public class TreatIterator extends ItemRuntimePlan
         private int resultCount;
 
         private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
+                @NonNull ItemRuntimePlan childPlan,
                 @NonNull DynamicContext context,
                 TreatTypeValidator validator
         ) {

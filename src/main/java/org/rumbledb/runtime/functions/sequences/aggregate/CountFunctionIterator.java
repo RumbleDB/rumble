@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -31,7 +33,6 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -49,7 +50,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
     private static final long serialVersionUID = 1L;
 
     public CountFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -57,7 +58,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        RuntimePlan<Item> iterator = this.getChild(0);
+        ItemRuntimePlan iterator = this.getChild(0);
 
         // the count($x) case is treated separately because we can short-circuit the
         // count, e.g., if it comes from the group-by aggregation of a non-grouping
@@ -76,7 +77,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
     }
 
     public static Item computeCount(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -100,7 +101,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
         }
     }
 
-    private static Item computeLocalCount(RuntimePlan<Item> plan, DynamicContext context) {
+    private static Item computeLocalCount(ItemRuntimePlan plan, DynamicContext context) {
         long result = 0;
         try (Cursor<Item> cursor = plan.getCursor(context)) {
             while (cursor.hasNext()) {
@@ -112,7 +113,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
     }
 
     private static Item computeRDD(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -125,7 +126,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
     }
 
     private static Item computeDataFrame(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {

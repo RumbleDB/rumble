@@ -23,7 +23,6 @@ package org.rumbledb.runtime.control;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -44,12 +43,12 @@ public class TryCatchRuntimeIterator extends ItemRuntimePlan implements LocalRun
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> tryExpression;
-    private final Map<CatchPattern, ? extends RuntimePlan<Item>> catchExpressions;
+    private final ItemRuntimePlan tryExpression;
+    private final Map<CatchPattern, ? extends ItemRuntimePlan> catchExpressions;
 
     public TryCatchRuntimeIterator(
-            RuntimePlan<Item> tryExpression,
-            Map<CatchPattern, ? extends RuntimePlan<Item>> catchExpressions,
+            ItemRuntimePlan tryExpression,
+            Map<CatchPattern, ? extends ItemRuntimePlan> catchExpressions,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -73,7 +72,7 @@ public class TryCatchRuntimeIterator extends ItemRuntimePlan implements LocalRun
             return this.tryExpression.materialize(context);
         } catch (Throwable throwable) {
             RumbleException exception = RumbleException.unnestException(throwable);
-            RuntimePlan<Item> catchingExpression = findMatchingCatch(
+            ItemRuntimePlan catchingExpression = findMatchingCatch(
                 exception
             );
             if (catchingExpression == null) {
@@ -85,8 +84,8 @@ public class TryCatchRuntimeIterator extends ItemRuntimePlan implements LocalRun
         }
     }
 
-    private RuntimePlan<Item> findMatchingCatch(RumbleException exception) {
-        for (Map.Entry<CatchPattern, ? extends RuntimePlan<Item>> entry : this.catchExpressions.entrySet()) {
+    private ItemRuntimePlan findMatchingCatch(RumbleException exception) {
+        for (Map.Entry<CatchPattern, ? extends ItemRuntimePlan> entry : this.catchExpressions.entrySet()) {
             if (entry.getKey().matches(exception.getErrorCode())) {
                 return entry.getValue();
             }

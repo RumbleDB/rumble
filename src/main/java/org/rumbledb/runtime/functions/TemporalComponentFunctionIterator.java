@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -27,7 +29,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * Shared plan for extracting one component from a date, time, dateTime, or duration value.
@@ -87,11 +88,11 @@ public abstract class TemporalComponentFunctionIterator extends AbstractAtMostOn
         abstract Item evaluate(Item item);
     }
 
-    private final RuntimePlan<Item> argument;
+    private final ItemRuntimePlan argument;
     private final Component component;
 
     protected TemporalComponentFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext,
             Component component
     ) {

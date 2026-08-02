@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.arithmetics;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -39,7 +41,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -52,12 +53,12 @@ public class MultiplicativeOperationIterator extends AbstractAtMostOneItemRuntim
     @Serial
     private static final long serialVersionUID = 1L;
     private final MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
-    private final RuntimePlan<Item> leftIterator;
-    private final RuntimePlan<Item> rightIterator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
     public MultiplicativeOperationIterator(
-            RuntimePlan<Item> leftIterator,
-            RuntimePlan<Item> rightIterator,
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightIterator,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             RuntimeStaticContext staticContext
     ) {

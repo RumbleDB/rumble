@@ -1,5 +1,7 @@
 package org.rumbledb.api;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +22,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
@@ -51,7 +52,7 @@ import sparksoniq.spark.SparkSessionManager;
  */
 public class SequenceOfItems {
 
-    private final RuntimePlan<Item> plan;
+    private final ItemRuntimePlan plan;
     private final DynamicContext dynamicContext;
     private final RumbleRuntimeConfiguration configuration;
     private Cursor<Item> cursor;
@@ -72,7 +73,7 @@ public class SequenceOfItems {
      * @param configuration A RumbleDB configuration.
      */
     public SequenceOfItems(
-            RuntimePlan<Item> plan,
+            ItemRuntimePlan plan,
             DynamicContext dynamicContext,
             RumbleRuntimeConfiguration configuration
     ) {

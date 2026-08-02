@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 import java.io.Serial;
 import java.time.Duration;
@@ -10,7 +12,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidTimezoneException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.time.ZoneOffset;
 import java.util.List;
@@ -21,7 +22,7 @@ public class AdjustDateTimeToTimezone extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public AdjustDateTimeToTimezone(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

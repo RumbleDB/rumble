@@ -20,13 +20,14 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -37,7 +38,7 @@ public class ZeroOrOneIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public ZeroOrOneIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -45,7 +46,7 @@ public class ZeroOrOneIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        RuntimePlan<Item> sequenceIterator = this.getChild(0);
+        ItemRuntimePlan sequenceIterator = this.getChild(0);
         Item result = null;
         try {
             result = sequenceIterator.materializeAtMostOne(context);

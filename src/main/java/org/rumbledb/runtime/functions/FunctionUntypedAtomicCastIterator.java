@@ -19,7 +19,6 @@ import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.MappingLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -44,11 +43,11 @@ public class FunctionUntypedAtomicCastIterator
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
     private final UntypedAtomicCaster caster;
 
     public FunctionUntypedAtomicCastIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             ItemType targetType,
             String exceptionMessage,
             RuntimeStaticContext staticContext

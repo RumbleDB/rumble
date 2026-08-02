@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.control;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.Arrays;
 
@@ -30,7 +32,6 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -40,9 +41,9 @@ public class AtMostOneItemIfRuntimeIterator extends AbstractAtMostOneItemRuntime
     private static final long serialVersionUID = 1L;
 
     public AtMostOneItemIfRuntimeIterator(
-            RuntimePlan<Item> condition,
-            RuntimePlan<Item> branch,
-            RuntimePlan<Item> elseBranch,
+            ItemRuntimePlan condition,
+            ItemRuntimePlan branch,
+            ItemRuntimePlan elseBranch,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(condition, branch, elseBranch), staticContext);
@@ -52,7 +53,7 @@ public class AtMostOneItemIfRuntimeIterator extends AbstractAtMostOneItemRuntime
     public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        RuntimePlan<Item> condition = this.getChild(0);
+        ItemRuntimePlan condition = this.getChild(0);
         boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(condition, dynamicContext);
 
         if (effectiveBooleanValue) {

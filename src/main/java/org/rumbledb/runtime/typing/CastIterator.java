@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
@@ -13,7 +15,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -32,11 +33,11 @@ import java.util.regex.Pattern;
 public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> child;
+    private final ItemRuntimePlan child;
     private final SequenceType sequenceType;
 
     public CastIterator(
-            RuntimePlan<Item> child,
+            ItemRuntimePlan child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -53,7 +54,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
     }
 
     private static Item evaluate(
-            RuntimePlan<Item> child,
+            ItemRuntimePlan child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext,
             ExceptionMetadata metadata,

@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 
 import java.io.Serial;
@@ -36,7 +38,6 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -54,11 +55,11 @@ public class ArrayForEachFunctionIterator extends AbstractAtMostOneItemRuntimePl
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> arrayIterator;
-    private final RuntimePlan<Item> functionIterator;
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan functionIterator;
 
     public ArrayForEachFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -129,7 +130,7 @@ public class ArrayForEachFunctionIterator extends AbstractAtMostOneItemRuntimePl
             .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
-    private RuntimePlan<Item> createSequenceIterator(List<Item> items) {
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -143,7 +144,7 @@ public class ArrayForEachFunctionIterator extends AbstractAtMostOneItemRuntimePl
             );
         }
 
-        List<RuntimePlan<Item>> childIterators = new ArrayList<>(
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(
                 items.size()
         );
         for (Item item : items) {
@@ -178,11 +179,11 @@ public class ArrayForEachFunctionIterator extends AbstractAtMostOneItemRuntimePl
             List<Item> memberSequence,
             DynamicContext context
     ) {
-        RuntimePlan<Item> memberIterator = createSequenceIterator(
+        ItemRuntimePlan memberIterator = createSequenceIterator(
             memberSequence
         );
 
-        List<RuntimePlan<Item>> arguments = new ArrayList<>(1);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
 
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
@@ -191,7 +192,7 @@ public class ArrayForEachFunctionIterator extends AbstractAtMostOneItemRuntimePl
             .executionMode(ExecutionMode.LOCAL)
             .metadata(getMetadata())
             .build();
-        RuntimePlan<Item> functionCall = new DynamicFunctionCallIterator(
+        ItemRuntimePlan functionCall = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(action, functionItemContext),
                 arguments,
                 functionItemContext

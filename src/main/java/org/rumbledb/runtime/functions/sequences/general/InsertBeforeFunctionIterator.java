@@ -32,7 +32,6 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
 
 import lombok.NonNull;
@@ -48,13 +47,13 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> sequenceIterator;
-    private final RuntimePlan<Item> positionIterator;
-    private final RuntimePlan<Item> insertIterator;
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan positionIterator;
+    private final ItemRuntimePlan insertIterator;
     private int insertPosition; // position to start inserting
 
     public InsertBeforeFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -130,9 +129,9 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> sequencePlan;
-        private final RuntimePlan<Item> positionPlan;
-        private final RuntimePlan<Item> insertPlan;
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan positionPlan;
+        private final ItemRuntimePlan insertPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> sequenceCursor;
@@ -142,9 +141,9 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
         private boolean insertionCompleted;
 
         private EvaluationCursor(
-                @NonNull RuntimePlan<Item> sequencePlan,
-                @NonNull RuntimePlan<Item> positionPlan,
-                @NonNull RuntimePlan<Item> insertPlan,
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan positionPlan,
+                @NonNull ItemRuntimePlan insertPlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {

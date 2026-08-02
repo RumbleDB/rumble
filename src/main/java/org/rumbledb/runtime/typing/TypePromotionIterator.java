@@ -24,7 +24,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -46,12 +45,12 @@ public class TypePromotionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
     private final SequenceType sequenceType;
     private final ItemType itemType;
 
     public TypePromotionIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext staticContext
@@ -246,7 +245,7 @@ public class TypePromotionIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> childPlan;
+        private final ItemRuntimePlan childPlan;
         private final DynamicContext context;
         private final SequenceType sequenceType;
         private final ItemType itemType;
@@ -259,7 +258,7 @@ public class TypePromotionIterator extends ItemRuntimePlan
         private long childIndex;
 
         private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
+                @NonNull ItemRuntimePlan childPlan,
                 @NonNull DynamicContext context,
                 @NonNull SequenceType sequenceType,
                 @NonNull ItemType itemType,

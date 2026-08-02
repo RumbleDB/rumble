@@ -25,8 +25,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -40,15 +39,15 @@ public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> rightIterator;
+    private final ItemRuntimePlan rightIterator;
     private final DynamicContext dynamicContext;
 
     public SimpleMapExpressionClosure(
-            RuntimePlan<Item> rightIterator,
+            ItemRuntimePlan rightIterator,
             DynamicContext dynamicContext
     ) {
         this.rightIterator = rightIterator;
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.rightIterator)) {
+        if (this.rightIterator.isSparkJobNeeded()) {
             throw new JobWithinAJobException(
                     "The expression in this simple map requires parallel execution, but the simple map is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
                     this.rightIterator.getRuntimeStaticContext().getMetadata()

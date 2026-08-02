@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -12,7 +14,6 @@ import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -22,7 +23,7 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
 
     public GetRootFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

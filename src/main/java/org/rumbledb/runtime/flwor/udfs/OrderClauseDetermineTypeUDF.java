@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
@@ -30,7 +32,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.misc.CollationSupport;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -68,7 +69,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     }
 
     private void populateFromExpression(OrderByClauseAnnotatedChildIterator expressionWithIterator) {
-        RuntimePlan<Item> iterator = expressionWithIterator.getIterator();
+        ItemRuntimePlan iterator = expressionWithIterator.getIterator();
         try {
             // apply expression in the dynamic context
             this.nextItem = iterator.materializeAtMostOne(this.dataFrameContext.getContext());

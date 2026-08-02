@@ -31,7 +31,6 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -57,13 +56,13 @@ public class NodeSetOperationIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private RuntimePlan<Item> leftIterator;
-    private RuntimePlan<Item> rightIterator;
+    private ItemRuntimePlan leftIterator;
+    private ItemRuntimePlan rightIterator;
     private NodeSetExpression.NodeSetOperator operator;
 
     public NodeSetOperationIterator(
-            RuntimePlan<Item> leftIterator,
-            RuntimePlan<Item> rightIterator,
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightIterator,
             NodeSetExpression.NodeSetOperator operator,
             RuntimeStaticContext staticContext
     ) {
@@ -124,7 +123,7 @@ public class NodeSetOperationIterator extends ItemRuntimePlan
      * Builds an ordered set of nodes while validating that every item is an XML node with a document position.
      */
     private Set<Item> buildNodeSet(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             String side
     ) {

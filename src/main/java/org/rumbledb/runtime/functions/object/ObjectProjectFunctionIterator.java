@@ -38,7 +38,6 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -60,16 +59,16 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
 
     private static final class ProjectionLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> inputPlan;
-        private final RuntimePlan<Item> keysPlan;
+        private final ItemRuntimePlan inputPlan;
+        private final ItemRuntimePlan keysPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> inputCursor;
         private List<Item> keys;
 
         private ProjectionLocalCursor(
-                RuntimePlan<Item> inputPlan,
-                RuntimePlan<Item> keysPlan,
+                ItemRuntimePlan inputPlan,
+                ItemRuntimePlan keysPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -134,10 +133,10 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimePlan<Item> iterator;
+    private ItemRuntimePlan iterator;
 
     public ObjectProjectFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

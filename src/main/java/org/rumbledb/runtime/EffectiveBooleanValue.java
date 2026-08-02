@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Objects;
@@ -31,7 +33,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 /**
@@ -42,12 +43,12 @@ public final class EffectiveBooleanValue {
     private EffectiveBooleanValue() {
     }
 
-    public static boolean evaluate(RuntimePlan<Item> plan, DynamicContext context) {
+    public static boolean evaluate(ItemRuntimePlan plan, DynamicContext context) {
         return evaluateOrCheckPosition(plan, context, null);
     }
 
     public static boolean evaluateOrCheckPosition(
-            RuntimePlan<Item> plan,
+            ItemRuntimePlan plan,
             DynamicContext context,
             Item position
     ) {

@@ -55,7 +55,6 @@ import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -561,7 +560,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             }
             buffer.append("Variable ").append(iterator.getVariableName()).append("\n");
             if (iterator.getExpression() != null) {
-                RuntimePlanDiagnostics.print(iterator.getExpression(), buffer, indent + 1);
+                iterator.getExpression().print(buffer, indent + 1);
             }
         }
     }
@@ -736,12 +735,12 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (this.child.isSparkJobNeeded()) {
             return true;
         }
         for (GroupByClauseSparkIteratorExpression i : this.groupingExpressions) {
             if (i.getExpression() != null) {
-                if (RuntimePlanDiagnostics.isSparkJobNeeded(i.getExpression())) {
+                if (i.getExpression().isSparkJobNeeded()) {
                     return true;
                 }
             }

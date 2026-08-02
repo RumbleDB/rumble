@@ -59,7 +59,6 @@ import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -961,7 +960,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             }
             buffer.append("Positional variable ").append(this.positionalVariableName.toString()).append("\n");
         }
-        RuntimePlanDiagnostics.print(this.assignmentIterator, buffer, indent + 1);
+        this.assignmentIterator.print(buffer, indent + 1);
     }
 
     @Override
@@ -1412,10 +1411,10 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (this.child.isSparkJobNeeded()) {
             return true;
         }
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.assignmentIterator)) {
+        if (this.assignmentIterator.isSparkJobNeeded()) {
             return true;
         }
         switch (this.staticContext.getExecutionMode()) {

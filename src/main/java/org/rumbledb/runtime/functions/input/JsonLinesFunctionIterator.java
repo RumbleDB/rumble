@@ -38,7 +38,6 @@ import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 
 import com.google.gson.stream.JsonReader;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.*;
@@ -81,10 +80,10 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
 
     public JsonLinesFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

@@ -18,7 +18,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 /**
@@ -33,7 +32,7 @@ abstract class UpdatingExpressionIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     protected UpdatingExpressionIterator(
-            List<RuntimePlan<Item>> children,
+            List<ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

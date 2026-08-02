@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.Optional;
@@ -35,7 +37,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
 
 import java.io.Serial;
@@ -56,7 +57,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     }
 
     public DeepEqualFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -64,8 +65,8 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        RuntimePlan<Item> sequenceIterator1 = this.getChild(0);
-        RuntimePlan<Item> sequenceIterator2 = this.getChild(1);
+        ItemRuntimePlan sequenceIterator1 = this.getChild(0);
+        ItemRuntimePlan sequenceIterator2 = this.getChild(1);
         validateCollation(
             this.getChildren().size() == 3
                 ? this.getChild(2).materializeFirstOrNull(context)

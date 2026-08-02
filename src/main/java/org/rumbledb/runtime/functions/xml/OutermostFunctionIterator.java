@@ -10,7 +10,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,7 +31,7 @@ public class OutermostFunctionIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     public OutermostFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

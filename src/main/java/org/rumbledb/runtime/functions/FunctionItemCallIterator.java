@@ -21,7 +21,6 @@
 package org.rumbledb.runtime.functions;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import java.io.Serial;
@@ -64,7 +63,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
     // parametrized fields
     private final Item functionItem;
-    private final List<RuntimePlan<Item>> functionArguments;
+    private final List<ItemRuntimePlan> functionArguments;
 
     // calculated fields
     private boolean isPartialApplication;
@@ -72,7 +71,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
     public FunctionItemCallIterator(
             Item functionItem,
-            List<RuntimePlan<Item>> functionArguments,
+            List<ItemRuntimePlan> functionArguments,
             RuntimeStaticContext staticContext,
             boolean isTailOptimization
     ) {
@@ -109,7 +108,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
     private static final class FunctionCallLocalCursor extends AbstractLocalCursor<Item> {
         private final Item functionItem;
-        private final List<RuntimePlan<Item>> functionArguments;
+        private final List<ItemRuntimePlan> functionArguments;
         private final boolean partialApplication;
         private final boolean tailOptimization;
         private final RuntimeStaticContext staticContext;
@@ -118,7 +117,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
         private FunctionCallLocalCursor(
                 Item functionItem,
-                List<RuntimePlan<Item>> functionArguments,
+                List<ItemRuntimePlan> functionArguments,
                 boolean partialApplication,
                 boolean tailOptimization,
                 RuntimeStaticContext staticContext,
@@ -135,7 +134,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
         @Override
         protected void openLocal() {
-            RuntimePlan<Item> bodyPlan;
+            ItemRuntimePlan bodyPlan;
             DynamicContext bodyContext;
             if (this.partialApplication) {
                 bodyPlan = generatePartiallyAppliedFunction(
@@ -178,7 +177,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
     private static DynamicContext createCallContext(
             Item functionItem,
-            List<RuntimePlan<Item>> functionArguments,
+            List<ItemRuntimePlan> functionArguments,
             DynamicContext context
     ) {
         // A call context belongs to one invocation. Reusing it would retain parameters and function-local variables.
@@ -234,15 +233,15 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
      *
      * @return a one-item iterator containing the partially applied function item
      */
-    private static RuntimePlan<Item> generatePartiallyAppliedFunction(
+    private static ItemRuntimePlan generatePartiallyAppliedFunction(
             Item functionItem,
-            List<RuntimePlan<Item>> functionArguments,
+            List<ItemRuntimePlan> functionArguments,
             boolean tailOptimization,
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
         Name argName;
-        RuntimePlan<Item> argIterator;
+        ItemRuntimePlan argIterator;
 
         Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 functionItem.getLocalVariablesInClosure()
@@ -315,12 +314,12 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
     private static void populateDynamicContextWithArguments(
             Item functionItem,
-            List<RuntimePlan<Item>> functionArguments,
+            List<ItemRuntimePlan> functionArguments,
             DynamicContext context,
             DynamicContext callContext
     ) {
         Name argName;
-        RuntimePlan<Item> argIterator;
+        ItemRuntimePlan argIterator;
 
         for (int i = 0; i < functionArguments.size(); i++) {
             argName = functionItem.getParameterNames().get(i);
@@ -353,7 +352,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
         }
 
         DynamicContext callContext = createCallContext(dynamicContext);
-        RuntimePlan<Item> bodyIterator = this.functionItem.getBodyIterator();
+        ItemRuntimePlan bodyIterator = this.functionItem.getBodyIterator();
         return bodyIterator.getRDD(callContext);
     }
 
@@ -366,7 +365,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
         }
 
         DynamicContext callContext = createCallContext(dynamicContext);
-        RuntimePlan<Item> bodyIterator = this.functionItem.getBodyIterator();
+        ItemRuntimePlan bodyIterator = this.functionItem.getBodyIterator();
         return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(bodyIterator, callContext);
     }
 
@@ -378,7 +377,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
         DynamicContext callContext = createCallContext(context);
         DynamicContext contextForUpdates = new DynamicContext(callContext);
         contextForUpdates.setCurrentMutabilityLevel(context.getCurrentMutabilityLevel());
-        RuntimePlan<Item> bodyIterator = this.functionItem.getBodyIterator();
+        ItemRuntimePlan bodyIterator = this.functionItem.getBodyIterator();
         return UpdatingRuntimePlan.get(bodyIterator, contextForUpdates);
     }
 }

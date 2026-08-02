@@ -2,7 +2,6 @@ package org.rumbledb.runtime.control;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -34,12 +33,12 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> testField;
+    private final ItemRuntimePlan testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
 
     public TypeswitchRuntimeIterator(
-            RuntimePlan<Item> test,
+            ItemRuntimePlan test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
             RuntimeStaticContext staticContext
@@ -66,14 +65,14 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
     }
 
     private static final class TypeswitchLocalCursor extends AbstractLocalCursor<Item> {
-        private final RuntimePlan<Item> testPlan;
+        private final ItemRuntimePlan testPlan;
         private final List<TypeswitchRuntimeIteratorCase> cases;
         private final TypeswitchRuntimeIteratorCase defaultCase;
         private final DynamicContext context;
         private Cursor<Item> selected;
 
         private TypeswitchLocalCursor(
-                RuntimePlan<Item> testPlan,
+                ItemRuntimePlan testPlan,
                 List<TypeswitchRuntimeIteratorCase> cases,
                 TypeswitchRuntimeIteratorCase defaultCase,
                 DynamicContext context,

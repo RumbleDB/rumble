@@ -22,7 +22,6 @@ package org.rumbledb.runtime.control;
 
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -52,9 +51,9 @@ public class IfRuntimeIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     public IfRuntimeIterator(
-            RuntimePlan<Item> condition,
-            RuntimePlan<Item> branch,
-            RuntimePlan<Item> elseBranch,
+            ItemRuntimePlan condition,
+            ItemRuntimePlan branch,
+            ItemRuntimePlan elseBranch,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -80,10 +79,10 @@ public class IfRuntimeIterator extends ItemRuntimePlan
 
 
 
-    public RuntimePlan<Item> selectApplicableIterator(
+    public ItemRuntimePlan selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
-        RuntimePlan<Item> condition = this.getChild(0);
+        ItemRuntimePlan condition = this.getChild(0);
         boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(condition, dynamicContext);
         if (effectiveBooleanValue) {
             return this.getChild(1);
@@ -94,7 +93,7 @@ public class IfRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        RuntimePlan<Item> iterator = selectApplicableIterator(
+        ItemRuntimePlan iterator = selectApplicableIterator(
             dynamicContext
         );
         return iterator.getRDD(dynamicContext);
@@ -102,7 +101,7 @@ public class IfRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        RuntimePlan<Item> iterator = selectApplicableIterator(
+        ItemRuntimePlan iterator = selectApplicableIterator(
             dynamicContext
         );
 
@@ -115,7 +114,7 @@ public class IfRuntimeIterator extends ItemRuntimePlan
             return new PendingUpdateList();
         }
 
-        RuntimePlan<Item> iterator = selectApplicableIterator(context);
+        ItemRuntimePlan iterator = selectApplicableIterator(context);
         return UpdatingRuntimePlan.get(iterator, context);
     }
 }

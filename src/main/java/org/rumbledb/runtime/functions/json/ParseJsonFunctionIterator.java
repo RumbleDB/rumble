@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.json;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 import com.google.gson.stream.JsonReader;
 import org.rumbledb.api.Item;
@@ -29,7 +31,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.items.parsing.JSONParsingOptions;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.io.StringReader;
@@ -41,7 +42,7 @@ public class ParseJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private static final long serialVersionUID = 1L;
 
     public ParseJsonFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

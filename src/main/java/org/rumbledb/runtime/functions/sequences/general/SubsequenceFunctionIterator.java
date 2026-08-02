@@ -41,7 +41,6 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -58,16 +57,16 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> sequenceIterator;
-    private final RuntimePlan<Item> positionIterator;
-    private final RuntimePlan<Item> lengthIterator;
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan positionIterator;
+    private final ItemRuntimePlan lengthIterator;
     private int startPosition;
     private int length;
     private final int optimizationThreshold = 10_000_000; // do optimization only if startPosition is above this
                                                           // threshold
 
     public SubsequenceFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -211,9 +210,9 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> sequencePlan;
-        private final RuntimePlan<Item> positionPlan;
-        private final RuntimePlan<Item> lengthPlan;
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan positionPlan;
+        private final ItemRuntimePlan lengthPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> sequenceCursor;
@@ -221,9 +220,9 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
         private int currentLength;
 
         private EvaluationCursor(
-                @NonNull RuntimePlan<Item> sequencePlan,
-                @NonNull RuntimePlan<Item> positionPlan,
-                RuntimePlan<Item> lengthPlan,
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan positionPlan,
+                ItemRuntimePlan lengthPlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {

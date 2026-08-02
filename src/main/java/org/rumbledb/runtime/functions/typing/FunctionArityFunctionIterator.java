@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.typing;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -7,7 +9,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -18,7 +19,7 @@ public class FunctionArityFunctionIterator extends AbstractAtMostOneItemRuntimeP
     private static final long serialVersionUID = 1L;
 
     public FunctionArityFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.List;
 import java.util.function.Function;
@@ -30,7 +32,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 /**
@@ -60,7 +61,7 @@ public class AttributeNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePl
         return createAttribute(iterator -> iterator.materialize(dynamicContext));
     }
 
-    private Item createAttribute(Function<RuntimePlan<Item>, List<Item>> materialize) {
+    private Item createAttribute(Function<ItemRuntimePlan, List<Item>> materialize) {
         StringBuilder sb = new StringBuilder();
         // follow the spec as defined in https://www.w3.org/TR/xquery-31/#id-attributes
         // 2. Each enclosed expression is converted to a string as follows:

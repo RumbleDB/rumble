@@ -17,7 +17,8 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 
 import java.io.Serial;
@@ -45,11 +46,11 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> arrayIterator;
-    private final RuntimePlan<Item> positionsIterator;
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan positionsIterator;
 
     public ArrayRemoveFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

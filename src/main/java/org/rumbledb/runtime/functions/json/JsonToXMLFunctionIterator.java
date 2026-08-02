@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.json;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import com.google.gson.Strictness;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -17,7 +19,6 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -44,7 +45,7 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private static final String DUPLICATES_RETAIN = "retain";
 
     public JsonToXMLFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 
 import java.io.Serial;
@@ -37,7 +39,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -55,12 +56,12 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> arrayIterator1;
-    private final RuntimePlan<Item> arrayIterator2;
-    private final RuntimePlan<Item> functionIterator;
+    private final ItemRuntimePlan arrayIterator1;
+    private final ItemRuntimePlan arrayIterator2;
+    private final ItemRuntimePlan functionIterator;
 
     public ArrayForEachPairFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -156,7 +157,7 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
             .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
-    private RuntimePlan<Item> createSequenceIterator(List<Item> items) {
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -167,7 +168,7 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
-        List<RuntimePlan<Item>> childIterators = new ArrayList<>(
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(
                 items.size()
         );
         for (Item item : items) {
@@ -195,16 +196,16 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
             List<Item> memberSequence2,
             DynamicContext context
     ) {
-        RuntimePlan<Item> firstArg = createSequenceIterator(memberSequence1);
-        RuntimePlan<Item> secondArg = createSequenceIterator(
+        ItemRuntimePlan firstArg = createSequenceIterator(memberSequence1);
+        ItemRuntimePlan secondArg = createSequenceIterator(
             memberSequence2
         );
 
-        List<RuntimePlan<Item>> arguments = new ArrayList<>(2);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(2);
         arguments.add(firstArg);
         arguments.add(secondArg);
 
-        RuntimePlan<Item> functionCall = NamedFunctions
+        ItemRuntimePlan functionCall = NamedFunctions
             .buildFunctionItemCallIterator(
                 functionItem,
                 this.staticContext,

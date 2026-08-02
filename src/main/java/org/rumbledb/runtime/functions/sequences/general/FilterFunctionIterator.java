@@ -15,7 +15,6 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -39,11 +38,11 @@ public class FilterFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> sequenceIterator;
-    private final RuntimePlan<Item> predicateIterator;
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan predicateIterator;
 
     public FilterFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -55,7 +54,7 @@ public class FilterFunctionIterator extends ItemRuntimePlan
     }
 
     private static Item resolvePredicate(
-            RuntimePlan<Item> predicateIterator,
+            ItemRuntimePlan predicateIterator,
             DynamicContext context,
             RuntimeStaticContext staticContext
     ) {
@@ -89,7 +88,7 @@ public class FilterFunctionIterator extends ItemRuntimePlan
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        List<RuntimePlan<Item>> callbackArguments = new ArrayList<>(1);
+        List<ItemRuntimePlan> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(new ConstantRuntimeIterator(item, argumentContext));
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
             .configuration(staticContext.getConfiguration())
@@ -97,7 +96,7 @@ public class FilterFunctionIterator extends ItemRuntimePlan
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        RuntimePlan<Item> callback = new DynamicFunctionCallIterator(
+        ItemRuntimePlan callback = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(predicate, functionItemContext),
                 callbackArguments,
                 functionItemContext
@@ -114,8 +113,8 @@ public class FilterFunctionIterator extends ItemRuntimePlan
 
     private static final class FilterLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> sequencePlan;
-        private final RuntimePlan<Item> predicatePlan;
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan predicatePlan;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
         private Cursor<Item> sequenceCursor;
@@ -123,8 +122,8 @@ public class FilterFunctionIterator extends ItemRuntimePlan
         private Item nextResult;
 
         private FilterLocalCursor(
-                RuntimePlan<Item> sequencePlan,
-                RuntimePlan<Item> predicatePlan,
+                ItemRuntimePlan sequencePlan,
+                ItemRuntimePlan predicatePlan,
                 DynamicContext context,
                 RuntimeStaticContext staticContext
         ) {

@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -9,7 +11,6 @@ import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayDeque;
@@ -31,7 +32,7 @@ public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimeP
     private static final Name NR_ATTRIBUTE_NAME = new Name(null, null, "nr");
 
     public AnalyzeStringFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +41,6 @@ import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -52,10 +53,10 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     private static final String CODEPOINT_COLLATION =
         "http://www.w3.org/2005/xpath-functions/collation/codepoint";
 
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
 
     public MinFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -110,12 +111,12 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         );
     }
 
-    private RuntimePlan<Item> getCollationPlan() {
+    private ItemRuntimePlan getCollationPlan() {
         return this.getChildren().size() > 1 ? this.getChild(1) : null;
     }
 
     private void validateCollation(DynamicContext context) {
-        RuntimePlan<Item> collationPlan = getCollationPlan();
+        ItemRuntimePlan collationPlan = getCollationPlan();
         if (collationPlan == null) {
             return;
         }

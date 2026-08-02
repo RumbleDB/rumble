@@ -53,7 +53,6 @@ import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -460,7 +459,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
-            RuntimePlanDiagnostics.print(iterator.getIterator(), buffer, indent + 1);
+            iterator.getIterator().print(buffer, indent + 1);
         }
     }
 
@@ -643,11 +642,11 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (this.child.isSparkJobNeeded()) {
             return true;
         }
         for (OrderByClauseAnnotatedChildIterator i : this.expressionsWithIterator) {
-            if (RuntimePlanDiagnostics.isSparkJobNeeded(i.getIterator())) {
+            if (i.getIterator().isSparkJobNeeded()) {
                 return true;
             }
         }

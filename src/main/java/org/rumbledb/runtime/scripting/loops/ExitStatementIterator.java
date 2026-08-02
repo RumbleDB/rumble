@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.scripting.loops;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -31,11 +30,11 @@ public class ExitStatementIterator extends ItemRuntimePlan
             UpdatingRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> childIterator;
+    private final ItemRuntimePlan childIterator;
     private PendingUpdateList pendingUpdateList;
 
     public ExitStatementIterator(
-            RuntimePlan<Item> childIterator,
+            ItemRuntimePlan childIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(childIterator), staticContext);
@@ -103,13 +102,13 @@ public class ExitStatementIterator extends ItemRuntimePlan
 
     private static final class ExitLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> childPlan;
+        private final ItemRuntimePlan childPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private boolean hasNext;
 
         private ExitLocalCursor(
-                RuntimePlan<Item> childPlan,
+                ItemRuntimePlan childPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

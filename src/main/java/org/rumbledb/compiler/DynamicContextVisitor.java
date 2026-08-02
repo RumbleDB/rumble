@@ -20,6 +20,8 @@
 
 package org.rumbledb.compiler;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -44,7 +46,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.RuntimePlanBindings;
 import org.rumbledb.runtime.typing.CastIterator;
@@ -102,7 +103,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (!expression.getReturnType().isResolved()) {
             expression.getReturnType().resolve(argument, expression.getMetadata());
         }
-        RuntimePlan<Item> bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+        ItemRuntimePlan bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
         List<Item> functionInList = bodyIterator.materialize(argument);
         if (functionInList.size() != 1) {
             throw new OurBadException("A function declaration should produce exactly one function");
@@ -123,7 +124,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     // for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
     // Expression child = copyDecl.getSourceExpression();
     // this.visit(child, argument);
-    // RuntimePlan<Item> iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
+    // ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
     // iterator.bindToVariableInDynamicContext(argument, copyDecl.getVariableName(), argument);
     // }
     //
@@ -141,7 +142,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is not external: we use the expression.
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
-            RuntimePlan<Item> iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
             RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }
@@ -335,7 +336,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is external and we do not have any supplied value: we fall back to expression, if any.
         Expression expression = variableDeclaration.getExpression();
         if (expression != null) {
-            RuntimePlan<Item> iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
             RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }

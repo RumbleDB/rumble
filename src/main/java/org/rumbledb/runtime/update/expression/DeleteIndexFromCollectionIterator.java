@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
@@ -8,7 +10,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.Mode;
@@ -24,13 +25,13 @@ public class DeleteIndexFromCollectionIterator extends UpdatingExpressionIterato
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> targetIterator;
-    private final RuntimePlan<Item> numDeleteIterator;
+    private final ItemRuntimePlan targetIterator;
+    private final ItemRuntimePlan numDeleteIterator;
     private final boolean isFirst;
     private final Mode mode;
 
     public DeleteIndexFromCollectionIterator(
-            RuntimePlan<Item> targetIterator,
+            ItemRuntimePlan targetIterator,
             boolean isFirst,
             Mode mode,
             RuntimeStaticContext staticContext
@@ -43,8 +44,8 @@ public class DeleteIndexFromCollectionIterator extends UpdatingExpressionIterato
     }
 
     public DeleteIndexFromCollectionIterator(
-            RuntimePlan<Item> targetIterator,
-            RuntimePlan<Item> numDeleteIterator,
+            ItemRuntimePlan targetIterator,
+            ItemRuntimePlan numDeleteIterator,
             boolean isFirst,
             Mode mode,
             RuntimeStaticContext staticContext

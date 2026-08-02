@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -8,7 +10,6 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.Mode;
@@ -23,11 +24,11 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> targetIterator;
+    private final ItemRuntimePlan targetIterator;
     private final Mode mode;
 
     public TruncateCollectionIterator(
-            RuntimePlan<Item> targetIterator,
+            ItemRuntimePlan targetIterator,
             Mode mode,
             RuntimeStaticContext staticContext
     ) {

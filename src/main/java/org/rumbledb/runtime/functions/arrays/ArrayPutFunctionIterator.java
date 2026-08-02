@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 
 import org.rumbledb.api.Item;
@@ -28,7 +30,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -50,12 +51,12 @@ public class ArrayPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> arrayIterator;
-    private final RuntimePlan<Item> positionIterator;
-    private final RuntimePlan<Item> memberIterator;
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan positionIterator;
+    private final ItemRuntimePlan memberIterator;
 
     public ArrayPutFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

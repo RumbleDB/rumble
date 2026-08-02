@@ -32,7 +32,6 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -48,10 +47,10 @@ public class ObjectKeysFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
 
     public ObjectKeysFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -76,7 +75,7 @@ public class ObjectKeysFunctionIterator extends ItemRuntimePlan
 
     private static final class ObjectKeysLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> inputPlan;
+        private final ItemRuntimePlan inputPlan;
         private final DynamicContext context;
         private final Set<String> seenKeys;
         private Cursor<Item> inputCursor;
@@ -84,7 +83,7 @@ public class ObjectKeysFunctionIterator extends ItemRuntimePlan
         private String nextKey;
 
         private ObjectKeysLocalCursor(
-                RuntimePlan<Item> inputPlan,
+                ItemRuntimePlan inputPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

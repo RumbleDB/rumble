@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -48,10 +47,10 @@ public class MapKeysFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> mapIterator;
+    private final ItemRuntimePlan mapIterator;
 
     public MapKeysFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

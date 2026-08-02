@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -9,7 +11,6 @@ import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -21,12 +22,12 @@ public class EditCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> targetIterator;
-    private final RuntimePlan<Item> contentIterator;
+    private final ItemRuntimePlan targetIterator;
+    private final ItemRuntimePlan contentIterator;
 
     public EditCollectionIterator(
-            RuntimePlan<Item> targetIterator,
-            RuntimePlan<Item> contentIterator,
+            ItemRuntimePlan targetIterator,
+            ItemRuntimePlan contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

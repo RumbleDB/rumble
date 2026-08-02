@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.datetime;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.time.OffsetDateTime;
 
@@ -9,7 +11,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.time.OffsetTime;
 import java.util.List;
@@ -19,11 +20,11 @@ public class DateTimeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> dateIterator;
-    private final RuntimePlan<Item> timeIterator;
+    private final ItemRuntimePlan dateIterator;
+    private final ItemRuntimePlan timeIterator;
 
     public DateTimeFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

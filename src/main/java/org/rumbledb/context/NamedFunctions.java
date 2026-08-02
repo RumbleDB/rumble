@@ -30,7 +30,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
@@ -69,7 +68,7 @@ public class NamedFunctions implements Serializable {
     public ItemRuntimePlan getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
             RuntimeStaticContext callerRuntimeContext,
-            List<? extends RuntimePlan<Item>> arguments,
+            List<? extends ItemRuntimePlan> arguments,
             boolean isTailOptimization
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
@@ -97,10 +96,10 @@ public class NamedFunctions implements Serializable {
             Item functionItem,
             RuntimeStaticContext callerRuntimeContext,
             ExecutionMode executionModeForFunctionCall,
-            List<? extends RuntimePlan<Item>> inputArguments,
+            List<? extends ItemRuntimePlan> inputArguments,
             boolean isTailOptimization
     ) {
-        List<RuntimePlan<Item>> arguments = new ArrayList<>(inputArguments);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(inputArguments);
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
         boolean isPartialApplication = arguments.stream().anyMatch(a -> a == null);
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
@@ -214,11 +213,11 @@ public class NamedFunctions implements Serializable {
 
     public static ItemRuntimePlan getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
-            List<? extends RuntimePlan<Item>> inputArguments,
+            List<? extends ItemRuntimePlan> inputArguments,
             RuntimeStaticContext callerStaticContext,
             boolean argumentsAlreadyCoerced
     ) {
-        List<RuntimePlan<Item>> arguments = new ArrayList<>(inputArguments);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(inputArguments);
         RumbleRuntimeConfiguration conf = callerStaticContext.getConfiguration();
         ExceptionMetadata metadata = callerStaticContext.getMetadata();
         boolean checkReturnTypesOfBuiltinFunctions = conf.isCheckReturnTypeOfBuiltinFunctions();
@@ -260,7 +259,7 @@ public class NamedFunctions implements Serializable {
                             )
                         );
                     } else {
-                        RuntimePlan<Item> argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
+                        ItemRuntimePlan argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
                             arguments.get(i),
                             sequenceType,
                             exceptionMessage,

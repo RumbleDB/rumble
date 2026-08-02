@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.scripting.block;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -32,8 +31,8 @@ public class StatementsWithExprIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     public StatementsWithExprIterator(
-            List<? extends RuntimePlan<Item>> statements,
-            RuntimePlan<Item> exprIterator,
+            List<? extends ItemRuntimePlan> statements,
+            ItemRuntimePlan exprIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -57,8 +56,8 @@ public class StatementsWithExprIterator extends ItemRuntimePlan
     }
 
     private static boolean isSequential(
-            List<? extends RuntimePlan<Item>> statements,
-            RuntimePlan<Item> exprIterator
+            List<? extends ItemRuntimePlan> statements,
+            ItemRuntimePlan exprIterator
     ) {
         return exprIterator.getRuntimeStaticContext().isSequential()
             || statements.stream().anyMatch(statement -> statement.getRuntimeStaticContext().isSequential());
@@ -68,7 +67,7 @@ public class StatementsWithExprIterator extends ItemRuntimePlan
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty()) {
             int childIndex = 0;
-            RuntimePlan<Item> currentChild = this.getChild(childIndex);
+            ItemRuntimePlan currentChild = this.getChild(childIndex);
 
             JavaRDD<Item> childRDD = currentChild.getRDD(dynamicContext);
             childIndex++;
@@ -96,7 +95,7 @@ public class StatementsWithExprIterator extends ItemRuntimePlan
             );
             ++childIndex;
         }
-        RuntimePlan<Item> exprIterator = this.getChild(childIndex);
+        ItemRuntimePlan exprIterator = this.getChild(childIndex);
         return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
             exprIterator,
             dynamicContext
@@ -105,7 +104,7 @@ public class StatementsWithExprIterator extends ItemRuntimePlan
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        RuntimePlan<Item> exprIterator = this.getChild(
+        ItemRuntimePlan exprIterator = this.getChild(
             this.getChildren().size() - 1
         );
         if (exprIterator.getRuntimeStaticContext().isUpdating()) {

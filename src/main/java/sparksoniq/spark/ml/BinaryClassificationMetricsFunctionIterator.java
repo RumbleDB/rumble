@@ -1,5 +1,7 @@
 package sparksoniq.spark.ml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +18,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import scala.Tuple2;
@@ -27,7 +28,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AbstractAtMostO
     private static final long serialVersionUID = 1L;
 
     public BinaryClassificationMetricsFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -66,7 +67,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AbstractAtMostO
             .metadata(getMetadata())
             .build();
 
-        RuntimePlan<Item> it = new ConstantRDDRuntimeIterator(
+        ItemRuntimePlan it = new ConstantRDDRuntimeIterator(
                 rdd,
                 staticContext
         );

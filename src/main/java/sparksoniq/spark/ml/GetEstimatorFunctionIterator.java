@@ -20,6 +20,8 @@
 
 package sparksoniq.spark.ml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.ml.Estimator;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,7 +32,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -57,7 +58,7 @@ public class GetEstimatorFunctionIterator extends AbstractAtMostOneItemRuntimePl
     );
 
     public GetEstimatorFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -112,7 +113,7 @@ public class GetEstimatorFunctionIterator extends AbstractAtMostOneItemRuntimePl
                 }
             }
 
-            RuntimePlan<Item> bodyIterator =
+            ItemRuntimePlan bodyIterator =
                 new ApplyEstimatorRuntimeIterator(
                         estimatorShortName,
                         estimator,

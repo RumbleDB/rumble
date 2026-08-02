@@ -17,9 +17,10 @@
 
 package org.rumbledb.runtime.control;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.util.Objects;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.EffectiveBooleanValue;
@@ -34,13 +35,13 @@ import org.rumbledb.runtime.cursor.Cursor;
  */
 final class ConditionalLocalCursor<T> extends AbstractDelegatingLocalCursor<T> {
 
-    private final RuntimePlan<Item> conditionPlan;
+    private final ItemRuntimePlan conditionPlan;
     private final RuntimePlan<T> thenPlan;
     private final RuntimePlan<T> elsePlan;
     private final DynamicContext context;
 
     public ConditionalLocalCursor(
-            RuntimePlan<Item> conditionPlan,
+            ItemRuntimePlan conditionPlan,
             RuntimePlan<T> thenPlan,
             RuntimePlan<T> elsePlan,
             DynamicContext context,

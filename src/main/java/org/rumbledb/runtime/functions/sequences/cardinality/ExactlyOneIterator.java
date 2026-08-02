@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,7 +30,6 @@ import org.rumbledb.exceptions.SequenceExceptionExactlyOne;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -39,7 +40,7 @@ public class ExactlyOneIterator extends AbstractAtMostOneItemRuntimePlan impleme
     private static final long serialVersionUID = 1L;
 
     public ExactlyOneIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

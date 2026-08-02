@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 
 import java.io.Serial;
@@ -33,7 +35,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 /**
@@ -43,13 +44,13 @@ public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimeP
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final List<? extends RuntimePlan<Item>> keys;
-    private final List<? extends RuntimePlan<Item>> values;
+    private final List<? extends ItemRuntimePlan> keys;
+    private final List<? extends ItemRuntimePlan> values;
     private final boolean mutable;
 
     public MapConstructorRuntimeIterator(
-            List<? extends RuntimePlan<Item>> keys,
-            List<? extends RuntimePlan<Item>> values,
+            List<? extends ItemRuntimePlan> keys,
+            List<? extends ItemRuntimePlan> values,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -88,7 +89,7 @@ public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimeP
         return evaluate(iterator -> iterator.materialize(dynamicContext));
     }
 
-    private Item evaluate(Function<RuntimePlan<Item>, List<Item>> materialize) {
+    private Item evaluate(Function<ItemRuntimePlan, List<Item>> materialize) {
         List<Item> mapKeys = new ArrayList<>();
         List<List<Item>> valueSequences = new ArrayList<>();
         boolean allKeysString = true;

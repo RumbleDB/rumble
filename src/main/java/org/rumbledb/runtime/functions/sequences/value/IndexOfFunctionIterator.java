@@ -33,7 +33,6 @@ import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -46,12 +45,12 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> sequenceIterator;
-    private final RuntimePlan<Item> searchIterator;
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan searchIterator;
     private Item search;
 
     public IndexOfFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -94,9 +93,9 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan
 
     private static final class IndexOfLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> sequencePlan;
-        private final RuntimePlan<Item> searchPlan;
-        private final RuntimePlan<Item> collationPlan;
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan searchPlan;
+        private final ItemRuntimePlan collationPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> sequenceCursor;
@@ -105,9 +104,9 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan
         private int index;
 
         private IndexOfLocalCursor(
-                RuntimePlan<Item> sequencePlan,
-                RuntimePlan<Item> searchPlan,
-                RuntimePlan<Item> collationPlan,
+                ItemRuntimePlan sequencePlan,
+                ItemRuntimePlan searchPlan,
+                ItemRuntimePlan collationPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

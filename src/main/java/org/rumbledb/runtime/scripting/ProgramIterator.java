@@ -5,7 +5,6 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -43,11 +42,11 @@ public class ProgramIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> statementsAndExprIterator;
+    private final ItemRuntimePlan statementsAndExprIterator;
     private final ProgramExecutionState executionState;
 
     public ProgramIterator(
-            RuntimePlan<Item> statementsAndExprIterator,
+            ItemRuntimePlan statementsAndExprIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(statementsAndExprIterator), staticContext);
@@ -92,7 +91,7 @@ public class ProgramIterator extends ItemRuntimePlan
 
     private static final class ProgramLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> statementsAndExprPlan;
+        private final ItemRuntimePlan statementsAndExprPlan;
         private final ProgramExecutionState executionState;
         private final DynamicContext context;
         private Cursor<Item> delegate;
@@ -100,7 +99,7 @@ public class ProgramIterator extends ItemRuntimePlan
         private int exitIndex;
 
         private ProgramLocalCursor(
-                RuntimePlan<Item> statementsAndExprPlan,
+                ItemRuntimePlan statementsAndExprPlan,
                 ProgramExecutionState executionState,
                 DynamicContext context,
                 RuntimeStaticContext staticContext

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +36,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -44,11 +45,11 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> child;
+    private final ItemRuntimePlan child;
     private final SequenceType sequenceType;
 
     public InstanceOfIterator(
-            RuntimePlan<Item> child,
+            ItemRuntimePlan child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -65,7 +66,7 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private static Item evaluate(
-            RuntimePlan<Item> child,
+            ItemRuntimePlan child,
             SequenceType sequenceType,
             ExceptionMetadata metadata,
             DynamicContext dynamicContext
@@ -97,7 +98,7 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private static Item evaluateLocal(
-            RuntimePlan<Item> child,
+            ItemRuntimePlan child,
             SequenceType sequenceType,
             ExceptionMetadata metadata,
             DynamicContext dynamicContext

@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,7 +15,6 @@ import org.rumbledb.exceptions.ModifiesImmutableValueException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -22,12 +23,12 @@ public class DeleteExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> mainIterator;
-    private final RuntimePlan<Item> lookupIterator;
+    private final ItemRuntimePlan mainIterator;
+    private final ItemRuntimePlan lookupIterator;
 
     public DeleteExpressionIterator(
-            RuntimePlan<Item> mainIterator,
-            RuntimePlan<Item> lookupIterator,
+            ItemRuntimePlan mainIterator,
+            ItemRuntimePlan lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

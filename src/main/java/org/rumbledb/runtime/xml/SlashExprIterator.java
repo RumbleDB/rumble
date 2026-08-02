@@ -34,7 +34,6 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
 
 import java.io.Serial;
@@ -56,13 +55,13 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
         Item::getXmlDocumentPosition,
         Comparator.nullsLast(Comparator.naturalOrder())
     );
-    private RuntimePlan<Item> leftIterator;
-    private RuntimePlan<Item> rightIterator;
+    private ItemRuntimePlan leftIterator;
+    private ItemRuntimePlan rightIterator;
 
 
     public SlashExprIterator(
-            RuntimePlan<Item> sequence,
-            RuntimePlan<Item> stepIterator,
+            ItemRuntimePlan sequence,
+            ItemRuntimePlan stepIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(sequence, stepIterator), staticContext);

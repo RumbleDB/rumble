@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.error;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -8,7 +10,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -19,7 +20,7 @@ public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public ThrowErrorIterator(
-            List<RuntimePlan<Item>> children,
+            List<ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

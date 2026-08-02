@@ -36,7 +36,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -50,10 +49,10 @@ public class OneOrMoreIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
 
     public OneOrMoreIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -92,12 +91,12 @@ public class OneOrMoreIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> childPlan;
+        private final ItemRuntimePlan childPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> childCursor;
 
-        private EvaluationCursor(RuntimePlan<Item> childPlan, DynamicContext context, ExceptionMetadata metadata) {
+        private EvaluationCursor(ItemRuntimePlan childPlan, DynamicContext context, ExceptionMetadata metadata) {
             super(metadata);
             this.childPlan = Objects.requireNonNull(childPlan, "child plan cannot be null");
             this.context = Objects.requireNonNull(context, "dynamic context cannot be null");

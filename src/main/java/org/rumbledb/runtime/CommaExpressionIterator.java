@@ -27,7 +27,6 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -62,7 +61,7 @@ public class CommaExpressionIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     public CommaExpressionIterator(
-            List<? extends RuntimePlan<Item>> childIterators,
+            List<? extends ItemRuntimePlan> childIterators,
             RuntimeStaticContext staticContext
     ) {
         super(childIterators, staticContext);
@@ -73,7 +72,7 @@ public class CommaExpressionIterator extends ItemRuntimePlan
         return new ConcatLocalCursor<>(getChildren(), context, getMetadata());
     }
 
-    public List<RuntimePlan<Item>> getOperands() {
+    public List<ItemRuntimePlan> getOperands() {
         // This method is currently used in SequenceLookupIterator and ObjectConstructorRuntimeIterator
         // Because getChildren is protected and not visible from there
         return getChildren();
@@ -83,7 +82,7 @@ public class CommaExpressionIterator extends ItemRuntimePlan
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty()) {
             int childIndex = 0;
-            RuntimePlan<Item> currentChild = this.getChild(childIndex);
+            ItemRuntimePlan currentChild = this.getChild(childIndex);
 
             JavaRDD<Item> childRDD = currentChild.getRDD(dynamicContext);
             childIndex++;
@@ -104,7 +103,7 @@ public class CommaExpressionIterator extends ItemRuntimePlan
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         List<NativeClauseContext> childClauses = new ArrayList<>();
-        for (RuntimePlan<Item> iterator : this.getChildren()) {
+        for (ItemRuntimePlan iterator : this.getChildren()) {
             NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
                 iterator,
                 nativeClauseContext
@@ -188,7 +187,7 @@ public class CommaExpressionIterator extends ItemRuntimePlan
         }
 
         PendingUpdateList pul = new PendingUpdateList();
-        for (RuntimePlan<Item> child : this.getChildren()) {
+        for (ItemRuntimePlan child : this.getChildren()) {
             pul.mergeUpdates(
                 UpdatingRuntimePlan.get(child, context),
                 this.getRuntimeStaticContext().getMetadata()

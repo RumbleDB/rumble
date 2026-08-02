@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -27,7 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -40,7 +41,7 @@ public class EmptyFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
     private static final long serialVersionUID = 1L;
 
     public EmptyFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

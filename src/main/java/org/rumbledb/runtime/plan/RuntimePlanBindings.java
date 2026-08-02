@@ -7,7 +7,6 @@
 
 package org.rumbledb.runtime.plan;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
@@ -21,7 +20,7 @@ public final class RuntimePlanBindings {
     }
 
     public static void bind(
-            RuntimePlan<Item> plan,
+            ItemRuntimePlan plan,
             DynamicContext targetContext,
             Name variable,
             DynamicContext executionContext

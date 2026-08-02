@@ -9,7 +9,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -23,7 +22,7 @@ public class AnnotateFunctionIterator extends ItemRuntimePlan implements DataFra
     private static final long serialVersionUID = 1L;
 
     public AnnotateFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -31,8 +30,8 @@ public class AnnotateFunctionIterator extends ItemRuntimePlan implements DataFra
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        RuntimePlan<Item> inputDataIterator = this.getChild(0);
-        RuntimePlan<Item> schemaIterator = this.getChild(1);
+        ItemRuntimePlan inputDataIterator = this.getChild(0);
+        ItemRuntimePlan schemaIterator = this.getChild(1);
         Item schemaItem = schemaIterator.materializeFirstOrNull(context);
         ItemType schemaType = ItemTypeFactory.createItemTypeFromJSoundCompactItem(null, schemaItem, null);
         schemaType.resolve(context, getMetadata());

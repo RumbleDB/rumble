@@ -19,7 +19,6 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -44,12 +43,12 @@ public class SortFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> inputIterator;
-    private final RuntimePlan<Item> collationIterator;
-    private final RuntimePlan<Item> keyIterator;
+    private final ItemRuntimePlan inputIterator;
+    private final ItemRuntimePlan collationIterator;
+    private final ItemRuntimePlan keyIterator;
 
     public SortFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -178,9 +177,9 @@ public class SortFunctionIterator extends ItemRuntimePlan
             Item item,
             DynamicContext context
     ) {
-        List<RuntimePlan<Item>> arguments = new ArrayList<>(1);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(new ConstantRuntimeIterator(item, localStaticContext()));
-        RuntimePlan<Item> call = NamedFunctions
+        ItemRuntimePlan call = NamedFunctions
             .buildFunctionItemCallIterator(
                 functionItem,
                 this.staticContext,
@@ -198,7 +197,7 @@ public class SortFunctionIterator extends ItemRuntimePlan
                     getMetadata()
             );
         }
-        RuntimePlan<Item> indexIterator = new ConstantRuntimeIterator(
+        ItemRuntimePlan indexIterator = new ConstantRuntimeIterator(
                 item,
                 localStaticContext()
         );
@@ -218,7 +217,7 @@ public class SortFunctionIterator extends ItemRuntimePlan
                     getMetadata()
             );
         }
-        RuntimePlan<Item> keyIterator = new ConstantRuntimeIterator(
+        ItemRuntimePlan keyIterator = new ConstantRuntimeIterator(
                 atomized.get(0),
                 localStaticContext()
         );
@@ -231,14 +230,14 @@ public class SortFunctionIterator extends ItemRuntimePlan
     }
 
     private List<Item> materializeIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context
     ) {
         return iterator.materialize(context);
     }
 
     private List<Item> materializeKeyIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context
     ) {
         List<Item> rawItems = materializeIterator(iterator, context);

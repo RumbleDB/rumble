@@ -18,6 +18,8 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 
 import java.io.Serial;
@@ -41,7 +43,6 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.SortKeyComparison;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -60,12 +61,12 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> arrayIterator;
-    private final RuntimePlan<Item> collationIterator;
-    private final RuntimePlan<Item> keyIterator;
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan collationIterator;
+    private final ItemRuntimePlan keyIterator;
 
     public ArraySortFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -231,12 +232,12 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             List<Item> memberSequence,
             DynamicContext context
     ) {
-        RuntimePlan<Item> memberIterator = createSequenceIterator(
+        ItemRuntimePlan memberIterator = createSequenceIterator(
             memberSequence
         );
-        List<RuntimePlan<Item>> arguments = new ArrayList<>(1);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        RuntimePlan<Item> call = NamedFunctions
+        ItemRuntimePlan call = NamedFunctions
             .buildFunctionItemCallIterator(
                 functionItem,
                 this.staticContext,
@@ -267,7 +268,7 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                     getMetadata()
             );
         }
-        RuntimePlan<Item> indexIterator = new ConstantRuntimeIterator(
+        ItemRuntimePlan indexIterator = new ConstantRuntimeIterator(
                 indexItem,
                 localStaticContext()
         );
@@ -296,14 +297,14 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     }
 
     private List<Item> materializeIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context
     ) {
         return iterator.materialize(context);
     }
 
     private List<Item> materializeKeyIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context
     ) {
         return fnDataKeySequence(materializeIterator(iterator, context));
@@ -318,14 +319,14 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             .build();
     }
 
-    private RuntimePlan<Item> createSequenceIterator(List<Item> items) {
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             return new CommaExpressionIterator(
                     Collections.emptyList(),
                     localStaticContext()
             );
         }
-        List<RuntimePlan<Item>> childIterators = new ArrayList<>(
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(
                 items.size()
         );
         for (Item item : items) {

@@ -1,10 +1,11 @@
 package org.rumbledb.runtime.scripting.block;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -14,7 +15,7 @@ public class StatementsOnlyIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public StatementsOnlyIterator(
-            List<? extends RuntimePlan<Item>> children,
+            List<? extends ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -25,7 +26,7 @@ public class StatementsOnlyIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        for (RuntimePlan<Item> statement : this.getChildren()) {
+        for (ItemRuntimePlan statement : this.getChildren()) {
             statement.materialize(dynamicContext);
         }
         return null;

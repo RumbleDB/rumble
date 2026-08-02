@@ -1,11 +1,12 @@
 package org.rumbledb.runtime.scripting.control;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.EffectiveBooleanValue;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -15,16 +16,16 @@ public class ConditionalStatementIterator extends AbstractAtMostOneItemRuntimePl
     private static final long serialVersionUID = 1L;
 
     public ConditionalStatementIterator(
-            List<? extends RuntimePlan<Item>> children,
+            List<? extends ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
     }
 
-    private RuntimePlan<Item> selectApplicableIterator(
+    private ItemRuntimePlan selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
-        RuntimePlan<Item> condition = this.getChild(0);
+        ItemRuntimePlan condition = this.getChild(0);
         boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(condition, dynamicContext);
         if (effectiveBooleanValue) {
             return this.getChild(1);
@@ -35,7 +36,7 @@ public class ConditionalStatementIterator extends AbstractAtMostOneItemRuntimePl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        RuntimePlan<Item> selectedIterator = selectApplicableIterator(
+        ItemRuntimePlan selectedIterator = selectApplicableIterator(
             dynamicContext
         );
         DynamicContext childDynamicContext = new DynamicContext(dynamicContext);

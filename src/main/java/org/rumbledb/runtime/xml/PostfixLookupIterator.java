@@ -40,7 +40,6 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * Postfix lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
@@ -64,8 +63,8 @@ public class PostfixLookupIterator extends ItemRuntimePlan
 
     private static final class LookupLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> inputPlan;
-        private final RuntimePlan<Item> lookupPlan;
+        private final ItemRuntimePlan inputPlan;
+        private final ItemRuntimePlan lookupPlan;
         private final boolean wildcard;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
@@ -74,8 +73,8 @@ public class PostfixLookupIterator extends ItemRuntimePlan
         private Iterator<Item> currentResults;
 
         private LookupLocalCursor(
-                RuntimePlan<Item> inputPlan,
-                RuntimePlan<Item> lookupPlan,
+                ItemRuntimePlan inputPlan,
+                ItemRuntimePlan lookupPlan,
                 boolean wildcard,
                 DynamicContext context,
                 RuntimeStaticContext staticContext
@@ -209,13 +208,13 @@ public class PostfixLookupIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
-    private final RuntimePlan<Item> lookupIterator;
+    private final ItemRuntimePlan iterator;
+    private final ItemRuntimePlan lookupIterator;
     private boolean wildcard;
 
     public PostfixLookupIterator(
-            RuntimePlan<Item> object,
-            RuntimePlan<Item> lookupIterator,
+            ItemRuntimePlan object,
+            ItemRuntimePlan lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

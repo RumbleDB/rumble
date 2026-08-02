@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.Function;
@@ -28,7 +30,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -42,10 +43,10 @@ public class ObjectIntersectFunctionIterator extends AbstractAtMostOneItemRuntim
      */
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
 
     public ObjectIntersectFunctionIterator(
-            List<RuntimePlan<Item>> children,
+            List<ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

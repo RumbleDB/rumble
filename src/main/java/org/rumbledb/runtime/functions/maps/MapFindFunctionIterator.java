@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions.maps;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 
 import java.io.Serial;
@@ -32,7 +34,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
@@ -48,11 +49,11 @@ public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> inputIterator;
-    private final RuntimePlan<Item> keyIterator;
+    private final ItemRuntimePlan inputIterator;
+    private final ItemRuntimePlan keyIterator;
 
     public MapFindFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

@@ -1,5 +1,7 @@
 package sparksoniq.spark.ml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Estimator;
@@ -20,7 +22,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
@@ -354,7 +355,7 @@ public class ApplyEstimatorRuntimeIterator extends AbstractAtMostOneItemRuntimeP
     }
 
     private Item generateTransformerFunctionItem(Transformer fittedModel, DynamicContext dynamicContext) {
-        RuntimePlan<Item> bodyIterator = new ApplyTransformerRuntimeIterator(
+        ItemRuntimePlan bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
                 this.staticContext

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -27,7 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
     private static final long serialVersionUID = 1L;
 
     public ObjectDescendantPairsFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

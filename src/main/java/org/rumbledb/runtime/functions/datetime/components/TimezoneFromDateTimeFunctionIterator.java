@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.time.Duration;
 import org.rumbledb.api.Item;
@@ -7,7 +9,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.TemporalComponentFunctionIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class TimezoneFromDateTimeFunctionIterator extends TemporalComponentFunct
     private static final long serialVersionUID = 1L;
 
     public TimezoneFromDateTimeFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext, Component.TIMEZONE);

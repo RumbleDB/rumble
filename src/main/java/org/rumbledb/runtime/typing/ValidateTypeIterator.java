@@ -42,7 +42,6 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.MappingLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
@@ -61,13 +60,13 @@ public class ValidateTypeIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
     private final ItemType itemType;
     private final boolean isValidate;
     private final ItemValidator validator;
 
     public ValidateTypeIterator(
-            RuntimePlan<Item> instance,
+            ItemRuntimePlan instance,
             ItemType itemType,
             boolean isValidate,
             RuntimeStaticContext staticContext

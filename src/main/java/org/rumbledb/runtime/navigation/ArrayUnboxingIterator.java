@@ -45,7 +45,6 @@ import org.rumbledb.runtime.cursor.Cursor;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -64,10 +63,10 @@ public class ArrayUnboxingIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
 
     public ArrayUnboxingIterator(
-            RuntimePlan<Item> arrayIterator,
+            ItemRuntimePlan arrayIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(arrayIterator), staticContext);

@@ -18,7 +18,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -31,16 +30,16 @@ public class TransformExpressionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final Map<Name, ? extends RuntimePlan<Item>> copyDeclMap;
-    private final RuntimePlan<Item> modifyIterator;
-    private final RuntimePlan<Item> returnIterator;
+    private final Map<Name, ? extends ItemRuntimePlan> copyDeclMap;
+    private final ItemRuntimePlan modifyIterator;
+    private final ItemRuntimePlan returnIterator;
     private final boolean mutable;
     private final int mutabilityLevel;
 
     public TransformExpressionIterator(
-            Map<Name, ? extends RuntimePlan<Item>> copyDeclMap,
-            RuntimePlan<Item> modifyIterator,
-            RuntimePlan<Item> returnIterator,
+            Map<Name, ? extends ItemRuntimePlan> copyDeclMap,
+            ItemRuntimePlan modifyIterator,
+            ItemRuntimePlan returnIterator,
             RuntimeStaticContext staticContext,
             int mutabilityLevel,
             boolean resultMutable
@@ -90,7 +89,7 @@ public class TransformExpressionIterator extends ItemRuntimePlan
 
     private void bindCopyDeclarations(DynamicContext context) {
         for (Name copyVar : this.copyDeclMap.keySet()) {
-            RuntimePlan<Item> copyIterator = this.copyDeclMap.get(copyVar);
+            ItemRuntimePlan copyIterator = this.copyDeclMap.get(copyVar);
             List<Item> toCopy = copyIterator.materialize(context);
             List<Item> copy = new ArrayList<>();
             Item temp;
@@ -107,9 +106,9 @@ public class TransformExpressionIterator extends ItemRuntimePlan
 
     private static final class TransformLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final Map<Name, ? extends RuntimePlan<Item>> copyDeclarations;
-        private final RuntimePlan<Item> modifyPlan;
-        private final RuntimePlan<Item> returnPlan;
+        private final Map<Name, ? extends ItemRuntimePlan> copyDeclarations;
+        private final ItemRuntimePlan modifyPlan;
+        private final ItemRuntimePlan returnPlan;
         private final int mutabilityLevel;
         private final boolean resultMutable;
         private final DynamicContext context;
@@ -117,9 +116,9 @@ public class TransformExpressionIterator extends ItemRuntimePlan
         private Cursor<Item> returnCursor;
 
         private TransformLocalCursor(
-                Map<Name, ? extends RuntimePlan<Item>> copyDeclarations,
-                RuntimePlan<Item> modifyPlan,
-                RuntimePlan<Item> returnPlan,
+                Map<Name, ? extends ItemRuntimePlan> copyDeclarations,
+                ItemRuntimePlan modifyPlan,
+                ItemRuntimePlan returnPlan,
                 int mutabilityLevel,
                 boolean resultMutable,
                 DynamicContext context,
@@ -175,7 +174,7 @@ public class TransformExpressionIterator extends ItemRuntimePlan
         }
 
         private void bindCopyDeclarations() {
-            for (Map.Entry<Name, ? extends RuntimePlan<Item>> declaration : this.copyDeclarations.entrySet()) {
+            for (Map.Entry<Name, ? extends ItemRuntimePlan> declaration : this.copyDeclarations.entrySet()) {
                 List<Item> copy = new ArrayList<>();
                 for (Item item : declaration.getValue().materialize(this.context)) {
                     Item copiedItem = item.copy(true);

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -36,7 +38,6 @@ import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -55,7 +56,7 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     private static final long serialVersionUID = 1L;
 
     public SumFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -81,7 +82,7 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     public static Item computeSum(
             Item zeroElement,
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -111,7 +112,7 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     private static Item computeLocalSum(
             Item zeroElement,
-            RuntimePlan<Item> plan,
+            ItemRuntimePlan plan,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -153,7 +154,7 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     private static Item computeRDD(
             Item zeroElement,
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -166,7 +167,7 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     private static Item computeDataFrame(
             Item zeroElement,
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {

@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,7 +16,6 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -24,12 +25,12 @@ public class AppendExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> arrayIterator;
-    private final RuntimePlan<Item> toAppendIterator;
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan toAppendIterator;
 
     public AppendExpressionIterator(
-            RuntimePlan<Item> arrayIterator,
-            RuntimePlan<Item> toAppendIterator,
+            ItemRuntimePlan arrayIterator,
+            ItemRuntimePlan toAppendIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

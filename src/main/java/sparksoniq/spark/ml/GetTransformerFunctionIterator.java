@@ -20,6 +20,8 @@
 
 package sparksoniq.spark.ml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.ml.Transformer;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -31,7 +33,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -59,7 +60,7 @@ public class GetTransformerFunctionIterator extends AbstractAtMostOneItemRuntime
     );
 
     public GetTransformerFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -121,7 +122,7 @@ public class GetTransformerFunctionIterator extends AbstractAtMostOneItemRuntime
                     }
                 }
             }
-            RuntimePlan<Item> bodyIterator =
+            ItemRuntimePlan bodyIterator =
                 new ApplyTransformerRuntimeIterator(
                         transformerShortName,
                         transformer,

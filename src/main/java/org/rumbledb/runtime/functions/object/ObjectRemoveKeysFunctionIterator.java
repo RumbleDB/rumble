@@ -38,7 +38,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -57,16 +56,16 @@ public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
 
     private static final class RemovalLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> inputPlan;
-        private final RuntimePlan<Item> keysPlan;
+        private final ItemRuntimePlan inputPlan;
+        private final ItemRuntimePlan keysPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> inputCursor;
         private List<String> keys;
 
         private RemovalLocalCursor(
-                RuntimePlan<Item> inputPlan,
-                RuntimePlan<Item> keysPlan,
+                ItemRuntimePlan inputPlan,
+                ItemRuntimePlan keysPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -136,10 +135,10 @@ public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimePlan<Item> iterator;
+    private ItemRuntimePlan iterator;
 
     public ObjectRemoveKeysFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

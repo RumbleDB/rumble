@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -30,7 +32,6 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -97,7 +98,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
     }
 
     private Item createAttribute(
-            Function<RuntimePlan<Item>, List<Item>> materialize,
+            Function<ItemRuntimePlan, List<Item>> materialize,
             DynamicContext dynamicContext
     ) {
         Item attributeName;

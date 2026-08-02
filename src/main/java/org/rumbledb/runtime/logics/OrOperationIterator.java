@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.logics;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.Arrays;
 
@@ -31,7 +33,6 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -39,12 +40,12 @@ public class OrOperationIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> leftIterator;
-    private final RuntimePlan<Item> rightIterator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
     public OrOperationIterator(
-            RuntimePlan<Item> leftIterator,
-            RuntimePlan<Item> rightIterator,
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);

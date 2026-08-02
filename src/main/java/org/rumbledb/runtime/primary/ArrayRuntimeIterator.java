@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +35,6 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -49,7 +50,7 @@ public class ArrayRuntimeIterator extends AbstractAtMostOneItemRuntimePlan imple
      * Curly array constructor: single child whose items become singleton members.
      */
     public ArrayRuntimeIterator(
-            RuntimePlan<Item> arrayItems,
+            ItemRuntimePlan arrayItems,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -62,7 +63,7 @@ public class ArrayRuntimeIterator extends AbstractAtMostOneItemRuntimePlan imple
      * Square array constructor: each child iterator produces one member (possibly a sequence).
      */
     public ArrayRuntimeIterator(
-            List<? extends RuntimePlan<Item>> memberIterators,
+            List<? extends ItemRuntimePlan> memberIterators,
             boolean isFixedSlotsArrayConstructor,
             RuntimeStaticContext staticContext,
             boolean mutable

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -28,7 +30,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class ObjectAccumulateFunctionIterator extends AbstractAtMostOneItemRunti
     private static final long serialVersionUID = 1L;
 
     public ObjectAccumulateFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -51,7 +52,7 @@ public class ObjectAccumulateFunctionIterator extends AbstractAtMostOneItemRunti
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        RuntimePlan<Item> iterator = this.getChild(0);
+        ItemRuntimePlan iterator = this.getChild(0);
 
         if (!iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             return accumulate(iterator.materialize(context));

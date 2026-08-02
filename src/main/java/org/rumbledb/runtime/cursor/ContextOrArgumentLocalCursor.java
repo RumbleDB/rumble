@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.cursor;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -26,7 +28,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * Resolves an explicit argument, or the context item when the argument is omitted, and maps the resolved value.
@@ -38,7 +39,7 @@ import org.rumbledb.runtime.plan.RuntimePlan;
  */
 public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O> {
 
-    private final RuntimePlan<Item> argumentPlan;
+    private final ItemRuntimePlan argumentPlan;
     private final DynamicContext context;
     private final Function<? super Item, ? extends List<? extends O>> mapper;
     private final ExceptionMetadata metadata;
@@ -46,7 +47,7 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
     private int position;
 
     private ContextOrArgumentLocalCursor(
-            RuntimePlan<Item> argumentPlan,
+            ItemRuntimePlan argumentPlan,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends List<? extends O>> mapper,
             @NonNull ExceptionMetadata metadata
@@ -59,7 +60,7 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
     }
 
     public static <O> ContextOrArgumentLocalCursor<O> mapArgument(
-            @NonNull RuntimePlan<Item> argumentPlan,
+            @NonNull ItemRuntimePlan argumentPlan,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends O> mapper,
             @NonNull ExceptionMetadata metadata
@@ -76,7 +77,7 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
     }
 
     public static <O> ContextOrArgumentLocalCursor<O> mapFirstArgumentOrContext(
-            @NonNull List<? extends RuntimePlan<Item>> argumentPlans,
+            @NonNull List<? extends ItemRuntimePlan> argumentPlans,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends O> mapper,
             @NonNull ExceptionMetadata metadata
@@ -93,7 +94,7 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
     }
 
     public static <O> ContextOrArgumentLocalCursor<O> flatMapArgument(
-            @NonNull RuntimePlan<Item> argumentPlan,
+            @NonNull ItemRuntimePlan argumentPlan,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends List<? extends O>> mapper,
             @NonNull ExceptionMetadata metadata
@@ -102,7 +103,7 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
     }
 
     public static <O> ContextOrArgumentLocalCursor<O> flatMapFirstArgumentOrContext(
-            @NonNull List<? extends RuntimePlan<Item>> argumentPlans,
+            @NonNull List<? extends ItemRuntimePlan> argumentPlans,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends List<? extends O>> mapper,
             @NonNull ExceptionMetadata metadata

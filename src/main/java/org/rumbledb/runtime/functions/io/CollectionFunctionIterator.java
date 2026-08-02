@@ -8,7 +8,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.net.URI;
@@ -20,7 +19,7 @@ public class CollectionFunctionIterator extends ItemRuntimePlan implements DataF
     private static final long serialVersionUID = 1L;
 
     public CollectionFunctionIterator(
-            List<RuntimePlan<Item>> children,
+            List<ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

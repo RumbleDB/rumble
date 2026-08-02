@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -26,7 +28,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -48,8 +49,8 @@ final class ExtremumLocalEvaluation {
     }
 
     public static Item min(
-            RuntimePlan<Item> childPlan,
-            RuntimePlan<Item> collationPlan,
+            ItemRuntimePlan childPlan,
+            ItemRuntimePlan collationPlan,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -57,8 +58,8 @@ final class ExtremumLocalEvaluation {
     }
 
     public static Item max(
-            RuntimePlan<Item> childPlan,
-            RuntimePlan<Item> collationPlan,
+            ItemRuntimePlan childPlan,
+            ItemRuntimePlan collationPlan,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -66,8 +67,8 @@ final class ExtremumLocalEvaluation {
     }
 
     private static Item evaluate(
-            @NonNull RuntimePlan<Item> childPlan,
-            RuntimePlan<Item> collationPlan,
+            @NonNull ItemRuntimePlan childPlan,
+            ItemRuntimePlan collationPlan,
             @NonNull DynamicContext context,
             @NonNull ExceptionMetadata metadata,
             @NonNull Kind kind
@@ -146,7 +147,7 @@ final class ExtremumLocalEvaluation {
     }
 
     private static void validateCollation(
-            RuntimePlan<Item> collationPlan,
+            ItemRuntimePlan collationPlan,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {

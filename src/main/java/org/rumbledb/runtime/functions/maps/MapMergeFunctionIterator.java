@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.maps;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,7 +18,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -62,12 +63,12 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
     }
 
-    private final RuntimePlan<Item> mapsIterator;
-    private final RuntimePlan<Item> optionsIterator; // may be null for
-                                                     // arity-1
+    private final ItemRuntimePlan mapsIterator;
+    private final ItemRuntimePlan optionsIterator; // may be null for
+                                                   // arity-1
 
     public MapMergeFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

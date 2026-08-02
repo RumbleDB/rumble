@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.arithmetics;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,7 +32,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -42,12 +43,12 @@ import java.util.Collections;
 public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     private final boolean negated;
-    private final RuntimePlan<Item> child;
+    private final ItemRuntimePlan child;
     @Serial
     private static final long serialVersionUID = 1L;
 
     public UnaryOperationIterator(
-            RuntimePlan<Item> child,
+            ItemRuntimePlan child,
             boolean negated,
             RuntimeStaticContext staticContext
     ) {

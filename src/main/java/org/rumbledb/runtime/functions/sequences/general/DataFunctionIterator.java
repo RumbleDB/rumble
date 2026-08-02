@@ -39,7 +39,6 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.SingletonLocalCursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.exceptions.OurBadException;
 
 import lombok.NonNull;
@@ -57,10 +56,10 @@ public class DataFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> sequenceIterator;
+    private final ItemRuntimePlan sequenceIterator;
 
     public DataFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -102,14 +101,14 @@ public class DataFunctionIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> sequencePlan;
+        private final ItemRuntimePlan sequencePlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> inputCursor;
         private Iterator<Item> atomizedValues;
 
         private EvaluationCursor(
-                RuntimePlan<Item> sequencePlan,
+                ItemRuntimePlan sequencePlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {

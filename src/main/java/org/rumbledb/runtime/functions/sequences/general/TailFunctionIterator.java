@@ -32,7 +32,6 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import lombok.NonNull;
 import java.io.Serial;
@@ -46,10 +45,10 @@ public class TailFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
 
     public TailFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -74,13 +73,13 @@ public class TailFunctionIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> childPlan;
+        private final ItemRuntimePlan childPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> childCursor;
 
         private EvaluationCursor(
-                @NonNull RuntimePlan<Item> childPlan,
+                @NonNull ItemRuntimePlan childPlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {

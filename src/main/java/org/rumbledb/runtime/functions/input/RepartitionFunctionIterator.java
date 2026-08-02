@@ -34,7 +34,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -49,11 +48,11 @@ public class RepartitionFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> iterator;
-    private final RuntimePlan<Item> partitionCountIterator;
+    private final ItemRuntimePlan iterator;
+    private final ItemRuntimePlan partitionCountIterator;
 
     public RepartitionFunctionIterator(
-            List<RuntimePlan<Item>> inputIterators,
+            List<ItemRuntimePlan> inputIterators,
             RuntimeStaticContext staticContext
     ) {
         super(inputIterators, staticContext);

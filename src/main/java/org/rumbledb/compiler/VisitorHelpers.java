@@ -27,11 +27,9 @@ import org.rumbledb.parser.jsoniq.JsoniqLexer;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryLexer;
 import org.rumbledb.parser.xquery.XQueryParser;
-import org.rumbledb.api.Item;
-import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.resources.ResolvedResource;
-import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 
 import java.io.IOException;
 import java.net.URI;
@@ -41,11 +39,11 @@ import java.util.List;
 
 public class VisitorHelpers {
 
-    public static RuntimePlan<Item> generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
-        RuntimePlan<Item> result = new RuntimeIteratorVisitor(conf).visit(node, null);
+    public static ItemRuntimePlan generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
+        ItemRuntimePlan result = new RuntimeIteratorVisitor(conf).visit(node, null);
         if (conf.isPrintIteratorTree() || conf.debug()) {
             StringBuilder sb = new StringBuilder();
-            RuntimePlanDiagnostics.print(result, sb, 0);
+            result.print(sb, 0);
             System.err.println(sb);
         }
         return result;

@@ -33,7 +33,6 @@ import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -49,11 +48,11 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> sequenceIterator;
-    private final RuntimePlan<Item> partitionsIterator;
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan partitionsIterator;
 
     public ParallelizeFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -97,7 +96,7 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
     }
 
     private static Item getNumberOfPartitions(
-            RuntimePlan<Item> partitionsPlan,
+            ItemRuntimePlan partitionsPlan,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -129,15 +128,15 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> sequencePlan;
-        private final RuntimePlan<Item> partitionsPlan;
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan partitionsPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> sequenceCursor;
 
         private EvaluationCursor(
-                @NonNull RuntimePlan<Item> sequencePlan,
-                @NonNull RuntimePlan<Item> partitionsPlan,
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan partitionsPlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,7 +31,6 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -97,7 +98,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
     }
 
     private Item createNamespace(
-            Function<RuntimePlan<Item>, List<Item>> materialize,
+            Function<ItemRuntimePlan, List<Item>> materialize,
             DynamicContext dynamicContext
     ) {
         // Spec: "A computed namespace constructor creates a new namespace node, with its own node identity."
@@ -117,7 +118,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         return namespaceItem;
     }
 
-    private String resolvePrefix(Function<RuntimePlan<Item>, List<Item>> materialize) {
+    private String resolvePrefix(Function<ItemRuntimePlan, List<Item>> materialize) {
         // Spec: "If the constructor specifies a Prefix, it is used as the prefix for the namespace node."
         if (this.staticPrefix != null) {
             return this.staticPrefix;
@@ -161,7 +162,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         return prefix;
     }
 
-    private String resolveUri(Function<RuntimePlan<Item>, List<Item>> materialize) {
+    private String resolveUri(Function<ItemRuntimePlan, List<Item>> materialize) {
         // Spec: "The content expression is evaluated, and the result is cast to xs:anyURI to create the URI property
         // for the newly created node. An implementation may raise a dynamic error [err:XQDY0074] if the URIExpr of a
         // computed namespace

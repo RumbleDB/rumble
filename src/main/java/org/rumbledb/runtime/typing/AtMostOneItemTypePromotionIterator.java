@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
@@ -14,7 +16,6 @@ import org.rumbledb.runtime.functions.FunctionUntypedAtomicCastIterator;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -30,13 +31,13 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
     @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private final RuntimePlan<Item> iterator;
+    private final ItemRuntimePlan iterator;
     private final SequenceType sequenceType;
     private final ItemType itemType;
     private final FunctionUntypedAtomicCastIterator.UntypedAtomicCaster untypedAtomicCaster;
 
     public AtMostOneItemTypePromotionIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext staticContext
@@ -49,7 +50,7 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
      * values are converted directly during scalar evaluation instead of through an intermediate mapping cursor.
      */
     public AtMostOneItemTypePromotionIterator(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext staticContext,
@@ -98,7 +99,7 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
     }
 
     private static Item evaluate(
-            RuntimePlan<Item> iterator,
+            ItemRuntimePlan iterator,
             SequenceType sequenceType,
             ItemType itemType,
             String exceptionMessage,

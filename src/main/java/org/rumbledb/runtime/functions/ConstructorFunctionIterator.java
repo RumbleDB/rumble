@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.List;
 
@@ -8,7 +10,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -19,12 +20,12 @@ public class ConstructorFunctionIterator extends AbstractAtMostOneItemRuntimePla
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> argumentIterator;
+    private final ItemRuntimePlan argumentIterator;
     private final SequenceType targetSequenceType;
 
     public ConstructorFunctionIterator(
             FunctionIdentifier identifier,
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -38,7 +39,7 @@ public class ConstructorFunctionIterator extends AbstractAtMostOneItemRuntimePla
         return createCastIterator().materializeFirstOrNull(dynamicContext);
     }
 
-    private RuntimePlan<Item> createCastIterator() {
+    private ItemRuntimePlan createCastIterator() {
         return new CastIterator(
                 this.argumentIterator,
                 this.targetSequenceType,

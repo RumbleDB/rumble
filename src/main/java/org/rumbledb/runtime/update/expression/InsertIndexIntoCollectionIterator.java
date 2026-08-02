@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -12,7 +14,6 @@ import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.Mode;
@@ -28,17 +29,17 @@ public class InsertIndexIntoCollectionIterator extends UpdatingExpressionIterato
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> targetIterator;
-    private final RuntimePlan<Item> contentIterator;
-    private final RuntimePlan<Item> posIterator;
+    private final ItemRuntimePlan targetIterator;
+    private final ItemRuntimePlan contentIterator;
+    private final ItemRuntimePlan posIterator;
     private final Mode mode;
     private final boolean isFirst;
     private final boolean isLast;
 
     public InsertIndexIntoCollectionIterator(
-            RuntimePlan<Item> targetIterator,
-            RuntimePlan<Item> contentIterator,
-            RuntimePlan<Item> posIterator,
+            ItemRuntimePlan targetIterator,
+            ItemRuntimePlan contentIterator,
+            ItemRuntimePlan posIterator,
             Mode mode,
             boolean isFirst,
             boolean isLast,
@@ -59,8 +60,8 @@ public class InsertIndexIntoCollectionIterator extends UpdatingExpressionIterato
     }
 
     public InsertIndexIntoCollectionIterator(
-            RuntimePlan<Item> targetIterator,
-            RuntimePlan<Item> contentIterator,
+            ItemRuntimePlan targetIterator,
+            ItemRuntimePlan contentIterator,
             Mode mode,
             boolean isFirst,
             boolean isLast,

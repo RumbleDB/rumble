@@ -45,7 +45,6 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -61,15 +60,15 @@ public class RangeOperationIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> leftIterator;
-    private final RuntimePlan<Item> rightIterator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
     private long left;
     private long right;
     public static final int PARTITION_SIZE = 1000000;
 
     public RangeOperationIterator(
-            RuntimePlan<Item> leftIterator,
-            RuntimePlan<Item> rightiterator,
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightiterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightiterator), staticContext);
@@ -179,16 +178,16 @@ public class RangeOperationIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> leftPlan;
-        private final RuntimePlan<Item> rightPlan;
+        private final ItemRuntimePlan leftPlan;
+        private final ItemRuntimePlan rightPlan;
         private final DynamicContext context;
         private long rightBound;
         private long position;
         private boolean hasNext;
 
         private EvaluationCursor(
-                @NonNull RuntimePlan<Item> leftPlan,
-                @NonNull RuntimePlan<Item> rightPlan,
+                @NonNull ItemRuntimePlan leftPlan,
+                @NonNull ItemRuntimePlan rightPlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
@@ -247,7 +246,7 @@ public class RangeOperationIterator extends ItemRuntimePlan
             this.hasNext = false;
         }
 
-        private Item materializeBound(RuntimePlan<Item> plan) {
+        private Item materializeBound(ItemRuntimePlan plan) {
             try {
                 return plan.materializeAtMostOne(this.context);
             } catch (MoreThanOneItemException exception) {

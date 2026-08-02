@@ -49,7 +49,6 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -391,7 +390,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
     @Override
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
-        RuntimePlanDiagnostics.print(this.expression, buffer, indent + 1);
+        this.expression.print(buffer, indent + 1);
     }
 
     @Override
@@ -502,10 +501,10 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (this.child.isSparkJobNeeded()) {
             return true;
         }
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
+        if (this.expression.isSparkJobNeeded()) {
             return true;
         }
         switch (this.staticContext.getExecutionMode()) {

@@ -38,7 +38,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.AtomicValueComparisonKey;
 import org.rumbledb.runtime.misc.CollationSupport;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
@@ -57,10 +56,10 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> sequenceIterator;
+    private final ItemRuntimePlan sequenceIterator;
 
     public DistinctValuesFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -134,8 +133,8 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
 
     private static final class DistinctLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> sequencePlan;
-        private final RuntimePlan<Item> collationPlan;
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan collationPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private final List<Item> seen = new ArrayList<>();
@@ -144,8 +143,8 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
         private String activeCollation;
 
         private DistinctLocalCursor(
-                RuntimePlan<Item> sequencePlan,
-                RuntimePlan<Item> collationPlan,
+                ItemRuntimePlan sequencePlan,
+                ItemRuntimePlan collationPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

@@ -19,6 +19,8 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
@@ -27,7 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
 
     public InScopePrefixesFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

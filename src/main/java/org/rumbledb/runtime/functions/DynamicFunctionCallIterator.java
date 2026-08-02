@@ -49,7 +49,6 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 public class DynamicFunctionCallIterator extends ItemRuntimePlan
@@ -63,13 +62,13 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private final RuntimePlan<Item> functionItemIterator;
-    private final List<? extends RuntimePlan<Item>> functionArguments;
+    private final ItemRuntimePlan functionItemIterator;
+    private final List<? extends ItemRuntimePlan> functionArguments;
     private final boolean isPartialApplication;
 
     public DynamicFunctionCallIterator(
-            RuntimePlan<Item> functionItemIterator,
-            List<? extends RuntimePlan<Item>> functionArguments,
+            ItemRuntimePlan functionItemIterator,
+            List<? extends ItemRuntimePlan> functionArguments,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -111,8 +110,8 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
     }
 
     private static FunctionCall resolveFunctionCall(
-            RuntimePlan<Item> functionItemPlan,
-            List<? extends RuntimePlan<Item>> functionArguments,
+            ItemRuntimePlan functionItemPlan,
+            List<? extends ItemRuntimePlan> functionArguments,
             boolean partialApplication,
             ExecutionMode callerExecutionMode,
             RuntimeStaticContext staticContext,
@@ -146,7 +145,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                         staticContext.getMetadata()
                 );
             }
-            RuntimePlan<Item> keyIterator = functionArguments.get(0);
+            ItemRuntimePlan keyIterator = functionArguments.get(0);
             RuntimeStaticContext callStaticContext = RuntimeStaticContext.builder()
                 .configuration(staticContext.getConfiguration())
                 .staticType(SequenceType.createSequenceType("item*"))
@@ -174,7 +173,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                         staticContext.getMetadata()
                 );
             }
-            RuntimePlan<Item> keyIterator = functionArguments.get(0);
+            ItemRuntimePlan keyIterator = functionArguments.get(0);
             RuntimeStaticContext callStaticContext = RuntimeStaticContext.builder()
                 .configuration(staticContext.getConfiguration())
                 .staticType(SequenceType.createSequenceType("item*"))
@@ -224,7 +223,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
 
     private static ExecutionMode getCalleeExecutionModeForFunctionItemCall(
             Item functionItem,
-            List<? extends RuntimePlan<Item>> functionArguments,
+            List<? extends ItemRuntimePlan> functionArguments,
             boolean partialApplication,
             RuntimeStaticContext staticContext
     ) {
@@ -239,7 +238,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                 );
             // assume that the passed builtin function is valid
             ExecutionMode firstArgumentMode = ExecutionMode.LOCAL;
-            for (RuntimePlan<Item> arg : functionArguments) {
+            for (ItemRuntimePlan arg : functionArguments) {
                 if (arg != null) {
                     firstArgumentMode = arg.getRuntimeStaticContext().getExecutionMode();
                     break;
@@ -285,17 +284,17 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
     }
 
     private static final class FunctionCall {
-        private final RuntimePlan<Item> iterator;
+        private final ItemRuntimePlan iterator;
 
-        private FunctionCall(RuntimePlan<Item> iterator) {
+        private FunctionCall(ItemRuntimePlan iterator) {
             this.iterator = iterator;
         }
     }
 
     private static final class DynamicCallLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> functionItemPlan;
-        private final List<? extends RuntimePlan<Item>> functionArguments;
+        private final ItemRuntimePlan functionItemPlan;
+        private final List<? extends ItemRuntimePlan> functionArguments;
         private final boolean partialApplication;
         private final ExecutionMode callerExecutionMode;
         private final RuntimeStaticContext staticContext;
@@ -306,8 +305,8 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
         private int exitIndex;
 
         private DynamicCallLocalCursor(
-                RuntimePlan<Item> functionItemPlan,
-                List<? extends RuntimePlan<Item>> functionArguments,
+                ItemRuntimePlan functionItemPlan,
+                List<? extends ItemRuntimePlan> functionArguments,
                 boolean partialApplication,
                 ExecutionMode callerExecutionMode,
                 RuntimeStaticContext staticContext,

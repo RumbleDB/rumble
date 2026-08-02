@@ -34,7 +34,6 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -54,12 +53,12 @@ public class ArrayFoldRightFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> arrayIterator;
-    private final RuntimePlan<Item> zeroIterator;
-    private final RuntimePlan<Item> functionIterator;
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan zeroIterator;
+    private final ItemRuntimePlan functionIterator;
 
     public ArrayFoldRightFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -120,7 +119,7 @@ public class ArrayFoldRightFunctionIterator extends ItemRuntimePlan
         return accumulator;
     }
 
-    private RuntimePlan<Item> createSequenceIterator(List<Item> items) {
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -131,7 +130,7 @@ public class ArrayFoldRightFunctionIterator extends ItemRuntimePlan
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
-        List<RuntimePlan<Item>> childIterators = new ArrayList<>(
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(
                 items.size()
         );
         for (Item item : items) {
@@ -159,16 +158,16 @@ public class ArrayFoldRightFunctionIterator extends ItemRuntimePlan
             List<Item> accumulator,
             DynamicContext context
     ) {
-        RuntimePlan<Item> memberIterator = createSequenceIterator(
+        ItemRuntimePlan memberIterator = createSequenceIterator(
             memberSequence
         );
-        RuntimePlan<Item> accIterator = createSequenceIterator(accumulator);
+        ItemRuntimePlan accIterator = createSequenceIterator(accumulator);
 
-        List<RuntimePlan<Item>> arguments = new ArrayList<>(2);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(2);
         arguments.add(memberIterator);
         arguments.add(accIterator);
 
-        RuntimePlan<Item> functionCall = NamedFunctions
+        ItemRuntimePlan functionCall = NamedFunctions
             .buildFunctionItemCallIterator(
                 functionItem,
                 this.staticContext,

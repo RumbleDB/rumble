@@ -20,13 +20,14 @@
 
 package org.rumbledb.items;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -47,11 +48,11 @@ public class LazyObjectItem extends AbstractMapItem {
     final transient private Map<String, LazyValue> lazyValues;
 
     public class LazyValue {
-        private final RuntimePlan<Item> iterator;
+        private final ItemRuntimePlan iterator;
         private final DynamicContext context;
         private final boolean isArray;
 
-        public LazyValue(RuntimePlan<Item> iterator, DynamicContext context, boolean isArray) {
+        public LazyValue(ItemRuntimePlan iterator, DynamicContext context, boolean isArray) {
             this.iterator = iterator;
             this.context = context;
             this.isArray = isArray;
@@ -242,7 +243,7 @@ public class LazyObjectItem extends AbstractMapItem {
     }
 
     @Override
-    public void putLazyItemByKey(String key, RuntimePlan<Item> iterator, DynamicContext context, boolean isArray) {
+    public void putLazyItemByKey(String key, ItemRuntimePlan iterator, DynamicContext context, boolean isArray) {
         this.keys.add(key);
         LazyValue lv = new LazyValue(iterator, context, isArray);
         this.lazyValues.put(key, lv);

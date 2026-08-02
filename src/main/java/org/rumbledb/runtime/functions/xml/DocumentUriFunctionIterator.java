@@ -19,6 +19,8 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -26,7 +28,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -63,7 +64,7 @@ public class DocumentUriFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
 
     public DocumentUriFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

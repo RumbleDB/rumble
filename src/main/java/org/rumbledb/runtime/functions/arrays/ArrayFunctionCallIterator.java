@@ -11,7 +11,6 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -82,11 +81,11 @@ public class ArrayFunctionCallIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     private final Item arrayItem;
-    private final RuntimePlan<Item> indexIterator;
+    private final ItemRuntimePlan indexIterator;
 
     public ArrayFunctionCallIterator(
             Item arrayItem,
-            RuntimePlan<Item> indexIterator,
+            ItemRuntimePlan indexIterator,
             RuntimeStaticContext staticContext
     ) {
         super(indexIterator == null ? null : Collections.singletonList(indexIterator), staticContext);

@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.io;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 
@@ -10,7 +12,6 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -32,7 +33,7 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public DocFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

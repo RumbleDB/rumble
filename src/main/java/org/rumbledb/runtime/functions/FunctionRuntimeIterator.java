@@ -20,13 +20,14 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -40,13 +41,13 @@ public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     private final Name functionName;
     private final Map<Name, SequenceType> paramNameToSequenceTypes;
     final SequenceType returnType;
-    final RuntimePlan<Item> bodyIterator;
+    final ItemRuntimePlan bodyIterator;
 
     public FunctionRuntimeIterator(
             Name functionName,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
-            RuntimePlan<Item> bodyIterator,
+            ItemRuntimePlan bodyIterator,
             RuntimeStaticContext staticContext
     ) {
         super(List.of(), staticContext);

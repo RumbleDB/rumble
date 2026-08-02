@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -33,7 +35,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -55,7 +56,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
     private static final long serialVersionUID = 1L;
     private final Name staticElementName;
     private final DataFunctionIterator nameIterator;
-    private final RuntimePlan<Item> contentIterator;
+    private final ItemRuntimePlan contentIterator;
 
     /**
      * Constructor for static element name: element elementName { content }
@@ -66,7 +67,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
      */
     public ComputedElementConstructorRuntimeIterator(
             Name staticElementName,
-            RuntimePlan<Item> contentIterator,
+            ItemRuntimePlan contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(contentIterator), staticContext);
@@ -84,7 +85,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
      */
     public ComputedElementConstructorRuntimeIterator(
             DataFunctionIterator nameIterator,
-            RuntimePlan<Item> contentIterator,
+            ItemRuntimePlan contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -105,7 +106,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
     }
 
     private Item createElement(
-            BiFunction<RuntimePlan<Item>, DynamicContext, List<Item>> materialize,
+            BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize,
             DynamicContext dynamicContext
     ) {
         // Check if this is the top-level runtime iterator for XML tree building

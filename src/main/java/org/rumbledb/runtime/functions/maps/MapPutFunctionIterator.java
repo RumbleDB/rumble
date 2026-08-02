@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.maps;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +15,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:put}:
@@ -30,12 +31,12 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> mapIterator;
-    private final RuntimePlan<Item> keyIterator;
-    private final RuntimePlan<Item> valueIterator;
+    private final ItemRuntimePlan mapIterator;
+    private final ItemRuntimePlan keyIterator;
+    private final ItemRuntimePlan valueIterator;
 
     public MapPutFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

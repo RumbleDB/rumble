@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -30,7 +32,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import java.io.Serial;
@@ -45,7 +46,7 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public AvgFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -53,7 +54,7 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        RuntimePlan<Item> child = this.getChild(0);
+        ItemRuntimePlan child = this.getChild(0);
         if (!child.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return computeLocalAverage(child, context, getMetadata());
         }
@@ -95,7 +96,7 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private static Item computeLocalAverage(
-            RuntimePlan<Item> plan,
+            ItemRuntimePlan plan,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {

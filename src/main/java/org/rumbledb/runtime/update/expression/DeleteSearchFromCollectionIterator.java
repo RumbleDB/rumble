@@ -1,11 +1,12 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
@@ -20,10 +21,10 @@ public class DeleteSearchFromCollectionIterator extends UpdatingExpressionIterat
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> contentIterator;
+    private final ItemRuntimePlan contentIterator;
 
     public DeleteSearchFromCollectionIterator(
-            RuntimePlan<Item> contentIterator,
+            ItemRuntimePlan contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(contentIterator), staticContext.toBuilder().isUpdating(true).build());

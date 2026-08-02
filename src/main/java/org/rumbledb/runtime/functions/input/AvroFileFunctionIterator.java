@@ -33,7 +33,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
@@ -46,7 +45,7 @@ public class AvroFileFunctionIterator extends ItemRuntimePlan implements DataFra
     private static final long serialVersionUID = 1L;
 
     public AvroFileFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

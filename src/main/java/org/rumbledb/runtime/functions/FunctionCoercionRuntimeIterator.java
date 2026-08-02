@@ -21,7 +21,6 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -123,7 +122,7 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
         return callableItem.getBodyIterator().getRuntimeStaticContext().getExecutionMode();
     }
 
-    private RuntimePlan<Item> buildDelegate(DynamicContext context) {
+    private ItemRuntimePlan buildDelegate(DynamicContext context) {
         return buildDelegate(
             this.callableItem,
             this.parameterNames,
@@ -134,7 +133,7 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
         );
     }
 
-    private static RuntimePlan<Item> buildDelegate(
+    private static ItemRuntimePlan buildDelegate(
             Item callableItem,
             List<Name> parameterNames,
             SequenceType expectedReturnType,
@@ -142,7 +141,7 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
-        List<RuntimePlan<Item>> arguments = new ArrayList<>(
+        List<ItemRuntimePlan> arguments = new ArrayList<>(
                 parameterNames.size()
         );
         for (Name parameterName : parameterNames) {
@@ -168,7 +167,7 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
                     staticContext.getMetadata()
             );
         }
-        RuntimePlan<Item> callIterator = NamedFunctions
+        ItemRuntimePlan callIterator = NamedFunctions
             .buildFunctionItemCallIterator(
                 callableItem,
                 callStaticContext,
@@ -184,7 +183,7 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
         );
     }
 
-    private static RuntimePlan<Item> buildArgumentIterator(
+    private static ItemRuntimePlan buildArgumentIterator(
             Name parameterName,
             DynamicContext context,
             RuntimeStaticContext staticContext
@@ -212,13 +211,13 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        RuntimePlan<Item> call = buildDelegate(context);
+        ItemRuntimePlan call = buildDelegate(context);
         return call.getRDD(context);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        RuntimePlan<Item> call = buildDelegate(dynamicContext);
+        ItemRuntimePlan call = buildDelegate(dynamicContext);
         return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
     }
 

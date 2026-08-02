@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -27,7 +29,6 @@ import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.xml.XMLUtils;
 
 import java.io.Serial;
@@ -41,7 +42,7 @@ public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRun
     private static final long serialVersionUID = 1L;
 
     public CodepointsToStringFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -50,7 +51,7 @@ public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRun
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         String xmlVersion = getConfiguration().getXmlVersion();
-        RuntimePlan<Item> argumentIterator = this.getChild(0);
+        ItemRuntimePlan argumentIterator = this.getChild(0);
 
         try (Cursor<Item> cursor = argumentIterator.getCursor(context)) {
             return ItemFactory.getInstance()

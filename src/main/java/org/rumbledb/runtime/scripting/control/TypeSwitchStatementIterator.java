@@ -1,10 +1,11 @@
 package org.rumbledb.runtime.scripting.control;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -19,12 +20,12 @@ import java.util.stream.Stream;
 public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> testField;
+    private final ItemRuntimePlan testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
 
     public TypeSwitchStatementIterator(
-            RuntimePlan<Item> testField,
+            ItemRuntimePlan testField,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
             RuntimeStaticContext staticContext
@@ -48,26 +49,26 @@ public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePla
         return execute(
             this.testField.materializeFirstOrNull(context),
             childContext,
-            RuntimePlan<Item>::materialize
+            ItemRuntimePlan::materialize
         );
     }
 
     private Item execute(
             Item value,
             DynamicContext childContext,
-            BiConsumer<RuntimePlan<Item>, DynamicContext> materialize
+            BiConsumer<ItemRuntimePlan, DynamicContext> materialize
     ) {
-        RuntimePlan<Item> selected = selectIterator(value, childContext);
+        ItemRuntimePlan selected = selectIterator(value, childContext);
         materialize.accept(selected, childContext);
         return null;
     }
 
-    private RuntimePlan<Item> selectIterator(
+    private ItemRuntimePlan selectIterator(
             Item value,
             DynamicContext childContext
     ) {
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
-            RuntimePlan<Item> selected =
+            ItemRuntimePlan selected =
                 testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase, value);
             if (selected != null) {
                 if (typeSwitchCase.getVariableName() != null) {
@@ -91,7 +92,7 @@ public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePla
         return this.defaultCase.getReturnIterator();
     }
 
-    private RuntimePlan<Item> testTypeMatchAndReturnCorrespondingIterator(
+    private ItemRuntimePlan testTypeMatchAndReturnCorrespondingIterator(
             TypeswitchRuntimeIteratorCase typeSwitchCase,
             Item value
     ) {

@@ -32,7 +32,6 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -61,11 +60,11 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> mapIterator;
-    private final RuntimePlan<Item> actionIterator;
+    private final ItemRuntimePlan mapIterator;
+    private final ItemRuntimePlan actionIterator;
 
     public MapForEachFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -77,8 +76,8 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
     }
 
     private static Invocation resolveInvocation(
-            RuntimePlan<Item> mapPlan,
-            RuntimePlan<Item> actionPlan,
+            ItemRuntimePlan mapPlan,
+            ItemRuntimePlan actionPlan,
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
@@ -121,12 +120,12 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
         return new Invocation(mapItem, actionFunction, keyArgumentContext, valueArgumentContext);
     }
 
-    private static RuntimePlan<Item> buildCallback(
+    private static ItemRuntimePlan buildCallback(
             Invocation invocation,
             Item key,
             RuntimeStaticContext staticContext
     ) {
-        List<RuntimePlan<Item>> valueChildren = new ArrayList<>();
+        List<ItemRuntimePlan> valueChildren = new ArrayList<>();
         List<Item> values = invocation.map.getSequenceByKey(key);
         if (values != null) {
             for (Item value : values) {
@@ -166,8 +165,8 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
 
     private static final class MapForEachLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> mapPlan;
-        private final RuntimePlan<Item> actionPlan;
+        private final ItemRuntimePlan mapPlan;
+        private final ItemRuntimePlan actionPlan;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private Invocation invocation;
@@ -175,8 +174,8 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
         private Cursor<Item> callbackCursor;
 
         private MapForEachLocalCursor(
-                RuntimePlan<Item> mapPlan,
-                RuntimePlan<Item> actionPlan,
+                ItemRuntimePlan mapPlan,
+                ItemRuntimePlan actionPlan,
                 RuntimeStaticContext staticContext,
                 DynamicContext context
         ) {
@@ -205,7 +204,7 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
                 if (!this.keys.hasNext()) {
                     return false;
                 }
-                RuntimePlan<Item> callback = buildCallback(
+                ItemRuntimePlan callback = buildCallback(
                     this.invocation,
                     this.keys.next(),
                     this.staticContext

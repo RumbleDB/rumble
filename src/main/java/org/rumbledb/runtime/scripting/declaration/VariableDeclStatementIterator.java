@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.scripting.declaration;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -7,7 +9,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanBindings;
 
 import java.io.Serial;
@@ -20,7 +21,7 @@ public class VariableDeclStatementIterator extends AbstractAtMostOneItemRuntimeP
 
     public VariableDeclStatementIterator(
             Name variableName,
-            List<? extends RuntimePlan<Item>> children,
+            List<? extends ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

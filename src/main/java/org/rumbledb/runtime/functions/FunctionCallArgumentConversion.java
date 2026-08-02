@@ -16,6 +16,8 @@
  */
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
@@ -23,7 +25,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
@@ -44,7 +45,7 @@ public final class FunctionCallArgumentConversion {
 
     public static void validateArity(
             Item functionItem,
-            List<RuntimePlan<Item>> functionArguments,
+            List<ItemRuntimePlan> functionArguments,
             ExceptionMetadata metadata
     ) {
         if (functionItem.getParameterNames().size() != functionArguments.size()) {
@@ -62,7 +63,7 @@ public final class FunctionCallArgumentConversion {
 
     public static void wrapAccordingToSignature(
             Item functionItem,
-            List<RuntimePlan<Item>> functionArguments,
+            List<ItemRuntimePlan> functionArguments,
             RuntimeStaticContext callerStaticContext
     ) {
         if (functionItem.getSignature().getParameterTypes() == null) {
@@ -104,13 +105,13 @@ public final class FunctionCallArgumentConversion {
                         )
                     );
                 } else {
-                    RuntimePlan<Item> argumentIterator = wrapForFunctionConversion(
+                    ItemRuntimePlan argumentIterator = wrapForFunctionConversion(
                         functionArguments.get(i),
                         sequenceType,
                         exceptionMessage,
                         runtimeStaticContext
                     );
-                    RuntimePlan<Item> typePromotionIterator =
+                    ItemRuntimePlan typePromotionIterator =
                         new TypePromotionIterator(
                                 argumentIterator,
                                 sequenceType,
@@ -123,8 +124,8 @@ public final class FunctionCallArgumentConversion {
         }
     }
 
-    public static RuntimePlan<Item> wrapForFunctionConversion(
-            RuntimePlan<Item> argumentIterator,
+    public static ItemRuntimePlan wrapForFunctionConversion(
+            ItemRuntimePlan argumentIterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext runtimeStaticContext
@@ -150,8 +151,8 @@ public final class FunctionCallArgumentConversion {
         return argumentIterator;
     }
 
-    public static RuntimePlan<Item> wrapAtMostOneForFunctionConversion(
-            RuntimePlan<Item> argumentIterator,
+    public static ItemRuntimePlan wrapAtMostOneForFunctionConversion(
+            ItemRuntimePlan argumentIterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext runtimeStaticContext

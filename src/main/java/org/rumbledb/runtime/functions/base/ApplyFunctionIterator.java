@@ -22,7 +22,6 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -41,14 +40,14 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
     }
 
     private static final class ApplyLocalCursor extends AbstractDelegatingLocalCursor<Item> {
-        private final RuntimePlan<Item> functionPlan;
-        private final RuntimePlan<Item> argumentsPlan;
+        private final ItemRuntimePlan functionPlan;
+        private final ItemRuntimePlan argumentsPlan;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
 
         private ApplyLocalCursor(
-                RuntimePlan<Item> functionPlan,
-                RuntimePlan<Item> argumentsPlan,
+                ItemRuntimePlan functionPlan,
+                ItemRuntimePlan argumentsPlan,
                 RuntimeStaticContext staticContext,
                 DynamicContext context
         ) {
@@ -74,7 +73,7 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     public ApplyFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -93,13 +92,13 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
         );
     }
 
-    private RuntimePlan<Item> buildDelegate(DynamicContext context) {
+    private ItemRuntimePlan buildDelegate(DynamicContext context) {
         return buildDelegate(this.getChild(0), this.getChild(1), this.staticContext, context);
     }
 
-    private static RuntimePlan<Item> buildDelegate(
-            RuntimePlan<Item> functionPlan,
-            RuntimePlan<Item> argumentsPlan,
+    private static ItemRuntimePlan buildDelegate(
+            ItemRuntimePlan functionPlan,
+            ItemRuntimePlan argumentsPlan,
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
@@ -132,12 +131,12 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
             );
         }
 
-        List<RuntimePlan<Item>> argumentIterators = new ArrayList<>();
+        List<ItemRuntimePlan> argumentIterators = new ArrayList<>();
         for (List<Item> memberSequence : argumentsArray.getSequenceMembers()) {
             argumentIterators.add(buildArgumentIterator(memberSequence, localItemStarContext));
         }
 
-        RuntimePlan<Item> functionItemIterator = new ConstantRuntimeIterator(
+        ItemRuntimePlan functionItemIterator = new ConstantRuntimeIterator(
                 functionItem,
                 staticContext
                     .toBuilder()
@@ -152,7 +151,7 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
         );
     }
 
-    private static RuntimePlan<Item> buildArgumentIterator(
+    private static ItemRuntimePlan buildArgumentIterator(
             List<Item> memberSequence,
             RuntimeStaticContext localItemStarContext
     ) {
@@ -162,7 +161,7 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
         if (memberSequence.size() == 1) {
             return new ConstantRuntimeIterator(memberSequence.get(0), localItemStarContext);
         }
-        List<RuntimePlan<Item>> sequenceItems = new ArrayList<>(
+        List<ItemRuntimePlan> sequenceItems = new ArrayList<>(
                 memberSequence.size()
         );
         for (Item item : memberSequence) {

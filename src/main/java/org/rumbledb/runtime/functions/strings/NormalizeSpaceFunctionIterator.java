@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -27,7 +29,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -38,7 +39,7 @@ public class NormalizeSpaceFunctionIterator extends AbstractAtMostOneItemRuntime
     private static final long serialVersionUID = 1L;
 
     public NormalizeSpaceFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

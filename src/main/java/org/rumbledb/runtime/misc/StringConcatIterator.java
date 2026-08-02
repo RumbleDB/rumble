@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.misc;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.Arrays;
 
@@ -31,18 +33,17 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> leftIterator;
-    private final RuntimePlan<Item> rightIterator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
     public StringConcatIterator(
-            RuntimePlan<Item> leftIterator,
-            RuntimePlan<Item> rightIterator,
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);

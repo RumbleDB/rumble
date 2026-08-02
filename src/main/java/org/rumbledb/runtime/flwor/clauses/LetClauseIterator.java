@@ -56,7 +56,6 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -614,7 +613,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             buffer.append("  ");
         }
         buffer.append("Variable ").append(this.variableName).append("\n");
-        RuntimePlanDiagnostics.print(this.assignmentIterator, buffer, indent + 1);
+        this.assignmentIterator.print(buffer, indent + 1);
     }
 
     @Override
@@ -979,10 +978,10 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (this.child.isSparkJobNeeded()) {
             return true;
         }
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.assignmentIterator)) {
+        if (this.assignmentIterator.isSparkJobNeeded()) {
             return true;
         }
         switch (this.staticContext.getExecutionMode()) {

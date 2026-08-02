@@ -34,7 +34,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -58,12 +57,12 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> sequenceIterator1;
-    private final RuntimePlan<Item> sequenceIterator2;
-    private final RuntimePlan<Item> actionIterator;
+    private final ItemRuntimePlan sequenceIterator1;
+    private final ItemRuntimePlan sequenceIterator2;
+    private final ItemRuntimePlan actionIterator;
 
     public ForEachPairFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -76,7 +75,7 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
     }
 
     private static Item resolveAction(
-            RuntimePlan<Item> actionPlan,
+            ItemRuntimePlan actionPlan,
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
@@ -107,7 +106,7 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
             .build();
     }
 
-    private static RuntimePlan<Item> buildCallback(
+    private static ItemRuntimePlan buildCallback(
             Item action,
             Item first,
             Item second,
@@ -128,9 +127,9 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
 
     private static final class ForEachPairLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> firstPlan;
-        private final RuntimePlan<Item> secondPlan;
-        private final RuntimePlan<Item> actionPlan;
+        private final ItemRuntimePlan firstPlan;
+        private final ItemRuntimePlan secondPlan;
+        private final ItemRuntimePlan actionPlan;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private List<Item> firstItems;
@@ -141,9 +140,9 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
         private Cursor<Item> callbackCursor;
 
         private ForEachPairLocalCursor(
-                RuntimePlan<Item> firstPlan,
-                RuntimePlan<Item> secondPlan,
-                RuntimePlan<Item> actionPlan,
+                ItemRuntimePlan firstPlan,
+                ItemRuntimePlan secondPlan,
+                ItemRuntimePlan actionPlan,
                 RuntimeStaticContext staticContext,
                 DynamicContext context
         ) {
@@ -171,7 +170,7 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
                 if (this.pairIndex >= Math.min(this.firstItems.size(), this.secondItems.size())) {
                     return false;
                 }
-                RuntimePlan<Item> callback = buildCallback(
+                ItemRuntimePlan callback = buildCallback(
                     this.action,
                     this.firstItems.get(this.pairIndex),
                     this.secondItems.get(this.pairIndex),

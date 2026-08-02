@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.scripting.loops;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -7,7 +9,6 @@ import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.EffectiveBooleanValue;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -15,12 +16,12 @@ import java.util.Arrays;
 public class WhileStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> testConditionIterator;
-    private final RuntimePlan<Item> bodyIterator;
+    private final ItemRuntimePlan testConditionIterator;
+    private final ItemRuntimePlan bodyIterator;
 
     public WhileStatementIterator(
-            RuntimePlan<Item> testConditionIterator,
-            RuntimePlan<Item> bodyIterator,
+            ItemRuntimePlan testConditionIterator,
+            ItemRuntimePlan bodyIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

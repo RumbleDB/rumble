@@ -20,6 +20,8 @@
 
 package org.rumbledb.items;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +40,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -61,7 +62,7 @@ public class FunctionItem implements Item {
      */
     private FunctionSignature signature;
 
-    private RuntimePlan<Item> bodyIterator;
+    private ItemRuntimePlan bodyIterator;
 
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
@@ -100,7 +101,7 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimePlan<Item> bodyIterator
+            ItemRuntimePlan bodyIterator
     ) {
         this(identifier, parameterNames, signature, dynamicModuleContext, bodyIterator, false);
     }
@@ -110,7 +111,7 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimePlan<Item> bodyIterator,
+            ItemRuntimePlan bodyIterator,
             boolean isBuiltin
     ) {
         this.identifier = identifier;
@@ -129,7 +130,7 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimePlan<Item> bodyIterator,
+            ItemRuntimePlan bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
             Map<Name, HomogeneousItemDataFrame> DFVariablesInClosure
@@ -152,7 +153,7 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimePlan<Item> bodyIterator,
+            ItemRuntimePlan bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
             Map<Name, HomogeneousItemDataFrame> DFVariablesInClosure,
@@ -174,7 +175,7 @@ public class FunctionItem implements Item {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimePlan<Item> bodyIterator,
+            ItemRuntimePlan bodyIterator,
             boolean isUpdating
     ) {
         this(name, paramNameToSequenceTypes, returnType, dynamicModuleContext, bodyIterator, isUpdating, false);
@@ -185,7 +186,7 @@ public class FunctionItem implements Item {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimePlan<Item> bodyIterator,
+            ItemRuntimePlan bodyIterator,
             boolean isUpdating,
             boolean isBuiltin
     ) {
@@ -233,7 +234,7 @@ public class FunctionItem implements Item {
     }
 
     @Override
-    public RuntimePlan<Item> getBodyIterator() {
+    public ItemRuntimePlan getBodyIterator() {
         return this.bodyIterator;
     }
 

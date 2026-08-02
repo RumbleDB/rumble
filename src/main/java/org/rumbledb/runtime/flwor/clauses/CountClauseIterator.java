@@ -44,7 +44,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
@@ -252,7 +251,7 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (this.child.isSparkJobNeeded()) {
             return true;
         }
         switch (this.staticContext.getExecutionMode()) {

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -30,7 +32,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 
 import java.io.Serial;
@@ -51,19 +52,19 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
     @Serial
     private static final long serialVersionUID = 1L;
     private final Name elementName;
-    private final List<RuntimePlan<Item>> content;
+    private final List<ItemRuntimePlan> content;
     private final List<AttributeNodeRuntimeIterator> attributes;
     private final List<NamespaceDeclaration> namespaceDeclarations;
 
     public DirElemConstructorRuntimeIterator(
             Name elementName,
-            List<RuntimePlan<Item>> content,
+            List<ItemRuntimePlan> content,
             List<AttributeNodeRuntimeIterator> attributes,
             List<NamespaceDeclaration> namespaceDeclarations,
             RuntimeStaticContext staticContext
     ) {
         super(
-            Stream.concat(attributes.stream().<RuntimePlan<Item>>map(iterator -> iterator), content.stream()).toList(),
+            Stream.concat(attributes.stream().<ItemRuntimePlan>map(iterator -> iterator), content.stream()).toList(),
             staticContext
         );
         this.content = content;
@@ -81,7 +82,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
     }
 
     private Item createElement(
-            BiFunction<RuntimePlan<Item>, DynamicContext, List<Item>> materialize,
+            BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize,
             DynamicContext dynamicContext
     ) {
         // Check if this is the top-level runtime iterator for XML tree building
@@ -103,7 +104,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             StringBuilder textAccumulator = null;
             boolean hasSeenNonAttributeNode = false;
 
-            for (RuntimePlan<Item> iterator : this.content) {
+            for (ItemRuntimePlan iterator : this.content) {
                 boolean previousItemWasAtomic = false;
                 for (Item childItem : materialize.apply(iterator, contextToUse)) {
                     List<Item> expandedItems = new ArrayList<>();
@@ -201,7 +202,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         }
         // process regular attributes
         if (this.attributes != null) {
-            for (RuntimePlan<Item> iterator : this.attributes) {
+            for (ItemRuntimePlan iterator : this.attributes) {
                 for (Item item : materialize.apply(iterator, contextToUse)) {
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {

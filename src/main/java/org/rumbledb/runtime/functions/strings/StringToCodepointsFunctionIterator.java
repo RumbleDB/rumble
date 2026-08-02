@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,7 +30,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -39,7 +40,7 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
     private static final long serialVersionUID = 1L;
 
     public StringToCodepointsFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -56,13 +57,13 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
 
     private static final class StringToCodepointsLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> argumentPlan;
+        private final ItemRuntimePlan argumentPlan;
         private final DynamicContext context;
         private String input;
         private int position;
 
         private StringToCodepointsLocalCursor(
-                RuntimePlan<Item> argumentPlan,
+                ItemRuntimePlan argumentPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

@@ -34,7 +34,6 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -60,11 +59,11 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> sequenceIterator;
-    private final RuntimePlan<Item> actionIterator;
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan actionIterator;
 
     public ForEachFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -76,7 +75,7 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
     }
 
     private static Item resolveAction(
-            RuntimePlan<Item> actionIterator,
+            ItemRuntimePlan actionIterator,
             DynamicContext context,
             RuntimeStaticContext staticContext
     ) {
@@ -110,7 +109,7 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        List<RuntimePlan<Item>> callbackArguments = new ArrayList<>(1);
+        List<ItemRuntimePlan> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(new ConstantRuntimeIterator(item, argumentContext));
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
             .configuration(staticContext.getConfiguration())
@@ -118,7 +117,7 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        RuntimePlan<Item> callback = new DynamicFunctionCallIterator(
+        ItemRuntimePlan callback = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(function, functionItemContext),
                 callbackArguments,
                 functionItemContext
@@ -135,8 +134,8 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
 
     private static final class ForEachLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> sequencePlan;
-        private final RuntimePlan<Item> actionPlan;
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan actionPlan;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
         private Cursor<Item> sequenceCursor;
@@ -144,8 +143,8 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
         private Iterator<Item> currentResults;
 
         private ForEachLocalCursor(
-                RuntimePlan<Item> sequencePlan,
-                RuntimePlan<Item> actionPlan,
+                ItemRuntimePlan sequencePlan,
+                ItemRuntimePlan actionPlan,
                 DynamicContext context,
                 RuntimeStaticContext staticContext
         ) {

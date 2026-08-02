@@ -18,7 +18,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.types.SequenceType;
 
@@ -30,21 +29,21 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final List<RuntimePlan<Item>> children;
+    private final List<ItemRuntimePlan> children;
 
     protected ItemRuntimePlan(
-            @NonNull List<? extends RuntimePlan<Item>> children,
+            @NonNull List<? extends ItemRuntimePlan> children,
             @NonNull RuntimeStaticContext staticContext
     ) {
         super(staticContext, ItemRuntimeDataFrameFactory.INSTANCE);
         this.children = new ArrayList<>(children);
     }
 
-    protected final RuntimePlan<Item> getChild(int index) {
+    protected final ItemRuntimePlan getChild(int index) {
         return this.children.get(index);
     }
 
-    protected final List<RuntimePlan<Item>> getChildren() {
+    protected final List<ItemRuntimePlan> getChildren() {
         return this.children;
     }
 
@@ -52,13 +51,30 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item> {
         return this.staticContext.getStaticType();
     }
 
+    public boolean isSparkJobNeeded() {
+        return this.staticContext.getExecutionMode().isRDDOrDataFrame()
+            || this.children.stream().anyMatch(ItemRuntimePlan::isSparkJobNeeded);
+    }
+
+    public void print(StringBuilder buffer, int indent) {
+        for (int i = 0; i < indent; i++) {
+            buffer.append("  ");
+        }
+        buffer.append(this.getClass().getSimpleName())
+            .append(" | ")
+            .append(this.staticContext.getExecutionMode())
+            .append(" | ")
+            .append(this.staticContext.getStaticType())
+            .append('\n');
+        for (ItemRuntimePlan child : this.children) {
+            child.print(buffer, indent + 1);
+        }
+    }
+
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
-        for (RuntimePlan<Item> child : this.children) {
-            if (!(child instanceof ItemRuntimePlan itemPlan)) {
-                throw new OurBadException("Item runtime plans can only have item runtime plan children.");
-            }
-            DynamicContext.mergeVariableDependencies(result, itemPlan.getVariableDependencies());
+        for (ItemRuntimePlan child : this.children) {
+            DynamicContext.mergeVariableDependencies(result, child.getVariableDependencies());
         }
         return result;
     }

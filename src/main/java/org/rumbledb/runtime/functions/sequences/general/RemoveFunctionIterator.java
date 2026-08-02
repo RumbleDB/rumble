@@ -32,7 +32,6 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import lombok.NonNull;
 import java.io.Serial;
@@ -46,13 +45,13 @@ public class RemoveFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> sequenceIterator;
-    private final RuntimePlan<Item> positionIterator;
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan positionIterator;
     private int removePosition; // position to remove the item
 
 
     public RemoveFunctionIterator(
-            List<RuntimePlan<Item>> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -84,8 +83,8 @@ public class RemoveFunctionIterator extends ItemRuntimePlan
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimePlan<Item> sequencePlan;
-        private final RuntimePlan<Item> positionPlan;
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan positionPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> sequenceCursor;
@@ -93,8 +92,8 @@ public class RemoveFunctionIterator extends ItemRuntimePlan
         private int currentPosition;
 
         private EvaluationCursor(
-                @NonNull RuntimePlan<Item> sequencePlan,
-                @NonNull RuntimePlan<Item> positionPlan,
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan positionPlan,
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {

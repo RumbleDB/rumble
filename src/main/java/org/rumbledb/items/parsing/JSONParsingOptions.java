@@ -1,5 +1,7 @@
 package org.rumbledb.items.parsing;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -8,7 +10,6 @@ import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -119,9 +120,9 @@ public final class JSONParsingOptions {
                 .metadata(metadata)
                 .build();
 
-            List<RuntimePlan<Item>> arguments = new ArrayList<>(1);
+            List<ItemRuntimePlan> arguments = new ArrayList<>(1);
             arguments.add(new StringRuntimeIterator(escapedSequence, callContext));
-            RuntimePlan<Item> call = NamedFunctions.buildFunctionItemCallIterator(
+            ItemRuntimePlan call = NamedFunctions.buildFunctionItemCallIterator(
                 functionItem,
                 callContext,
                 ExecutionMode.LOCAL,

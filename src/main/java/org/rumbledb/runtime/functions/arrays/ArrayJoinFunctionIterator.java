@@ -17,7 +17,8 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 
 
 import org.rumbledb.api.Item;
@@ -40,10 +41,10 @@ public class ArrayJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> arraysIterator;
+    private final ItemRuntimePlan arraysIterator;
 
     public ArrayJoinFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

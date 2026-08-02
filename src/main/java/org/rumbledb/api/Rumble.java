@@ -1,5 +1,7 @@
 package org.rumbledb.api;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import lombok.Getter;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.compiler.VisitorHelpers;
@@ -7,7 +9,6 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -72,7 +73,7 @@ public class Rumble {
             this.compilationConfiguration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimePlan<Item> plan = VisitorHelpers.generateRuntimeIterator(
+        ItemRuntimePlan plan = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             this.configuration
         );
@@ -104,7 +105,7 @@ public class Rumble {
             this.compilationConfiguration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimePlan<Item> plan = VisitorHelpers.generateRuntimeIterator(
+        ItemRuntimePlan plan = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             this.configuration
         );

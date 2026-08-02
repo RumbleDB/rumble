@@ -17,7 +17,6 @@ import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * Item plan that evaluates at most one item and exposes that evaluation as a native cursor.
@@ -30,7 +29,7 @@ public abstract class AbstractAtMostOneItemRuntimePlan extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     protected AbstractAtMostOneItemRuntimePlan(
-            List<? extends RuntimePlan<Item>> children,
+            List<? extends ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

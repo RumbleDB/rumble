@@ -57,7 +57,6 @@ import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -162,7 +161,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
 
         // for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> r : rightHandSideEqualityCriteria) {
         // StringBuilder sb = new StringBuilder();
-        // org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(r, sb, 2);
+        // org.rumbledb.runtime.plan.r.print(sb, 2);
         // System.out.println(sb.toString());
         // }
 
@@ -512,7 +511,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
+        if (this.child.isSparkJobNeeded()) {
             return true;
         }
         switch (this.staticContext.getExecutionMode()) {

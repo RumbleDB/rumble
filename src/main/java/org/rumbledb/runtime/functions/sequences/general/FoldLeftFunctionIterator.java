@@ -14,7 +14,6 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -35,12 +34,12 @@ public class FoldLeftFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimePlan<Item> sequenceIterator;
-    private final RuntimePlan<Item> zeroIterator;
-    private final RuntimePlan<Item> functionIterator;
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan zeroIterator;
+    private final ItemRuntimePlan functionIterator;
 
     public FoldLeftFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -78,7 +77,7 @@ public class FoldLeftFunctionIterator extends ItemRuntimePlan
                                 inputItem,
                                 localItemStarContext
                         );
-                    RuntimePlan<Item> functionCall = NamedFunctions
+                    ItemRuntimePlan functionCall = NamedFunctions
                         .buildFunctionItemCallIterator(
                             functionItem,
                             this.staticContext,
@@ -103,12 +102,12 @@ public class FoldLeftFunctionIterator extends ItemRuntimePlan
     private static final class ReusableFunctionCall {
         private final ConstantRuntimeIterator accumulatorArgument;
         private final ConstantRuntimeIterator currentItemArgument;
-        private final RuntimePlan<Item> functionCall;
+        private final ItemRuntimePlan functionCall;
 
         private ReusableFunctionCall(
                 ConstantRuntimeIterator accumulatorArgument,
                 ConstantRuntimeIterator currentItemArgument,
-                RuntimePlan<Item> functionCall
+                ItemRuntimePlan functionCall
         ) {
             this.accumulatorArgument = accumulatorArgument;
             this.currentItemArgument = currentItemArgument;
@@ -116,7 +115,7 @@ public class FoldLeftFunctionIterator extends ItemRuntimePlan
         }
     }
 
-    private RuntimePlan<Item> createSequenceIterator(List<Item> items) {
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         RuntimeStaticContext localItemStarContext = RuntimeStaticContext.builder()
             .configuration(getConfiguration())
             .staticType(SequenceType.createSequenceType("item*"))
@@ -127,7 +126,7 @@ public class FoldLeftFunctionIterator extends ItemRuntimePlan
             return new CommaExpressionIterator(Collections.emptyList(), localItemStarContext);
         }
 
-        List<RuntimePlan<Item>> childIterators = new ArrayList<>(
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(
                 items.size()
         );
         for (Item item : items) {
@@ -142,11 +141,11 @@ public class FoldLeftFunctionIterator extends ItemRuntimePlan
             List<Item> currentItemSequence,
             DynamicContext context
     ) {
-        List<RuntimePlan<Item>> arguments = new ArrayList<>(2);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(2);
         arguments.add(createSequenceIterator(accumulator));
         arguments.add(createSequenceIterator(currentItemSequence));
 
-        RuntimePlan<Item> functionCall = NamedFunctions
+        ItemRuntimePlan functionCall = NamedFunctions
             .buildFunctionItemCallIterator(
                 functionItem,
                 this.staticContext,

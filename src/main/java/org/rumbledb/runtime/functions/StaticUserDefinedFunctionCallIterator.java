@@ -21,7 +21,6 @@
 package org.rumbledb.runtime.functions;
 
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -94,7 +93,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
-                    new ArrayList<RuntimePlan<Item>>(this.functionArguments),
+                    new ArrayList<ItemRuntimePlan>(this.functionArguments),
                     false
                 );
             return call.getRDD(dynamicContext);
@@ -110,7 +109,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
-                    new ArrayList<RuntimePlan<Item>>(this.functionArguments),
+                    new ArrayList<ItemRuntimePlan>(this.functionArguments),
                     false
                 );
             return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
@@ -141,7 +140,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
             .getUserDefinedFunctionCallIterator(
                 this.functionIdentifier,
                 this.staticContext,
-                new ArrayList<RuntimePlan<Item>>(this.functionArguments),
+                new ArrayList<ItemRuntimePlan>(this.functionArguments),
                 false
             );
         return UpdatingRuntimePlan.get(call, context);
@@ -180,7 +179,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
-                    new ArrayList<RuntimePlan<Item>>(this.functionArguments),
+                    new ArrayList<ItemRuntimePlan>(this.functionArguments),
                     this.tailCallOptimizationCandidate
                 );
             openDelegate(call);

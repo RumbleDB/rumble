@@ -8,7 +8,6 @@ import org.rumbledb.items.parsing.StringToStringItemMapper;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-import org.rumbledb.runtime.plan.RuntimePlan;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
@@ -23,7 +22,7 @@ public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implement
     private static final Pattern LINE_SPLIT_PATTERN = Pattern.compile("\r\n|\r|\n");
 
     public UnparsedTextLinesFunctionIterator(
-            List<RuntimePlan<Item>> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -31,7 +30,7 @@ public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implement
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        RuntimePlan<Item> hrefIterator = this.getChild(0);
+        ItemRuntimePlan hrefIterator = this.getChild(0);
         Item hrefItem = hrefIterator.materializeFirstOrNull(context);
         if (hrefItem == null) {
             return SparkSessionManager.getInstance()
