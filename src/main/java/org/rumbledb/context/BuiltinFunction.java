@@ -4,7 +4,7 @@ import lombok.EqualsAndHashCode;
 
 import lombok.Getter;
 import org.rumbledb.api.Item;
-import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 
 @Getter
@@ -26,13 +26,13 @@ public class BuiltinFunction {
 
     private FunctionIdentifier identifier;
     private final FunctionSignature signature;
-    private final Class<? extends RuntimePlan<Item>> functionIteratorClass;
+    private final Class<? extends ItemRuntimePlan> functionIteratorClass;
     private final BuiltinFunctionExecutionMode builtinFunctionExecutionMode;
 
     BuiltinFunction(
             FunctionIdentifier identifier,
             FunctionSignature signature,
-            Class<? extends RuntimePlan<Item>> functionIteratorClass,
+            Class<? extends ItemRuntimePlan> functionIteratorClass,
             BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         this.identifier = identifier;

@@ -234,14 +234,14 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
         ) {
             return null;
         }
-        ItemRuntimePlan left = (ItemRuntimePlan) comparisonIterator.getLeftIterator();
+        ItemRuntimePlan left = comparisonIterator.getLeftIterator();
         if (!(left instanceof VariableReferenceIterator varRef)) {
             return null;
         }
         if (!varRef.getVariableName().equals(countVariable)) {
             return null;
         }
-        ItemRuntimePlan right = (ItemRuntimePlan) comparisonIterator.getRightIterator();
+        ItemRuntimePlan right = comparisonIterator.getRightIterator();
         Set<Name> usedVariables = right.getVariableDependencies().keySet();
         Set<Name> tuples = countClauseIterator.getOutputTupleVariableNames();
         usedVariables.retainAll(tuples);

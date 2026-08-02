@@ -1392,7 +1392,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
         ItemRuntimePlan runtimeIterator = null;
         if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
-            runtimeIterator = (ItemRuntimePlan) NamedFunctions.getBuiltInFunctionIterator(
+            runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
                 asRuntimePlans(arguments),
                 // Note: passing the static context of the function call expression makes

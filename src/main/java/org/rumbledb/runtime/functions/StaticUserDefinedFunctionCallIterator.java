@@ -90,7 +90,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         try {
-            ItemRuntimePlan call = (ItemRuntimePlan) dynamicContext.getNamedFunctions()
+            ItemRuntimePlan call = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
@@ -106,7 +106,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         try {
-            ItemRuntimePlan call = (ItemRuntimePlan) dynamicContext.getNamedFunctions()
+            ItemRuntimePlan call = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
@@ -137,7 +137,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
         if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
-        ItemRuntimePlan call = (ItemRuntimePlan) context.getNamedFunctions()
+        ItemRuntimePlan call = context.getNamedFunctions()
             .getUserDefinedFunctionCallIterator(
                 this.functionIdentifier,
                 this.staticContext,
@@ -176,7 +176,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
 
         @Override
         protected void openLocal() {
-            ItemRuntimePlan call = (ItemRuntimePlan) this.context.getNamedFunctions()
+            ItemRuntimePlan call = this.context.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
@@ -190,7 +190,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
                     && isTailCall(this.nextResult)
             ) {
                 closeDelegate();
-                ItemRuntimePlan tailCall = (ItemRuntimePlan) NamedFunctions
+                ItemRuntimePlan tailCall = NamedFunctions
                     .buildFunctionItemCallIterator(
                         this.nextResult,
                         this.staticContext,

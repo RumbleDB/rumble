@@ -31,7 +31,7 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -39,12 +39,12 @@ public class AndOperationIterator extends AbstractAtMostOneItemRuntimePlan imple
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimePlan<Item> leftIterator;
-    private final RuntimePlan<Item> rightIterator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
     public AndOperationIterator(
-            RuntimePlan<Item> leftIterator,
-            RuntimePlan<Item> rightIterator,
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
@@ -52,11 +52,11 @@ public class AndOperationIterator extends AbstractAtMostOneItemRuntimePlan imple
         this.rightIterator = rightIterator;
     }
 
-    public RuntimePlan<Item> getLeftIterator() {
+    public ItemRuntimePlan getLeftIterator() {
         return this.leftIterator;
     }
 
-    public RuntimePlan<Item> getRightIterator() {
+    public ItemRuntimePlan getRightIterator() {
         return this.rightIterator;
     }
 

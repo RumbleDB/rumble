@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.api.Item;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
@@ -65,7 +66,7 @@ public class NamedFunctions implements Serializable {
     /**
      * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()}.
      */
-    public RuntimePlan<Item> getUserDefinedFunctionCallIterator(
+    public ItemRuntimePlan getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
             RuntimeStaticContext callerRuntimeContext,
             List<RuntimePlan<Item>> arguments,
@@ -92,7 +93,7 @@ public class NamedFunctions implements Serializable {
      * Builds a dynamic function-item call using configuration and metadata from {@code callerRuntimeContext} and the
      * callee's {@code executionModeForFunctionCall}
      */
-    public static RuntimePlan<Item> buildFunctionItemCallIterator(
+    public static ItemRuntimePlan buildFunctionItemCallIterator(
             Item functionItem,
             RuntimeStaticContext callerRuntimeContext,
             ExecutionMode executionModeForFunctionCall,
@@ -128,7 +129,7 @@ public class NamedFunctions implements Serializable {
             .staticType(innerSequenceType)
             .executionMode(executionModeForFunctionCall)
             .build();
-        RuntimePlan<Item> functionCallIterator;
+        ItemRuntimePlan functionCallIterator;
         if (functionItem.isBuiltinFunction()) {
             if (arguments.stream().anyMatch(a -> a == null)) {
                 throw new UnsupportedFeatureException(
@@ -210,7 +211,7 @@ public class NamedFunctions implements Serializable {
         return functionItem.copyForLookup();
     }
 
-    public static RuntimePlan<Item> getBuiltInFunctionIterator(
+    public static ItemRuntimePlan getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
             List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext callerStaticContext,
@@ -294,10 +295,10 @@ public class NamedFunctions implements Serializable {
                 .build();
         }
 
-        RuntimePlan<Item> functionCallIterator;
+        ItemRuntimePlan functionCallIterator;
         try {
             if (builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
-                Constructor<? extends RuntimePlan<Item>> constructor = builtinFunction.getFunctionIteratorClass()
+                Constructor<? extends ItemRuntimePlan> constructor = builtinFunction.getFunctionIteratorClass()
                     .getConstructor(FunctionIdentifier.class, List.class, RuntimeStaticContext.class);
                 functionCallIterator = constructor.newInstance(
                     builtinFunction.getIdentifier(),
@@ -305,7 +306,7 @@ public class NamedFunctions implements Serializable {
                     delegateContext
                 );
             } else {
-                Constructor<? extends RuntimePlan<Item>> constructor = builtinFunction.getFunctionIteratorClass()
+                Constructor<? extends ItemRuntimePlan> constructor = builtinFunction.getFunctionIteratorClass()
                     .getConstructor(List.class, RuntimeStaticContext.class);
                 functionCallIterator = constructor.newInstance(arguments, delegateContext);
             }

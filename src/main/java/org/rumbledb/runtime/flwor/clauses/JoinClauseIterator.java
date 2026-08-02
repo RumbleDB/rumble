@@ -383,12 +383,12 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
             ItemRuntimePlan iterator = candidateIterators.pop();
             if (iterator instanceof AndOperationIterator andOperationIterator) {
                 AndOperationIterator andIterator = andOperationIterator;
-                candidateIterators.push((ItemRuntimePlan) andIterator.getLeftIterator());
-                candidateIterators.push((ItemRuntimePlan) andIterator.getRightIterator());
+                candidateIterators.push(andIterator.getLeftIterator());
+                candidateIterators.push(andIterator.getRightIterator());
             } else if (iterator instanceof ComparisonIterator comparisonIterator) {
                 if (comparisonIterator.isValueEquality()) {
-                    ItemRuntimePlan lhs = (ItemRuntimePlan) comparisonIterator.getLeftIterator();
-                    ItemRuntimePlan rhs = (ItemRuntimePlan) comparisonIterator.getRightIterator();
+                    ItemRuntimePlan lhs = comparisonIterator.getLeftIterator();
+                    ItemRuntimePlan rhs = comparisonIterator.getRightIterator();
 
                     Set<Name> leftComparisonDependencies = new HashSet<>(
                             lhs.getVariableDependencies().keySet()

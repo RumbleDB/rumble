@@ -527,8 +527,8 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         while (!candidateIterators.isEmpty()) {
             ItemRuntimePlan iterator = candidateIterators.pop();
             if (iterator instanceof AndOperationIterator andIterator) {
-                candidateIterators.push((ItemRuntimePlan) andIterator.getLeftIterator());
-                candidateIterators.push((ItemRuntimePlan) andIterator.getRightIterator());
+                candidateIterators.push(andIterator.getLeftIterator());
+                candidateIterators.push(andIterator.getRightIterator());
                 continue;
             }
             if (!(iterator instanceof ComparisonIterator comparisonIterator)) {
@@ -539,9 +539,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             }
 
             ItemRuntimePlan leftHandSideOfJoinEqualityCriterion =
-                (ItemRuntimePlan) comparisonIterator.getLeftIterator();
+                comparisonIterator.getLeftIterator();
             ItemRuntimePlan rightHandSideOfJoinEqualityCriterion =
-                (ItemRuntimePlan) comparisonIterator.getRightIterator();
+                comparisonIterator.getRightIterator();
             Set<Name> leftDependencies = new HashSet<>(
                     leftHandSideOfJoinEqualityCriterion.getVariableDependencies()
                         .keySet()
