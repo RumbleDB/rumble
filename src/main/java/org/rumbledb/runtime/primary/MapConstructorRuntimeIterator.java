@@ -43,13 +43,13 @@ public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimeP
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final List<RuntimePlan<Item>> keys;
-    private final List<RuntimePlan<Item>> values;
+    private final List<? extends RuntimePlan<Item>> keys;
+    private final List<? extends RuntimePlan<Item>> values;
     private final boolean mutable;
 
     public MapConstructorRuntimeIterator(
-            List<RuntimePlan<Item>> keys,
-            List<RuntimePlan<Item>> values,
+            List<? extends RuntimePlan<Item>> keys,
+            List<? extends RuntimePlan<Item>> values,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {

@@ -14,7 +14,7 @@ public class StatementsOnlyIterator extends AbstractAtMostOneItemRuntimePlan {
     private static final long serialVersionUID = 1L;
 
     public StatementsOnlyIterator(
-            List<RuntimePlan<Item>> children,
+            List<? extends RuntimePlan<Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(

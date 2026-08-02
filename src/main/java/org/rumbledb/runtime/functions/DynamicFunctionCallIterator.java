@@ -64,12 +64,12 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private final RuntimePlan<Item> functionItemIterator;
-    private final List<RuntimePlan<Item>> functionArguments;
+    private final List<? extends RuntimePlan<Item>> functionArguments;
     private final boolean isPartialApplication;
 
     public DynamicFunctionCallIterator(
             RuntimePlan<Item> functionItemIterator,
-            List<RuntimePlan<Item>> functionArguments,
+            List<? extends RuntimePlan<Item>> functionArguments,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -112,7 +112,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
 
     private static FunctionCall resolveFunctionCall(
             RuntimePlan<Item> functionItemPlan,
-            List<RuntimePlan<Item>> functionArguments,
+            List<? extends RuntimePlan<Item>> functionArguments,
             boolean partialApplication,
             ExecutionMode callerExecutionMode,
             RuntimeStaticContext staticContext,
@@ -224,7 +224,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
 
     private static ExecutionMode getCalleeExecutionModeForFunctionItemCall(
             Item functionItem,
-            List<RuntimePlan<Item>> functionArguments,
+            List<? extends RuntimePlan<Item>> functionArguments,
             boolean partialApplication,
             RuntimeStaticContext staticContext
     ) {
@@ -295,7 +295,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
     private static final class DynamicCallLocalCursor extends AbstractLocalCursor<Item> {
 
         private final RuntimePlan<Item> functionItemPlan;
-        private final List<RuntimePlan<Item>> functionArguments;
+        private final List<? extends RuntimePlan<Item>> functionArguments;
         private final boolean partialApplication;
         private final ExecutionMode callerExecutionMode;
         private final RuntimeStaticContext staticContext;
@@ -307,7 +307,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
 
         private DynamicCallLocalCursor(
                 RuntimePlan<Item> functionItemPlan,
-                List<RuntimePlan<Item>> functionArguments,
+                List<? extends RuntimePlan<Item>> functionArguments,
                 boolean partialApplication,
                 ExecutionMode callerExecutionMode,
                 RuntimeStaticContext staticContext,

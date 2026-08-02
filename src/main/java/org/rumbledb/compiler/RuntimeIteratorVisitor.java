@@ -279,18 +279,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         this.config = config;
     }
 
-    private static List<RuntimePlan<Item>> asRuntimePlans(List<? extends ItemRuntimePlan> plans) {
-        return new ArrayList<>(plans);
-    }
-
-    private static <K> Map<K, RuntimePlan<Item>> asRuntimePlanValues(
-            Map<K, ? extends ItemRuntimePlan> plans
-    ) {
-        Map<K, RuntimePlan<Item>> result = new LinkedHashMap<>();
-        result.putAll(plans);
-        return result;
-    }
-
     @Override
     public ItemRuntimePlan visit(Node node, ItemRuntimePlan argument) {
         return node.accept(this, argument);
@@ -576,7 +564,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         ItemRuntimePlan returnIterator = this.visit(expression.getReturnExpression(), argument);
 
         ItemRuntimePlan runtimeIterator = new TransformExpressionIterator(
-                asRuntimePlanValues(copyDeclMap),
+                copyDeclMap,
                 modifyIterator,
                 returnIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
@@ -912,7 +900,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         }
         ItemRuntimePlan runtimeIterator = new DynamicFunctionCallIterator(
                 mainIterator,
-                asRuntimePlans(arguments),
+                arguments,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
@@ -944,7 +932,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                 }
             }
             runtimeIterator = new ArrayRuntimeIterator(
-                    asRuntimePlans(memberIterators),
+                    memberIterators,
                     true,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
@@ -972,12 +960,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         ItemRuntimePlan runtimeIterator;
         if (expression.isMergedConstructor()) {
             runtimeIterator = new ObjectConstructorRuntimeIterator(
-                    asRuntimePlans(
-                        expression.getChildren()
-                            .stream()
-                            .map(arg -> this.visit(arg, argument))
-                            .collect(Collectors.toList())
-                    ),
+                    expression.getChildren()
+                        .stream()
+                        .map(arg -> this.visit(arg, argument))
+                        .collect(Collectors.toList()),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
@@ -993,8 +979,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                 .map(arg -> this.visit(arg, argument))
                 .collect(Collectors.toList());
             runtimeIterator = new ObjectConstructorRuntimeIterator(
-                    asRuntimePlans(keys),
-                    asRuntimePlans(values),
+                    keys,
+                    values,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
@@ -1030,8 +1016,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             .collect(Collectors.toList());
         if (keyTypes.isEmpty() && valueTypes.isEmpty()) {
             ItemRuntimePlan runtimeIterator = new ObjectConstructorRuntimeIterator(
-                    asRuntimePlans(keys),
-                    asRuntimePlans(values),
+                    keys,
+                    values,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
@@ -1039,8 +1025,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             return runtimeIterator;
         }
         ItemRuntimePlan runtimeIterator = new MapConstructorRuntimeIterator(
-                asRuntimePlans(keys),
-                asRuntimePlans(values),
+                keys,
+                values,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                 expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
         );
@@ -1388,7 +1374,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
-                asRuntimePlans(arguments),
+                arguments,
                 // Note: passing the static context of the function call expression makes
                 // all builtin functions static-context-dependent.
                 // This might be worth a more fine-grained adjustment later.
@@ -1889,7 +1875,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         }
         return new TryCatchRuntimeIterator(
                 this.visit(expression.getTryExpression(), argument),
-                asRuntimePlanValues(cases),
+                cases,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
@@ -1914,7 +1900,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         }
         return new VariableDeclStatementIterator(
                 varName,
-                asRuntimePlans(exprIterator),
+                exprIterator,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
@@ -1929,7 +1915,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             children.add(this.visit(varDecl, argument));
         }
         return new CommaVariableDeclStatementIterator(
-                asRuntimePlans(children),
+                children,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
@@ -1983,7 +1969,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         }
         return new TryCatchStatementIterator(
                 this.visit(statement.getTryStatement(), argument),
-                asRuntimePlanValues(cases),
+                cases,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
@@ -1998,7 +1984,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             }
         }
         return new StatementsOnlyIterator(
-                asRuntimePlans(result),
+                result,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
@@ -2065,7 +2051,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         // return exprIterator;
         // }
         return new StatementsWithExprIterator(
-                asRuntimePlans(result),
+                result,
                 exprIterator,
                 statementsAndExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -2092,14 +2078,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         // }
         if (exprIterator != null) {
             return new StatementsWithExprIterator(
-                    asRuntimePlans(result),
+                    result,
                     exprIterator,
                     statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
 
         }
         return new StatementsOnlyIterator(
-                asRuntimePlans(result),
+                result,
                 statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
@@ -2125,7 +2111,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         result.add(thenIterator);
         result.add(elseIterator);
         ItemRuntimePlan runtimeIterator = new ConditionalStatementIterator(
-                asRuntimePlans(result),
+                result,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 

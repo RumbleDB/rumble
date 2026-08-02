@@ -21,11 +21,11 @@ public class TryCatchStatementIterator extends AbstractAtMostOneItemRuntimePlan 
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimePlan<Item> tryStatementIterator;
-    private final Map<CatchPattern, RuntimePlan<Item>> catchStatements;
+    private final Map<CatchPattern, ? extends RuntimePlan<Item>> catchStatements;
 
     public TryCatchStatementIterator(
             RuntimePlan<Item> tryStatement,
-            Map<CatchPattern, RuntimePlan<Item>> catchStatements,
+            Map<CatchPattern, ? extends RuntimePlan<Item>> catchStatements,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -73,7 +73,7 @@ public class TryCatchStatementIterator extends AbstractAtMostOneItemRuntimePlan 
     }
 
     private RuntimePlan<Item> findMatchingCatch(RumbleException exception) {
-        for (Map.Entry<CatchPattern, RuntimePlan<Item>> entry : this.catchStatements.entrySet()) {
+        for (Map.Entry<CatchPattern, ? extends RuntimePlan<Item>> entry : this.catchStatements.entrySet()) {
             if (entry.getKey().matches(exception.getErrorCode())) {
                 return entry.getValue();
             }

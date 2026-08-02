@@ -20,7 +20,7 @@ public class VariableDeclStatementIterator extends AbstractAtMostOneItemRuntimeP
 
     public VariableDeclStatementIterator(
             Name variableName,
-            List<RuntimePlan<Item>> children,
+            List<? extends RuntimePlan<Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

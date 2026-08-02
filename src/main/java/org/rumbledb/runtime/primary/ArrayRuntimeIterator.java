@@ -62,7 +62,7 @@ public class ArrayRuntimeIterator extends AbstractAtMostOneItemRuntimePlan imple
      * Square array constructor: each child iterator produces one member (possibly a sequence).
      */
     public ArrayRuntimeIterator(
-            List<RuntimePlan<Item>> memberIterators,
+            List<? extends RuntimePlan<Item>> memberIterators,
             boolean isFixedSlotsArrayConstructor,
             RuntimeStaticContext staticContext,
             boolean mutable

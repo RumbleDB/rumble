@@ -52,14 +52,14 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<RuntimePlan<Item>> keys;
-    private List<RuntimePlan<Item>> values;
+    private List<? extends RuntimePlan<Item>> keys;
+    private List<? extends RuntimePlan<Item>> values;
     private boolean isMergedObject = false;
     private final boolean mutable;
 
     public ObjectConstructorRuntimeIterator(
-            List<RuntimePlan<Item>> keys,
-            List<RuntimePlan<Item>> values,
+            List<? extends RuntimePlan<Item>> keys,
+            List<? extends RuntimePlan<Item>> values,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -70,7 +70,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
     }
 
     public ObjectConstructorRuntimeIterator(
-            List<RuntimePlan<Item>> childExpressions,
+            List<? extends RuntimePlan<Item>> childExpressions,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -149,7 +149,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
     }
 
     private NativeClauseContext generateMergedObject(NativeClauseContext nativeClauseContext) {
-        List<RuntimePlan<Item>> objectsToMerge = this.getChildren();
+        List<? extends RuntimePlan<Item>> objectsToMerge = this.getChildren();
         if (this.getChild(0) instanceof CommaExpressionIterator commaExpressionIterator) {
             objectsToMerge = commaExpressionIterator.getOperands();
         }

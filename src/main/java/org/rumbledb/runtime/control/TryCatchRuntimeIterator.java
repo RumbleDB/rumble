@@ -45,11 +45,11 @@ public class TryCatchRuntimeIterator extends ItemRuntimePlan implements LocalRun
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimePlan<Item> tryExpression;
-    private final Map<CatchPattern, RuntimePlan<Item>> catchExpressions;
+    private final Map<CatchPattern, ? extends RuntimePlan<Item>> catchExpressions;
 
     public TryCatchRuntimeIterator(
             RuntimePlan<Item> tryExpression,
-            Map<CatchPattern, RuntimePlan<Item>> catchExpressions,
+            Map<CatchPattern, ? extends RuntimePlan<Item>> catchExpressions,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -86,7 +86,7 @@ public class TryCatchRuntimeIterator extends ItemRuntimePlan implements LocalRun
     }
 
     private RuntimePlan<Item> findMatchingCatch(RumbleException exception) {
-        for (Map.Entry<CatchPattern, RuntimePlan<Item>> entry : this.catchExpressions.entrySet()) {
+        for (Map.Entry<CatchPattern, ? extends RuntimePlan<Item>> entry : this.catchExpressions.entrySet()) {
             if (entry.getKey().matches(exception.getErrorCode())) {
                 return entry.getValue();
             }

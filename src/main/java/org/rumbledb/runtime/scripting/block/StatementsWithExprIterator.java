@@ -32,7 +32,7 @@ public class StatementsWithExprIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     public StatementsWithExprIterator(
-            List<RuntimePlan<Item>> statements,
+            List<? extends RuntimePlan<Item>> statements,
             RuntimePlan<Item> exprIterator,
             RuntimeStaticContext staticContext
     ) {
@@ -57,7 +57,7 @@ public class StatementsWithExprIterator extends ItemRuntimePlan
     }
 
     private static boolean isSequential(
-            List<RuntimePlan<Item>> statements,
+            List<? extends RuntimePlan<Item>> statements,
             RuntimePlan<Item> exprIterator
     ) {
         return exprIterator.getRuntimeStaticContext().isSequential()

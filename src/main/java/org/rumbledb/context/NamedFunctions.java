@@ -69,7 +69,7 @@ public class NamedFunctions implements Serializable {
     public ItemRuntimePlan getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
             RuntimeStaticContext callerRuntimeContext,
-            List<RuntimePlan<Item>> arguments,
+            List<? extends RuntimePlan<Item>> arguments,
             boolean isTailOptimization
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
@@ -97,9 +97,10 @@ public class NamedFunctions implements Serializable {
             Item functionItem,
             RuntimeStaticContext callerRuntimeContext,
             ExecutionMode executionModeForFunctionCall,
-            List<RuntimePlan<Item>> arguments,
+            List<? extends RuntimePlan<Item>> inputArguments,
             boolean isTailOptimization
     ) {
+        List<RuntimePlan<Item>> arguments = new ArrayList<>(inputArguments);
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
         boolean isPartialApplication = arguments.stream().anyMatch(a -> a == null);
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
@@ -213,10 +214,11 @@ public class NamedFunctions implements Serializable {
 
     public static ItemRuntimePlan getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
-            List<RuntimePlan<Item>> arguments,
+            List<? extends RuntimePlan<Item>> inputArguments,
             RuntimeStaticContext callerStaticContext,
             boolean argumentsAlreadyCoerced
     ) {
+        List<RuntimePlan<Item>> arguments = new ArrayList<>(inputArguments);
         RumbleRuntimeConfiguration conf = callerStaticContext.getConfiguration();
         ExceptionMetadata metadata = callerStaticContext.getMetadata();
         boolean checkReturnTypesOfBuiltinFunctions = conf.isCheckReturnTypeOfBuiltinFunctions();

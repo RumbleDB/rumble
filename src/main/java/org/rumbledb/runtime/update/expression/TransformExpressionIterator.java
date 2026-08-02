@@ -31,14 +31,14 @@ public class TransformExpressionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final Map<Name, RuntimePlan<Item>> copyDeclMap;
+    private final Map<Name, ? extends RuntimePlan<Item>> copyDeclMap;
     private final RuntimePlan<Item> modifyIterator;
     private final RuntimePlan<Item> returnIterator;
     private final boolean mutable;
     private final int mutabilityLevel;
 
     public TransformExpressionIterator(
-            Map<Name, RuntimePlan<Item>> copyDeclMap,
+            Map<Name, ? extends RuntimePlan<Item>> copyDeclMap,
             RuntimePlan<Item> modifyIterator,
             RuntimePlan<Item> returnIterator,
             RuntimeStaticContext staticContext,
@@ -107,7 +107,7 @@ public class TransformExpressionIterator extends ItemRuntimePlan
 
     private static final class TransformLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final Map<Name, RuntimePlan<Item>> copyDeclarations;
+        private final Map<Name, ? extends RuntimePlan<Item>> copyDeclarations;
         private final RuntimePlan<Item> modifyPlan;
         private final RuntimePlan<Item> returnPlan;
         private final int mutabilityLevel;
@@ -117,7 +117,7 @@ public class TransformExpressionIterator extends ItemRuntimePlan
         private Cursor<Item> returnCursor;
 
         private TransformLocalCursor(
-                Map<Name, RuntimePlan<Item>> copyDeclarations,
+                Map<Name, ? extends RuntimePlan<Item>> copyDeclarations,
                 RuntimePlan<Item> modifyPlan,
                 RuntimePlan<Item> returnPlan,
                 int mutabilityLevel,
@@ -175,7 +175,7 @@ public class TransformExpressionIterator extends ItemRuntimePlan
         }
 
         private void bindCopyDeclarations() {
-            for (Map.Entry<Name, RuntimePlan<Item>> declaration : this.copyDeclarations.entrySet()) {
+            for (Map.Entry<Name, ? extends RuntimePlan<Item>> declaration : this.copyDeclarations.entrySet()) {
                 List<Item> copy = new ArrayList<>();
                 for (Item item : declaration.getValue().materialize(this.context)) {
                     Item copiedItem = item.copy(true);

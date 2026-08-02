@@ -17,7 +17,7 @@ public class CommaVariableDeclStatementIterator extends AbstractAtMostOneItemRun
     private static final long serialVersionUID = 1L;
 
     public CommaVariableDeclStatementIterator(
-            List<RuntimePlan<Item>> children,
+            List<? extends RuntimePlan<Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
