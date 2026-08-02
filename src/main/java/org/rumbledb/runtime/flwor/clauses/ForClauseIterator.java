@@ -58,7 +58,6 @@ import org.rumbledb.runtime.flwor.udfs.GenericForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.types.BuiltinTypesCatalogue;

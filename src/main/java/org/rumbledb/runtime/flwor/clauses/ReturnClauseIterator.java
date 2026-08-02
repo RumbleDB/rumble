@@ -248,7 +248,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
     private void setInputAndOutputTupleVariableDependencies() {
         Map<Name, VariableDependency> dependencies =
             this.expression
-        .getVariableDependencies();
+                .getVariableDependencies();
         Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
         Map<Name, VariableDependency> projection = new HashMap<>();
         for (Name n : dependencies.keySet()) {

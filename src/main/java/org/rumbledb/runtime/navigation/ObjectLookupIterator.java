@@ -60,7 +60,6 @@ import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;

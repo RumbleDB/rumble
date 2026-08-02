@@ -47,7 +47,6 @@ import org.rumbledb.runtime.cursor.Cursor;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 

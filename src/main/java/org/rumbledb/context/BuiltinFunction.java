@@ -3,7 +3,6 @@ package org.rumbledb.context;
 import lombok.EqualsAndHashCode;
 
 import lombok.Getter;
-import org.rumbledb.api.Item;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 

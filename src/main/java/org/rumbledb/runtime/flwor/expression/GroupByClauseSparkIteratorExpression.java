@@ -22,7 +22,6 @@ package org.rumbledb.runtime.flwor.expression;
 
 
 import lombok.Getter;
-import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.SequenceType;

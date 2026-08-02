@@ -48,7 +48,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;

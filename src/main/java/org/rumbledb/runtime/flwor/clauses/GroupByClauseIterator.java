@@ -54,7 +54,6 @@ import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.runtime.misc.CollationSupport;

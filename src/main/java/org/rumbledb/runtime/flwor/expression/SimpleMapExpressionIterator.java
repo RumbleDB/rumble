@@ -48,7 +48,6 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 
 import scala.Tuple2;

@@ -1,6 +1,5 @@
 package org.rumbledb.context;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;

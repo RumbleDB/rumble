@@ -9,7 +9,6 @@ import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 

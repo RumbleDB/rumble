@@ -53,7 +53,6 @@ import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 
 import org.rumbledb.types.BuiltinTypesCatalogue;

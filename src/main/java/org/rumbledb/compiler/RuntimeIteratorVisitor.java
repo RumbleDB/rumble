@@ -980,10 +980,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         ItemRuntimePlan runtimeIterator;
         if (expression.isMergedConstructor()) {
             runtimeIterator = new ObjectConstructorRuntimeIterator(
-                    asRuntimePlans(expression.getChildren()
-                        .stream()
-                        .map(arg -> this.visit(arg, argument))
-                        .collect(Collectors.toList())),
+                    asRuntimePlans(
+                        expression.getChildren()
+                            .stream()
+                            .map(arg -> this.visit(arg, argument))
+                            .collect(Collectors.toList())
+                    ),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );

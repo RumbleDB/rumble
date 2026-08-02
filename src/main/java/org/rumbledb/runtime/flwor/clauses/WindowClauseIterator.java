@@ -24,7 +24,6 @@ import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;

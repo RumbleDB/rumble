@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import java.io.Serial;
@@ -57,7 +56,6 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanDiagnostics;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;

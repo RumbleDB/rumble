@@ -21,7 +21,6 @@
 package org.rumbledb.runtime.flwor.expression;
 
 import lombok.Getter;
-import org.rumbledb.api.Item;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
