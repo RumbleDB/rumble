@@ -17,8 +17,6 @@
 
 package org.rumbledb.config;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.InvalidSerializationParameterValueException;
 import org.rumbledb.serialization.SerializationParameters;
 
@@ -32,12 +30,15 @@ import java.util.Set;
  * Handles parsing and validation of serialization parameter values according to the
  * XQuery 3.1 Serialization Parameters specification.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SerializationParameterBuilder {
 
     /**
      * Private constructor to prevent instantiation.
      */
+    private SerializationParameterBuilder() {
+        // empty
+    }
+
     /**
      * Builds a fresh {@link SerializationParameters} instance from the provided parameters.
      * This is equivalent to calling {@link #build(Map, SerializationParameters)} with

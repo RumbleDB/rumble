@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import com.ibm.icu.text.TimeZoneNames;
 import com.ibm.icu.util.TimeZone;
 
@@ -12,9 +10,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TimezoneNames {
 
+    private TimezoneNames() {
+    }
 
     public static String name(
             OffsetDateTime value,

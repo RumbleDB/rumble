@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Locale;
@@ -10,9 +8,10 @@ import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.TimezoneNames;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class TemporalFormattingSupport {
 
+    private TemporalFormattingSupport() {
+    }
 
     static String applyNameCase(String value, VariableMarker parsed, Locale locale) {
         if (parsed.nameForm == null) {

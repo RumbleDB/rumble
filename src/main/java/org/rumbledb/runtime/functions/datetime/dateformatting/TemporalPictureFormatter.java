@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
@@ -12,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class TemporalPictureFormatter {
 
     @FunctionalInterface
@@ -22,6 +19,8 @@ final class TemporalPictureFormatter {
 
     private static final Map<String, ParsedPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
 
+    private TemporalPictureFormatter() {
+    }
 
     /**
      * Formats the given temporal value according to the picture string and formatting context.

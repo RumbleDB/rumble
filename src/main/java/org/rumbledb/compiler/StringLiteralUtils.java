@@ -1,17 +1,16 @@
 package org.rumbledb.compiler;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 
 /** Decodes string literals according to the rules of the source query language. */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class StringLiteralUtils {
 
     /** Utility class; instances carry no state. */
+    private StringLiteralUtils() {
+    }
 
     /**
      * Validates and decodes a complete JSONiq string literal.

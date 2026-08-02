@@ -1,15 +1,14 @@
 package org.rumbledb.runtime.functions.util.formatting.calendar;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class CalendarModes {
 
+    private CalendarModes() {
+    }
 
     // Best-effort mappings from W3C calendar designators to ICU calendar keywords.
     // ICU provides the calendar data. If formatted dates are wrong for

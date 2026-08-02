@@ -1,12 +1,11 @@
 package org.rumbledb.config;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import java.util.regex.Pattern;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FormattingCalendarModeSupport {
 
+    private FormattingCalendarModeSupport() {
+    }
 
     public static final String DEFAULT = "ISO";
 

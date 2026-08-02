@@ -18,8 +18,6 @@
 
 package org.rumbledb.runtime.misc;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.context.Name;
@@ -39,9 +37,10 @@ import java.util.List;
  * Lexicographic comparison of sort-key sequences for F&amp;O 3.1 {@code fn:sort} / {@code array:sort}
  * ({@code deep-less-than} and {@code fn:deep-equal} on key sequences with a collation).
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SortKeyComparison {
 
+    private SortKeyComparison() {
+    }
 
     public static void checkCollationSupported(String collationUri, ExceptionMetadata metadata) {
         if (CollationCatalogue.isDefaultStaticallyKnownCollation(collationUri)) {

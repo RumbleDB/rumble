@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import com.ibm.icu.number.LocalizedNumberFormatter;
 import com.ibm.icu.number.NumberFormatter;
 import com.ibm.icu.text.RuleBasedNumberFormat;
@@ -19,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.EqualsAndHashCode;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NumberWords {
     // For plain ordinal word formatting (`Ww;o`) RumbleDB selects the ICU masculine ordinal rule set when available,
     // with a small set of aliases for ICU's abbreviated rule-set names. This is implementation-defined behavior
@@ -32,6 +29,8 @@ public final class NumberWords {
 
     private static final Map<ULocale, LocalizedNumberFormatter> GROUPING_FORMATTER_CACHE = new ConcurrentHashMap<>();
 
+    private NumberWords() {
+    }
 
     public static String cardinal(long value, ULocale locale, String requestedRuleSet) {
         CachedRuleFormat f = ruleFormat(locale, RuleBasedNumberFormat.SPELLOUT);

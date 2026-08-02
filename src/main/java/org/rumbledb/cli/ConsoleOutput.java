@@ -17,17 +17,15 @@
 
 package org.rumbledb.cli;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
 /**
  * Centralizes user-facing command-line output.
  *
  * Debug logging should be done through the logging framework, not through this class.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ConsoleOutput {
 
+    private ConsoleOutput() {
+    }
 
     /**
      * Prints user-facing text to standard output.

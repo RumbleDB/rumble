@@ -1,7 +1,5 @@
 package org.rumbledb.serialization;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -18,9 +16,10 @@ import java.util.List;
 /**
  * Shared helpers for {@link Serializer} implementations (map serialization, DM node names).
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SerializerUtils {
 
+    private SerializerUtils() {
+    }
 
     public static void appendDmNodeNameLexical(StringBuilder sb, Item item) {
         Name n = item.nodeName();

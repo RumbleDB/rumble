@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.typing;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -12,7 +10,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TypeInferrenceUtils {
 
     public enum TypeMergeMode {
@@ -20,6 +17,8 @@ public final class TypeInferrenceUtils {
         LAX
     }
 
+    private TypeInferrenceUtils() {
+    }
 
     public static ItemType inferItemTypeOfRDDItems(
             JavaRDD<Item> itemRDD,

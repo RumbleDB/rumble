@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
@@ -10,9 +8,10 @@ import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 
 import java.time.OffsetDateTime;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class FractionalSecondsFormatter {
 
+    private FractionalSecondsFormatter() {
+    }
 
     static String format(
             OffsetDateTime dt,

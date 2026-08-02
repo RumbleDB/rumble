@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.io;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -17,9 +15,10 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TextResourceUtil {
 
+    private TextResourceUtil() {
+    }
 
     public static byte[] fetchBytes(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata)
             throws IOException {

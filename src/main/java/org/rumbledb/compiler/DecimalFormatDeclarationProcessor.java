@@ -1,7 +1,5 @@
 package org.rumbledb.compiler;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.context.Name;
@@ -17,9 +15,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DecimalFormatDeclarationProcessor {
 
+    private DecimalFormatDeclarationProcessor() {
+    }
 
     public static void process(
             boolean isDefaultDecimalFormat,

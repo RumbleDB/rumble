@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.runtime.functions.util.formatting.GroupingPos;
 import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
@@ -10,8 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntPredicate;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FormatNumberPictureSupport {
+    private FormatNumberPictureSupport() {
+    }
 
     static boolean isMandatoryDigit(int cp, DecimalFormatDefinition decimalFormat) {
         int zeroDigit = decimalFormat.getZeroDigit();

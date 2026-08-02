@@ -1,13 +1,12 @@
 package org.rumbledb.serialization;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.UnsupportedNormalizationFormSerializationException;
 import org.rumbledb.exceptions.OurBadException;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Serializers {
 
+    private Serializers() {
+    }
 
     public static Serializer from(SerializationParameters params) {
         SerializationParameters effectiveParams = params != null ? params : SerializationParameters.defaults();

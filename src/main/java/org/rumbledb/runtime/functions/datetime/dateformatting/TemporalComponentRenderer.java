@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.ComponentSpecifierNotAvailableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -13,9 +11,10 @@ import org.rumbledb.runtime.functions.util.formatting.NumberWords;
 import java.math.BigInteger;
 import java.time.OffsetDateTime;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class TemporalComponentRenderer {
 
+    private TemporalComponentRenderer() {
+    }
 
     static String render(
             OffsetDateTime value,

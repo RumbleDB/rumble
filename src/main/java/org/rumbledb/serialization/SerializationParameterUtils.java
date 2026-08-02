@@ -1,7 +1,5 @@
 package org.rumbledb.serialization;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.context.Name;
@@ -28,11 +26,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SerializationParameterUtils {
 
     public static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
+    private SerializationParameterUtils() {
+    }
 
     public static SerializationParameters defaultsForSerializeFunction(String queryLanguage) {
         SerializationParameters params = SerializationParameters.defaults(queryLanguage);

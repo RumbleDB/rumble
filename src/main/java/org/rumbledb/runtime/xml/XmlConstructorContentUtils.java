@@ -20,15 +20,14 @@
 
 package org.rumbledb.runtime.xml;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 
 import java.util.List;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class XmlConstructorContentUtils {
 
+    private XmlConstructorContentUtils() {
+    }
 
     static void appendExpandedItem(Item item, List<Item> result) {
         if (item.isDocumentNode()) {

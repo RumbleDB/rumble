@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import com.ibm.icu.util.ULocale;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -15,11 +13,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class IntegerPictureFormatter {
 
     private static final Map<String, FormatIntegerPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
 
+    private IntegerPictureFormatter() {
+    }
 
     /**
      * <p>
