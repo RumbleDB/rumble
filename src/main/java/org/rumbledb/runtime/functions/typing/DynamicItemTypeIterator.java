@@ -1,54 +1,56 @@
 package org.rumbledb.runtime.functions.typing;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
 import java.util.List;
 
-public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DynamicItemTypeIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<Item> materializedArgument;
-    private ItemType itemType;
 
-    public DynamicItemTypeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public DynamicItemTypeIterator(
+            List<ItemRuntimePlan> children,
+            RuntimeStaticContext staticContext
+    ) {
         super(children, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        materializeArgument(context);
-        setArgumentType();
-        return getLeastCommonSupertype();
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(this.getChild(0), context);
     }
 
-    private void materializeArgument(DynamicContext context) {
-        this.materializedArgument = this.getChild(0).materialize(context);
+    private static Item evaluate(
+            ItemRuntimePlan argumentPlan,
+            DynamicContext context
+    ) {
+        List<Item> argument = argumentPlan.materialize(context);
+        ItemType itemType = argument.get(0).getDynamicType();
+        List<Item> structureItems = getStructureItems(argument, itemType);
+        ItemType commonType = getLeastCommonSupertype(structureItems);
+        return ItemFactory.getInstance().createStringItem(commonType.getIdentifierString());
     }
 
-    private void setArgumentType() {
-        this.itemType = this.materializedArgument.get(0).getDynamicType();
-    }
-
-    private Item getLeastCommonSupertype() {
-        List<Item> structureItems = getStructureItems();
+    private static ItemType getLeastCommonSupertype(List<Item> structureItems) {
         ItemType structureCommonType = structureItems.get(0).getDynamicType();
         for (Item item : structureItems) {
             structureCommonType = structureCommonType.findLeastCommonSuperTypeWith(item.getDynamicType());
         }
-        return ItemFactory.getInstance().createStringItem(structureCommonType.getIdentifierString());
+        return structureCommonType;
     }
 
-    private List<Item> getStructureItems() {
-        if (this.itemType.isArrayItemType()) {
-            return this.materializedArgument.get(0).getItemMembers();
+    private static List<Item> getStructureItems(List<Item> argument, ItemType itemType) {
+        if (itemType.isArrayItemType()) {
+            return argument.get(0).getItemMembers();
         }
-        return this.materializedArgument;
+        return argument;
     }
 }

@@ -5,21 +5,21 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
+public class CollectionFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public CollectionFunctionIterator(
-            List<RuntimeIterator> children,
+            List<ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
@@ -28,12 +28,12 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
     // TODO: implement collection function
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         if (this.getChildren().isEmpty()) {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }
         Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+            .materializeFirstOrNull(context);
         if (stringItem == null) {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }

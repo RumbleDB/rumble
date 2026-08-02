@@ -1,11 +1,10 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
@@ -21,15 +20,15 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
-public class TruncateCollectionIterator extends HybridRuntimeIterator {
+public class TruncateCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator targetIterator;
+    private final ItemRuntimePlan targetIterator;
     private final Mode mode;
 
     public TruncateCollectionIterator(
-            RuntimeIterator targetIterator,
+            ItemRuntimePlan targetIterator,
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
@@ -39,44 +38,19 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
-    }
-
-    @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         Item collectionNameItem = null;
         try {
-            collectionNameItem = this.targetIterator.materializeExactlyOneItem(context);
+            collectionNameItem = this.targetIterator.materializeExactlyOne(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a unique string, but more than one item was provided.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a string, but no item was provided.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -84,7 +58,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
             throw new InvalidUpdateTargetException(
                     "Expecting collection name as a String, but it was: "
                         + collectionNameItem.getDynamicType().getIdentifierString(),
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
         String logicalPath = collectionNameItem.getStringValue();
@@ -105,7 +79,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = factory.createTruncateCollectionPrimitive(
             collection,
-            this.getMetadata(),
+            this.getRuntimeStaticContext().getMetadata(),
             context.getRumbleRuntimeConfiguration()
         );
 

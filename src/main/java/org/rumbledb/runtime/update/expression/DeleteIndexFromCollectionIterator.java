@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
@@ -9,8 +10,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.Mode;
@@ -22,17 +21,17 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
-public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
+public class DeleteIndexFromCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator targetIterator;
-    private final RuntimeIterator numDeleteIterator;
+    private final ItemRuntimePlan targetIterator;
+    private final ItemRuntimePlan numDeleteIterator;
     private final boolean isFirst;
     private final Mode mode;
 
     public DeleteIndexFromCollectionIterator(
-            RuntimeIterator targetIterator,
+            ItemRuntimePlan targetIterator,
             boolean isFirst,
             Mode mode,
             RuntimeStaticContext staticContext
@@ -45,42 +44,20 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
     }
 
     public DeleteIndexFromCollectionIterator(
-            RuntimeIterator targetIterator,
-            RuntimeIterator numDeleteIterator,
+            ItemRuntimePlan targetIterator,
+            ItemRuntimePlan numDeleteIterator,
             boolean isFirst,
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, numDeleteIterator), staticContext.toBuilder().isUpdating(true).build());
+        super(
+            Arrays.asList(targetIterator, numDeleteIterator),
+            staticContext.toBuilder().isUpdating(true).build()
+        );
         this.targetIterator = targetIterator;
         this.numDeleteIterator = numDeleteIterator;
         this.isFirst = isFirst;
         this.mode = mode;
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
-    }
-
-    @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
     }
 
     @Override
@@ -89,16 +66,16 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
         Item targetItem = null;
         try {
-            targetItem = this.targetIterator.materializeExactlyOneItem(context);
+            targetItem = this.targetIterator.materializeExactlyOne(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a string, but more than one item was provided.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a string, but no item was provided.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -106,7 +83,7 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             throw new InvalidUpdateTargetException(
                     "Expecting collection name as a String, but it was: "
                         + targetItem.getDynamicType().getIdentifierString(),
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -114,16 +91,16 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
         if (this.numDeleteIterator != null) {
             Item numDeleteItem = null;
             try {
-                numDeleteItem = this.numDeleteIterator.materializeExactlyOneItem(context);
+                numDeleteItem = this.numDeleteIterator.materializeExactlyOne(context);
             } catch (MoreThanOneItemException e) {
                 throw new InvalidUpdateTargetException(
                         "The number to be deleted must be an integer, but more than one item was provided.",
-                        this.getMetadata()
+                        this.getRuntimeStaticContext().getMetadata()
                 );
             } catch (NoItemException e) {
                 throw new InvalidUpdateTargetException(
                         "The number to be deleted must be an integer, but no item was provided.",
-                        this.getMetadata()
+                        this.getRuntimeStaticContext().getMetadata()
                 );
             }
 
@@ -131,7 +108,7 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
                 throw new InvalidUpdateTargetException(
                         "Expecting number to be deleted name as an integer, but it was: "
                             + targetItem.getDynamicType().getIdentifierString(),
-                        this.getMetadata()
+                        this.getRuntimeStaticContext().getMetadata()
                 );
             }
 
@@ -158,7 +135,7 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
                 collection,
                 rowOrder,
-                this.getMetadata()
+                this.getRuntimeStaticContext().getMetadata()
             );
             pul.addUpdatePrimitive(up);
         }

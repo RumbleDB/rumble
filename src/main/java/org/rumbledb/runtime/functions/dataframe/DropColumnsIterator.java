@@ -1,54 +1,46 @@
 package org.rumbledb.runtime.functions.dataframe;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.EmptyLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
 
-public class DropColumnsIterator extends HybridRuntimeIterator {
+public class DropColumnsIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
+    }
+
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DropColumnsIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public DropColumnsIterator(
+            List<ItemRuntimePlan> children,
+            RuntimeStaticContext staticContext
+    ) {
         super(children, staticContext);
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
-    }
-
-    @Override
-    public void openLocal() {
-
-    }
-
-    @Override
-    public void closeLocal() {
-
-    }
-
-    @Override
-    public boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    public Item nextLocal() {
-        return null;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame dataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame dataFrame = ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(

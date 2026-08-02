@@ -20,37 +20,38 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class UpperCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class UpperCaseFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public UpperCaseFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item stringItem = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        return evaluate(this.getChild(0).materializeFirstOrNull(dynamicContext));
+    }
 
+    private static Item evaluate(Item stringItem) {
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
-        } else {
-            String input = stringItem.getStringValue();
-            return ItemFactory.getInstance().createStringItem(input.toUpperCase());
         }
+        return ItemFactory.getInstance().createStringItem(stringItem.getStringValue().toUpperCase());
     }
 }

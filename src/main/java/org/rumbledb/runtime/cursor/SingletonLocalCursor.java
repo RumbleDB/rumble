@@ -13,23 +13,30 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
  */
 
-package org.rumbledb.runtime;
+package org.rumbledb.runtime.cursor;
 
-import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
-import java.io.Serializable;
+import java.util.Objects;
 
-public interface RuntimeIteratorInterface<T> extends Serializable {
-    void open(DynamicContext context);
+/**
+ * Cursor over one non-null value.
+ *
+ * @param <T> the value type
+ */
+public final class SingletonLocalCursor<T> extends AtMostOneLocalCursor<T> {
 
-    void close();
+    private final T value;
 
-    boolean hasNext();
+    public SingletonLocalCursor(T value, ExceptionMetadata metadata) {
+        super(metadata);
+        this.value = Objects.requireNonNull(value, "value cannot be null");
+    }
 
-    T next();
+    @Override
+    protected T materializeOneItemOrNull() {
+        return this.value;
+    }
 }

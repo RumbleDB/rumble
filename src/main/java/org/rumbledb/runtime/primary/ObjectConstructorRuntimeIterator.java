@@ -20,9 +20,12 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,9 +36,9 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -44,19 +47,20 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan
+        implements
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<RuntimeIterator> keys;
-    private List<RuntimeIterator> values;
+    private List<? extends ItemRuntimePlan> keys;
+    private List<? extends ItemRuntimePlan> values;
     private boolean isMergedObject = false;
     private final boolean mutable;
 
     public ObjectConstructorRuntimeIterator(
-            List<RuntimeIterator> keys,
-            List<RuntimeIterator> values,
+            List<? extends ItemRuntimePlan> keys,
+            List<? extends ItemRuntimePlan> values,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -67,7 +71,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     public ObjectConstructorRuntimeIterator(
-            List<RuntimeIterator> childExpressions,
+            List<? extends ItemRuntimePlan> childExpressions,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -77,32 +81,28 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        return evaluate(iterator -> iterator.materialize(dynamicContext));
+    }
+
+    private Item evaluate(Function<ItemRuntimePlan, List<Item>> materialize) {
         List<Item> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();
         if (this.isMergedObject) {
-            for (RuntimeIterator iterator : this.getChildren()) {
-                iterator.open(dynamicContext);
-                while (iterator.hasNext()) {
-                    ObjectItem item = (ObjectItem) iterator.next();
+            for (ItemRuntimePlan iterator : this.getChildren()) {
+                for (Item materializedItem : materialize.apply(iterator)) {
+                    ObjectItem item = (ObjectItem) materializedItem;
                     keys.addAll(item.getStringKeys());
                     values.addAll(item.getItemValues());
                 }
-                iterator.close();
             }
-            this.hasNext = false;
             return ItemFactory.getInstance()
                 .createObjectItem(keys, values, getMetadata(), this.mutable);
 
         } else {
 
-            for (RuntimeIterator valueIterator : this.values) {
-                List<Item> currentResults = new ArrayList<>();
-                valueIterator.open(dynamicContext);
-                while (valueIterator.hasNext()) {
-                    currentResults.add(valueIterator.next());
-                }
-                valueIterator.close();
+            for (ItemRuntimePlan valueIterator : this.values) {
+                List<Item> currentResults = materialize.apply(valueIterator);
                 // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                 if (currentResults.size() > 1) {
                     values.add(
@@ -116,12 +116,12 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 }
             }
 
-            for (RuntimeIterator keyIterator : this.keys) {
-                keyIterator.open(dynamicContext);
-                if (!keyIterator.hasNext()) {
+            for (ItemRuntimePlan keyIterator : this.keys) {
+                List<Item> keyItems = materialize.apply(keyIterator);
+                if (keyItems.isEmpty()) {
                     throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
                 }
-                Item key = keyIterator.next();
+                Item key = keyItems.get(0);
                 if (!key.isString() && !key.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                     throw new UnexpectedTypeException(
                             "Key provided for object creation must be of type String",
@@ -129,15 +129,13 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                     );
                 }
                 keys.add(key.getStringValue());
-                if (keyIterator.hasNext()) {
+                if (keyItems.size() > 1) {
                     throw new IteratorFlowException(
                             "A key cannot be a sequence of more than one item",
                             getMetadata()
                     );
                 }
-                keyIterator.close();
             }
-            this.hasNext = false;
             return ItemFactory.getInstance()
                 .createObjectItem(keys, values, getMetadata(), this.mutable);
         }
@@ -152,7 +150,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     private NativeClauseContext generateMergedObject(NativeClauseContext nativeClauseContext) {
-        List<RuntimeIterator> objectsToMerge = this.getChildren();
+        List<? extends ItemRuntimePlan> objectsToMerge = this.getChildren();
         if (this.getChild(0) instanceof CommaExpressionIterator commaExpressionIterator) {
             objectsToMerge = commaExpressionIterator.getOperands();
         }
@@ -168,9 +166,12 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         List<String> queries = new ArrayList<>();
         List<String> keyNames = new ArrayList<>();
         List<ItemType> valueTypes = new ArrayList<>();
-        for (RuntimeIterator objectToMerge : objectsToMerge) {
+        for (ItemRuntimePlan objectToMerge : objectsToMerge) {
             if (objectToMerge instanceof VariableReferenceIterator) {
-                NativeClauseContext objectPartContext = objectToMerge.generateNativeQuery(nativeClauseContext);
+                NativeClauseContext objectPartContext = NativeQueryRuntimePlan.generate(
+                    objectToMerge,
+                    nativeClauseContext
+                );
                 if (objectPartContext == NativeClauseContext.NoNativeQuery) {
                     return NativeClauseContext.NoNativeQuery;
                 }
@@ -188,7 +189,9 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                         objectsToMerge.size() > 1 ? ".*" : ""
                     )
                 );
-            } else if (objectToMerge instanceof ObjectConstructorRuntimeIterator child) {
+            } else if (
+                objectToMerge instanceof ObjectConstructorRuntimeIterator child
+            ) {
                 if (child.isMergedObject) {
                     return NativeClauseContext.NoNativeQuery;
                 }
@@ -197,16 +200,22 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 }
                 List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
                 List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
-                for (RuntimeIterator key : child.keys) {
-                    NativeClauseContext keyNativeContext = key.generateNativeQuery(nativeClauseContext);
+                for (ItemRuntimePlan key : child.keys) {
+                    NativeClauseContext keyNativeContext = NativeQueryRuntimePlan.generate(
+                        key,
+                        nativeClauseContext
+                    );
                     if (keyNativeContext == NativeClauseContext.NoNativeQuery) {
                         return NativeClauseContext.NoNativeQuery;
                     }
                     keyNativeContexts.add(keyNativeContext);
                     nativeClauseContext = keyNativeContext;
                 }
-                for (RuntimeIterator value : child.values) {
-                    NativeClauseContext valueNativeContext = value.generateNativeQuery(nativeClauseContext);
+                for (ItemRuntimePlan value : child.values) {
+                    NativeClauseContext valueNativeContext = NativeQueryRuntimePlan.generate(
+                        value,
+                        nativeClauseContext
+                    );
                     if (valueNativeContext == NativeClauseContext.NoNativeQuery) {
                         return NativeClauseContext.NoNativeQuery;
                     }
@@ -273,16 +282,22 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         }
         List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
         List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
-        for (RuntimeIterator key : this.keys) {
-            NativeClauseContext keyNativeContext = key.generateNativeQuery(nativeClauseContext);
+        for (ItemRuntimePlan key : this.keys) {
+            NativeClauseContext keyNativeContext = NativeQueryRuntimePlan.generate(
+                key,
+                nativeClauseContext
+            );
             if (keyNativeContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
             keyNativeContexts.add(keyNativeContext);
             nativeClauseContext = keyNativeContext;
         }
-        for (RuntimeIterator value : this.values) {
-            NativeClauseContext valueNativeContext = value.generateNativeQuery(nativeClauseContext);
+        for (ItemRuntimePlan value : this.values) {
+            NativeClauseContext valueNativeContext = NativeQueryRuntimePlan.generate(
+                value,
+                nativeClauseContext
+            );
             if (valueNativeContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }

@@ -24,6 +24,8 @@ import java.io.Serial;
 
 public class IteratorFlowException extends OurBadException {
 
+    public static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+
     @Serial
     private static final long serialVersionUID = 1L;
 

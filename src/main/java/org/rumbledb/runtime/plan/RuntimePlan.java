@@ -355,7 +355,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             }
             T result = cursor.next();
             if (cursor.hasNext()) {
-                throw new MoreThanOneItemException();
+                throw new MoreThanOneItemException(metadata);
             }
             return result;
         }
@@ -370,7 +370,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             throws MoreThanOneItemException {
         List<T> result = rdd.take(2);
         if (result.size() > 1) {
-            throw new MoreThanOneItemException();
+            throw new MoreThanOneItemException(metadata);
         }
         return result.isEmpty() ? null : result.get(0);
     }

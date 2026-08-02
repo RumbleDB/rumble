@@ -4,20 +4,21 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.BreakStatementException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
+import java.util.List;
 
-public class BreakStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+public class BreakStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public BreakStatementIterator(RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         throw new BreakStatementException();
     }
 }

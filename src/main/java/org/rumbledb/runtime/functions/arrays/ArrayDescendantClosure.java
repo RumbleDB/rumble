@@ -27,7 +27,7 @@ public class ArrayDescendantClosure implements FlatMapFunction<Item, Item> {
                 innerValues = arg0.getItemMembers();
             } else {
                 innerValues = new ArrayList<Item>();
-                for (java.util.List<Item> member : arg0.getSequenceMembers()) {
+                for (List<Item> member : arg0.getSequenceMembers()) {
                     innerValues.addAll(member);
                 }
             }

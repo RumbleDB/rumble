@@ -1,5 +1,7 @@
 package org.rumbledb.api;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import lombok.Getter;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.compiler.VisitorHelpers;
@@ -7,7 +9,6 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -72,12 +73,12 @@ public class Rumble {
             this.compilationConfiguration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
+        ItemRuntimePlan plan = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             this.configuration
         );
 
-        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+        return new SequenceOfItems(plan, dynamicContext, this.configuration);
     }
 
     /**
@@ -95,7 +96,7 @@ public class Rumble {
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
      * @param location the JSONiq main module location.
-     * @throws java.io.IOException if there was an issue reading a module.
+     * @throws IOException if there was an issue reading a module.
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(URI location) throws IOException {
@@ -104,12 +105,12 @@ public class Rumble {
             this.compilationConfiguration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
+        ItemRuntimePlan plan = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             this.configuration
         );
 
-        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+        return new SequenceOfItems(plan, dynamicContext, this.configuration);
     }
 
     /**
@@ -117,7 +118,7 @@ public class Rumble {
      * declared in the static context.
      *
      * @param location the JSONiq main module location.
-     * @throws java.io.IOException if there was an issue reading a module.
+     * @throws IOException if there was an issue reading a module.
      * @return the serialized query result.
      */
     public String runQueryToString(URI location) throws IOException {

@@ -1,41 +1,43 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.io.Serial;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+abstract class DateFormattingFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DateFormattingFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public DateFormattingFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
 
-        Item languageItem = this.getChildren().size() > 2
-            ? this.getChild(2).materializeFirstItemOrNull(context)
-            : null;
-        Item calendarItem = this.getChildren().size() > 3
-            ? this.getChild(3).materializeFirstItemOrNull(context)
-            : null;
-        Item placeItem = this.getChildren().size() > 4
-            ? this.getChild(4).materializeFirstItemOrNull(context)
-            : null;
+    private Item evaluate(DynamicContext context) {
+        Item valueItem = this.getChild(0).materializeFirstOrNull(context);
+        Item pictureItem = this.getChild(1).materializeFirstOrNull(context);
+        Item languageItem = this.getChildren().size() > 2 ? this.getChild(2).materializeFirstOrNull(context) : null;
+        Item calendarItem = this.getChildren().size() > 3 ? this.getChild(3).materializeFirstOrNull(context) : null;
+        Item placeItem = this.getChildren().size() > 4 ? this.getChild(4).materializeFirstOrNull(context) : null;
 
         // If $value is the empty sequence, the functions return the empty sequence
         if (valueItem == null) {

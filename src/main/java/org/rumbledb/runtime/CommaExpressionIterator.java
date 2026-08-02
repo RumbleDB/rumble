@@ -20,12 +20,22 @@
 
 package org.rumbledb.runtime;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.cursor.ConcatLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -40,106 +50,48 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CommaExpressionIterator extends HybridRuntimeIterator {
+public class CommaExpressionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            UpdatingRuntimePlan,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator currentChild;
-    private Item nextResult;
-    private int childIndex;
 
     public CommaExpressionIterator(
-            List<RuntimeIterator> childIterators,
+            List<? extends ItemRuntimePlan> childIterators,
             RuntimeStaticContext staticContext
     ) {
         super(childIterators, staticContext);
     }
 
     @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Comma expression", getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new ConcatLocalCursor<>(getChildren(), context, getMetadata());
     }
 
-    private void startLocal() {
-        this.childIndex = 0;
-
-        if (this.getChildren().size() >= 1) {
-            this.currentChild = this.getChild(this.childIndex);
-            this.currentChild.open(this.currentDynamicContextForLocalExecution);
-        } else {
-            this.currentChild = null;
-        }
-
-        setNextResult();
-    }
-
-    @Override
-    public void openLocal() {
-        startLocal();
-    }
-
-    public void setNextResult() {
-        if (this.currentChild == null) {
-            this.hasNext = false;
-            return;
-        }
-
-        this.nextResult = null;
-
-        while (this.nextResult == null) {
-            if (this.currentChild.hasNext()) {
-                this.nextResult = this.currentChild.next();
-            } else {
-                this.currentChild.close();
-                if (++this.childIndex == this.getChildren().size()) {
-                    this.currentChild = null;
-                    break;
-                }
-                this.currentChild = this.getChild(this.childIndex);
-                this.currentChild.open(this.currentDynamicContextForLocalExecution);
-            }
-        }
-
-        this.hasNext = this.nextResult != null;
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.currentChild != null) {
-            this.currentChild.close();
-        }
-    }
-
-    public List<RuntimeIterator> getOperands() {
+    public List<ItemRuntimePlan> getOperands() {
         // This method is currently used in SequenceLookupIterator and ObjectConstructorRuntimeIterator
         // Because getChildren is protected and not visible from there
         return getChildren();
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty()) {
-            this.childIndex = 0;
-            this.currentChild = this.getChild(this.childIndex);
+            int childIndex = 0;
+            ItemRuntimePlan currentChild = this.getChild(childIndex);
 
-            JavaRDD<Item> childRDD = this.currentChild.getRDD(dynamicContext);
-            this.childIndex++;
+            JavaRDD<Item> childRDD = currentChild.getRDD(dynamicContext);
+            childIndex++;
 
-            while (this.childIndex < this.getChildren().size()) {
-                this.currentChild = this.getChild(this.childIndex);
-                JavaRDD<Item> nextChildRDD = this.currentChild.getRDD(dynamicContext);
+            while (childIndex < this.getChildren().size()) {
+                currentChild = this.getChild(childIndex);
+                JavaRDD<Item> nextChildRDD = currentChild.getRDD(dynamicContext);
                 childRDD = childRDD.union(nextChildRDD);
-                this.childIndex++;
+                childIndex++;
             }
             return childRDD;
         } else {
@@ -151,8 +103,11 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         List<NativeClauseContext> childClauses = new ArrayList<>();
-        for (RuntimeIterator iterator : this.getChildren()) {
-            NativeClauseContext childContext = iterator.generateNativeQuery(nativeClauseContext);
+        for (ItemRuntimePlan iterator : this.getChildren()) {
+            NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
+                iterator,
+                nativeClauseContext
+            );
             if (childContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -227,13 +182,16 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (!isUpdating()) {
+        if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
 
         PendingUpdateList pul = new PendingUpdateList();
-        for (RuntimeIterator child : this.getChildren()) {
-            pul.mergeUpdates(child.getPendingUpdateList(context), this.getMetadata());
+        for (ItemRuntimePlan child : this.getChildren()) {
+            pul.mergeUpdates(
+                UpdatingRuntimePlan.get(child, context),
+                this.getRuntimeStaticContext().getMetadata()
+            );
         }
         return pul;
     }

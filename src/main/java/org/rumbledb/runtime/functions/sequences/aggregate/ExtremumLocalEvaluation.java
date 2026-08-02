@@ -1,0 +1,184 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.rumbledb.runtime.functions.sequences.aggregate;
+
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+import lombok.NonNull;
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnsupportedCollationException;
+import org.rumbledb.items.ItemComparator;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+
+/**
+ * Direct local evaluation shared by the {@code min()} and {@code max()} aggregate plans.
+ */
+final class ExtremumLocalEvaluation {
+
+    private enum Kind {
+        MIN,
+        MAX
+    }
+
+    private static final String CODEPOINT_COLLATION =
+        "http://www.w3.org/2005/xpath-functions/collation/codepoint";
+
+    private ExtremumLocalEvaluation() {
+    }
+
+    public static Item min(
+            ItemRuntimePlan childPlan,
+            ItemRuntimePlan collationPlan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        return evaluate(childPlan, collationPlan, context, metadata, Kind.MIN);
+    }
+
+    public static Item max(
+            ItemRuntimePlan childPlan,
+            ItemRuntimePlan collationPlan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        return evaluate(childPlan, collationPlan, context, metadata, Kind.MAX);
+    }
+
+    private static Item evaluate(
+            @NonNull ItemRuntimePlan childPlan,
+            ItemRuntimePlan collationPlan,
+            @NonNull DynamicContext context,
+            @NonNull ExceptionMetadata metadata,
+            @NonNull Kind kind
+    ) {
+        validateCollation(collationPlan, context, metadata);
+
+        Item selected = null;
+        boolean sawNull = false;
+        boolean sawFloat = false;
+        boolean sawDouble = false;
+        boolean sawString = false;
+        ItemComparator comparator = new ItemComparator(
+                kind == Kind.MIN,
+                new InvalidArgumentTypeException(
+                        functionName(kind)
+                            + " expression input error. Input has to be non-null atomics of matching types",
+                        metadata
+                )
+        );
+
+        try (Cursor<Item> childCursor = childPlan.getCursor(context)) {
+            while (childCursor.hasNext()) {
+                Item candidate = childCursor.next();
+                if (candidate.isNull()) {
+                    if (kind == Kind.MIN) {
+                        return ItemFactory.getInstance().createNullItem();
+                    }
+                    sawNull = true;
+                    continue;
+                }
+                if (candidate.isUntypedAtomic()) {
+                    candidate = ItemFactory.getInstance().createDoubleItem(candidate.castToDoubleValue());
+                }
+                ensureSupported(candidate);
+                sawDouble |= candidate.isDouble();
+                sawFloat |= candidate.isFloat();
+                sawString |= candidate.isString();
+
+                if (selected == null) {
+                    selected = candidate;
+                    continue;
+                }
+
+                int comparison = comparator.compare(selected, candidate);
+                if (isNaN(candidate)) {
+                    selected = candidate;
+                } else if (!isNaN(selected) && shouldSelectCandidate(comparison, kind)) {
+                    selected = candidate;
+                }
+            }
+        }
+
+        if (selected == null) {
+            return sawNull ? ItemFactory.getInstance().createNullItem() : null;
+        }
+        if (selected.isNumeric()) {
+            if (sawDouble) {
+                return ItemFactory.getInstance().createDoubleItem(selected.castToDoubleValue());
+            }
+            if (sawFloat) {
+                return ItemFactory.getInstance().createFloatItem(selected.castToFloatValue());
+            }
+        }
+        if (sawString && (selected.isString() || selected.isAnyURI())) {
+            return ItemFactory.getInstance().createStringItem(selected.getStringValue());
+        }
+        return selected;
+    }
+
+    private static boolean shouldSelectCandidate(int comparison, Kind kind) {
+        return kind == Kind.MIN ? comparison > 0 : comparison < 0;
+    }
+
+    private static boolean isNaN(Item item) {
+        return (item.isFloat() || item.isDouble()) && item.isNaN();
+    }
+
+    private static void validateCollation(
+            ItemRuntimePlan collationPlan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        if (collationPlan == null) {
+            return;
+        }
+        Item collation = collationPlan.materializeFirstOrNull(context);
+        if (!CODEPOINT_COLLATION.equals(collation.getStringValue())) {
+            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+        }
+    }
+
+    private static void ensureSupported(Item item) {
+        ItemType type = item.getDynamicType();
+        if (
+            item.isNumeric()
+                || item.isString()
+                || item.isAnyURI()
+                || item.isBoolean()
+                || type.equals(BuiltinTypesCatalogue.dateItem)
+                || type.isSubtypeOf(BuiltinTypesCatalogue.dateTimeItem)
+                || type.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
+                || type.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
+                || type.equals(BuiltinTypesCatalogue.timeItem)
+        ) {
+            return;
+        }
+        throw new OurBadException("Inconsistent state in state iteration");
+    }
+
+    private static String functionName(Kind kind) {
+        return kind == Kind.MIN ? "Min" : "Max";
+    }
+}

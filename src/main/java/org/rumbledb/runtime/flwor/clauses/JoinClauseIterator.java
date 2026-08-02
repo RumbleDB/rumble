@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,8 +44,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.TupleRuntimePlan;
+import org.rumbledb.runtime.cursor.EmptyLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -52,6 +55,8 @@ import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -59,7 +64,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
 
-public class JoinClauseIterator extends RuntimeTupleIterator {
+public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -70,27 +75,20 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
     @SuppressWarnings("unused")
     private final DataFrameContext dataFrameContext;
 
-    // Computation state
-    @SuppressWarnings("unused")
-    private transient DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
-    @SuppressWarnings("unused")
-    private transient long position;
-    @SuppressWarnings("unused")
-    private transient FlworTuple nextLocalTupleResult;
-    @SuppressWarnings("unused")
-    private transient FlworTuple inputTuple; // tuple received from child, used for tuple creation
-    @SuppressWarnings("unused")
-    private transient boolean isFirstItem;
-
     public JoinClauseIterator(
-            RuntimeTupleIterator leftChild,
-            RuntimeTupleIterator rightChild,
+            TupleRuntimePlan leftChild,
+            TupleRuntimePlan rightChild,
             boolean isLeftOuterJoin,
             RuntimeStaticContext staticContext
     ) {
         super(leftChild, staticContext);
         this.isLeftOuterJoin = isLeftOuterJoin;
         this.dataFrameContext = new DataFrameContext();
+    }
+
+    @Override
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
+        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
     }
 
     /**
@@ -119,7 +117,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             List<Name> variablesInLeftInputTuple, // really needed?
             List<Name> variablesInRightInputTuple, // really needed?
-            RuntimeIterator predicateIterator,
+            ItemRuntimePlan predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata,
@@ -144,8 +142,10 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         // TODO project away from the left all variables from the right
 
         // Is this a join that we can optimize as an actual Spark join?
-        List<RuntimeIterator> leftTupleSideEqualityCriteria = new ArrayList<>();
-        List<RuntimeIterator> rightTupleSideEqualityCriteria = new ArrayList<>();
+        List<ItemRuntimePlan> leftTupleSideEqualityCriteria =
+            new ArrayList<>();
+        List<ItemRuntimePlan> rightTupleSideEqualityCriteria =
+            new ArrayList<>();
 
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
             predicateIterator,
@@ -159,9 +159,9 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
             optimizableJoin = false;
         }
 
-        // for (RuntimeIterator r : rightHandSideEqualityCriteria) {
+        // for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> r : rightHandSideEqualityCriteria) {
         // StringBuilder sb = new StringBuilder();
-        // r.print(sb, 2);
+        // org.rumbledb.runtime.plan.r.print(sb, 2);
         // System.out.println(sb.toString());
         // }
 
@@ -199,8 +199,8 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
 
 
         // Now we prepare the iterators for the two sides of the equality criterion.
-        RuntimeIterator rightHandSideEqualityCriterion;
-        RuntimeIterator leftHandSideEqualityCriterion;
+        ItemRuntimePlan rightHandSideEqualityCriterion;
+        ItemRuntimePlan leftHandSideEqualityCriterion;
 
         if (rightTupleSideEqualityCriteria.size() == 1) {
             rightHandSideEqualityCriterion = rightTupleSideEqualityCriteria.get(0);
@@ -367,25 +367,25 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
     }
 
     private static boolean extractEqualityComparisonsForHashing(
-            RuntimeIterator predicateIterator,
-            List<RuntimeIterator> leftTupleSideEqualityCriteria,
-            List<RuntimeIterator> rightTupleSideEqualityCriteria,
+            ItemRuntimePlan predicateIterator,
+            List<ItemRuntimePlan> leftTupleSideEqualityCriteria,
+            List<ItemRuntimePlan> rightTupleSideEqualityCriteria,
             List<Name> leftTupleSideVariableNames,
             List<Name> rightTupleSideVariableNames
     ) {
         boolean optimizableJoin = false;
-        Stack<RuntimeIterator> candidateIterators = new Stack<>();
+        Stack<ItemRuntimePlan> candidateIterators = new Stack<>();
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
-            RuntimeIterator iterator = candidateIterators.pop();
+            ItemRuntimePlan iterator = candidateIterators.pop();
             if (iterator instanceof AndOperationIterator andOperationIterator) {
                 AndOperationIterator andIterator = andOperationIterator;
                 candidateIterators.push(andIterator.getLeftIterator());
                 candidateIterators.push(andIterator.getRightIterator());
             } else if (iterator instanceof ComparisonIterator comparisonIterator) {
                 if (comparisonIterator.isValueEquality()) {
-                    RuntimeIterator lhs = comparisonIterator.getLeftIterator();
-                    RuntimeIterator rhs = comparisonIterator.getRightIterator();
+                    ItemRuntimePlan lhs = comparisonIterator.getLeftIterator();
+                    ItemRuntimePlan rhs = comparisonIterator.getRightIterator();
 
                     Set<Name> leftComparisonDependencies = new HashSet<>(
                             lhs.getVariableDependencies().keySet()
@@ -418,13 +418,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworTuple next() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public FlworDataFrame getDataFrame(DynamicContext context) {
+    public FlworDataFrame createNativeDataFrame(DynamicContext context) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -459,7 +453,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
-            RuntimeIterator predicateIterator,
+            ItemRuntimePlan predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata
@@ -474,7 +468,10 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         StructType rightSchema = rightInputTuple.schema();
         StructType unionSchema = FlworDataFrameUtils.schemaUnion(leftSchema, rightSchema);
         NativeClauseContext nativeContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, unionSchema, context);
-        NativeClauseContext nativeQuery = predicateIterator.generateNativeQuery(nativeContext);
+        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(
+            predicateIterator,
+            nativeContext
+        );
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
@@ -517,7 +514,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         if (this.child.isSparkJobNeeded()) {
             return true;
         }
-        switch (getHighestExecutionMode()) {
+        switch (this.staticContext.getExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

@@ -21,10 +21,12 @@
 
 package org.rumbledb.runtime.functions.io;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.parsing.ItemParser;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -32,7 +34,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -47,72 +50,96 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private YAMLParser parser;
-    private Item nextResult;
 
     public YamlDocFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.getChild(0);
-        Item path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        try {
-            URI uri = FileSystemUtil.resolveURI(
-                this.staticContext.getStaticURI(),
-                path.getStringValue(),
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new ResourceLocalCursor<>(
+                () -> {
+                    Item path = this.getChild(0).materializeFirstOrNull(context);
+                    try {
+                        URI uri = FileSystemUtil.resolveURI(
+                            this.staticContext.getStaticURI(),
+                            path.getStringValue(),
+                            getMetadata()
+                        );
+                        InputStream input = FileSystemUtil.getDataInputStream(
+                            uri,
+                            context.getRumbleRuntimeConfiguration(),
+                            getMetadata()
+                        );
+                        YAMLParser yamlParser = new YAMLFactory().createParser(new InputStreamReader(input));
+                        return new YamlResourceIterator(yamlParser, getMetadata());
+                    } catch (IOException e) {
+                        throw new ParsingException(e.getMessage(), getMetadata());
+                    }
+                },
                 getMetadata()
-            );
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-                getMetadata()
-            );
-            YAMLFactory factory = new YAMLFactory();
-            this.parser = factory.createParser(new InputStreamReader(is));
-            getNextResult();
-        } catch (IOException e) {
-            throw new ParsingException(e.getMessage(), getMetadata());
-        } catch (IteratorFlowException e) {
-            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-        }
+        );
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.nextResult;
-            getNextResult();
+    private static final class YamlResourceIterator
+            implements
+                ResourceLocalCursor.ResourceIterator<Item> {
+
+        private final YAMLParser parser;
+        private final ExceptionMetadata metadata;
+        private Item next;
+
+        private YamlResourceIterator(
+                YAMLParser parser,
+                ExceptionMetadata metadata
+        ) {
+            this.parser = parser;
+            this.metadata = metadata;
+            advance();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.next != null;
+        }
+
+        @Override
+        public Item next() {
+            Item result = this.next;
+            advance();
             return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " yaml-doc function", getMetadata());
-    }
 
-    public void getNextResult() {
-        com.fasterxml.jackson.core.JsonToken nt = null;
-        try {
-            nt = this.parser.nextToken();
-        } catch (IOException e) {
-            RumbleException r = new ParsingException(
-                    "An error happened while parsing YAML. YAML is not well-formed!",
-                    this.getMetadata()
-            );
-            r.initCause(e);
-            throw r;
+        private void advance() {
+            try {
+                this.next = ItemParser.getItemFromYAML(
+                    this.parser,
+                    this.parser.nextToken(),
+                    this.metadata
+                );
+            } catch (IOException e) {
+                RumbleException exception = new ParsingException(
+                        "An error happened while parsing YAML. YAML is not well-formed!",
+                        this.metadata
+                );
+                exception.initCause(e);
+                throw exception;
+            }
         }
-        this.nextResult = ItemParser.getItemFromYAML(this.parser, nt, getMetadata());
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
+
+        @Override
+        public void close() {
+            try {
+                this.parser.close();
+            } catch (IOException e) {
+                RumbleException exception = new ParsingException(e.getMessage(), this.metadata);
+                exception.initCause(e);
+                throw exception;
+            }
         }
     }
-
 
 }

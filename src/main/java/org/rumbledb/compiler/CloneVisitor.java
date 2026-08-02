@@ -473,7 +473,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
         ArrayConstructorExpression result;
         if (expression.isFixedSlotsArrayConstructor()) {
-            List<Expression> clonedMembers = new java.util.ArrayList<>();
+            List<Expression> clonedMembers = new ArrayList<>();
             if (expression.getMemberExpressions() != null) {
                 for (Expression memberExpr : expression.getMemberExpressions()) {
                     clonedMembers.add((Expression) visit(memberExpr, argument));

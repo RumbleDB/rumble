@@ -20,45 +20,55 @@
 
 package org.rumbledb.runtime.misc;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.LongStream;
 
+import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
-public class RangeOperationIterator extends HybridRuntimeIterator {
+public class RangeOperationIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
     private long left;
     private long right;
-    private long index;
     public static final int PARTITION_SIZE = 1000000;
 
     public RangeOperationIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightiterator,
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightiterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightiterator), staticContext);
@@ -67,20 +77,11 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.leftIterator, this.rightIterator, context, getMetadata());
     }
 
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            if (this.index == this.right) {
-                this.hasNext = false;
-            }
-            return ItemFactory.getInstance().createLongItem(this.index++);
-        }
-        throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
-    }
+
 
     /**
      * Initializes the boundaries of the range.
@@ -92,7 +93,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         Item left;
         Item right;
         try {
-            left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            left = this.leftIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received more than one item",
@@ -100,7 +101,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
             );
         }
         try {
-            right = this.rightIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            right = this.rightIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received more than one item",
@@ -139,33 +140,8 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal() {
-        this.index = 0;
-        if (init(this.currentDynamicContextForLocalExecution)) {
-            if (this.right < this.left) {
-                this.hasNext = false;
-            } else {
-                this.index = this.left;
-                this.hasNext = true;
-            }
-        } else {
-            this.hasNext = false;
-        }
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        if (!init(this.currentDynamicContextForLocalExecution)) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        if (!init(context)) {
             return new HomogeneousItemDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                     BuiltinTypesCatalogue.item
@@ -199,17 +175,100 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem, staticContext);
     }
 
-    @Override
-    protected void closeLocal() {
+
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
+
+        private final ItemRuntimePlan leftPlan;
+        private final ItemRuntimePlan rightPlan;
+        private final DynamicContext context;
+        private long rightBound;
+        private long position;
+        private boolean hasNext;
+
+        private EvaluationCursor(
+                @NonNull ItemRuntimePlan leftPlan,
+                @NonNull ItemRuntimePlan rightPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.leftPlan = leftPlan;
+            this.rightPlan = rightPlan;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            Item left = materializeBound(this.leftPlan);
+            Item right = materializeBound(this.rightPlan);
+            if (left == null || right == null) {
+                this.hasNext = false;
+                return;
+            }
+            if (!left.isInteger() || !right.isInteger()) {
+                throw new UnexpectedTypeException(
+                        "Range expression must have integer input, but instead received "
+                            + left.getDynamicType()
+                            + " and "
+                            + right.getDynamicType(),
+                        this.getMetadata()
+                );
+            }
+            this.position = left.castToIntegerValue().longValue();
+            this.rightBound = right.castToIntegerValue().longValue();
+            this.hasNext = this.position <= this.rightBound;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.hasNext;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!this.hasNext) {
+                throw new IteratorFlowException(
+                        "Invalid next call in Range Operation",
+                        this.getMetadata()
+                );
+            }
+            long result = this.position;
+            if (this.position == this.rightBound) {
+                this.hasNext = false;
+            } else {
+                this.position++;
+            }
+            return ItemFactory.getInstance().createLongItem(result);
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.hasNext = false;
+        }
+
+        private Item materializeBound(ItemRuntimePlan plan) {
+            try {
+                return plan.materializeAtMostOne(this.context);
+            } catch (MoreThanOneItemException exception) {
+                throw new UnexpectedTypeException(
+                        "Range expression must have integer input, but instead received more than one item",
+                        this.getMetadata()
+                );
+            }
+        }
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftContext = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext leftContext = NativeQueryRuntimePlan.generate(
+            this.leftIterator,
+            nativeClauseContext
+        );
         if (leftContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightContext = this.rightIterator.generateNativeQuery(
+        NativeClauseContext rightContext = NativeQueryRuntimePlan.generate(
+            this.rightIterator,
             new NativeClauseContext(leftContext, null, null)
         );
         if (rightContext == NativeClauseContext.NoNativeQuery) {

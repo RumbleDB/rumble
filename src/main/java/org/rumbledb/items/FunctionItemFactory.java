@@ -17,6 +17,10 @@
 
 package org.rumbledb.items;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,17 +32,15 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinNamedFunctionReferenceMarkerIterator;
 import org.rumbledb.types.SequenceType;
 
 /**
  * Construction helpers for {@link FunctionItem} values used by the runtime.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FunctionItemFactory {
 
-    private FunctionItemFactory() {
-    }
 
     /**
      * Builds a function item for a builtin named function reference, using synthetic parameter names
@@ -63,7 +65,7 @@ public final class FunctionItemFactory {
             .executionMode(ExecutionMode.LOCAL)
             .metadata(metadata)
             .build();
-        RuntimeIterator markerBody = new BuiltinNamedFunctionReferenceMarkerIterator(markerContext);
+        ItemRuntimePlan markerBody = new BuiltinNamedFunctionReferenceMarkerIterator(markerContext);
         return new FunctionItem(
                 identifier,
                 paramNames,

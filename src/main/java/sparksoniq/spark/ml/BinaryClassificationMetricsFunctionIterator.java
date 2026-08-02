@@ -1,5 +1,7 @@
 package sparksoniq.spark.ml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,33 +16,32 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
 import scala.Tuple2;
 
-public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class BinaryClassificationMetricsFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public BinaryClassificationMetricsFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         JavaRDD<Item> scoresAndLabels = this.getChild(0).getRDD(context);
-        String scoreCol = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
-        String labelCol = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
+        String scoreCol = this.getChild(1).materializeFirstOrNull(context).getStringValue();
+        String labelCol = this.getChild(2).materializeFirstOrNull(context).getStringValue();
         int numBins = -1;
         if (this.getChildren().size() > 3) {
-            numBins = this.getChild(3).materializeFirstItemOrNull(context).getIntValue();
+            numBins = this.getChild(3).materializeFirstOrNull(context).getIntValue();
         }
         JavaPairRDD<Object, Object> predictionAndLabels = scoresAndLabels.mapToPair(
             p -> new Tuple2<>(
@@ -66,7 +67,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
             .metadata(getMetadata())
             .build();
 
-        RuntimeIterator it = new ConstantRDDRuntimeIterator(
+        ItemRuntimePlan it = new ConstantRDDRuntimeIterator(
                 rdd,
                 staticContext
         );

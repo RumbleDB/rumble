@@ -146,7 +146,7 @@ public class StaticContext {
     }
 
     private void initializeRootCollations() {
-        this.staticallyKnownCollations = new LinkedHashSet<>(CollationCatalogue.defaultStaticallyKnownCollations());
+        this.staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
         this.defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
     }
 

@@ -17,27 +17,26 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -45,18 +44,22 @@ import org.rumbledb.types.SequenceType;
  * XPath and XQuery Functions and Operators 3.1 {@code array:filter}:
  * {@code array:filter($array as array(*), $predicate as function(item()*) as xs:boolean) as array(*)}.
  */
-public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
+public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return computeResult(context);
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator predicateIterator;
-    private Item resultItem;
-    private boolean hasProducedResult;
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan predicateIterator;
 
     public ArrayFilterFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -65,31 +68,21 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         }
         this.arrayIterator = arguments.get(0);
         this.predicateIterator = arguments.get(1);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        Item arrayItem;
+    private Item computeResult(DynamicContext context) {
+        Item arrayItem = null;
         try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:filter expects exactly one array argument.",
                     getMetadata()
             );
         }
-
+        if (arrayItem == null) {
+            return null;
+        }
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; argument to array:filter must be an array.",
@@ -130,12 +123,11 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : kept) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(kept, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        return ItemFactory.getInstance()
+            .createSequenceArrayItem(kept, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     private boolean predicateHoldsForCallableItem(
@@ -143,16 +135,18 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             List<Item> memberSequence,
             DynamicContext context
     ) {
-        RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
+        ItemRuntimePlan memberIterator = createSequenceIterator(
+            memberSequence
+        );
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
             .configuration(getConfiguration())
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(ExecutionMode.LOCAL)
             .metadata(getMetadata())
             .build();
-        List<RuntimeIterator> arguments = new ArrayList<>(1);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        RuntimeIterator functionCall = new DynamicFunctionCallIterator(
+        ItemRuntimePlan functionCall = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(predicate, functionItemContext),
                 arguments,
                 functionItemContext
@@ -178,7 +172,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         return value.getBooleanValue();
     }
 
-    private RuntimeIterator createSequenceIterator(List<Item> items) {
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -192,7 +186,9 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(
+                items.size()
+        );
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -215,51 +211,5 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             .metadata(getMetadata())
             .build();
         return new CommaExpressionIterator(childIterators, staticContext);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        if (this.predicateIterator.isOpen()) {
-            this.predicateIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:filter is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:filter is currently supported only in local execution mode."
-        );
     }
 }

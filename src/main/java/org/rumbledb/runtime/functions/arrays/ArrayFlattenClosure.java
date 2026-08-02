@@ -33,7 +33,7 @@ public class ArrayFlattenClosure implements FlatMapFunction<Item, Item> {
                 }
             }
         } else {
-            for (java.util.List<Item> member : arg0.getSequenceMembers()) {
+            for (List<Item> member : arg0.getSequenceMembers()) {
                 for (Item memberItem : member) {
                     Iterator<Item> innerResult = this.call(memberItem);
                     while (innerResult.hasNext()) {

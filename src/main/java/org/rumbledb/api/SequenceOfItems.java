@@ -1,5 +1,7 @@
 package org.rumbledb.api;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,8 +19,10 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.Serializers;
@@ -48,9 +52,10 @@ import sparksoniq.spark.SparkSessionManager;
  */
 public class SequenceOfItems {
 
-    private final RuntimeIterator iterator;
+    private final ItemRuntimePlan plan;
     private final DynamicContext dynamicContext;
     private final RumbleRuntimeConfiguration configuration;
+    private Cursor<Item> cursor;
 
     /**
      * Checks whether the iterator is open.
@@ -63,20 +68,21 @@ public class SequenceOfItems {
      * The constructor is not meant to be used directly. Sequences of items are obtained through a Rumble object and a
      * query.
      * 
-     * @param iterator The top-level iterator of the query.
+     * @param plan The top-level runtime plan of the query.
      * @param dynamicContext An initialized dynamic context.
      * @param configuration A RumbleDB configuration.
      */
     public SequenceOfItems(
-            RuntimeIterator iterator,
+            ItemRuntimePlan plan,
             DynamicContext dynamicContext,
             RumbleRuntimeConfiguration configuration
     ) {
-        this.iterator = iterator;
+        this.plan = plan;
         this.isOpen = false;
         this.dynamicContext = dynamicContext;
         this.configuration = configuration;
         this.cachedItems = null;
+        this.cursor = null;
     }
 
     /**
@@ -86,7 +92,7 @@ public class SequenceOfItems {
         if (this.availableAsPUL()) {
             return;
         }
-        this.iterator.open(this.dynamicContext);
+        this.cursor = this.plan.getCursor(this.dynamicContext);
         this.isOpen = true;
     }
 
@@ -98,7 +104,8 @@ public class SequenceOfItems {
             return;
         }
         if (this.isOpen) {
-            this.iterator.close();
+            this.cursor.close();
+            this.cursor = null;
         }
         this.isOpen = false;
     }
@@ -112,7 +119,7 @@ public class SequenceOfItems {
         if (this.availableAsPUL()) {
             return false;
         }
-        return this.iterator.hasNext();
+        return this.cursor.hasNext();
     }
 
     /**
@@ -125,7 +132,7 @@ public class SequenceOfItems {
         if (this.availableAsPUL()) {
             return ItemFactory.getInstance().createNullItem();
         }
-        return this.iterator.next();
+        return this.cursor.next();
     }
 
     /**
@@ -134,7 +141,7 @@ public class SequenceOfItems {
      * @return true if it is available as an RDD of Items.
      */
     public boolean availableAsRDD() {
-        return this.iterator.isRDDOrDataFrame();
+        return this.executionMode().isRDDOrDataFrame();
     }
 
     /**
@@ -143,7 +150,7 @@ public class SequenceOfItems {
      * @return true if it is available as a data frame.
      */
     public boolean availableAsDataFrame() {
-        return this.iterator.isDataFrame();
+        return this.executionMode().isDataFrame();
     }
 
     /**
@@ -152,7 +159,7 @@ public class SequenceOfItems {
      * @return true if updating; otherwise false.
      */
     public boolean availableAsPUL() {
-        return this.iterator.isUpdating();
+        return this.plan.getRuntimeStaticContext().isUpdating();
     }
 
     /**
@@ -167,13 +174,18 @@ public class SequenceOfItems {
      * @return a list of output modes, among "DataFrame", "RDD", "PUL", and "Local".
      */
     public List<String> availableOutputs() {
-        if (this.iterator.isDataFrame()) {
+        if (this.executionMode().isDataFrame()) {
             return Arrays.asList("DataFrame", "RDD", "Local");
-        } else if (this.iterator.canProduceDataFrame()) {
+        } else if (
+            this.plan.getRuntimeStaticContext()
+                .getStaticType()
+                .getItemType()
+                .isCompatibleWithDataFrames(this.configuration)
+        ) {
             return Arrays.asList("RDD", "Local", "DataFrame");
-        } else if (this.iterator.isRDD()) {
+        } else if (this.executionMode().isRDD()) {
             return Arrays.asList("RDD", "Local");
-        } else if (this.iterator.isUpdating()) {
+        } else if (this.availableAsPUL()) {
             return Arrays.asList("PUL");
         } else {
             return Arrays.asList("Local");
@@ -193,7 +205,7 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this.iterator.getRDD(this.dynamicContext);
+        return this.plan.getRDD(this.dynamicContext);
     }
 
     /**
@@ -216,7 +228,7 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this.iterator.getRDD(this.dynamicContext)
+        return this.plan.getRDD(this.dynamicContext)
             .map(
                 item -> ("\u0080\u0005\u0095"
                     + longToLittleEndianString(item.serializeAsJSON().length() + 7)
@@ -253,7 +265,7 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        Dataset<Row> res = this.iterator.getOrCreateDataFrame(this.dynamicContext).getDataFrame();
+        Dataset<Row> res = this.plan.getDataFrame(this.dynamicContext).getDataFrame();
         if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
             res = res.withColumnRenamed(SparkSessionManager.nonObjectJSONiqItemColumnName, "__value");
         }
@@ -267,15 +279,15 @@ public class SequenceOfItems {
      * that should be used when serializing the results of this sequence.
      */
     public RuntimeStaticContext getRuntimeStaticContext() {
-        return this.iterator.getRuntimeStaticContext();
+        return this.plan.getRuntimeStaticContext();
     }
 
     /**
      * Applies the PUL available when the iterator is updating.
      */
     public void applyPUL() {
-        PendingUpdateList pul = this.iterator.getPendingUpdateList(this.dynamicContext);
-        pul.applyUpdates(this.iterator.getMetadata());
+        PendingUpdateList pul = UpdatingRuntimePlan.get(this.plan, this.dynamicContext);
+        pul.applyUpdates(this.plan.getRuntimeStaticContext().getMetadata());
     }
 
     /**
@@ -371,46 +383,12 @@ public class SequenceOfItems {
      * @return The list of items in the sequence, possibly capped.
      */
     public List<Item> getFirstItemsAsList(int maxNumberOfItems) {
-        List<Item> resultList = new ArrayList<Item>();
         if (this.availableAsPUL()) {
-            return resultList;
+            return new ArrayList<>();
         }
-        if (this.iterator.isRDDOrDataFrame()) {
-            JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
-            List<Item> result = rdd.take(maxNumberOfItems);
-            resultList.addAll(result);
-            return resultList;
-        }
-        this.iterator.open(this.dynamicContext);
-        Item result = null;
-        if (this.iterator.hasNext()) {
-            result = this.iterator.next();
-        }
-        if (result == null) {
-            this.iterator.close();
-            return resultList;
-        }
-        Item singleOutput = result;
-        if (!this.iterator.hasNext()) {
-            resultList.add(singleOutput);
-            this.iterator.close();
-            return resultList;
-        } else {
-            int itemCount = 1;
-            resultList.add(result);
-            while (
-                this.iterator.hasNext()
-                    &&
-                    ((itemCount < maxNumberOfItems && maxNumberOfItems > 0)
-                        ||
-                        maxNumberOfItems == 0)
-            ) {
-                resultList.add(this.iterator.next());
-                itemCount++;
-            }
-            this.iterator.close();
-            return resultList;
-        }
+        return maxNumberOfItems == 0
+            ? this.plan.materialize(this.dynamicContext)
+            : this.plan.materializeAtMost(this.dynamicContext, maxNumberOfItems);
     }
 
     /*
@@ -424,9 +402,9 @@ public class SequenceOfItems {
         if (this.availableAsPUL()) {
             return -1;
         }
-        if (this.iterator.isRDDOrDataFrame()) {
+        if (this.executionMode().isRDDOrDataFrame()) {
             long count = -1;
-            JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
+            JavaRDD<Item> rdd = this.plan.getRDD(this.dynamicContext);
             List<Item> result = rdd.take(maxNumberOfItems + 1);
             if (result.size() == maxNumberOfItems + 1) {
                 count = rdd.count();
@@ -436,40 +414,23 @@ public class SequenceOfItems {
                 .collect(Collectors.toCollection(() -> resultList));
             return count;
         }
-        this.iterator.open(this.dynamicContext);
-        Item result = null;
-        if (this.iterator.hasNext()) {
-            result = this.iterator.next();
-        }
-        if (result == null) {
-            this.iterator.close();
-            return -1;
-        }
-        Item singleOutput = result;
-        if (!this.iterator.hasNext()) {
-            resultList.add(singleOutput);
-            this.iterator.close();
-            return -1;
-        } else {
-            int itemCount = 1;
-            resultList.add(result);
+        try (Cursor<Item> localCursor = this.plan.getCursor(this.dynamicContext)) {
+            int itemCount = 0;
             while (
-                this.iterator.hasNext()
-                    &&
-                    ((itemCount < maxNumberOfItems && maxNumberOfItems > 0)
-                        ||
-                        maxNumberOfItems == 0)
+                localCursor.hasNext()
+                    && ((itemCount < maxNumberOfItems && maxNumberOfItems > 0) || maxNumberOfItems == 0)
             ) {
-                resultList.add(this.iterator.next());
+                resultList.add(localCursor.next());
                 itemCount++;
             }
-            if (this.iterator.hasNext() && itemCount == maxNumberOfItems) {
-                this.iterator.close();
-                return Long.MAX_VALUE;
-            }
-            this.iterator.close();
-            return -1;
+            return localCursor.hasNext() && itemCount == maxNumberOfItems
+                ? Long.MAX_VALUE
+                : -1;
         }
+    }
+
+    private ExecutionMode executionMode() {
+        return this.plan.getRuntimeStaticContext().getExecutionMode();
     }
 
     /**

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
@@ -246,7 +247,7 @@ public class ComparisonVisitor extends CloneVisitor {
             Expression left,
             Expression right,
             StaticContext context,
-            org.rumbledb.exceptions.ExceptionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         SequenceType leftType = left.getStaticSequenceType();
         SequenceType rightType = right.getStaticSequenceType();
@@ -322,7 +323,7 @@ public class ComparisonVisitor extends CloneVisitor {
             Expression operand,
             SequenceType targetType,
             StaticContext context,
-            org.rumbledb.exceptions.ExceptionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         CastExpression castExpression = new CastExpression(operand, targetType, metadata);
         castExpression.setStaticContext(context);

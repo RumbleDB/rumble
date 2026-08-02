@@ -31,7 +31,7 @@ public class ArrayMembersClosure implements FlatMapFunction<Item, Item> {
                 }
             }
         } else {
-            for (java.util.List<Item> member : arg0.getSequenceMembers()) {
+            for (List<Item> member : arg0.getSequenceMembers()) {
                 results.addAll(member);
             }
         }

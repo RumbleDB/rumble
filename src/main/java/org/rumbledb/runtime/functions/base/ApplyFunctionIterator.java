@@ -1,11 +1,15 @@
 package org.rumbledb.runtime.functions.base;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -14,8 +18,9 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.EmptySequenceIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -23,79 +28,92 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApplyFunctionIterator extends HybridRuntimeIterator {
+public class ApplyFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new ApplyLocalCursor(this.getChild(0), this.getChild(1), this.staticContext, context);
+    }
+
+    private static final class ApplyLocalCursor extends AbstractDelegatingLocalCursor<Item> {
+        private final ItemRuntimePlan functionPlan;
+        private final ItemRuntimePlan argumentsPlan;
+        private final RuntimeStaticContext staticContext;
+        private final DynamicContext context;
+
+        private ApplyLocalCursor(
+                ItemRuntimePlan functionPlan,
+                ItemRuntimePlan argumentsPlan,
+                RuntimeStaticContext staticContext,
+                DynamicContext context
+        ) {
+            super(staticContext.getMetadata());
+            this.functionPlan = functionPlan;
+            this.argumentsPlan = argumentsPlan;
+            this.staticContext = staticContext;
+            this.context = context;
+        }
+
+        @Override
+        protected Cursor<Item> createDelegateCursor() {
+            return buildDelegate(
+                this.functionPlan,
+                this.argumentsPlan,
+                this.staticContext,
+                this.context
+            ).getCursor(this.context);
+        }
+    }
+
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator delegate;
-    private Item nextResult;
 
     public ApplyFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    protected void openLocal() {
-        this.delegate = buildDelegate(this.currentDynamicContextForLocalExecution);
-        this.delegate.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "in fn:apply",
-                    getMetadata()
-            );
-        }
-        Item result = this.nextResult;
-        setNextResult();
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.delegate != null && this.delegate.isOpen()) {
-            this.delegate.close();
-        }
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         return buildDelegate(context).getRDD(context);
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            buildDelegate(context),
+            context
+        );
     }
 
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        return buildDelegate(context).getDataFrame(context);
+    private ItemRuntimePlan buildDelegate(DynamicContext context) {
+        return buildDelegate(this.getChild(0), this.getChild(1), this.staticContext, context);
     }
 
-    private RuntimeIterator buildDelegate(DynamicContext context) {
+    private static ItemRuntimePlan buildDelegate(
+            ItemRuntimePlan functionPlan,
+            ItemRuntimePlan argumentsPlan,
+            RuntimeStaticContext staticContext,
+            DynamicContext context
+    ) {
         Item functionItem;
         Item argumentsArray;
         try {
-            functionItem = this.getChild(0).materializeAtMostOneItemOrNull(context);
-            argumentsArray = this.getChild(1).materializeAtMostOneItemOrNull(context);
+            functionItem = functionPlan.materializeAtMostOne(context);
+            argumentsArray = argumentsPlan.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:apply expects exactly one function item and exactly one array item.",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
-        RuntimeStaticContext localItemStarContext = this.staticContext
+        RuntimeStaticContext localItemStarContext = staticContext
             .toBuilder()
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(ExecutionMode.LOCAL)
@@ -109,18 +127,18 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
                         + argumentsArray.getSize()
                         + ".",
                     ErrorCode.ApplyFunctionArityMismatch,
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
 
-        List<RuntimeIterator> argumentIterators = new ArrayList<>();
+        List<ItemRuntimePlan> argumentIterators = new ArrayList<>();
         for (List<Item> memberSequence : argumentsArray.getSequenceMembers()) {
             argumentIterators.add(buildArgumentIterator(memberSequence, localItemStarContext));
         }
 
-        RuntimeIterator functionItemIterator = new ConstantRuntimeIterator(
+        ItemRuntimePlan functionItemIterator = new ConstantRuntimeIterator(
                 functionItem,
-                this.staticContext
+                staticContext
                     .toBuilder()
                     .staticType(SequenceType.createSequenceType("function(*)"))
                     .executionMode(ExecutionMode.LOCAL)
@@ -129,11 +147,11 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         return new DynamicFunctionCallIterator(
                 functionItemIterator,
                 argumentIterators,
-                this.staticContext
+                staticContext
         );
     }
 
-    private RuntimeIterator buildArgumentIterator(
+    private static ItemRuntimePlan buildArgumentIterator(
             List<Item> memberSequence,
             RuntimeStaticContext localItemStarContext
     ) {
@@ -143,23 +161,13 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         if (memberSequence.size() == 1) {
             return new ConstantRuntimeIterator(memberSequence.get(0), localItemStarContext);
         }
-        List<RuntimeIterator> sequenceItems = new ArrayList<>(memberSequence.size());
+        List<ItemRuntimePlan> sequenceItems = new ArrayList<>(
+                memberSequence.size()
+        );
         for (Item item : memberSequence) {
             sequenceItems.add(new ConstantRuntimeIterator(item, localItemStarContext));
         }
         return new CommaExpressionIterator(sequenceItems, localItemStarContext);
     }
 
-    private void setNextResult() {
-        this.nextResult = null;
-        if (this.delegate.hasNext()) {
-            this.nextResult = this.delegate.next();
-        }
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.delegate.close();
-        } else {
-            this.hasNext = true;
-        }
-    }
 }

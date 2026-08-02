@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.Optional;
@@ -32,8 +34,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import scala.Tuple2;
@@ -42,9 +43,9 @@ import java.io.Serial;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
-public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -55,33 +56,34 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return Objects.equals(q1, q2);
     }
 
-
     public DeepEqualFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator sequenceIterator1 = this.getChild(0);
-        RuntimeIterator sequenceIterator2 = this.getChild(1);
-        if (this.getChildren().size() == 3) {
-            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
+    public Item evaluateAtMostOne(DynamicContext context) {
+        ItemRuntimePlan sequenceIterator1 = this.getChild(0);
+        ItemRuntimePlan sequenceIterator2 = this.getChild(1);
+        validateCollation(
+            this.getChildren().size() == 3
+                ? this.getChild(2).materializeFirstOrNull(context)
+                : null
+        );
 
-        if (sequenceIterator1.isRDDOrDataFrame() && sequenceIterator2.isRDDOrDataFrame()) {
+        if (
+            sequenceIterator1.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()
+                && sequenceIterator2.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()
+        ) {
             JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(context);
             JavaRDD<Item> rdd2 = sequenceIterator2.getRDD(context);
             if (rdd1.partitions().size() == rdd2.partitions().size()) {
                 FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter =
                     new SameElementsAndLengthClosure();
                 JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
-                return ItemFactory.getInstance().createBooleanItem(differences.isEmpty());
+                return booleanItem(differences.isEmpty());
             } else {
                 JavaPairRDD<Long, Item> rdd1Zipped = rdd1.zipWithIndex().mapToPair(Tuple2::swap);
                 JavaPairRDD<Long, Item> rdd2Zipped = rdd2.zipWithIndex().mapToPair(Tuple2::swap);
@@ -91,14 +93,27 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddFiltered = rddJoined.filter(
                     tuple -> !tuple._2()._1().equals(tuple._2()._2())
                 );
-                return ItemFactory.getInstance().createBooleanItem(rddFiltered.isEmpty());
+                return booleanItem(rddFiltered.isEmpty());
             }
         }
         List<Item> items1 = sequenceIterator1.materialize(context);
         List<Item> items2 = sequenceIterator2.materialize(context);
 
-        boolean res = checkDeepEqual(items1, items2);
-        return ItemFactory.getInstance().createBooleanItem(res);
+        return booleanItem(checkDeepEqual(items1, items2));
+    }
+
+    private void validateCollation(Item collationItem) {
+        if (
+            collationItem != null
+                && !collationItem.getStringValue()
+                    .equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")
+        ) {
+            throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+        }
+    }
+
+    private static Item booleanItem(boolean value) {
+        return ItemFactory.getInstance().createBooleanItem(value);
     }
 
     /**
@@ -282,7 +297,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return node.children()
             .stream()
             .filter(child -> child.isElementNode() || child.isTextNode())
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
     }
 
     /**

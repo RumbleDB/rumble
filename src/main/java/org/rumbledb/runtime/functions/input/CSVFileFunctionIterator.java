@@ -32,8 +32,8 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -41,22 +41,22 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
+public class CSVFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public CSVFileFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+            .materializeFirstOrNull(context);
         String url = stringItem.getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
@@ -86,7 +86,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                     } else {
                         throw new UnexpectedTypeException(
                                 "Only boolean, string, and numeric types allowed as values",
-                                this.getMetadata()
+                                this.getRuntimeStaticContext().getMetadata()
                         );
                     }
                 }
@@ -99,12 +99,12 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                 ex.initCause(e);
                 throw ex;
             } else {
-                throw new UnexpectedTypeException(e.getMessage(), this.getMetadata());
+                throw new UnexpectedTypeException(e.getMessage(), this.getRuntimeStaticContext().getMetadata());
             }
         }
     }
 
     private Item getObjectItem(DynamicContext context) {
-        return this.getChild(1).materializeFirstItemOrNull(context);
+        return this.getChild(1).materializeFirstOrNull(context);
     }
 }

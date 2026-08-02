@@ -20,44 +20,55 @@
 
 package org.rumbledb.runtime.functions.numerics.exponential;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.util.List;
 
-public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class Exp10FunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final ItemRuntimePlan argument;
+
     public Exp10FunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+        this.argument = arguments.get(0);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item exponent = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item exponent = this.argument.materializeFirstOrNull(context);
         if (exponent == null) {
             return null;
         }
+        return evaluate(exponent);
+    }
+
+    private static Item evaluate(Item exponent) {
         return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.getDoubleValue()));
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext powerQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext powerQuery = NativeQueryRuntimePlan.generate(
+            this.argument,
+            nativeClauseContext
+        );
         if (powerQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

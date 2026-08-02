@@ -27,8 +27,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.XmlSyntaxToItemMapper;
-import org.rumbledb.runtime.RDDRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -38,26 +38,26 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
+public class XmlFilesFunctionIterator extends ItemRuntimePlan implements RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public XmlFilesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 
         int partitions = 32;
         if (this.getChildren().size() > 1) {
-            partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
+            partitions = this.getChild(1).materializeFirstOrNull(context).getIntValue();
         }
 
         JavaPairRDD<String, String> strings;

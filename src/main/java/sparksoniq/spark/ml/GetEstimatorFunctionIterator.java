@@ -20,6 +20,8 @@
 
 package sparksoniq.spark.ml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.ml.Estimator;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,18 +31,18 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class GetEstimatorFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -56,20 +58,22 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
     );
 
     public GetEstimatorFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
+    public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        String estimatorShortName = this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+        String estimatorShortName = this.getChild(0)
+            .materializeFirstOrNull(dynamicContext)
+            .getStringValue();
         Item paramMapItem = null;
         if (this.getChildren().size() >= 2) {
-            paramMapItem = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
+            paramMapItem = this.getChild(1).materializeFirstOrNull(dynamicContext);
         }
 
         String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(
@@ -109,16 +113,17 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                 }
             }
 
-            RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
-                    estimatorShortName,
-                    estimator,
-                    this.staticContext
-                        .toBuilder()
-                        .staticType(SequenceType.createSequenceType("function(*)"))
-                        .executionMode(ExecutionMode.LOCAL)
-                        .metadata(getMetadata())
-                        .build()
-            );
+            ItemRuntimePlan bodyIterator =
+                new ApplyEstimatorRuntimeIterator(
+                        estimatorShortName,
+                        estimator,
+                        this.staticContext
+                            .toBuilder()
+                            .staticType(SequenceType.createSequenceType("function(*)"))
+                            .executionMode(ExecutionMode.LOCAL)
+                            .metadata(getMetadata())
+                            .build()
+                );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(
                     SequenceType.createSequenceType("object*"),
@@ -146,7 +151,7 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
         } catch (
                 InstantiationException
                 | IllegalAccessException
-                | java.lang.reflect.InvocationTargetException
+                | InvocationTargetException
                 | NoSuchMethodException e
         ) {
             throw new OurBadException(

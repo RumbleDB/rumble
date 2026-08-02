@@ -20,6 +20,14 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -32,11 +40,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
@@ -46,39 +54,115 @@ import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.TreeMap;
 
-public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
+public class SimpleMapExpressionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new SimpleMapLocalCursor(this.leftIterator, this.rightIterator, context, getMetadata());
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
-    private Item nextResult;
-    private DynamicContext mapDynamicContext;
-    private Queue<Item> mapValues;
-    private long position;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
 
     public SimpleMapExpressionIterator(
-            RuntimeIterator sequence,
-            RuntimeIterator mapExpression,
+            ItemRuntimePlan sequence,
+            ItemRuntimePlan mapExpression,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(sequence, mapExpression), staticContext);
         this.leftIterator = sequence;
         this.rightIterator = mapExpression;
-        this.mapDynamicContext = null;
+    }
+
+    private static final class SimpleMapLocalCursor extends AbstractLocalCursor<Item> {
+        private final ItemRuntimePlan leftPlan;
+        private final ItemRuntimePlan rightPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private List<Item> inputs;
+        private int inputIndex;
+        private Cursor<Item> currentResults;
+
+        private SimpleMapLocalCursor(
+                ItemRuntimePlan leftPlan,
+                ItemRuntimePlan rightPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.leftPlan = leftPlan;
+            this.rightPlan = rightPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.inputs = this.leftPlan.materialize(this.context);
+            this.inputIndex = 0;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            while (this.currentResults == null || !this.currentResults.hasNext()) {
+                closeCurrentResults();
+                if (this.inputIndex >= this.inputs.size()) {
+                    return false;
+                }
+                DynamicContext mapContext = new DynamicContext(this.context);
+                mapContext.getVariableValues()
+                    .addVariableValue(
+                        Name.CONTEXT_ITEM,
+                        List.of(this.inputs.get(this.inputIndex))
+                    );
+                mapContext.getVariableValues().setPosition(this.inputIndex + 1L);
+                mapContext.getVariableValues().setLast(this.inputs.size());
+                this.inputIndex++;
+                this.currentResults = this.rightPlan.getCursor(mapContext);
+            }
+            return true;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw new IteratorFlowException(
+                        "Invalid next() call in simple map expression",
+                        this.metadata
+                );
+            }
+            return this.currentResults.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            closeCurrentResults();
+            this.inputs = null;
+            this.inputIndex = 0;
+        }
+
+        private void closeCurrentResults() {
+            if (this.currentResults != null) {
+                this.currentResults.close();
+                this.currentResults = null;
+            }
+        }
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
         long count = childRDD.count();
@@ -88,84 +172,6 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
                 count
         );
         return zippedChildRDD.flatMap(transformation);
-    }
-
-    private void setLast() {
-        long last = 0;
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        while (this.leftIterator.hasNext()) {
-            this.leftIterator.next();
-            ++last;
-        }
-        this.leftIterator.close();
-        this.mapDynamicContext.getVariableValues().setLast(last);
-    }
-
-    @Override
-    protected void openLocal() {
-        this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        setLast();
-        this.mapValues = new LinkedList<>();
-        this.position = 0;
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.leftIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in simple map expression", getMetadata());
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-
-        if (this.mapValues.size() > 0) {
-            this.nextResult = this.mapValues.poll();
-            this.hasNext = true;
-        } else if (this.leftIterator.hasNext()) {
-            List<Item> mapValuesRaw = getRightIteratorValues();
-            while (mapValuesRaw.size() == 0 && this.leftIterator.hasNext()) { // Discard all empty sequences
-                mapValuesRaw = getRightIteratorValues();
-            }
-
-            if (mapValuesRaw.size() == 1) {
-                this.nextResult = mapValuesRaw.get(0);
-            } else {
-                this.mapValues.addAll(mapValuesRaw);
-                this.nextResult = this.mapValues.poll();
-            }
-        }
-        if (this.nextResult != null) {
-            this.hasNext = true;
-        } else {
-            this.hasNext = false;
-        }
-    }
-
-    private List<Item> getRightIteratorValues() {
-        Item item = this.leftIterator.next();
-        List<Item> currentItems = new ArrayList<>();
-        this.mapDynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
-        this.mapDynamicContext.getVariableValues().setPosition(++this.position);
-        currentItems.add(item);
-        List<Item> mapValuesRaw = this.rightIterator.materialize(this.mapDynamicContext);
-        this.mapDynamicContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
-        return mapValuesRaw;
     }
 
     @Override
@@ -179,13 +185,11 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame df = this.leftIterator.getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.leftIterator,
+            context
+        );
         if (df.isEmptySequence()) {
             return df;
         }
@@ -194,9 +198,12 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
                 df.getDataFrame().schema(),
                 context
         );
-        NativeClauseContext nativeQuery = this.rightIterator.generateNativeQuery(forContext);
+        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(
+            this.rightIterator,
+            forContext
+        );
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
-            JavaRDD<Item> rdd = getRDDAux(context);
+            JavaRDD<Item> rdd = createNativeRDD(context);
             JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));
             StructType schema = ValidateTypeIterator.convertToDataFrameSchema(
                 getStaticType().getItemType(),

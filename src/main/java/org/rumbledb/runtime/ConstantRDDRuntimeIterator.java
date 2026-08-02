@@ -20,53 +20,50 @@
 
 package org.rumbledb.runtime;
 
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.EmptyLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
+import java.util.List;
 
-public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
+public class ConstantRDDRuntimeIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final JavaRDD<Item> items;
 
     public ConstantRDDRuntimeIterator(
             JavaRDD<Item> items,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
         this.items = items;
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         return this.items;
     }
 
-    @Override
-    protected void openLocal() {
-        // TODO Auto-generated method stub
 
-    }
 
-    @Override
-    protected void closeLocal() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        // TODO Auto-generated method stub
-        return null;
-    }
 }

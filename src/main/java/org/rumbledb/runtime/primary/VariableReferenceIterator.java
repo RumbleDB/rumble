@@ -20,6 +20,12 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.types.*;
@@ -27,59 +33,60 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.VariableValues;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class VariableReferenceIterator extends HybridRuntimeIterator {
+public class VariableReferenceIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
     @Getter
     private final Name variableName;
-    private List<Item> items = null;
-    private int currentIndex = 0;
 
     public VariableReferenceIterator(
             Name variableName,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
         this.variableName = variableName;
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.variableName, context, getMetadata());
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         return context.getVariableValues().getRDDVariableValue(this.variableName, getMetadata());
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         return context.getVariableValues().getDataFrameVariableValue(this.variableName, getMetadata());
     }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
@@ -130,38 +137,6 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
-    @Override
-    public Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.variableName,
-                    getMetadata()
-            );
-        }
-        Item item = this.items.get(this.currentIndex);
-        this.currentIndex++;
-        if (this.currentIndex == this.items.size()) {
-            this.hasNext = false;
-        }
-        return item;
-    }
-
-    @Override
-    public void openLocal() {
-        this.currentIndex = 0;
-        DynamicContext context = this.currentDynamicContextForLocalExecution;
-        VariableValues values = context.getVariableValues();
-        this.items = values.getLocalVariableValue(
-            this.variableName,
-            getMetadata()
-        );
-        this.hasNext = this.items.size() != 0;
-    }
-
-    @Override
-    protected void closeLocal() {
-        // do nothing
-    }
 
 
     @Override
@@ -169,5 +144,55 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(this.variableName, DynamicContext.VariableDependency.FULL);
         return result;
+    }
+
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
+
+        private final Name variableName;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private List<Item> items;
+        private int currentIndex;
+
+        private EvaluationCursor(
+                @NonNull Name variableName,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.variableName = variableName;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.items = this.context.getVariableValues()
+                .getLocalVariableValue(this.variableName, this.metadata);
+            this.currentIndex = 0;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.currentIndex < this.items.size();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw new IteratorFlowException(
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + this.variableName,
+                        this.metadata
+                );
+            }
+            return this.items.get(this.currentIndex++);
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.items = null;
+            this.currentIndex = 0;
+        }
+
     }
 }

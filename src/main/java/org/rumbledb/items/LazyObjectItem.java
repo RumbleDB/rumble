@@ -20,18 +20,20 @@
 
 package org.rumbledb.items;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,11 +48,11 @@ public class LazyObjectItem extends AbstractMapItem {
     final transient private Map<String, LazyValue> lazyValues;
 
     public class LazyValue {
-        private final RuntimeIterator iterator;
+        private final ItemRuntimePlan iterator;
         private final DynamicContext context;
         private final boolean isArray;
 
-        public LazyValue(RuntimeIterator iterator, DynamicContext context, boolean isArray) {
+        public LazyValue(ItemRuntimePlan iterator, DynamicContext context, boolean isArray) {
             this.iterator = iterator;
             this.context = context;
             this.isArray = isArray;
@@ -132,7 +134,7 @@ public class LazyObjectItem extends AbstractMapItem {
     public List<List<Item>> getSequenceValues() {
         List<List<Item>> result = new ArrayList<>(this.keys.size());
         for (String key : this.keys) {
-            result.add(java.util.Collections.singletonList(getItemByKey(key)));
+            result.add(Collections.singletonList(getItemByKey(key)));
         }
         return result;
     }
@@ -169,7 +171,7 @@ public class LazyObjectItem extends AbstractMapItem {
         if (value == null) {
             return null;
         }
-        return java.util.Collections.singletonList(value);
+        return Collections.singletonList(value);
     }
 
     @Override
@@ -241,7 +243,7 @@ public class LazyObjectItem extends AbstractMapItem {
     }
 
     @Override
-    public void putLazyItemByKey(String key, RuntimeIterator iterator, DynamicContext context, boolean isArray) {
+    public void putLazyItemByKey(String key, ItemRuntimePlan iterator, DynamicContext context, boolean isArray) {
         this.keys.add(key);
         LazyValue lv = new LazyValue(iterator, context, isArray);
         this.lazyValues.put(key, lv);
