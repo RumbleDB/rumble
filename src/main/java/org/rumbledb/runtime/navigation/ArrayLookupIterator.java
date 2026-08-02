@@ -68,21 +68,23 @@ public class ArrayLookupIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
     private final ItemRuntimePlan iterator;
+    private final ItemRuntimePlan lookupIterator;
     private int lookup;
 
     public ArrayLookupIterator(
             ItemRuntimePlan array,
-            ItemRuntimePlan iterator,
+            ItemRuntimePlan lookupIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(array, iterator), staticContext);
+        super(Arrays.asList(array, lookupIterator), staticContext);
         this.iterator = array;
+        this.lookupIterator = lookupIterator;
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         int position = requireLookupPosition(
-            this.getChild(1).materialize(context)
+            this.lookupIterator.materialize(context)
         );
         return new FlatMappingLocalCursor<>(
                 this.iterator,
@@ -103,10 +105,8 @@ public class ArrayLookupIterator extends ItemRuntimePlan
 
 
     private void initLookupPosition(DynamicContext context) {
-        ItemRuntimePlan lookupIterator = this.iterator;
-
         try {
-            Item lookupExpression = lookupIterator.materializeExactlyOne(context);
+            Item lookupExpression = this.lookupIterator.materializeExactlyOne(context);
             if (!lookupExpression.isNumeric()) {
                 throw new UnexpectedTypeException(
                         "Type error; Non numeric array lookup for : "
@@ -174,7 +174,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
             Map<Name, DynamicContext.VariableDependency> keyDependencies =
-                this.iterator.getVariableDependencies();
+                this.lookupIterator.getVariableDependencies();
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;

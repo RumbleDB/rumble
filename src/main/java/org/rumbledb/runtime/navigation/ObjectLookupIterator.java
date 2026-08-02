@@ -80,6 +80,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
     private final ItemRuntimePlan iterator;
+    private final ItemRuntimePlan lookupIterator;
     private Item lookupKey;
     private boolean contextLookup;
 
@@ -90,18 +91,19 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     ) {
         super(Arrays.asList(object, lookupIterator), staticContext);
         this.iterator = object;
+        this.lookupIterator = lookupIterator;
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         String key;
-        if (this.getChild(1) instanceof ContextExpressionIterator) {
+        if (this.lookupIterator instanceof ContextExpressionIterator) {
             key = context.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0)
                 .getStringValue();
         } else {
-            key = requireLookupKey(this.getChild(1).materialize(context));
+            key = requireLookupKey(this.lookupIterator.materialize(context));
         }
         return new FlatMappingLocalCursor<>(
                 this.iterator,
@@ -118,14 +120,12 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     }
 
     private void initLookupKey(DynamicContext context) {
-        ItemRuntimePlan lookupIterator = this.iterator;
-
-        this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
+        this.contextLookup = this.lookupIterator instanceof ContextExpressionIterator;
 
         if (!this.contextLookup) {
 
             try {
-                this.lookupKey = lookupIterator.materializeExactlyOne(context);
+                this.lookupKey = this.lookupIterator.materializeExactlyOne(context);
             } catch (NoItemException e) {
                 throw new InvalidSelectorException(
                         "Invalid Lookup Key; Object lookup can't be performed with no key.",
@@ -245,7 +245,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
         Map<Name, DynamicContext.VariableDependency> keyDependencies =
-            this.iterator.getVariableDependencies();
+            this.lookupIterator.getVariableDependencies();
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
@@ -309,7 +309,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType structSchema)) {
-            if (this.getChild(1) instanceof StringRuntimeIterator) {
+            if (this.lookupIterator instanceof StringRuntimeIterator) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
                             "You are trying to look up the value associated with the field "
@@ -377,7 +377,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             );
             newContext.setSchema(field.dataType());
         } else {
-            if (this.getChild(1) instanceof StringRuntimeIterator) {
+            if (this.lookupIterator instanceof StringRuntimeIterator) {
                 LogManager.getLogger("ObjectLookupIterator")
                     .warn(
                         "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
