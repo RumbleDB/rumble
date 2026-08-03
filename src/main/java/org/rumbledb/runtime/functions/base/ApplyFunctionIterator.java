@@ -19,7 +19,6 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.EmptySequenceIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
@@ -34,41 +33,6 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
             RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
 
-    @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ApplyLocalCursor(this.getChild(0), this.getChild(1), this.staticContext, context);
-    }
-
-    private static final class ApplyLocalCursor extends AbstractDelegatingLocalCursor<Item> {
-        private final ItemRuntimePlan functionPlan;
-        private final ItemRuntimePlan argumentsPlan;
-        private final RuntimeStaticContext staticContext;
-        private final DynamicContext context;
-
-        private ApplyLocalCursor(
-                ItemRuntimePlan functionPlan,
-                ItemRuntimePlan argumentsPlan,
-                RuntimeStaticContext staticContext,
-                DynamicContext context
-        ) {
-            super(staticContext.getMetadata());
-            this.functionPlan = functionPlan;
-            this.argumentsPlan = argumentsPlan;
-            this.staticContext = staticContext;
-            this.context = context;
-        }
-
-        @Override
-        protected Cursor<Item> createDelegateCursor() {
-            return buildDelegate(
-                this.functionPlan,
-                this.argumentsPlan,
-                this.staticContext,
-                this.context
-            ).getCursor(this.context);
-        }
-    }
-
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -80,28 +44,27 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
     }
 
     @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return this.buildPlan(context).getCursor(context);
+    }
+
+    @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        return buildDelegate(context).getRDD(context);
+        return this.buildPlan(context).getRDD(context);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-            buildDelegate(context),
+            this.buildPlan(context),
             context
         );
     }
 
-    private ItemRuntimePlan buildDelegate(DynamicContext context) {
-        return buildDelegate(this.getChild(0), this.getChild(1), this.staticContext, context);
-    }
+    private ItemRuntimePlan buildPlan(DynamicContext context) {
+        ItemRuntimePlan functionPlan = this.getChild(0);
+        ItemRuntimePlan argumentsPlan = this.getChild(1);
 
-    private static ItemRuntimePlan buildDelegate(
-            ItemRuntimePlan functionPlan,
-            ItemRuntimePlan argumentsPlan,
-            RuntimeStaticContext staticContext,
-            DynamicContext context
-    ) {
         Item functionItem;
         Item argumentsArray;
         try {

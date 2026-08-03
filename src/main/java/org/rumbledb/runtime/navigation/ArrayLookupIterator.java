@@ -102,8 +102,6 @@ public class ArrayLookupIterator extends ItemRuntimePlan
         );
     }
 
-
-
     private void initLookupPosition(DynamicContext context) {
         try {
             Item lookupExpression = this.lookupIterator.materializeExactlyOne(context);

@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions;
 
+import lombok.Getter;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -16,7 +17,6 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
@@ -38,6 +38,7 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @Getter
     private final Item callableItem;
     private final List<Name> parameterNames;
     private final SequenceType expectedReturnType;
@@ -59,56 +60,7 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new CoercionLocalCursor(
-                this.callableItem,
-                this.parameterNames,
-                this.expectedReturnType,
-                this.exceptionMessage,
-                getRuntimeStaticContext(),
-                context
-        );
-    }
-
-    private static final class CoercionLocalCursor extends AbstractDelegatingLocalCursor<Item> {
-        private final Item callableItem;
-        private final List<Name> parameterNames;
-        private final SequenceType expectedReturnType;
-        private final String exceptionMessage;
-        private final RuntimeStaticContext staticContext;
-        private final DynamicContext context;
-
-        private CoercionLocalCursor(
-                Item callableItem,
-                List<Name> parameterNames,
-                SequenceType expectedReturnType,
-                String exceptionMessage,
-                RuntimeStaticContext staticContext,
-                DynamicContext context
-        ) {
-            super(staticContext.getMetadata());
-            this.callableItem = callableItem;
-            this.parameterNames = parameterNames;
-            this.expectedReturnType = expectedReturnType;
-            this.exceptionMessage = exceptionMessage;
-            this.staticContext = staticContext;
-            this.context = context;
-        }
-
-        @Override
-        protected Cursor<Item> createDelegateCursor() {
-            return buildDelegate(
-                this.callableItem,
-                this.parameterNames,
-                this.expectedReturnType,
-                this.exceptionMessage,
-                this.staticContext,
-                this.context
-            ).getCursor(this.context);
-        }
-    }
-
-    public Item getCallableItem() {
-        return this.callableItem;
+        return this.getPlan(context).getCursor(context);
     }
 
     public ExecutionMode getWrappedCallableExecutionMode() {
@@ -122,25 +74,7 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
         return callableItem.getBodyIterator().getRuntimeStaticContext().getExecutionMode();
     }
 
-    private ItemRuntimePlan buildDelegate(DynamicContext context) {
-        return buildDelegate(
-            this.callableItem,
-            this.parameterNames,
-            this.expectedReturnType,
-            this.exceptionMessage,
-            getRuntimeStaticContext(),
-            context
-        );
-    }
-
-    private static ItemRuntimePlan buildDelegate(
-            Item callableItem,
-            List<Name> parameterNames,
-            SequenceType expectedReturnType,
-            String exceptionMessage,
-            RuntimeStaticContext staticContext,
-            DynamicContext context
-    ) {
+    private ItemRuntimePlan getPlan(DynamicContext context) {
         List<ItemRuntimePlan> arguments = new ArrayList<>(
                 parameterNames.size()
         );
@@ -211,13 +145,13 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        ItemRuntimePlan call = buildDelegate(context);
+        ItemRuntimePlan call = this.getPlan(context);
         return call.getRDD(context);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        ItemRuntimePlan call = buildDelegate(dynamicContext);
+        ItemRuntimePlan call = this.getPlan(dynamicContext);
         return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
     }
 
