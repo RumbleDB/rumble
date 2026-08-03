@@ -831,7 +831,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 fnReturnType,
                 funcBody,
                 isExternal,
-                createMetadataFromContext(ctx)
+                createMetadataFromContext(ctx),
+                createMetadataFromContext(ctx.functionName())
         );
     }
 
@@ -3222,7 +3223,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
         }
-        return new VariableDeclaration(var, external, seq, expr, annotations, createMetadataFromContext(ctx));
+        return new VariableDeclaration(
+                var,
+                external,
+                seq,
+                expr,
+                annotations,
+                createMetadataFromContext(ctx),
+                createMetadataFromContext(ctx.varRef())
+        );
     }
 
     @Override
