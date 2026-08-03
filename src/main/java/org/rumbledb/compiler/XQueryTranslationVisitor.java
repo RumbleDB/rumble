@@ -817,7 +817,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 fnReturnType,
                 funcBody,
                 isExternal,
-                createMetadataFromContext(ctx)
+                createMetadataFromContext(ctx),
+                createMetadataFromContext(ctx.functionName())
         );
     }
 
@@ -2922,7 +2923,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
         }
-        return new VariableDeclaration(var, external, seq, expr, annotations, createMetadataFromContext(ctx));
+        return new VariableDeclaration(
+                var,
+                external,
+                seq,
+                expr,
+                annotations,
+                createMetadataFromContext(ctx),
+                createMetadataFromContext(ctx.varRef())
+        );
     }
 
     @Override
