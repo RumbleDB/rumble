@@ -178,7 +178,7 @@ public class RuntimePlanCursorTest {
         @Override
         public Cursor<Item> createNativeCursor(DynamicContext context) {
             this.cursorCreationCount++;
-            return new SingletonLocalCursor<>(this.result, getRuntimeStaticContext().getMetadata());
+            return new AtMostOneLocalCursor<>(this.result, getRuntimeStaticContext().getMetadata());
         }
     }
 

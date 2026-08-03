@@ -37,12 +37,7 @@ public abstract class AbstractAtMostOneItemRuntimePlan extends ItemRuntimePlan
 
     @Override
     public final Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new AtMostOneLocalCursor<>(getMetadata()) {
-            @Override
-            protected Item materializeOneItemOrNull() {
-                return AbstractAtMostOneItemRuntimePlan.this.evaluateAtMostOne(context);
-            }
-        };
+        return new AtMostOneLocalCursor<>(this.evaluateAtMostOne(context), this.getMetadata());
     }
 
     @Override

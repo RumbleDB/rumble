@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import java.io.Serial;
@@ -45,7 +46,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.TupleRuntimePlan;
-import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
@@ -88,7 +88,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
 
     @Override
     public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
+        return new AtMostOneLocalCursor<>(null, this.getRuntimeStaticContext().getMetadata());
     }
 
     /**
@@ -195,8 +195,6 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
                     "Rumble detected that it can optimize your query and make it faster with an equi-join."
                 );
         }
-
-
 
         // Now we prepare the iterators for the two sides of the equality criterion.
         ItemRuntimePlan rightHandSideEqualityCriterion;

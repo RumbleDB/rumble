@@ -19,7 +19,7 @@ package org.rumbledb.runtime.functions;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.cursor.EmptyLocalCursor;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
@@ -48,7 +48,7 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
+        return new AtMostOneLocalCursor<>(null, this.getRuntimeStaticContext().getMetadata());
     }
 
 }

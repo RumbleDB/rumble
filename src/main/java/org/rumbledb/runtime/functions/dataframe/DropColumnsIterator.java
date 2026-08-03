@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.dataframe;
 
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
@@ -11,7 +12,6 @@ import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
@@ -24,7 +24,7 @@ public class DropColumnsIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
+        return new AtMostOneLocalCursor<>(null, this.getRuntimeStaticContext().getMetadata());
     }
 
     @Serial

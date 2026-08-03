@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
@@ -38,7 +39,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 import org.rumbledb.exceptions.OurBadException;
 
 import lombok.NonNull;
@@ -129,7 +129,7 @@ public class DataFunctionIterator extends ItemRuntimePlan
                 if (contextItems.size() != 1) {
                     throw new OurBadException("The context item is not a singleton.", this.metadata);
                 }
-                this.inputCursor = new SingletonLocalCursor<>(contextItems.get(0), this.metadata);
+                this.inputCursor = new AtMostOneLocalCursor<>(contextItems.get(0), this.metadata);
             }
         }
 

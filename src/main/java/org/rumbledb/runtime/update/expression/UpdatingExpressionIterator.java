@@ -8,6 +8,8 @@
 package org.rumbledb.runtime.update.expression;
 
 import java.io.Serial;
+
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
@@ -16,7 +18,6 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
@@ -40,6 +41,6 @@ abstract class UpdatingExpressionIterator extends ItemRuntimePlan
 
     @Override
     public final Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
+        return new AtMostOneLocalCursor<>(null, this.getRuntimeStaticContext().getMetadata());
     }
 }

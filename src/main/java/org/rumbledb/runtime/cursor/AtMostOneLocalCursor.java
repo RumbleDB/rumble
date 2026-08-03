@@ -25,19 +25,19 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  *
  * @param <T> the value type
  */
-public abstract class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
+public final class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
 
     private T result;
     private boolean hasNext;
 
-    protected AtMostOneLocalCursor(@NonNull ExceptionMetadata metadata) {
+    public AtMostOneLocalCursor(T value, @NonNull ExceptionMetadata metadata) {
         super(metadata);
+        this.result = value;
+        this.hasNext = value != null;
     }
 
     @Override
     protected final void openLocal() {
-        this.result = materializeOneItemOrNull();
-        this.hasNext = this.result != null;
     }
 
     @Override
@@ -48,7 +48,7 @@ public abstract class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
     @Override
     protected final T nextLocal() {
         if (!this.hasNext) {
-            throw invalidState("At-most-one cursor is exhausted.");
+            throw this.invalidState("At-most-one cursor is exhausted.");
         }
         this.hasNext = false;
         return this.result;
@@ -59,6 +59,4 @@ public abstract class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
         this.result = null;
         this.hasNext = false;
     }
-
-    protected abstract T materializeOneItemOrNull();
 }
