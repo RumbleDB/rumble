@@ -37,8 +37,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     private String queryLanguage;
 
-    public FunctionInliningVisitor() {
-    }
 
     private boolean isVariableReferenced(Node expression, Name name) {
         if (expression instanceof VariableReferenceExpression variableReference) {

@@ -195,5 +195,3 @@ public class TysonSerializer implements Serializer, Serializable {
         }
     }
 }
-
-

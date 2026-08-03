@@ -1,7 +1,6 @@
 package org.rumbledb.items;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.util.Base64;
 import java.util.regex.Pattern;
@@ -12,7 +11,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
-@NoArgsConstructor // For Kryo serialization
 public class Base64BinaryItem extends AbstractAtomicItem {
 
     private static final String B64 = "[A-Za-z0-9+/]";

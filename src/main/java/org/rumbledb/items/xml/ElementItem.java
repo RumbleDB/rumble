@@ -1,6 +1,5 @@
 package org.rumbledb.items.xml;
 
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -20,7 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@NoArgsConstructor // For Kryo serialization
 public class ElementItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;

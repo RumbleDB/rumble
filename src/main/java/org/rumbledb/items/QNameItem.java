@@ -18,7 +18,6 @@
 
 package org.rumbledb.items;
 
-import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.util.Objects;
 
@@ -31,7 +30,6 @@ import org.rumbledb.types.ItemType;
 /**
  * Atomic item representing an {@code xs:QName} value as an expanded name ({@link Name}).
  */
-@NoArgsConstructor // For Kryo serialization
 public class QNameItem extends AbstractAtomicItem {
 
     @Serial

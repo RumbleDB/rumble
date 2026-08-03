@@ -4,7 +4,6 @@ import java.io.Serial;
 import java.util.List;
 import java.util.Set;
 
-import lombok.NoArgsConstructor;
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -16,7 +15,6 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
-@NoArgsConstructor(force = true)
 public class DerivedAtomicItemType extends AbstractItemType {
 
     @Serial

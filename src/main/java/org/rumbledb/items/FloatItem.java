@@ -20,7 +20,6 @@
 
 package org.rumbledb.items;
 
-import lombok.NoArgsConstructor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
@@ -34,7 +33,6 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-@NoArgsConstructor // For Kryo serialization
 public class FloatItem extends AbstractAtomicItem {
 
     @Serial
