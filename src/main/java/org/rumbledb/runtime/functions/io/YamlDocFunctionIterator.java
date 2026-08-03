@@ -21,6 +21,7 @@
 
 package org.rumbledb.runtime.functions.io;
 
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -35,7 +36,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -60,56 +60,56 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ResourceLocalCursor<>(
-                () -> {
-                    Item path = this.getChild(0).materializeFirstOrNull(context);
-                    try {
-                        URI uri = FileSystemUtil.resolveURI(
-                            this.staticContext.getStaticURI(),
-                            path.getStringValue(),
-                            getMetadata()
-                        );
-                        InputStream input = FileSystemUtil.getDataInputStream(
-                            uri,
-                            context.getRumbleRuntimeConfiguration(),
-                            getMetadata()
-                        );
-                        YAMLParser yamlParser = new YAMLFactory().createParser(new InputStreamReader(input));
-                        return new YamlResourceIterator(yamlParser, getMetadata());
-                    } catch (IOException e) {
-                        throw new ParsingException(e.getMessage(), getMetadata());
-                    }
-                },
+        Item path = this.getChild(0).materializeFirstOrNull(context);
+        try {
+            URI uri = FileSystemUtil.resolveURI(
+                this.staticContext.getStaticURI(),
+                path.getStringValue(),
                 getMetadata()
-        );
+            );
+            InputStream input = FileSystemUtil.getDataInputStream(
+                uri,
+                context.getRumbleRuntimeConfiguration(),
+                getMetadata()
+            );
+            YAMLParser yamlParser = new YAMLFactory().createParser(new InputStreamReader(input));
+            return new YamlResourceCursor(yamlParser, getMetadata());
+        } catch (IOException e) {
+            throw new ParsingException(e.getMessage(), getMetadata());
+        }
     }
 
-    private static final class YamlResourceIterator
-            implements
-                ResourceLocalCursor.ResourceIterator<Item> {
+    private static final class YamlResourceCursor
+            extends
+                AbstractLocalCursor<Item> {
 
         private final YAMLParser parser;
         private final ExceptionMetadata metadata;
         private Item next;
 
-        private YamlResourceIterator(
+        private YamlResourceCursor(
                 YAMLParser parser,
                 ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.parser = parser;
             this.metadata = metadata;
-            advance();
         }
 
         @Override
-        public boolean hasNext() {
+        protected void openLocal() {
+            this.advance();
+        }
+
+        @Override
+        public boolean hasNextLocal() {
             return this.next != null;
         }
 
         @Override
-        public Item next() {
+        public Item nextLocal() {
             Item result = this.next;
-            advance();
+            this.advance();
             return result;
         }
 
@@ -131,7 +131,7 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
         }
 
         @Override
-        public void close() {
+        public void closeLocal() {
             try {
                 this.parser.close();
             } catch (IOException e) {
