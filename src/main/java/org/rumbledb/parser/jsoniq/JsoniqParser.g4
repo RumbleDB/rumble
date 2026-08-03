@@ -140,7 +140,7 @@ decimalFormatDecl
    ;
 
 schemaImport
-   : KW_IMPORT KW_SCHEMA schemaPrefix? nsURI = uriLiteral (KW_AT locations += uriLiteral (COMMA locations += uriLiteral)*)?
+   : KW_IMPORT KW_SCHEMA schemaPrefix? nsURI = uriLiteral (KW_AT locations += uriLiteral (COMMA locations += uriLiteral)*)? SEMICOLON
    ;
 
 schemaPrefix
@@ -148,7 +148,7 @@ schemaPrefix
    ;
 
 moduleImport
-   : KW_IMPORT KW_MODULE (KW_NAMESPACE prefix = ncName EQUAL)? targetNamespace = uriLiteral (KW_AT locations += uriLiteral (COMMA locations += uriLiteral)*)?
+   : KW_IMPORT KW_MODULE (KW_NAMESPACE prefix = ncName EQUAL)? targetNamespace = uriLiteral (KW_AT locations += uriLiteral (COMMA locations += uriLiteral)*)? SEMICOLON
    ;
 
 namespaceDecl
