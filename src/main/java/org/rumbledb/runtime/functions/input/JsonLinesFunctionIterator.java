@@ -30,11 +30,11 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 
 import com.google.gson.stream.JsonReader;
 
@@ -50,15 +50,20 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item> {
 
-    @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ResourceLocalCursor<>(
-                () -> openJsonLines(context),
-                getMetadata()
-        );
+    @Serial
+    private static final long serialVersionUID = 1L;
+    private final ItemRuntimePlan iterator;
+
+    public JsonLinesFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        this.iterator = this.getChild(0);
     }
 
-    private JsonLinesResourceIterator openJsonLines(DynamicContext context) {
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
         Item path = this.iterator.materializeFirstOrNull(context);
         URI uri = FileSystemUtil.resolveFileSystemURI(
             this.staticContext.getStaticURI(),
@@ -70,24 +75,12 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
             context.getRumbleRuntimeConfiguration(),
             getMetadata()
         );
-        return new JsonLinesResourceIterator(
-                new BufferedReader(new InputStreamReader(input)),
+        return new JsonLinesCursor(
+                input,
                 path.getStringValue(),
                 getMetadata(),
                 this.getRuntimeStaticContext().isQuerySideEffecting()
         );
-    }
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-    private final ItemRuntimePlan iterator;
-
-    public JsonLinesFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        this.iterator = this.getChild(0);
     }
 
     @Override
@@ -154,38 +147,31 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
         );
     }
 
-    private static final class JsonLinesResourceIterator
-            implements
-                ResourceLocalCursor.ResourceIterator<Item> {
-        private final BufferedReader reader;
+    private static final class JsonLinesCursor extends AbstractLocalCursor<Item> {
+        private final InputStream input;
         private final String path;
         private final ExceptionMetadata metadata;
         private final boolean querySideEffecting;
         private Item next;
+        private BufferedReader reader;
 
-        private JsonLinesResourceIterator(
-                BufferedReader reader,
+        private JsonLinesCursor(
+                InputStream input,
                 String path,
                 ExceptionMetadata metadata,
                 boolean querySideEffecting
         ) {
-            this.reader = reader;
+            super(metadata);
+            this.input = input;
             this.path = path;
             this.metadata = metadata;
             this.querySideEffecting = querySideEffecting;
-            advance();
         }
 
         @Override
-        public boolean hasNext() {
-            return this.next != null;
-        }
-
-        @Override
-        public Item next() {
-            Item result = this.next;
-            advance();
-            return result;
+        protected void openLocal() {
+            this.reader = new BufferedReader(new InputStreamReader(input));
+            this.advance();
         }
 
         private void advance() {
@@ -201,16 +187,28 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
                         this.querySideEffecting
                     );
             } catch (IOException exception) {
-                throw resourceError(exception);
+                throw this.resourceError(exception);
             }
         }
 
         @Override
-        public void close() {
+        protected boolean hasNextLocal() {
+            return this.next != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            Item result = this.next;
+            this.advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
             try {
                 this.reader.close();
             } catch (IOException exception) {
-                throw resourceError(exception);
+                throw this.resourceError(exception);
             }
         }
 

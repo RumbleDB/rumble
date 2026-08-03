@@ -21,6 +21,7 @@
 
 package org.rumbledb.runtime.functions.io;
 
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 import org.rumbledb.api.Item;
@@ -31,7 +32,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -54,60 +54,57 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ResourceLocalCursor<>(
-                () -> {
-                    Item path = this.getChild(0).materializeFirstOrNull(context);
-                    if (path == null) {
-                        throw new IteratorFlowException(
-                                IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " local-text-file function",
-                                getMetadata()
-                        );
-                    }
-                    URI uri = FileSystemUtil.resolveFileSystemURI(
-                        this.staticContext.getStaticURI(),
-                        path.getStringValue(),
-                        getMetadata()
-                    );
-                    InputStream input = FileSystemUtil.getDataInputStream(
-                        uri,
-                        context.getRumbleRuntimeConfiguration(),
-                        getMetadata()
-                    );
-                    return new TextLineResourceIterator(input, getMetadata());
-                },
-                getMetadata()
+        Item path = this.getChild(0).materializeFirstOrNull(context);
+        if (path == null) {
+            throw new IteratorFlowException(
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " local-text-file function",
+                    getMetadata()
+            );
+        }
+        URI uri = FileSystemUtil.resolveFileSystemURI(
+            this.staticContext.getStaticURI(),
+            path.getStringValue(),
+            getMetadata()
         );
+        InputStream input = FileSystemUtil.getDataInputStream(
+            uri,
+            context.getRumbleRuntimeConfiguration(),
+            getMetadata()
+        );
+        return new TextLineCursor(input, getMetadata());
     }
 
-    private static final class TextLineResourceIterator
-            implements
-                ResourceLocalCursor.ResourceIterator<Item> {
-
+    private static final class TextLineCursor extends AbstractLocalCursor<Item> {
         private final InputStream input;
-        private final Iterator<String> lines;
+        private Iterator<String> lines;
         private final ExceptionMetadata metadata;
 
-        private TextLineResourceIterator(
+        private TextLineCursor(
                 InputStream input,
                 ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.input = input;
-            this.lines = new BufferedReader(new InputStreamReader(input)).lines().iterator();
             this.metadata = metadata;
         }
 
         @Override
-        public boolean hasNext() {
+        protected void openLocal() {
+            this.lines = new BufferedReader(new InputStreamReader(input)).lines().iterator();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
             return this.lines.hasNext();
         }
 
         @Override
-        public Item next() {
+        protected Item nextLocal() {
             return ItemFactory.getInstance().createStringItem(this.lines.next());
         }
 
         @Override
-        public void close() {
+        protected void closeLocal() {
             try {
                 this.input.close();
             } catch (IOException e) {
