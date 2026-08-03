@@ -170,7 +170,7 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
 
         @Override
         protected void openLocal() {
-            this.reader = new BufferedReader(new InputStreamReader(input));
+            this.reader = new BufferedReader(new InputStreamReader(this.input));
             this.advance();
         }
 

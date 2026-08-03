@@ -90,7 +90,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
         @Override
         protected void openLocal() {
-            this.lines = new BufferedReader(new InputStreamReader(input)).lines().iterator();
+            this.lines = new BufferedReader(new InputStreamReader(this.input)).lines().iterator();
         }
 
         @Override

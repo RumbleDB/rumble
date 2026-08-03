@@ -80,9 +80,9 @@ public class BuiltinFunctionItemCallIterator extends ItemRuntimePlan
 
     private ItemRuntimePlan getPlan() {
         return NamedFunctions.getBuiltInFunctionIterator(
-            functionItem.getIdentifier(),
-            new ArrayList<>(functionArguments),
-            staticContext,
+            this.functionItem.getIdentifier(),
+            new ArrayList<>(this.functionArguments),
+            this.staticContext,
             true
         );
     }

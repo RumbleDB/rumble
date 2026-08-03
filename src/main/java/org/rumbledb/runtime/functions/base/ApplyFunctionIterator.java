@@ -73,10 +73,10 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:apply expects exactly one function item and exactly one array item.",
-                    staticContext.getMetadata()
+                    this.staticContext.getMetadata()
             );
         }
-        RuntimeStaticContext localItemStarContext = staticContext
+        RuntimeStaticContext localItemStarContext = this.staticContext
             .toBuilder()
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(ExecutionMode.LOCAL)
@@ -90,7 +90,7 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
                         + argumentsArray.getSize()
                         + ".",
                     ErrorCode.ApplyFunctionArityMismatch,
-                    staticContext.getMetadata()
+                    this.staticContext.getMetadata()
             );
         }
 
@@ -101,7 +101,7 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
 
         ItemRuntimePlan functionItemIterator = new ConstantRuntimeIterator(
                 functionItem,
-                staticContext
+                this.staticContext
                     .toBuilder()
                     .staticType(SequenceType.createSequenceType("function(*)"))
                     .executionMode(ExecutionMode.LOCAL)
@@ -110,7 +110,7 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
         return new DynamicFunctionCallIterator(
                 functionItemIterator,
                 argumentIterators,
-                staticContext
+                this.staticContext
         );
     }
 

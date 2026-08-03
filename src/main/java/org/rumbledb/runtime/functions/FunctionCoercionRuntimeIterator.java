@@ -76,34 +76,34 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
 
     private ItemRuntimePlan getPlan(DynamicContext context) {
         List<ItemRuntimePlan> arguments = new ArrayList<>(
-                parameterNames.size()
+                this.parameterNames.size()
         );
-        for (Name parameterName : parameterNames) {
-            arguments.add(buildArgumentIterator(parameterName, context, staticContext));
+        for (Name parameterName : this.parameterNames) {
+            arguments.add(buildArgumentIterator(parameterName, context, this.staticContext));
         }
 
-        ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode(callableItem);
-        RuntimeStaticContext callStaticContext = staticContext
+        ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode(this.callableItem);
+        RuntimeStaticContext callStaticContext = this.staticContext
             .toBuilder()
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(wrappedCallableExecutionMode)
             .build();
 
-        if (callableItem.isArray()) {
-            return new ArrayFunctionCallIterator(callableItem, arguments.get(0), callStaticContext);
+        if (this.callableItem.isArray()) {
+            return new ArrayFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
         }
-        if (callableItem.isMap()) {
-            return new MapFunctionCallIterator(callableItem, arguments.get(0), callStaticContext);
+        if (this.callableItem.isMap()) {
+            return new MapFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
         }
-        if (!callableItem.isFunction()) {
+        if (!this.callableItem.isFunction()) {
             throw new OurBadException(
                     "Function coercion can only wrap functions, maps, or arrays.",
-                    staticContext.getMetadata()
+                    this.staticContext.getMetadata()
             );
         }
         ItemRuntimePlan callIterator = NamedFunctions
             .buildFunctionItemCallIterator(
-                callableItem,
+                this.callableItem,
                 callStaticContext,
                 wrappedCallableExecutionMode,
                 arguments,
@@ -111,9 +111,9 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
             );
         return FunctionCallArgumentConversion.wrapForFunctionConversion(
             callIterator,
-            expectedReturnType,
-            exceptionMessage,
-            callStaticContext.toBuilder().staticType(expectedReturnType).build()
+            this.expectedReturnType,
+            this.exceptionMessage,
+            callStaticContext.toBuilder().staticType(this.expectedReturnType).build()
         );
     }
 
