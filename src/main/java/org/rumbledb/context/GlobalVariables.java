@@ -1,5 +1,6 @@
 package org.rumbledb.context;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serial;
@@ -7,6 +8,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+@Getter
 public class GlobalVariables implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -22,16 +24,6 @@ public class GlobalVariables implements Serializable {
         }
         this.globalVariables.add(globalVariable);
     }
-
-    public boolean isGlobalVariable(Name globalVariable) {
-        return this.globalVariables.contains(globalVariable);
-    }
-
-    public Set<Name> getGlobalVariables() {
-        return this.globalVariables;
-    }
-
-
 
     @Override
     public String toString() {

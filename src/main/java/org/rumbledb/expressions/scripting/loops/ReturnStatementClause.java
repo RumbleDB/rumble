@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.loops;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
@@ -10,6 +11,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class ReturnStatementClause extends Clause {
     private final Statement returnStatement;
 
@@ -45,7 +47,4 @@ public class ReturnStatementClause extends Clause {
         this.returnStatement.serializeToJSONiq(sb, 0);
     }
 
-    public Statement getReturnStatement() {
-        return this.returnStatement;
-    }
 }

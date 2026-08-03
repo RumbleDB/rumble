@@ -33,7 +33,4 @@ public class InvalidNodeNameException extends RumbleException {
         super(message, ErrorCode.InvalidNodeNameErrorCode, metadata);
     }
 
-    public InvalidNodeNameException(String message) {
-        super(message, ErrorCode.InvalidNodeNameErrorCode);
-    }
 }

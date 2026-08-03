@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.comparison;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -36,6 +37,7 @@ import java.util.List;
  * 
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-node-comparisons">XQuery 3.1, 3.7.3: Node Comparisons</a>
  */
+@Getter
 public class NodeComparisonExpression extends Expression {
 
     public static enum NodeComparisonOperator {
@@ -92,18 +94,6 @@ public class NodeComparisonExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
-    }
-
-    public NodeComparisonOperator getOperator() {
-        return this.operator;
-    }
-
-    public Expression getLeftExpression() {
-        return this.leftExpression;
-    }
-
-    public Expression getRightExpression() {
-        return this.rightExpression;
     }
 
     @Override

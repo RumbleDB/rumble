@@ -23,6 +23,7 @@ package org.rumbledb.context;
 import java.io.Serial;
 import java.io.Serializable;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.OurBadException;
 
 import lombok.EqualsAndHashCode;
@@ -40,18 +41,19 @@ import lombok.EqualsAndHashCode;
  * @author Ghislain Fourny
  *
  */
+@Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Name implements Comparable<Name>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
     @EqualsAndHashCode.Include
-    private String namespace;
+    private final String namespace;
 
     private final String prefix;
 
     @EqualsAndHashCode.Include
-    private String localName;
+    private final String localName;
 
     public static final String JSONIQ_DEFAULT_TYPE_NS = "http://jsoniq.org/default-type-namespace";
     public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
@@ -214,18 +216,6 @@ public class Name implements Comparable<Name>, Serializable {
      */
     public Name addArityToFunctionName(int arity) {
         return new Name(this.namespace, this.prefix, this.localName + "#" + arity);
-    }
-
-    public String getNamespace() {
-        return this.namespace;
-    }
-
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    public String getLocalName() {
-        return this.localName;
     }
 
     /**

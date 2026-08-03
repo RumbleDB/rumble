@@ -20,6 +20,7 @@
 
 package org.rumbledb.types;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.io.Serial;
@@ -28,6 +29,7 @@ import java.util.List;
 
 import lombok.EqualsAndHashCode;
 
+@Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor() // For Kryo serialization
 public class FunctionSignature implements Serializable {
@@ -59,18 +61,6 @@ public class FunctionSignature implements Serializable {
         this(parameterTypes, returnType, false);
     }
 
-
-    public List<SequenceType> getParameterTypes() {
-        return this.parameterTypes;
-    }
-
-    public SequenceType getReturnType() {
-        return this.returnType;
-    }
-
-    public boolean isUpdating() {
-        return this.isUpdating;
-    }
 
     public boolean isSubtypeOf(FunctionSignature other) {
         // a signature is a subtype of another signature if it always respect its contract typewise (i.e. no static type

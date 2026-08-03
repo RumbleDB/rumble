@@ -1,9 +1,11 @@
 package org.rumbledb.expressions.update;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 
+@Getter
 public class CopyDeclaration {
 
     private Name variableName;
@@ -18,14 +20,6 @@ public class CopyDeclaration {
         }
         this.variableName = variableName;
         this.sourceExpression = sourceExpression;
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public Expression getSourceExpression() {
-        return this.sourceExpression;
     }
 
     public SequenceType getSourceSequenceType() {

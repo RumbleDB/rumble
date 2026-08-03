@@ -14,7 +14,7 @@ import java.util.Set;
  *
  * node() sits at depth 1 in the type hierarchy, with item at depth 0.
  */
-public class NodeItemType implements ItemType {
+public class NodeItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -27,14 +27,6 @@ public class NodeItemType implements ItemType {
     }
 
 
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
 
     @Override
     public boolean hasName() {
@@ -94,4 +86,3 @@ public class NodeItemType implements ItemType {
         return false;
     }
 }
-

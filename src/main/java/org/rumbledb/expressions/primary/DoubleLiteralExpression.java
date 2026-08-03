@@ -24,11 +24,13 @@ package org.rumbledb.expressions.primary;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
+@Getter
 public class DoubleLiteralExpression extends Expression {
 
     private final double value;
@@ -36,10 +38,6 @@ public class DoubleLiteralExpression extends Expression {
     public DoubleLiteralExpression(double value, ExceptionMetadata metadata) {
         super(metadata);
         this.value = value;
-    }
-
-    public double getValue() {
-        return this.value;
     }
 
     @Override

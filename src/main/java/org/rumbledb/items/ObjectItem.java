@@ -39,7 +39,7 @@ import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
 
-public class ObjectItem implements Item {
+public class ObjectItem extends AbstractMapItem {
 
 
     @Serial
@@ -56,7 +56,6 @@ public class ObjectItem implements Item {
     private Collection collection;
 
     public ObjectItem() {
-        super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
         this.keyStringToIndex = new HashMap<>();
@@ -69,7 +68,6 @@ public class ObjectItem implements Item {
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
-        super();
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
@@ -97,34 +95,6 @@ public class ObjectItem implements Item {
         return result;
     }
 
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isObject()) {
-            return false;
-        }
-        for (String s : getStringKeys()) {
-            Item v = otherItem.getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        for (String s : otherItem.getStringKeys()) {
-            Item v = getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!otherItem.getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     /**
      * ObjectItem constructor from the given map data structure.
      * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single
@@ -136,7 +106,6 @@ public class ObjectItem implements Item {
     public ObjectItem(Map<String, ?> keyValuePairs)
 
     {
-        super();
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
@@ -386,15 +355,6 @@ public class ObjectItem implements Item {
     }
 
 
-
-    public int hashCode() {
-        int result = 0;
-        result += getStringKeys().size();
-        for (String s : getStringKeys()) {
-            result += getItemByKey(s).hashCode();
-        }
-        return result;
-    }
 
     @Override
     public ItemType getDynamicType() {

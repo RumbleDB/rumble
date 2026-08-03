@@ -20,6 +20,7 @@
 
 package org.rumbledb.errorcodes;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
@@ -30,6 +31,7 @@ import java.util.Objects;
 
 import lombok.EqualsAndHashCode;
 
+@Getter
 @EqualsAndHashCode
 public final class ErrorCode implements Serializable {
 
@@ -48,10 +50,6 @@ public final class ErrorCode implements Serializable {
         ErrorCode errorCode = new ErrorCode(new Name(Name.ERROR_NS, "err", identifier));
         BUILTIN_BY_IDENTIFIER.put(identifier, errorCode);
         return errorCode;
-    }
-
-    public Name getName() {
-        return this.name;
     }
 
     public String getLocalName() {

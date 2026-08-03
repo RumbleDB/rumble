@@ -20,26 +20,21 @@
 
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 import java.io.Serial;
 
-public class BooleanItem implements Item {
-
+@NoArgsConstructor // For Kryo serialization
+public class BooleanItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private boolean value;
 
-    public BooleanItem() {
-        super();
-    }
-
     public BooleanItem(boolean value) {
-        super();
         this.value = value;
     }
 
@@ -75,22 +70,6 @@ public class BooleanItem implements Item {
     @Override
     public boolean isBoolean() {
         return true;
-    }
-
-
-
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isBoolean()) {
-            return false;
-        }
-        return (getBooleanValue() == otherItem.getBooleanValue());
-    }
-
-    public int hashCode() {
-        return getBooleanValue() ? 1 : 0;
     }
 
     @Override

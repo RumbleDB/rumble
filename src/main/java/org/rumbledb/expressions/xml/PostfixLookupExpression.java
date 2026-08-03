@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.xml;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // clone of ObjectLookupExpression but for xquery lookup
+@Getter
 public class PostfixLookupExpression extends Expression {
 
     private Expression mainExpression;
@@ -67,17 +69,9 @@ public class PostfixLookupExpression extends Expression {
         sb.append("\n");
     }
 
-    public Expression getLookupExpression() {
-        // can be null if wildcard
-        return this.lookupExpression;
-    }
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitPostfixLookupExpression(this, argument);
     }
 
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
 }

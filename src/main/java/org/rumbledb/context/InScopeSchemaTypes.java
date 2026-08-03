@@ -23,10 +23,6 @@ public class InScopeSchemaTypes implements Serializable {
         this.inScopeSchemaTypes = new HashMap<>();
     }
 
-    public void clearInScopeSchemaTypes() {
-        this.inScopeSchemaTypes.clear();
-    }
-
     public void addInScopeSchemaType(ItemType type, ExceptionMetadata meta) {
         if (!type.hasName()) {
             throw new InvalidSchemaException("A top-level user-defined type must have a name.", meta);

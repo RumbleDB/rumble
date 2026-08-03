@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.loops;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -9,6 +10,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import java.util.Collections;
 import java.util.List;
 
+@Getter
 public class ExitStatement extends Statement {
     private final Expression exitExpression;
 
@@ -31,10 +33,6 @@ public class ExitStatement extends Statement {
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         this.exitExpression.serializeToJSONiq(sb, 0);
-    }
-
-    public Expression getExitExpression() {
-        return this.exitExpression;
     }
 
 }

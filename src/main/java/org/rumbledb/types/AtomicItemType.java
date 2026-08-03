@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
@@ -37,7 +38,8 @@ import static org.rumbledb.types.BuiltinTypesCatalogue.yearMonthDurationItem;
 /**
  * This class describes all the primitive built-in atomic types in the JSONiq data model.
  */
-public class AtomicItemType implements ItemType {
+@NoArgsConstructor(force = true)
+public class AtomicItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -56,19 +58,8 @@ public class AtomicItemType implements ItemType {
      */
     private List<String> lexicalSpacePatterns;
 
-    public AtomicItemType() {
-    }
-
     AtomicItemType(Name name, Set<ConstrainingFacetTypes> allowedFacets) {
         this(name, allowedFacets, WhitespaceFacet.COLLAPSE, null);
-    }
-
-    AtomicItemType(
-            Name name,
-            Set<ConstrainingFacetTypes> allowedFacets,
-            WhitespaceFacet whiteSpace
-    ) {
-        this(name, allowedFacets, whiteSpace, null);
     }
 
     AtomicItemType(
@@ -101,21 +92,6 @@ public class AtomicItemType implements ItemType {
         this.cardinality = cardinality;
         this.numeric = numeric;
         this.lexicalSpacePatterns = lexicalSpacePatterns == null ? Collections.emptyList() : lexicalSpacePatterns;
-    }
-
-
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name != null ? this.name.hashCode() : super.hashCode();
     }
 
     @Override

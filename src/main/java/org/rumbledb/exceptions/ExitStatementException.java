@@ -1,5 +1,6 @@
 package org.rumbledb.exceptions;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -13,9 +14,12 @@ import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
 public class ExitStatementException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private final PendingUpdateList pendingUpdateList;
     private final List<Item> localResult;
+    @Getter
     private final JavaRDD<Item> rddResult;
+    @Getter
     private final JSoundDataFrame dataFrameResult;
     private final ExceptionMetadata exceptionMetadata;
 
@@ -33,10 +37,6 @@ public class ExitStatementException extends RuntimeException {
         this.exceptionMetadata = exceptionMetadata;
     }
 
-    public PendingUpdateList getPendingUpdateList() {
-        return this.pendingUpdateList;
-    }
-
     public List<Item> getLocalResult() {
         if (hasLocalResult()) {
             return this.localResult;
@@ -46,14 +46,6 @@ public class ExitStatementException extends RuntimeException {
             return dataFrameToRDDOfItems(this.dataFrameResult, this.exceptionMetadata).collect();
         }
         throw new OurBadException("Expected local result but there was nothing to return from the exit statement!");
-    }
-
-    public JavaRDD<Item> getRddResult() {
-        return this.rddResult;
-    }
-
-    public JSoundDataFrame getDataFrameResult() {
-        return this.dataFrameResult;
     }
 
     public boolean hasLocalResult() {
