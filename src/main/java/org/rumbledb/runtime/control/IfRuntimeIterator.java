@@ -22,17 +22,13 @@ package org.rumbledb.runtime.control;
 
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+import org.rumbledb.runtime.plan.*;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
@@ -68,16 +64,8 @@ public class IfRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ConditionalLocalCursor<>(
-                getChild(0),
-                getChild(1),
-                getChild(2),
-                context,
-                this.getRuntimeStaticContext().getMetadata()
-        );
+        return this.selectApplicableIterator(context).getCursor(context);
     }
-
-
 
     public ItemRuntimePlan selectApplicableIterator(
             DynamicContext dynamicContext
