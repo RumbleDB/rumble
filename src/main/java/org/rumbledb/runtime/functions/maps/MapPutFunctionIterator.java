@@ -19,27 +19,25 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 /**
  * W3C XPath/XQuery {@code map:put}:
+ *
  * <ul>
- * <li>requires exactly one map argument</li>
- * <li>atomizes the key and requires exactly one atomic value</li>
- * <li>returns a new map with the entry added or replaced (key equivalence via op:same-key)</li>
+ *   <li>requires exactly one map argument
+ *   <li>atomizes the key and requires exactly one atomic value
+ *   <li>returns a new map with the entry added or replaced (key equivalence via op:same-key)
  * </ul>
  *
  * This built-in is local execution only.
  */
 public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator mapIterator;
     private final RuntimeIterator keyIterator;
     private final RuntimeIterator valueIterator;
 
     public MapPutFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("map:put must have exactly three arguments.");
@@ -57,15 +55,12 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             mapItem = this.mapIterator.materializeExactlyOneItem(context);
         } catch (NoItemException | MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "map:put expects exactly one map argument [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "map:put expects exactly one map argument [err:XPTY0004].", getMetadata());
         }
         if (mapItem == null || !mapItem.isMap()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to map:put must be a map [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         // 2) Atomize $key and require that it atomizes to exactly one atomic value.
@@ -79,9 +74,7 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
             throw new UnexpectedTypeException(
-                    "Map key must atomize to a single atomic value [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "Map key must atomize to a single atomic value [err:XPTY0004].", getMetadata());
         }
         Item key = atomized.get(0);
 
@@ -92,7 +85,8 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (mapItem.getMutabilityLevel() == -1) {
             return ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence);
         }
-        // 4) Build a new map: keep entries whose key is not op:same-key to $key. Walk keys and value
+        // 4) Build a new map: keep entries whose key is not op:same-key to $key. Walk keys and
+        // value
         // sequences by index (one pass); reuse value lists for unchanged entries like map:remove.
         if (mapItem.isObject() && key.isString() && valueSequence.size() == 1) {
             // fast path:construct an object item
@@ -104,7 +98,8 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     keyFound = true;
                     continue;
                 }
-                newKeyValuePairs.put(existingKey.getStringValue(), mapItem.getItemByKey(existingKey));
+                newKeyValuePairs.put(
+                        existingKey.getStringValue(), mapItem.getItemByKey(existingKey));
             }
             newKeyValuePairs.put(key.getStringValue(), valueSequence.get(0));
             return ItemFactory.getInstance().createObjectItemOptimized(newKeyValuePairs, false);
@@ -122,8 +117,10 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             newKeyValuePairs.put(key, valueSequence);
 
             return ItemFactory.getInstance()
-                .createMapItem(newKeyValuePairs, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createMapItem(
+                            newKeyValuePairs,
+                            getMetadata(),
+                            this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 }
-

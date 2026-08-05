@@ -20,9 +20,6 @@
 
 package org.rumbledb.errorcodes;
 
-import lombok.Getter;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -30,13 +27,15 @@ import java.util.Map;
 import java.util.Objects;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+
+import org.rumbledb.context.Name;
 
 @Getter
 @EqualsAndHashCode
 public final class ErrorCode implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private static final Map<String, ErrorCode> BUILTIN_BY_IDENTIFIER = new HashMap<>();
 
@@ -85,10 +84,13 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode UnidentifiedErrorExceptionCode = registerBuiltIn("FOER0000");
 
-    public static final ErrorCode IncorrectSyntaxFormatDateTimeErrorCode = registerBuiltIn("FOFD1340");
-    public static final ErrorCode ComponentSpecifierNotAvailableErrorCode = registerBuiltIn("FOFD1350");
+    public static final ErrorCode IncorrectSyntaxFormatDateTimeErrorCode =
+            registerBuiltIn("FOFD1340");
+    public static final ErrorCode ComponentSpecifierNotAvailableErrorCode =
+            registerBuiltIn("FOFD1350");
 
-    public static final ErrorCode IncorrectSyntaxFormatNumberErrorCode = registerBuiltIn("FODF1310");
+    public static final ErrorCode IncorrectSyntaxFormatNumberErrorCode =
+            registerBuiltIn("FODF1310");
     public static final ErrorCode InvalidDecimalFormatName = registerBuiltIn("FODF1280");
 
     public static final ErrorCode CastErrorCode = registerBuiltIn("FORG0001");
@@ -125,8 +127,10 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode CannotMaterializeErrorCode = registerBuiltIn("RBDY0005");
 
-    public static final ErrorCode UnrecognizedRumbleMLClassReferenceErrorCode = registerBuiltIn("RBML0001");
-    public static final ErrorCode UnrecognizedRumbleMLParamReferenceErrorCode = registerBuiltIn("RBML0002");
+    public static final ErrorCode UnrecognizedRumbleMLClassReferenceErrorCode =
+            registerBuiltIn("RBML0001");
+    public static final ErrorCode UnrecognizedRumbleMLParamReferenceErrorCode =
+            registerBuiltIn("RBML0002");
     public static final ErrorCode InvalidRumbleMLParamErrorCode = registerBuiltIn("RBML0003");
     public static final ErrorCode MLNotADataFrameErrorCode = registerBuiltIn("RBML0004");
 
@@ -137,7 +141,8 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode ClusterConnectionErrorCode = registerBuiltIn("RBDY0005");
     public static final ErrorCode DatesWithTimezonesNotSupported = registerBuiltIn("RBDY0006");
     public static final ErrorCode CannotModifyImmutableValue = registerBuiltIn("RBDY0007");
-    public static final ErrorCode CannotInferSchemaOnNonStructuredData = registerBuiltIn("RBDY0008");
+    public static final ErrorCode CannotInferSchemaOnNonStructuredData =
+            registerBuiltIn("RBDY0008");
 
     public static final ErrorCode UnexpectedStaticType = registerBuiltIn("RBTY0001");
 
@@ -148,7 +153,8 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode RuntimeExceptionErrorCode = registerBuiltIn("XPDY0130");
 
     public static final ErrorCode ParsingErrorCode = registerBuiltIn("XPST0003");
-    public static final ErrorCode StaticallyInferredEmptySequenceNotFromCommaExpression = registerBuiltIn("XPST0005");
+    public static final ErrorCode StaticallyInferredEmptySequenceNotFromCommaExpression =
+            registerBuiltIn("XPST0005");
     public static final ErrorCode UndeclaredVariableErrorCode = registerBuiltIn("XPST0008");
     public static final ErrorCode InvalidFunctionCallErrorCode = registerBuiltIn("XPST0017");
     public static final ErrorCode UndefinedTypeErrorCode = registerBuiltIn("XPST0051");
@@ -160,20 +166,25 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode UnexpectedNode = registerBuiltIn("XPTY0019");
 
     public static final ErrorCode InvalidInstance = registerBuiltIn("XQDY0027");
-    public static final ErrorCode InvalidProcessingInstructionTargetCastErrorCode = registerBuiltIn("XQDY0041");
-    public static final ErrorCode CycleInVariableDeclarationsErrorCode = registerBuiltIn("XQDY0054");
-    public static final ErrorCode InvalidProcessingInstructionContentErrorCode = registerBuiltIn("XQDY0026");
-    public static final ErrorCode InvalidProcessingInstructionTargetErrorCode = registerBuiltIn("XQDY0064");
+    public static final ErrorCode InvalidProcessingInstructionTargetCastErrorCode =
+            registerBuiltIn("XQDY0041");
+    public static final ErrorCode CycleInVariableDeclarationsErrorCode =
+            registerBuiltIn("XQDY0054");
+    public static final ErrorCode InvalidProcessingInstructionContentErrorCode =
+            registerBuiltIn("XQDY0026");
+    public static final ErrorCode InvalidProcessingInstructionTargetErrorCode =
+            registerBuiltIn("XQDY0064");
 
     public static final ErrorCode InvalidSchemaErrorCode = registerBuiltIn("XQST0012");
     public static final ErrorCode DuplicatedVariableNameInWindowCode = registerBuiltIn("XQST0103");
+
     /**
-     * Namespace declaration attribute value contains an enclosed expression (direct
-     * element constructor).
+     * Namespace declaration attribute value contains an enclosed expression (direct element
+     * constructor).
      */
-    public static final ErrorCode NamespaceDeclarationAttributeEnclosedExpressionErrorCode = registerBuiltIn(
-        "XQST0022"
-    );
+    public static final ErrorCode NamespaceDeclarationAttributeEnclosedExpressionErrorCode =
+            registerBuiltIn("XQST0022");
+
     public static final ErrorCode ModuleDeclarationErrorCode = registerBuiltIn("XQST0016");
     public static final ErrorCode InvalidJsoniqVersionErrorCode = registerBuiltIn("XQST0031");
     public static final ErrorCode MultipleBaseURIExceptionCode = registerBuiltIn("XQST0032");
@@ -181,26 +192,38 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DuplicateFunctionIdentifier = registerBuiltIn("XQST0034");
     public static final ErrorCode DefaultCollationExceptionCode = registerBuiltIn("XQST0038");
     public static final ErrorCode DuplicateParamName = registerBuiltIn("XQST0039");
-    public static final ErrorCode AnnotationInReservedNamespaceErrorCode = registerBuiltIn("XQST0045");
+    public static final ErrorCode AnnotationInReservedNamespaceErrorCode =
+            registerBuiltIn("XQST0045");
     public static final ErrorCode InvalidURILiteralErrorCode = registerBuiltIn("XQST0046");
     public static final ErrorCode DuplicateModuleTargetNamespace = registerBuiltIn("XQST0047");
     public static final ErrorCode NamespaceDoesNotMatchModule = registerBuiltIn("XQST0048");
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
     public static final ErrorCode UnknownCastTypeErrorCode = registerBuiltIn("XQST0052");
-    public static final ErrorCode MoreThanOneCopyNamespacesDeclarationErrorCode = registerBuiltIn("XQST0055");
+    public static final ErrorCode MoreThanOneCopyNamespacesDeclarationErrorCode =
+            registerBuiltIn("XQST0055");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
-    public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
-    public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
-    public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
-    public static final ErrorCode UnknownCollationInQueryPrologOrClause = registerBuiltIn("XQST0076");
-    public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
+    public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode =
+            registerBuiltIn("XQST0068");
+    public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode =
+            registerBuiltIn("XQST0069");
+    public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode =
+            registerBuiltIn("XQST0070");
+    public static final ErrorCode UnknownCollationInQueryPrologOrClause =
+            registerBuiltIn("XQST0076");
+    public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode =
+            registerBuiltIn("XQST0085");
     public static final ErrorCode EmptyModuleURIErrorCode = registerBuiltIn("XQST0088");
-    public static final ErrorCode PositionalVariableNameSameAsForVariable = registerBuiltIn("XQST0089");
+    public static final ErrorCode PositionalVariableNameSameAsForVariable =
+            registerBuiltIn("XQST0089");
     public static final ErrorCode InvalidGroupVariableErrorCode = registerBuiltIn("XQST0094");
-    public static final ErrorCode DirectElementConstructorTagMismatchErrorCode = registerBuiltIn("XQST0118");
-    public static final ErrorCode DecimalFormatPropertyInvalidValueErrorCode = registerBuiltIn("XQST0097");
-    public static final ErrorCode DecimalFormatPropertyConflictErrorCode = registerBuiltIn("XQST0098");
-    public static final ErrorCode DuplicateDecimalFormatPropertyErrorCode = registerBuiltIn("XQST0114");
+    public static final ErrorCode DirectElementConstructorTagMismatchErrorCode =
+            registerBuiltIn("XQST0118");
+    public static final ErrorCode DecimalFormatPropertyInvalidValueErrorCode =
+            registerBuiltIn("XQST0097");
+    public static final ErrorCode DecimalFormatPropertyConflictErrorCode =
+            registerBuiltIn("XQST0098");
+    public static final ErrorCode DuplicateDecimalFormatPropertyErrorCode =
+            registerBuiltIn("XQST0114");
 
     public static final ErrorCode AtomizationError = registerBuiltIn("FOTY0012");
     public static final ErrorCode UnexpectedFunctionItem = registerBuiltIn("FOTY0015");
@@ -208,46 +231,63 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DurationOverflowOrUnderflow = registerBuiltIn("FODT0002");
     public static final ErrorCode InvalidTimezoneValue = registerBuiltIn("FODT0003");
 
-    public static final ErrorCode InvalidUpdatingExpressionPositionErrorCode = registerBuiltIn("XUST0001");
-    public static final ErrorCode SimpleExpressionMustBeVacuousErrorCode = registerBuiltIn("XUST0002");
+    public static final ErrorCode InvalidUpdatingExpressionPositionErrorCode =
+            registerBuiltIn("XUST0001");
+    public static final ErrorCode SimpleExpressionMustBeVacuousErrorCode =
+            registerBuiltIn("XUST0002");
 
     public static final ErrorCode TransformBadCopySource = registerBuiltIn("XUTY0013");
 
     public static final ErrorCode TransformModifiesNonCopiedValue = registerBuiltIn("XUDY0014");
     public static final ErrorCode UpdateTargetIsEmptySeqErrorCode = registerBuiltIn("XUDY0027");
 
-    public static final ErrorCode UpdatingFunctionHasReturnTypeErrorCode = registerBuiltIn("XUST0028");
+    public static final ErrorCode UpdatingFunctionHasReturnTypeErrorCode =
+            registerBuiltIn("XUST0028");
 
     public static final ErrorCode InvalidAttributeNameErrorCode = registerBuiltIn("XQDY0044");
-    public static final ErrorCode InvalidElementNameExpressionErrorCode = registerBuiltIn("XQDY0074");
+    public static final ErrorCode InvalidElementNameExpressionErrorCode =
+            registerBuiltIn("XQDY0074");
     public static final ErrorCode InvalidCommentContentErrorCode = registerBuiltIn("XQDY0072");
     public static final ErrorCode InvalidNodeNameErrorCode = registerBuiltIn("XQDY0096");
     public static final ErrorCode DuplicateAttributeErrorCode = registerBuiltIn("XQDY0025");
-    public static final ErrorCode InvalidComputedNamespaceConstructorErrorCode = registerBuiltIn("XQDY0101");
-    public static final ErrorCode AttributeOrNamespaceAfterNonAttributeErrorCode = registerBuiltIn("XQTY0024");
+    public static final ErrorCode InvalidComputedNamespaceConstructorErrorCode =
+            registerBuiltIn("XQDY0101");
+    public static final ErrorCode AttributeOrNamespaceAfterNonAttributeErrorCode =
+            registerBuiltIn("XQTY0024");
 
-    public static final ErrorCode DuplicateObjectInsertSourceErrorCode = registerBuiltIn("JNUP0005");
+    public static final ErrorCode DuplicateObjectInsertSourceErrorCode =
+            registerBuiltIn("JNUP0005");
     public static final ErrorCode DuplicateKeyOnUpdateApplyErrorCode = registerBuiltIn("JNUP0006");
     public static final ErrorCode CannotCastUpdateSelectorErrorCode = registerBuiltIn("JNUP0007");
     public static final ErrorCode InvalidUpdateTargetErrorCode = registerBuiltIn("JNUP0008");
-    public static final ErrorCode TooManyReplacesOnSameTargetSelectorErrorCode = registerBuiltIn("JNUP0009");
-    public static final ErrorCode TooManyRenamesOnSameTargetSelectorErrorCode = registerBuiltIn("JNUP0010");
-    public static final ErrorCode TooManyCollectionCreationsOnSameTargetException = registerBuiltIn("JNUP0011");
+    public static final ErrorCode TooManyReplacesOnSameTargetSelectorErrorCode =
+            registerBuiltIn("JNUP0009");
+    public static final ErrorCode TooManyRenamesOnSameTargetSelectorErrorCode =
+            registerBuiltIn("JNUP0010");
+    public static final ErrorCode TooManyCollectionCreationsOnSameTargetException =
+            registerBuiltIn("JNUP0011");
     public static final ErrorCode TooManyEditsOnSameTargetException = registerBuiltIn("JNUP0012");
-    public static final ErrorCode CannotResolveUpdateSelectorErrorCode = registerBuiltIn("JNUP0016");
-    public static final ErrorCode ObjectInsertContentIsNotObjectSeqErrorCode = registerBuiltIn("JNUP0019");
+    public static final ErrorCode CannotResolveUpdateSelectorErrorCode =
+            registerBuiltIn("JNUP0016");
+    public static final ErrorCode ObjectInsertContentIsNotObjectSeqErrorCode =
+            registerBuiltIn("JNUP0019");
 
     public static final ErrorCode InvalidExpressionClassification = registerBuiltIn("SCCL0001");
-    public static final ErrorCode InvalidComposabilityUpdatingAndSequentialExpression = registerBuiltIn("SCCP0001");
+    public static final ErrorCode InvalidComposabilityUpdatingAndSequentialExpression =
+            registerBuiltIn("SCCP0001");
     public static final ErrorCode InvalidUpdatingExpressionOperand = registerBuiltIn("SCCP0002");
 
     public static final ErrorCode InvalidUpdatingExpressionCondition = registerBuiltIn("SCCP0003");
-    public static final ErrorCode InvalidControlStatementComposability = registerBuiltIn("SCCP0004");
-    public static final ErrorCode InvalidAssignableVariableComposability = registerBuiltIn("SCCP0005");
-    public static final ErrorCode InvalidSequentialChildInNonSequentialParent = registerBuiltIn("SCCP0006");
+    public static final ErrorCode InvalidControlStatementComposability =
+            registerBuiltIn("SCCP0004");
+    public static final ErrorCode InvalidAssignableVariableComposability =
+            registerBuiltIn("SCCP0005");
+    public static final ErrorCode InvalidSequentialChildInNonSequentialParent =
+            registerBuiltIn("SCCP0006");
     public static final ErrorCode InvalidAnnotation = registerBuiltIn("XQAN0001");
     public static final ErrorCode InvalidVariableDeclaration = registerBuiltIn("SCIN0001");
 
-    public static final ErrorCode UnsupportedNormalizationFormSerialization = registerBuiltIn("SESU0011");
+    public static final ErrorCode UnsupportedNormalizationFormSerialization =
+            registerBuiltIn("SESU0011");
     public static final ErrorCode InvalidSerializationParameterValue = registerBuiltIn("SEPM0016");
 }

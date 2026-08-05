@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -35,16 +36,13 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class MapWithRemovedEntryItem extends AbstractMapItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    /**
-     * This is an optimization version of maps when there is exactly one key-value pair.
-     */
+    /** This is an optimization version of maps when there is exactly one key-value pair. */
     private final Item original;
+
     private final Set<Item> removedKeys;
     private final int chainLength;
 
@@ -86,12 +84,10 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
         }
         return new MapItem(
                 this.getItemKeys().stream().map(item -> item.copy(mutable)).toList(),
-                this.getSequenceValues()
-                    .stream()
-                    .map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList())
-                    .toList(),
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                this.getSequenceValues().stream()
+                        .map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList())
+                        .toList(),
+                ExceptionMetadata.EMPTY_METADATA);
     }
 
     // region maps
@@ -108,12 +104,11 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
 
     @Override
     public List<String> getStringKeys() {
-        List<String> result = new ArrayList<>(
-                CollectionUtils.subtract(
-                    this.original.getStringKeys(),
-                    this.removedKeys.stream().map(Item::getStringValue).toList()
-                )
-        );
+        List<String> result =
+                new ArrayList<>(
+                        CollectionUtils.subtract(
+                                this.original.getStringKeys(),
+                                this.removedKeys.stream().map(Item::getStringValue).toList()));
         return result;
     }
 
@@ -208,32 +203,38 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
 
     @Override
     public void putItemByKey(String key, Item value) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void putItemByKey(Item key, Item value) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void putSequenceByKey(String key, List<Item> valueSequence) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void putSequenceByKey(Item key, List<Item> valueSequence) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void removeItemByKey(String key) {
-        throw new OurBadException("Cannot remove an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot remove an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void removeItemByKey(Item key) {
-        throw new OurBadException("Cannot remove an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot remove an item by key in a MapEntryItem, which is not mutable.");
     }
 
     // endregion maps
@@ -267,7 +268,8 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
 
     @Override
     public void setTopLevelID(long topLevelID) {
-        throw new OurBadException("Cannot change top level ID of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change top level ID of a MapEntryItem, which is not mutable.");
     }
 
     @Override
@@ -277,7 +279,8 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
 
     @Override
     public void setTopLevelOrder(double topLevelOrder) {
-        throw new OurBadException("Cannot change top level order of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change top level order of a MapEntryItem, which is not mutable.");
     }
 
     @Override
@@ -297,7 +300,8 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
 
     @Override
     public void setTableLocation(String location) {
-        throw new OurBadException("Cannot change table location of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change table location of a MapEntryItem, which is not mutable.");
     }
 
     @Override
@@ -323,9 +327,7 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -340,7 +342,7 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
 
     @Override
     public void setCollection(Collection collection) {
-        throw new OurBadException("Cannot change collection of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change collection of a MapEntryItem, which is not mutable.");
     }
-
 }

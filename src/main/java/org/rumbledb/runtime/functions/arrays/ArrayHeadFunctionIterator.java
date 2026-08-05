@@ -1,6 +1,12 @@
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -14,23 +20,15 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private Queue<Item> pendingResults;
 
     public ArrayHeadFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 1) {
             throw new OurBadException("array:head must have exactly one argument.");
@@ -56,24 +54,18 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
             return;
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:head expects exactly one array argument.",
-                    getMetadata()
-            );
+                    "array:head expects exactly one array argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; argument to array:head must be an array.",
-                    getMetadata()
-            );
+                    "Type error; argument to array:head must be an array.", getMetadata());
         }
 
         int size = arrayItem.getSize();
         if (size == 0) {
             throw new ArrayIndexOutOfBoundsException(
-                    "array:head called on an empty array.",
-                    getMetadata()
-            );
+                    "array:head called on an empty array.", getMetadata());
         }
 
         if (arrayItem.isArrayOfItems()) {
@@ -113,8 +105,7 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:head is currently supported only in local execution mode."
-        );
+                "array:head is currently supported only in local execution mode.");
     }
 
     @Override
@@ -125,8 +116,6 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:head is currently supported only in local execution mode."
-        );
+                "array:head is currently supported only in local execution mode.");
     }
 }
-

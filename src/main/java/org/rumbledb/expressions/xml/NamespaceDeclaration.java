@@ -23,20 +23,19 @@ import java.io.Serial;
 import java.io.Serializable;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * Namespace declaration in a direct element constructor start tag.
  *
- * This is intentionally not an attribute node expression: namespace declarations
- * contribute namespace nodes and static namespace bindings, but do not construct
- * attribute nodes.
+ * <p>This is intentionally not an attribute node expression: namespace declarations contribute
+ * namespace nodes and static namespace bindings, but do not construct attribute nodes.
  */
 @Getter
 public class NamespaceDeclaration implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final String prefix;
     private final String uri;

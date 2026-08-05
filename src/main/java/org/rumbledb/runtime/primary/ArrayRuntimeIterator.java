@@ -38,42 +38,31 @@ import org.rumbledb.types.SequenceType;
 
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final boolean isFixedSlotsArrayConstructor;
     private final boolean mutable;
 
-    /**
-     * Curly array constructor: single child whose items become singleton members.
-     */
+    /** Curly array constructor: single child whose items become singleton members. */
     public ArrayRuntimeIterator(
-            RuntimeIterator arrayItems,
-            RuntimeStaticContext staticContext,
-            boolean mutable
-    ) {
+            RuntimeIterator arrayItems, RuntimeStaticContext staticContext, boolean mutable) {
         super(arrayItems == null ? List.of() : List.of(arrayItems), staticContext);
         this.isFixedSlotsArrayConstructor = false;
         this.mutable = mutable;
     }
 
-    /**
-     * Square array constructor: each child iterator produces one member (possibly a sequence).
-     */
+    /** Square array constructor: each child iterator produces one member (possibly a sequence). */
     public ArrayRuntimeIterator(
             List<RuntimeIterator> memberIterators,
             boolean isFixedSlotsArrayConstructor,
             RuntimeStaticContext staticContext,
-            boolean mutable
-    ) {
+            boolean mutable) {
         super(memberIterators == null ? List.of() : memberIterators, staticContext);
         this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
         this.mutable = mutable;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
-            DynamicContext dynamicContext
-    ) {
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         if (isEffectiveFixedSlotsArrayConstructor()) {
             boolean allSingleton = true;
             List<List<Item>> memberSequences = new ArrayList<>();
@@ -89,11 +78,10 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                 for (List<Item> member : memberSequences) {
                     items.add(member.get(0));
                 }
-                return ItemFactory.getInstance()
-                    .createArrayItem(items, this.mutable);
+                return ItemFactory.getInstance().createArrayItem(items, this.mutable);
             } else {
                 return ItemFactory.getInstance()
-                    .createSequenceArrayItem(memberSequences, this.mutable);
+                        .createSequenceArrayItem(memberSequences, this.mutable);
             }
         }
         List<Item> result = new ArrayList<>();
@@ -109,7 +97,8 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         if (this.getChildren().size() == 1) {
-            NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+            NativeClauseContext childQuery =
+                    this.getChild(0).generateNativeQuery(nativeClauseContext);
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -117,24 +106,19 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             if (this.getChild(0) instanceof CommaExpressionIterator) {
                 resultingQuery = childQuery.getResultingQuery();
             } else {
-                resultingQuery = "array( "
-                    + childQuery.getResultingQuery()
-                    + " )";
+                resultingQuery = "array( " + childQuery.getResultingQuery() + " )";
             }
             return new NativeClauseContext(
                     childQuery,
                     resultingQuery,
                     new SequenceType(
                             ArrayItemType.arrayOf(childQuery.getResultingType().getItemType()),
-                            SequenceType.Arity.One
-                    )
-            );
+                            SequenceType.Arity.One));
         } else {
             return new NativeClauseContext(
                     nativeClauseContext,
                     "array()",
-                    new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
-            );
+                    new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One));
         }
     }
 

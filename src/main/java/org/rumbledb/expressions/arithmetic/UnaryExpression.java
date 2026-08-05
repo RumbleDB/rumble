@@ -20,17 +20,16 @@
 
 package org.rumbledb.expressions.arithmetic;
 
+import java.util.Collections;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Collections;
-import java.util.List;
-
 
 @Getter
 public class UnaryExpression extends Expression {
@@ -66,7 +65,8 @@ public class UnaryExpression extends Expression {
         buffer.append(" (" + (this.negated ? "-" : "+") + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+                " | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -76,10 +76,8 @@ public class UnaryExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
-        if (this.negated)
-            sb.append("-");
-        else
-            sb.append("+");
+        if (this.negated) sb.append("-");
+        else sb.append("+");
 
         indentIt(sb, indent);
         sb.append("(\n");

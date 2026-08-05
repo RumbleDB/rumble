@@ -20,22 +20,18 @@
 
 package org.rumbledb.runtime;
 
+import java.io.Serial;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 
-import java.io.Serial;
-
 public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private Item item;
 
-    public ConstantRuntimeIterator(
-            Item item,
-            RuntimeStaticContext staticContext
-    ) {
+    public ConstantRuntimeIterator(Item item, RuntimeStaticContext staticContext) {
         super(null, staticContext);
         this.item = item;
     }

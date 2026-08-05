@@ -20,8 +20,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 /**
  * W3C XPath/XQuery {@code map:merge}:
  *
- * <p>
- * Implements the FO 3.1 conceptual semantics:
+ * <p>Implements the FO 3.1 conceptual semantics:
  *
  * <pre>
  * let $duplicates-handler := map {
@@ -42,14 +41,12 @@ import org.rumbledb.runtime.RuntimeIterator;
  *   $combine-maps(?, ?, $duplicates-handler(($OPTIONS?duplicates, "use-first")[1])))
  * </pre>
  *
- * <p>
- * This implementation stays local-only and mirrors that behaviour using the existing MapItem
+ * <p>This implementation stays local-only and mirrors that behaviour using the existing MapItem
  * representation and {@code MapAtomicSameKey} key equality via {@code MapItem.getSequenceByKey()}.
  */
 public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private static class AccumulatedEntry {
         private Item key;
@@ -65,9 +62,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     private final RuntimeIterator optionsIterator; // may be null for arity-1
 
     public MapMergeFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() == 1) {
             this.mapsIterator = arguments.get(0);
@@ -100,14 +95,12 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                 // map-merge-026: second argument must not be empty -> XPTY0004.
                 throw new UnexpectedTypeException(
                         "map:merge options argument must be a single map, not the empty sequence [err:XPTY0004].",
-                        metadata
-                );
+                        metadata);
             }
             if (optionsSeq.size() != 1 || !optionsSeq.get(0).isMap()) {
                 throw new UnexpectedTypeException(
                         "map:merge options argument must be exactly one map(*) [err:XPTY0004].",
-                        metadata
-                );
+                        metadata);
             }
             Item optionsMap = optionsSeq.get(0);
             // $OPTIONS?duplicates, fallback to \"use-first\".
@@ -118,8 +111,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                     // FOJS0005: invalid option value for a recognized key.
                     throw new UnexpectedTypeException(
                             "Invalid value for map:merge option duplicates (expected xs:string) [err:FOJS0005].",
-                            metadata
-                    );
+                            metadata);
                 }
                 String v = d.getStringValue();
                 if ("use-first".equals(v)) {
@@ -135,9 +127,10 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                 } else {
                     // FOJS0005: invalid value for a recognized key.
                     throw new UnexpectedTypeException(
-                            "Invalid value for map:merge option duplicates: " + v + " [err:FOJS0005].",
-                            metadata
-                    );
+                            "Invalid value for map:merge option duplicates: "
+                                    + v
+                                    + " [err:FOJS0005].",
+                            metadata);
                 }
             }
         }
@@ -155,8 +148,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                 if (!mapItem.isMap()) {
                     throw new UnexpectedTypeException(
                             "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].",
-                            metadata
-                    );
+                            metadata);
                 }
                 sawAnyMap = true;
                 List<Item> bKeys = mapItem.getItemKeys();
@@ -194,7 +186,8 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                         case USE_ANY:
                             break;
                         case COMBINE:
-                            List<Item> combined = new ArrayList<>(existing.values.size() + bSeq.size());
+                            List<Item> combined =
+                                    new ArrayList<>(existing.values.size() + bSeq.size());
                             combined.addAll(existing.values);
                             combined.addAll(bSeq);
                             existing.key = bKey;
@@ -209,8 +202,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                         case REJECT:
                             throw new DuplicateJSONKeyException(
                                     "map:merge encountered duplicate map keys with duplicates=\"reject\" [err:FOJS0003].",
-                                    metadata
-                            );
+                                    metadata);
                         default:
                             throw new OurBadException("Unexpected duplicates policy in map:merge.");
                     }
@@ -222,8 +214,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
         // Empty input -> empty map.
         if (!sawAnyMap) {
-            return ItemFactory.getInstance()
-                .createObjectItemOptimized(new HashMap<>(), false);
+            return ItemFactory.getInstance().createObjectItemOptimized(new HashMap<>(), false);
         }
 
         if (allKeysString && allValuesSingletons) {
@@ -237,14 +228,17 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             return ItemFactory.getInstance().createObjectItemOptimized(newKeyValuePairs, false);
         } else {
             // construct a map item
-            // 4. Build final MapItem from accumulator via map overload to avoid duplicate-key verification.
+            // 4. Build final MapItem from accumulator via map overload to avoid duplicate-key
+            // verification.
             Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
             for (AccumulatedEntry entry : accumulator.values()) {
                 finalKeyValuePairs.put(entry.key, entry.values);
             }
             return ItemFactory.getInstance()
-                .createMapItem(finalKeyValuePairs, metadata, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createMapItem(
+                            finalKeyValuePairs,
+                            metadata,
+                            this.getRuntimeStaticContext().isQuerySideEffecting());
         }
-
     }
 }

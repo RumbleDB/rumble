@@ -20,48 +20,38 @@
 
 package org.rumbledb.types;
 
-import lombok.Getter;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FunctionSignature implements Serializable {
-    @EqualsAndHashCode.Include
-    private List<SequenceType> parameterTypes;
+    @EqualsAndHashCode.Include private List<SequenceType> parameterTypes;
 
-    @EqualsAndHashCode.Include
-    private SequenceType returnType;
+    @EqualsAndHashCode.Include private SequenceType returnType;
 
     private boolean isUpdating;
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public FunctionSignature(
-            List<SequenceType> parameterTypes,
-            SequenceType returnType,
-            boolean isUpdating
-    ) {
+            List<SequenceType> parameterTypes, SequenceType returnType, boolean isUpdating) {
         this.parameterTypes = parameterTypes;
         this.returnType = returnType;
         this.isUpdating = isUpdating;
     }
 
-    public FunctionSignature(
-            List<SequenceType> parameterTypes,
-            SequenceType returnType
-    ) {
+    public FunctionSignature(List<SequenceType> parameterTypes, SequenceType returnType) {
         this(parameterTypes, returnType, false);
     }
 
-
     public boolean isSubtypeOf(FunctionSignature other) {
-        // a signature is a subtype of another signature if it always respect its contract typewise (i.e. no static type
+        // a signature is a subtype of another signature if it always respect its contract typewise
+        // (i.e. no static type
         // errors)
         // this return type must be a subtype of other return type
         if (!this.returnType.isSubtypeOf(other.returnType)) {

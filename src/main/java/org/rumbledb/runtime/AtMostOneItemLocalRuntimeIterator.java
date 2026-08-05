@@ -20,7 +20,14 @@
 
 package org.rumbledb.runtime;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,29 +38,21 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private Item result;
 
     protected AtMostOneItemLocalRuntimeIterator(
-            List<RuntimeIterator> children,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
         if (getHighestExecutionMode() != ExecutionMode.LOCAL) {
-            throw new OurBadException("At-most-one-item runtime iterators support only the local execution mode");
+            throw new OurBadException(
+                    "At-most-one-item runtime iterators support only the local execution mode");
         }
     }
 
@@ -68,9 +67,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     }
 
     @Override
-    public abstract Item materializeFirstItemOrNull(
-            DynamicContext context
-    );
+    public abstract Item materializeFirstItemOrNull(DynamicContext context);
 
     @Override
     public void open(DynamicContext dynamicContext) {
@@ -95,11 +92,8 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     }
 
     @Override
-    public Item materializeExactlyOneItem(
-            DynamicContext dynamicContext
-    )
-            throws NoItemException,
-                MoreThanOneItemException {
+    public Item materializeExactlyOneItem(DynamicContext dynamicContext)
+            throws NoItemException, MoreThanOneItemException {
         Item result = materializeFirstItemOrNull(dynamicContext);
         if (result == null) {
             throw new NoItemException();
@@ -108,9 +102,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     }
 
     @Override
-    public Item materializeAtMostOneItemOrNull(
-            DynamicContext dynamicContext
-    )
+    public Item materializeAtMostOneItemOrNull(DynamicContext dynamicContext)
             throws MoreThanOneItemException {
         return materializeFirstItemOrNull(dynamicContext);
     }
@@ -137,7 +129,8 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     }
 
     @Override
-    public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
+    public boolean getEffectiveBooleanValueOrCheckPosition(
+            DynamicContext dynamicContext, Item position) {
         Item item = materializeFirstItemOrNull(dynamicContext);
         if (item == null) {
             return false;
@@ -159,11 +152,12 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
                     return !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
                 } else {
                     throw new OurBadException(
-                            "Unexpected numeric type found while calculating effective boolean value."
-                    );
+                            "Unexpected numeric type found while calculating effective boolean value.");
                 }
             } else {
-                return ComparisonIterator.compareItems(item, position, ComparisonOperator.VC_EQ, getMetadata()) == 0;
+                return ComparisonIterator.compareItems(
+                                item, position, ComparisonOperator.VC_EQ, getMetadata())
+                        == 0;
             }
         }
         if (item.isNull()) {
@@ -182,18 +176,15 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         } else {
             if (item.isObject() || item.isArray()) {
                 System.err.println(
-                    "Note: effective boolean value of "
-                        + (item.isObject() ? "Object " : "Array ")
-                        + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
-                );
+                        "Note: effective boolean value of "
+                                + (item.isObject() ? "Object " : "Array ")
+                                + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option");
             }
         }
 
         throw new InvalidArgumentTypeException(
                 "Effective boolean value not defined for items of type "
-                    +
-                    item.getDynamicType().toString(),
-                getMetadata()
-        );
+                        + item.getDynamicType().toString(),
+                getMetadata());
     }
 }

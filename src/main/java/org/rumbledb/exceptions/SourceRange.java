@@ -25,8 +25,7 @@ import java.io.Serializable;
 
 public record SourceRange(SourcePosition start, SourcePosition end) implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public static SourceRange point(int line, int column) {
         SourcePosition position = new SourcePosition(line, column);

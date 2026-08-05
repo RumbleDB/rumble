@@ -1,24 +1,24 @@
 package org.rumbledb.runtime.scripting.declaration;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 /*
  * It is expected that no results are returned for this iterator.
  */
 public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private int childIndex;
 
-    public CommaVariableDeclStatementIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public CommaVariableDeclStatementIterator(
+            List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 

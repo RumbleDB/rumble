@@ -20,7 +20,12 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
@@ -35,13 +40,8 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator sequenceIterator1;
     private final RuntimeIterator sequenceIterator2;
@@ -57,9 +57,7 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
     private MutableArgumentIterator mutableSecondArgumentIterator;
 
     public ForEachPairFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("fn:for-each-pair must have exactly three arguments.");
@@ -83,43 +81,44 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
         if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The third argument of fn:for-each-pair must be a single function item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         this.actionFunction = functionItems.get(0);
         if (this.actionFunction.getIdentifier().getArity() != 2) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:for-each-pair must accept exactly two arguments [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
-        this.firstArgumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
-        this.secondArgumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        this.firstArgumentContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
+        this.secondArgumentContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
         this.pairIndex = 0;
 
         this.mutableFirstArgumentIterator = new MutableArgumentIterator(this.firstArgumentContext);
-        this.mutableSecondArgumentIterator = new MutableArgumentIterator(this.secondArgumentContext);
+        this.mutableSecondArgumentIterator =
+                new MutableArgumentIterator(this.secondArgumentContext);
         List<RuntimeIterator> callbackArguments = new ArrayList<>(2);
         callbackArguments.add(this.mutableFirstArgumentIterator);
         callbackArguments.add(this.mutableSecondArgumentIterator);
-        this.currentCallbackIterator = NamedFunctions.buildFunctionItemCallIterator(
-            this.actionFunction,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            callbackArguments,
-            false
-        );
+        this.currentCallbackIterator =
+                NamedFunctions.buildFunctionItemCallIterator(
+                        this.actionFunction,
+                        this.staticContext,
+                        ExecutionMode.LOCAL,
+                        callbackArguments,
+                        false);
     }
 
     private void advanceToNextResult(DynamicContext context) {
@@ -132,12 +131,10 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
                 this.currentCallbackIterator.close();
             }
 
-            if (
-                this.inputItems1 == null
+            if (this.inputItems1 == null
                     || this.inputItems2 == null
                     || this.pairIndex >= this.inputItems1.size()
-                    || this.pairIndex >= this.inputItems2.size()
-            ) {
+                    || this.pairIndex >= this.inputItems2.size()) {
                 this.hasNext = false;
                 return;
             }
@@ -196,17 +193,18 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("fn:for-each-pair is currently supported only in local execution mode.");
+        throw new OurBadException(
+                "fn:for-each-pair is currently supported only in local execution mode.");
     }
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("fn:for-each-pair is currently supported only in local execution mode.");
+        throw new OurBadException(
+                "fn:for-each-pair is currently supported only in local execution mode.");
     }
 
     private static class MutableArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
-        @Serial
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         private Item currentItem;
 
         MutableArgumentIterator(RuntimeStaticContext staticContext) {

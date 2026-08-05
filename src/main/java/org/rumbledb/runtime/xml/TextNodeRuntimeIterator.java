@@ -20,36 +20,33 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
-import java.io.Serial;
-
 /**
  * Runtime iterator for text nodes in a direct element constructor.
- * 
+ *
  * @see org.rumbledb.expressions.xml.TextNodeExpression
  */
 public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
+
     /** The string content of the text node */
     private final String content;
 
     /**
      * Constructor for text node runtime iterator.
-     * 
+     *
      * @param content The string content of the text node
      * @param staticContext The static context
      */
-    public TextNodeRuntimeIterator(
-            String content,
-            RuntimeStaticContext staticContext
-    ) {
+    public TextNodeRuntimeIterator(String content, RuntimeStaticContext staticContext) {
         super(null, staticContext);
         this.content = content;
     }
@@ -58,9 +55,6 @@ public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         // Create and return the element item
         this.hasNext = false;
-        return ItemFactory.getInstance()
-            .createXmlTextNode(
-                this.content
-            );
+        return ItemFactory.getInstance().createXmlTextNode(this.content);
     }
 }

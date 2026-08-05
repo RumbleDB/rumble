@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions.context;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -28,21 +33,12 @@ import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 public class LastFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public LastFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -50,7 +46,8 @@ public class LastFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item result = context.getVariableValues().getLast();
         if (result == null) {
-            throw new AbsentPartOfDynamicContextException("Context undefined (last) ", getMetadata());
+            throw new AbsentPartOfDynamicContextException(
+                    "Context undefined (last) ", getMetadata());
         }
         return result;
     }
@@ -58,9 +55,8 @@ public class LastFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<Name, DynamicContext.VariableDependency>();
+                new TreeMap<Name, DynamicContext.VariableDependency>();
         result.put(Name.CONTEXT_COUNT, DynamicContext.VariableDependency.FULL);
         return result;
     }
-
 }

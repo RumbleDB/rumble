@@ -19,6 +19,9 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -29,38 +32,38 @@ import org.rumbledb.items.StringItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 /**
  * Implementation of the fn:name function according to XQuery 3.1 specification.
- * 
- * Returns the name of a node, as an xs:string that is either the zero-length string,
- * or has the lexical form of an xs:QName.
- * 
- * Function signatures:
- * 
+ *
+ * <p>Returns the name of a node, as an xs:string that is either the zero-length string, or has the
+ * lexical form of an xs:QName.
+ *
+ * <p>Function signatures:
+ *
  * <ul>
- * <li>fn:name() as xs:string</li>
- * <li>fn:name($arg as node()?) as xs:string</li>
+ *   <li>fn:name() as xs:string
+ *   <li>fn:name($arg as node()?) as xs:string
  * </ul>
- * 
+ *
  * Rules:
+ *
  * <ul>
- * <li>If the argument is omitted, it defaults to the context item (.)</li>
- * <li>If the argument is supplied and is the empty sequence, the function returns the zero-length string</li>
- * <li>If the node identified by $arg has no name (that is, if it is a document node, a comment,
- * a text node, or a namespace node having no name), the function returns the zero-length string</li>
- * <li>Otherwise, the function returns the value of the expression fn:string(fn:node-name($arg))</li>
+ *   <li>If the argument is omitted, it defaults to the context item (.)
+ *   <li>If the argument is supplied and is the empty sequence, the function returns the zero-length
+ *       string
+ *   <li>If the node identified by $arg has no name (that is, if it is a document node, a comment, a
+ *       text node, or a namespace node having no name), the function returns the zero-length string
+ *   <li>Otherwise, the function returns the value of the expression fn:string(fn:node-name($arg))
  * </ul>
- * 
- * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-name">XPath Functions 3.1: fn:name</a>
+ *
+ * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-name">XPath Functions 3.1:
+ *     fn:name</a>
  */
 public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    public NodeNameFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public NodeNameFunctionIterator(
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
@@ -84,41 +87,44 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
             // Check if the item is an XML node; otherwise, raise a type error.
             if (!node.isNode()) {
                 throw new UnexpectedTypeException(
-                        "The argument must be a reference to an XML node",
-                        getMetadata()
-                );
+                        "The argument must be a reference to an XML node", getMetadata());
             }
 
             // Use the generic XDM 3.1 node-name accessor defined on Item and implemented
             // by XML node item classes (see Item.nodeName()).
             Name nodeName = node.nodeName();
 
-            // If the node has no name (document, comment, text, or a namespace node with empty prefix),
-            // dm:node-name is the empty sequence (null here). fn:name returns the zero-length string.
+            // If the node has no name (document, comment, text, or a namespace node with empty
+            // prefix),
+            // dm:node-name is the empty sequence (null here). fn:name returns the zero-length
+            // string.
             if (nodeName == null) {
                 return new StringItem("");
             }
 
             // For named nodes (elements, attributes, processing instructions, namespace nodes with
-            // a non-empty name), return the lexical form of the QName (fn:string(fn:node-name($arg))).
+            // a non-empty name), return the lexical form of the QName
+            // (fn:string(fn:node-name($arg))).
             return new StringItem(nodeName.toString());
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " name function", getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " name function", getMetadata());
     }
 
     /**
-     * Helper method to get the context node.
-     * If no parameters are provided, uses the context item.
+     * Helper method to get the context node. If no parameters are provided, uses the context item.
      * If a parameter is provided, uses the first parameter.
      */
     private Item getContextNode() {
         if (this.getChildren().isEmpty()) {
             // No argument provided, use context item
-            return this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0);
+            return this.currentDynamicContextForLocalExecution
+                    .getVariableValues()
+                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                    .get(0);
         }
         // Argument provided, use first parameter
-        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.getChild(0)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }

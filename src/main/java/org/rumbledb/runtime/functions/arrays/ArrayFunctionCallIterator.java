@@ -1,34 +1,33 @@
 package org.rumbledb.runtime.functions.arrays;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.*;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
+
 public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final Item arrayItem;
     private final RuntimeIterator indexIterator;
     private final Queue<Item> pendingResults;
 
     public ArrayFunctionCallIterator(
-            Item arrayItem,
-            RuntimeIterator indexIterator,
-            RuntimeStaticContext staticContext
-    ) {
-        super(indexIterator == null ? null : java.util.Collections.singletonList(indexIterator), staticContext);
+            Item arrayItem, RuntimeIterator indexIterator, RuntimeStaticContext staticContext) {
+        super(
+                indexIterator == null ? null : java.util.Collections.singletonList(indexIterator),
+                staticContext);
         this.arrayItem = arrayItem;
         this.indexIterator = indexIterator;
         this.pendingResults = new LinkedList<>();
@@ -38,9 +37,7 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
     protected void openLocal() {
         if (this.indexIterator == null) {
             throw new UnexpectedTypeException(
-                    "Array function calls must have exactly one argument.",
-                    getMetadata()
-            );
+                    "Array function calls must have exactly one argument.", getMetadata());
         }
         initializeResults(this.currentDynamicContextForLocalExecution);
         setNextResult();
@@ -54,36 +51,30 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
         } catch (NoItemException e) {
             throw new InvalidSelectorException(
                     "Invalid array function call; array lookup can't be performed with no key.",
-                    getMetadata()
-            );
+                    getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new InvalidSelectorException(
                     "Invalid array function call; array lookup can't be performed with multiple keys.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (!lookupExpression.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; non numeric array lookup for : " + lookupExpression.serialize(),
-                    getMetadata()
-            );
+                    getMetadata());
         }
         int lookup = lookupExpression.castToIntValue();
         if (!this.arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Array function calls can only be performed on arrays.",
-                    getMetadata()
-            );
+                    "Array function calls can only be performed on arrays.", getMetadata());
         }
         if (lookup <= 0) {
             // 1-based positions: anything < 1 is out of bounds and should raise FOAY0001
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: "
-                        + lookup
-                        + ", of array with length: "
-                        + this.arrayItem.getSize(),
-                    getMetadata()
-            );
+                            + lookup
+                            + ", of array with length: "
+                            + this.arrayItem.getSize(),
+                    getMetadata());
         }
         if (this.arrayItem.isArrayOfItems()) {
             Item member = this.arrayItem.getItemAt(lookup - 1);
@@ -128,8 +119,7 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "Array function calls are currently supported only in local execution mode."
-        );
+                "Array function calls are currently supported only in local execution mode.");
     }
 
     @Override
@@ -140,7 +130,6 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "Array function calls are currently supported only in local execution mode."
-        );
+                "Array function calls are currently supported only in local execution mode.");
     }
 }

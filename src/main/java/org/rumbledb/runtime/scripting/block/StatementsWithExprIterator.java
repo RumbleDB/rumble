@@ -1,7 +1,12 @@
 package org.rumbledb.runtime.scripting.block;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.stream.Stream;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -12,13 +17,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.Serial;
-import java.util.List;
-import java.util.stream.Stream;
-
 public class StatementsWithExprIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private int childIndex;
     private Item result;
@@ -26,17 +26,15 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
     public StatementsWithExprIterator(
             List<RuntimeIterator> statements,
             RuntimeIterator exprIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.concat(statements.stream(), Stream.of(exprIterator)).toList(),
-            staticContext.toBuilder()
-                .isUpdating(exprIterator.isUpdating())
-                .isSequential(
-                    statements.stream().anyMatch(RuntimeIterator::isSequential) || exprIterator.isSequential()
-                )
-                .build()
-        );
+                Stream.concat(statements.stream(), Stream.of(exprIterator)).toList(),
+                staticContext.toBuilder()
+                        .isUpdating(exprIterator.isUpdating())
+                        .isSequential(
+                                statements.stream().anyMatch(RuntimeIterator::isSequential)
+                                        || exprIterator.isSequential())
+                        .build());
     }
 
     @Override
@@ -67,7 +65,6 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
             return sparkContext.emptyRDD();
         }
     }
-
 
     private void startLocal() {
         this.childIndex = 0;
@@ -127,7 +124,8 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
             setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException("Invalid next() call in StatementsWithExpression", getMetadata());
+        throw new IteratorFlowException(
+                "Invalid next() call in StatementsWithExpression", getMetadata());
     }
 
     @Override

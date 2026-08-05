@@ -17,7 +17,16 @@
 
 package org.rumbledb.runtime.misc;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,17 +38,8 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-
 public class NodeSetOperationIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
@@ -51,8 +51,7 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
             NodeSetExpression.NodeSetOperator operator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
@@ -67,7 +66,8 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (!this.hasNext) {
-            throw new IteratorFlowException("Invalid next call in node set operation", getMetadata());
+            throw new IteratorFlowException(
+                    "Invalid next call in node set operation", getMetadata());
         }
         Item result = this.localResults.get(this.nextResultIndex++);
         this.hasNext = this.nextResultIndex < this.localResults.size();
@@ -83,14 +83,8 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<Item> leftNodes = buildNodeRDD(
-            this.leftIterator.getRDD(context),
-            "left"
-        );
-        JavaRDD<Item> rightNodes = buildNodeRDD(
-            this.rightIterator.getRDD(context),
-            "right"
-        );
+        JavaRDD<Item> leftNodes = buildNodeRDD(this.leftIterator.getRDD(context), "left");
+        JavaRDD<Item> rightNodes = buildNodeRDD(this.rightIterator.getRDD(context), "right");
 
         JavaRDD<Item> result;
         switch (this.operator) {
@@ -104,7 +98,8 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
                 result = leftNodes.subtract(rightNodes);
                 break;
             default:
-                throw new IteratorFlowException("Unrecognized node set operator: " + this.operator, getMetadata());
+                throw new IteratorFlowException(
+                        "Unrecognized node set operator: " + this.operator, getMetadata());
         }
         return result.sortBy(Item::getXmlDocumentPosition, true, 1);
     }
@@ -130,18 +125,16 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
                 leftNodes.removeAll(rightNodes);
                 return sortNodes(leftNodes);
             default:
-                throw new IteratorFlowException("Unrecognized node set operator: " + this.operator, getMetadata());
+                throw new IteratorFlowException(
+                        "Unrecognized node set operator: " + this.operator, getMetadata());
         }
     }
 
     /**
-     * Builds an ordered set of nodes while validating that every item is an XML node with a document position.
+     * Builds an ordered set of nodes while validating that every item is an XML node with a
+     * document position.
      */
-    private Set<Item> buildNodeSet(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            String side
-    ) {
+    private Set<Item> buildNodeSet(RuntimeIterator iterator, DynamicContext context, String side) {
         Set<Item> nodes = new TreeSet<>(Comparator.comparing(Item::getXmlDocumentPosition));
         for (Item item : iterator.materialize(context)) {
             validateAndGetNodePosition(item, side, getMetadata());
@@ -156,32 +149,30 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
 
     private JavaRDD<Item> buildNodeRDD(JavaRDD<Item> items, String side) {
         ExceptionMetadata metadata = getMetadata();
-        return items.map(item -> {
-            validateAndGetNodePosition(item, side, metadata);
-            return item;
-        });
+        return items.map(
+                item -> {
+                    validateAndGetNodePosition(item, side, metadata);
+                    return item;
+                });
     }
 
     private static XMLDocumentPosition validateAndGetNodePosition(
-            Item item,
-            String side,
-            ExceptionMetadata metadata
-    ) {
+            Item item, String side, ExceptionMetadata metadata) {
         if (!item.isNode()) {
             throw new UnexpectedTypeException(
                     "The "
-                        + side
-                        + " operand of a node set operation must contain only nodes, got: "
-                        + item.getDynamicType(),
-                    metadata
-            );
+                            + side
+                            + " operand of a node set operation must contain only nodes, got: "
+                            + item.getDynamicType(),
+                    metadata);
         }
         XMLDocumentPosition position = item.getXmlDocumentPosition();
         if (position == null) {
             throw new UnexpectedTypeException(
-                    "The " + side + " operand of a node set operation contains a node without document position.",
-                    metadata
-            );
+                    "The "
+                            + side
+                            + " operand of a node set operation contains a node without document position.",
+                    metadata);
         }
         return position;
     }

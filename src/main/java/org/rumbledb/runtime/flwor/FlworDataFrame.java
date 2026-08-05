@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
-import lombok.Getter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.UDFRegistration;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.Getter;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -22,14 +24,11 @@ import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.types.SequenceType;
 
 public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    @Getter
-    private Dataset<Row> dataFrame;
+    @Getter private Dataset<Row> dataFrame;
 
-    @Getter
-    private List<FlworDataFrameColumn> columns;
+    @Getter private List<FlworDataFrameColumn> columns;
     private Map<Name, SequenceType> columnTypes;
 
     public FlworDataFrame(Dataset<Row> dataFrame) {
@@ -48,9 +47,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     @Override
     public JavaRDD<FlworTuple> toRDD(ExceptionMetadata metadata) {
         throw new OurBadException(
-                "Converting a FLWOR DataFrame to an RDD of tuples is not implemented.",
-                metadata
-        );
+                "Converting a FLWOR DataFrame to an RDD of tuples is not implemented.", metadata);
     }
 
     public List<Name> getVariableNames() {
@@ -63,8 +60,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
 
     public boolean hasVariableName(Name name) {
         for (FlworDataFrameColumn c : getColumns()) {
-            if (name.equals(c.getVariableName()))
-                return true;
+            if (name.equals(c.getVariableName())) return true;
         }
         return false;
     }
@@ -74,10 +70,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public FlworDataFrame sql(String sqlQuery) {
-        FlworDataFrame result = new FlworDataFrame(
-                this.dataFrame.sparkSession()
-                    .sql(sqlQuery)
-        );
+        FlworDataFrame result = new FlworDataFrame(this.dataFrame.sparkSession().sql(sqlQuery));
         for (Name v : this.getVariableNames()) {
             SequenceType type = this.getVariableType(v);
             if (result.hasVariableName(v)) {
@@ -88,21 +81,15 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public Dataset<Row> sqlRaw(String sqlQuery) {
-        return this.dataFrame.sparkSession()
-            .sql(sqlQuery);
+        return this.dataFrame.sparkSession().sql(sqlQuery);
     }
 
     public List<FlworDataFrameColumn> getColumns(
             Map<Name, DynamicContext.VariableDependency> dependencies,
             List<Name> variablesToRestrictTo,
-            List<Name> variablesToExclude
-    ) {
+            List<Name> variablesToExclude) {
         return FlworDataFrameUtils.getColumns(
-            this.dataFrame.schema(),
-            dependencies,
-            variablesToRestrictTo,
-            variablesToExclude
-        );
+                this.dataFrame.schema(), dependencies, variablesToRestrictTo, variablesToExclude);
     }
 
     public void setVariableType(Name name, SequenceType type) {
@@ -139,6 +126,4 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
         System.err.println("Data Frame");
         this.dataFrame.show();
     }
-
-
 }

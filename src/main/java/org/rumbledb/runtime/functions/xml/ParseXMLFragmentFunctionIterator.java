@@ -1,40 +1,38 @@
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.InvalidXmlDocumentException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import java.io.IOException;
+import java.io.Serial;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.Serial;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidXmlDocumentException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
 
 public class ParseXMLFragmentFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private static final String WRAPPER_ELEMENT_NAME = "rumble-parse-xml-fragment-wrapper";
 
     public ParseXMLFragmentFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -44,18 +42,24 @@ public class ParseXMLFragmentFunctionIterator extends AtMostOneItemLocalRuntimeI
         if (arg == null) {
             return null;
         }
-        String wrapped = "<" + WRAPPER_ELEMENT_NAME + ">" + arg.getStringValue() + "</" + WRAPPER_ELEMENT_NAME + ">";
+        String wrapped =
+                "<"
+                        + WRAPPER_ELEMENT_NAME
+                        + ">"
+                        + arg.getStringValue()
+                        + "</"
+                        + WRAPPER_ELEMENT_NAME
+                        + ">";
         try {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(wrapped)));
+            Document xmlDocument =
+                    documentBuilder.parse(new InputSource(new StringReader(wrapped)));
             Node wrapperElement = xmlDocument.getDocumentElement();
 
-            boolean removeParentPointers = context
-                .getRumbleConfiguration()
-                .optimization()
-                .optimizeParentPointers();
+            boolean removeParentPointers =
+                    context.getRumbleConfiguration().optimization().optimizeParentPointers();
             String path = XMLDocumentPosition.generateConstructedTreePath();
             List<Item> children = new ArrayList<>();
             NodeList nodeList = wrapperElement.getChildNodes();
@@ -77,8 +81,7 @@ public class ParseXMLFragmentFunctionIterator extends AtMostOneItemLocalRuntimeI
         } catch (SAXException | IOException e) {
             throw new InvalidXmlDocumentException(
                     "fn:parse-xml-fragment: the argument is not a well-formed external general parsed entity",
-                    getMetadata()
-            );
+                    getMetadata());
         }
     }
 

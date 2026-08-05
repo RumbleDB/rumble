@@ -2,6 +2,8 @@ package org.rumbledb.runtime.functions.datetime.components;
 
 import java.io.Serial;
 import java.time.Duration;
+import java.time.ZoneOffset;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -11,16 +13,13 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.time.ZoneOffset;
-import java.util.List;
-
 public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private Item timezone = null;
 
-    public AdjustTimeToTimezone(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public AdjustTimeToTimezone(
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -35,11 +34,13 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.timezone == null && this.getChildren().size() == 1) {
             return ItemFactory.getInstance()
-                .createTimeItem(timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
+                    .createTimeItem(
+                            timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
         }
         if (this.timezone == null) {
             return ItemFactory.getInstance()
-                .createTimeItem(timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.UTC), false);
+                    .createTimeItem(
+                            timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.UTC), false);
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
@@ -49,21 +50,23 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
             int minutes = (int) timezoneDuration.toMinutes() % 60;
             if (timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
-                    .createTimeItem(
-                        timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
-                        true
-                    );
+                        .createTimeItem(
+                                timeItem.getTimeValue()
+                                        .withOffsetSameInstant(
+                                                ZoneOffset.ofHoursMinutes(hours, minutes)),
+                                true);
             }
             return ItemFactory.getInstance()
-                .createTimeItem(
-                    timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
-                    true
-                );
+                    .createTimeItem(
+                            timeItem.getTimeValue()
+                                    .withOffsetSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                            true);
         }
     }
 
     private boolean checkTimeZoneArgument() {
         Duration timezoneDuration = this.timezone.getDurationValue();
-        return (Math.abs(timezoneDuration.toMinutes()) > 840) || (Double.compare(timezoneDuration.getNano(), 0) != 0);
+        return (Math.abs(timezoneDuration.toMinutes()) > 840)
+                || (Double.compare(timezoneDuration.getNano(), 0) != 0);
     }
 }

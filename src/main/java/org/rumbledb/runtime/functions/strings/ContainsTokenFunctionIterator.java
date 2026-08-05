@@ -1,5 +1,9 @@
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.Comparator;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -7,18 +11,11 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.Comparator;
-import java.util.List;
-
 public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public ContainsTokenFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -30,7 +27,8 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
         }
 
         Comparator<String> comparator = resolveComparator(context);
-        return ItemFactory.getInstance().createBooleanItem(inputContainsToken(context, token, comparator));
+        return ItemFactory.getInstance()
+                .createBooleanItem(inputContainsToken(context, token, comparator));
     }
 
     private Comparator<String> resolveComparator(DynamicContext context) {
@@ -63,7 +61,8 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
         return character == ' ' || character == '\t' || character == '\n' || character == '\r';
     }
 
-    private boolean inputContainsToken(DynamicContext context, String token, Comparator<String> comparator) {
+    private boolean inputContainsToken(
+            DynamicContext context, String token, Comparator<String> comparator) {
         RuntimeIterator inputIterator = this.getChild(0);
         inputIterator.open(context);
         try {
@@ -73,21 +72,23 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
         }
     }
 
-    private boolean iteratorContainsToken(RuntimeIterator inputIterator, String token, Comparator<String> comparator) {
+    private boolean iteratorContainsToken(
+            RuntimeIterator inputIterator, String token, Comparator<String> comparator) {
         while (inputIterator.hasNext()) {
             Item inputItem = inputIterator.next();
             String[] inputTokens = inputItem.getStringValue().split("[\\t\\n\\r ]+");
-            if (isTokenInSequence(inputTokens, token, comparator))
-                return true;
+            if (isTokenInSequence(inputTokens, token, comparator)) return true;
         }
         return false;
     }
 
-    private static boolean isTokenInSequence(String[] inputTokens, String token, Comparator<String> comparator) {
+    private static boolean isTokenInSequence(
+            String[] inputTokens, String token, Comparator<String> comparator) {
         for (String inputToken : inputTokens) {
-            boolean matches = comparator == null
-                ? inputToken.equals(token)
-                : comparator.compare(inputToken, token) == 0;
+            boolean matches =
+                    comparator == null
+                            ? inputToken.equals(token)
+                            : comparator.compare(inputToken, token) == 0;
             if (matches) {
                 return true;
             }

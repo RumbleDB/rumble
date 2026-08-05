@@ -7,6 +7,10 @@
 
 package org.rumbledb.compiler;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
+
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.StaticContext;
@@ -16,26 +20,21 @@ import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.LibraryModule;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-
 /** Shared module import semantics for the JSONiq and XQuery frontends. */
 final class ModuleImportLoader {
 
-    private ModuleImportLoader() {
-    }
+    private ModuleImportLoader() {}
 
     public static LibraryModule load(
             String namespace,
             List<String> locationHints,
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         URI baseURI = importingModuleContext.getStaticBaseURI();
         String normalizedNamespace = URILiteralUtils.normalizeAsAnyURI(namespace);
-        List<String> candidates = locationHints.isEmpty() ? List.of(normalizedNamespace) : locationHints;
+        List<String> candidates =
+                locationHints.isEmpty() ? List.of(normalizedNamespace) : locationHints;
         Exception lastFailure = null;
 
         for (String candidate : candidates) {
@@ -47,21 +46,20 @@ final class ModuleImportLoader {
                 continue;
             }
             try {
-                LibraryModule module = VisitorHelpers.parseLibraryModuleFromLocation(
-                    location,
-                    importingModuleContext,
-                    compilationConfiguration,
-                    metadata
-                );
+                LibraryModule module =
+                        VisitorHelpers.parseLibraryModuleFromLocation(
+                                location,
+                                importingModuleContext,
+                                compilationConfiguration,
+                                metadata);
 
                 if (!normalizedNamespace.equals(module.getNamespace())) {
                     throw new ModuleNotFoundException(
                             "A module with namespace "
-                                + normalizedNamespace
-                                + " was not found. The namespace of the module at this location was: "
-                                + module.getNamespace(),
-                            metadata
-                    );
+                                    + normalizedNamespace
+                                    + " was not found. The namespace of the module at this location was: "
+                                    + module.getNamespace(),
+                            metadata);
                 }
 
                 return module;
@@ -70,13 +68,13 @@ final class ModuleImportLoader {
             }
         }
 
-        RumbleException exception = new ModuleNotFoundException(
-                "Module not found: %s, cause: %s".formatted(
-                    normalizedNamespace,
-                    lastFailure != null ? lastFailure.getMessage() : "unknown"
-                ),
-                metadata
-        );
+        RumbleException exception =
+                new ModuleNotFoundException(
+                        "Module not found: %s, cause: %s"
+                                .formatted(
+                                        normalizedNamespace,
+                                        lastFailure != null ? lastFailure.getMessage() : "unknown"),
+                        metadata);
         if (lastFailure != null) {
             exception.initCause(lastFailure);
         }

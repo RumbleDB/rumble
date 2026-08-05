@@ -1,6 +1,10 @@
 package org.rumbledb.runtime.functions.dataframe;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -10,12 +14,8 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class DropColumnsIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public DropColumnsIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
@@ -27,14 +27,10 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal() {
-
-    }
+    public void openLocal() {}
 
     @Override
-    public void closeLocal() {
-
-    }
+    public void closeLocal() {}
 
     @Override
     public boolean hasNextLocal() {
@@ -53,18 +49,19 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         String[] columnsToDrop = new String[columnsToDropItems.size()];
         int i = 0;
         for (Item columnItem : columnsToDropItems) {
             if (!columnItem.isString()) {
-                throw new UnexpectedTypeException("drop-columns invoked with non-string columns", getMetadata());
+                throw new UnexpectedTypeException(
+                        "drop-columns invoked with non-string columns", getMetadata());
             }
             columnsToDrop[i] = columnItem.getStringValue();
             ++i;
         }
-        return new HomogeneousItemDataFrame(dataFrame.getDataFrame().drop(columnsToDrop), dataFrame.getItemType());
+        return new HomogeneousItemDataFrame(
+                dataFrame.getDataFrame().drop(columnsToDrop), dataFrame.getItemType());
     }
 }

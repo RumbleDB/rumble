@@ -20,8 +20,12 @@
 
 package org.rumbledb.expressions.primary;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -29,32 +33,19 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class FunctionCallExpression extends Expression {
 
     private final FunctionIdentifier identifier;
-    @Getter
-    private final List<Expression> arguments; // null for placeholder
-    @Getter
-    private final boolean isPartialApplication;
-    @Setter
-    @Getter
-    private boolean isTailCallOptimization;
+    @Getter private final List<Expression> arguments; // null for placeholder
+    @Getter private final boolean isPartialApplication;
+    @Setter @Getter private boolean isTailCallOptimization;
 
     public FunctionCallExpression(
-            Name functionName,
-            List<Expression> arguments,
-            ExceptionMetadata metadata
-    ) {
+            Name functionName, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         this.arguments = arguments;
         this.isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
-        this.identifier = new FunctionIdentifier(
-                functionName,
-                this.arguments.size()
-        );
+        this.identifier = new FunctionIdentifier(functionName, this.arguments.size());
         this.isTailCallOptimization = false;
     }
 
@@ -68,7 +59,8 @@ public class FunctionCallExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList());
+        List<Node> result =
+                this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList());
         return result;
     }
 
@@ -89,12 +81,13 @@ public class FunctionCallExpression extends Expression {
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
         buffer.append(
-            " | "
-                + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                " | "
+                        + (this.staticSequenceType == null
+                                ? "not set"
+                                : this.staticSequenceType
+                                        + (this.staticSequenceType.isResolved()
+                                                ? " (resolved)"
+                                                : " (unresolved)")));
         buffer.append("\n");
         for (Expression arg : this.arguments) {
             if (arg == null) {

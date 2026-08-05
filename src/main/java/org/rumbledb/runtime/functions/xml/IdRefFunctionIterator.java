@@ -1,18 +1,5 @@
 package org.rumbledb.runtime.functions.xml;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.NodeNotInDocumentException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,9 +7,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.NodeNotInDocumentException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
+
 public class IdRefFunctionIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
@@ -30,9 +30,7 @@ public class IdRefFunctionIterator extends HybridRuntimeIterator {
     private int currentIndex;
 
     public IdRefFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -53,7 +51,8 @@ public class IdRefFunctionIterator extends HybridRuntimeIterator {
 
         Item node = getContextNode(this.currentDynamicContextForLocalExecution);
         if (node == null || !node.isNode()) {
-            throw new UnexpectedTypeException("The argument to fn:idref must be a node", getMetadata());
+            throw new UnexpectedTypeException(
+                    "The argument to fn:idref must be a node", getMetadata());
         }
         Item root = node;
         while (root.parent() != null) {
@@ -62,8 +61,7 @@ public class IdRefFunctionIterator extends HybridRuntimeIterator {
         if (!root.isDocumentNode()) {
             throw new NodeNotInDocumentException(
                     "fn:idref: the node is not part of a tree rooted in a document node",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         List<Item> matches = new ArrayList<>();
@@ -76,11 +74,9 @@ public class IdRefFunctionIterator extends HybridRuntimeIterator {
     }
 
     private static void collectIdrefs(Item node, Set<String> candidateIds, List<Item> matches) {
-        if (
-            (node.isElementNode() || node.isAttributeNode())
+        if ((node.isElementNode() || node.isAttributeNode())
                 && node.isIdrefs()
-                && containsCandidate(node.getStringValue(), candidateIds)
-        ) {
+                && containsCandidate(node.getStringValue(), candidateIds)) {
             matches.add(node);
         }
         if (node.isElementNode()) {
@@ -111,8 +107,8 @@ public class IdRefFunctionIterator extends HybridRuntimeIterator {
             return this.getChild(1).materializeFirstItemOrNull(context);
         }
         return context.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-            .get(0);
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0);
     }
 
     @Override
@@ -123,7 +119,8 @@ public class IdRefFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected Item nextLocal() {
         if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " fn:idref", getMetadata());
+            throw new IteratorFlowException(
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " fn:idref", getMetadata());
         }
         Item result = this.results.get(this.currentIndex++);
         this.hasNext = this.currentIndex < this.results.size();
@@ -131,8 +128,7 @@ public class IdRefFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void closeLocal() {
-    }
+    protected void closeLocal() {}
 
     @Override
     protected boolean implementsDataFrames() {

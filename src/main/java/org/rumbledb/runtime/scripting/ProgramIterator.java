@@ -1,6 +1,11 @@
 package org.rumbledb.runtime.scripting;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -10,13 +15,8 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
-
 public class ProgramIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator statementsAndExprIterator;
     private PendingUpdateList pendingUpdateList;
     private int nextExitStatementResult;
@@ -24,7 +24,8 @@ public class ProgramIterator extends HybridRuntimeIterator {
 
     private boolean encounteredExitStatement;
 
-    public ProgramIterator(RuntimeIterator statementsAndExprIterator, RuntimeStaticContext staticContext) {
+    public ProgramIterator(
+            RuntimeIterator statementsAndExprIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(statementsAndExprIterator), staticContext);
         this.encounteredExitStatement = false;
         this.nextExitStatementResult = 0;

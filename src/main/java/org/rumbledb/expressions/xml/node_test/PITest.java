@@ -1,29 +1,26 @@
 package org.rumbledb.expressions.xml.node_test;
 
-import lombok.NoArgsConstructor;
-import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.Serial;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 /**
- * XQuery 3.1 Section 2.5.5 - SequenceType Matching
- * PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
- * A PITest with no argument matches any processing-instruction node.
- * A PITest with an NCName or StringLiteral argument matches any processing-instruction node
- * whose PITarget equals fn:normalize-space of the given name.
+ * XQuery 3.1 Section 2.5.5 - SequenceType Matching PITest ::= "processing-instruction" "(" (NCName
+ * | StringLiteral)? ")" A PITest with no argument matches any processing-instruction node. A PITest
+ * with an NCName or StringLiteral argument matches any processing-instruction node whose PITarget
+ * equals fn:normalize-space of the given name.
  */
 @Getter
 @NoArgsConstructor(force = true)
 public class PITest implements NodeTest {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final String targetName;
 
-    /**
-     * Creates a PITest that matches any processing-instruction node.
-     */
+    /** Creates a PITest that matches any processing-instruction node. */
     /**
      * Creates a PITest that matches processing-instruction nodes with the given target name.
      *
@@ -46,6 +43,4 @@ public class PITest implements NodeTest {
         sb.append(")");
         return sb.toString();
     }
-
-
 }

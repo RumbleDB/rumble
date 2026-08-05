@@ -6,6 +6,7 @@ import java.util.Collections;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -21,20 +22,19 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
-
 public class AppendExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator toAppendIterator;
 
     public AppendExpressionIterator(
             RuntimeIterator arrayIterator,
             RuntimeIterator toAppendIterator,
-            RuntimeStaticContext staticContext
-    ) {
-        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext.toBuilder().isUpdating(true).build());
+            RuntimeStaticContext staticContext) {
+        super(
+                Arrays.asList(arrayIterator, toAppendIterator),
+                staticContext.toBuilder().isUpdating(true).build());
 
         this.arrayIterator = arrayIterator;
         this.toAppendIterator = toAppendIterator;
@@ -46,15 +46,10 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
+    protected void openLocal() {}
 
     @Override
-    protected void closeLocal() {
-
-    }
-
+    protected void closeLocal() {}
 
     @Override
     protected boolean hasNextLocal() {
@@ -74,7 +69,9 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
 
         try {
             target = this.arrayIterator.materializeExactlyOneItem(context);
-            content = SerializationUtils.clone(this.toAppendIterator.materializeExactlyOneItem(context));
+            content =
+                    SerializationUtils.clone(
+                            this.toAppendIterator.materializeExactlyOneItem(context));
         } catch (NoItemException | MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }
@@ -84,25 +81,22 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
         if (target.isArray()) {
             Item locator = ItemFactory.getInstance().createIntItem(target.getSize() + 1);
             if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+                throw new ModifiesImmutableValueException(
+                        "Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
-                        "Attempt to modify currently immutable target",
-                        this.getMetadata()
-                );
+                        "Attempt to modify currently immutable target", this.getMetadata());
             }
-            up = factory.createInsertIntoArrayPrimitive(
-                target,
-                locator,
-                Collections.singletonList(content),
-                this.getMetadata()
-            );
+            up =
+                    factory.createInsertIntoArrayPrimitive(
+                            target,
+                            locator,
+                            Collections.singletonList(content),
+                            this.getMetadata());
         } else {
             throw new InvalidUpdateTargetException(
-                    "Append expression target must be a single array",
-                    this.getMetadata()
-            );
+                    "Append expression target must be a single array", this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

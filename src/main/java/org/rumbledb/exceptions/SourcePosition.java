@@ -25,6 +25,5 @@ import java.io.Serializable;
 
 public record SourcePosition(int line, int column) implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 }

@@ -1,20 +1,20 @@
 package org.rumbledb.items.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
 
 public class ProcessingInstructionItem extends AbstractNodeItem {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private String target;
     private String content;
     private Item parent;
@@ -27,7 +27,7 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
 
     /**
      * Constructor for a processing instruction item.
-     * 
+     *
      * @param target The processing instruction target
      * @param content The processing instruction content
      */
@@ -110,7 +110,8 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — node-kind.
      *
-     * For a Processing Instruction Node, dm:node-kind returns the string "processing-instruction".
+     * <p>For a Processing Instruction Node, dm:node-kind returns the string
+     * "processing-instruction".
      */
     @Override
     public String nodeKind() {
@@ -120,7 +121,7 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — attributes.
      *
-     * For a Processing Instruction Node, dm:attributes returns the empty sequence.
+     * <p>For a Processing Instruction Node, dm:attributes returns the empty sequence.
      */
     @Override
     public List<Item> attributes() {
@@ -130,7 +131,7 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — children.
      *
-     * For a Processing Instruction Node, dm:children returns the empty sequence.
+     * <p>For a Processing Instruction Node, dm:children returns the empty sequence.
      */
     @Override
     public List<Item> children() {
@@ -140,8 +141,8 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — base-uri.
      *
-     * For a Processing Instruction Node, dm:base-uri returns the base URI of the parent node,
-     * if it has one; otherwise it returns the empty sequence.
+     * <p>For a Processing Instruction Node, dm:base-uri returns the base URI of the parent node, if
+     * it has one; otherwise it returns the empty sequence.
      */
     @Override
     public List<Item> baseUri() {
@@ -154,9 +155,9 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — document-uri.
      *
-     * For a Processing Instruction Node, dm:document-uri returns the document-uri of the
-     * document node that is the root of the tree containing the processing instruction node,
-     * if it has one; otherwise it returns the empty sequence.
+     * <p>For a Processing Instruction Node, dm:document-uri returns the document-uri of the
+     * document node that is the root of the tree containing the processing instruction node, if it
+     * has one; otherwise it returns the empty sequence.
      */
     @Override
     public List<Item> documentUri() {
@@ -169,7 +170,7 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — is-id.
      *
-     * For a Processing Instruction Node, dm:is-id returns false.
+     * <p>For a Processing Instruction Node, dm:is-id returns false.
      */
     @Override
     public boolean isId() {
@@ -179,7 +180,7 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — is-idrefs.
      *
-     * For a Processing Instruction Node, dm:is-idrefs returns false.
+     * <p>For a Processing Instruction Node, dm:is-idrefs returns false.
      */
     @Override
     public boolean isIdrefs() {
@@ -189,7 +190,7 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — nilled.
      *
-     * For a Processing Instruction Node, dm:nilled returns the empty sequence.
+     * <p>For a Processing Instruction Node, dm:nilled returns the empty sequence.
      */
     @Override
     public List<Item> nilled() {
@@ -199,7 +200,7 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — type-name.
      *
-     * For a Processing Instruction Node, dm:type-name returns the empty sequence.
+     * <p>For a Processing Instruction Node, dm:type-name returns the empty sequence.
      */
     @Override
     public List<Item> typeName() {

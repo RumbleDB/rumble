@@ -34,16 +34,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
 
     public StringConcatIterator(
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
@@ -53,37 +51,31 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item left = null;
         try {
-            left = this.leftIterator.materializeAtMostOneItemOrDefault(
-                dynamicContext,
-                ItemFactory.getInstance().createStringItem("")
-            );
+            left =
+                    this.leftIterator.materializeAtMostOneItemOrDefault(
+                            dynamicContext, ItemFactory.getInstance().createStringItem(""));
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "String concatenation expression requires at most one item in its left input sequence.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         Item right = null;
         try {
-            right = this.rightIterator.materializeAtMostOneItemOrDefault(
-                dynamicContext,
-                ItemFactory.getInstance().createStringItem("")
-            );
+            right =
+                    this.rightIterator.materializeAtMostOneItemOrDefault(
+                            dynamicContext, ItemFactory.getInstance().createStringItem(""));
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "String concatenation expression requires at most one item in its right input sequence.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (!(left.isAtomic()) || !(right.isAtomic())) {
             throw new UnexpectedTypeException(
                     "String concat expression has arguments that can't be converted to a string "
-                        +
-                        left.serialize()
-                        + ", "
-                        + right.serialize(),
-                    getMetadata()
-            );
+                            + left.serialize()
+                            + ", "
+                            + right.serialize(),
+                    getMetadata());
         }
 
         String leftStringValue = left.getStringValue();

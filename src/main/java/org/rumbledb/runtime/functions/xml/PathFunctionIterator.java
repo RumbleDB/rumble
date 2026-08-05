@@ -1,5 +1,11 @@
 package org.rumbledb.runtime.functions.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -10,22 +16,13 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Predicate;
-
 public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private static final String ROOT_PREFIX = "Q{http://www.w3.org/2005/xpath-functions}root()";
 
     public PathFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -36,7 +33,8 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
         if (!node.isNode()) {
-            throw new UnexpectedTypeException("The argument to fn:path must be a node", getMetadata());
+            throw new UnexpectedTypeException(
+                    "The argument to fn:path must be a node", getMetadata());
         }
         if (node.isDocumentNode()) {
             return ItemFactory.getInstance().createStringItem("/");
@@ -65,12 +63,20 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         Item parent = node.parent();
         if (node.isElementNode()) {
             Name name = node.nodeName();
-            int position = positionAmong(
-                node,
-                parent,
-                candidate -> candidate.isElementNode() && sameName(candidate.nodeName(), name)
-            );
-            return "/Q{" + namespaceOrEmpty(name) + "}" + name.getLocalName() + "[" + position + "]";
+            int position =
+                    positionAmong(
+                            node,
+                            parent,
+                            candidate ->
+                                    candidate.isElementNode()
+                                            && sameName(candidate.nodeName(), name));
+            return "/Q{"
+                    + namespaceOrEmpty(name)
+                    + "}"
+                    + name.getLocalName()
+                    + "["
+                    + position
+                    + "]";
         }
         if (node.isAttributeNode()) {
             Name name = node.nodeName();
@@ -89,12 +95,13 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (node.isProcessingInstructionNode()) {
             String target = node.nodeName().getLocalName();
-            int position = positionAmong(
-                node,
-                parent,
-                candidate -> candidate.isProcessingInstructionNode()
-                    && candidate.nodeName().getLocalName().equals(target)
-            );
+            int position =
+                    positionAmong(
+                            node,
+                            parent,
+                            candidate ->
+                                    candidate.isProcessingInstructionNode()
+                                            && candidate.nodeName().getLocalName().equals(target));
             return "/processing-instruction(" + target + ")[" + position + "]";
         }
         if (node.isNamespaceNode()) {
@@ -131,7 +138,8 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static boolean sameName(Name a, Name b) {
-        return namespaceOrEmpty(a).equals(namespaceOrEmpty(b)) && a.getLocalName().equals(b.getLocalName());
+        return namespaceOrEmpty(a).equals(namespaceOrEmpty(b))
+                && a.getLocalName().equals(b.getLocalName());
     }
 
     private static String namespaceOrEmpty(Name name) {
@@ -143,7 +151,7 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return this.getChild(0).materializeFirstItemOrNull(context);
         }
         return context.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-            .get(0);
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0);
     }
 }

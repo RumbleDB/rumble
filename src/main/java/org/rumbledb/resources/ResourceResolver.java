@@ -7,12 +7,12 @@
 
 package org.rumbledb.resources;
 
+import java.net.URI;
+import java.util.Map;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import java.net.URI;
-import java.util.Map;
 
 /** Resolves logical resource URIs to source content used during query compilation. */
 public final class ResourceResolver {
@@ -28,14 +28,9 @@ public final class ResourceResolver {
     }
 
     public ResolvedResource resolve(
-            URI requestedURI,
-            RumbleConfiguration configuration,
-            ExceptionMetadata metadata
-    ) {
+            URI requestedURI, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         URI physicalURI = this.mappings.getOrDefault(requestedURI, requestedURI);
         return new ResolvedResource(
-                physicalURI,
-                FileSystemUtil.getDataInputStream(physicalURI, metadata)
-        );
+                physicalURI, FileSystemUtil.getDataInputStream(physicalURI, metadata));
     }
 }

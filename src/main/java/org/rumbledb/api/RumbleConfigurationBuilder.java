@@ -1,15 +1,15 @@
 package org.rumbledb.api;
 
 public final class RumbleConfigurationBuilder {
-    private final org.rumbledb.config.RumbleConfiguration.RumbleConfigurationBuilder internalBuilder;
+    private final org.rumbledb.config.RumbleConfiguration.RumbleConfigurationBuilder
+            internalBuilder;
 
     public RumbleConfigurationBuilder() {
         this.internalBuilder = org.rumbledb.config.RumbleConfiguration.builder();
     }
 
     protected RumbleConfigurationBuilder(
-            org.rumbledb.config.RumbleConfiguration.RumbleConfigurationBuilder internalBuilder
-    ) {
+            org.rumbledb.config.RumbleConfiguration.RumbleConfigurationBuilder internalBuilder) {
         this.internalBuilder = internalBuilder;
     }
 

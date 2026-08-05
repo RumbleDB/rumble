@@ -1,12 +1,12 @@
 package org.rumbledb.expressions.xml;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Collections;
-import java.util.List;
 
 public class PathRootExpression extends Expression {
 

@@ -1,5 +1,8 @@
 package org.rumbledb.runtime.functions.typing;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -12,17 +15,11 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
 public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public FunctionNameFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -33,11 +30,13 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
          * TODO remove...
          * Currently used for debugging, this guard fails when given an if statement
          */
-        if (!functionIterator.getStaticType().isSubtypeOf(SequenceType.createSequenceType("function"))) {
+        if (!functionIterator
+                .getStaticType()
+                .isSubtypeOf(SequenceType.createSequenceType("function"))) {
             throw new UnexpectedTypeException(
-                    "fn:function-name expects a function item, found " + functionIterator.getStaticType(),
-                    getMetadata()
-            );
+                    "fn:function-name expects a function item, found "
+                            + functionIterator.getStaticType(),
+                    getMetadata());
         }
         System.err.println("Item is of type function");
         Item functionItem = functionIterator.materializeFirstItemOrNull(context);

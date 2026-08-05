@@ -1,5 +1,11 @@
 package org.rumbledb.runtime.xml.axis;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -7,19 +13,11 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-
 public abstract class AxisIterator extends LocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
-    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
-        Item::getXmlDocumentPosition,
-        Comparator.nullsLast(Comparator.naturalOrder())
-    );
+    @Serial private static final long serialVersionUID = 1L;
+    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR =
+            Comparator.comparing(
+                    Item::getXmlDocumentPosition, Comparator.nullsLast(Comparator.naturalOrder()));
     protected List<Item> results;
     protected int resultCounter = 0;
     protected Item nextResult;
@@ -33,7 +31,6 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
         super.open(context);
         setNextResult();
     }
-
 
     protected abstract void setNextResult();
 
@@ -85,9 +82,7 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
             return nextResult;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in axis",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in axis", getMetadata());
     }
 
     @Override

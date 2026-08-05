@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
@@ -25,7 +26,9 @@ final class DirectConstructorUtils {
         private final List<Expression> expressions = new ArrayList<>();
         private StringBuilder text;
 
-        // Used to track the first and last parse-tree nodes of a literal run so that we can assign a source range to
+        // Used to track the first and last parse-tree nodes of a literal run so that we can assign
+        // a
+        // source range to
         // the merged content
         private ParseTree firstTextTree;
         private ParseTree lastTextTree;
@@ -48,7 +51,10 @@ final class DirectConstructorUtils {
             this.lastTextTree = source;
         }
 
-        /** Adds an expression, merging literal attribute content and preserving non-literal boundaries. */
+        /**
+         * Adds an expression, merging literal attribute content and preserving non-literal
+         * boundaries.
+         */
         void append(Expression expression, ParseTree source) {
             if (expression instanceof AttributeNodeContentExpression textExpression) {
                 appendText(textExpression.getContent(), source);
@@ -70,11 +76,9 @@ final class DirectConstructorUtils {
                 return;
             }
             this.expressions.add(
-                new AttributeNodeContentExpression(
-                        this.text.toString(),
-                        this.metadataFactory.apply(this.firstTextTree, this.lastTextTree)
-                )
-            );
+                    new AttributeNodeContentExpression(
+                            this.text.toString(),
+                            this.metadataFactory.apply(this.firstTextTree, this.lastTextTree)));
             this.text = null;
             this.firstTextTree = null;
             this.lastTextTree = null;
@@ -111,9 +115,10 @@ final class DirectConstructorUtils {
                 }
                 ensureText(textExpression.getMetadata());
                 this.text.append(value);
-                this.boundaryWhitespaceOnly = this.boundaryWhitespaceOnly
-                    && textExpression.isBoundaryWhitespace()
-                    && isWhitespaceOnly(value);
+                this.boundaryWhitespaceOnly =
+                        this.boundaryWhitespaceOnly
+                                && textExpression.isBoundaryWhitespace()
+                                && isWhitespaceOnly(value);
                 return;
             }
             flushText();
@@ -139,11 +144,10 @@ final class DirectConstructorUtils {
             if (this.text == null) {
                 return;
             }
-            if (
-                this.text.length() > 0
-                    && (this.preserveBoundarySpace || !this.boundaryWhitespaceOnly)
-            ) {
-                this.expressions.add(new TextNodeExpression(this.text.toString(), this.firstTextMetadata));
+            if (this.text.length() > 0
+                    && (this.preserveBoundarySpace || !this.boundaryWhitespaceOnly)) {
+                this.expressions.add(
+                        new TextNodeExpression(this.text.toString(), this.firstTextMetadata));
             }
             this.text = null;
             this.firstTextMetadata = null;
@@ -154,10 +158,10 @@ final class DirectConstructorUtils {
     /**
      * Converts a quoted direct attribute value into its ordered content expressions.
      *
-     * <p>
-     * This method restores whitespace and comments from the hidden token channel, expands XML references and
-     * doubled delimiters, delegates enclosed expressions and literal fragments to the language-specific visitor,
-     * and merges adjacent literal fragments while preserving their combined source range.
+     * <p>This method restores whitespace and comments from the hidden token channel, expands XML
+     * references and doubled delimiters, delegates enclosed expressions and literal fragments to
+     * the language-specific visitor, and merges adjacent literal fragments while preserving their
+     * combined source range.
      *
      * @param tokenStream token stream used to recover hidden attribute content
      * @param ctx complete quoted attribute-value context
@@ -173,8 +177,7 @@ final class DirectConstructorUtils {
             boolean allowEnclosedExpressions,
             Function<ParseTree, ExceptionMetadata> metadataFactory,
             BiFunction<ParseTree, ParseTree, ExceptionMetadata> rangeMetadataFactory,
-            BiFunction<ParserRuleContext, Boolean, List<Expression>> contentProcessor
-    ) {
+            BiFunction<ParserRuleContext, Boolean, List<Expression>> contentProcessor) {
         AttributeValueBuilder result = new AttributeValueBuilder(rangeMetadataFactory);
         Token previousToken = ctx.getStart();
         String delimiter = previousToken.getText();
@@ -188,24 +191,18 @@ final class DirectConstructorUtils {
             String childText = child.getText();
             if (childText.startsWith("&") && childText.endsWith(";")) {
                 result.append(
-                    new AttributeNodeContentExpression(
-                            StringEscapeUtils.unescapeXml(childText),
-                            metadataFactory.apply(child)
-                    ),
-                    child
-                );
+                        new AttributeNodeContentExpression(
+                                StringEscapeUtils.unescapeXml(childText),
+                                metadataFactory.apply(child)),
+                        child);
             } else if (childText.equals(escapeSequence)) {
                 result.append(
-                    new AttributeNodeContentExpression(delimiter, metadataFactory.apply(child)),
-                    child
-                );
+                        new AttributeNodeContentExpression(delimiter, metadataFactory.apply(child)),
+                        child);
             } else {
-                for (
-                    Expression expression : contentProcessor.apply(
-                        (ParserRuleContext) child,
-                        allowEnclosedExpressions
-                    )
-                ) {
+                for (Expression expression :
+                        contentProcessor.apply(
+                                (ParserRuleContext) child, allowEnclosedExpressions)) {
                     result.append(expression, child);
                 }
             }
@@ -236,9 +233,9 @@ final class DirectConstructorUtils {
     /**
      * Processes direct element children and normalizes adjacent text nodes into a single node.
      *
-     * <p>
-     * Hidden-channel content between parsed children is restored, empty text nodes are omitted, and non-text
-     * expressions delimit text runs. The first text node in each run supplies the resulting metadata.
+     * <p>Hidden-channel content between parsed children is restored, empty text nodes are omitted,
+     * and non-text expressions delimit text runs. The first text node in each run supplies the
+     * resulting metadata.
      *
      * @param tokenStream token stream used to recover hidden element content
      * @param firstContentToken token immediately before the first child
@@ -251,25 +248,22 @@ final class DirectConstructorUtils {
             Token firstContentToken,
             List<T> children,
             boolean preserveBoundarySpace,
-            Function<T, Expression> contentProcessor
-    ) {
+            Function<T, Expression> contentProcessor) {
         ElementContentBuilder result = new ElementContentBuilder(preserveBoundarySpace);
         Token previousToken = firstContentToken;
 
         for (T child : children) {
             Expression expression = contentProcessor.apply(child);
             result.appendHiddenText(
-                getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-                expression.getMetadata()
-            );
+                    getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+                    expression.getMetadata());
             result.append(expression);
             previousToken = child.getStop();
         }
 
         result.appendHiddenText(
-            getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-            ExceptionMetadata.EMPTY_METADATA
-        );
+                getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+                ExceptionMetadata.EMPTY_METADATA);
         return result.finish();
     }
 
@@ -308,15 +302,11 @@ final class DirectConstructorUtils {
      * @param metadataFactory creates error metadata for the supplied node
      */
     static void validateLiteral(
-            String source,
-            ParseTree tree,
-            Function<ParseTree, ExceptionMetadata> metadataFactory
-    ) {
+            String source, ParseTree tree, Function<ParseTree, ExceptionMetadata> metadataFactory) {
         if (source.indexOf('<') >= 0) {
             throw new ParsingException(
                     "A direct attribute value must not contain a literal '<' character.",
-                    metadataFactory.apply(tree)
-            );
+                    metadataFactory.apply(tree));
         }
     }
 
@@ -326,8 +316,7 @@ final class DirectConstructorUtils {
             AttributeValueBuilder result,
             Token previousToken,
             ParseTree tree,
-            Function<ParseTree, ExceptionMetadata> metadataFactory
-    ) {
+            Function<ParseTree, ExceptionMetadata> metadataFactory) {
         String hiddenText = getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
         validateLiteral(hiddenText, tree, metadataFactory);
         result.appendText(hiddenText, tree);
@@ -341,6 +330,7 @@ final class DirectConstructorUtils {
         if (tree instanceof TerminalNode terminalNode) {
             return terminalNode.getSymbol();
         }
-        throw new IllegalArgumentException("Cannot get stop token from parse tree: " + tree.getClass().getName());
+        throw new IllegalArgumentException(
+                "Cannot get stop token from parse tree: " + tree.getClass().getName());
     }
 }

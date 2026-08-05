@@ -4,36 +4,34 @@ import java.math.BigInteger;
 import java.util.*;
 
 /**
- * Locale-independent digit formatting: grouping and alphabetic. Locale-sensitive words and Roman numerals live in
- * {@link NumberWords}.
+ * Locale-independent digit formatting: grouping and alphabetic. Locale-sensitive words and Roman
+ * numerals live in {@link NumberWords}.
  */
 public final class NumericFormattingSupport {
 
-    private NumericFormattingSupport() {
-    }
+    private NumericFormattingSupport() {}
 
     public static String toDecimalString(BigInteger value) {
         return value.bitLength() < 63 ? Long.toString(value.longValueExact()) : value.toString();
     }
 
     public static String applyGrouping(String digits, NumericPicture picture) {
-        Integer repeatingInterval = picture.isRepeatingGrouping()
-            ? picture.getRepeatingGroupingInterval()
-            : null;
+        Integer repeatingInterval =
+                picture.isRepeatingGrouping() ? picture.getRepeatingGroupingInterval() : null;
         return applyGrouping(digits, picture.getGroupingPositions(), repeatingInterval, true);
     }
 
     /**
-     * Inserts grouping separators into a run of digits. With {@code groupFromRight} the positions are counted from the
-     * right (integer part); otherwise from the left (fractional part). A non-null {@code repeatingInterval} groups at a
-     * fixed periodic interval instead of at the explicit positions.
+     * Inserts grouping separators into a run of digits. With {@code groupFromRight} the positions
+     * are counted from the right (integer part); otherwise from the left (fractional part). A
+     * non-null {@code repeatingInterval} groups at a fixed periodic interval instead of at the
+     * explicit positions.
      */
     public static String applyGrouping(
             String digits,
             List<GroupingPos> groupingPositions,
             Integer repeatingInterval,
-            boolean groupFromRight
-    ) {
+            boolean groupFromRight) {
         if (groupingPositions == null || groupingPositions.isEmpty()) {
             return digits;
         }
@@ -42,7 +40,8 @@ public final class NumericFormattingSupport {
 
         if (repeatingInterval != null) {
             // Repeating grouping uses a single separator across all positions.
-            String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP()));
+            String separator =
+                    new String(Character.toChars(groupingPositions.get(0).separatorCP()));
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < working.length(); i++) {
                 if (i > 0 && i % repeatingInterval == 0) {
@@ -69,8 +68,8 @@ public final class NumericFormattingSupport {
     }
 
     /**
-     * Maps the ASCII digits of {@code s} into the Unicode digit family whose zero is {@code zeroDigit}, leaving every
-     * other character unchanged.
+     * Maps the ASCII digits of {@code s} into the Unicode digit family whose zero is {@code
+     * zeroDigit}, leaving every other character unchanged.
      */
     public static String mapAsciiDigits(String s, int zeroDigit) {
         if (zeroDigit == '0') {

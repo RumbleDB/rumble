@@ -1,5 +1,8 @@
 package org.rumbledb.runtime.scripting.declaration;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -9,19 +12,12 @@ import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final Name variableName;
 
     public VariableDeclStatementIterator(
-            Name variableName,
-            List<RuntimeIterator> children,
-            RuntimeStaticContext staticContext
-    ) {
+            Name variableName, List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
         this.variableName = variableName;
     }
@@ -34,11 +30,13 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
         }
         if (!this.getChildren().isEmpty()) {
             RuntimeIterator exprIterator = this.getChild(0);
-            exprIterator.bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext);
+            exprIterator.bindToVariableInDynamicContext(
+                    dynamicContext, this.variableName, dynamicContext);
         } else {
             // Casting needed to distinguish between local and RDD variables.
-            dynamicContext.getVariableValues()
-                .addVariableValue(this.variableName, (List<Item>) null);
+            dynamicContext
+                    .getVariableValues()
+                    .addVariableValue(this.variableName, (List<Item>) null);
         }
         return null;
     }

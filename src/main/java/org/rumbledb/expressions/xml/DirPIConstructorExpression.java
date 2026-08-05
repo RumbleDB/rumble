@@ -20,27 +20,28 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Expression representing a direct processing instruction constructor.
  *
- * "A direct processing instruction constructor creates a processing instruction node
- * whose target property is PITarget and whose content property is DirPIContents. The base-uri property of the node is
- * empty. The parent property of the node is empty."
- * "The PITarget of a processing instruction must not consist of the characters "XML" in any combination
- * of upper and lower case. The DirPIContents of a processing instruction must not contain the string "?>"."
+ * <p>"A direct processing instruction constructor creates a processing instruction node whose
+ * target property is PITarget and whose content property is DirPIContents. The base-uri property of
+ * the node is empty. The parent property of the node is empty." "The PITarget of a processing
+ * instruction must not consist of the characters "XML" in any combination of upper and lower case.
+ * The DirPIContents of a processing instruction must not contain the string "?>"."
  *
- * @see <a href="https://www.w3.org/TR/xquery-31/#doc-xquery31-DirPIConstructor">XQuery 3.1, 3.9.1.2: Direct
- *      Processing Instruction Constructors</a>
+ * @see <a href="https://www.w3.org/TR/xquery-31/#doc-xquery31-DirPIConstructor">XQuery 3.1,
+ *     3.9.1.2: Direct Processing Instruction Constructors</a>
  */
 @Getter
 public class DirPIConstructorExpression extends Expression {
@@ -48,10 +49,7 @@ public class DirPIConstructorExpression extends Expression {
     private final Expression contentExpression;
 
     public DirPIConstructorExpression(
-            String target,
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+            String target, Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.target = target;
         this.contentExpression = contentExpression;
@@ -87,4 +85,3 @@ public class DirPIConstructorExpression extends Expression {
         sb.append("?>\n");
     }
 }
-

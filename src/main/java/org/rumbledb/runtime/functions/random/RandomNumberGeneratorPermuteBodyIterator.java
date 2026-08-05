@@ -1,6 +1,12 @@
 package org.rumbledb.runtime.functions.random;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -10,18 +16,12 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
 /**
- * Body of the "permute" entry of a random-number-generator map: a seed-deterministic Fisher-Yates shuffle
- * of the bound "arg" parameter.
+ * Body of the "permute" entry of a random-number-generator map: a seed-deterministic Fisher-Yates
+ * shuffle of the bound "arg" parameter.
  */
 public class RandomNumberGeneratorPermuteBodyIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final long seed;
     private List<Item> results;
@@ -34,10 +34,13 @@ public class RandomNumberGeneratorPermuteBodyIterator extends HybridRuntimeItera
 
     @Override
     protected void openLocal() {
-        List<Item> items = new ArrayList<>(
-                this.currentDynamicContextForLocalExecution.getVariableValues()
-                    .getLocalVariableValue(RandomNumberGeneratorMapBuilder.PERMUTE_PARAM_NAME, getMetadata())
-        );
+        List<Item> items =
+                new ArrayList<>(
+                        this.currentDynamicContextForLocalExecution
+                                .getVariableValues()
+                                .getLocalVariableValue(
+                                        RandomNumberGeneratorMapBuilder.PERMUTE_PARAM_NAME,
+                                        getMetadata()));
         Random random = new Random(this.seed);
         for (int i = items.size() - 1; i > 0; --i) {
             int j = random.nextInt(i + 1);
@@ -60,8 +63,7 @@ public class RandomNumberGeneratorPermuteBodyIterator extends HybridRuntimeItera
         if (!this.hasNext) {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " random-number-generator permute",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         Item result = this.results.get(this.currentIndex++);
         this.hasNext = this.currentIndex < this.results.size();
@@ -69,8 +71,7 @@ public class RandomNumberGeneratorPermuteBodyIterator extends HybridRuntimeItera
     }
 
     @Override
-    protected void closeLocal() {
-    }
+    protected void closeLocal() {}
 
     @Override
     protected boolean implementsDataFrames() {
@@ -80,14 +81,12 @@ public class RandomNumberGeneratorPermuteBodyIterator extends HybridRuntimeItera
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new OurBadException(
-                "random-number-generator permute is currently supported only in local execution mode."
-        );
+                "random-number-generator permute is currently supported only in local execution mode.");
     }
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "random-number-generator permute is currently supported only in local execution mode."
-        );
+                "random-number-generator permute is currently supported only in local execution mode.");
     }
 }

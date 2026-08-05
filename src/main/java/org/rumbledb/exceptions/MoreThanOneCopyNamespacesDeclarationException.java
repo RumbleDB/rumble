@@ -24,7 +24,8 @@ public class MoreThanOneCopyNamespacesDeclarationException extends RumbleExcepti
 
     private static final long serialVersionUID = 1L;
 
-    public MoreThanOneCopyNamespacesDeclarationException(String message, ExceptionMetadata metadata) {
+    public MoreThanOneCopyNamespacesDeclarationException(
+            String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.MoreThanOneCopyNamespacesDeclarationErrorCode, metadata);
     }
 }

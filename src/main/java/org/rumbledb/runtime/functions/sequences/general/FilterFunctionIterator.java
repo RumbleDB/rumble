@@ -1,6 +1,11 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -16,13 +21,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class FilterFunctionIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator sequenceIterator;
     private final RuntimeIterator predicateIterator;
@@ -35,9 +35,7 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
     private RuntimeIterator currentCallbackIterator;
 
     public FilterFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("fn:filter must have exactly two arguments.");
@@ -59,38 +57,38 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
         if (predicateItems.size() != 1) {
             throw new UnexpectedTypeException(
                     "The second argument of fn:filter must be a single function item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         this.predicate = predicateItems.get(0);
         if (!acceptsSingleArgument(this.predicate)) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:filter must accept exactly one argument [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
-        this.argumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        this.argumentContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
         this.itemIndex = 0;
         this.mutableArgumentIterator = new MutableArgumentIterator(this.argumentContext);
         List<RuntimeIterator> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(this.mutableArgumentIterator);
-        RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
-        this.currentCallbackIterator = new DynamicFunctionCallIterator(
-                new ConstantRuntimeIterator(this.predicate, functionItemContext),
-                callbackArguments,
-                functionItemContext
-        );
+        RuntimeStaticContext functionItemContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
+        this.currentCallbackIterator =
+                new DynamicFunctionCallIterator(
+                        new ConstantRuntimeIterator(this.predicate, functionItemContext),
+                        callbackArguments,
+                        functionItemContext);
     }
 
     private void setNextResult(DynamicContext context) {
@@ -168,8 +166,7 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
     }
 
     private static class MutableArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
-        @Serial
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         private Item currentItem;
 
         MutableArgumentIterator(RuntimeStaticContext staticContext) {

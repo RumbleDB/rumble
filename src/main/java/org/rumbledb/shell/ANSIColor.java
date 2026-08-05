@@ -86,4 +86,3 @@ public enum ANSIColor {
         return this.code;
     }
 }
-

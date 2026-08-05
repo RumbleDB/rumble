@@ -20,7 +20,6 @@
 
 package org.rumbledb.items.xml;
 
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
@@ -29,15 +28,14 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 /**
- * The `XMLDocumentPosition` class represents the position of an item within an XML document.
- * It provides information about the document's path and the item's position within the document.
- * This class is used to ensure the uniqueness and ordering of items across XML documents.
+ * The `XMLDocumentPosition` class represents the position of an item within an XML document. It
+ * provides information about the document's path and the item's position within the document. This
+ * class is used to ensure the uniqueness and ordering of items across XML documents.
  */
 @Getter
 @EqualsAndHashCode
 public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private String path;
     private int docPosition;
 
@@ -58,5 +56,4 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
         }
         return pathResult;
     }
-
 }

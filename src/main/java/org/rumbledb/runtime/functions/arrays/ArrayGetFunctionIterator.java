@@ -1,6 +1,12 @@
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -14,24 +20,16 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator positionIterator;
     private Queue<Item> pendingResults;
 
     public ArrayGetFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("array:get must have exactly two arguments.");
@@ -59,16 +57,12 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
             return;
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:get expects exactly one array argument.",
-                    getMetadata()
-            );
+                    "array:get expects exactly one array argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:get must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:get must be an array.", getMetadata());
         }
 
         Item positionItem;
@@ -76,21 +70,15 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
             positionItem = this.positionIterator.materializeExactlyOneItem(context);
         } catch (NoItemException e) {
             throw new UnexpectedTypeException(
-                    "array:get expects exactly one position argument.",
-                    getMetadata()
-            );
+                    "array:get expects exactly one position argument.", getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:get expects exactly one position argument.",
-                    getMetadata()
-            );
+                    "array:get expects exactly one position argument.", getMetadata());
         }
 
         if (!positionItem.isNumeric()) {
             throw new UnexpectedTypeException(
-                    "Type error; position argument to array:get must be numeric.",
-                    getMetadata()
-            );
+                    "Type error; position argument to array:get must be numeric.", getMetadata());
         }
 
         java.math.BigInteger positionInteger;
@@ -100,17 +88,15 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
             positionInteger = java.math.BigInteger.valueOf(positionItem.castToIntValue());
         }
 
-        if (
-            positionInteger.compareTo(java.math.BigInteger.ONE) < 0
-                || positionInteger.compareTo(java.math.BigInteger.valueOf(arrayItem.getSize())) > 0
-        ) {
+        if (positionInteger.compareTo(java.math.BigInteger.ONE) < 0
+                || positionInteger.compareTo(java.math.BigInteger.valueOf(arrayItem.getSize()))
+                        > 0) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: "
-                        + positionInteger
-                        + ", of array with length: "
-                        + arrayItem.getSize(),
-                    getMetadata()
-            );
+                            + positionInteger
+                            + ", of array with length: "
+                            + arrayItem.getSize(),
+                    getMetadata());
         }
 
         int lookup = positionInteger.intValue();
@@ -160,9 +146,7 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:get is currently supported only in local execution mode."
-        );
+        throw new OurBadException("array:get is currently supported only in local execution mode.");
     }
 
     @Override
@@ -172,9 +156,6 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:get is currently supported only in local execution mode."
-        );
+        throw new OurBadException("array:get is currently supported only in local execution mode.");
     }
 }
-

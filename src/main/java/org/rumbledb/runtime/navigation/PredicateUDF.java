@@ -20,8 +20,13 @@
 
 package org.rumbledb.runtime.navigation;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -30,13 +35,8 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class PredicateUDF implements UDF1<Row, Boolean> {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator expression;
     private final DynamicContext dynamicContext;
@@ -48,8 +48,7 @@ public class PredicateUDF implements UDF1<Row, Boolean> {
             RuntimeIterator expression,
             DynamicContext context,
             ExceptionMetadata metadata,
-            ItemType itemType
-    ) {
+            ItemType itemType) {
         this.expression = expression;
         this.dynamicContext = new DynamicContext(context);
         this.metadata = metadata;
@@ -62,7 +61,9 @@ public class PredicateUDF implements UDF1<Row, Boolean> {
         this.currentItems.clear();
         Item item = ItemParser.getItemFromRow(row, this.metadata, this.itemType);
         this.currentItems.add(item);
-        this.dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this.currentItems);
+        this.dynamicContext
+                .getVariableValues()
+                .addVariableValue(Name.CONTEXT_ITEM, this.currentItems);
 
         boolean result = this.expression.getEffectiveBooleanValue(this.dynamicContext);
         return result;

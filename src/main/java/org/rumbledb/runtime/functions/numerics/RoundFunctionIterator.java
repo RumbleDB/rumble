@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,20 +37,12 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
-
 public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public RoundFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -55,29 +52,21 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == null) {
             return null;
         }
-        if (
-            (value.isDouble() && Double.isNaN(value.getDoubleValue()))
-                || (value.isFloat() && Float.isNaN(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
             return value;
         }
-        if (
-            (value.isDouble() && Double.isInfinite(value.getDoubleValue()))
-                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
             return value;
         }
-        if (
-            (value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
-                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))
-        ) {
+        if ((value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
+                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))) {
             return value;
         }
         int precision;
         if (this.getChildren().size() > 1) {
-            precision = this.getChild(1)
-                .materializeFirstItemOrNull(dynamicContext)
-                .getIntValue();
+            precision = this.getChild(1).materializeFirstItemOrNull(dynamicContext).getIntValue();
         }
         // if second param is not given precision is set as 0 (rounds to a whole number)
         else {
@@ -85,11 +74,15 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         try {
             if (value.isInt()) {
-                BigDecimal bd = new BigDecimal(value.getIntValue()).setScale(precision, RoundingMode.HALF_UP);
+                BigDecimal bd =
+                        new BigDecimal(value.getIntValue())
+                                .setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createIntItem(bd.intValue());
             }
             if (value.isInteger()) {
-                BigDecimal bd = new BigDecimal(value.getIntegerValue()).setScale(precision, RoundingMode.HALF_UP);
+                BigDecimal bd =
+                        new BigDecimal(value.getIntegerValue())
+                                .setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createIntegerItem(bd.toBigInteger());
             }
             if (value.isDecimal()) {
@@ -106,25 +99,36 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 double sign = getSign(value.getDoubleValue());
                 BigDecimal bd;
                 if (sign == 1) {
-                    bd = new BigDecimal(value.getDoubleValue()).setScale(precision, RoundingMode.HALF_UP);
+                    bd =
+                            new BigDecimal(value.getDoubleValue())
+                                    .setScale(precision, RoundingMode.HALF_UP);
                 } else {
-                    bd = new BigDecimal(value.getDoubleValue()).setScale(precision, RoundingMode.HALF_DOWN);
+                    bd =
+                            new BigDecimal(value.getDoubleValue())
+                                    .setScale(precision, RoundingMode.HALF_DOWN);
                 }
 
-                return ItemFactory.getInstance().createDoubleItem(sign * Math.abs(bd.doubleValue()));
+                return ItemFactory.getInstance()
+                        .createDoubleItem(sign * Math.abs(bd.doubleValue()));
             }
             if (value.isFloat()) {
 
                 double sign = getSign(value.getFloatValue());
                 BigDecimal bd;
                 if (sign == 1) {
-                    bd = new BigDecimal(value.getFloatValue()).setScale(precision, RoundingMode.HALF_UP);
+                    bd =
+                            new BigDecimal(value.getFloatValue())
+                                    .setScale(precision, RoundingMode.HALF_UP);
                 } else {
-                    bd = new BigDecimal(value.getFloatValue()).setScale(precision, RoundingMode.HALF_DOWN);
+                    bd =
+                            new BigDecimal(value.getFloatValue())
+                                    .setScale(precision, RoundingMode.HALF_DOWN);
                 }
-                return ItemFactory.getInstance().createFloatItem((float) sign * Math.abs(bd.floatValue()));
+                return ItemFactory.getInstance()
+                        .createFloatItem((float) sign * Math.abs(bd.floatValue()));
             }
-            throw new UnexpectedTypeException("Unexpected value in round(): " + value.getDynamicType(), getMetadata());
+            throw new UnexpectedTypeException(
+                    "Unexpected value in round(): " + value.getDynamicType(), getMetadata());
 
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
@@ -133,10 +137,8 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private double getSign(double doubleValue) {
         double sign = 0;
-        if (doubleValue > 0)
-            sign = 1;
-        if (doubleValue < 0)
-            sign = -1;
+        if (doubleValue > 0) sign = 1;
+        if (doubleValue < 0) sign = -1;
         return sign;
     }
 
@@ -152,15 +154,12 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "( CAST ("
-            + "ROUND( "
-            + value.getResultingQuery()
-            + " ) AS FLOAT)"
-            + " )";
+        String resultingQuery =
+                "( CAST (" + "ROUND( " + value.getResultingQuery() + " ) AS FLOAT)" + " )";
         return new NativeClauseContext(
                 value,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity()));
     }
 }

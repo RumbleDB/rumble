@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,13 +37,10 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-/**
- * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
- */
+/** FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*). */
 public class MapFindFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator inputIterator;
     private final RuntimeIterator keyIterator;
@@ -50,9 +48,7 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
     private boolean hasProducedResult;
 
     public MapFindFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("map:find must have exactly two arguments.");
@@ -76,22 +72,21 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
             keyItem = this.keyIterator.materializeExactlyOneItem(context);
         } catch (NoItemException | MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "map:find expects exactly one atomic key as second argument.",
-                    getMetadata()
-            );
+                    "map:find expects exactly one atomic key as second argument.", getMetadata());
         }
         if (keyItem == null || !keyItem.isAtomic()) {
             throw new UnexpectedTypeException(
-                    "map:find expects exactly one atomic key as second argument.",
-                    getMetadata()
-            );
+                    "map:find expects exactly one atomic key as second argument.", getMetadata());
         }
 
         List<Item> inputItems = this.inputIterator.materialize(context);
         List<List<Item>> foundMembers = new ArrayList<>();
         scanItems(inputItems, keyItem, foundMembers);
-        this.resultItem = ItemFactory.getInstance()
-            .createSequenceArrayItem(foundMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+        this.resultItem =
+                ItemFactory.getInstance()
+                        .createSequenceArrayItem(
+                                foundMembers,
+                                this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     private void scanItems(List<Item> items, Item lookupKey, List<List<Item>> foundMembers) {

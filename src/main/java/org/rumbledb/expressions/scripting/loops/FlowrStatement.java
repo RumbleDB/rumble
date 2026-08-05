@@ -1,6 +1,10 @@
 package org.rumbledb.expressions.scripting.loops;
 
+import java.util.Collections;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -9,25 +13,17 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.scripting.statement.Statement;
 
-import java.util.Collections;
-import java.util.List;
-
 @Getter
 public class FlowrStatement extends Statement {
     private final ReturnStatementClause returnStatementClause;
 
-    public FlowrStatement(
-            ReturnStatementClause returnStatementClause,
-            ExceptionMetadata metadata
-    ) {
+    public FlowrStatement(ReturnStatementClause returnStatementClause, ExceptionMetadata metadata) {
         super(metadata);
         Clause startClause = returnStatementClause.getFirstClause();
-        if (
-            startClause.getClauseType() != FLWOR_CLAUSES.FOR
-                &&
-                startClause.getClauseType() != FLWOR_CLAUSES.LET
-        ) {
-            throw new SemanticException("FLOWR clause must starts with a FOR or a LET\n", this.getMetadata());
+        if (startClause.getClauseType() != FLWOR_CLAUSES.FOR
+                && startClause.getClauseType() != FLWOR_CLAUSES.LET) {
+            throw new SemanticException(
+                    "FLOWR clause must starts with a FOR or a LET\n", this.getMetadata());
         }
         this.returnStatementClause = returnStatementClause;
     }
@@ -48,5 +44,4 @@ public class FlowrStatement extends Statement {
         this.returnStatementClause.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
-
 }

@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -27,31 +32,20 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public TranslateFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
-        Item mapStringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
-        Item transStringItem = this.getChild(2)
-            .materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item mapStringItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item transStringItem = this.getChild(2).materializeFirstItemOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");
@@ -71,23 +65,26 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         for (int i = 0; i < mapCodePoints.length; i++) {
             int codePoint = mapCodePoints[i];
             if (!translations.containsKey(codePoint)) {
-                translations.put(codePoint, i < translationCodePoints.length ? translationCodePoints[i] : null);
+                translations.put(
+                        codePoint,
+                        i < translationCodePoints.length ? translationCodePoints[i] : null);
             }
         }
 
         StringBuilder output = new StringBuilder(input.length());
-        input.codePoints().forEach(codePoint -> {
-            if (!translations.containsKey(codePoint)) {
-                output.appendCodePoint(codePoint);
-                return;
-            }
-            Integer translatedCodePoint = translations.get(codePoint);
-            if (translatedCodePoint != null) {
-                output.appendCodePoint(translatedCodePoint);
-            }
-        });
+        input.codePoints()
+                .forEach(
+                        codePoint -> {
+                            if (!translations.containsKey(codePoint)) {
+                                output.appendCodePoint(codePoint);
+                                return;
+                            }
+                            Integer translatedCodePoint = translations.get(codePoint);
+                            if (translatedCodePoint != null) {
+                                output.appendCodePoint(translatedCodePoint);
+                            }
+                        });
 
         return ItemFactory.getInstance().createStringItem(output.toString());
     }
-
 }

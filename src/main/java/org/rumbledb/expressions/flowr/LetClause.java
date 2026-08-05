@@ -25,6 +25,7 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -38,30 +39,27 @@ import org.rumbledb.types.SequenceType;
 
 public class LetClause extends Clause {
 
-    @Getter
-    private final Name variableName;
+    @Getter private final Name variableName;
     protected SequenceType sequenceType;
-    @Setter
-    @Getter
-    protected SequenceType staticType;
-    @Getter
-    protected Expression expression;
+    @Setter @Getter protected SequenceType staticType;
+    @Getter protected Expression expression;
 
-    @Setter
-    private boolean isReferenced;
+    @Setter private boolean isReferenced;
 
-    // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or
+    // DF)
+    // format in a tuple
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
     public LetClause(
             Name variableName,
             SequenceType sequenceType,
             Expression expression,
-            ExceptionMetadata metadataFromContext
-    ) {
+            ExceptionMetadata metadataFromContext) {
         super(FLWOR_CLAUSES.LET, metadataFromContext);
         if (variableName == null) {
-            throw new SemanticException("Let clause must have at least one variable", metadataFromContext);
+            throw new SemanticException(
+                    "Let clause must have at least one variable", metadataFromContext);
         }
         this.variableName = variableName;
         this.sequenceType = sequenceType;
@@ -70,7 +68,9 @@ public class LetClause extends Clause {
     }
 
     public SequenceType getSequenceType() {
-        return this.sequenceType == null ? SequenceType.createSequenceType("item*") : this.sequenceType;
+        return this.sequenceType == null
+                ? SequenceType.createSequenceType("item*")
+                : this.sequenceType;
     }
 
     public SequenceType getActualSequenceType() {
@@ -78,10 +78,8 @@ public class LetClause extends Clause {
     }
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
-        if (
-            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.variableHighestStorageMode == ExecutionMode.UNSET
-        ) {
+        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.variableHighestStorageMode == ExecutionMode.UNSET) {
             throw new OurBadException("An variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
@@ -115,15 +113,18 @@ public class LetClause extends Clause {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(
-            " ("
-                + ("$" + this.variableName)
-                + ", "
-                + ((this.getSequenceType() != null) ? this.getSequenceType().toString() : "(unset)")
-                + ((this.getSequenceType() != null)
-                    ? (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
-                    : "")
-                + ") "
-        );
+                " ("
+                        + ("$" + this.variableName)
+                        + ", "
+                        + ((this.getSequenceType() != null)
+                                ? this.getSequenceType().toString()
+                                : "(unset)")
+                        + ((this.getSequenceType() != null)
+                                ? (this.getSequenceType().isResolved()
+                                        ? " (resolved)"
+                                        : " (unresolved)")
+                                : "")
+                        + ") ");
         buffer.append(")");
         buffer.append(" | mode: " + this.highestExecutionMode);
         buffer.append(" | variable mode: " + this.variableHighestStorageMode);
@@ -138,8 +139,7 @@ public class LetClause extends Clause {
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("let $" + this.variableName.toString());
-        if (this.sequenceType != null)
-            sb.append(" as " + this.sequenceType.toString());
+        if (this.sequenceType != null) sb.append(" as " + this.sequenceType.toString());
         sb.append(" := (");
         this.expression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
@@ -148,5 +148,4 @@ public class LetClause extends Clause {
     public boolean getReferenced() {
         return this.isReferenced;
     }
-
 }

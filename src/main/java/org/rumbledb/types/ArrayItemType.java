@@ -1,5 +1,8 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
+import java.util.*;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -9,23 +12,17 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
-import java.io.Serial;
-import java.util.*;
-
 public class ArrayItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
-            Arrays.asList(
-                ConstrainingFacetTypes.ENUMERATION,
-                ConstrainingFacetTypes.CONTENT,
-
-                ConstrainingFacetTypes.MINLENGTH,
-                ConstrainingFacetTypes.MAXLENGTH
-            )
-    );
+    static final Set<ConstrainingFacetTypes> allowedFacets =
+            new HashSet<>(
+                    Arrays.asList(
+                            ConstrainingFacetTypes.ENUMERATION,
+                            ConstrainingFacetTypes.CONTENT,
+                            ConstrainingFacetTypes.MINLENGTH,
+                            ConstrainingFacetTypes.MAXLENGTH));
 
     private Name name;
     private ItemType baseType;
@@ -41,8 +38,7 @@ public class ArrayItemType extends AbstractItemType {
             ItemType content,
             Integer minLength,
             Integer maxLength,
-            List<Item> enumeration
-    ) {
+            List<Item> enumeration) {
         this.name = name;
         if (baseType == null) {
             throw new OurBadException("Unexpected error: baseType is null.");
@@ -67,8 +63,7 @@ public class ArrayItemType extends AbstractItemType {
                 itemType,
                 null,
                 null,
-                null
-        );
+                null);
     }
 
     @Override
@@ -87,14 +82,13 @@ public class ArrayItemType extends AbstractItemType {
         }
         if (superType.isXQueryArrayItemType()) {
             // an ArrayItemType (js:array()) with a base type of T <: array(T)
-            return new SequenceType(this.content, SequenceType.Arity.One).isSubtypeOf(
-                superType.getMemberSequenceType()
-            );
+            return new SequenceType(this.content, SequenceType.Arity.One)
+                    .isSubtypeOf(superType.getMemberSequenceType());
         }
         if (superType.isFunctionItemType()) {
-            ItemType xqueryArrayType = ItemTypeFactory.xqueryArrayOf(
-                new SequenceType(this.content, SequenceType.Arity.One)
-            );
+            ItemType xqueryArrayType =
+                    ItemTypeFactory.xqueryArrayOf(
+                            new SequenceType(this.content, SequenceType.Arity.One));
             return xqueryArrayType.isSubtypeOf(superType);
         }
         return super.isSubtypeOf(superType);
@@ -187,7 +181,9 @@ public class ArrayItemType extends AbstractItemType {
         }
         Integer mergedMinLength = mergeMinLengthFacet(this.minLength, otherArray.minLength);
         Integer mergedMaxLength = mergeMaxLengthFacet(this.maxLength, otherArray.maxLength);
-        if (mergedMinLength != null && mergedMaxLength != null && mergedMinLength > mergedMaxLength) {
+        if (mergedMinLength != null
+                && mergedMaxLength != null
+                && mergedMinLength > mergedMaxLength) {
             mergedMinLength = null;
             mergedMaxLength = null;
         }
@@ -197,8 +193,7 @@ public class ArrayItemType extends AbstractItemType {
                 mergedContent,
                 mergedMinLength,
                 mergedMaxLength,
-                null
-        );
+                null);
     }
 
     @Override
@@ -300,8 +295,7 @@ public class ArrayItemType extends AbstractItemType {
         if (!this.baseType.equals(BuiltinTypesCatalogue.JSONItem)) {
             throw new InvalidSchemaException(
                     "This type cannot be the base type of an array type: " + this.baseType,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         if (this.content == null) {
             throw new OurBadException("Content cannot be null in primitive array type.");
@@ -342,32 +336,30 @@ public class ArrayItemType extends AbstractItemType {
             if (this.getTypeTreeDepth() >= 3) {
                 throw new InvalidSchemaException(
                         "Any user-defined array type must have an array type as its base type.",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             return;
         }
         if (!this.content.isSubtypeOf(this.baseType.getArrayContentFacet())) {
             throw new InvalidSchemaException(
                     "The content of an array subtype (here: "
-                        + this.content
-                        + ") must be a subtype of the content of its base type (here: "
-                        + this.baseType.getArrayContentFacet()
-                        + ")",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                            + this.content
+                            + ") must be a subtype of the content of its base type (here: "
+                            + this.baseType.getArrayContentFacet()
+                            + ")",
+                    ExceptionMetadata.EMPTY_METADATA);
         }
-        if (this.baseType.getMinLengthFacet() != null && this.getMinLengthFacet() < this.baseType.getMinLengthFacet()) {
+        if (this.baseType.getMinLengthFacet() != null
+                && this.getMinLengthFacet() < this.baseType.getMinLengthFacet()) {
             throw new InvalidSchemaException(
                     "The minLength facet of an array subtype must be greater or equal to that of its base type.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
-        if (this.baseType.getMaxLengthFacet() != null && this.getMaxLengthFacet() > this.baseType.getMaxLengthFacet()) {
+        if (this.baseType.getMaxLengthFacet() != null
+                && this.getMaxLengthFacet() > this.baseType.getMaxLengthFacet()) {
             throw new InvalidSchemaException(
                     "The maxLength facet of an array subtype must be lesser or equal to that of its base type.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -384,8 +376,6 @@ public class ArrayItemType extends AbstractItemType {
         sb.append(">");
         return sb.toString();
     }
-
-
 
     private boolean hasEnumerationFacet() {
         return this.enumeration != null && !this.enumeration.isEmpty();

@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.scripting.statement;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 public class StatementsAndOptionalExpr extends Expression {
@@ -16,10 +17,7 @@ public class StatementsAndOptionalExpr extends Expression {
     private final Expression expression;
 
     public StatementsAndOptionalExpr(
-            List<Statement> statements,
-            Expression expression,
-            ExceptionMetadata metadata
-    ) {
+            List<Statement> statements, Expression expression, ExceptionMetadata metadata) {
         super(metadata);
         // An empty statements list should initialize an empty list for safety.
         if (statements == null) {
@@ -44,11 +42,12 @@ public class StatementsAndOptionalExpr extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (!this.statements.isEmpty()) {
-            this.statements.forEach(statement -> {
-                if (statement != null) {
-                    result.add(statement);
-                }
-            });
+            this.statements.forEach(
+                    statement -> {
+                        if (statement != null) {
+                            result.add(statement);
+                        }
+                    });
         }
         if (this.expression != null) {
             result.add(this.expression);
@@ -72,5 +71,4 @@ public class StatementsAndOptionalExpr extends Expression {
             sb.append('\n');
         }
     }
-
 }

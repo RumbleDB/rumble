@@ -20,20 +20,17 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.context.RuntimeStaticContext;
-
 import java.io.Serial;
 import java.util.List;
 
+import org.rumbledb.context.RuntimeStaticContext;
+
 public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     protected DataFrameRuntimeIterator(
-            List<RuntimeIterator> children,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 

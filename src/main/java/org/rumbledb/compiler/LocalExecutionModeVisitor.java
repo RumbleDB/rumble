@@ -26,13 +26,10 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Node;
 
-/**
- * Static context visitor implements a multi-pass algorithm that enables function hoisting
- */
+/** Static context visitor implements a multi-pass algorithm that enables function hoisting */
 public class LocalExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    LocalExecutionModeVisitor(RumbleConfiguration configuration) {
-    }
+    LocalExecutionModeVisitor(RumbleConfiguration configuration) {}
 
     @Override
     protected StaticContext defaultAction(Node node, StaticContext argument) {

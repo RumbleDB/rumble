@@ -20,24 +20,22 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
+
+import scala.collection.Iterator;
+import scala.collection.immutable.ArraySeq;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
-import scala.collection.immutable.ArraySeq;
-import scala.collection.Iterator;
-
-import java.io.Serial;
-import java.util.ArrayList;
-// import java.util.Iterator;
-import java.util.List;
-
 public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<Object>, Object[]> {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final List<Item> nextResult;
     private final List<List<Item>> deserializedParams;
 
@@ -61,8 +59,7 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<O
                 @SuppressWarnings("unchecked")
                 ArraySeq<Object> arraySeq = (ArraySeq<Object>) o;
                 Iterator<Object> iterator2 = arraySeq.iterator();
-                while (iterator2.hasNext())
-                    result.add(iterator2.next());
+                while (iterator2.hasNext()) result.add(iterator2.next());
             } else {
                 throw new OurBadException("We cannot process " + o.getClass().getCanonicalName());
             }

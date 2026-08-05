@@ -20,8 +20,13 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,26 +37,18 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private Item nextResult;
     private List<Item> projectionKeys;
 
     public ObjectProjectFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
@@ -59,12 +56,12 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.projectionKeys = this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
+        this.projectionKeys =
+                this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
         if (this.projectionKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Projection Key; Object projection can't be performed with zero keys: ",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         setNextResult();
@@ -78,9 +75,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " PROJECT function",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " PROJECT function", getMetadata());
     }
 
     public void setNextResult() {
@@ -114,7 +109,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, getMetadata(), true);
+                .createObjectItem(finalKeylist, finalValueList, getMetadata(), true);
     }
 
     @Override
@@ -131,10 +126,8 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         this.projectionKeys = this.getChild(1).materialize(context);
-        FlatMapFunction<Item, Item> transformation = new ObjectProjectClosure(
-                this.projectionKeys,
-                getMetadata()
-        );
+        FlatMapFunction<Item, Item> transformation =
+                new ObjectProjectClosure(this.projectionKeys, getMetadata());
         return childRDD.flatMap(transformation);
     }
 
@@ -162,23 +155,16 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         }
         if (keys.isEmpty()) {
             return childDataFrame.evaluateSQL(
-                String.format(
-                    "SELECT NULL as `%s` FROM %s",
-                    SparkSessionManager.emptyObjectJSONiqItemColumnName,
-                    object
-                ),
-                BuiltinTypesCatalogue.objectItem
-            );
+                    String.format(
+                            "SELECT NULL as `%s` FROM %s",
+                            SparkSessionManager.emptyObjectJSONiqItemColumnName, object),
+                    BuiltinTypesCatalogue.objectItem);
         }
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
-        HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
-            String.format(
-                "SELECT %s FROM %s",
-                projectionVariables,
-                object
-            ),
-            BuiltinTypesCatalogue.objectItem
-        );
+        HomogeneousItemDataFrame result =
+                childDataFrame.evaluateSQL(
+                        String.format("SELECT %s FROM %s", projectionVariables, object),
+                        BuiltinTypesCatalogue.objectItem);
         return result;
     }
 }

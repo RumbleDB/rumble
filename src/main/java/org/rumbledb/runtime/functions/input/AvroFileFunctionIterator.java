@@ -20,9 +20,14 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
+
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,38 +37,32 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
 
 public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public AvroFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri =
+                FileSystemUtil.resolveFileSystemURI(
+                        this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         Item optionsObjectItem;
         DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
         try {
-            if (this.getChildren().size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
+            if (this.getChildren().size() > 1
+                    && ((optionsObjectItem = getObjectItem(context)) != null)) {
                 ObjectItem options = (ObjectItem) optionsObjectItem;
                 List<String> keys = options.getStringKeys();
                 List<Item> values = options.getItemValues();
@@ -71,15 +70,13 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     Item value = values.get(i);
                     if (value.isString()) {
                         if (keys.get(i).equals("avroSchema")) {
-                            URI schemaURI = FileSystemUtil.resolveFileSystemURI(
-                                this.staticContext.getStaticURI(),
-                                value.getStringValue(),
-                                getMetadata()
-                            );
-                            String jsonFormatSchema = FileSystemUtil.readContent(
-                                schemaURI,
-                                getMetadata()
-                            );
+                            URI schemaURI =
+                                    FileSystemUtil.resolveFileSystemURI(
+                                            this.staticContext.getStaticURI(),
+                                            value.getStringValue(),
+                                            getMetadata());
+                            String jsonFormatSchema =
+                                    FileSystemUtil.readContent(schemaURI, getMetadata());
                             dfr.option(keys.get(i), jsonFormatSchema);
                         } else {
                             dfr.option(keys.get(i), value.getStringValue());
@@ -89,20 +86,22 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     } else {
                         throw new UnexpectedTypeException(
                                 "Only string and boolean types allowed as values",
-                                this.getMetadata()
-                        );
+                                this.getMetadata());
                     }
                 }
             }
-            Dataset<Row> dataFrame = dfr.format("avro").load(FileSystemUtil.convertURIToStringForSpark(uri));
+            Dataset<Row> dataFrame =
+                    dfr.format("avro").load(FileSystemUtil.convertURIToStringForSpark(uri));
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof UnexpectedTypeException) {
-                RuntimeException f = new UnexpectedTypeException(e.getMessage(), this.getMetadata());
+                RuntimeException f =
+                        new UnexpectedTypeException(e.getMessage(), this.getMetadata());
                 f.initCause(e);
                 throw f;
             } else {
-                RuntimeException f = new CannotRetrieveResourceException(e.getMessage(), getMetadata());
+                RuntimeException f =
+                        new CannotRetrieveResourceException(e.getMessage(), getMetadata());
                 f.initCause(e);
                 throw f;
             }

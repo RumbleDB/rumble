@@ -35,17 +35,14 @@ import org.rumbledb.types.SequenceType;
 
 public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
 
     public OrOperationIterator(
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
@@ -53,10 +50,13 @@ public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        boolean leftEffectiveBooleanValue = this.leftIterator.getEffectiveBooleanValue(dynamicContext);
-        boolean rightEffectiveBooleanValue = this.rightIterator.getEffectiveBooleanValue(dynamicContext);
+        boolean leftEffectiveBooleanValue =
+                this.leftIterator.getEffectiveBooleanValue(dynamicContext);
+        boolean rightEffectiveBooleanValue =
+                this.rightIterator.getEffectiveBooleanValue(dynamicContext);
 
-        return ItemFactory.getInstance().createBooleanItem((leftEffectiveBooleanValue || rightEffectiveBooleanValue));
+        return ItemFactory.getInstance()
+                .createBooleanItem((leftEffectiveBooleanValue || rightEffectiveBooleanValue));
     }
 
     @Override
@@ -65,28 +65,32 @@ public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
-            new NativeClauseContext(leftResult, null, null)
-        );
+        NativeClauseContext rightResult =
+                this.rightIterator.generateNativeQuery(
+                        new NativeClauseContext(leftResult, null, null));
         if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (
-            SequenceType.Arity.OneOrMore.isSubtypeOf(leftResult.getResultingType().getArity())
-                ||
-                SequenceType.Arity.OneOrMore.isSubtypeOf(rightResult.getResultingType().getArity())
-        ) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(leftResult.getResultingType().getArity())
+                || SequenceType.Arity.OneOrMore.isSubtypeOf(
+                        rightResult.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
-            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
-                ? SequenceType.Arity.One
-                : SequenceType.Arity.OneOrZero;
-        String resultingQuery = "( " + leftResult.getResultingQuery() + " OR " + rightResult.getResultingQuery() + " )";
+        SequenceType.Arity resultingArity =
+                (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+                                && rightResult.getResultingType().getArity()
+                                        == SequenceType.Arity.One)
+                        ? SequenceType.Arity.One
+                        : SequenceType.Arity.OneOrZero;
+        String resultingQuery =
+                "( "
+                        + leftResult.getResultingQuery()
+                        + " OR "
+                        + rightResult.getResultingQuery()
+                        + " )";
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
-        );
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity));
     }
 }

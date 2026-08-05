@@ -20,6 +20,12 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
@@ -30,20 +36,12 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class LazyObjectItem extends AbstractMapItem {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final List<String> keys;
     private final Map<String, Item> values;
-    final transient private Map<String, LazyValue> lazyValues;
+    private final transient Map<String, LazyValue> lazyValues;
 
     public class LazyValue {
         private final RuntimeIterator iterator;
@@ -89,7 +87,6 @@ public class LazyObjectItem extends AbstractMapItem {
             result.setMutabilityLevel(0);
         }
         return result;
-
     }
 
     // region maps
@@ -149,7 +146,8 @@ public class LazyObjectItem extends AbstractMapItem {
                 this.values.put(key, i);
                 return i;
             }
-            throw new OurBadException("Key " + key + "not found in lazy object. Inconsistent layout.");
+            throw new OurBadException(
+                    "Key " + key + "not found in lazy object. Inconsistent layout.");
         } else {
             return null;
         }
@@ -203,8 +201,7 @@ public class LazyObjectItem extends AbstractMapItem {
         }
         if (valueSequence.size() != 1) {
             throw new OurBadException(
-                    "LazyObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-            );
+                    "LazyObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
         }
         putItemByKey(key, valueSequence.get(0));
     }
@@ -219,8 +216,7 @@ public class LazyObjectItem extends AbstractMapItem {
             return;
         }
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-        );
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
     }
 
     @Override
@@ -241,7 +237,8 @@ public class LazyObjectItem extends AbstractMapItem {
     }
 
     @Override
-    public void putLazyItemByKey(String key, RuntimeIterator iterator, DynamicContext context, boolean isArray) {
+    public void putLazyItemByKey(
+            String key, RuntimeIterator iterator, DynamicContext context, boolean isArray) {
         this.keys.add(key);
         LazyValue lv = new LazyValue(iterator, context, isArray);
         this.lazyValues.put(key, lv);
@@ -268,8 +265,6 @@ public class LazyObjectItem extends AbstractMapItem {
         }
     }
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.objectItem;
@@ -278,14 +273,11 @@ public class LazyObjectItem extends AbstractMapItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
     public boolean getEffectiveBooleanValue() {
         return true;
     }
-
 }

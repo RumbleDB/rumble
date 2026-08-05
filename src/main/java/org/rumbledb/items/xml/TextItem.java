@@ -1,19 +1,19 @@
 package org.rumbledb.items.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.w3c.dom.Node;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
 
 public class TextItem extends AbstractNodeItem {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private String content; // is also typed-value
     private Item parent;
     private XMLDocumentPosition documentPos;
@@ -24,7 +24,7 @@ public class TextItem extends AbstractNodeItem {
 
     /**
      * Create a new Text Node with the given content.
-     * 
+     *
      * @param content the content of the text node
      */
     public TextItem(String content) {
@@ -67,8 +67,6 @@ public class TextItem extends AbstractNodeItem {
         return !this.content.isEmpty();
     }
 
-
-
     @Override
     public String getStringValue() {
         return this.content;
@@ -102,7 +100,7 @@ public class TextItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — node-kind.
      *
-     * "For a Text Node, dm:node-kind returns the string \"text\"."
+     * <p>"For a Text Node, dm:node-kind returns the string \"text\"."
      */
     @Override
     public String nodeKind() {
@@ -112,7 +110,7 @@ public class TextItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — attributes.
      *
-     * "For a Text Node, dm:attributes returns the empty sequence."
+     * <p>"For a Text Node, dm:attributes returns the empty sequence."
      */
     @Override
     public List<Item> attributes() {
@@ -122,7 +120,7 @@ public class TextItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — children.
      *
-     * "For a Text Node, dm:children returns the empty sequence."
+     * <p>"For a Text Node, dm:children returns the empty sequence."
      */
     @Override
     public List<Item> children() {
@@ -131,7 +129,8 @@ public class TextItem extends AbstractNodeItem {
 
     @Override
     public List<Item> atomizedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.content));
+        return Collections.singletonList(
+                ItemFactory.getInstance().createUntypedAtomicItem(this.content));
     }
 
     @Override
@@ -147,7 +146,7 @@ public class TextItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — base-uri.
      *
-     * For a Text Node, dm:base-uri returns the base URI of the parent node, if it has one;
+     * <p>For a Text Node, dm:base-uri returns the base URI of the parent node, if it has one;
      * otherwise it returns the empty sequence.
      */
     @Override
@@ -161,9 +160,9 @@ public class TextItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — document-uri.
      *
-     * For a Text Node, dm:document-uri returns the document-uri of the document node that is
-     * the root of the tree containing the text node, if it has one; otherwise it returns the
-     * empty sequence.
+     * <p>For a Text Node, dm:document-uri returns the document-uri of the document node that is the
+     * root of the tree containing the text node, if it has one; otherwise it returns the empty
+     * sequence.
      */
     @Override
     public List<Item> documentUri() {
@@ -176,7 +175,7 @@ public class TextItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — is-id.
      *
-     * For a Text Node, dm:is-id returns false.
+     * <p>For a Text Node, dm:is-id returns false.
      */
     @Override
     public boolean isId() {
@@ -186,7 +185,7 @@ public class TextItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — is-idrefs.
      *
-     * For a Text Node, dm:is-idrefs returns false.
+     * <p>For a Text Node, dm:is-idrefs returns false.
      */
     @Override
     public boolean isIdrefs() {
@@ -196,27 +195,24 @@ public class TextItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — nilled.
      *
-     * For a Text Node, dm:nilled returns the empty sequence.
+     * <p>For a Text Node, dm:nilled returns the empty sequence.
      */
     @Override
     public List<Item> nilled() {
         return Collections.emptyList();
     }
 
-
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — type-name:
      *
-     * For a Text Node, dm:type-name returns xs:untypedAtomic.
+     * <p>For a Text Node, dm:type-name returns xs:untypedAtomic.
      */
     @Override
     public List<Item> typeName() {
         return Collections.singletonList(
-            ItemFactory.getInstance()
-                .createAnnotatedItem(
-                    ItemFactory.getInstance().createStringItem("untypedAtomic"),
-                    BuiltinTypesCatalogue.QNameItem
-                )
-        );
+                ItemFactory.getInstance()
+                        .createAnnotatedItem(
+                                ItemFactory.getInstance().createStringItem("untypedAtomic"),
+                                BuiltinTypesCatalogue.QNameItem));
     }
 }

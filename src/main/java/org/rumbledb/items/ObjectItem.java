@@ -38,16 +38,17 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-
 public class ObjectItem extends AbstractMapItem {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private List<Item> values;
     private List<String> keys;
-    /** String key → index in {@link #keys} / {@link #values}; rebuilt after remove and Kryo read. */
+
+    /**
+     * String key → index in {@link #keys} / {@link #values}; rebuilt after remove and Kryo read.
+     */
     private Map<String, Integer> keyStringToIndex;
+
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -96,16 +97,13 @@ public class ObjectItem extends AbstractMapItem {
     }
 
     /**
-     * ObjectItem constructor from the given map data structure.
-     * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single
-     * element.
+     * ObjectItem constructor from the given map data structure. For each key, the corresponding
+     * values list is turned into an ArrayItem if it contains more than a single element.
      *
-     * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for
-     *        functionality
+     * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys --
+     *     essential for functionality
      */
-    public ObjectItem(Map<String, ?> keyValuePairs)
-
-    {
+    public ObjectItem(Map<String, ?> keyValuePairs) {
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
@@ -132,10 +130,8 @@ public class ObjectItem extends AbstractMapItem {
                 } else {
                     throw new RuntimeException("Unexpected value type found.");
                 }
-
             }
         }
-
 
         this.keys = keyList;
         this.values = valueList;
@@ -148,8 +144,6 @@ public class ObjectItem extends AbstractMapItem {
         this.collection = null;
         this.topLevelOrder = 0.0;
     }
-
-
 
     private void rebuildKeyStringIndex() {
         if (this.keyStringToIndex == null) {
@@ -279,7 +273,6 @@ public class ObjectItem extends AbstractMapItem {
         putItemByKey(key.getStringValue(), value);
     }
 
-
     @Override
     public void putSequenceByKey(String key, List<Item> valueSequence) {
         if (valueSequence == null) {
@@ -290,8 +283,7 @@ public class ObjectItem extends AbstractMapItem {
             return;
         }
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-        );
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
     }
 
     @Override
@@ -306,8 +298,7 @@ public class ObjectItem extends AbstractMapItem {
         }
         // throw an error
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-        );
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
     }
 
     @Override
@@ -354,8 +345,6 @@ public class ObjectItem extends AbstractMapItem {
         }
     }
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.objectItem;
@@ -401,7 +390,9 @@ public class ObjectItem extends AbstractMapItem {
     @Override
     public void setTopLevelOrder(double topLevelOrder) {
         this.topLevelOrder = topLevelOrder;
-        // The loop below is redundant now, but might be useful to port inner updates to rowOrder (since rowOrder is
+        // The loop below is redundant now, but might be useful to port inner updates to rowOrder
+        // (since
+        // rowOrder is
         // also candidate key)
         for (Item item : this.values) {
             item.setTopLevelOrder(topLevelOrder);
@@ -511,15 +502,14 @@ public class ObjectItem extends AbstractMapItem {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new CannotAtomizeException("tried to atomize Object", ExceptionMetadata.EMPTY_METADATA);
+        throw new CannotAtomizeException(
+                "tried to atomize Object", ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -543,6 +533,5 @@ public class ObjectItem extends AbstractMapItem {
         for (Item item : this.values) {
             item.setCollection(collection);
         }
-
     }
 }

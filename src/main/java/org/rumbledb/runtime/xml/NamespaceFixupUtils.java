@@ -18,6 +18,12 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -25,23 +31,17 @@ import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 
-import java.util.LinkedHashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 final class NamespaceFixupUtils {
 
-    private NamespaceFixupUtils() {
-    }
+    private NamespaceFixupUtils() {}
 
     static Item copyNodeForConstructor(Item item, RuntimeStaticContext staticContext) {
         Item copy = item.copy(true);
         if (!item.isElementNode()) {
             return copy;
         }
-        configureCopiedElementNamespaces((ElementItem) item, (ElementItem) copy, staticContext, true);
+        configureCopiedElementNamespaces(
+                (ElementItem) item, (ElementItem) copy, staticContext, true);
         return copy;
     }
 
@@ -68,9 +68,9 @@ final class NamespaceFixupUtils {
             ElementItem original,
             ElementItem copy,
             RuntimeStaticContext staticContext,
-            boolean rootOfCopiedTree
-    ) {
-        copy.setDeclaredNamespaces(selectPreservedNamespaces(original, staticContext.isCopyNamespacesPreserve()));
+            boolean rootOfCopiedTree) {
+        copy.setDeclaredNamespaces(
+                selectPreservedNamespaces(original, staticContext.isCopyNamespacesPreserve()));
         if (rootOfCopiedTree) {
             copy.setInheritNamespacesFromParent(staticContext.isCopyNamespacesInherit());
         }
@@ -82,16 +82,16 @@ final class NamespaceFixupUtils {
             Item copiedChild = copiedChildren.get(i);
             if (originalChild.isElementNode() && copiedChild.isElementNode()) {
                 configureCopiedElementNamespaces(
-                    (ElementItem) originalChild,
-                    (ElementItem) copiedChild,
-                    staticContext,
-                    false
-                );
+                        (ElementItem) originalChild,
+                        (ElementItem) copiedChild,
+                        staticContext,
+                        false);
             }
         }
     }
 
-    private static Map<String, String> selectPreservedNamespaces(ElementItem element, boolean preserveAll) {
+    private static Map<String, String> selectPreservedNamespaces(
+            ElementItem element, boolean preserveAll) {
         Map<String, String> inScope = inScopeNamespaceMap(element);
         // The predefined xml binding is always in scope in XDM, but it is implicit rather than
         // something we should materialize as a declared namespace on copied elements.
@@ -136,19 +136,28 @@ final class NamespaceFixupUtils {
     private static Map<String, String> inScopeNamespaceMap(Item element) {
         Map<String, String> result = new LinkedHashMap<>();
         for (Item namespaceNode : element.namespaceNodes()) {
-            String prefix = namespaceNode instanceof NamespaceItem namespace
-                ? normalize(namespace.getPrefix())
-                : normalize(namespaceNode.nodeName() == null ? "" : namespaceNode.nodeName().getLocalName());
+            String prefix =
+                    namespaceNode instanceof NamespaceItem namespace
+                            ? normalize(namespace.getPrefix())
+                            : normalize(
+                                    namespaceNode.nodeName() == null
+                                            ? ""
+                                            : namespaceNode.nodeName().getLocalName());
             result.put(prefix, namespaceNode.getStringValue());
         }
         return result;
     }
 
-    private static void mergeDeclaredUndeclarations(ElementItem element, Map<String, String> preservedNamespaces) {
+    private static void mergeDeclaredUndeclarations(
+            ElementItem element, Map<String, String> preservedNamespaces) {
         for (Item namespaceNode : element.declaredNamespaceNodes()) {
-            String prefix = namespaceNode instanceof NamespaceItem namespace
-                ? normalize(namespace.getPrefix())
-                : normalize(namespaceNode.nodeName() == null ? "" : namespaceNode.nodeName().getLocalName());
+            String prefix =
+                    namespaceNode instanceof NamespaceItem namespace
+                            ? normalize(namespace.getPrefix())
+                            : normalize(
+                                    namespaceNode.nodeName() == null
+                                            ? ""
+                                            : namespaceNode.nodeName().getLocalName());
             String uri = normalize(namespaceNode.getStringValue());
             if (uri.isEmpty()) {
                 preservedNamespaces.put(prefix, uri);
@@ -202,7 +211,8 @@ final class NamespaceFixupUtils {
         if (prefix.isEmpty()) {
             String replacement = freshPrefix(parent);
             parent.declareNamespaceBinding(replacement, namespace);
-            return renameAttribute(attribute, new Name(namespace, replacement, nodeName.getLocalName()));
+            return renameAttribute(
+                    attribute, new Name(namespace, replacement, nodeName.getLocalName()));
         }
 
         String bound = resolveInScopeNamespace(parent, prefix);
@@ -216,7 +226,8 @@ final class NamespaceFixupUtils {
 
         String replacement = freshPrefix(parent);
         parent.declareNamespaceBinding(replacement, namespace);
-        return renameAttribute(attribute, new Name(namespace, replacement, nodeName.getLocalName()));
+        return renameAttribute(
+                attribute, new Name(namespace, replacement, nodeName.getLocalName()));
     }
 
     private static Item renameAttribute(Item attribute, Name newName) {
@@ -229,9 +240,13 @@ final class NamespaceFixupUtils {
     private static String resolveInScopeNamespace(Item element, String prefix) {
         String normalizedPrefix = normalize(prefix);
         for (Item namespaceNode : element.namespaceNodes()) {
-            String namespacePrefix = namespaceNode instanceof NamespaceItem namespace
-                ? normalize(namespace.getPrefix())
-                : normalize(namespaceNode.nodeName() == null ? "" : namespaceNode.nodeName().getLocalName());
+            String namespacePrefix =
+                    namespaceNode instanceof NamespaceItem namespace
+                            ? normalize(namespace.getPrefix())
+                            : normalize(
+                                    namespaceNode.nodeName() == null
+                                            ? ""
+                                            : namespaceNode.nodeName().getLocalName());
             if (normalizedPrefix.equals(namespacePrefix)) {
                 return namespaceNode.getStringValue();
             }

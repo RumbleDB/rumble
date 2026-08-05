@@ -1,19 +1,19 @@
 package org.rumbledb.items.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.w3c.dom.Node;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
 
 public class CommentItem extends AbstractNodeItem {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private String content;
     private Item parent;
     private XMLDocumentPosition documentPos;
@@ -75,7 +75,7 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — node-kind.
      *
-     * "For a Comment Node, dm:node-kind returns the string \"comment\"."
+     * <p>"For a Comment Node, dm:node-kind returns the string \"comment\"."
      */
     @Override
     public String nodeKind() {
@@ -85,7 +85,7 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — node-name.
      *
-     * "For a Comment Node, dm:node-name returns the empty sequence."
+     * <p>"For a Comment Node, dm:node-name returns the empty sequence."
      */
     @Override
     public Name nodeName() {
@@ -115,7 +115,7 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — attributes.
      *
-     * For a Comment Node, dm:attributes returns the empty sequence.
+     * <p>For a Comment Node, dm:attributes returns the empty sequence.
      */
     @Override
     public List<Item> attributes() {
@@ -125,7 +125,7 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — children.
      *
-     * For a Comment Node, dm:children returns the empty sequence.
+     * <p>For a Comment Node, dm:children returns the empty sequence.
      */
     @Override
     public List<Item> children() {
@@ -135,7 +135,7 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — base-uri.
      *
-     * For a Comment Node, dm:base-uri returns the base URI of the parent node, if it has one;
+     * <p>For a Comment Node, dm:base-uri returns the base URI of the parent node, if it has one;
      * otherwise it returns the empty sequence.
      */
     @Override
@@ -149,9 +149,9 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — document-uri.
      *
-     * For a Comment Node, dm:document-uri returns the document-uri of the document node that is
-     * the root of the tree containing the comment node, if it has one; otherwise it returns
-     * the empty sequence.
+     * <p>For a Comment Node, dm:document-uri returns the document-uri of the document node that is
+     * the root of the tree containing the comment node, if it has one; otherwise it returns the
+     * empty sequence.
      */
     @Override
     public List<Item> documentUri() {
@@ -164,7 +164,7 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — is-id.
      *
-     * For a Comment Node, dm:is-id returns false.
+     * <p>For a Comment Node, dm:is-id returns false.
      */
     @Override
     public boolean isId() {
@@ -174,7 +174,7 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — is-idrefs.
      *
-     * For a Comment Node, dm:is-idrefs returns false.
+     * <p>For a Comment Node, dm:is-idrefs returns false.
      */
     @Override
     public boolean isIdrefs() {
@@ -184,7 +184,7 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — nilled.
      *
-     * For a Comment Node, dm:nilled returns the empty sequence.
+     * <p>For a Comment Node, dm:nilled returns the empty sequence.
      */
     @Override
     public List<Item> nilled() {
@@ -194,7 +194,7 @@ public class CommentItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.6 Comment Node Accessors — type-name.
      *
-     * For a Comment Node, dm:type-name returns the empty sequence.
+     * <p>For a Comment Node, dm:type-name returns the empty sequence.
      */
     @Override
     public List<Item> typeName() {

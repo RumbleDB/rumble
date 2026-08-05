@@ -16,7 +16,12 @@
  */
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
@@ -27,17 +32,10 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Dynamic invocation of a function item that represents a builtin named function reference.
- */
+/** Dynamic invocation of a function item that represents a builtin named function reference. */
 public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final Item functionItem;
     private final List<RuntimeIterator> functionArguments;
@@ -48,31 +46,28 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
     public BuiltinFunctionItemCallIterator(
             Item functionItem,
             List<RuntimeIterator> functionArguments,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            functionArguments.stream().filter(arg -> arg != null).toList(),
-            staticContext.toBuilder().isUpdating(functionItem.getSignature().isUpdating()).build()
-        );
+                functionArguments.stream().filter(arg -> arg != null).toList(),
+                staticContext.toBuilder()
+                        .isUpdating(functionItem.getSignature().isUpdating())
+                        .build());
 
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
 
-        FunctionCallArgumentConversion.validateArity(functionItem, this.functionArguments, getMetadata());
+        FunctionCallArgumentConversion.validateArity(
+                functionItem, this.functionArguments, getMetadata());
         FunctionCallArgumentConversion.wrapAccordingToSignature(
-            functionItem,
-            this.functionArguments,
-            staticContext
-        );
+                functionItem, this.functionArguments, staticContext);
     }
 
     private RuntimeIterator newBuiltinDelegate() {
         return NamedFunctions.getBuiltInFunctionIterator(
-            this.functionItem.getIdentifier(),
-            new ArrayList<>(this.functionArguments),
-            this.staticContext,
-            true
-        );
+                this.functionItem.getIdentifier(),
+                new ArrayList<>(this.functionArguments),
+                this.staticContext,
+                true);
     }
 
     @Override
@@ -91,11 +86,10 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE
-                    + " in "
-                    + this.functionItem.getIdentifier().getName()
-                    + "  function",
-                getMetadata()
-        );
+                        + " in "
+                        + this.functionItem.getIdentifier().getName()
+                        + "  function",
+                getMetadata());
     }
 
     @Override

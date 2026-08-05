@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class DeleteExpression extends Expression {
@@ -17,10 +18,7 @@ public class DeleteExpression extends Expression {
     private Expression locatorExpression;
 
     public DeleteExpression(
-            Expression mainExpression,
-            Expression locatorExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression mainExpression, Expression locatorExpression, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Main expression cannot be null in a delete expression.");
@@ -36,7 +34,6 @@ public class DeleteExpression extends Expression {
     public List<Node> getChildren() {
         return Arrays.asList(this.mainExpression, this.locatorExpression);
     }
-
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {

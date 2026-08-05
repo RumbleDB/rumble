@@ -1,22 +1,21 @@
 package org.rumbledb.items;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+
 public class SequenceArrayItem extends AbstractArrayItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final List<List<Item>> memberSequences;
     private int mutabilityLevel;
     private long topLevelID;
@@ -91,8 +90,7 @@ public class SequenceArrayItem extends AbstractArrayItem {
         for (List<Item> member : this.memberSequences) {
             if (member.size() != 1) {
                 throw new OurBadException(
-                        "getItemMembers is not defined when an array member is a non-singleton sequence."
-                );
+                        "getItemMembers is not defined when an array member is a non-singleton sequence.");
             }
             members.add(member.get(0));
         }
@@ -112,15 +110,16 @@ public class SequenceArrayItem extends AbstractArrayItem {
     public Item getItemAt(int position) throws OurBadException {
         if (position < 0 || position >= getSize()) {
             throw new ArrayIndexOutOfBoundsException(
-                    "Tried to access array index: " + (position + 1) + ", of array with length: " + getSize(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Tried to access array index: "
+                            + (position + 1)
+                            + ", of array with length: "
+                            + getSize(),
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         List<Item> member = this.memberSequences.get(position);
         if (member.size() != 1) {
             throw new OurBadException(
-                    "getItemAt() is not defined for non-singleton member sequences; use getSequenceAt(int) instead."
-            );
+                    "getItemAt() is not defined for non-singleton member sequences; use getSequenceAt(int) instead.");
         }
         return member.get(0);
     }
@@ -129,9 +128,11 @@ public class SequenceArrayItem extends AbstractArrayItem {
     public List<Item> getSequenceAt(int position) {
         if (position < 0 || position >= getSize()) {
             throw new ArrayIndexOutOfBoundsException(
-                    "Tried to access array index: " + (position + 1) + ", of array with length: " + getSize(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Tried to access array index: "
+                            + (position + 1)
+                            + ", of array with length: "
+                            + getSize(),
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         List<Item> member = this.memberSequences.get(position);
         return member;
@@ -199,8 +200,6 @@ public class SequenceArrayItem extends AbstractArrayItem {
     }
 
     // endregion arrays
-
-
 
     @Override
     public ItemType getDynamicType() {
@@ -287,8 +286,7 @@ public class SequenceArrayItem extends AbstractArrayItem {
                 // Fallback: use JSON representation of the member sequence as a scalar.
                 // This keeps Spark integration conservative for now.
                 List<Item> asSequence = member;
-                Item sequenceWrapper = ItemFactory.getInstance()
-                    .createArrayItem(asSequence, false);
+                Item sequenceWrapper = ItemFactory.getInstance().createArrayItem(asSequence, false);
                 sb.append(sequenceWrapper.getSparkSQLValue());
             }
             if (i + 1 < this.memberSequences.size()) {

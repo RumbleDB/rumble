@@ -20,8 +20,15 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,24 +36,15 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 public class ObjectDescendantFunctionIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private Queue<Item>
+            nextResults; // queue that holds the results created by the current item in inspection
 
     public ObjectDescendantFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
@@ -64,15 +62,15 @@ public class ObjectDescendantFunctionIterator extends HybridRuntimeIterator {
         if (this.hasNext) {
             Item result = this.nextResults.remove(); // save the result to be returned
             if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
+                // if there are no more results left in the queue, trigger calculation for the next
+                // result
                 setNextResult();
             }
             return result;
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " DESCENDANT-OBJECTS function",
-                getMetadata()
-        );
+                getMetadata());
     }
 
     public void setNextResult() {

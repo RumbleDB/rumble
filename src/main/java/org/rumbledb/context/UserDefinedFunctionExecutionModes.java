@@ -20,30 +20,34 @@
 
 package org.rumbledb.context;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.expressions.ExecutionMode;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.expressions.ExecutionMode;
+
 public class UserDefinedFunctionExecutionModes {
 
-    // two maps for User defined function are needed as execution mode is known at static analysis phase
+    // two maps for User defined function are needed as execution mode is known at static analysis
+    // phase
     // but functions items are fully known at runtimeIterator generation
     private final HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
-    private final HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
+    private final HashMap<FunctionIdentifier, List<ExecutionMode>>
+            userDefinedFunctionsParametersStorageMode;
+
     @Getter
     private final List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
-    @Setter
-    private String queryLanguage;
+
+    @Setter private String queryLanguage;
 
     public UserDefinedFunctionExecutionModes() {
         this.userDefinedFunctionsExecutionMode = new HashMap<>();
@@ -57,47 +61,37 @@ public class UserDefinedFunctionExecutionModes {
     }
 
     public ExecutionMode getExecutionMode(
-            FunctionIdentifier identifier,
-            ExceptionMetadata metadata
-    ) {
+            FunctionIdentifier identifier, ExceptionMetadata metadata) {
         if (exists(identifier)) {
             return this.userDefinedFunctionsExecutionMode.get(identifier);
         }
         throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                metadata
-        );
-
+                identifier.getName(), identifier.getArity(), metadata);
     }
 
     public void setExecutionMode(
             FunctionIdentifier functionIdentifier,
             ExecutionMode executionMode,
             boolean suppressErrorsForFunctionSignatureCollision,
-            ExceptionMetadata metadata
-    ) {
-        if (
-            BuiltinFunctionCatalogue.exists(functionIdentifier, this.queryLanguage)
-                ||
-                (!suppressErrorsForFunctionSignatureCollision
-                    && this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
-        ) {
+            ExceptionMetadata metadata) {
+        if (BuiltinFunctionCatalogue.exists(functionIdentifier, this.queryLanguage)
+                || (!suppressErrorsForFunctionSignatureCollision
+                        && this.userDefinedFunctionsExecutionMode.containsKey(
+                                functionIdentifier))) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, metadata);
         }
 
         if (isAddingNewUnsetUserDefinedFunction(functionIdentifier, executionMode)) {
             this.userDefinedFunctionIdentifiersWithUnsetExecutionModes.add(functionIdentifier);
-        } else if (isUpdatingUnsetUserDefinedFunctionToNonUnset(functionIdentifier, executionMode)) {
+        } else if (isUpdatingUnsetUserDefinedFunctionToNonUnset(
+                functionIdentifier, executionMode)) {
             this.userDefinedFunctionIdentifiersWithUnsetExecutionModes.remove(functionIdentifier);
         }
         this.userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
     }
 
     public List<ExecutionMode> getParameterExecutionMode(
-            FunctionIdentifier identifier,
-            ExceptionMetadata metadata
-    ) {
+            FunctionIdentifier identifier, ExceptionMetadata metadata) {
         if (exists(identifier)) {
             return this.userDefinedFunctionsParametersStorageMode.get(identifier);
         }
@@ -112,14 +106,13 @@ public class UserDefinedFunctionExecutionModes {
     public void setParameterExecutionMode(
             FunctionIdentifier functionIdentifier,
             List<ExecutionMode> executionModes,
-            ExceptionMetadata meta
-    ) {
+            ExceptionMetadata meta) {
         List<ExecutionMode> newModes = new ArrayList<>();
         if (!this.userDefinedFunctionsParametersStorageMode.containsKey(functionIdentifier)) {
             this.userDefinedFunctionsParametersStorageMode.put(functionIdentifier, executionModes);
         }
-        Iterator<ExecutionMode> oldModes = this.userDefinedFunctionsParametersStorageMode.get(functionIdentifier)
-            .iterator();
+        Iterator<ExecutionMode> oldModes =
+                this.userDefinedFunctionsParametersStorageMode.get(functionIdentifier).iterator();
         Iterator<ExecutionMode> updatedModes = executionModes.iterator();
         while (oldModes.hasNext() && updatedModes.hasNext()) {
             ExecutionMode oldMode = oldModes.next();
@@ -138,11 +131,10 @@ public class UserDefinedFunctionExecutionModes {
             }
             throw new OurBadException(
                     "Conflicting execution modes in user-defined function parameters for function: "
-                        + functionIdentifier.getName()
-                        + " with arity: "
-                        + functionIdentifier.getArity()
-                        + ". This happens when the same function is used in a setting with big sequences and another with small sequences, which is an unsupported feature. If you need this, please let us know so we can prioritize."
-            );
+                            + functionIdentifier.getName()
+                            + " with arity: "
+                            + functionIdentifier.getArity()
+                            + ". This happens when the same function is used in a setting with big sequences and another with small sequences, which is an unsupported feature. If you need this, please let us know so we can prioritize.");
         }
         if (oldModes.hasNext() || updatedModes.hasNext()) {
             throw new OurBadException("Inconsistent parameter execution modes.");
@@ -151,20 +143,17 @@ public class UserDefinedFunctionExecutionModes {
     }
 
     private boolean isAddingNewUnsetUserDefinedFunction(
-            FunctionIdentifier functionIdentifier,
-            ExecutionMode executionMode
-    ) {
+            FunctionIdentifier functionIdentifier, ExecutionMode executionMode) {
         return !this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
-            && executionMode == ExecutionMode.UNSET;
+                && executionMode == ExecutionMode.UNSET;
     }
 
     private boolean isUpdatingUnsetUserDefinedFunctionToNonUnset(
-            FunctionIdentifier functionIdentifier,
-            ExecutionMode executionMode
-    ) {
+            FunctionIdentifier functionIdentifier, ExecutionMode executionMode) {
         return this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
-            && this.userDefinedFunctionsExecutionMode.get(functionIdentifier) == ExecutionMode.UNSET
-            && executionMode != ExecutionMode.UNSET;
+                && this.userDefinedFunctionsExecutionMode.get(functionIdentifier)
+                        == ExecutionMode.UNSET
+                && executionMode != ExecutionMode.UNSET;
     }
 
     @Override
@@ -177,7 +166,8 @@ public class UserDefinedFunctionExecutionModes {
         }
         for (FunctionIdentifier fi : this.userDefinedFunctionsParametersStorageMode.keySet()) {
             List<ExecutionMode> modes = this.userDefinedFunctionsParametersStorageMode.get(fi);
-            List<String> modeStrings = modes.stream().map(x -> x.toString()).collect(Collectors.toList());
+            List<String> modeStrings =
+                    modes.stream().map(x -> x.toString()).collect(Collectors.toList());
             stringBuilder.append(fi + " parameters: " + String.join(", ", modeStrings));
             stringBuilder.append("\n");
         }

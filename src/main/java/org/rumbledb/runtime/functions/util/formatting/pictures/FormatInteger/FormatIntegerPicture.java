@@ -9,11 +9,8 @@ public class FormatIntegerPicture {
     private final IntegerFormatModifier formatModifier;
 
     FormatIntegerPicture(
-            PrimaryFormatToken primaryFormatToken,
-            IntegerFormatModifier formatModifier
-    ) {
+            PrimaryFormatToken primaryFormatToken, IntegerFormatModifier formatModifier) {
         this.primaryFormatToken = primaryFormatToken;
         this.formatModifier = formatModifier;
     }
-
 }

@@ -1,5 +1,12 @@
 package org.rumbledb.runtime.functions.xml;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -11,31 +18,21 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.JSONLiteralParsingUtils;
 import org.rumbledb.items.parsing.JSONParsingOptions;
-import org.rumbledb.serialization.SerializationParameters;
-import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
+import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.Serializers;
 
 public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private static final String FUNCTIONS_NAMESPACE = "http://www.w3.org/2005/xpath-functions";
     private static final Pattern JSON_NUMBER_PATTERN =
-        Pattern.compile("-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
+            Pattern.compile("-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
     private static final Pattern PERMISSIVE_NUMBER_PATTERN =
-        Pattern.compile("[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
+            Pattern.compile("[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
 
     public XMLToJsonFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -56,9 +53,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return this.getChild(0).materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "fn:xml-to-json expects at most one input item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "fn:xml-to-json expects at most one input item [err:XPTY0004].", getMetadata());
         }
     }
 
@@ -73,21 +68,18 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "The options argument of fn:xml-to-json must be a single map item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         if (options == null) {
             throw new UnexpectedTypeException(
                     "The options argument of fn:xml-to-json must be a map item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (!options.isMap()) {
             throw new UnexpectedTypeException(
                     "The options argument of fn:xml-to-json must be a map item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         List<Item> indentOption = options.getSequenceByKey("indent");
@@ -97,8 +89,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (indentOption.size() != 1 || !indentOption.get(0).isBoolean()) {
             throw new UnexpectedTypeException(
                     "The indent option of fn:xml-to-json must be a single xs:boolean [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return indentOption.get(0).getBooleanValue();
     }
@@ -111,8 +102,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (!input.isElementNode()) {
             throw new UnexpectedTypeException(
                     "fn:xml-to-json expects an element or document node [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return parseJsonElement(input, true);
     }
@@ -133,12 +123,14 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 throw invalidRepresentation("Document node contains a non-element child.");
             }
             if (root != null) {
-                throw invalidRepresentation("Document node contains more than one top-level element.");
+                throw invalidRepresentation(
+                        "Document node contains more than one top-level element.");
             }
             root = child;
         }
         if (root == null) {
-            throw invalidRepresentation("Document node does not contain a JSON representation element.");
+            throw invalidRepresentation(
+                    "Document node does not contain a JSON representation element.");
         }
         return root;
     }
@@ -153,12 +145,15 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             case "array" -> parseArray(element);
             case "string" -> parseStringValue(element);
             case "number" -> parseNumberValue(element);
-            case "boolean" -> ItemFactory.getInstance().createBooleanItem(parseBooleanValue(element));
+            case "boolean" ->
+                    ItemFactory.getInstance().createBooleanItem(parseBooleanValue(element));
             case "null" -> {
                 ensureOnlyScalarChildren(element);
                 yield ItemFactory.getInstance().createNullItem();
             }
-            default -> throw invalidRepresentation("Unsupported JSON representation element: " + localName + ".");
+            default ->
+                    throw invalidRepresentation(
+                            "Unsupported JSON representation element: " + localName + ".");
         };
     }
 
@@ -168,14 +163,12 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             throw invalidRepresentation("Element is not in the XPath functions namespace.");
         }
         String localName = name.getLocalName();
-        if (
-            !localName.equals("map")
+        if (!localName.equals("map")
                 && !localName.equals("array")
                 && !localName.equals("string")
                 && !localName.equals("number")
                 && !localName.equals("boolean")
-                && !localName.equals("null")
-        ) {
+                && !localName.equals("null")) {
             throw invalidRepresentation("Element is not part of the XML representation of JSON.");
         }
     }
@@ -187,14 +180,16 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             String localName = attributeName.getLocalName();
 
             if (FUNCTIONS_NAMESPACE.equals(namespace)) {
-                throw invalidRepresentation("Attributes in the XPath functions namespace are not permitted.");
+                throw invalidRepresentation(
+                        "Attributes in the XPath functions namespace are not permitted.");
             }
             if (namespace != null && !namespace.isEmpty()) {
                 continue;
             }
             if (localName.equals("key")) {
                 if (!allowKeyAttribute) {
-                    throw invalidRepresentation("A key attribute is not permitted on this element.");
+                    throw invalidRepresentation(
+                            "A key attribute is not permitted on this element.");
                 }
                 continue;
             }
@@ -225,7 +220,8 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
             String key = extractRequiredKey(child);
             if (keys.contains(key)) {
-                throw invalidRepresentation("Duplicate keys are not permitted in the XML representation of JSON.");
+                throw invalidRepresentation(
+                        "Duplicate keys are not permitted in the XML representation of JSON.");
             }
             keys.add(key);
             values.add(parseJsonElement(child, true));
@@ -241,7 +237,8 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             }
             if (child.isTextNode()) {
                 if (!child.getStringValue().trim().isEmpty()) {
-                    throw invalidRepresentation("An array may not contain non-whitespace text nodes.");
+                    throw invalidRepresentation(
+                            "An array may not contain non-whitespace text nodes.");
                 }
                 continue;
             }
@@ -280,9 +277,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
         if (JSON_NUMBER_PATTERN.matcher(stringValue).matches()) {
             return JSONLiteralParsingUtils.getItemFromJSONNumber(
-                stringValue,
-                JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE
-            );
+                    stringValue, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE);
         }
         if (!PERMISSIVE_NUMBER_PATTERN.matcher(stringValue).matches()) {
             throw invalidRepresentation("Invalid lexical representation for a JSON number.");
@@ -296,7 +291,8 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             if (normalized.equals("0") && stringValue.startsWith("-")) {
                 return ItemFactory.getInstance().createDoubleItem(-0d);
             }
-            return JSONLiteralParsingUtils.getItemFromJSONNumber(normalized, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE);
+            return JSONLiteralParsingUtils.getItemFromJSONNumber(
+                    normalized, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE);
         } catch (NumberFormatException e) {
             throw invalidRepresentation("Invalid lexical representation for a JSON number.");
         }
@@ -324,7 +320,8 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 }
                 continue;
             }
-            throw invalidRepresentation("A scalar JSON representation element contains an invalid child.");
+            throw invalidRepresentation(
+                    "A scalar JSON representation element contains an invalid child.");
         }
     }
 
@@ -338,7 +335,8 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 result.append(child.getStringValue());
                 continue;
             }
-            throw invalidRepresentation("A scalar JSON representation element contains an invalid child.");
+            throw invalidRepresentation(
+                    "A scalar JSON representation element contains an invalid child.");
         }
         return result.toString();
     }
@@ -347,7 +345,8 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         for (Item attribute : element.attributes()) {
             Name attributeName = attribute.nodeName();
             String namespace = attributeName.getNamespace();
-            if ((namespace == null || namespace.isEmpty()) && localName.equals(attributeName.getLocalName())) {
+            if ((namespace == null || namespace.isEmpty())
+                    && localName.equals(attributeName.getLocalName())) {
                 return attribute;
             }
         }
@@ -364,12 +363,10 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return;
         }
         String normalized = value.trim();
-        if (
-            normalized.equals("true")
+        if (normalized.equals("true")
                 || normalized.equals("false")
                 || normalized.equals("1")
-                || normalized.equals("0")
-        ) {
+                || normalized.equals("0")) {
             return;
         }
         throw invalidRepresentation("Attribute " + attributeName + " must have a boolean value.");
@@ -401,7 +398,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             }
             try {
                 JSONLiteralParsingUtils.DecodedEscape decodedEscape =
-                    JSONLiteralParsingUtils.decodeEscapeSequence(content, index);
+                        JSONLiteralParsingUtils.decodeEscapeSequence(content, index);
                 decoded.append(decodedEscape.getDecodedText());
                 index = decodedEscape.getNextIndex();
             } catch (IllegalArgumentException e) {
@@ -450,7 +447,8 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private RumbleException invalidRepresentation(String message) {
-        return new RumbleException(message, ErrorCode.InvalidXMLRepresentationOfJSON, getMetadata());
+        return new RumbleException(
+                message, ErrorCode.InvalidXMLRepresentationOfJSON, getMetadata());
     }
 
     private RumbleException invalidEscape(String message) {

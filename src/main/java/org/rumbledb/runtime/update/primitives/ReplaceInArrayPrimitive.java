@@ -2,13 +2,13 @@ package org.rumbledb.runtime.update.primitives;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-
 
 public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
@@ -18,16 +18,10 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
     private Collection collection;
 
     public ReplaceInArrayPrimitive(
-            Item targetArray,
-            Item positionInt,
-            Item replacementItem,
-            ExceptionMetadata metadata
-    ) {
+            Item targetArray, Item positionInt, Item replacementItem, ExceptionMetadata metadata) {
         if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize()) {
             throw new CannotResolveUpdateSelectorException(
-                    "Cannot replace item at index out of range of target array",
-                    metadata
-            );
+                    "Cannot replace item at index out of range of target array", metadata);
         }
 
         this.target = targetArray;
@@ -63,7 +57,9 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         // TODO: Sort out diff types of content Item
         // TODO: Find out name of array column
         // ASSUME pathIn CONTAINS ARRAYFIELD NAME
-        // PERHAPS CASE OF REPLACING ARRAY WITH 1 ITEM SHOULD CREATE NEW ARRAYCOL WITH CORRECTED TYPE IF TYPE CHANGES
+        // PERHAPS CASE OF REPLACING ARRAY WITH 1 ITEM SHOULD CREATE NEW ARRAYCOL WITH CORRECTED
+        // TYPE IF
+        // TYPE CHANGES
 
         String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
         String location = this.collection.getPhysicalName();
@@ -71,25 +67,30 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
-            String selectArrayQuery = "SELECT "
-                + pathIn
-                + " AS `"
-                + SparkSessionManager.nonObjectJSONiqItemColumnName
-                + "` FROM "
-                + location
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
+            String selectArrayQuery =
+                    "SELECT "
+                            + pathIn
+                            + " AS `"
+                            + SparkSessionManager.nonObjectJSONiqItemColumnName
+                            + "` FROM "
+                            + location
+                            + " WHERE `"
+                            + SparkSessionManager.rowIdColumnName
+                            + "` == "
+                            + rowID;
 
-            Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
+            Dataset<Row> arrayDF =
+                    SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
-                .getType();
+            ItemType arrayType =
+                    ItemTypeFactory.createItemType(arrayDF.schema())
+                            .getObjectContentFacet(
+                                    SparkSessionManager.nonObjectJSONiqItemColumnName)
+                            .getType();
 
             this.applyItem();
-            this.applySetFieldInCollection(location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
+            this.applySetFieldInCollection(
+                    location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
         } else {
             this.arrayIndexingApplyDelta();
         }

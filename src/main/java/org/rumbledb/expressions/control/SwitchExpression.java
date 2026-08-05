@@ -20,15 +20,15 @@
 
 package org.rumbledb.expressions.control;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 public class SwitchExpression extends Expression {
@@ -41,8 +41,7 @@ public class SwitchExpression extends Expression {
             Expression testCondition,
             List<SwitchCase> cases,
             Expression defaultExpression,
-            ExceptionMetadata metadataFromContext
-    ) {
+            ExceptionMetadata metadataFromContext) {
         super(metadataFromContext);
         this.testCondition = testCondition;
         this.cases = cases;

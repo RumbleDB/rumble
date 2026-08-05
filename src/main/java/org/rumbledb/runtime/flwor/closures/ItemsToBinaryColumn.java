@@ -20,22 +20,21 @@
 
 package org.rumbledb.runtime.flwor.closures;
 
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.rumbledb.api.Item;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
+
 public class ItemsToBinaryColumn implements Function<Item, Row> {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final DataFrameContext dataFrameContext;
 
     public ItemsToBinaryColumn() {
@@ -52,11 +51,10 @@ public class ItemsToBinaryColumn implements Function<Item, Row> {
         itemList.add(item);
 
         return RowFactory.create(
-            (Object) FlworDataFrameUtils.serializeItemList(
-                itemList,
-                this.dataFrameContext.getKryo(),
-                this.dataFrameContext.getOutput()
-            )
-        );
+                (Object)
+                        FlworDataFrameUtils.serializeItemList(
+                                itemList,
+                                this.dataFrameContext.getKryo(),
+                                this.dataFrameContext.getOutput()));
     }
 }

@@ -10,6 +10,7 @@ import java.util.Set;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -20,80 +21,72 @@ import org.rumbledb.types.SequenceType;
 @Value
 @Builder(toBuilder = true)
 public class RuntimeStaticContext implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final URI staticURI;
     private final String staticURIString;
 
     /**
-     * Query language associated with this context, which is used for error reporting and to determine the
-     * semantics of certain operations.
+     * Query language associated with this context, which is used for error reporting and to
+     * determine the semantics of certain operations.
      */
     private final String queryLanguage;
 
     /**
      * Runtime configuration associated with this context, which is used for error reporting and to
-     * determine limits such as the materialization cap; the returned configuration is never {@code null}
+     * determine limits such as the materialization cap; the returned configuration is never {@code
+     * null}
      */
-    @NonNull
-    private final RumbleConfiguration configuration;
+    @NonNull private final RumbleConfiguration configuration;
 
     private final SequenceType staticType;
 
     /**
-     * Execution mode in which expressions in this context should be evaluated; the returned execution mode
-     * is never {@code null}
+     * Execution mode in which expressions in this context should be evaluated; the returned
+     * execution mode is never {@code null}
      */
-    @NonNull
-    private final ExecutionMode executionMode;
+    @NonNull private final ExecutionMode executionMode;
 
-    /**
-     * Metadata associated with this context, which is used for error reporting.
-     */
-    @NonNull
-    private final ExceptionMetadata metadata;
+    /** Metadata associated with this context, which is used for error reporting. */
+    @NonNull private final ExceptionMetadata metadata;
 
     @Builder.Default
     private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
 
     @Builder.Default
-    private final Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
+    private final Set<String> staticallyKnownCollations =
+            CollationCatalogue.defaultStaticallyKnownCollations();
 
     private final SerializationParameters serializationParameters;
 
-    @Builder.Default
-    private final String defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
+    @Builder.Default private final String defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
 
     /**
-     * Default decimal format definition, or {@code null} if no default decimal format is defined in this
-     * context
+     * Default decimal format definition, or {@code null} if no default decimal format is defined in
+     * this context
      */
     private final DecimalFormatDefinition defaultDecimalFormat;
 
     /**
-     * Decimal format definitions defined in this context, or {@code null} if no decimal formats are defined
-     * in this context
+     * Decimal format definitions defined in this context, or {@code null} if no decimal formats are
+     * defined in this context
      */
     private final Map<Name, DecimalFormatDefinition> decimalFormats;
 
     /**
-     * Whether this context is associated with a query that has side effects. This is used to determine whether
-     * certain optimizations are allowed, such as reordering of expressions or elimination of redundant expressions.
+     * Whether this context is associated with a query that has side effects. This is used to
+     * determine whether certain optimizations are allowed, such as reordering of expressions or
+     * elimination of redundant expressions.
      */
     private final boolean isQuerySideEffecting;
 
-    @Builder.Default
-    private final boolean copyNamespacesPreserve = true;
+    @Builder.Default private final boolean copyNamespacesPreserve = true;
 
-    @Builder.Default
-    private final boolean copyNamespacesInherit = true;
+    @Builder.Default private final boolean copyNamespacesInherit = true;
 
-    @Builder.Default
-    private final boolean isUpdating = false;
+    @Builder.Default private final boolean isUpdating = false;
 
-    @Builder.Default
-    private final boolean isSequential = false;
+    @Builder.Default private final boolean isSequential = false;
 
     @Override
     public String toString() {
@@ -104,8 +97,12 @@ public class RuntimeStaticContext implements Serializable {
         sb.append("  staticType: ").append(this.staticType).append("\n");
         sb.append("  executionMode: ").append(this.executionMode).append("\n");
         sb.append("  metadata: ").append(this.metadata).append("\n");
-        sb.append("  staticallyKnownNamespaces: ").append(this.staticallyKnownNamespaces).append("\n");
-        sb.append("  staticallyKnownCollations: ").append(this.staticallyKnownCollations).append("\n");
+        sb.append("  staticallyKnownNamespaces: ")
+                .append(this.staticallyKnownNamespaces)
+                .append("\n");
+        sb.append("  staticallyKnownCollations: ")
+                .append(this.staticallyKnownCollations)
+                .append("\n");
         sb.append("  defaultCollation: ").append(this.defaultCollation).append("\n");
         sb.append("  copyNamespacesPreserve: ").append(this.copyNamespacesPreserve).append("\n");
         sb.append("  copyNamespacesInherit: ").append(this.copyNamespacesInherit).append("\n");
@@ -120,11 +117,10 @@ public class RuntimeStaticContext implements Serializable {
     }
 
     /**
-     * Lombok generates the body of this class.
-     * Without this declaration, Javadoc generation will return error because it cannot find symbol
+     * Lombok generates the body of this class. Without this declaration, Javadoc generation will
+     * return error because it cannot find symbol
      */
-    public static class RuntimeStaticContextBuilder {
-    }
+    public static class RuntimeStaticContextBuilder {}
 
     /**
      * Returns a builder seeded with the settings that originate in a {@link StaticContext}.
@@ -132,30 +128,31 @@ public class RuntimeStaticContext implements Serializable {
      * @param staticContext the static context to copy settings from; must not be {@code null}
      * @return a builder for completing a runtime static context
      */
-    public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
+    public static RuntimeStaticContextBuilder fromStaticContext(
+            @NonNull StaticContext staticContext) {
         return builder()
-            .staticURI(staticContext.getStaticBaseURI())
-            .staticURIString(staticContext.getStaticBaseUriString())
-            .queryLanguage(staticContext.getQueryLanguage())
-            .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
-            .staticallyKnownCollations(staticContext.getStaticallyKnownCollations())
-            .serializationParameters(staticContext.getSerializationParameters())
-            .defaultCollation(staticContext.getDefaultCollation())
-            .defaultDecimalFormat(staticContext.getDefaultDecimalFormat())
-            .decimalFormats(staticContext.getDecimalFormats())
-            .isQuerySideEffecting(staticContext.isQuerySideEffecting())
-            .copyNamespacesPreserve(staticContext.isCopyNamespacesPreserve())
-            .copyNamespacesInherit(staticContext.isCopyNamespacesInherit());
+                .staticURI(staticContext.getStaticBaseURI())
+                .staticURIString(staticContext.getStaticBaseUriString())
+                .queryLanguage(staticContext.getQueryLanguage())
+                .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
+                .staticallyKnownCollations(staticContext.getStaticallyKnownCollations())
+                .serializationParameters(staticContext.getSerializationParameters())
+                .defaultCollation(staticContext.getDefaultCollation())
+                .defaultDecimalFormat(staticContext.getDefaultDecimalFormat())
+                .decimalFormats(staticContext.getDecimalFormats())
+                .isQuerySideEffecting(staticContext.isQuerySideEffecting())
+                .copyNamespacesPreserve(staticContext.isCopyNamespacesPreserve())
+                .copyNamespacesInherit(staticContext.isCopyNamespacesInherit());
     }
 
     /**
-     * Returns the static type of expressions in this context, or {@code null} if no static type is defined for this
-     * context. Note that clauses do not have static types, so calling this method on a context associated with a clause
-     * will throw an exception.
-     * 
-     * @return the static type of expressions in this context, or {@code null} if no static type is defined for this
-     *         context; note that clauses do not have static types, so calling this method on a context associated with
-     *         a clause will throw an exception
+     * Returns the static type of expressions in this context, or {@code null} if no static type is
+     * defined for this context. Note that clauses do not have static types, so calling this method
+     * on a context associated with a clause will throw an exception.
+     *
+     * @return the static type of expressions in this context, or {@code null} if no static type is
+     *     defined for this context; note that clauses do not have static types, so calling this
+     *     method on a context associated with a clause will throw an exception
      */
     public SequenceType getStaticType() {
         if (this.staticType == null) {
@@ -165,13 +162,14 @@ public class RuntimeStaticContext implements Serializable {
     }
 
     /**
-     * Resolves a namespace prefix using in-scope bindings from this context, falling back to built-in
-     * prefixes (fn, xs, ...). For the default element/type namespace, pass {@code ""}.
+     * Resolves a namespace prefix using in-scope bindings from this context, falling back to
+     * built-in prefixes (fn, xs, ...). For the default element/type namespace, pass {@code ""}.
      *
      * @return the namespace URI, or {@code null} if the prefix is not bound
      */
     public String resolvePrefix(String prefix) {
-        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
+        if (this.staticallyKnownNamespaces != null
+                && this.staticallyKnownNamespaces.containsKey(prefix)) {
             return this.staticallyKnownNamespaces.get(prefix);
         }
         return StaticContext.getBuiltinNamespaceBinding(prefix);

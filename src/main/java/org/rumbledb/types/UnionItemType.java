@@ -15,12 +15,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class UnionItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    private static final Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
-            Arrays.asList(ConstrainingFacetTypes.CONTENT)
-    );
+    private static final Set<ConstrainingFacetTypes> allowedFacets =
+            new HashSet<>(Arrays.asList(ConstrainingFacetTypes.CONTENT));
 
     private final Name name;
     private final ItemType baseType;
@@ -195,8 +193,7 @@ public class UnionItemType extends AbstractItemType {
     @Override
     public boolean isResolved() {
         for (ItemType itemType : this.types) {
-            if (!itemType.isResolved())
-                return false;
+            if (!itemType.isResolved()) return false;
         }
         return true;
     }
@@ -226,18 +223,14 @@ public class UnionItemType extends AbstractItemType {
         }
         ItemType first = this.types.get(0);
         ItemType second = this.types.get(1);
-        if (
-            first.equals(BuiltinTypesCatalogue.nullItem)
+        if (first.equals(BuiltinTypesCatalogue.nullItem)
                 && second.isAtomicItemType()
-                && second.isCompatibleWithDataFrames(configuration)
-        ) {
+                && second.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
-        if (
-            second.equals(BuiltinTypesCatalogue.nullItem)
+        if (second.equals(BuiltinTypesCatalogue.nullItem)
                 && first.isAtomicItemType()
-                && first.isCompatibleWithDataFrames(configuration)
-        ) {
+                && first.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
         return false;
@@ -280,7 +273,8 @@ public class UnionItemType extends AbstractItemType {
             return BuiltinTypesCatalogue.numericItem;
         }
         if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
-            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes));
+            return new UnionItemType(
+                    null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes));
         }
         return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes));
     }
@@ -309,5 +303,4 @@ public class UnionItemType extends AbstractItemType {
         }
         return null;
     }
-
 }

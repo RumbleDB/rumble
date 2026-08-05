@@ -20,19 +20,19 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
-import org.apache.spark.sql.api.java.UDF1;
-import org.rumbledb.api.Item;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.spark.sql.api.java.UDF1;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+
 public class IntegerSerializeUDF implements UDF1<Integer, byte[]> {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final List<Item> nextResult;
 
@@ -49,9 +49,8 @@ public class IntegerSerializeUDF implements UDF1<Integer, byte[]> {
         this.nextResult.add(ItemFactory.getInstance().createLongItem(countIndex.longValue()));
 
         return FlworDataFrameUtils.serializeItemList(
-            this.nextResult,
-            this.dataFrameContext.getKryo(),
-            this.dataFrameContext.getOutput()
-        );
+                this.nextResult,
+                this.dataFrameContext.getKryo(),
+                this.dataFrameContext.getOutput());
     }
 }

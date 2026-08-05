@@ -20,25 +20,22 @@
 
 package org.rumbledb.expressions.module;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class LibraryModule extends Module {
 
-    @Setter
-    protected StaticContext staticContext;
-    @Getter
-    private final String namespace;
-    @Getter
-    private final Prolog prolog;
+    @Setter protected StaticContext staticContext;
+    @Getter private final String namespace;
+    @Getter private final Prolog prolog;
 
     public LibraryModule(Prolog prolog, String namespace, ExceptionMetadata metadata) {
         super(metadata);
@@ -85,4 +82,3 @@ public class LibraryModule extends Module {
         this.prolog.serializeToJSONiq(sb, indent);
     }
 }
-

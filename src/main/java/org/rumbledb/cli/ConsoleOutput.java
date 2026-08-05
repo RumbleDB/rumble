@@ -20,12 +20,11 @@ package org.rumbledb.cli;
 /**
  * Centralizes user-facing command-line output.
  *
- * Debug logging should be done through the logging framework, not through this class.
+ * <p>Debug logging should be done through the logging framework, not through this class.
  */
 public final class ConsoleOutput {
 
-    private ConsoleOutput() {
-    }
+    private ConsoleOutput() {}
 
     /**
      * Prints user-facing text to standard output.
@@ -55,7 +54,8 @@ public final class ConsoleOutput {
     }
 
     /**
-     * Prints a stack trace to standard error when the user explicitly requested debug error details.
+     * Prints a stack trace to standard error when the user explicitly requested debug error
+     * details.
      *
      * @param throwable the throwable whose stack trace should be printed.
      */

@@ -31,6 +31,7 @@ import org.apache.spark.sql.types.DoubleType;
 import org.apache.spark.sql.types.FloatType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -83,22 +84,31 @@ public class SparkSessionManager {
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
 
-    public static final String nonObjectJSONiqItemColumnName = "notObject0d08af5d-10bb-4a73-af84-c6aac917a830";
-    public static final String emptyObjectJSONiqItemColumnName = "emptyobja84bc646-05af-4383-8853-2e9f31a710f2";
+    public static final String nonObjectJSONiqItemColumnName =
+            "notObject0d08af5d-10bb-4a73-af84-c6aac917a830";
+    public static final String emptyObjectJSONiqItemColumnName =
+            "emptyobja84bc646-05af-4383-8853-2e9f31a710f2";
     public static final String temporaryColumnName = "tmp0f7b4040-b404-4239-99dd-9b4cf2900594";
     public static final String countColumnName = "count5af0c0c8-e84c-482a-82ce-1887565cf448";
-    public static final String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b";
-    public static final String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
-    public static final String sparkSqlVariableName = "sparksql73706172-6b73-716c-7661-726961626c65";
+    public static final String rightHandSideHashColumnName =
+            "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b";
+    public static final String leftHandSideHashColumnName =
+            "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
+    public static final String sparkSqlVariableName =
+            "sparksql73706172-6b73-716c-7661-726961626c65";
     public static final String sequenceColumnName = "sequence56415249-4142-4c45-5345-5155454e4345";
 
     // Temporary column names for insert operations
     public static final String tempMaxRowIdColumnName = "maxRowId_2d8f6a4c0b8a4dd88c782b64e1b93a77";
-    public static final String tempMinRowOrderColumnName = "minRowOrder_9f7d9d6a5ee14c8b9d1074f4799c5d30";
-    public static final String tempMaxRowOrderColumnName = "maxRowOrder_3e8b7a4c1d2e4f6b8c9d0a1b2c3d4e5f";
+    public static final String tempMinRowOrderColumnName =
+            "minRowOrder_9f7d9d6a5ee14c8b9d1074f4799c5d30";
+    public static final String tempMaxRowOrderColumnName =
+            "maxRowOrder_3e8b7a4c1d2e4f6b8c9d0a1b2c3d4e5f";
     public static final String tempRowNumColumnName = "rowNum_f0a3c5e92a214f0c8cd50d6de3c4f9d9";
-    public static final String tempRowNumSeqColumnName = "rowNumSeq_d2f8b4a18e1f4fdb9c54cc5e4a3c23a6";
-    public static final String tempRowNumOrderColumnName = "rowNumOrder_b7c6a1f4ff4b4d099ad01f2b76c9a8e1";
+    public static final String tempRowNumSeqColumnName =
+            "rowNumSeq_d2f8b4a18e1f4fdb9c54cc5e4a3c23a6";
+    public static final String tempRowNumOrderColumnName =
+            "rowNumOrder_b7c6a1f4ff4b4d099ad01f2b76c9a8e1";
 
     // Special private column names
     public static final String mutabilityLevelColumnName = "__mutabilityLevel";
@@ -107,8 +117,7 @@ public class SparkSessionManager {
     public static final String tableLocationColumnName = "__tableLocation";
     public static final String rowOrderColumnName = "__rowOrder";
 
-    private SparkSessionManager() {
-    }
+    private SparkSessionManager() {}
 
     private SparkSessionManager(SparkConf conf) {
         this.configuration = conf;
@@ -155,29 +164,31 @@ public class SparkSessionManager {
     private void setDefaultConfiguration() {
         try {
             this.configuration = new SparkConf();
-            if (this.configuration.get("spark.app.name", DEFAULT_APP_NAME).equals(DEFAULT_APP_NAME)) {
+            if (this.configuration
+                    .get("spark.app.name", DEFAULT_APP_NAME)
+                    .equals(DEFAULT_APP_NAME)) {
                 LogManager.getLogger("SparkSessionManager")
-                    .warn(
-                        "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
-                            + APP_NAME
-                    );
+                        .warn(
+                                "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                                        + APP_NAME);
                 this.configuration.setAppName(APP_NAME);
             }
-            this.configuration.set("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/test.myCollection");
-            this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
-            this.configuration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
             this.configuration.set(
-                "spark.sql.catalog.spark_catalog",
-                "org.apache.spark.sql.delta.catalog.DeltaCatalog"
-            );
+                    "spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/test.myCollection");
+            this.configuration.set(
+                    "spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+            this.configuration.set(
+                    "spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
+            this.configuration.set(
+                    "spark.sql.catalog.spark_catalog",
+                    "org.apache.spark.sql.delta.catalog.DeltaCatalog");
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
             this.configuration.set("spark.log.level", LOG_LEVEL.name());
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(
-                    "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
-            );
+                    "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured.");
         }
     }
 
@@ -193,72 +204,78 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
+            this.session =
+                    SparkSession.builder()
+                            .config(this.configuration)
+                            .enableHiveSupport()
+                            .getOrCreate();
         } else {
-            throw new OurBadException("Session already exists: new session initialization prevented.");
+            throw new OurBadException(
+                    "Session already exists: new session initialization prevented.");
         }
     }
 
     private void initializeKryoSerialization() {
         if (!this.configuration.contains("spark.serializer")) {
-            this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+            this.configuration.set(
+                    "spark.serializer", "org.apache.spark.serializer.KryoSerializer");
             // this.configuration.set("spark.kryo.registrationRequired", "true");
-            Class<?>[] serializedClasses = new Class[] {
-                Item.class,
-                AnnotatedItem.class,
-                ArrayItem.class,
-                ObjectItem.class,
-                AnyURIItem.class,
-                Base64BinaryItem.class,
-                BooleanItem.class,
-                DateItem.class,
-                DateTimeItem.class,
-                DateTimeStampItem.class,
-                DayTimeDurationItem.class,
-                DecimalItem.class,
-                DoubleItem.class,
-                DurationItem.class,
-                FloatItem.class,
-                HexBinaryItem.class,
-                IntegerItem.class,
-                IntItem.class,
-                NullItem.class,
-                QNameItem.class,
-                StringItem.class,
-                TimeItem.class,
-                YearMonthDurationItem.class,
-                DocumentItem.class,
-                ElementItem.class,
-                AttributeItem.class,
-                NamespaceItem.class,
-                CommentItem.class,
-                ProcessingInstructionItem.class,
-                TextItem.class,
-                FunctionItem.class,
-                FunctionIdentifier.class,
-                Name.class,
-                SequenceType.class,
-                SequenceType.Arity.class,
-                ItemType.class,
-                DynamicContext.class,
-                FlworTuple.class,
-                FlworKey.class,
-                RuntimeIterator.class,
-                RuntimeTupleIterator.class,
-                StructType.class,
-                StructType[].class,
-                StructField.class,
-                StructField[].class,
-                BooleanType.class,
-                DoubleType.class,
-                FloatType.class,
-                IntType.class,
-            };
+            Class<?>[] serializedClasses =
+                    new Class[] {
+                        Item.class,
+                        AnnotatedItem.class,
+                        ArrayItem.class,
+                        ObjectItem.class,
+                        AnyURIItem.class,
+                        Base64BinaryItem.class,
+                        BooleanItem.class,
+                        DateItem.class,
+                        DateTimeItem.class,
+                        DateTimeStampItem.class,
+                        DayTimeDurationItem.class,
+                        DecimalItem.class,
+                        DoubleItem.class,
+                        DurationItem.class,
+                        FloatItem.class,
+                        HexBinaryItem.class,
+                        IntegerItem.class,
+                        IntItem.class,
+                        NullItem.class,
+                        QNameItem.class,
+                        StringItem.class,
+                        TimeItem.class,
+                        YearMonthDurationItem.class,
+                        DocumentItem.class,
+                        ElementItem.class,
+                        AttributeItem.class,
+                        NamespaceItem.class,
+                        CommentItem.class,
+                        ProcessingInstructionItem.class,
+                        TextItem.class,
+                        FunctionItem.class,
+                        FunctionIdentifier.class,
+                        Name.class,
+                        SequenceType.class,
+                        SequenceType.Arity.class,
+                        ItemType.class,
+                        DynamicContext.class,
+                        FlworTuple.class,
+                        FlworKey.class,
+                        RuntimeIterator.class,
+                        RuntimeTupleIterator.class,
+                        StructType.class,
+                        StructType[].class,
+                        StructField.class,
+                        StructField[].class,
+                        BooleanType.class,
+                        DoubleType.class,
+                        FloatType.class,
+                        IntType.class,
+                    };
 
             this.configuration.registerKryoClasses(serializedClasses);
         }
     }
-
 
     public void initializeConfigurationAndSession(SparkConf conf, boolean setAppName) {
         if (setAppName) {
@@ -276,9 +293,9 @@ public class SparkSessionManager {
             initializeSession();
         }
         if (this.javaSparkContext == null) {
-            this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
+            this.javaSparkContext =
+                    JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
         return this.javaSparkContext;
     }
-
 }

@@ -20,24 +20,22 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * Exception for XQTY0024: It is a type error if the content sequence in an element constructor
- * contains an attribute node or a namespace node following a node that is not an attribute or namespace node.
+ * contains an attribute node or a namespace node following a node that is not an attribute or
+ * namespace node.
  *
  * @see <a href="https://www.w3.org/TR/xquery-31/#ERRXQTY0024">XQuery 3.1, F: XQTY0024</a>
  */
 public class AttributeOrNamespaceAfterNonAttributeException extends RumbleException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public AttributeOrNamespaceAfterNonAttributeException(String message) {
         super(message, ErrorCode.AttributeOrNamespaceAfterNonAttributeErrorCode);
     }
 }
-
-

@@ -20,9 +20,14 @@
 
 package org.rumbledb.expressions.primary;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -36,33 +41,21 @@ import org.rumbledb.expressions.scripting.annotations.AnnotationConstants;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.types.SequenceType;
 
-import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.NON_SEQUENTIAL;
 import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.SEQUENTIAL;
 
 public class InlineFunctionExpression extends Expression {
 
-    @Getter
-    private final Name name;
-    @Getter
-    private final ExceptionMetadata nameMetadata;
-    @Getter
-    private final FunctionIdentifier functionIdentifier;
-    @Getter
-    private final Map<Name, SequenceType> params;
+    @Getter private final Name name;
+    @Getter private final ExceptionMetadata nameMetadata;
+    @Getter private final FunctionIdentifier functionIdentifier;
+    @Getter private final Map<Name, SequenceType> params;
     private final SequenceType returnType;
-    @Getter
-    private final StatementsAndOptionalExpr body;
+    @Getter private final StatementsAndOptionalExpr body;
     private final List<Annotation> annotations;
     private boolean hasSequentialPropertyAnnotation;
-    @Setter
-    private boolean hasExitStatement;
-    @Getter
-    private final boolean isExternal;
+    @Setter private boolean hasExitStatement;
+    @Getter private final boolean isExternal;
 
     public InlineFunctionExpression(
             List<Annotation> annotations,
@@ -71,8 +64,7 @@ public class InlineFunctionExpression extends Expression {
             SequenceType returnType,
             StatementsAndOptionalExpr body,
             boolean isExternal,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         this(annotations, name, params, returnType, body, isExternal, metadata, metadata);
     }
 
@@ -84,8 +76,7 @@ public class InlineFunctionExpression extends Expression {
             StatementsAndOptionalExpr body,
             boolean isExternal,
             ExceptionMetadata metadata,
-            ExceptionMetadata nameMetadata
-    ) {
+            ExceptionMetadata nameMetadata) {
         super(metadata);
         this.name = name;
         this.nameMetadata = nameMetadata;
@@ -119,8 +110,7 @@ public class InlineFunctionExpression extends Expression {
         if (foundSeqAnnotation && foundNonSeqAnnotation) {
             throw new InvalidAnnotationException(
                     "A function cannot be declared as both sequential and non-sequential!",
-                    this.getMetadata()
-            );
+                    this.getMetadata());
         }
         this.setSequential(foundSeqAnnotation);
     }
@@ -131,8 +121,7 @@ public class InlineFunctionExpression extends Expression {
             Map<Name, SequenceType> params,
             SequenceType returnType,
             StatementsAndOptionalExpr body,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         this(annotations, name, params, returnType, body, false, metadata);
     }
 
@@ -144,8 +133,7 @@ public class InlineFunctionExpression extends Expression {
         return this.returnType;
     }
 
-    @Nullable
-    public List<Annotation> getAnnotations() {
+    @Nullable public List<Annotation> getAnnotations() {
         return this.annotations;
     }
 
@@ -164,19 +152,17 @@ public class InlineFunctionExpression extends Expression {
         return Arrays.asList(this.body);
     }
 
-    public void registerUserDefinedFunctionExecutionMode(
-            VisitorConfig visitorConfig
-    ) {
+    public void registerUserDefinedFunctionExecutionMode(VisitorConfig visitorConfig) {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
         if (this.name != null) {
-            getStaticContext().getUserDefinedFunctionsExecutionModes()
-                .setExecutionMode(
-                    identifier,
-                    this.body.getHighestExecutionMode(visitorConfig),
-                    visitorConfig.suppressErrorsForFunctionSignatureCollision(),
-                    this.getMetadata()
-                );
+            getStaticContext()
+                    .getUserDefinedFunctionsExecutionModes()
+                    .setExecutionMode(
+                            identifier,
+                            this.body.getHighestExecutionMode(visitorConfig),
+                            visitorConfig.suppressErrorsForFunctionSignatureCollision(),
+                            this.getMetadata());
         }
     }
 
@@ -196,25 +182,26 @@ public class InlineFunctionExpression extends Expression {
             buffer.append(entry.getKey());
             buffer.append(", ");
             buffer.append(
-                entry.getValue().toString() + (entry.getValue().isResolved() ? " (resolved)" : " (unresolved)")
-            );
+                    entry.getValue().toString()
+                            + (entry.getValue().isResolved() ? " (resolved)" : " (unresolved)"));
             buffer.append(", ");
         }
         buffer.append(
-            this.returnType == null
-                ? "not set"
-                : this.returnType.toString() + (this.returnType.isResolved() ? " (resolved)" : " (unresolved)")
-        );
+                this.returnType == null
+                        ? "not set"
+                        : this.returnType.toString()
+                                + (this.returnType.isResolved() ? " (resolved)" : " (unresolved)"));
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
         buffer.append(
-            " | "
-                + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                " | "
+                        + (this.staticSequenceType == null
+                                ? "not set"
+                                : this.staticSequenceType
+                                        + (this.staticSequenceType.isResolved()
+                                                ? " (resolved)"
+                                                : " (unresolved)")));
         buffer.append("\n");
         for (int i = 0; i < indent + 2; ++i) {
             buffer.append("  ");
@@ -244,10 +231,8 @@ public class InlineFunctionExpression extends Expression {
                 }
                 i++;
             }
-            if (this.returnType != null)
-                sb.append(" as " + this.returnType.toString());
-            else
-                sb.append("\n");
+            if (this.returnType != null) sb.append(" as " + this.returnType.toString());
+            else sb.append("\n");
             indentIt(sb, indent);
             sb.append("{\n");
             this.body.serializeToJSONiq(sb, indent + 1);

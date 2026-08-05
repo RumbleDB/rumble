@@ -20,9 +20,13 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import java.io.Serial;
+import java.util.*;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
@@ -48,14 +52,9 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.io.Serial;
-import java.util.*;
-
 public class WhereClauseIterator extends RuntimeTupleIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator expression;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
@@ -63,8 +62,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
     public WhereClauseIterator(
             RuntimeTupleIterator child,
             RuntimeIterator whereExpression,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(child, staticContext);
         this.expression = whereExpression;
         this.expression.getVariableDependencies();
@@ -75,7 +73,9 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         super.open(context);
         if (this.child != null) {
             this.child.open(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
+            this.tupleContext =
+                    new DynamicContext(
+                            this.currentDynamicContext); // assign current context as parent
 
             setNextLocalTupleResult();
 
@@ -113,12 +113,17 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         while (this.child.hasNext()) {
             // tuple received from child, used for tuple creation
             inputTuple = this.child.next();
-            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
-                                                                                                   // variables from new
-                                                                                                   // tuple
+            this.tupleContext
+                    .getVariableValues()
+                    .removeAllVariables(); // clear the previous variables
+            this.tupleContext
+                    .getVariableValues()
+                    .setBindingsFromTuple(inputTuple, getMetadata()); // assign new
+            // variables from new
+            // tuple
 
-            boolean effectiveBooleanValue = this.expression.getEffectiveBooleanValue(this.tupleContext);
+            boolean effectiveBooleanValue =
+                    this.expression.getEffectiveBooleanValue(this.tupleContext);
             if (effectiveBooleanValue) {
                 this.nextLocalTupleResult = inputTuple;
                 this.hasNext = true;
@@ -132,9 +137,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworDataFrame getDataFrame(
-            DynamicContext context
-    ) {
+    public FlworDataFrame getDataFrame(DynamicContext context) {
         if (this.child == null) {
             throw new OurBadException("Invalid where clause.");
         }
@@ -142,8 +145,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         if (this.expression.isRDDOrDataFrame()) {
             throw new JobWithinAJobException(
                     "A where clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         FlworDataFrame dataFrameIfLimit = getDataFrameIfLimit(context);
@@ -161,41 +163,32 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
 
         FlworDataFrame nativeQueryResult = null;
         if (getConfiguration().runtime().useNativeExecution()) {
-            nativeQueryResult = tryNativeQuery(
-                df,
-                this.expression,
-                context,
-                this.getMetadata()
-            );
+            nativeQueryResult = tryNativeQuery(df, this.expression, context, this.getMetadata());
         }
         if (nativeQueryResult != null) {
             return nativeQueryResult;
         }
 
         // was not possible, we use let udf
-        List<FlworDataFrameColumn> UDFcolumns = df.getColumns(
-            this.expression.getVariableDependencies(),
-            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
-            null
-        );
+        List<FlworDataFrameColumn> UDFcolumns =
+                df.getColumns(
+                        this.expression.getVariableDependencies(),
+                        new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                        null);
 
         df.getUDFRegistration()
-            .register(
-                "whereClauseUDF",
-                new WhereClauseUDF(this.expression, context, UDFcolumns),
-                DataTypes.BooleanType
-            );
+                .register(
+                        "whereClauseUDF",
+                        new WhereClauseUDF(this.expression, context, UDFcolumns),
+                        DataTypes.BooleanType);
 
         String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         String input = df.createTempView();
         return df.sql(
-            String.format(
-                "select * from %s where whereClauseUDF(%s) = 'true'",
-                input,
-                UDFParameters
-            )
-        );
+                String.format(
+                        "select * from %s where whereClauseUDF(%s) = 'true'",
+                        input, UDFParameters));
     }
 
     private FlworDataFrame getDataFrameIfLimit(DynamicContext context) {
@@ -206,11 +199,12 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         if (!(this.expression instanceof ComparisonIterator comparisonIterator)) {
             return null;
         }
-        if (
-            !comparisonIterator.getComparisonOperator().equals(ComparisonExpression.ComparisonOperator.VC_LE)
-                &&
-                !comparisonIterator.getComparisonOperator().equals(ComparisonExpression.ComparisonOperator.GC_LE)
-        ) {
+        if (!comparisonIterator
+                        .getComparisonOperator()
+                        .equals(ComparisonExpression.ComparisonOperator.VC_LE)
+                && !comparisonIterator
+                        .getComparisonOperator()
+                        .equals(ComparisonExpression.ComparisonOperator.GC_LE)) {
             return null;
         }
         RuntimeIterator left = comparisonIterator.getLeftIterator();
@@ -237,9 +231,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
             return null;
         }
         LogManager.getLogger("WhereClauseSparkIterator")
-            .info(
-                "Rumble detected a LIMIT in a count and where clause."
-            );
+                .info("Rumble detected a LIMIT in a count and where clause.");
         FlworDataFrame df = this.child.getChildIterator().getDataFrame(context);
         String input = df.createTempView();
         return df.sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
@@ -255,27 +247,33 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         // System.err.println("[DEBUG] Height of the where clause: " + height);
         for (int i = 1; i < height; ++i) {
             if (!this.canSetEvaluationDepthLimit(i)) {
-                // System.err.println("[DEBUG] Depth " + i + " impossible (not a starting let or for clause).");
+                // System.err.println("[DEBUG] Depth " + i + " impossible (not a starting let or for
+                // clause).");
                 continue;
             }
             this.setEvaluationDepthLimit(i);
             if (this.containsClause(FLWOR_CLAUSES.GROUP_BY)) {
-                // System.err.println("[DEBUG] Depth " + i + " does not work (because of a group by clause).");
+                // System.err.println("[DEBUG] Depth " + i + " does not work (because of a group by
+                // clause).");
                 continue;
             }
             if (this.containsClause(FLWOR_CLAUSES.COUNT)) {
-                // System.err.println("[DEBUG] Depth " + i + " does not work (because of a count clause).");
+                // System.err.println("[DEBUG] Depth " + i + " does not work (because of a count
+                // clause).");
                 continue;
             }
             RuntimeTupleIterator otherChild = this.getSubtreeBeyondLimit(i);
             if (!otherChild.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)) {
                 // System.err.println(
-                // "[DEBUG] Depth " + i + " does not work (because the left does not have a DataFrame execution)."
+                // "[DEBUG] Depth " + i + " does not work (because the left does not have a
+                // DataFrame
+                // execution)."
                 // );
                 continue;
             }
             Set<Name> leftNames = otherChild.getOutputTupleVariableNames();
-            Map<Name, VariableDependency> rightDependencies = this.child.getDynamicContextVariableDependencies();
+            Map<Name, VariableDependency> rightDependencies =
+                    this.child.getDynamicContextVariableDependencies();
             Set<Name> rightNames = rightDependencies.keySet();
             rightNames.retainAll(leftNames);
             if (!rightNames.isEmpty()) {
@@ -308,13 +306,19 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         }
 
         LogManager.getLogger("WhereClauseSparkIterator")
-            .info("Rumble detected a join predicate in the where clause (limit=" + limit + " of " + height + ").");
+                .info(
+                        "Rumble detected a join predicate in the where clause (limit="
+                                + limit
+                                + " of "
+                                + height
+                                + ").");
 
         try {
             FlworDataFrame leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
             Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
             this.setEvaluationDepthLimit(limit);
-            Map<Name, VariableDependency> temporaryInputProjection = new HashMap<>(this.inputTupleProjection);
+            Map<Name, VariableDependency> temporaryInputProjection =
+                    new HashMap<>(this.inputTupleProjection);
             for (Name key : leftVariables) {
                 temporaryInputProjection.remove(key);
             }
@@ -325,38 +329,35 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
             Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
             this.setEvaluationDepthLimit(-1);
 
-            FlworDataFrame result = JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
-                context,
-                leftTuples.getDataFrame(),
-                rightTuples.getDataFrame(),
-                this.outputTupleProjection,
-                new ArrayList<Name>(leftVariables),
-                new ArrayList<Name>(rightVariables),
-                this.expression,
-                false,
-                null,
-                getMetadata(),
-                getStaticContext()
-            );
+            FlworDataFrame result =
+                    JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
+                            context,
+                            leftTuples.getDataFrame(),
+                            rightTuples.getDataFrame(),
+                            this.outputTupleProjection,
+                            new ArrayList<Name>(leftVariables),
+                            new ArrayList<Name>(rightVariables),
+                            this.expression,
+                            false,
+                            null,
+                            getMetadata(),
+                            getStaticContext());
             return result;
         } catch (Exception e) {
             LogManager.getLogger("WhereClauseSparkIterator")
-                .warn(
-                    "Join failed. Falling back to regular execution (nevertheless, please let us know!)."
-                );
+                    .warn(
+                            "Join failed. Falling back to regular execution (nevertheless, please let us know!).");
 
             this.setEvaluationDepthLimit(-1);
             this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
             return null;
         }
-
     }
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
-        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(
-                this.expression.getVariableDependencies()
-        );
+        Map<Name, DynamicContext.VariableDependency> result =
+                new TreeMap<>(this.expression.getVariableDependencies());
         for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
         }
@@ -377,14 +378,13 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> parentProjection
-    ) {
+            Map<Name, DynamicContext.VariableDependency> parentProjection) {
         // copy over the projection needed by the parent clause.
         Map<Name, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<Name, DynamicContext.VariableDependency> exprDependency = this.expression
-            .getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> exprDependency =
+                this.expression.getVariableDependencies();
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
@@ -402,8 +402,8 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * Try to generate the native query for the let clause and run it, if successful return the resulting dataframe,
-     * otherwise it returns null
+     * Try to generate the native query for the let clause and run it, if successful return the
+     * resulting dataframe, otherwise it returns null
      *
      * @param dataFrame input dataframe for the query
      * @param iterator where filtering expression iterator
@@ -415,51 +415,46 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
             FlworDataFrame dataFrame,
             RuntimeIterator iterator,
             DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         StructType inputSchema = dataFrame.getDataFrame().schema();
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
         String input = FlworDataFrameUtils.createTempView(dataFrame.getDataFrame());
-        NativeClauseContext letContext = new NativeClauseContext(
-                FLWOR_CLAUSES.WHERE,
-                inputSchema,
-                context
-        );
+        NativeClauseContext letContext =
+                new NativeClauseContext(FLWOR_CLAUSES.WHERE, inputSchema, context);
         letContext.setView(input);
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        if (!nativeQuery.getResultingType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
+        if (!nativeQuery
+                .getResultingType()
+                .getItemType()
+                .equals(BuiltinTypesCatalogue.booleanItem)) {
             throw new InvalidArgumentTypeException(
                     "Effective boolean value not defined for items of type "
-                        +
-                        nativeQuery.getResultingType().getItemType().toString(),
-                    iterator.getMetadata()
-            );
+                            + nativeQuery.getResultingType().getItemType().toString(),
+                    iterator.getMetadata());
         }
         LogManager.getLogger("WhereClauseSparkIterator")
-            .info(
-                "Rumble was able to optimize a where clause to a native SQL query: "
-                    + String.format(
-                        "select %s from (%s) where %s",
-                        FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
-                        nativeQuery.getView(),
-                        nativeQuery.getResultingQuery()
-                    )
-            );
+                .info(
+                        "Rumble was able to optimize a where clause to a native SQL query: "
+                                + String.format(
+                                        "select %s from (%s) where %s",
+                                        FlworDataFrameUtils.getSQLColumnProjection(
+                                                allColumns, false),
+                                        nativeQuery.getView(),
+                                        nativeQuery.getResultingQuery()));
         return new FlworDataFrame(
-                dataFrame.getDataFrame()
-                    .sparkSession()
-                    .sql(
-                        String.format(
-                            "select %s from (%s) where %s",
-                            FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
-                            nativeQuery.getView(),
-                            nativeQuery.getResultingQuery()
-                        )
-                    )
-        );
+                dataFrame
+                        .getDataFrame()
+                        .sparkSession()
+                        .sql(
+                                String.format(
+                                        "select %s from (%s) where %s",
+                                        FlworDataFrameUtils.getSQLColumnProjection(
+                                                allColumns, false),
+                                        nativeQuery.getView(),
+                                        nativeQuery.getResultingQuery())));
     }
 
     @Override
@@ -511,36 +506,34 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         if (expressionContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!expressionContext.getResultingType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
+        if (!expressionContext
+                .getResultingType()
+                .getItemType()
+                .equals(BuiltinTypesCatalogue.booleanItem)) {
             throw new InvalidArgumentTypeException(
                     "Effective boolean value not defined for items of type "
-                        +
-                        expressionContext.getResultingType().getItemType().toString(),
-                    getMetadata()
-            );
+                            + expressionContext.getResultingType().getItemType().toString(),
+                    getMetadata());
         }
         String conditionalColumnName = childContext.addVariable().toString();
 
-        String resultString = String.format(
-            "select *, %s as `%s` from (%s)",
-            expressionContext.getResultingQuery(),
-            conditionalColumnName,
-            expressionContext.getView()
-        );
+        String resultString =
+                String.format(
+                        "select *, %s as `%s` from (%s)",
+                        expressionContext.getResultingQuery(),
+                        conditionalColumnName,
+                        expressionContext.getView());
         if (nativeClauseContext.getPositionalVariableName() != null && !childContext.isGrouped()) {
-            resultString = String.format(
-                "select * from (%s) where `%s` or (`%s` = 1)",
-                resultString,
-                conditionalColumnName,
-                nativeClauseContext.getPositionalVariableName().getLocalName()
-            );
+            resultString =
+                    String.format(
+                            "select * from (%s) where `%s` or (`%s` = 1)",
+                            resultString,
+                            conditionalColumnName,
+                            nativeClauseContext.getPositionalVariableName().getLocalName());
         }
         childContext.setSchema(
-            ((StructType) childContext.getSchema()).add(
-                conditionalColumnName,
-                DataTypes.BooleanType
-            )
-        );
+                ((StructType) childContext.getSchema())
+                        .add(conditionalColumnName, DataTypes.BooleanType));
         childContext.addConditionalColumn(conditionalColumnName);
         childContext.setView(resultString);
         return new NativeClauseContext(childContext, null, null);

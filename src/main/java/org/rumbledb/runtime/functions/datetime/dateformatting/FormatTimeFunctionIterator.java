@@ -12,10 +12,10 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 public class FormatTimeFunctionIterator extends DateFormattingFunctionIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    public FormatTimeFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public FormatTimeFunctionIterator(
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -33,12 +33,12 @@ public class FormatTimeFunctionIterator extends DateFormattingFunctionIterator {
     @Override
     protected boolean supportsComponent(char component) {
         return component == 'H'
-            || component == 'h'
-            || component == 'P'
-            || component == 'm'
-            || component == 's'
-            || component == 'f'
-            || component == 'Z'
-            || component == 'z';
+                || component == 'h'
+                || component == 'P'
+                || component == 'm'
+                || component == 's'
+                || component == 'f'
+                || component == 'Z'
+                || component == 'z';
     }
 }

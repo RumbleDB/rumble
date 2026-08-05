@@ -11,6 +11,7 @@ import java.io.Serial;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -19,53 +20,45 @@ import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 
-/**
- * Encodes item RDDs as {@link HomogeneousItemDataFrame}s.
- */
+/** Encodes item RDDs as {@link HomogeneousItemDataFrame}s. */
 public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactory<Item> {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public static final ItemRuntimeDataFrameFactory INSTANCE = new ItemRuntimeDataFrameFactory();
 
-    private ItemRuntimeDataFrameFactory() {
-    }
+    private ItemRuntimeDataFrameFactory() {}
 
     @Override
     public RuntimeDataFrame<Item> fromList(
-            List<Item> items,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+            List<Item> items, DynamicContext context, RuntimeStaticContext staticContext) {
         ItemType itemType = staticContext.getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
-            itemType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items,
-                staticContext.getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
+            itemType =
+                    TypeInferrenceUtils.inferItemTypeOfLocalItems(
+                            items,
+                            staticContext.getMetadata(),
+                            TypeInferrenceUtils.TypeMergeMode.LAX);
             if (staticContext.getConfiguration().analysis().printInferredTypes()) {
                 System.err.println("Inferred DataFrame type:\n" + itemType);
             }
         }
-        return ValidateTypeIterator.convertLocalItemsToDataFrame(items, itemType, context, true, staticContext);
+        return ValidateTypeIterator.convertLocalItemsToDataFrame(
+                items, itemType, context, true, staticContext);
     }
 
     @Override
     public RuntimeDataFrame<Item> fromRDD(
-            JavaRDD<Item> rdd,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+            JavaRDD<Item> rdd, DynamicContext context, RuntimeStaticContext staticContext) {
         ItemType itemType = staticContext.getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
-            itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                rdd,
-                staticContext.getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
+            itemType =
+                    TypeInferrenceUtils.inferItemTypeOfRDDItems(
+                            rdd,
+                            staticContext.getMetadata(),
+                            TypeInferrenceUtils.TypeMergeMode.LAX);
         }
-        return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
+        return ValidateTypeIterator.convertRDDToValidDataFrame(
+                rdd, itemType, context, true, staticContext);
     }
 }

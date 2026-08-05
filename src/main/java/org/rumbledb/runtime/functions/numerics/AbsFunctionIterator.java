@@ -20,6 +20,10 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,19 +34,12 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.List;
-
 public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public AbsFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -64,7 +61,8 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 return value;
             }
             if (intValue == Integer.MIN_VALUE) {
-                return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(intValue).negate());
+                return ItemFactory.getInstance()
+                        .createIntegerItem(BigInteger.valueOf(intValue).negate());
             }
             return ItemFactory.getInstance().createIntItem(-intValue);
         }
@@ -79,17 +77,18 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery =
+                this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (SequenceType.Arity.OneOrMore.isSubtypeOf(nativeChildQuery.getResultingType().getArity())) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                nativeChildQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
         return new NativeClauseContext(
                 nativeChildQuery,
                 "ABS(" + nativeChildQuery.getResultingQuery() + ")",
-                nativeChildQuery.getResultingType()
-        );
+                nativeChildQuery.getResultingType());
     }
 }

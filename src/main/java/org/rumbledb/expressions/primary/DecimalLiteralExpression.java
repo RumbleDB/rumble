@@ -20,16 +20,16 @@
 
 package org.rumbledb.expressions.primary;
 
-import lombok.Getter;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 
 @Getter
 public class DecimalLiteralExpression extends Expression {
@@ -64,7 +64,8 @@ public class DecimalLiteralExpression extends Expression {
         buffer.append(" (" + (this.value) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+                " | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

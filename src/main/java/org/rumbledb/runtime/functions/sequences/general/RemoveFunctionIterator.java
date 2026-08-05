@@ -20,8 +20,12 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,25 +33,17 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator sequenceIterator;
     private final RuntimeIterator positionIterator;
     private Item nextResult;
     private int removePosition; // position to remove the item
     private int currentPosition; // current position
 
-
     public RemoveFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
@@ -59,7 +55,8 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
 
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
-        JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((item) -> item._2() != this.removePosition - 1);
+        JavaPairRDD<Item, Long> filteredRDD =
+                zippedRDD.filter((item) -> item._2() != this.removePosition - 1);
         return filteredRDD.map((item) -> item._1);
     }
 

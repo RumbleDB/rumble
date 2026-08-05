@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -29,18 +32,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public StringFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -55,13 +52,14 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (this.getChildren().size() == 0) {
-            List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            List<Item> items =
+                    context.getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             Item contextItem = items.get(0);
             return stringResultFromItem(contextItem);
         }
 
-        Item item = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item item = this.getChild(0).materializeFirstItemOrNull(context);
 
         if (item == null) {
             return null;
@@ -69,5 +67,4 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         return stringResultFromItem(item);
     }
-
 }

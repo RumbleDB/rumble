@@ -23,40 +23,37 @@ package org.rumbledb.context;
 import java.io.Serial;
 import java.io.Serializable;
 
-import lombok.Getter;
-import org.rumbledb.exceptions.OurBadException;
-
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+
+import org.rumbledb.exceptions.OurBadException;
 
 /**
  * This class represents expanded names, corresponding to QNames in the W3C XQuery standard.
- * 
- * An expanded name consists logically of a namespace (possibly absent) and a local name.
- * 
- * A namespace may also have a proxy called a namespace prefix, used in lexical representation
- * (e.g., name of the function or variable in JSONiq code).
- * 
- * Expanded names serve as (global or local) variable names, function names, and error codes.
- * 
- * @author Ghislain Fourny
  *
+ * <p>An expanded name consists logically of a namespace (possibly absent) and a local name.
+ *
+ * <p>A namespace may also have a proxy called a namespace prefix, used in lexical representation
+ * (e.g., name of the function or variable in JSONiq code).
+ *
+ * <p>Expanded names serve as (global or local) variable names, function names, and error codes.
+ *
+ * @author Ghislain Fourny
  */
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Name implements Comparable<Name>, Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    @EqualsAndHashCode.Include
-    private final String namespace;
+    @EqualsAndHashCode.Include private final String namespace;
 
     private final String prefix;
 
-    @EqualsAndHashCode.Include
-    private final String localName;
+    @EqualsAndHashCode.Include private final String localName;
 
     public static final String JSONIQ_DEFAULT_TYPE_NS = "http://jsoniq.org/default-type-namespace";
-    public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
+    public static final String JSONIQ_DEFAULT_FUNCTION_NS =
+            "http://jsoniq.org/default-function-namespace";
     public static final String FN_NS = "http://www.w3.org/2005/xpath-functions";
     public static final String JN_NS = "http://jsoniq.org/functions";
     public static final String MATH_NS = "http://www.w3.org/2005/xpath-functions/math";
@@ -69,17 +66,19 @@ public class Name implements Comparable<Name>, Serializable {
     public static final String JSONIQ_ANNOTATIONS_NS = "http://jsoniq.org/annotations";
     public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
     public static final String XQUERY_ANNOTATIONS_NS = "http://www.w3.org/2012/xquery";
-    public static final String DEFAULT_COLLATION_NS = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
+    public static final String DEFAULT_COLLATION_NS =
+            "http://www.w3.org/2005/xpath-functions/collation/codepoint";
     public static final String ERROR_NS = "http://www.w3.org/2005/xqt-errors";
 
     public static final Name CONTEXT_ITEM = createVariableInNoNamespace("$");
     public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");
-    public static final Name TEMP_VAR1 = createVariableInNoNamespace("$d3094969-fe9a-4cad-95e5-88475bbee008");
-    public static final Name TEMP_VAR2 = createVariableInNoNamespace("$a6b2b9fb-f60a-4ba2-af60-e668256c49ec");
-    public static final Name TAIL_CALL_OPTIMIZATION = createVariableInNoNamespace(
-        "$186e9958-978d-421c-96dd-9306ff5644b8"
-    );
+    public static final Name TEMP_VAR1 =
+            createVariableInNoNamespace("$d3094969-fe9a-4cad-95e5-88475bbee008");
+    public static final Name TEMP_VAR2 =
+            createVariableInNoNamespace("$a6b2b9fb-f60a-4ba2-af60-e668256c49ec");
+    public static final Name TAIL_CALL_OPTIMIZATION =
+            createVariableInNoNamespace("$186e9958-978d-421c-96dd-9306ff5644b8");
 
     public Name(String namespace, String prefix, String localName) {
         this.namespace = namespace;
@@ -93,7 +92,7 @@ public class Name implements Comparable<Name>, Serializable {
     /**
      * Creates an expanded name that has no namespace. In JSONiq, unprefixed variables are never in
      * a namespace.
-     * 
+     *
      * @param localName the name of the variable
      * @return the expanded name
      */
@@ -102,12 +101,11 @@ public class Name implements Comparable<Name>, Serializable {
     }
 
     /**
-     * Creates an expanded name that has the default JSONiq function namespace. By default, in Rumble, unprefixed
-     * function names live in this namespace. This namespace is for convenience and includes
-     * all functions in XQuery's fn namespace, JSONiq's jn (JSONiq core) and jnlib (JSONiq library)
-     * namespaces, as well as any
-     * user-defined functions with unprefixed names.
-     * 
+     * Creates an expanded name that has the default JSONiq function namespace. By default, in
+     * Rumble, unprefixed function names live in this namespace. This namespace is for convenience
+     * and includes all functions in XQuery's fn namespace, JSONiq's jn (JSONiq core) and jnlib
+     * (JSONiq library) namespaces, as well as any user-defined functions with unprefixed names.
+     *
      * @param localName the name of the variable
      * @return the expanded name
      */
@@ -116,10 +114,10 @@ public class Name implements Comparable<Name>, Serializable {
     }
 
     /**
-     * Creates an expanded name that has the default JSONiq type namespace. By default, in Rumble, unprefixed
-     * type names live in this namespace. This namespace is for convenience and includes
+     * Creates an expanded name that has the default JSONiq type namespace. By default, in Rumble,
+     * unprefixed type names live in this namespace. This namespace is for convenience and includes
      * all builtin XQuery and JSONiq functions.
-     * 
+     *
      * @param localName the name of the variable
      * @return the expanded name
      */
@@ -128,9 +126,9 @@ public class Name implements Comparable<Name>, Serializable {
     }
 
     /**
-     * Creates an expanded name that has the default XQuery annotations namespace.
-     * This is used for unprefixed annotations in XQuery.
-     * 
+     * Creates an expanded name that has the default XQuery annotations namespace. This is used for
+     * unprefixed annotations in XQuery.
+     *
      * @param localName the name of the variable
      * @return the expanded name
      */
@@ -139,8 +137,8 @@ public class Name implements Comparable<Name>, Serializable {
     }
 
     /**
-     * Creates an expanded name that has the default JSONiq annotations namespace.
-     * This is used for implementation-defined JSONiq annotations in Rumble.
+     * Creates an expanded name that has the default JSONiq annotations namespace. This is used for
+     * implementation-defined JSONiq annotations in Rumble.
      *
      * @param localName the name of the annotation
      * @return the expanded name
@@ -159,13 +157,14 @@ public class Name implements Comparable<Name>, Serializable {
 
     /**
      * Creates an expanded name resolving the prefix from namespace bindings.
-     * 
+     *
      * @param prefix the prefix
      * @param localName the local name
      * @param moduleContext the module context containing the bindings.
      * @return the expanded name.
      */
-    public static Name createVariableResolvingPrefix(String prefix, String localName, StaticContext moduleContext) {
+    public static Name createVariableResolvingPrefix(
+            String prefix, String localName, StaticContext moduleContext) {
         String namespace = moduleContext.resolveNamespace(prefix);
         if (namespace != null) {
             return new Name(namespace, prefix, localName);
@@ -176,7 +175,7 @@ public class Name implements Comparable<Name>, Serializable {
 
     /**
      * Creates an expanded name resolving the prefix from namespace bindings.
-     * 
+     *
      * @param prefixedName the QName literal.
      * @param moduleContext the module context containing the bindings.
      * @return the expanded name.
@@ -194,17 +193,17 @@ public class Name implements Comparable<Name>, Serializable {
         if (namespace != null) {
             return new Name(namespace, prefix, localName);
         } else {
-            throw new OurBadException("Prefix " + prefix + " could not be resolved against a namespace in scope.");
+            throw new OurBadException(
+                    "Prefix " + prefix + " could not be resolved against a namespace in scope.");
         }
     }
 
     /**
-     * Converts the expanded name to an expanded name whose local name has a #n suffix, where n is the arity of the
-     * function,
-     * in order to encode the whole function identifier as an expanded name.
-     * This is only used to keep track of dependencies between functions and variables in the dependency
-     * resolution mechanism, and it should not be used for other purposes.
-     * 
+     * Converts the expanded name to an expanded name whose local name has a #n suffix, where n is
+     * the arity of the function, in order to encode the whole function identifier as an expanded
+     * name. This is only used to keep track of dependencies between functions and variables in the
+     * dependency resolution mechanism, and it should not be used for other purposes.
+     *
      * @param arity the arity of the function.
      * @return the expanded name
      */
@@ -213,10 +212,9 @@ public class Name implements Comparable<Name>, Serializable {
     }
 
     /**
-     * Converts to a string. If there is a prefix, it is used. Otherwise, if there is a namespace, the Clark notation of
-     * the expanded name is returned.
-     * Otherwise, the local name is returned.
-     * 
+     * Converts to a string. If there is a prefix, it is used. Otherwise, if there is a namespace,
+     * the Clark notation of the expanded name is returned. Otherwise, the local name is returned.
+     *
      * @return The converted string.
      */
     @Override
@@ -248,5 +246,4 @@ public class Name implements Comparable<Name>, Serializable {
         }
         return this.localName.compareTo(other.localName);
     }
-
 }

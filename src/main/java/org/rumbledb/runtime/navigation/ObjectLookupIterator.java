@@ -29,12 +29,13 @@ import java.util.Map;
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -55,18 +56,16 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
-import org.rumbledb.spark.SparkSessionManager;
-
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private Item lookupKey;
     private boolean contextLookup;
@@ -75,8 +74,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     public ObjectLookupIterator(
             RuntimeIterator object,
             RuntimeIterator lookupIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(object, lookupIterator), staticContext);
         this.iterator = object;
     }
@@ -93,21 +91,18 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             } catch (NoItemException e) {
                 throw new InvalidSelectorException(
                         "Invalid Lookup Key; Object lookup can't be performed with no key.",
-                        getMetadata()
-                );
+                        getMetadata());
             } catch (MoreThanOneItemException e) {
                 throw new InvalidSelectorException(
                         "Invalid Lookup Key; Object lookup can't be performed with multiple keys.",
-                        getMetadata()
-                );
+                        getMetadata());
             }
 
             if (this.lookupKey.isNull() || this.lookupKey.isObject() || this.lookupKey.isArray()) {
                 throw new UnexpectedTypeException(
                         "Type error; Object selector can't be converted to a string: "
-                            + this.lookupKey.serialize(),
-                        getMetadata()
-                );
+                                + this.lookupKey.serialize(),
+                        getMetadata());
             } else {
                 // convert to string
                 if (this.lookupKey.isBoolean()) {
@@ -132,8 +127,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             if (!this.lookupKey.isString()) {
                 throw new UnexpectedTypeException(
                         "Non string object lookup for " + this.lookupKey.serialize(),
-                        getMetadata()
-                );
+                        getMetadata());
             }
         }
     }
@@ -178,12 +172,11 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         break;
                     }
                 } else {
-                    Item contextItem = this.currentDynamicContextForLocalExecution.getVariableValues()
-                        .getLocalVariableValue(
-                            Name.CONTEXT_ITEM,
-                            getMetadata()
-                        )
-                        .get(0);
+                    Item contextItem =
+                            this.currentDynamicContextForLocalExecution
+                                    .getVariableValues()
+                                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                                    .get(0);
                     this.nextResult = item.getItemByKey(contextItem.getStringValue());
                 }
             }
@@ -202,14 +195,15 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         initLookupKey(dynamicContext);
         String key;
         if (this.contextLookup) {
-            // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = dynamicContext.getVariableValues()
-                .getLocalVariableValue(
-                    Name.CONTEXT_ITEM,
-                    getMetadata()
-                )
-                .get(0)
-                .getStringValue();
+            // For now this will always be an error. Later on we will pass the dynamic context from
+            // the
+            // parent iterator.
+            key =
+                    dynamicContext
+                            .getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                            .get(0)
+                            .getStringValue();
         } else {
             key = this.lookupKey.getStringValue();
         }
@@ -227,11 +221,12 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
-        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
-            .getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> keyDependencies =
+                this.getChild(1).getVariableDependencies();
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
-        // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
+        // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL
+        // query.
         if (outerContextSchema instanceof StructType structSchema) {
             for (Name n : keyDependencies.keySet()) {
                 if (FlworDataFrameUtils.hasColumnForVariable(structSchema, n)) {
@@ -247,74 +242,64 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         // this is the schema from the left hand side.
         DataType leftSchema;
         NativeClauseContext newContext;
-        if (
-            nativeClauseContext.getClauseType().equals(FLWOR_CLAUSES.FILTER)
-                && (this.iterator instanceof ContextExpressionIterator)
-        ) {
-            leftSchema = (nativeClauseContext.getResultingType() != null)
-                ? TypeMappings.getDataFrameDataTypeFromItemType(
-                    nativeClauseContext.getResultingType().getItemType(),
-                    this.staticContext
-                )
-                : outerContextSchema;
+        if (nativeClauseContext.getClauseType().equals(FLWOR_CLAUSES.FILTER)
+                && (this.iterator instanceof ContextExpressionIterator)) {
+            leftSchema =
+                    (nativeClauseContext.getResultingType() != null)
+                            ? TypeMappings.getDataFrameDataTypeFromItemType(
+                                    nativeClauseContext.getResultingType().getItemType(),
+                                    this.staticContext)
+                            : outerContextSchema;
             if (leftSchema instanceof StructType) {
-                newContext = new NativeClauseContext(
-                        nativeClauseContext,
-                        null,
-                        nativeClauseContext.getResultingType()
-                );
+                newContext =
+                        new NativeClauseContext(
+                                nativeClauseContext, null, nativeClauseContext.getResultingType());
             } else {
                 if (leftSchema instanceof ArrayType arrayType) {
                     leftSchema = arrayType.elementType();
                 }
-                newContext = new NativeClauseContext(
-                        nativeClauseContext,
-                        "`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`",
-                        nativeClauseContext.getResultingType()
-                );
+                newContext =
+                        new NativeClauseContext(
+                                nativeClauseContext,
+                                "`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`",
+                                nativeClauseContext.getResultingType());
             }
         } else {
             newContext = this.iterator.generateNativeQuery(nativeClauseContext);
             if (newContext != NativeClauseContext.NoNativeQuery) {
-                leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(
-                    newContext.getResultingType().getItemType(),
-                    this.staticContext
-                );
+                leftSchema =
+                        TypeMappings.getDataFrameDataTypeFromItemType(
+                                newContext.getResultingType().getItemType(), this.staticContext);
             } else {
                 return NativeClauseContext.NoNativeQuery;
             }
             leftSchema = newContext.getSchema();
         }
 
-
-
         // get key (escape backtick)
-        String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
+        String key =
+                this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType structSchema)) {
             if (this.getChild(1) instanceof StringRuntimeIterator) {
                 if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "You are trying to look up the value associated with the field "
-                                + key
-                                + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
-                                + "Fortunately Rumble was able to catch this. This is probably an overlook? "
-                                + "Please check your query and try again.",
+                                    + key
+                                    + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
+                                    + "Fortunately Rumble was able to catch this. This is probably an overlook? "
+                                    + "Please check your query and try again.",
                             ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
                 LogManager.getLogger("ObjectLookupIterator")
-                    .warn(
-                        "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-                    );
+                        .warn(
+                                "Object lookup on a DataFrame that does not have this column. Empty sequence returned.");
             }
             return NativeClauseContext.NoNativeQuery;
         }
-        if (
-            Arrays.asList(structSchema.fieldNames()).contains(key)
-                || Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)
-        ) {
+        if (Arrays.asList(structSchema.fieldNames()).contains(key)
+                || Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)) {
             if (Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)) {
                 key = sequenceKey;
             }
@@ -326,18 +311,22 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setResultingType(
-                new SequenceType(
-                        TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
-                        SequenceType.Arity.OneOrZero
-                )
-            );
+                    new SequenceType(
+                            TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
+                            SequenceType.Arity.OneOrZero));
             newContext.setSchema(field.dataType());
-        } else if (
-            newContext.getResultingType().getItemType().isObjectItemType()
+        } else if (newContext.getResultingType().getItemType().isObjectItemType()
                 && (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(key)
-                    || newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey))
-        ) {
-            if (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey)) {
+                        || newContext
+                                .getResultingType()
+                                .getItemType()
+                                .getObjectKeysFacet()
+                                .contains(sequenceKey))) {
+            if (newContext
+                    .getResultingType()
+                    .getItemType()
+                    .getObjectKeysFacet()
+                    .contains(sequenceKey)) {
                 key = sequenceKey;
             }
             String leftQuery = newContext.getResultingQuery();
@@ -346,34 +335,32 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             } else {
                 newContext.setResultingQuery("`" + key + "`");
             }
-            ItemType resultType = newContext.getResultingType()
-                .getItemType()
-                .getObjectContentFacet(key)
-                .getType();
+            ItemType resultType =
+                    newContext
+                            .getResultingType()
+                            .getItemType()
+                            .getObjectContentFacet(key)
+                            .getType();
             newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.OneOrZero));
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setResultingType(
-                new SequenceType(
-                        TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
-                        SequenceType.Arity.OneOrZero
-                )
-            );
+                    new SequenceType(
+                            TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
+                            SequenceType.Arity.OneOrZero));
             newContext.setSchema(field.dataType());
         } else {
             if (this.getChild(1) instanceof StringRuntimeIterator) {
                 LogManager.getLogger("ObjectLookupIterator")
-                    .warn(
-                        "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-                    );
+                        .warn(
+                                "Object lookup on a DataFrame that does not have this column. Empty sequence returned.");
                 if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "There is no field with the name "
-                                + key
-                                + " so that the lookup will always result in the empty sequence no matter what. "
-                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                                    + key
+                                    + " so that the lookup will always result in the empty sequence no matter what. "
+                                    + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
                             ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
             }
             return NativeClauseContext.NoNativeQuery;
@@ -387,82 +374,80 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         initLookupKey(context);
         String key;
         if (this.contextLookup) {
-            key = context.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0)
-                .getStringValue();
+            key =
+                    context.getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                            .get(0)
+                            .getStringValue();
         } else {
             key = this.lookupKey.getStringValue();
         }
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (childDataFrame.hasKey(key)) {
-            FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet(key);
+            FieldDescriptor fieldDescriptor =
+                    childDataFrame.getItemType().getObjectContentFacet(key);
             ItemType type = BuiltinTypesCatalogue.item;
             if (fieldDescriptor != null) {
                 type = fieldDescriptor.getType();
             }
             if (type.isObjectItemType()) {
-                // TODO: Find another way to check if delta dataframe -- e.g. flag and mutability level
+                // TODO: Find another way to check if delta dataframe -- e.g. flag and mutability
+                // level
                 // TODO: implement keyword vars to stop ust using strs
                 String sql;
-                if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
-                    sql = String.format(
-                        "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
-                        key,
-                        SparkSessionManager.rowIdColumnName,
-                        SparkSessionManager.mutabilityLevelColumnName,
-                        SparkSessionManager.pathInColumnName,
-                        key,
-                        SparkSessionManager.pathInColumnName,
-                        SparkSessionManager.tableLocationColumnName,
-                        object
-                    );
+                if (childDataFrame
+                        .getKeys()
+                        .contains(SparkSessionManager.tableLocationColumnName)) {
+                    sql =
+                            String.format(
+                                    "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
+                                    key,
+                                    SparkSessionManager.rowIdColumnName,
+                                    SparkSessionManager.mutabilityLevelColumnName,
+                                    SparkSessionManager.pathInColumnName,
+                                    key,
+                                    SparkSessionManager.pathInColumnName,
+                                    SparkSessionManager.tableLocationColumnName,
+                                    object);
 
                 } else {
                     sql = String.format("SELECT `%s`.* FROM %s", key, object);
                 }
-                HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
-                    sql,
-                    type
-                );
+                HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(sql, type);
                 return result;
             } else {
                 String sql;
                 HomogeneousItemDataFrame result;
-                if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
-                    sql = String.format(
-                        "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
-                        key,
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        SparkSessionManager.rowIdColumnName,
-                        SparkSessionManager.mutabilityLevelColumnName,
-                        SparkSessionManager.pathInColumnName,
-                        key,
-                        SparkSessionManager.pathInColumnName,
-                        SparkSessionManager.tableLocationColumnName,
-                        object
-                    );
+                if (childDataFrame
+                        .getKeys()
+                        .contains(SparkSessionManager.tableLocationColumnName)) {
+                    sql =
+                            String.format(
+                                    "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
+                                    key,
+                                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                    SparkSessionManager.rowIdColumnName,
+                                    SparkSessionManager.mutabilityLevelColumnName,
+                                    SparkSessionManager.pathInColumnName,
+                                    key,
+                                    SparkSessionManager.pathInColumnName,
+                                    SparkSessionManager.tableLocationColumnName,
+                                    object);
                     Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
                     result = new HomogeneousItemDataFrame(df, type);
                 } else {
-                    sql = String.format(
-                        "SELECT `%s` AS `%s` FROM %s",
-                        key,
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        object
-                    );
-                    result = childDataFrame.evaluateSQL(
-                        sql,
-                        type
-                    );
+                    sql =
+                            String.format(
+                                    "SELECT `%s` AS `%s` FROM %s",
+                                    key, SparkSessionManager.nonObjectJSONiqItemColumnName, object);
+                    result = childDataFrame.evaluateSQL(sql, type);
                 }
                 return result;
             }
         }
         LogManager.getLogger("ObjectLookupIterator")
-            .warn(
-                "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-            );
+                .warn(
+                        "Object lookup on a DataFrame that does not have this column. Empty sequence returned.");
         HomogeneousItemDataFrame result = HomogeneousItemDataFrame.emptyDataFrame();
         return result;
     }

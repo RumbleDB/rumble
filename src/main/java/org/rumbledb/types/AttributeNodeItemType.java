@@ -1,26 +1,25 @@
 package org.rumbledb.types;
 
-import lombok.Getter;
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.util.Set;
+
+import lombok.Getter;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing attribute() and attribute(QName) item types.
  *
- * Wildcard attribute() is represented with no node-name restriction.
- * attribute(QName) is represented with a concrete node-name restriction.
+ * <p>Wildcard attribute() is represented with no node-name restriction. attribute(QName) is
+ * represented with a concrete node-name restriction.
  */
 public class AttributeNodeItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
-    @Getter
-    private Name nodeName;
+    @Getter private Name nodeName;
 
     public AttributeNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("attribute");
@@ -52,7 +51,8 @@ public class AttributeNodeItemType extends AbstractItemType {
     @Override
     public Name getName() {
         if (this.catalogueName == null) {
-            throw new UnsupportedOperationException("Named attribute node item type has no builtin QName");
+            throw new UnsupportedOperationException(
+                    "Named attribute node item type has no builtin QName");
         }
         return this.catalogueName;
     }
@@ -71,11 +71,9 @@ public class AttributeNodeItemType extends AbstractItemType {
                 }
             }
         }
-        if (
-            this.equals(superType)
+        if (this.equals(superType)
                 || superType.equals(BuiltinTypesCatalogue.item)
-                || superType.equals(BuiltinTypesCatalogue.nodeItem)
-        ) {
+                || superType.equals(BuiltinTypesCatalogue.nodeItem)) {
             return true;
         }
         if (!(superType instanceof AttributeNodeItemType other)) {

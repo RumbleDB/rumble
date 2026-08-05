@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -23,8 +24,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator startIterator;
@@ -34,9 +34,7 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
     private boolean hasProducedResult;
 
     public ArraySubarrayFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2 && arguments.size() != 3) {
             throw new OurBadException("array:subarray must have either two or three arguments.");
@@ -69,16 +67,13 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
             return;
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:subarray expects exactly one array argument.",
-                    getMetadata()
-            );
+                    "array:subarray expects exactly one array argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to array:subarray must be an array.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         BigInteger start = materializeIntegerArgument(context, this.startIterator, "start");
@@ -89,8 +84,7 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
         if (start.compareTo(min) < 0 || start.compareTo(max) > 0) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: " + start + ", of array with length: " + size,
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         BigInteger length;
@@ -101,21 +95,19 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
             if (length.compareTo(BigInteger.ZERO) < 0) {
                 throw new ArrayInvalidSubarrayLengthException(
                         "array:subarray length must be non-negative. Found: " + length,
-                        getMetadata()
-                );
+                        getMetadata());
             }
         }
 
         if (start.add(length).compareTo(BigInteger.valueOf((long) size).add(BigInteger.ONE)) > 0) {
             throw new ArrayIndexOutOfBoundsException(
                     "array:subarray start + length is out of bounds: start="
-                        + start
-                        + ", length="
-                        + length
-                        + ", array length="
-                        + size,
-                    getMetadata()
-            );
+                            + start
+                            + ", length="
+                            + length
+                            + ", array length="
+                            + size,
+                    getMetadata());
         }
 
         int fromIndex = start.intValue() - 1;
@@ -127,37 +119,43 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
             for (int i = fromIndex; i < toIndex; i++) {
                 slicedMembers.add(originalMembers.get(i));
             }
-            // TODO: optimization: if the subarray contains only singleton members, we can create an array of items
+            // TODO: optimization: if the subarray contains only singleton members, we can create an
+            // array
+            // of items
             // instead.
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    slicedMembers,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
             for (int i = fromIndex; i < toIndex; i++) {
                 slicedMembers.add(originalMembers.get(i));
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    slicedMembers,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
-    private BigInteger materializeIntegerArgument(DynamicContext context, RuntimeIterator iterator, String label) {
+    private BigInteger materializeIntegerArgument(
+            DynamicContext context, RuntimeIterator iterator, String label) {
         Item item;
         try {
             item = iterator.materializeExactlyOneItem(context);
         } catch (NoItemException | MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:subarray expects exactly one " + label + " argument.",
-                    getMetadata()
-            );
+                    "array:subarray expects exactly one " + label + " argument.", getMetadata());
         }
 
         if (!item.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; " + label + " argument to array:subarray must be numeric.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         if (item.isInteger()) {
@@ -199,8 +197,7 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:subarray is currently supported only in local execution mode."
-        );
+                "array:subarray is currently supported only in local execution mode.");
     }
 
     @Override
@@ -211,8 +208,6 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:subarray is currently supported only in local execution mode."
-        );
+                "array:subarray is currently supported only in local execution mode.");
     }
 }
-

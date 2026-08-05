@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -31,29 +34,24 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
 public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public StringLengthFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (this.getChildren().size() == 0) {
-            List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            List<Item> items =
+                    context.getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return ItemFactory.getInstance().createIntItem(items.get(0).getStringValue().length());
         }
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
 
         if (stringItem == null) {
             return ItemFactory.getInstance().createIntItem(0);
@@ -67,15 +65,16 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
         if (this.getChildren().size() == 0) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext =
+                this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultString = String.format("character_length(%s)", childContext.getResultingQuery());
+        String resultString =
+                String.format("character_length(%s)", childContext.getResultingQuery());
         return new NativeClauseContext(
                 childContext,
                 resultString,
-                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-        );
+                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
     }
 }

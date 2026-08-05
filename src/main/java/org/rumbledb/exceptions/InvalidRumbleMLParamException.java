@@ -20,23 +20,18 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class InvalidRumbleMLParamException extends RumbleException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     final String message;
 
     public InvalidRumbleMLParamException(String message, ExceptionMetadata metadata) {
-        super(
-            "Invalid Param; " + message,
-            ErrorCode.InvalidRumbleMLParamErrorCode,
-            metadata
-        );
+        super("Invalid Param; " + message, ErrorCode.InvalidRumbleMLParamErrorCode, metadata);
         this.message = message;
     }
 

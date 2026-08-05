@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -38,17 +39,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private Item resultItem;
     private boolean hasProducedResult;
 
     public ArrayReverseFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 1) {
             throw new OurBadException("array:reverse must have exactly one argument.");
@@ -75,32 +73,33 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
             return;
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:reverse expects exactly one array argument.",
-                    getMetadata()
-            );
+                    "array:reverse expects exactly one array argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; argument to array:reverse must be an array.",
-                    getMetadata()
-            );
+                    "Type error; argument to array:reverse must be an array.", getMetadata());
         }
 
         if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    reversedMembers,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    reversedMembers,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
-
     }
 
     @Override
@@ -130,8 +129,7 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:reverse is currently supported only in local execution mode."
-        );
+                "array:reverse is currently supported only in local execution mode.");
     }
 
     @Override
@@ -142,8 +140,6 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:reverse is currently supported only in local execution mode."
-        );
+                "array:reverse is currently supported only in local execution mode.");
     }
 }
-

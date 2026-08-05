@@ -20,7 +20,14 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -39,34 +46,19 @@ import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private Item item;
 
     public SumFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.item = computeSum(
-            zeroElement(context),
-            this.getChild(0),
-            context,
-            getMetadata()
-        );
+        this.item = computeSum(zeroElement(context), this.getChild(0), context, getMetadata());
         if (this.item == null) {
             return null;
         }
@@ -85,29 +77,13 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             Item zeroElement,
             RuntimeIterator iterator,
             DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (iterator.isDataFrame()) {
-            return computeDataFrame(
-                zeroElement,
-                iterator,
-                context,
-                metadata
-            );
+            return computeDataFrame(zeroElement, iterator, context, metadata);
         } else if (iterator.isRDDOrDataFrame()) {
-            return computeRDD(
-                zeroElement,
-                iterator,
-                context,
-                metadata
-            );
+            return computeRDD(zeroElement, iterator, context, metadata);
         } else {
-            return computeLocally(
-                zeroElement,
-                iterator,
-                context,
-                metadata
-            );
+            return computeLocally(zeroElement, iterator, context, metadata);
         }
     }
 
@@ -115,15 +91,15 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             Item zeroElement,
             RuntimeIterator iterator,
             DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         iterator.open(context);
 
         Item result = null;
         while (iterator.hasNext()) {
             Item nextValue = iterator.next();
             if (nextValue.isUntypedAtomic()) {
-                nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
+                nextValue =
+                        ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
             }
             if (result == null) {
                 result = nextValue;
@@ -135,12 +111,11 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (sum == null) {
                     throw new InvalidArgumentTypeException(
                             " \"+\": operation not possible with parameters of type \""
-                                + result.getDynamicType().toString()
-                                + "\" and \""
-                                + nextValue.getDynamicType().toString()
-                                + "\"",
-                            metadata
-                    );
+                                    + result.getDynamicType().toString()
+                                    + "\" and \""
+                                    + nextValue.getDynamicType().toString()
+                                    + "\"",
+                            metadata);
                 }
                 result = sum;
             }
@@ -156,8 +131,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             Item zeroElement,
             RuntimeIterator iterator,
             DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         JavaRDD<Item> rdd = iterator.getRDD(context);
         if (rdd.count() == 0) {
             return zeroElement;
@@ -169,22 +143,20 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             Item zeroElement,
             RuntimeIterator iterator,
             DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         HomogeneousItemDataFrame df = iterator.getDataFrame(context);
         if (df.isEmptySequence()) {
             return zeroElement;
         }
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-        HomogeneousItemDataFrame summedDF = df.evaluateSQL(
-            String.format(
-                "SELECT SUM(`%s`) as `%s` FROM %s",
-                SparkSessionManager.nonObjectJSONiqItemColumnName,
-                SparkSessionManager.nonObjectJSONiqItemColumnName,
-                input
-            ),
-            df.getItemType()
-        );
+        HomogeneousItemDataFrame summedDF =
+                df.evaluateSQL(
+                        String.format(
+                                "SELECT SUM(`%s`) as `%s` FROM %s",
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                input),
+                        df.getItemType());
         return summedDF.getExactlyOneItem();
     }
 
@@ -192,7 +164,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.getChild(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
-                new TreeMap<Name, DynamicContext.VariableDependency>();
+                    new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
             return result;
         } else {
@@ -202,22 +174,24 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext =
+                this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!childContext.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
+        if (!childContext
+                .getResultingType()
+                .getItemType()
+                .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
         if (SequenceType.Arity.OneOrMore.isSubtypeOf(childContext.getResultingType().getArity())) {
             return new NativeClauseContext(
                     childContext,
                     String.format(
-                        "aggregate(%s, decimal(0), (x, y) -> decimal(x + y))",
-                        childContext.getResultingQuery()
-                    ),
-                    SequenceType.createSequenceType("integer")
-            );
+                            "aggregate(%s, decimal(0), (x, y) -> decimal(x + y))",
+                            childContext.getResultingQuery()),
+                    SequenceType.createSequenceType("integer"));
         }
         // each row contains a single value
         return childContext;

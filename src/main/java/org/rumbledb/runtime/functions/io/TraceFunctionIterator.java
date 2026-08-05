@@ -18,8 +18,12 @@
  *
  */
 
-
 package org.rumbledb.runtime.functions.io;
+
+import java.io.Serial;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
@@ -30,24 +34,16 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-import java.io.Serial;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-
 public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private RuntimeIterator valueIterator;
     private RuntimeIterator labelIterator;
     private String label;
     private int position = 0;
 
     public TraceFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.position = 0;
     }
@@ -77,27 +73,27 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             Item result = this.valueIterator.next();
-            RumbleConfiguration conf = this.currentDynamicContextForLocalExecution
-                .getRumbleConfiguration();
+            RumbleConfiguration conf =
+                    this.currentDynamicContextForLocalExecution.getRumbleConfiguration();
             if (conf != null) {
                 String path = conf.output().logPath();
                 if (path != null) {
-                    URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                        path,
-                        getMetadata()
-                    );
+                    URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, getMetadata());
                     FileSystemUtil.append(
-                        uri,
-                        Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
-                        getMetadata()
-                    );
+                            uri,
+                            Collections.singletonList(
+                                    this.label
+                                            + " ["
+                                            + (++this.position)
+                                            + "]: "
+                                            + result.serialize()),
+                            getMetadata());
                 }
             }
             this.hasNext = this.valueIterator.hasNext();
             return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " trace function", getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " trace function", getMetadata());
     }
-
-
 }

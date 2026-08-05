@@ -20,18 +20,18 @@
 
 package org.rumbledb.items.parsing;
 
+import java.io.Serial;
+
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-
 public class RowToItemMapper implements Function<Row, Item> {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final ExceptionMetadata metadata;
     private final ItemType itemType;

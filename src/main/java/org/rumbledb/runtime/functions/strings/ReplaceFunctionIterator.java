@@ -20,38 +20,33 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.MatchesEmptyStringException;
-import org.rumbledb.exceptions.InvalidReplacementStringException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidReplacementStringException;
+import org.rumbledb.exceptions.MatchesEmptyStringException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
+
 public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public ReplaceFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
-        Item patternStringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item patternStringItem = this.getChild(1).materializeFirstItemOrNull(context);
 
         if (patternStringItem == null) {
             return null;
@@ -59,30 +54,27 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         String pattern = patternStringItem.getStringValue();
         String flags = null;
         if (this.getChildren().size() == 4) {
-            Item flagsItem = this.getChild(3)
-                .materializeFirstItemOrNull(context);
+            Item flagsItem = this.getChild(3).materializeFirstItemOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }
         }
-        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
+        RegexPatternUtils.CompiledRegex compiledRegex =
+                RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
         if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
             throw new MatchesEmptyStringException(
                     "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
-        Item replacementStringItem = this.getChild(2)
-            .materializeFirstItemOrNull(context);
+        Item replacementStringItem = this.getChild(2).materializeFirstItemOrNull(context);
         String replacement = replacementStringItem.getStringValue();
         if (compiledRegex.isQuote()) {
             replacement = Matcher.quoteReplacement(replacement);
         } else if (!(checkReplacementStringForValidity(replacement))) {
             throw new InvalidReplacementStringException(
                     "'" + replacement + "' contains a disallowed sequence of characters",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         String input;
@@ -94,7 +86,6 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         Matcher m = compiledRegex.getPattern().matcher(input);
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
-
     }
 
     private static boolean checkReplacementStringForValidity(String repl) {
@@ -111,7 +102,8 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
                 i += 2;
             } else if (repl.charAt(i) == '$') { // '$' must always be followed by a digit
-                if ((i + 1 >= repl.length()) || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
+                if ((i + 1 >= repl.length())
+                        || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
                     return false;
                 }
                 i += 2;

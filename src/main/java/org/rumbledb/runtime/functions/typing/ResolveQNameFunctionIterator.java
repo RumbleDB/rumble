@@ -1,5 +1,8 @@
 package org.rumbledb.runtime.functions.typing;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -10,17 +13,11 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
-import java.io.Serial;
-import java.util.List;
-
 public class ResolveQNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public ResolveQNameFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -35,16 +32,13 @@ public class ResolveQNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
         if (element == null || !element.isElementNode()) {
             throw new UnexpectedTypeException(
                     "The second argument to fn:resolve-QName must be an element node",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         NamespaceBindingUtils.NamespaceResolver resolver = prefix -> resolvePrefix(element, prefix);
-        Name resolved = NamespaceBindingUtils.parseLexicalQNameForResolveQName(
-            qnameItem.getStringValue(),
-            resolver,
-            getMetadata()
-        );
+        Name resolved =
+                NamespaceBindingUtils.parseLexicalQNameForResolveQName(
+                        qnameItem.getStringValue(), resolver, getMetadata());
         return ItemFactory.getInstance().createQNameItem(resolved);
     }
 

@@ -20,7 +20,12 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,24 +41,16 @@ import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator sequenceIterator;
     private Item nextResult;
     private List<Item> prevResults;
     private String activeCollation;
 
     public DistinctValuesFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.sequenceIterator = arguments.get(0);
     }
@@ -61,11 +58,11 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     private String resolveCollation(DynamicContext context) {
         String explicitCollation = null;
         if (this.getChildren().size() == 2) {
-            explicitCollation = this.getChild(1)
-                .materializeFirstItemOrNull(context)
-                .getStringValue();
+            explicitCollation =
+                    this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
         }
-        String collation = CollationSupport.resolveCollation(explicitCollation, getRuntimeStaticContext());
+        String collation =
+                CollationSupport.resolveCollation(explicitCollation, getRuntimeStaticContext());
         CollationSupport.checkCollationSupported(collation, getMetadata());
         return collation;
     }
@@ -77,7 +74,8 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
             setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "distinct-values function", getMetadata());
+        throw new IteratorFlowException(
+                FLOW_EXCEPTION_MESSAGE + "distinct-values function", getMetadata());
     }
 
     @Override
@@ -89,7 +87,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         this.sequenceIterator.close();
     }
-
 
     @Override
     public void openLocal() {
@@ -121,7 +118,8 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     private boolean containsEquivalentValue(Item candidate) {
         for (Item previous : this.prevResults) {
-            if (AtomicValueComparison.equal(previous, candidate, this.activeCollation, getMetadata())) {
+            if (AtomicValueComparison.equal(
+                    previous, candidate, this.activeCollation, getMetadata())) {
                 return true;
             }
         }
@@ -132,9 +130,10 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         String collation = resolveCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        return childRDD.map(item -> new AtomicValueComparisonKey(item, collation, this.getMetadata()))
-            .distinct()
-            .map(AtomicValueComparisonKey::getItem);
+        return childRDD.map(
+                        item -> new AtomicValueComparisonKey(item, collation, this.getMetadata()))
+                .distinct()
+                .map(AtomicValueComparisonKey::getItem);
     }
 
     @Override
@@ -144,39 +143,34 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        // Spark SQL DISTINCT cannot be used here because its equality semantics differ from XDM for values such as
+        // Spark SQL DISTINCT cannot be used here because its equality semantics differ from XDM for
+        // values such as
         // promoted numerics and NaN.
         // Compute distinctness with AtomicValueComparisonKey through the RDD path, then
         // convert the result back to a DataFrame.
         // Since distinct-values commonly has the static type xs:anyAtomicType,
-        // infer the concrete runtime type when the static type cannot be represented by a Spark schema.
+        // infer the concrete runtime type when the static type cannot be represented by a Spark
+        // schema.
         JavaRDD<Item> rdd = getRDDAux(dynamicContext);
         ItemType itemType = getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(getConfiguration())) {
-            itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                rdd,
-                getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
+            itemType =
+                    TypeInferrenceUtils.inferItemTypeOfRDDItems(
+                            rdd, getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
         }
         return ValidateTypeIterator.convertRDDToValidDataFrame(
-            rdd,
-            itemType,
-            dynamicContext,
-            true,
-            getRuntimeStaticContext()
-        );
+                rdd, itemType, dynamicContext, true, getRuntimeStaticContext());
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext sequenceQuery = this.sequenceIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext sequenceQuery =
+                this.sequenceIterator.generateNativeQuery(nativeClauseContext);
         if (sequenceQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "DISTINCT( "
-            + sequenceQuery.getResultingQuery()
-            + " )";
-        return new NativeClauseContext(sequenceQuery, resultingQuery, sequenceQuery.getResultingType());
+        String resultingQuery = "DISTINCT( " + sequenceQuery.getResultingQuery() + " )";
+        return new NativeClauseContext(
+                sequenceQuery, resultingQuery, sequenceQuery.getResultingType());
     }
 }

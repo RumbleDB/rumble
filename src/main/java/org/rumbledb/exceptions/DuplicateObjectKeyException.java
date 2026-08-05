@@ -20,20 +20,18 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class DuplicateObjectKeyException extends RumbleException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public DuplicateObjectKeyException(String keyName, ExceptionMetadata metadata) {
         super(
-            "Dynamic error; Two pairs in an object have the same key name: " + keyName + ".",
-            ErrorCode.DuplicatePairNameErrorCode,
-            metadata
-        );
+                "Dynamic error; Two pairs in an object have the same key name: " + keyName + ".",
+                ErrorCode.DuplicatePairNameErrorCode,
+                metadata);
     }
 }

@@ -11,20 +11,15 @@ import org.rumbledb.errorcodes.ErrorCode;
 
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CatchPattern implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    @EqualsAndHashCode.Include
-    private final String namespace;
+    @EqualsAndHashCode.Include private final String namespace;
 
-    @EqualsAndHashCode.Include
-    private final String localName;
+    @EqualsAndHashCode.Include private final String localName;
 
-    @EqualsAndHashCode.Include
-    private final boolean namespaceWildcard;
+    @EqualsAndHashCode.Include private final boolean namespaceWildcard;
 
-    @EqualsAndHashCode.Include
-    private final boolean localNameWildcard;
+    @EqualsAndHashCode.Include private final boolean localNameWildcard;
 
     private final String displayText;
 
@@ -33,8 +28,7 @@ public class CatchPattern implements Serializable {
             String localName,
             boolean namespaceWildcard,
             boolean localNameWildcard,
-            String displayText
-    ) {
+            String displayText) {
         this.namespace = namespace;
         this.localName = localName;
         this.namespaceWildcard = namespaceWildcard;
@@ -47,7 +41,8 @@ public class CatchPattern implements Serializable {
     }
 
     public static CatchPattern exact(Name name) {
-        return new CatchPattern(name.getNamespace(), name.getLocalName(), false, false, name.toString());
+        return new CatchPattern(
+                name.getNamespace(), name.getLocalName(), false, false, name.toString());
     }
 
     public static CatchPattern namespaceWildcard(String localName, String displayText) {
@@ -80,5 +75,4 @@ public class CatchPattern implements Serializable {
     public String toString() {
         return this.displayText;
     }
-
 }

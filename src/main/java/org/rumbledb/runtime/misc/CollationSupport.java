@@ -1,17 +1,5 @@
 package org.rumbledb.runtime.misc;
 
-import com.ibm.icu.text.Collator;
-import com.ibm.icu.text.RuleBasedCollator;
-import com.ibm.icu.text.StringSearch;
-import com.ibm.icu.util.ULocale;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.CollationCatalogue;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.UnsupportedCollationException;
-import org.rumbledb.items.ItemFactory;
-
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.StringCharacterIterator;
@@ -21,14 +9,28 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.text.RuleBasedCollator;
+import com.ibm.icu.text.StringSearch;
+import com.ibm.icu.util.ULocale;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.CollationCatalogue;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.UnsupportedCollationException;
+import org.rumbledb.items.ItemFactory;
+
 public final class CollationSupport {
 
-    private static final ConcurrentHashMap<String, RuleBasedCollator> UCA_COLLATOR_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, RuleBasedCollator> UCA_COLLATOR_CACHE =
+            new ConcurrentHashMap<>();
 
-    private CollationSupport() {
-    }
+    private CollationSupport() {}
 
-    public static String resolveCollation(String explicitCollationUri, RuntimeStaticContext staticContext) {
+    public static String resolveCollation(
+            String explicitCollationUri, RuntimeStaticContext staticContext) {
         if (explicitCollationUri != null) {
             return explicitCollationUri;
         }
@@ -46,7 +48,8 @@ public final class CollationSupport {
         return item != null && (item.isString() || item.isAnyURI() || item.isUntypedAtomic());
     }
 
-    public static Item normalizeItemForCollation(Item item, String collationUri, ExceptionMetadata metadata) {
+    public static Item normalizeItemForCollation(
+            Item item, String collationUri, ExceptionMetadata metadata) {
         if (item == null) {
             return null;
         }
@@ -55,18 +58,20 @@ public final class CollationSupport {
             return item;
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
-            byte[] sortKeyBytes = getUcaCollator(collationUri, metadata)
-                .getCollationKey(item.getStringValue())
-                .toByteArray();
-            return ItemFactory.getInstance().createHexBinaryItem(HexFormat.of().formatHex(sortKeyBytes));
+            byte[] sortKeyBytes =
+                    getUcaCollator(collationUri, metadata)
+                            .getCollationKey(item.getStringValue())
+                            .toByteArray();
+            return ItemFactory.getInstance()
+                    .createHexBinaryItem(HexFormat.of().formatHex(sortKeyBytes));
         }
         return ItemFactory.getInstance()
-            .createStringItem(
-                CollationCatalogue.normalizeString(item.getStringValue(), collationUri)
-            );
+                .createStringItem(
+                        CollationCatalogue.normalizeString(item.getStringValue(), collationUri));
     }
 
-    public static int compareStrings(String left, String right, String collationUri, ExceptionMetadata metadata) {
+    public static int compareStrings(
+            String left, String right, String collationUri, ExceptionMetadata metadata) {
         checkCollationSupported(collationUri, metadata);
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
             return compareByCodePoint(left, right);
@@ -75,11 +80,12 @@ public final class CollationSupport {
             return getUcaCollator(collationUri, metadata).compare(left, right);
         }
         return CollationCatalogue.normalizeString(left, collationUri)
-            .compareTo(CollationCatalogue.normalizeString(right, collationUri));
+                .compareTo(CollationCatalogue.normalizeString(right, collationUri));
     }
 
     /**
-     * Compares two strings by Unicode code point value, as required by the Unicode Codepoint Collation
+     * Compares two strings by Unicode code point value, as required by the Unicode Codepoint
+     * Collation
      */
     public static int compareByCodePoint(String left, String right) {
         int leftLength = left.length();
@@ -98,26 +104,28 @@ public final class CollationSupport {
         return (leftLength - i) - (rightLength - j);
     }
 
-    public static boolean startsWith(String value, String prefix, String collationUri, ExceptionMetadata metadata) {
+    public static boolean startsWith(
+            String value, String prefix, String collationUri, ExceptionMetadata metadata) {
         checkCollationSupported(collationUri, metadata);
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
             return value.startsWith(prefix);
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
             RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
-            StringSearch stringSearch = new StringSearch(prefix, new StringCharacterIterator(value), collator);
+            StringSearch stringSearch =
+                    new StringSearch(prefix, new StringCharacterIterator(value), collator);
             return stringSearch.first() == 0;
         }
         return CollationCatalogue.normalizeString(value, collationUri)
-            .startsWith(CollationCatalogue.normalizeString(prefix, collationUri));
+                .startsWith(CollationCatalogue.normalizeString(prefix, collationUri));
     }
 
-    private static RuleBasedCollator getUcaCollator(String collationUri, ExceptionMetadata metadata) {
+    private static RuleBasedCollator getUcaCollator(
+            String collationUri, ExceptionMetadata metadata) {
         try {
-            RuleBasedCollator prototype = UCA_COLLATOR_CACHE.computeIfAbsent(
-                collationUri,
-                uri -> buildUcaCollator(uri, metadata)
-            );
+            RuleBasedCollator prototype =
+                    UCA_COLLATOR_CACHE.computeIfAbsent(
+                            collationUri, uri -> buildUcaCollator(uri, metadata));
             return prototype.cloneAsThawed();
         } catch (RuntimeException e) {
             if (e instanceof UnsupportedCollationException) {
@@ -127,11 +135,13 @@ public final class CollationSupport {
         }
     }
 
-    private static RuleBasedCollator buildUcaCollator(String collationUri, ExceptionMetadata metadata) {
+    private static RuleBasedCollator buildUcaCollator(
+            String collationUri, ExceptionMetadata metadata) {
         UcaParameters parameters = parseUcaParameters(collationUri, metadata);
-        ULocale locale = parameters.languageTag == null
-            ? ULocale.ROOT
-            : ULocale.forLanguageTag(parameters.languageTag);
+        ULocale locale =
+                parameters.languageTag == null
+                        ? ULocale.ROOT
+                        : ULocale.forLanguageTag(parameters.languageTag);
         Collator collator = Collator.getInstance(locale);
         if (!(collator instanceof RuleBasedCollator ruleBasedCollator)) {
             throw new UnsupportedCollationException("Wrong collation parameter", metadata);
@@ -139,10 +149,9 @@ public final class CollationSupport {
 
         ruleBasedCollator.setStrength(parameters.strength);
         ruleBasedCollator.setDecomposition(
-            parameters.normalization
-                ? Collator.CANONICAL_DECOMPOSITION
-                : Collator.NO_DECOMPOSITION
-        );
+                parameters.normalization
+                        ? Collator.CANONICAL_DECOMPOSITION
+                        : Collator.NO_DECOMPOSITION);
         ruleBasedCollator.setCaseLevel(parameters.caseLevel);
         if (parameters.backwards != null) {
             ruleBasedCollator.setFrenchCollation(parameters.backwards);
@@ -153,7 +162,8 @@ public final class CollationSupport {
         return ruleBasedCollator;
     }
 
-    private static UcaParameters parseUcaParameters(String collationUri, ExceptionMetadata metadata) {
+    private static UcaParameters parseUcaParameters(
+            String collationUri, ExceptionMetadata metadata) {
         UcaParameters parameters = new UcaParameters();
         int queryIndex = collationUri.indexOf('?');
         if (queryIndex < 0 || queryIndex == collationUri.length() - 1) {
@@ -170,9 +180,8 @@ public final class CollationSupport {
                 queryParameters.put(decodeQueryComponent(part), "");
             } else {
                 queryParameters.put(
-                    decodeQueryComponent(part.substring(0, separator)),
-                    decodeQueryComponent(part.substring(separator + 1))
-                );
+                        decodeQueryComponent(part.substring(0, separator)),
+                        decodeQueryComponent(part.substring(separator + 1)));
             }
         }
 
@@ -201,12 +210,14 @@ public final class CollationSupport {
                 case "fallback":
                 case "version":
                     if ("version".equals(key) && "no".equals(queryParameters.get("fallback"))) {
-                        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+                        throw new UnsupportedCollationException(
+                                "Wrong collation parameter", metadata);
                     }
                     break;
                 default:
                     if ("no".equals(queryParameters.get("fallback"))) {
-                        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+                        throw new UnsupportedCollationException(
+                                "Wrong collation parameter", metadata);
                     }
                     break;
             }
@@ -250,7 +261,8 @@ public final class CollationSupport {
             case "3", "tertiary" -> Collator.TERTIARY;
             case "4", "quaternary" -> Collator.QUATERNARY;
             case "5", "identical" -> Collator.IDENTICAL;
-            default -> throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+            default ->
+                    throw new UnsupportedCollationException("Wrong collation parameter", metadata);
         };
     }
 

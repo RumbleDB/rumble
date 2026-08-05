@@ -1,9 +1,9 @@
 package org.rumbledb.types;
 
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import lombok.Getter;
 
 @Getter
 public class UnionContentDescriptor {
@@ -12,5 +12,4 @@ public class UnionContentDescriptor {
     public UnionContentDescriptor() {
         this.types = new ArrayList<>();
     }
-
 }

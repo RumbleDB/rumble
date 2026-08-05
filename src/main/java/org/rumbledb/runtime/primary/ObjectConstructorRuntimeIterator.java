@@ -45,9 +45,7 @@ import org.rumbledb.types.SequenceType;
 
 public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private List<RuntimeIterator> keys;
     private List<RuntimeIterator> values;
     private boolean isMergedObject = false;
@@ -57,8 +55,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             List<RuntimeIterator> keys,
             List<RuntimeIterator> values,
             RuntimeStaticContext staticContext,
-            boolean mutable
-    ) {
+            boolean mutable) {
         super(Stream.concat(keys.stream(), values.stream()).toList(), staticContext);
         this.keys = keys;
         this.values = values;
@@ -68,8 +65,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> childExpressions,
             RuntimeStaticContext staticContext,
-            boolean mutable
-    ) {
+            boolean mutable) {
         super(childExpressions, staticContext);
         this.isMergedObject = true;
         this.mutable = mutable;
@@ -91,7 +87,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata(), this.mutable);
+                    .createObjectItem(keys, values, getMetadata(), this.mutable);
 
         } else {
 
@@ -105,9 +101,8 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                 if (currentResults.size() > 1) {
                     values.add(
-                        ItemFactory.getInstance()
-                            .createArrayItem(currentResults, this.mutable)
-                    );
+                            ItemFactory.getInstance()
+                                    .createArrayItem(currentResults, this.mutable));
                 } else if (currentResults.size() == 1) {
                     values.add(currentResults.get(0));
                 } else {
@@ -118,27 +113,27 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             for (RuntimeIterator keyIterator : this.keys) {
                 keyIterator.open(dynamicContext);
                 if (!keyIterator.hasNext()) {
-                    throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
+                    throw new IteratorFlowException(
+                            "A key cannot be the empty sequence", getMetadata());
                 }
                 Item key = keyIterator.next();
-                if (!key.isString() && !key.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
+                if (!key.isString()
+                        && !key.getDynamicType()
+                                .canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                     throw new UnexpectedTypeException(
                             "Key provided for object creation must be of type String",
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
                 keys.add(key.getStringValue());
                 if (keyIterator.hasNext()) {
                     throw new IteratorFlowException(
-                            "A key cannot be a sequence of more than one item",
-                            getMetadata()
-                    );
+                            "A key cannot be a sequence of more than one item", getMetadata());
                 }
                 keyIterator.close();
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata(), this.mutable);
+                    .createObjectItem(keys, values, getMetadata(), this.mutable);
         }
     }
 
@@ -155,13 +150,12 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         if (this.getChild(0) instanceof CommaExpressionIterator commaExpressionIterator) {
             objectsToMerge = commaExpressionIterator.getOperands();
         }
-        if (
-            !objectsToMerge.stream()
+        if (!objectsToMerge.stream()
                 .allMatch(
-                    objectToMerge -> objectToMerge instanceof VariableReferenceIterator
-                        || objectToMerge instanceof ObjectConstructorRuntimeIterator
-                )
-        ) {
+                        objectToMerge ->
+                                objectToMerge instanceof VariableReferenceIterator
+                                        || objectToMerge
+                                                instanceof ObjectConstructorRuntimeIterator)) {
             return NativeClauseContext.NoNativeQuery;
         }
         List<String> queries = new ArrayList<>();
@@ -169,24 +163,32 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         List<ItemType> valueTypes = new ArrayList<>();
         for (RuntimeIterator objectToMerge : objectsToMerge) {
             if (objectToMerge instanceof VariableReferenceIterator) {
-                NativeClauseContext objectPartContext = objectToMerge.generateNativeQuery(nativeClauseContext);
+                NativeClauseContext objectPartContext =
+                        objectToMerge.generateNativeQuery(nativeClauseContext);
                 if (objectPartContext == NativeClauseContext.NoNativeQuery) {
                     return NativeClauseContext.NoNativeQuery;
                 }
                 nativeClauseContext = new NativeClauseContext(objectPartContext, null, null);
-                ItemType objectPartContextResultingItemType = objectPartContext.getResultingType().getItemType();
-                objectPartContextResultingItemType.getObjectKeysFacet().forEach(k -> {
-                    keyNames.add(k);
-                    valueTypes.add(objectPartContextResultingItemType.getObjectContentFacet(k).getType());
-                });
-                // special case: if there is only one item, spark treats it as a reference, in that case don't use .*
+                ItemType objectPartContextResultingItemType =
+                        objectPartContext.getResultingType().getItemType();
+                objectPartContextResultingItemType
+                        .getObjectKeysFacet()
+                        .forEach(
+                                k -> {
+                                    keyNames.add(k);
+                                    valueTypes.add(
+                                            objectPartContextResultingItemType
+                                                    .getObjectContentFacet(k)
+                                                    .getType());
+                                });
+                // special case: if there is only one item, spark treats it as a reference, in that
+                // case
+                // don't use .*
                 queries.add(
-                    String.format(
-                        "%s%s",
-                        objectPartContext.getResultingQuery(),
-                        objectsToMerge.size() > 1 ? ".*" : ""
-                    )
-                );
+                        String.format(
+                                "%s%s",
+                                objectPartContext.getResultingQuery(),
+                                objectsToMerge.size() > 1 ? ".*" : ""));
             } else if (objectToMerge instanceof ObjectConstructorRuntimeIterator child) {
                 if (child.isMergedObject) {
                     return NativeClauseContext.NoNativeQuery;
@@ -197,7 +199,8 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
                 List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
                 for (RuntimeIterator key : child.keys) {
-                    NativeClauseContext keyNativeContext = key.generateNativeQuery(nativeClauseContext);
+                    NativeClauseContext keyNativeContext =
+                            key.generateNativeQuery(nativeClauseContext);
                     if (keyNativeContext == NativeClauseContext.NoNativeQuery) {
                         return NativeClauseContext.NoNativeQuery;
                     }
@@ -205,7 +208,8 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                     nativeClauseContext = keyNativeContext;
                 }
                 for (RuntimeIterator value : child.values) {
-                    NativeClauseContext valueNativeContext = value.generateNativeQuery(nativeClauseContext);
+                    NativeClauseContext valueNativeContext =
+                            value.generateNativeQuery(nativeClauseContext);
                     if (valueNativeContext == NativeClauseContext.NoNativeQuery) {
                         return NativeClauseContext.NoNativeQuery;
                     }
@@ -217,39 +221,44 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 if (subQueryCount == 0) {
                     return NativeClauseContext.NoNativeQuery;
                 }
-                if (
-                    subQueryCount == 1
-                        && keyNativeContexts.get(0)
-                            .getResultingQuery()
-                            .substring(1, keyNativeContexts.get(0).getResultingQuery().length() - 1)
-                            .equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
-                ) {
+                if (subQueryCount == 1
+                        && keyNativeContexts
+                                .get(0)
+                                .getResultingQuery()
+                                .substring(
+                                        1,
+                                        keyNativeContexts.get(0).getResultingQuery().length() - 1)
+                                .equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)) {
                     continue;
                 }
 
-                List<String> constructorKeyNames = createKeyNames(
-                    keyNativeContexts,
-                    valueNativeContexts,
-                    subQueryCount
-                );
+                List<String> constructorKeyNames =
+                        createKeyNames(keyNativeContexts, valueNativeContexts, subQueryCount);
                 for (int i = 0; i < subQueryCount; i++) {
                     queries.add(
-                        String.format(
-                            "(%s) as `%s`",
-                            valueNativeContexts.get(i).getResultingQuery(),
-                            constructorKeyNames.get(i)
-                                .substring(1, keyNativeContexts.get(i).getResultingQuery().length() - 1)
-                        )
-                    );
+                            String.format(
+                                    "(%s) as `%s`",
+                                    valueNativeContexts.get(i).getResultingQuery(),
+                                    constructorKeyNames
+                                            .get(i)
+                                            .substring(
+                                                    1,
+                                                    keyNativeContexts
+                                                                    .get(i)
+                                                                    .getResultingQuery()
+                                                                    .length()
+                                                            - 1)));
                 }
-                constructorKeyNames
-                    .stream()
-                    .map(key -> key.substring(1, key.length() - 1)) // because string wrapped in ""
-                    .forEach(keyNames::add);
-                valueNativeContexts
-                    .stream()
-                    .map(value -> value.getResultingType().getItemType())
-                    .forEach(valueTypes::add);
+                constructorKeyNames.stream()
+                        .map(
+                                key ->
+                                        key.substring(
+                                                1,
+                                                key.length() - 1)) // because string wrapped in ""
+                        .forEach(keyNames::add);
+                valueNativeContexts.stream()
+                        .map(value -> value.getResultingType().getItemType())
+                        .forEach(valueTypes::add);
             } else {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -259,11 +268,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultString,
-                new SequenceType(
-                        resultType,
-                        SequenceType.Arity.One
-                )
-        );
+                new SequenceType(resultType, SequenceType.Arity.One));
     }
 
     private NativeClauseContext generateKeyValueObject(NativeClauseContext nativeClauseContext) {
@@ -292,70 +297,66 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         if (subQueryCount == 0) {
             return new NativeClauseContext(
                     nativeClauseContext,
-                    "named_struct(\"" + SparkSessionManager.emptyObjectJSONiqItemColumnName + "\", null)",
-                    new SequenceType(
-                            BuiltinTypesCatalogue.objectItem,
-                            SequenceType.Arity.One
-                    )
-            );
+                    "named_struct(\""
+                            + SparkSessionManager.emptyObjectJSONiqItemColumnName
+                            + "\", null)",
+                    new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.One));
         }
 
-        List<String> keyNames = createKeyNames(keyNativeContexts, valueNativeContexts, subQueryCount);
+        List<String> keyNames =
+                createKeyNames(keyNativeContexts, valueNativeContexts, subQueryCount);
 
         List<String> objectItems = new ArrayList<>();
         for (int i = 0; i < subQueryCount; i++) {
             objectItems.add(
-                String.format(
-                    "%s, (%s)",
-                    keyNames.get(i),
-                    valueNativeContexts.get(i).getResultingQuery()
-                )
-            );
+                    String.format(
+                            "%s, (%s)",
+                            keyNames.get(i), valueNativeContexts.get(i).getResultingQuery()));
         }
-        String resultString =
-            String.format(
-                "named_struct(%s)",
-                String.join(",", objectItems)
-            );
+        String resultString = String.format("named_struct(%s)", String.join(",", objectItems));
 
         ItemType resultType =
-            ItemTypeFactory.createAnonymousObjectType(
-                keyNames
-                    .stream()
-                    .map(key -> key.substring(1, key.length() - 1)) // because string wrapped in ""
-                    .collect(Collectors.toList()),
-                valueNativeContexts
-                    .stream()
-                    .map(value -> value.getResultingType().getItemType())
-                    .collect(Collectors.toList())
-            );
+                ItemTypeFactory.createAnonymousObjectType(
+                        keyNames.stream()
+                                .map(
+                                        key ->
+                                                key.substring(
+                                                        1,
+                                                        key.length()
+                                                                - 1)) // because string wrapped in
+                                // ""
+                                .collect(Collectors.toList()),
+                        valueNativeContexts.stream()
+                                .map(value -> value.getResultingType().getItemType())
+                                .collect(Collectors.toList()));
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultString,
-                new SequenceType(
-                        resultType,
-                        SequenceType.Arity.One
-                )
-        );
+                new SequenceType(resultType, SequenceType.Arity.One));
     }
 
     private List<String> createKeyNames(
             List<NativeClauseContext> keyNativeContexts,
             List<NativeClauseContext> valueNativeContexts,
-            int subQueryCount
-    ) {
+            int subQueryCount) {
         List<String> constructorKeyNames = new ArrayList<>();
         for (int i = 0; i < subQueryCount; i++) {
-            if (SequenceType.Arity.OneOrMore.isSubtypeOf(valueNativeContexts.get(i).getResultingType().getArity())) {
+            if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                    valueNativeContexts.get(i).getResultingType().getArity())) {
                 constructorKeyNames.add(
-                    String.format(
-                        "\"%s%s\"",
-                        keyNativeContexts.get(i)
-                            .getResultingQuery()
-                            .substring(1, keyNativeContexts.get(i).getResultingQuery().length() - 1),
-                        SparkSessionManager.sequenceColumnName
-                    )
-                );
+                        String.format(
+                                "\"%s%s\"",
+                                keyNativeContexts
+                                        .get(i)
+                                        .getResultingQuery()
+                                        .substring(
+                                                1,
+                                                keyNativeContexts
+                                                                .get(i)
+                                                                .getResultingQuery()
+                                                                .length()
+                                                        - 1),
+                                SparkSessionManager.sequenceColumnName));
             } else {
                 constructorKeyNames.add(keyNativeContexts.get(i).getResultingQuery());
             }

@@ -1,12 +1,12 @@
 package org.rumbledb.runtime.functions.util.formatting.calendar;
 
-import org.rumbledb.config.FormattingCalendarModeSupport;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
-
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.rumbledb.config.FormattingCalendarModeSupport;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 
 public final class CalendarSupport {
 
@@ -15,17 +15,13 @@ public final class CalendarSupport {
     private static final Pattern EQNAME_PATTERN = Pattern.compile("^Q\\{([^}]*)}(.+)$");
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
-    private CalendarSupport() {
-    }
+    private CalendarSupport() {}
 
     /**
      * Normalizes a calendar argument if it matches a known calendar mode.
      *
-     * <p>
-     * EQName literals without a namespace are resolved against the known calendar
-     * names. Unknown values are returned unchanged.
-     * </p>
-     *
+     * <p>EQName literals without a namespace are resolved against the known calendar names. Unknown
+     * values are returned unchanged.
      */
     public static String normalizeKnownCalendarMode(String calendar) {
         String value = normalizeCalendarArgument(calendar);
@@ -36,24 +32,21 @@ public final class CalendarSupport {
         }
 
         return CalendarModes.isKnownDesignator(name.localName)
-            ? CalendarModes.normalizeDesignator(name.localName)
-            : name.localName;
+                ? CalendarModes.normalizeDesignator(name.localName)
+                : name.localName;
     }
 
     /**
-     * Unqualified calendar names must be syntactically valid. Supported calendar
-     * designators are handled by the ICU formatting backend; unsupported valid
-     * designators fall back later.
-     * Namespace-qualified calendar names are syntactically accepted when their prefix
-     * is statically known, but this implementation does not resolve arbitrary
-     * namespace-qualified calendar systems. They also fall back to the default
-     * calendar.
+     * Unqualified calendar names must be syntactically valid. Supported calendar designators are
+     * handled by the ICU formatting backend; unsupported valid designators fall back later.
+     * Namespace-qualified calendar names are syntactically accepted when their prefix is statically
+     * known, but this implementation does not resolve arbitrary namespace-qualified calendar
+     * systems. They also fall back to the default calendar.
      */
     public static String resolveCalendarMode(
             String calendar,
             Map<String, String> staticallyKnownNamespaces,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         String value = normalizeCalendarArgument(calendar);
 
         CalendarName name = parseCalendarName(value, staticallyKnownNamespaces, metadata);
@@ -82,15 +75,14 @@ public final class CalendarSupport {
     }
 
     /**
-     * Parses a calendar name from the given string value.
-     * The value may be an EQName literal, an unprefixed local name, or a prefixed
-     * name whose prefix is resolved using the statically known namespaces.
+     * Parses a calendar name from the given string value. The value may be an EQName literal, an
+     * unprefixed local name, or a prefixed name whose prefix is resolved using the statically known
+     * namespaces.
      */
     private static CalendarName parseCalendarName(
             String value,
             Map<String, String> staticallyKnownNamespaces,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         CalendarName eqName = parseEQNameLiteral(value);
         if (eqName != null) {
             return eqName;
@@ -109,9 +101,8 @@ public final class CalendarSupport {
         String prefix = value.substring(0, colon);
         String localName = value.substring(colon + 1);
 
-        String namespaceUri = staticallyKnownNamespaces == null
-            ? null
-            : staticallyKnownNamespaces.get(prefix);
+        String namespaceUri =
+                staticallyKnownNamespaces == null ? null : staticallyKnownNamespaces.get(prefix);
 
         if (namespaceUri == null) {
             throw invalidCalendar(value, metadata);
@@ -120,9 +111,7 @@ public final class CalendarSupport {
         return new CalendarName(namespaceUri, localName);
     }
 
-    /**
-     * Returns a new CalendarName object if {@code value} is an EQName, {@code null} otherwise.
-     */
+    /** Returns a new CalendarName object if {@code value} is an EQName, {@code null} otherwise. */
     private static CalendarName parseEQNameLiteral(String value) {
         Matcher matcher = EQNAME_PATTERN.matcher(value);
         if (!matcher.matches()) {
@@ -137,13 +126,9 @@ public final class CalendarSupport {
     }
 
     private static IncorrectSyntaxFormatDateTimeException invalidCalendar(
-            String calendar,
-            ExceptionMetadata metadata
-    ) {
+            String calendar, ExceptionMetadata metadata) {
         return new IncorrectSyntaxFormatDateTimeException(
-                "\"" + calendar + "\": invalid calendar",
-                metadata
-        );
+                "\"" + calendar + "\": invalid calendar", metadata);
     }
 
     private static final class CalendarName {

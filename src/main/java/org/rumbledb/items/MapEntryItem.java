@@ -36,16 +36,13 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-
 public class MapEntryItem extends AbstractMapItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    /**
-     * This is an optimization version of maps when there is exactly one key-value pair.
-     */
+    /** This is an optimization version of maps when there is exactly one key-value pair. */
     private final Item key;
+
     private final List<Item> value;
 
     public MapEntryItem(Item key, List<Item> value) {
@@ -65,7 +62,9 @@ public class MapEntryItem extends AbstractMapItem {
             result.setMutabilityLevel(0);
             return result;
         }
-        return new MapEntryItem(this.key.copy(mutable), this.value.stream().map(item -> item.copy(mutable)).toList());
+        return new MapEntryItem(
+                this.key.copy(mutable),
+                this.value.stream().map(item -> item.copy(mutable)).toList());
     }
 
     // region maps
@@ -146,43 +145,46 @@ public class MapEntryItem extends AbstractMapItem {
 
     @Override
     public void putItemByKey(String key, Item value) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void putItemByKey(Item key, Item value) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void putSequenceByKey(String key, List<Item> valueSequence) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void putSequenceByKey(Item key, List<Item> valueSequence) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void removeItemByKey(String key) {
-        throw new OurBadException("Cannot remove an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot remove an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void removeItemByKey(Item key) {
-        throw new OurBadException("Cannot remove an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot remove an item by key in a MapEntryItem, which is not mutable.");
     }
 
     // endregion maps
-
-
 
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.mapItem;
     }
-
 
     @Override
     public boolean getEffectiveBooleanValue() {
@@ -208,7 +210,8 @@ public class MapEntryItem extends AbstractMapItem {
 
     @Override
     public void setTopLevelID(long topLevelID) {
-        throw new OurBadException("Cannot change top level ID of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change top level ID of a MapEntryItem, which is not mutable.");
     }
 
     @Override
@@ -218,7 +221,8 @@ public class MapEntryItem extends AbstractMapItem {
 
     @Override
     public void setTopLevelOrder(double topLevelOrder) {
-        throw new OurBadException("Cannot change top level order of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change top level order of a MapEntryItem, which is not mutable.");
     }
 
     @Override
@@ -238,13 +242,15 @@ public class MapEntryItem extends AbstractMapItem {
 
     @Override
     public void setTableLocation(String location) {
-        throw new OurBadException("Cannot change table location of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change table location of a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public String getSparkSQLValue() {
         if (this.value.size() != 1) {
-            throw new OurBadException("Maps with more than one value do not have a Spark SQL value.");
+            throw new OurBadException(
+                    "Maps with more than one value do not have a Spark SQL value.");
         }
         StringBuilder sb = new StringBuilder();
         sb.append("named_struct(");
@@ -260,7 +266,8 @@ public class MapEntryItem extends AbstractMapItem {
     @Override
     public String getSparkSQLValue(ItemType itemType) {
         if (this.value.size() != 1) {
-            throw new OurBadException("Maps with more than one value do not have a Spark SQL value.");
+            throw new OurBadException(
+                    "Maps with more than one value do not have a Spark SQL value.");
         }
         StringBuilder sb = new StringBuilder();
         sb.append("named_struct(");
@@ -282,7 +289,8 @@ public class MapEntryItem extends AbstractMapItem {
     @Override
     public String getSparkSQLType() {
         if (this.value.size() != 1) {
-            throw new OurBadException("Maps with more than one value do not have a Spark SQL type.");
+            throw new OurBadException(
+                    "Maps with more than one value do not have a Spark SQL type.");
         }
         StringBuilder sb = new StringBuilder();
         sb.append("STRUCT<");
@@ -301,15 +309,14 @@ public class MapEntryItem extends AbstractMapItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
     public Object getVariantValue() {
         if (this.value.size() != 1) {
-            throw new OurBadException("Maps with more than one value do not have a Spark SQL variant value.");
+            throw new OurBadException(
+                    "Maps with more than one value do not have a Spark SQL variant value.");
         }
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put(this.key.getStringValue(), this.value.get(0).getVariantValue());
@@ -323,7 +330,7 @@ public class MapEntryItem extends AbstractMapItem {
 
     @Override
     public void setCollection(Collection collection) {
-        throw new OurBadException("Cannot change collection of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change collection of a MapEntryItem, which is not mutable.");
     }
-
 }

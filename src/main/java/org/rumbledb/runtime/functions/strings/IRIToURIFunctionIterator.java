@@ -1,5 +1,9 @@
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -8,18 +12,11 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-
 public class IRIToURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public IRIToURIFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -33,8 +30,7 @@ public class IRIToURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         if (!(inputItem.isString() || inputItem.isAnyURI() || inputItem.isUntypedAtomic())) {
             throw new UnexpectedTypeException(
                     "fn:iri-to-uri expects a string, xs:anyURI, or xs:untypedAtomic argument [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         return ItemFactory.getInstance().createStringItem(encodeIri(inputItem.getStringValue()));
@@ -52,7 +48,8 @@ public class IRIToURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             return;
         }
 
-        byte[] utf8Bytes = new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8);
+        byte[] utf8Bytes =
+                new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8);
         for (byte currentByte : utf8Bytes) {
             result.append('%');
             int unsigned = currentByte & 0xFF;

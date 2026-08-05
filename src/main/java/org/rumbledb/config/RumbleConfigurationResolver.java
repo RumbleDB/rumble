@@ -1,28 +1,29 @@
 package org.rumbledb.config;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
 /**
  * Utility class to manipulate RumbleConfiguration as JSON objects.
- * 
- * This is mainly used for the public configuration API. Our internal Java code should use the RumbleConfiguration class
- * directly, and not rely on this class because it is not type-safe and does not provide compile-time guarantees.
+ *
+ * <p>This is mainly used for the public configuration API. Our internal Java code should use the
+ * RumbleConfiguration class directly, and not rely on this class because it is not type-safe and
+ * does not provide compile-time guarantees.
  */
 public final class RumbleConfigurationResolver {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private RumbleConfigurationResolver() {
-    }
+    private RumbleConfigurationResolver() {}
 
-    public static RumbleConfiguration apply(RumbleConfiguration baseConfiguration, Map<String, ?> entries) {
+    public static RumbleConfiguration apply(
+            RumbleConfiguration baseConfiguration, Map<String, ?> entries) {
         ObjectNode mergedTree = MAPPER.valueToTree(baseConfiguration);
         deepMerge(mergedTree, toTree(entries));
         return fromTree(mergedTree);
@@ -37,9 +38,11 @@ public final class RumbleConfigurationResolver {
         return MAPPER.convertValue(getValue(configuration, path), valueType);
     }
 
-    public static <T> List<T> getList(RumbleConfiguration configuration, String path, Class<T> elementType) {
+    public static <T> List<T> getList(
+            RumbleConfiguration configuration, String path, Class<T> elementType) {
         Objects.requireNonNull(elementType, "List element type cannot be null.");
-        JavaType listType = MAPPER.getTypeFactory().constructCollectionType(List.class, elementType);
+        JavaType listType =
+                MAPPER.getTypeFactory().constructCollectionType(List.class, elementType);
         return MAPPER.convertValue(getValue(configuration, path), listType);
     }
 
@@ -115,14 +118,16 @@ public final class RumbleConfigurationResolver {
     }
 
     private static void deepMerge(ObjectNode target, ObjectNode updates) {
-        updates.fields().forEachRemaining(entry -> {
-            JsonNode existing = target.get(entry.getKey());
-            JsonNode update = entry.getValue();
-            if (existing instanceof ObjectNode && update instanceof ObjectNode) {
-                deepMerge((ObjectNode) existing, (ObjectNode) update);
-            } else {
-                target.set(entry.getKey(), update);
-            }
-        });
+        updates.fields()
+                .forEachRemaining(
+                        entry -> {
+                            JsonNode existing = target.get(entry.getKey());
+                            JsonNode update = entry.getValue();
+                            if (existing instanceof ObjectNode && update instanceof ObjectNode) {
+                                deepMerge((ObjectNode) existing, (ObjectNode) update);
+                            } else {
+                                target.set(entry.getKey(), update);
+                            }
+                        });
     }
 }

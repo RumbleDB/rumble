@@ -23,10 +23,10 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 
 /**
- * Visitor checks rules for composing statements based on sequential properties
- * or nesting (e.g., break statements).
- * The visitor passes a node representing the innermost control statement (while or FLWOR), and for some of the rules
- * applies checks to verify if loops enclose the visited node type.
+ * Visitor checks rules for composing statements based on sequential properties or nesting (e.g.,
+ * break statements). The visitor passes a node representing the innermost control statement (while
+ * or FLWOR), and for some of the rules applies checks to verify if loops enclose the visited node
+ * type.
  */
 public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
 
@@ -39,33 +39,26 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitProlog(Prolog expression, Node argument) {
-        expression.getFunctionDeclarations()
-            .forEach(
-                functionDeclaration -> visit(
-                    functionDeclaration,
-                    null
-                )
-            );
-        expression.getVariableDeclarations()
-            .forEach(
-                variableDeclaration -> visit(
-                    variableDeclaration,
-                    null
-                )
-            );
-        boolean containsOtherThanNonUpdatingNonSeq = expression.getVariableDeclarations()
-            .stream()
-            .anyMatch(varDecl -> {
-                if (varDecl.getExpression() != null) {
-                    return varDecl.getExpression().isUpdating() || varDecl.getExpression().isSequential();
-                }
-                return false;
-            });
+        expression
+                .getFunctionDeclarations()
+                .forEach(functionDeclaration -> visit(functionDeclaration, null));
+        expression
+                .getVariableDeclarations()
+                .forEach(variableDeclaration -> visit(variableDeclaration, null));
+        boolean containsOtherThanNonUpdatingNonSeq =
+                expression.getVariableDeclarations().stream()
+                        .anyMatch(
+                                varDecl -> {
+                                    if (varDecl.getExpression() != null) {
+                                        return varDecl.getExpression().isUpdating()
+                                                || varDecl.getExpression().isSequential();
+                                    }
+                                    return false;
+                                });
         if (containsOtherThanNonUpdatingNonSeq) {
             throw new InvalidComposabilityUpdatingAndSequentialExpression(
                     "We cannot support variable declaration which does not contain non-updating, non-sequential expressions.",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
         return argument;
     }
@@ -77,10 +70,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
-    public Node visitStatementsAndExpr(
-            StatementsAndExpr statementsAndExpr,
-            Node argument
-    ) {
+    public Node visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, Node argument) {
         if (statementsAndExpr.getStatements() != null) {
             statementsAndExpr.getStatements().forEach(statement -> visit(statement, argument));
         }
@@ -91,11 +81,11 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitStatementsAndOptionalExpr(
-            StatementsAndOptionalExpr statementsAndOptionalExpr,
-            Node argument
-    ) {
+            StatementsAndOptionalExpr statementsAndOptionalExpr, Node argument) {
         if (statementsAndOptionalExpr.getStatements() != null) {
-            statementsAndOptionalExpr.getStatements().forEach(statement -> visit(statement, argument));
+            statementsAndOptionalExpr
+                    .getStatements()
+                    .forEach(statement -> visit(statement, argument));
         }
         if (statementsAndOptionalExpr.getExpression() != null) {
             visit(statementsAndOptionalExpr.getExpression(), argument);
@@ -107,29 +97,22 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
     public Node visitAssignStatement(AssignStatement expression, Node argument) {
         if (expression.getAssignExpression().isUpdating()) {
             throw new InvalidUpdatingExpressionOperand(
-                    "Assign statement expects a non-updating operand.",
-                    expression.getMetadata()
-            );
+                    "Assign statement expects a non-updating operand.", expression.getMetadata());
         }
         if (!expression.getStaticContext().getIsAssignable(expression.getName())) {
             throw new InvalidAssignableVariableComposability(
-                    "Assign statement expects an assignable variable",
-                    expression.getMetadata()
-            );
+                    "Assign statement expects an assignable variable", expression.getMetadata());
         }
         return argument;
     }
 
     @Override
-    public Node visitVariableDeclStatement(
-            VariableDeclStatement statement,
-            Node argument
-    ) {
-        if (statement.getVariableExpression() != null && statement.getVariableExpression().isUpdating()) {
+    public Node visitVariableDeclStatement(VariableDeclStatement statement, Node argument) {
+        if (statement.getVariableExpression() != null
+                && statement.getVariableExpression().isUpdating()) {
             throw new InvalidUpdatingExpressionOperand(
                     "Variable declaration statements expects non-updating operands",
-                    statement.getMetadata()
-            );
+                    statement.getMetadata());
         }
         return argument;
     }
@@ -139,8 +122,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
         if (expression.getTestCondition().isUpdating()) {
             throw new InvalidUpdatingExpressionCondition(
                     "While statement expects non-updating test condition",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
         visit(expression.getStatement(), expression);
         return argument;
@@ -157,16 +139,12 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
-    public Node visitConditionalStatement(
-            ConditionalStatement expression,
-            Node argument
-    ) {
+    public Node visitConditionalStatement(ConditionalStatement expression, Node argument) {
         visit(expression.getCondition(), argument);
         if (expression.getCondition().isUpdating()) {
             throw new InvalidUpdatingExpressionCondition(
                     "If statement expects non-updating conditional expression",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
         visit(expression.getBranch(), argument);
         visit(expression.getElseBranch(), argument);
@@ -174,10 +152,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
-    public Node visitVariableDeclaration(
-            VariableDeclaration expression,
-            Node argument
-    ) {
+    public Node visitVariableDeclaration(VariableDeclaration expression, Node argument) {
         if (expression.external()) {
             // TODO: see if external should have different behavior.
             return argument;
@@ -185,8 +160,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
         if (expression.getExpression().isUpdating() || expression.getExpression().isSequential()) {
             throw new InvalidComposabilityUpdatingAndSequentialExpression(
                     "Variable declaration must contain non-updating and non-sequential expression in its assignment!",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
         return argument;
     }
@@ -197,23 +171,18 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
             // There is no enclosing while or flwor statement
             throw new InvalidControlStatementComposability(
                     "Break statements must be enclosed in while or flwor statements!",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
         return argument;
     }
 
     @Override
-    public Node visitContinueStatement(
-            ContinueStatement expression,
-            Node argument
-    ) {
+    public Node visitContinueStatement(ContinueStatement expression, Node argument) {
         if (argument == null) {
             // There is no enclosing while or flwor statement
             throw new InvalidControlStatementComposability(
                     "Break statements must be enclosed in while or flwor statements!",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
         return argument;
     }

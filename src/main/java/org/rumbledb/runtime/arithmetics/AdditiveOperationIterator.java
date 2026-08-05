@@ -23,12 +23,11 @@ package org.rumbledb.runtime.arithmetics;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.OffsetTime;
-import java.util.Arrays;
-
-import java.time.OffsetDateTime;
-import java.time.Period;
 import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.util.Arrays;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -45,11 +44,9 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-
 public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private Item left;
     private Item right;
@@ -61,8 +58,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
             boolean isMinus,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
@@ -76,16 +72,14 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Addition expression requires at most one item in its left input sequence.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         try {
             this.right = this.rightIterator.materializeAtMostOneItemOrNull(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Addition expression requires at most one item in its right input sequence.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         // if left or right equals empty sequence, return empty sequence
@@ -93,19 +87,19 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             return null;
         }
         if (!this.left.isAtomic()) {
-            String message = String.format(
-                "Can not atomize an %1$s item: an %1$s has probably been passed where "
-                    + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                this.left.getDynamicType().toString()
-            );
+            String message =
+                    String.format(
+                            "Can not atomize an %1$s item: an %1$s has probably been passed where "
+                                    + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                            this.left.getDynamicType().toString());
             throw new NonAtomicKeyException(message, getMetadata());
         }
         if (!this.right.isAtomic()) {
-            String message = String.format(
-                "Can not atomize an %1$s item: an %1$s has probably been passed where "
-                    + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                this.right.getDynamicType().toString()
-            );
+            String message =
+                    String.format(
+                            "Can not atomize an %1$s item: an %1$s has probably been passed where "
+                                    + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                            this.right.getDynamicType().toString());
             throw new NonAtomicKeyException(message, getMetadata());
         }
         if (this.left.isUntypedAtomic()) {
@@ -118,18 +112,18 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         if (result == null) {
             throw new UnexpectedTypeException(
                     " \"+\": operation not possible with parameters of type \""
-                        + this.left.getDynamicType().toString()
-                        + "\" and \""
-                        + this.right.getDynamicType().toString()
-                        + "\"",
-                    getMetadata()
-            );
+                            + this.left.getDynamicType().toString()
+                            + "\" and \""
+                            + this.right.getDynamicType().toString()
+                            + "\"",
+                    getMetadata());
         }
         return result;
     }
 
     public static Item processItem(Item left, Item right, boolean isMinus) {
-        // The integer 0 is considered the default neutral element for addition in sum(), even though
+        // The integer 0 is considered the default neutral element for addition in sum(), even
+        // though
         // it is technically incompatible with durations. In the future, we should
         // make sure an error is thrown if an actual 0 appears in the sum with durations.
         if (!isMinus && left.isInteger() && left.getIntegerValue().equals(BigInteger.ZERO)) {
@@ -139,13 +133,11 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             return left;
         }
         if (left.isInt() && right.isInt()) {
-            if (
-                right.isInt()
+            if (right.isInt()
                     && (left.getIntValue() < Integer.MAX_VALUE / 2
-                        && left.getIntValue() > -Integer.MAX_VALUE / 2
-                        && right.getIntValue() > -Integer.MAX_VALUE / 2
-                        && right.getIntValue() < Integer.MAX_VALUE / 2)
-            ) {
+                            && left.getIntValue() > -Integer.MAX_VALUE / 2
+                            && right.getIntValue() > -Integer.MAX_VALUE / 2
+                            && right.getIntValue() < Integer.MAX_VALUE / 2)) {
                 return processInt(left.getIntValue(), right.getIntValue(), isMinus);
             }
         }
@@ -322,11 +314,13 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private static Item processYearMonthDuration(Period l, Period r, boolean isMinus) {
-        return ItemFactory.getInstance().createYearMonthDurationItem(isMinus ? l.minus(r) : l.plus(r));
+        return ItemFactory.getInstance()
+                .createYearMonthDurationItem(isMinus ? l.minus(r) : l.plus(r));
     }
 
     private static Item processDayTimeDuration(Duration l, Duration r, boolean isMinus) {
-        return ItemFactory.getInstance().createDayTimeDurationItem(isMinus ? l.minus(r) : l.plus(r));
+        return ItemFactory.getInstance()
+                .createDayTimeDurationItem(isMinus ? l.minus(r) : l.plus(r));
     }
 
     private static Item processDateTimeDayTime(Item left, Item right) {
@@ -341,15 +335,18 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         return ItemFactory.getInstance().createDayTimeDurationItem(Duration.between(r, l));
     }
 
-    private static Item processDateTimeDurationDate(OffsetDateTime l, Duration r, boolean isMinus, boolean timeZone) {
+    private static Item processDateTimeDurationDate(
+            OffsetDateTime l, Duration r, boolean isMinus, boolean timeZone) {
         return ItemFactory.getInstance().createDateItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
     }
 
-    private static Item processDateTimeDurationDate(OffsetDateTime l, Period r, boolean isMinus, boolean timeZone) {
+    private static Item processDateTimeDurationDate(
+            OffsetDateTime l, Period r, boolean isMinus, boolean timeZone) {
         return ItemFactory.getInstance().createDateItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
     }
 
-    private static Item processDateTimeDurationTime(OffsetTime l, Duration r, boolean isMinus, boolean timeZone) {
+    private static Item processDateTimeDurationTime(
+            OffsetTime l, Duration r, boolean isMinus, boolean timeZone) {
         if (isMinus) {
             return ItemFactory.getInstance().createTimeItem(l.minus(r), timeZone);
         } else {
@@ -358,16 +355,15 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private static Item processDateTimeDurationDateTime(
-            OffsetDateTime l,
-            Duration r,
-            boolean isMinus,
-            boolean timeZone
-    ) {
-        return ItemFactory.getInstance().createDateTimeItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
+            OffsetDateTime l, Duration r, boolean isMinus, boolean timeZone) {
+        return ItemFactory.getInstance()
+                .createDateTimeItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
     }
 
-    private static Item processDateTimeDurationDateTime(OffsetDateTime l, Period r, boolean isMinus, boolean timeZone) {
-        return ItemFactory.getInstance().createDateTimeItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
+    private static Item processDateTimeDurationDateTime(
+            OffsetDateTime l, Period r, boolean isMinus, boolean timeZone) {
+        return ItemFactory.getInstance()
+                .createDateTimeItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
     }
 
     @Override
@@ -379,7 +375,8 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext rightResult =
+                this.rightIterator.generateNativeQuery(nativeClauseContext);
         if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -389,80 +386,89 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         ItemType resultType;
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
-        if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))
-                && rightResult.getResultingType().getItemType().isNumeric()
-        ) {
-            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))) {
+        if (leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))
+                && rightResult.getResultingType().getItemType().isNumeric()) {
+            if (!rightResult
+                    .getResultingType()
+                    .isSubtypeOf(SequenceType.createSequenceType("double?"))) {
                 rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
-        } else if (
-            rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))
-                && leftResult.getResultingType().getItemType().isNumeric()
-        ) {
-            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))) {
+        } else if (rightResult
+                        .getResultingType()
+                        .isSubtypeOf(SequenceType.createSequenceType("double?"))
+                && leftResult.getResultingType().getItemType().isNumeric()) {
+            if (!leftResult
+                    .getResultingType()
+                    .isSubtypeOf(SequenceType.createSequenceType("double?"))) {
                 leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
-        } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))
-                && rightResult.getResultingType().getItemType().isNumeric()
-        ) {
-            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))) {
+        } else if (leftResult
+                        .getResultingType()
+                        .isSubtypeOf(SequenceType.createSequenceType("float?"))
+                && rightResult.getResultingType().getItemType().isNumeric()) {
+            if (!rightResult
+                    .getResultingType()
+                    .isSubtypeOf(SequenceType.createSequenceType("float?"))) {
                 rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
-        } else if (
-            rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))
-                && leftResult.getResultingType().getItemType().isNumeric()
-        ) {
-            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))) {
+        } else if (rightResult
+                        .getResultingType()
+                        .isSubtypeOf(SequenceType.createSequenceType("float?"))
+                && leftResult.getResultingType().getItemType().isNumeric()) {
+            if (!leftResult
+                    .getResultingType()
+                    .isSubtypeOf(SequenceType.createSequenceType("float?"))) {
                 leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
-        } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("integer?"))
-                && rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("integer?"))
-        ) {
+        } else if (leftResult
+                        .getResultingType()
+                        .isSubtypeOf(SequenceType.createSequenceType("integer?"))
+                && rightResult
+                        .getResultingType()
+                        .isSubtypeOf(SequenceType.createSequenceType("integer?"))) {
             resultType = BuiltinTypesCatalogue.integerItem;
-        } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("decimal?"))
-                && rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("decimal?"))
-        ) {
+        } else if (leftResult
+                        .getResultingType()
+                        .isSubtypeOf(SequenceType.createSequenceType("decimal?"))
+                && rightResult
+                        .getResultingType()
+                        .isSubtypeOf(SequenceType.createSequenceType("decimal?"))) {
             resultType = BuiltinTypesCatalogue.decimalItem;
         } else {
             return NativeClauseContext.NoNativeQuery;
         }
 
-        SequenceType.Arity resultingArity = leftResult.getResultingType()
-            .getArity()
-            .multiplyWith(rightResult.getResultingType().getArity());
+        SequenceType.Arity resultingArity =
+                leftResult
+                        .getResultingType()
+                        .getArity()
+                        .multiplyWith(rightResult.getResultingType().getArity());
 
         if (resultingArity.equals(Arity.OneOrMore) || resultingArity.equals(Arity.ZeroOrMore)) {
             throw new UnexpectedTypeException(
                     " \"+\": operation not possible with parameters of type \""
-                        + this.left.getDynamicType().toString()
-                        + "\" and \""
-                        + this.right.getDynamicType().toString()
-                        + "\"",
-                    getMetadata()
-            );
+                            + this.left.getDynamicType().toString()
+                            + "\" and \""
+                            + this.right.getDynamicType().toString()
+                            + "\"",
+                    getMetadata());
         }
         if (this.isMinus) {
             String resultingQuery = "( " + leftQuery + " - " + rightQuery + " )";
             return new NativeClauseContext(
                     nativeClauseContext,
                     resultingQuery,
-                    new SequenceType(resultType, resultingArity)
-            );
+                    new SequenceType(resultType, resultingArity));
         } else {
             String resultingQuery = "( " + leftQuery + " + " + rightQuery + " )";
             return new NativeClauseContext(
                     nativeClauseContext,
                     resultingQuery,
-                    new SequenceType(resultType, resultingArity)
-            );
+                    new SequenceType(resultType, resultingArity));
         }
     }
 }

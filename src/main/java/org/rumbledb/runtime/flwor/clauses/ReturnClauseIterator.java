@@ -20,12 +20,26 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
@@ -45,29 +59,14 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
-import org.rumbledb.runtime.update.PendingUpdateList;
-import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
-
 public class ReturnClauseIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeTupleIterator child;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private final RuntimeIterator expression;
@@ -76,8 +75,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     public ReturnClauseIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Collections.singletonList(expression), staticContext);
         this.child = child;
         this.expression = expression;
@@ -91,8 +89,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                        getMetadata()
-                );
+                        getMetadata());
 
             this.child.open(context);
             JavaRDD<Item> result = null;
@@ -100,8 +97,10 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
                 DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                                                                                               // from new tuple
+                dynamicContext
+                        .getVariableValues()
+                        .setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                // from new tuple
 
                 JavaRDD<Item> intermediateResult = this.expression.getRDD(dynamicContext);
                 if (result == null) {
@@ -118,13 +117,14 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         }
         Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType oldSchema = df.schema();
-        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
-            oldSchema,
-            this.expression.getVariableDependencies(),
-            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
-            null
-        );
-        JavaRDD<Item> resultRDD = df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, UDFcolumns));
+        List<FlworDataFrameColumn> UDFcolumns =
+                FlworDataFrameUtils.getColumns(
+                        oldSchema,
+                        this.expression.getVariableDependencies(),
+                        new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                        null);
+        JavaRDD<Item> resultRDD =
+                df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, UDFcolumns));
         return resultRDD;
     }
 
@@ -152,8 +152,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                        getMetadata()
-                );
+                        getMetadata());
             // context
             this.child.open(context);
             HomogeneousItemDataFrame result = null;
@@ -161,10 +160,13 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
                 DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                                                                                               // from new tuple
+                dynamicContext
+                        .getVariableValues()
+                        .setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                // from new tuple
 
-                HomogeneousItemDataFrame intermediateResult = this.expression.getDataFrame(dynamicContext);
+                HomogeneousItemDataFrame intermediateResult =
+                        this.expression.getDataFrame(dynamicContext);
                 if (result == null) {
                     result = intermediateResult;
                 } else {
@@ -180,49 +182,40 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         if (!this.child.isDataFrame()) {
             throw new OurBadException(
                     "Unexpected application state: a dataframe was expected even though the previous tuple does not produce one.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema = df.schema();
         Dataset<Row> nativeQueryResult = null;
         if (getConfiguration().runtime().useNativeExecution()) {
-            nativeQueryResult = tryNativeQuery(
-                df,
-                this.expression,
-                inputSchema,
-                context
-            );
+            nativeQueryResult = tryNativeQuery(df, this.expression, inputSchema, context);
         }
         if (nativeQueryResult != null) {
             if (this.expression.getStaticType().getItemType().isObjectItemType()) {
                 String input = FlworDataFrameUtils.createTempView(nativeQueryResult);
                 nativeQueryResult =
-                    nativeQueryResult.sparkSession()
-                        .sql(
-                            String.format(
-                                "SELECT `%s`.* FROM %s",
-                                SparkSessionManager.nonObjectJSONiqItemColumnName,
-                                input
-                            )
-                        );
+                        nativeQueryResult
+                                .sparkSession()
+                                .sql(
+                                        String.format(
+                                                "SELECT `%s`.* FROM %s",
+                                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                                input));
             }
-            HomogeneousItemDataFrame result = new HomogeneousItemDataFrame(
-                    nativeQueryResult,
-                    this.expression.getStaticType().getItemType()
-            );
+            HomogeneousItemDataFrame result =
+                    new HomogeneousItemDataFrame(
+                            nativeQueryResult, this.expression.getStaticType().getItemType());
             return result;
         }
 
         JavaRDD<Item> rdd = getRDDAux(context);
         return ValidateTypeIterator.convertRDDToValidDataFrame(
-            rdd,
-            this.expression.getStaticType().getItemType(),
-            context,
-            true,
-            this.staticContext
-        );
+                rdd,
+                this.expression.getStaticType().getItemType(),
+                context,
+                true,
+                this.staticContext);
     }
 
     @Override
@@ -243,7 +236,9 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     @Override
     protected void openLocal() {
         this.child.open(this.currentDynamicContextForLocalExecution);
-        this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
+        this.tupleContext =
+                new DynamicContext(
+                        this.currentDynamicContextForLocalExecution); // assign current context
         // as parent
         setNextResult();
     }
@@ -258,9 +253,13 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
 
         while (this.child.hasNext()) {
             FlworTuple tuple = this.child.next();
-            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                                                                                              // from new tuple
+            this.tupleContext
+                    .getVariableValues()
+                    .removeAllVariables(); // clear the previous variables
+            this.tupleContext
+                    .getVariableValues()
+                    .setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+            // from new tuple
 
             this.expression.open(this.tupleContext);
             boolean isResultSet = setResultFromExpression();
@@ -300,7 +299,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(this.expression.getVariableDependencies());
+                new TreeMap<>(this.expression.getVariableDependencies());
         for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }
@@ -341,8 +340,8 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     }
 
     /**
-     * Try to generate the native query for the let clause and run it, if successful return the resulting dataframe,
-     * otherwise it returns null
+     * Try to generate the native query for the let clause and run it, if successful return the
+     * resulting dataframe, otherwise it returns null
      *
      * @param dataFrame input dataframe for the query
      * @param iterator where filtering expression iterator
@@ -354,39 +353,37 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             Dataset<Row> dataFrame,
             RuntimeIterator iterator,
             StructType inputSchema,
-            DynamicContext context
-    ) {
+            DynamicContext context) {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
-        NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.RETURN, inputSchema, context);
+        NativeClauseContext letContext =
+                new NativeClauseContext(FLWOR_CLAUSES.RETURN, inputSchema, context);
         letContext.setView(input);
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        String queryString = String.format(
-            "select %s as `%s` from (%s)",
-            SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
-                ? "explode(" + nativeQuery.getResultingQuery() + ")"
-                : nativeQuery.getResultingQuery(),
-            SparkSessionManager.nonObjectJSONiqItemColumnName,
-            nativeQuery.getView()
-        );
-        if (
-            nativeQuery.getResultingType().getArity() == SequenceType.Arity.OneOrZero
-                || nativeQuery.getResultingType().getArity() == SequenceType.Arity.ZeroOrMore
-        ) {
-            queryString = String.format(
-                "select `%s` from (%s) where `%s` is not null",
-                SparkSessionManager.nonObjectJSONiqItemColumnName,
-                queryString,
-                SparkSessionManager.nonObjectJSONiqItemColumnName
-            );
+        String queryString =
+                String.format(
+                        "select %s as `%s` from (%s)",
+                        SequenceType.Arity.OneOrMore.isSubtypeOf(
+                                        nativeQuery.getResultingType().getArity())
+                                ? "explode(" + nativeQuery.getResultingQuery() + ")"
+                                : nativeQuery.getResultingQuery(),
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        nativeQuery.getView());
+        if (nativeQuery.getResultingType().getArity() == SequenceType.Arity.OneOrZero
+                || nativeQuery.getResultingType().getArity() == SequenceType.Arity.ZeroOrMore) {
+            queryString =
+                    String.format(
+                            "select `%s` from (%s) where `%s` is not null",
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            queryString,
+                            SparkSessionManager.nonObjectJSONiqItemColumnName);
         }
         LogManager.getLogger("ReturnClauseSparkIterator")
-            .info(
-                "Rumble was able to optimize a return clause to a native SQL query: "
-                    + queryString
-            );
+                .info(
+                        "Rumble was able to optimize a return clause to a native SQL query: "
+                                + queryString);
         return dataFrame.sparkSession().sql(queryString);
     }
 
@@ -396,29 +393,20 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         String rowIdField = nativeClauseContext.addVariable().toString();
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-            (StructType) nativeClauseContext.getSchema(),
-            null,
-            null,
-            null
-        );
+        List<FlworDataFrameColumn> allColumns =
+                FlworDataFrameUtils.getColumns(
+                        (StructType) nativeClauseContext.getSchema(), null, null, null);
         // add an id column to get the initial dataframe back
         NativeClauseContext subQueryContext = nativeClauseContext.createChild();
         subQueryContext.setView(
-            String.format(
-                "select %s monotonically_increasing_id() as `%s` from (%s)",
-                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-                rowIdField,
-                nativeClauseContext.getView()
-            )
-        );
+                String.format(
+                        "select %s monotonically_increasing_id() as `%s` from (%s)",
+                        FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                        rowIdField,
+                        nativeClauseContext.getView()));
         // update schema
         subQueryContext.setSchema(
-            ((StructType) subQueryContext.getSchema()).add(
-                rowIdField,
-                DataTypes.IntegerType
-            )
-        );
+                ((StructType) subQueryContext.getSchema()).add(rowIdField, DataTypes.IntegerType));
         subQueryContext.setRowId(rowIdField);
         // get child query
         NativeClauseContext childContext = this.child.generateNativeQuery(subQueryContext);
@@ -435,136 +423,130 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         String resultingQuery;
         // if there are conditional columns, use "if(condition,then,else)"
         if (childContext.getConditionalColumns().isEmpty()) {
-            resultingQuery = String.format(
-                "select %s%s (%s) as `%s` from (%s)",
-                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-                childContext.isExplodedView() ? " `" + rowIdField + "`," : "",
-                expressionContext.getResultingQuery(),
-                resultColumnName,
-                expressionContext.getView()
-            );
+            resultingQuery =
+                    String.format(
+                            "select %s%s (%s) as `%s` from (%s)",
+                            FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                            childContext.isExplodedView() ? " `" + rowIdField + "`," : "",
+                            expressionContext.getResultingQuery(),
+                            resultColumnName,
+                            expressionContext.getView());
         } else {
-            String condition = childContext.getConditionalColumns()
-                .stream()
-                .map(name -> "`" + name + "`")
-                .collect(Collectors.joining(" and "));
-            resultingQuery = String.format(
-                "select %s%s%s (if(%s, %s, null)) as `%s` from (%s)",
-                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-                childContext.isExplodedView() ? " `" + rowIdField + "`," : "",
-                childContext.isExplodedView() && childContext.getSortingColumns().size() > 0
-                    ? childContext.getSortingColumns()
-                        .keySet()
-                        .stream()
-                        .map(key -> "`" + key + "`")
-                        .collect(Collectors.joining(","))
-                        + ","
-                    : "",
-                condition,
-                expressionContext.getResultingQuery(),
-                resultColumnName,
-                expressionContext.getView()
-            );
+            String condition =
+                    childContext.getConditionalColumns().stream()
+                            .map(name -> "`" + name + "`")
+                            .collect(Collectors.joining(" and "));
+            resultingQuery =
+                    String.format(
+                            "select %s%s%s (if(%s, %s, null)) as `%s` from (%s)",
+                            FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                            childContext.isExplodedView() ? " `" + rowIdField + "`," : "",
+                            childContext.isExplodedView()
+                                            && childContext.getSortingColumns().size() > 0
+                                    ? childContext.getSortingColumns().keySet().stream()
+                                                    .map(key -> "`" + key + "`")
+                                                    .collect(Collectors.joining(","))
+                                            + ","
+                                    : "",
+                            condition,
+                            expressionContext.getResultingQuery(),
+                            resultColumnName,
+                            expressionContext.getView());
         }
         SequenceType resultType;
         if (childContext.isExplodedView()) {
             if (childContext.getSortingColumns().size() == 0) {
-                // if the resulting expression is already a sequence type, then create one sequence from it
-                String collectingString = expressionContext.getResultingType()
-                    .getArity() == SequenceType.Arity.ZeroOrMore
-                        ? "flatten(collect_list(`" + resultColumnName + "`))"
-                        : "collect_list(`" + resultColumnName + "`)";
-                resultingQuery = String.format(
-                    "select %s, first(`%s`) as `%s`, %s as `%s.sequence` from (%s) group by `%s`",
-                    allColumns.stream()
-                        .map(
-                            name -> String.format(
-                                "first(%s) as %s",
-                                name,
-                                name
-                            )
-                        )
-                        .collect(Collectors.joining(",")),
-                    rowIdField,
-                    rowIdField,
-                    collectingString,
-                    resultColumnName,
-                    resultingQuery,
-                    rowIdField
-                );
+                // if the resulting expression is already a sequence type, then create one sequence
+                // from it
+                String collectingString =
+                        expressionContext.getResultingType().getArity()
+                                        == SequenceType.Arity.ZeroOrMore
+                                ? "flatten(collect_list(`" + resultColumnName + "`))"
+                                : "collect_list(`" + resultColumnName + "`)";
+                resultingQuery =
+                        String.format(
+                                "select %s, first(`%s`) as `%s`, %s as `%s.sequence` from (%s) group by `%s`",
+                                allColumns.stream()
+                                        .map(name -> String.format("first(%s) as %s", name, name))
+                                        .collect(Collectors.joining(",")),
+                                rowIdField,
+                                rowIdField,
+                                collectingString,
+                                resultColumnName,
+                                resultingQuery,
+                                rowIdField);
             } else {
-                String collectingString = expressionContext.getResultingType()
-                    .getArity() == SequenceType.Arity.ZeroOrMore
-                        ? "flatten(collect_list(`" + resultColumnName + "`))"
-                        : "collect_list(`" + resultColumnName + "`)";
-                // group by doesn't keep the order, because of this first partition by the row ID to collect the list,
+                String collectingString =
+                        expressionContext.getResultingType().getArity()
+                                        == SequenceType.Arity.ZeroOrMore
+                                ? "flatten(collect_list(`" + resultColumnName + "`))"
+                                : "collect_list(`" + resultColumnName + "`)";
+                // group by doesn't keep the order, because of this first partition by the row ID to
+                // collect
+                // the list,
                 // then do group by row ID
-                collectingString = String.format(
-                    "%s over (partition by `%s` order by %s) as `%s`",
-                    collectingString,
-                    rowIdField,
-                    childContext.getSortingColumns()
-                        .entrySet()
-                        .stream()
-                        .map(entry -> String.format("`%s` %s", entry.getKey(), entry.getValue() ? "desc" : "asc"))
-                        .collect(Collectors.joining(",")),
-                    resultColumnName
-                );
-                resultingQuery = String.format(
-                    "select %s %s, `%s` from (%s)",
-                    FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-                    collectingString,
-                    rowIdField,
-                    resultingQuery
-                );
-                resultingQuery = String.format(
-                    "select %s, last(`%s`) as `%s`, last(`%s`) as `%s.sequence` from (%s) group by `%s`",
-                    allColumns.stream()
-                        .map(
-                            name -> String.format(
-                                "last(%s) as %s",
-                                name,
-                                name
-                            )
-                        )
-                        .collect(Collectors.joining(",")),
-                    rowIdField,
-                    rowIdField,
-                    resultColumnName,
-                    resultColumnName,
-                    resultingQuery,
-                    rowIdField
-                );
+                collectingString =
+                        String.format(
+                                "%s over (partition by `%s` order by %s) as `%s`",
+                                collectingString,
+                                rowIdField,
+                                childContext.getSortingColumns().entrySet().stream()
+                                        .map(
+                                                entry ->
+                                                        String.format(
+                                                                "`%s` %s",
+                                                                entry.getKey(),
+                                                                entry.getValue() ? "desc" : "asc"))
+                                        .collect(Collectors.joining(",")),
+                                resultColumnName);
+                resultingQuery =
+                        String.format(
+                                "select %s %s, `%s` from (%s)",
+                                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                                collectingString,
+                                rowIdField,
+                                resultingQuery);
+                resultingQuery =
+                        String.format(
+                                "select %s, last(`%s`) as `%s`, last(`%s`) as `%s.sequence` from (%s) group by `%s`",
+                                allColumns.stream()
+                                        .map(name -> String.format("last(%s) as %s", name, name))
+                                        .collect(Collectors.joining(",")),
+                                rowIdField,
+                                rowIdField,
+                                resultColumnName,
+                                resultColumnName,
+                                resultingQuery,
+                                rowIdField);
             }
             resultColumnName = resultColumnName + ".sequence";
-            resultingQuery = String.format(
-                "select %s, `%s` from (%s) order by `%s`",
-                allColumns.stream()
-                    .map(FlworDataFrameColumn::toString)
-                    .collect(Collectors.joining(",")),
-                resultColumnName,
-                resultingQuery,
-                rowIdField
-            );
+            resultingQuery =
+                    String.format(
+                            "select %s, `%s` from (%s) order by `%s`",
+                            allColumns.stream()
+                                    .map(FlworDataFrameColumn::toString)
+                                    .collect(Collectors.joining(",")),
+                            resultColumnName,
+                            resultingQuery,
+                            rowIdField);
 
-            resultType = new SequenceType(
-                    expressionContext.getResultingType().getItemType(),
-                    expressionContext.getResultingType().getArity() == SequenceType.Arity.One
-                        ? SequenceType.Arity.OneOrMore
-                        : SequenceType.Arity.ZeroOrMore
-            );
+            resultType =
+                    new SequenceType(
+                            expressionContext.getResultingType().getItemType(),
+                            expressionContext.getResultingType().getArity()
+                                            == SequenceType.Arity.One
+                                    ? SequenceType.Arity.OneOrMore
+                                    : SequenceType.Arity.ZeroOrMore);
         } else {
             resultType = expressionContext.getResultingType();
         }
         nativeClauseContext.setSchema(
-            ((StructType) nativeClauseContext.getSchema()).add(
-                resultColumnName,
-                TypeMappings.getDataFrameDataTypeFromItemType(
-                    expressionContext.getResultingType().getItemType(),
-                    this.getRuntimeStaticContext()
-                )
-            )
-        );
+                ((StructType) nativeClauseContext.getSchema())
+                        .add(
+                                resultColumnName,
+                                TypeMappings.getDataFrameDataTypeFromItemType(
+                                        expressionContext.getResultingType().getItemType(),
+                                        this.getRuntimeStaticContext())));
         nativeClauseContext.setView(resultingQuery);
         resultColumnName = "`" + resultColumnName + "`";
         return new NativeClauseContext(nativeClauseContext, resultColumnName, resultType);
@@ -583,12 +565,17 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
 
             while (this.child.hasNext()) {
                 FlworTuple tuple = this.child.next();
-                this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-                this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new
-                                                                                                  // variables
+                this.tupleContext
+                        .getVariableValues()
+                        .removeAllVariables(); // clear the previous variables
+                this.tupleContext
+                        .getVariableValues()
+                        .setBindingsFromTuple(tuple, getMetadata()); // assign new
+                // variables
                 // from new tuple
-                result.mergeUpdates(this.expression.getPendingUpdateList(this.tupleContext), this.getMetadata());
-
+                result.mergeUpdates(
+                        this.expression.getPendingUpdateList(this.tupleContext),
+                        this.getMetadata());
             }
             this.child.close();
             return result;
@@ -601,18 +588,20 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                        getMetadata()
-                );
+                        getMetadata());
             // context
             this.child.open(context);
             while (this.child.hasNext()) {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
                 DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                dynamicContext
+                        .getVariableValues()
+                        .setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                 // from new tuple
 
-                PendingUpdateList intermediateResult = this.expression.getPendingUpdateList(dynamicContext);
+                PendingUpdateList intermediateResult =
+                        this.expression.getPendingUpdateList(dynamicContext);
                 result.mergeUpdates(intermediateResult, this.getMetadata());
             }
         }

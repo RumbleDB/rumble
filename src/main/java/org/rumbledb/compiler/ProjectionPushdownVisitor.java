@@ -1,5 +1,8 @@
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.Clause;
@@ -9,9 +12,6 @@ import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.scripting.Program;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ProjectionPushdownVisitor extends CloneVisitor {
 
@@ -29,11 +29,11 @@ public class ProjectionPushdownVisitor extends CloneVisitor {
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
         this.projectionPushdownDetectionVisitor.visit(mainModule, null);
-        MainModule result = new MainModule(
-                mainModule.getProlog(),
-                (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
-                mainModule.getMetadata()
-        );
+        MainModule result =
+                new MainModule(
+                        mainModule.getProlog(),
+                        (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
+                        mainModule.getMetadata());
         result.setStaticContext(mainModule.getStaticContext());
         return result;
     }
@@ -72,8 +72,7 @@ public class ProjectionPushdownVisitor extends CloneVisitor {
                     clause.getVariableName(),
                     clause.getActualSequenceType(),
                     (Expression) visit(clause.getExpression(), argument),
-                    clause.getMetadata()
-            );
+                    clause.getMetadata());
         }
         return null;
     }
@@ -83,8 +82,7 @@ public class ProjectionPushdownVisitor extends CloneVisitor {
         if (expression.isMergedConstructor()) {
             return new ObjectConstructorExpression(
                     (Expression) visit(expression.getChildren().get(0), argument),
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         } else {
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();

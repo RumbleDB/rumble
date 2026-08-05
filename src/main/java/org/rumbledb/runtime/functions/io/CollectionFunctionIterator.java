@@ -1,5 +1,9 @@
 package org.rumbledb.runtime.functions.io;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -9,19 +13,12 @@ import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
-
 public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public CollectionFunctionIterator(
-            List<RuntimeIterator> children,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
@@ -30,20 +27,22 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         if (this.getChildren().isEmpty()) {
-            throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
+            throw new CannotRetrieveResourceException(
+                    "No default collection is defined.", getMetadata());
         }
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (stringItem == null) {
-            throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
+            throw new CannotRetrieveResourceException(
+                    "No default collection is defined.", getMetadata());
         }
         String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri =
+                FileSystemUtil.resolveFileSystemURI(
+                        this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         // DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
         return HomogeneousItemDataFrame.emptyDataFrame();
     }
-
 }

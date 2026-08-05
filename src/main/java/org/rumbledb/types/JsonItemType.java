@@ -1,18 +1,15 @@
 package org.rumbledb.types;
 
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.util.Set;
 
-/**
- * Class representing the generic 'item' item type
- */
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
+
+/** Class representing the generic 'item' item type */
 public class JsonItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     static final ItemType jsonItem = new JsonItemType();
     private final Name name;
@@ -20,8 +17,6 @@ public class JsonItemType extends AbstractItemType {
     JsonItemType() {
         this.name = new Name(Name.JS_NS, "js", "json-item");
     }
-
-
 
     @Override
     public boolean hasName() {

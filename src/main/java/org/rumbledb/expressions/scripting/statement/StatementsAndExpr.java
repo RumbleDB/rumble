@@ -1,21 +1,23 @@
 package org.rumbledb.expressions.scripting.statement;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Getter
 public class StatementsAndExpr extends Expression {
     private final List<Statement> statements;
     private final Expression expression;
 
-    public StatementsAndExpr(List<Statement> statements, Expression expression, ExceptionMetadata metadata) {
+    public StatementsAndExpr(
+            List<Statement> statements, Expression expression, ExceptionMetadata metadata) {
         super(metadata);
         // An empty statements list should initialize an empty list for safety.
         if (statements == null) {
@@ -24,7 +26,8 @@ public class StatementsAndExpr extends Expression {
             this.statements = statements;
         }
         if (expression == null) {
-            throw new OurBadException("Expression cannot be null when statements and expression are needed.");
+            throw new OurBadException(
+                    "Expression cannot be null when statements and expression are needed.");
         }
         this.expression = expression;
     }
@@ -38,11 +41,12 @@ public class StatementsAndExpr extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (!this.statements.isEmpty()) {
-            this.statements.forEach(statement -> {
-                if (statement != null) {
-                    result.add(statement);
-                }
-            });
+            this.statements.forEach(
+                    statement -> {
+                        if (statement != null) {
+                            result.add(statement);
+                        }
+                    });
         }
         result.add(this.expression);
         return result;
@@ -51,12 +55,12 @@ public class StatementsAndExpr extends Expression {
     @Override
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
-        this.statements.forEach(statement -> {
-            statement.serializeToJSONiq(sb, 0);
-            sb.append(" ");
-        });
+        this.statements.forEach(
+                statement -> {
+                    statement.serializeToJSONiq(sb, 0);
+                    sb.append(" ");
+                });
         this.expression.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
-
 }

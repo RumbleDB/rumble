@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,40 +34,33 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Runtime iterator for document node constructors.
- * 
- * Document node constructors create document nodes according to the XQuery 3.1 specification.
+ *
+ * <p>Document node constructors create document nodes according to the XQuery 3.1 specification.
  * All document node constructors are computed constructors. The result of a document node
  * constructor is a new document node, with its own node identity.
- * 
+ *
  * @see org.rumbledb.expressions.xml.DocumentNodeConstructorExpression
  */
 public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator contentIterator;
 
     /**
      * Constructor for document node constructor runtime iterator
-     * 
+     *
      * @param contentIterator Iterator for the content expression
      * @param staticContext The static context
      */
     public DocumentNodeConstructorRuntimeIterator(
-            RuntimeIterator contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeIterator contentIterator, RuntimeStaticContext staticContext) {
         super(
-            contentIterator != null ? Collections.singletonList(contentIterator) : Collections.emptyList(),
-            staticContext
-        );
+                contentIterator != null
+                        ? Collections.singletonList(contentIterator)
+                        : Collections.emptyList(),
+                staticContext);
         this.contentIterator = contentIterator;
     }
 
@@ -71,7 +69,9 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            // This is the top-level runtime iterator - create a new context and set this iterator as top-level
+            // This is the top-level runtime iterator - create a new context and set this iterator
+            // as
+            // top-level
             contextToUse = new DynamicContext(dynamicContext);
             contextToUse.setTopLevelRuntimeIterator(this);
         } else {
@@ -80,7 +80,8 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
         }
 
         // Process content expression according to specification,
-        // The content expression of a document node constructor is processed in exactly the same way
+        // The content expression of a document node constructor is processed in exactly the same
+        // way
         // as an enclosed expression in the content of a direct element constructor, as described in
         // Step 1e of 3.9.1.3 Content. The result of processing the content expression is a sequence
         // of nodes called the content sequence.
@@ -88,10 +89,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
 
         // Create and return the document node item
         this.hasNext = false;
-        Item documentItem = ItemFactory.getInstance()
-            .createXmlDocumentNode(
-                processedContent
-            );
+        Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(processedContent);
 
         // Set the parent of the child nodes to the document node
         documentItem.addParentToDescendants();
@@ -108,15 +106,14 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
 
     /**
      * Processes the content expression of the document node constructor.
-     * 
-     * Processing of the document node constructor proceeds as follows:
-     * 1. If the content sequence contains a document node, the document node is replaced in the content
-     * sequence by its children.
-     * 2. Adjacent text nodes in the content sequence are merged into a single text node by concatenating
-     * their contents, with no intervening blanks. After concatenation, any text node whose content
-     * is a zero-length string is deleted from the content sequence.
-     * 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
-     * 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
+     *
+     * <p>Processing of the document node constructor proceeds as follows: 1. If the content
+     * sequence contains a document node, the document node is replaced in the content sequence by
+     * its children. 2. Adjacent text nodes in the content sequence are merged into a single text
+     * node by concatenating their contents, with no intervening blanks. After concatenation, any
+     * text node whose content is a zero-length string is deleted from the content sequence. 3. If
+     * the content sequence contains an attribute node, a type error is raised [err:XPTY0004]. 4. If
+     * the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
      */
     private List<Item> processContentExpression(DynamicContext dynamicContext) {
         List<Item> contentSequence = new ArrayList<>();
@@ -128,7 +125,8 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
             this.contentIterator.open(dynamicContext);
             while (this.contentIterator.hasNext()) {
                 List<Item> expandedItems = new ArrayList<>();
-                XmlConstructorContentUtils.appendExpandedItem(this.contentIterator.next(), expandedItems);
+                XmlConstructorContentUtils.appendExpandedItem(
+                        this.contentIterator.next(), expandedItems);
                 for (Item item : expandedItems) {
                     if (item.isAttributeNode() || item.isNamespaceNode()) {
                         if (textAccumulator != null) {
@@ -141,7 +139,8 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
                     }
 
                     if (item.isTextNode() || !item.isNode()) {
-                        String textContent = item.isTextNode() ? item.getTextValue() : item.getStringValue();
+                        String textContent =
+                                item.isTextNode() ? item.getTextValue() : item.getStringValue();
                         if (textAccumulator == null) {
                             textAccumulator = new StringBuilder();
                         }
@@ -162,10 +161,10 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
                         textAccumulator = null;
                     }
                     contentSequence.add(
-                        item.isNode()
-                            ? NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext)
-                            : item
-                    );
+                            item.isNode()
+                                    ? NamespaceFixupUtils.copyNodeForConstructor(
+                                            item, this.staticContext)
+                                    : item);
                     previousItemWasAtomic = false;
                 }
             }
@@ -175,12 +174,16 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
             flushTextAccumulator(contentSequence, textAccumulator);
         }
 
-        // 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
-        // 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
+        // 3. If the content sequence contains an attribute node, a type error is raised
+        // [err:XPTY0004].
+        // 4. If the content sequence contains a namespace node, a type error is raised
+        // [err:XPTY0004].
         validateNoAttributesOrNamespaces(contentSequence);
 
-        // 2. Adjacent text nodes in the content sequence are merged into a single text node by concatenating
-        // their contents, with no intervening blanks. After concatenation, any text node whose content
+        // 2. Adjacent text nodes in the content sequence are merged into a single text node by
+        // concatenating
+        // their contents, with no intervening blanks. After concatenation, any text node whose
+        // content
         // is a zero-length string is deleted from the content sequence.
         return mergeAdjacentTextNodes(contentSequence);
     }
@@ -193,32 +196,32 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
     }
 
     /**
-     * Validates that the content sequence contains no attribute or namespace nodes.
-     * 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
-     * 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
+     * Validates that the content sequence contains no attribute or namespace nodes. 3. If the
+     * content sequence contains an attribute node, a type error is raised [err:XPTY0004]. 4. If the
+     * content sequence contains a namespace node, a type error is raised [err:XPTY0004].
      */
     private void validateNoAttributesOrNamespaces(List<Item> contentSequence) {
         for (Item item : contentSequence) {
             if (item.isAttributeNode()) {
-                // 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
+                // 3. If the content sequence contains an attribute node, a type error is raised
+                // [err:XPTY0004].
                 throw new UnexpectedStaticTypeException(
-                        "Document node constructor content cannot contain attribute nodes [err:XPTY0004]"
-                );
+                        "Document node constructor content cannot contain attribute nodes [err:XPTY0004]");
             }
-            // 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
+            // 4. If the content sequence contains a namespace node, a type error is raised
+            // [err:XPTY0004].
             if (item.isNamespaceNode()) {
                 throw new UnexpectedStaticTypeException(
-                        "Document node constructor content cannot contain namespace nodes [err:XPTY0004]"
-                );
+                        "Document node constructor content cannot contain namespace nodes [err:XPTY0004]");
             }
         }
     }
 
     /**
-     * Merges adjacent text nodes in the content sequence.
-     * 2. Adjacent text nodes in the content sequence are merged into a single text node by concatenating
-     * their contents, with no intervening blanks. After concatenation, any text node whose content
-     * is a zero-length string is deleted from the content sequence.
+     * Merges adjacent text nodes in the content sequence. 2. Adjacent text nodes in the content
+     * sequence are merged into a single text node by concatenating their contents, with no
+     * intervening blanks. After concatenation, any text node whose content is a zero-length string
+     * is deleted from the content sequence.
      */
     private List<Item> mergeAdjacentTextNodes(List<Item> contentSequence) {
         List<Item> mergedSequence = new ArrayList<>();
@@ -240,10 +243,12 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
                 if (textAccumulator != null) {
                     // Finalize any accumulated text nodes
                     String accumulatedText = textAccumulator.toString();
-                    // After concatenation, any text node whose content is a zero-length string is deleted
+                    // After concatenation, any text node whose content is a zero-length string is
+                    // deleted
                     // from the content sequence.
                     if (!accumulatedText.isEmpty()) {
-                        mergedSequence.add(ItemFactory.getInstance().createXmlTextNode(accumulatedText));
+                        mergedSequence.add(
+                                ItemFactory.getInstance().createXmlTextNode(accumulatedText));
                     }
                     textAccumulator = null;
                 }

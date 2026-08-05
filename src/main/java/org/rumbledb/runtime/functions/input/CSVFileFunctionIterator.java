@@ -20,10 +20,15 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
+
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -34,38 +39,32 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
 
 public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public CSVFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri =
+                FileSystemUtil.resolveFileSystemURI(
+                        this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         Item optionsObjectItem;
         try {
             DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
-            if (this.getChildren().size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
+            if (this.getChildren().size() > 1
+                    && ((optionsObjectItem = getObjectItem(context)) != null)) {
                 ObjectItem options = (ObjectItem) optionsObjectItem;
                 List<String> keys = options.getStringKeys();
                 List<Item> values = options.getItemValues();
@@ -86,8 +85,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                     } else {
                         throw new UnexpectedTypeException(
                                 "Only boolean, string, and numeric types allowed as values",
-                                this.getMetadata()
-                        );
+                                this.getMetadata());
                     }
                 }
             }
@@ -95,7 +93,9 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException || e instanceof IllegalArgumentException) {
-                RumbleException ex = new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+                RumbleException ex =
+                        new CannotRetrieveResourceException(
+                                "File " + url + " not found.", getMetadata());
                 ex.initCause(e);
                 throw ex;
             } else {

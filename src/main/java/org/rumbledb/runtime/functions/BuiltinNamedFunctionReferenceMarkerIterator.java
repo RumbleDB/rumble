@@ -16,24 +16,23 @@
  */
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-
 /**
- * Placeholder body iterator for {@link org.rumbledb.items.FunctionItem}s that represent
- * a builtin named function reference ({@code fn:abs#1}). The real call path uses
- * {@link org.rumbledb.context.NamedFunctions#getBuiltInFunctionIterator}; this iterator
- * must not be evaluated as a normal function body.
+ * Placeholder body iterator for {@link org.rumbledb.items.FunctionItem}s that represent a builtin
+ * named function reference ({@code fn:abs#1}). The real call path uses {@link
+ * org.rumbledb.context.NamedFunctions#getBuiltInFunctionIterator}; this iterator must not be
+ * evaluated as a normal function body.
  */
 public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public BuiltinNamedFunctionReferenceMarkerIterator(RuntimeStaticContext staticContext) {
         super(null, staticContext);
@@ -49,8 +48,7 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator
     public Item next() {
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE
-                    + "builtin named function reference marker must not be evaluated",
-                getMetadata()
-        );
+                        + "builtin named function reference marker must not be evaluated",
+                getMetadata());
     }
 }

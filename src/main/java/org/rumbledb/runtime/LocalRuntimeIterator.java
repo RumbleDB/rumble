@@ -20,25 +20,23 @@
 
 package org.rumbledb.runtime;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 
-import java.io.Serial;
-import java.util.List;
-
 public abstract class LocalRuntimeIterator extends RuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     protected LocalRuntimeIterator(
-            List<RuntimeIterator> children,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
         if (getHighestExecutionMode() != ExecutionMode.LOCAL) {
-            throw new OurBadException("Local runtime iterators support only the local execution mode");
+            throw new OurBadException(
+                    "Local runtime iterators support only the local execution mode");
         }
     }
 }

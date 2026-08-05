@@ -13,6 +13,7 @@ import java.util.Map;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -29,8 +30,7 @@ import org.rumbledb.types.ItemType;
 
 public class AnnotatedItem implements Item {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final Item itemToAnnotate;
     private final ItemType type;
@@ -39,7 +39,8 @@ public class AnnotatedItem implements Item {
         this.itemToAnnotate = itemToAnnotate;
         this.type = type;
         if (type.getName() == null) {
-            throw new OurBadException("It it not possible to annotate an item with an anonymous type.");
+            throw new OurBadException(
+                    "It it not possible to annotate an item with an anonymous type.");
         }
     }
 
@@ -64,12 +65,8 @@ public class AnnotatedItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.isAtomic()
-            ? AtomicItemEquivalence.hash(this)
-            : this.itemToAnnotate.hashCode();
+        return this.isAtomic() ? AtomicItemEquivalence.hash(this) : this.itemToAnnotate.hashCode();
     }
-
-
 
     @Override
     public boolean isFunction() {
@@ -335,9 +332,7 @@ public class AnnotatedItem implements Item {
 
     @Override
     public void putSequenceByKey(Item key, List<Item> valueSequence)
-            throws UnsupportedOperationException,
-                OurBadException,
-                DuplicateObjectKeyException {
+            throws UnsupportedOperationException, OurBadException, DuplicateObjectKeyException {
         this.itemToAnnotate.putSequenceByKey(key, valueSequence);
     }
 
@@ -353,15 +348,10 @@ public class AnnotatedItem implements Item {
 
     @Override
     public void putLazyItemByKey(
-            String key,
-            RuntimeIterator iterator,
-            DynamicContext context,
-            boolean isArray
-    )
+            String key, RuntimeIterator iterator, DynamicContext context, boolean isArray)
             throws UnsupportedOperationException {
         this.itemToAnnotate.putLazyItemByKey(key, iterator, context, isArray);
     }
-
 
     // endregion maps
 
@@ -408,7 +398,8 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public void appendSequence(List<Item> sequence) throws UnsupportedOperationException, OurBadException {
+    public void appendSequence(List<Item> sequence)
+            throws UnsupportedOperationException, OurBadException {
         this.itemToAnnotate.appendSequence(sequence);
     }
 
@@ -418,7 +409,8 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public void putSequenceAt(List<Item> sequence, int index) throws UnsupportedOperationException, OurBadException {
+    public void putSequenceAt(List<Item> sequence, int index)
+            throws UnsupportedOperationException, OurBadException {
         this.itemToAnnotate.putSequenceAt(sequence, index);
     }
 
@@ -429,8 +421,7 @@ public class AnnotatedItem implements Item {
 
     @Override
     public void putSequencesAt(List<List<Item>> sequences, int index)
-            throws UnsupportedOperationException,
-                OurBadException {
+            throws UnsupportedOperationException, OurBadException {
         this.itemToAnnotate.putSequencesAt(sequences, index);
     }
 

@@ -4,8 +4,7 @@ import java.util.Locale;
 
 final class RegexUnicodeSupport {
 
-    private RegexUnicodeSupport() {
-    }
+    private RegexUnicodeSupport() {}
 
     static String lower(String value) {
         return value.toLowerCase(Locale.ROOT);

@@ -23,6 +23,12 @@ import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.objenesis.strategy.StdInstantiatorStrategy;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.serializers.FieldSerializer;
+
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.bindings.FileBinding;
@@ -35,44 +41,45 @@ import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.serialization.SerializationParameters;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.serializers.FieldSerializer;
-
 public class KryoFieldSerializationTest {
-    static private final Kryo kryo = new Kryo();
+    private static final Kryo kryo = new Kryo();
 
     static {
         kryo.setInstantiatorStrategy(
-            new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy())
-        );
+                new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
     }
 
     @Test
     public void configurationRoundTripsWithFieldSerializer() {
-        RumbleConfiguration configuration = RumbleConfiguration.builder()
-            .mode(RumbleMode.REPL)
-            .configureInput(input -> input.query("1 + 1"))
-            .configureOutput(
-                output -> output
-                    .outputPath("output.json")
-                    .allowOverwrite(true)
-                    .serializationParameters(
-                        SerializationParameterBuilder.build(
-                            Map.of("indent", "yes", "compression", "gzip")
-                        )
-                    )
-            )
-            .configureRuntime(runtime -> runtime.resultsSizeCap(25).useNativeExecution(false))
-            .configureDebug(debug -> debug.showErrorInfo(true))
-            .configureAnalysis(analysis -> analysis.enableStaticTyping(true))
-            .configureOptimization(optimization -> optimization.optimizeParentPointers(false))
-            .configureSemantics(semantics -> semantics.queryLanguage("xquery31").xmlVersion("1.0"))
-            .configureFormatting(formatting -> formatting.defaultFormattingPlace("Europe/Madrid"))
-            .build();
+        RumbleConfiguration configuration =
+                RumbleConfiguration.builder()
+                        .mode(RumbleMode.REPL)
+                        .configureInput(input -> input.query("1 + 1"))
+                        .configureOutput(
+                                output ->
+                                        output.outputPath("output.json")
+                                                .allowOverwrite(true)
+                                                .serializationParameters(
+                                                        SerializationParameterBuilder.build(
+                                                                Map.of(
+                                                                        "indent",
+                                                                        "yes",
+                                                                        "compression",
+                                                                        "gzip"))))
+                        .configureRuntime(
+                                runtime -> runtime.resultsSizeCap(25).useNativeExecution(false))
+                        .configureDebug(debug -> debug.showErrorInfo(true))
+                        .configureAnalysis(analysis -> analysis.enableStaticTyping(true))
+                        .configureOptimization(
+                                optimization -> optimization.optimizeParentPointers(false))
+                        .configureSemantics(
+                                semantics -> semantics.queryLanguage("xquery31").xmlVersion("1.0"))
+                        .configureFormatting(
+                                formatting -> formatting.defaultFormattingPlace("Europe/Madrid"))
+                        .build();
 
-        Assertions.assertInstanceOf(FieldSerializer.class, kryo.getSerializer(RumbleConfiguration.class));
+        Assertions.assertInstanceOf(
+                FieldSerializer.class, kryo.getSerializer(RumbleConfiguration.class));
 
         RumbleConfiguration copy = roundTrip(kryo, configuration, RumbleConfiguration.class);
 
@@ -85,12 +92,14 @@ public class KryoFieldSerializationTest {
         Assertions.assertEquals(configuration.semantics(), copy.semantics());
         Assertions.assertEquals(configuration.formatting(), copy.formatting());
         Assertions.assertEquals(configuration.output().outputPath(), copy.output().outputPath());
-        Assertions.assertEquals(configuration.output().allowOverwrite(), copy.output().allowOverwrite());
+        Assertions.assertEquals(
+                configuration.output().allowOverwrite(), copy.output().allowOverwrite());
 
         SerializationParameters serializationParameters = copy.output().serializationParameters();
         Assertions.assertNotNull(serializationParameters);
         Assertions.assertTrue(serializationParameters.getIndent());
-        Assertions.assertEquals("gzip", serializationParameters.getSparkOptions().get("compression"));
+        Assertions.assertEquals(
+                "gzip", serializationParameters.getSparkOptions().get("compression"));
     }
 
     @Test
@@ -98,47 +107,44 @@ public class KryoFieldSerializationTest {
         ExternalBindings bindings = ExternalBindings.empty();
         bindings.bind(Name.createVariableInNoNamespace("lexical"), new LexicalBinding("42"));
         bindings.bind(
-            Name.createVariableInNoNamespace("file"),
-            new FileBinding("input.txt", InputFormat.TEXT)
-        );
+                Name.createVariableInNoNamespace("file"),
+                new FileBinding("input.txt", InputFormat.TEXT));
         bindings.bind(
-            Name.createVariableInNoNamespace("stdin"),
-            new StandardInputBinding(InputFormat.JSON)
-        );
+                Name.createVariableInNoNamespace("stdin"),
+                new StandardInputBinding(InputFormat.JSON));
         bindings.bind(
-            Name.createVariableInNoNamespace("items"),
-            new ItemSequenceBinding(List.of(ItemFactory.getInstance().createStringItem("value")))
-        );
+                Name.createVariableInNoNamespace("items"),
+                new ItemSequenceBinding(
+                        List.of(ItemFactory.getInstance().createStringItem("value"))));
 
-        Assertions.assertInstanceOf(FieldSerializer.class, kryo.getSerializer(ExternalBindings.class));
-        Assertions.assertInstanceOf(FieldSerializer.class, kryo.getSerializer(DataFrameBinding.class));
+        Assertions.assertInstanceOf(
+                FieldSerializer.class, kryo.getSerializer(ExternalBindings.class));
+        Assertions.assertInstanceOf(
+                FieldSerializer.class, kryo.getSerializer(DataFrameBinding.class));
 
         ExternalBindings copy = roundTrip(kryo, bindings, ExternalBindings.class);
 
         Assertions.assertEquals(
-            "42",
-            copy.get(Name.createVariableInNoNamespace("lexical"), LexicalBinding.class)
-                .orElseThrow()
-                .getValue()
-        );
-        FileBinding file = copy.get(Name.createVariableInNoNamespace("file"), FileBinding.class)
-            .orElseThrow();
+                "42",
+                copy.get(Name.createVariableInNoNamespace("lexical"), LexicalBinding.class)
+                        .orElseThrow()
+                        .getValue());
+        FileBinding file =
+                copy.get(Name.createVariableInNoNamespace("file"), FileBinding.class).orElseThrow();
         Assertions.assertEquals("input.txt", file.getLocation());
         Assertions.assertEquals(InputFormat.TEXT, file.getFormat());
         Assertions.assertEquals(
-            InputFormat.JSON,
-            copy.get(Name.createVariableInNoNamespace("stdin"), StandardInputBinding.class)
-                .orElseThrow()
-                .getFormat()
-        );
+                InputFormat.JSON,
+                copy.get(Name.createVariableInNoNamespace("stdin"), StandardInputBinding.class)
+                        .orElseThrow()
+                        .getFormat());
         Assertions.assertEquals(
-            "value",
-            copy.get(Name.createVariableInNoNamespace("items"), ItemSequenceBinding.class)
-                .orElseThrow()
-                .getItems()
-                .get(0)
-                .getStringValue()
-        );
+                "value",
+                copy.get(Name.createVariableInNoNamespace("items"), ItemSequenceBinding.class)
+                        .orElseThrow()
+                        .getItems()
+                        .get(0)
+                        .getStringValue());
     }
 
     private static <T> T roundTrip(Kryo kryo, T value, Class<T> valueClass) {

@@ -20,8 +20,15 @@
 
 package org.rumbledb.runtime.navigation;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
+
+import scala.Option;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -32,15 +39,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 
-import scala.Option;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator expression;
     private final DynamicContext dynamicContext;
@@ -54,8 +54,7 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
             DynamicContext context,
             ExceptionMetadata metadata,
             ItemType itemType,
-            long contextSize
-    ) {
+            long contextSize) {
         this.expression = expression;
         this.dynamicContext = new DynamicContext(context);
         this.metadata = metadata;
@@ -69,7 +68,9 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
         this.currentItems.clear();
         Item item = ItemParser.getItemFromRow(row, this.metadata, this.itemType);
         this.currentItems.add(item);
-        this.dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this.currentItems);
+        this.dynamicContext
+                .getVariableValues()
+                .addVariableValue(Name.CONTEXT_ITEM, this.currentItems);
         Option<Object> opt = row.schema().getFieldIndex(SparkSessionManager.countColumnName);
         if (opt.isEmpty()) {
             throw new OurBadException("No count column for a zipped predicate on a dataframe.");
@@ -77,10 +78,9 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
         this.dynamicContext.getVariableValues().setPosition(row.getLong((int) opt.get()));
         this.dynamicContext.getVariableValues().setLast(this.contextSize);
 
-        boolean result = this.expression.getEffectiveBooleanValueOrCheckPosition(
-            this.dynamicContext,
-            this.dynamicContext.getVariableValues().getPosition()
-        );
+        boolean result =
+                this.expression.getEffectiveBooleanValueOrCheckPosition(
+                        this.dynamicContext, this.dynamicContext.getVariableValues().getPosition());
 
         return result;
     }

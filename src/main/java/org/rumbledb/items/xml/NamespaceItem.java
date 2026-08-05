@@ -1,6 +1,11 @@
 package org.rumbledb.items.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -8,25 +13,15 @@ import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
-
 public class NamespaceItem extends AbstractNodeItem {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    /**
-     * Nnamespace prefix (possibly empty).
-     */
-    @Getter
-    private String prefix;
+    /** Nnamespace prefix (possibly empty). */
+    @Getter private String prefix;
 
-    /**
-     * Namespaces URI.
-     */
-    @Getter
-    private String uri;
+    /** Namespaces URI. */
+    @Getter private String uri;
+
     private Item parent;
     private XMLDocumentPosition documentPos;
 
@@ -46,14 +41,12 @@ public class NamespaceItem extends AbstractNodeItem {
         return new NamespaceItem(this.prefix, this.uri);
     }
 
-
     /**
-     * Each Namespace Node represents the binding of a namespace URI to a namespace prefix or to the default
-     * namespace.
-     * Namespaces have the following properties: prefix , possibly empty uri parent , possibly empty
-     * A Namespace Node must not have the name xmlns nor the string-value http://www.w3.org/2000/xmlns/ .
+     * Each Namespace Node represents the binding of a namespace URI to a namespace prefix or to the
+     * default namespace. Namespaces have the following properties: prefix , possibly empty uri
+     * parent , possibly empty A Namespace Node must not have the name xmlns nor the string-value
+     * http://www.w3.org/2000/xmlns/ .
      */
-
     @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
@@ -71,8 +64,6 @@ public class NamespaceItem extends AbstractNodeItem {
         // Namespaces do not have descendants.
     }
 
-
-
     @Override
     public boolean isNode() {
         return true;
@@ -85,7 +76,9 @@ public class NamespaceItem extends AbstractNodeItem {
 
     @Override
     public Name nodeName() {
-        // XDM 3.1: if the prefix is not empty, node-name is an xs:QName with the prefix as the local name and an
+        // XDM 3.1: if the prefix is not empty, node-name is an xs:QName with the prefix as the
+        // local
+        // name and an
         // empty namespace name; otherwise the empty sequence.
         if (this.prefix == null || this.prefix.isEmpty()) {
             return null;
@@ -117,7 +110,7 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — node-kind.
      *
-     * "For a Namespace Node, dm:node-kind returns the string \"namespace\"."
+     * <p>"For a Namespace Node, dm:node-kind returns the string \"namespace\"."
      */
     @Override
     public String nodeKind() {
@@ -143,7 +136,7 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — attributes.
      *
-     * For a Namespace Node, dm:attributes returns the empty sequence.
+     * <p>For a Namespace Node, dm:attributes returns the empty sequence.
      */
     @Override
     public List<Item> attributes() {
@@ -153,7 +146,7 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — children.
      *
-     * For a Namespace Node, dm:children returns the empty sequence.
+     * <p>For a Namespace Node, dm:children returns the empty sequence.
      */
     @Override
     public List<Item> children() {
@@ -163,7 +156,7 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — base-uri.
      *
-     * For a Namespace Node, dm:base-uri returns the base URI of the parent node, if it has one;
+     * <p>For a Namespace Node, dm:base-uri returns the base URI of the parent node, if it has one;
      * otherwise it returns the empty sequence.
      */
     @Override
@@ -177,8 +170,8 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — document-uri.
      *
-     * For a Namespace Node, dm:document-uri returns the document-uri of the document node that is
-     * the root of the tree containing the namespace node, if it has one; otherwise it returns
+     * <p>For a Namespace Node, dm:document-uri returns the document-uri of the document node that
+     * is the root of the tree containing the namespace node, if it has one; otherwise it returns
      * the empty sequence.
      */
     @Override
@@ -192,7 +185,7 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — is-id.
      *
-     * For a Namespace Node, dm:is-id returns false.
+     * <p>For a Namespace Node, dm:is-id returns false.
      */
     @Override
     public boolean isId() {
@@ -202,7 +195,7 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — is-idrefs.
      *
-     * For a Namespace Node, dm:is-idrefs returns false.
+     * <p>For a Namespace Node, dm:is-idrefs returns false.
      */
     @Override
     public boolean isIdrefs() {
@@ -212,7 +205,7 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — nilled.
      *
-     * For a Namespace Node, dm:nilled returns the empty sequence.
+     * <p>For a Namespace Node, dm:nilled returns the empty sequence.
      */
     @Override
     public List<Item> nilled() {
@@ -222,7 +215,7 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — type-name.
      *
-     * For a Namespace Node, dm:type-name returns the empty sequence.
+     * <p>For a Namespace Node, dm:type-name returns the empty sequence.
      */
     @Override
     public List<Item> typeName() {

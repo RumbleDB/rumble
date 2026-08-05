@@ -17,12 +17,12 @@
 
 package org.rumbledb.items;
 
+import java.math.BigDecimal;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-
-import java.math.BigDecimal;
 
 /**
  * XPath/XQuery {@code op:same-key} for map keys (atomic values), per FO 3.1 section 17.1.1.
@@ -31,8 +31,7 @@ import java.math.BigDecimal;
  */
 public final class MapAtomicSameKey {
 
-    private MapAtomicSameKey() {
-    }
+    private MapAtomicSameKey() {}
 
     public static boolean sameKey(Item left, Item right) {
         if (left == null || right == null) {
@@ -62,13 +61,13 @@ public final class MapAtomicSameKey {
 
     private static boolean isGregorian(Item k) {
         return k.isDate()
-            || k.isTime()
-            || k.isDateTime()
-            || k.isGYear()
-            || k.isGYearMonth()
-            || k.isGMonth()
-            || k.isGMonthDay()
-            || k.isGDay();
+                || k.isTime()
+                || k.isDateTime()
+                || k.isGYear()
+                || k.isGYearMonth()
+                || k.isGMonth()
+                || k.isGMonthDay()
+                || k.isGDay();
     }
 
     private static boolean isMiscDeepEqualKeyType(Item k) {
@@ -80,7 +79,7 @@ public final class MapAtomicSameKey {
         }
         ItemType primitiveType = k.getDynamicType().getPrimitiveType();
         return BuiltinTypesCatalogue.QNameItem.equals(primitiveType)
-            || BuiltinTypesCatalogue.NOTATIONItem.equals(primitiveType);
+                || BuiltinTypesCatalogue.NOTATIONItem.equals(primitiveType);
     }
 
     /**
@@ -150,7 +149,7 @@ public final class MapAtomicSameKey {
 
     private static boolean isNaNFloatOrDouble(Item k) {
         return (k.isFloat() && Float.isNaN(k.getFloatValue()))
-            || (k.isDouble() && Double.isNaN(k.getDoubleValue()));
+                || (k.isDouble() && Double.isNaN(k.getDoubleValue()));
     }
 
     private static boolean bothPositiveInfinity(Item a, Item b) {
@@ -185,9 +184,7 @@ public final class MapAtomicSameKey {
         return false;
     }
 
-    /**
-     * Exact decimal for the XSD numeric value (no {@code eq}-style double rounding).
-     */
+    /** Exact decimal for the XSD numeric value (no {@code eq}-style double rounding). */
     private static BigDecimal toExactDecimalKey(Item k) {
         if (k.isDecimal()) {
             return k.getDecimalValue();

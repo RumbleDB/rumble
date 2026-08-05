@@ -1,5 +1,11 @@
 package org.rumbledb.runtime.scripting.flwor;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -11,23 +17,15 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
-import java.io.Serial;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeTupleIterator clauseIterator;
     private final RuntimeIterator expression;
 
     public ReturnStatementClauseIterator(
             RuntimeTupleIterator clauseIterator,
             RuntimeIterator expression,
-            RuntimeStaticContext context
-    ) {
+            RuntimeStaticContext context) {
         super(Collections.singletonList(expression), context);
         this.clauseIterator = clauseIterator;
         this.expression = expression;
@@ -35,7 +33,8 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
-        Map<Name, DynamicContext.VariableDependency> dependencies = this.expression.getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> dependencies =
+                this.expression.getVariableDependencies();
         Set<Name> allTupleNames = this.clauseIterator.getOutputTupleVariableNames();
         Map<Name, DynamicContext.VariableDependency> projection = new HashMap<>();
         for (Name n : dependencies.keySet()) {
@@ -58,11 +57,14 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
         while (this.clauseIterator.hasNext()) {
             try {
                 FlworTuple tuple = this.clauseIterator.next();
-                this.currentDynamicContextForLocalExecution.getVariableValues().removeAllVariables(); // clear the
-                                                                                                      // previous
+                this.currentDynamicContextForLocalExecution
+                        .getVariableValues()
+                        .removeAllVariables(); // clear the
+                // previous
                 // variables
-                this.currentDynamicContextForLocalExecution.getVariableValues()
-                    .setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                this.currentDynamicContextForLocalExecution
+                        .getVariableValues()
+                        .setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                 this.expression.materialize(this.currentDynamicContextForLocalExecution);
             } catch (BreakStatementException ignored) {
                 break;

@@ -17,8 +17,12 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -29,50 +33,56 @@ import org.rumbledb.items.StringItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DataFrameContextKryoTest {
 
     @Test
     public void kryoRoundTripsItemsWithoutNoArgumentConstructors() {
-        Assertions.assertThrows(NoSuchMethodException.class, StringItem.class::getDeclaredConstructor);
-        Assertions.assertThrows(NoSuchMethodException.class, AnnotatedItem.class::getDeclaredConstructor);
-        Assertions.assertThrows(NoSuchMethodException.class, FunctionIdentifier.class::getDeclaredConstructor);
+        Assertions.assertThrows(
+                NoSuchMethodException.class, StringItem.class::getDeclaredConstructor);
+        Assertions.assertThrows(
+                NoSuchMethodException.class, AnnotatedItem.class::getDeclaredConstructor);
+        Assertions.assertThrows(
+                NoSuchMethodException.class, FunctionIdentifier.class::getDeclaredConstructor);
 
         ItemFactory factory = ItemFactory.getInstance();
 
-        FunctionIdentifier identifier = new FunctionIdentifier(new Name("urn:test", "t", "function"), 2);
+        FunctionIdentifier identifier =
+                new FunctionIdentifier(new Name("urn:test", "t", "function"), 2);
         Assertions.assertEquals(identifier, roundTripObject(identifier));
 
         Item stringCopy = roundTrip(factory.createStringItem("value"));
         Assertions.assertEquals("value", stringCopy.getStringValue());
 
-        Item arrayCopy = roundTrip(
-            factory.createArrayItem(
-                new ArrayList<>(List.of(factory.createStringItem("first"), factory.createIntItem(2))),
-                false
-            )
-        );
+        Item arrayCopy =
+                roundTrip(
+                        factory.createArrayItem(
+                                new ArrayList<>(
+                                        List.of(
+                                                factory.createStringItem("first"),
+                                                factory.createIntItem(2))),
+                                false));
         Assertions.assertEquals(2, arrayCopy.getSize());
         Assertions.assertEquals("first", arrayCopy.getItemAt(0).getStringValue());
         Assertions.assertEquals(2, arrayCopy.getItemAt(1).getIntValue());
 
-        Item objectCopy = roundTrip(
-            factory.createObjectItem(
-                new ArrayList<>(List.of("key")),
-                new ArrayList<>(List.of(factory.createStringItem("object value"))),
-                ExceptionMetadata.EMPTY_METADATA,
-                false
-            )
-        );
+        Item objectCopy =
+                roundTrip(
+                        factory.createObjectItem(
+                                new ArrayList<>(List.of("key")),
+                                new ArrayList<>(List.of(factory.createStringItem("object value"))),
+                                ExceptionMetadata.EMPTY_METADATA,
+                                false));
         Assertions.assertEquals("object value", objectCopy.getItemByKey("key").getStringValue());
 
-        Item annotatedCopy = roundTrip(
-            factory.createAnnotatedItem(factory.createStringItem("en"), BuiltinTypesCatalogue.languageItem)
-        );
+        Item annotatedCopy =
+                roundTrip(
+                        factory.createAnnotatedItem(
+                                factory.createStringItem("en"),
+                                BuiltinTypesCatalogue.languageItem));
         Assertions.assertEquals("en", annotatedCopy.getStringValue());
-        Assertions.assertEquals(BuiltinTypesCatalogue.languageItem.getName(), annotatedCopy.getDynamicType().getName());
+        Assertions.assertEquals(
+                BuiltinTypesCatalogue.languageItem.getName(),
+                annotatedCopy.getDynamicType().getName());
 
         TextItem text = new TextItem("node text");
         text.setXmlDocumentPosition("document.xml", 1);

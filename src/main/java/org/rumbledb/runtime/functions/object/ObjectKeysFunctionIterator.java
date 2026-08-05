@@ -20,8 +20,15 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,24 +39,16 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private Queue<Item>
+            nextResults; // queue that holds the results created by the current item in inspection
     private List<Item> alreadyFoundKeys;
 
     public ObjectKeysFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
@@ -68,7 +67,8 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void setResultsFromDF() {
-        HomogeneousItemDataFrame childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
+        HomogeneousItemDataFrame childDF =
+                this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
         for (String key : childDF.getKeys()) {
             if (key.equals(SparkSessionManager.mutabilityLevelColumnName)) {
                 continue;
@@ -82,10 +82,8 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
             if (key.equals(SparkSessionManager.pathInColumnName)) {
                 continue;
             }
-            if (
-                !key.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
-                    && !key.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)
-            ) {
+            if (!key.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
+                    && !key.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
                 this.nextResults.add(ItemFactory.getInstance().createStringItem(key));
             }
         }
@@ -130,9 +128,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " KEYS function",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " KEYS function", getMetadata());
     }
 
     @Override

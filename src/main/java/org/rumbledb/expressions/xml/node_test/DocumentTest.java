@@ -1,14 +1,12 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import java.io.Serial;
 
 import lombok.Getter;
 
-import java.io.Serial;
-
 @Getter
 public class DocumentTest implements NodeTest {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     // TODO: schemaElement test unsupported yet.
     private final NodeTest nodeTest;
 
@@ -29,6 +27,4 @@ public class DocumentTest implements NodeTest {
     public boolean isEmptyCheck() {
         return this.nodeTest == null;
     }
-
-
 }

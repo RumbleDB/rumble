@@ -20,23 +20,22 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
-import java.io.Serial;
-
 /**
  * Runtime iterator for attribute node content.
- * 
+ *
  * @see org.rumbledb.expressions.xml.AttributeNodeContentExpression
  */
 public class AttributeNodeContentRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final Item item;
 
     public AttributeNodeContentRuntimeIterator(String content, RuntimeStaticContext staticContext) {

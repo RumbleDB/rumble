@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.util.Arrays;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -22,8 +23,7 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 public class RenameExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator mainIterator;
     private final RuntimeIterator locatorIterator;
     private final RuntimeIterator nameIterator;
@@ -32,12 +32,10 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator mainIterator,
             RuntimeIterator locatorIterator,
             RuntimeIterator nameIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Arrays.asList(mainIterator, locatorIterator, nameIterator),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+                Arrays.asList(mainIterator, locatorIterator, nameIterator),
+                staticContext.toBuilder().isUpdating(true).build());
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
@@ -50,14 +48,10 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
+    protected void openLocal() {}
 
     @Override
-    protected void closeLocal() {
-
-    }
+    protected void closeLocal() {}
 
     @Override
     protected boolean hasNextLocal() {
@@ -81,7 +75,8 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
             locator = this.locatorIterator.materializeExactlyOneItem(context);
             content = this.nameIterator.materializeExactlyOneItem(context);
         } catch (NoItemException e) {
-            throw new UpdateTargetIsEmptySeqException("Target of rename expression is empty", this.getMetadata());
+            throw new UpdateTargetIsEmptySeqException(
+                    "Target of rename expression is empty", this.getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }
@@ -92,24 +87,22 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
             if (!locator.isString()) {
                 throw new CannotCastUpdateSelectorException(
                         "Rename expression selection cannot be cast to String type",
-                        this.getMetadata()
-                );
+                        this.getMetadata());
             }
             if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+                throw new ModifiesImmutableValueException(
+                        "Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
-                        "Attempt to modify currently immutable target",
-                        this.getMetadata()
-                );
+                        "Attempt to modify currently immutable target", this.getMetadata());
             }
-            up = factory.createRenameInObjectPrimitive(target, locator, content, this.getMetadata());
+            up =
+                    factory.createRenameInObjectPrimitive(
+                            target, locator, content, this.getMetadata());
         } else {
             throw new InvalidUpdateTargetException(
-                    "Rename expression target must be a single object",
-                    this.getMetadata()
-            );
+                    "Rename expression target must be a single object", this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

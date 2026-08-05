@@ -20,10 +20,14 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,14 +40,9 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.Serial;
-import java.util.List;
-
 public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator sequenceIterator;
     private final RuntimeIterator positionIterator;
     private RuntimeIterator lengthIterator;
@@ -51,13 +50,13 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     private int startPosition;
     private int currentLength;
     private int length;
-    private final int optimizationThreshold = 10_000_000; // do optimization only if startPosition is above this
-                                                          // threshold
+    private final int optimizationThreshold =
+            10_000_000; // do optimization only if startPosition is above this
+
+    // threshold
 
     public SubsequenceFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
@@ -77,9 +76,12 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             if (this.length < 0) {
                 filteredRDD = zippedRDD.filter((input) -> input._2() >= this.startPosition - 1);
             } else {
-                filteredRDD = zippedRDD.filter(
-                    (input) -> input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length
-                );
+                filteredRDD =
+                        zippedRDD.filter(
+                                (input) ->
+                                        input._2() >= this.startPosition - 1
+                                                && input._2()
+                                                        < this.startPosition - 1 + this.length);
             }
             return filteredRDD.map(x -> x._1);
         }
@@ -95,13 +97,10 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         if (this.startPosition < this.optimizationThreshold) {
             return getDataFrameOld(dynamicContext);
-        } else
-            return getDataFrameOffset(dynamicContext);
+        } else return getDataFrameOffset(dynamicContext);
     }
 
-    /**
-     * Old implementation of getDataFrame, it is faster for low starting positions
-     */
+    /** Old implementation of getDataFrame, it is faster for low starting positions */
     private HomogeneousItemDataFrame getDataFrameOld(DynamicContext dynamicContext) {
         HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
@@ -112,39 +111,34 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
-            df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s LIMIT %s",
-                    input,
-                    Integer.toString(this.startPosition + this.length - 1)
-                ),
-                df.getItemType()
-            );
+            df =
+                    df.evaluateSQL(
+                            String.format(
+                                    "SELECT * FROM %s LIMIT %s",
+                                    input, Integer.toString(this.startPosition + this.length - 1)),
+                            df.getItemType());
         }
 
-        Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(
-            df.getDataFrame(),
-            1L,
-            SparkSessionManager.temporaryColumnName
-        );
+        Dataset<Row> ds =
+                FlworDataFrameUtils.zipWithIndex(
+                        df.getDataFrame(), 1L, SparkSessionManager.temporaryColumnName);
 
         String inputds = FlworDataFrameUtils.createTempView(ds);
-        ds = ds.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
-                    selectSQL,
-                    inputds,
-                    SparkSessionManager.temporaryColumnName,
-                    Integer.toString(this.startPosition)
-                )
-            );
+        ds =
+                ds.sparkSession()
+                        .sql(
+                                String.format(
+                                        "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
+                                        selectSQL,
+                                        inputds,
+                                        SparkSessionManager.temporaryColumnName,
+                                        Integer.toString(this.startPosition)));
         return new HomogeneousItemDataFrame(ds, df.getItemType());
     }
 
     /**
-     * New implementation of getDataFrame using offset, it scales much better than the old implementation but is slower
-     * for small values
+     * New implementation of getDataFrame using offset, it scales much better than the old
+     * implementation but is slower for small values
      */
     private HomogeneousItemDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
         HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
@@ -152,24 +146,21 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
-            df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s LIMIT %s OFFSET %s",
-                    input,
-                    Integer.toString(this.length),
-                    Integer.toString(this.startPosition - 1)
-                ),
-                df.getItemType()
-            );
+            df =
+                    df.evaluateSQL(
+                            String.format(
+                                    "SELECT * FROM %s LIMIT %s OFFSET %s",
+                                    input,
+                                    Integer.toString(this.length),
+                                    Integer.toString(this.startPosition - 1)),
+                            df.getItemType());
         } else {
-            df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s OFFSET %s",
-                    input,
-                    Integer.toString(this.startPosition - 1)
-                ),
-                df.getItemType()
-            );
+            df =
+                    df.evaluateSQL(
+                            String.format(
+                                    "SELECT * FROM %s OFFSET %s",
+                                    input, Integer.toString(this.startPosition - 1)),
+                            df.getItemType());
         }
         return new HomogeneousItemDataFrame(df.getDataFrame(), df.getItemType());
     }
@@ -197,7 +188,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", getMetadata());
+        throw new IteratorFlowException(
+                FLOW_EXCEPTION_MESSAGE + "subsequence function", getMetadata());
     }
 
     private void initializeLocal() {
@@ -241,14 +233,12 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void setInstanceVariables(DynamicContext context) {
-        Item positionItem = this.positionIterator
-            .materializeFirstItemOrNull(context);
+        Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
         this.startPosition = (int) Math.round(positionItem.getDoubleValue());
 
         this.length = -1;
         if (this.getChildren().size() == 3) {
-            Item lengthItem = this.lengthIterator
-                .materializeFirstItemOrNull(context);
+            Item lengthItem = this.lengthIterator.materializeFirstItemOrNull(context);
             this.length = (int) Math.round(lengthItem.getDoubleValue());
         }
     }
@@ -258,15 +248,16 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         if (this.currentLength != 0) {
             if (this.sequenceIterator.hasNext()) {
-                if (this.currentLength > 0) { // take length many items -> decrement the value for each item until 0
+                if (this.currentLength
+                        > 0) { // take length many items -> decrement the value for each item until
+                    // 0
                     this.nextResult = this.sequenceIterator.next();
                     this.currentLength--;
-                } else if (this.currentLength == -1) { // length not specified -> take all items until the end
+                } else if (this.currentLength
+                        == -1) { // length not specified -> take all items until the end
                     this.nextResult = this.sequenceIterator.next();
                 } else {
-                    throw new OurBadException(
-                            "Unexpected length value found."
-                    );
+                    throw new OurBadException("Unexpected length value found.");
                 }
             }
         }

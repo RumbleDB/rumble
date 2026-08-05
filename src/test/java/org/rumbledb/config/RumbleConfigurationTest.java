@@ -20,6 +20,7 @@ package org.rumbledb.config;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
 import org.rumbledb.config.model.RumbleMode;
 import org.rumbledb.config.model.RuntimeConfig;
 
@@ -27,10 +28,13 @@ public class RumbleConfigurationTest {
 
     @Test
     public void lambdaCustomizersConfigureSections() {
-        RumbleConfiguration configuration = RumbleConfiguration.builder()
-            .configureRuntime(runtime -> runtime.resultsSizeCap(25).useNativeExecution(false))
-            .configureOutput(output -> output.outputPath("output.json").allowOverwrite(true))
-            .build();
+        RumbleConfiguration configuration =
+                RumbleConfiguration.builder()
+                        .configureRuntime(
+                                runtime -> runtime.resultsSizeCap(25).useNativeExecution(false))
+                        .configureOutput(
+                                output -> output.outputPath("output.json").allowOverwrite(true))
+                        .build();
 
         Assertions.assertEquals(25, configuration.runtime().resultsSizeCap());
         Assertions.assertFalse(configuration.runtime().useNativeExecution());
@@ -40,19 +44,20 @@ public class RumbleConfigurationTest {
 
     @Test
     public void lambdaCustomizersPreserveExistingSectionValues() {
-        RumbleConfiguration original = RumbleConfiguration.builder()
-            .runtime(
-                RuntimeConfig.builder()
-                    .materializationCap(42)
-                    .useParallelExecution(false)
-                    .build()
-            )
-            .configureRuntime(runtime -> runtime.resultsSizeCap(25))
-            .build();
+        RumbleConfiguration original =
+                RumbleConfiguration.builder()
+                        .runtime(
+                                RuntimeConfig.builder()
+                                        .materializationCap(42)
+                                        .useParallelExecution(false)
+                                        .build())
+                        .configureRuntime(runtime -> runtime.resultsSizeCap(25))
+                        .build();
 
-        RumbleConfiguration updated = original.toBuilder()
-            .configureRuntime(runtime -> runtime.useNativeExecution(false))
-            .build();
+        RumbleConfiguration updated =
+                original.toBuilder()
+                        .configureRuntime(runtime -> runtime.useNativeExecution(false))
+                        .build();
 
         Assertions.assertEquals(25, updated.runtime().resultsSizeCap());
         Assertions.assertEquals(42, updated.runtime().materializationCap());
@@ -62,13 +67,14 @@ public class RumbleConfigurationTest {
 
     @Test
     public void withEntriesApplyNestedOverrides() {
-        RumbleConfiguration configuration = RumbleConfiguration.builder()
-            .configureRuntime(runtime -> runtime.materializationCap(42))
-            .with("mode", "RUN")
-            .with("input.queryPath", "queries/main.jq")
-            .with("runtime.resultsSizeCap", 100)
-            .with("debug.showErrorInfo", true)
-            .build();
+        RumbleConfiguration configuration =
+                RumbleConfiguration.builder()
+                        .configureRuntime(runtime -> runtime.materializationCap(42))
+                        .with("mode", "RUN")
+                        .with("input.queryPath", "queries/main.jq")
+                        .with("runtime.resultsSizeCap", 100)
+                        .with("debug.showErrorInfo", true)
+                        .build();
 
         Assertions.assertEquals(RumbleMode.RUN, configuration.mode());
         Assertions.assertEquals("queries/main.jq", configuration.input().queryPath());
@@ -79,12 +85,13 @@ public class RumbleConfigurationTest {
 
     @Test
     public void withEntriesOverrideTypedBuilderValues() {
-        RumbleConfiguration configuration = RumbleConfiguration.builder()
-            .mode(RumbleMode.RUN)
-            .configureRuntime(runtime -> runtime.resultsSizeCap(25))
-            .with("mode", "REPL")
-            .with("runtime.resultsSizeCap", 100)
-            .build();
+        RumbleConfiguration configuration =
+                RumbleConfiguration.builder()
+                        .mode(RumbleMode.RUN)
+                        .configureRuntime(runtime -> runtime.resultsSizeCap(25))
+                        .with("mode", "REPL")
+                        .with("runtime.resultsSizeCap", 100)
+                        .build();
 
         Assertions.assertEquals(RumbleMode.REPL, configuration.mode());
         Assertions.assertEquals(100, configuration.runtime().resultsSizeCap());
@@ -93,10 +100,7 @@ public class RumbleConfigurationTest {
     @Test()
     public void withUnknownEntryFailsFast() {
         Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> RumbleConfiguration.builder()
-                .with("runtime.unknownOption", true)
-                .build()
-        );
+                IllegalArgumentException.class,
+                () -> RumbleConfiguration.builder().with("runtime.unknownOption", true).build());
     }
 }

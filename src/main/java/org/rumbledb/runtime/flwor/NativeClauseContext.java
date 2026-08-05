@@ -1,72 +1,67 @@
 package org.rumbledb.runtime.flwor;
 
-import lombok.Getter;
-import lombok.Setter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.Getter;
+import lombok.Setter;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
- * This class describes the context of a native clause and is used when processing FLWOR expressions without UDF
+ * This class describes the context of a native clause and is used when processing FLWOR expressions
+ * without UDF
  */
 public class NativeClauseContext {
     public static final NativeClauseContext NoNativeQuery = new NativeClauseContext();
 
     private NativeClauseContext parent;
-    @Setter
+    @Setter @Getter private FLWOR_CLAUSES clauseType;
+    @Setter @Getter private DataType schema;
+    @Getter private DynamicContext context;
+    @Setter @Getter private String resultingQuery;
+
     @Getter
-    private FLWOR_CLAUSES clauseType;
-    @Setter
-    @Getter
-    private DataType schema;
-    @Getter
-    private DynamicContext context;
-    @Setter
-    @Getter
-    private String resultingQuery;
-    @Getter
-    private List<String> lateralViewPart; // used in array unboxing to generate the correct lateral view
-    @Setter
-    @Getter
-    private SequenceType resultingType;
+    private List<String>
+            lateralViewPart; // used in array unboxing to generate the correct lateral view
+
+    @Setter @Getter private SequenceType resultingType;
 
     private List<String> conditionalColumns; // used in where clauses
 
-    @Setter
-    @Getter
-    private String view;
+    @Setter @Getter private String view;
 
     private int monotonicallyIncreasingId;
 
-    @Setter
-    @Getter
-    private boolean isExplodedView; // if the view is exploded, then the result is a sequence; otherwise it's atomic
+    @Setter @Getter
+    private boolean
+            isExplodedView; // if the view is exploded, then the result is a sequence; otherwise
+
+    // it's
+
+    // atomic
 
     private List<Name> positionalVariableNames;
 
-    @Getter
-    private Map<String, Boolean> sortingColumns;
+    @Getter private Map<String, Boolean> sortingColumns;
 
     private Map<Name, Name> variables;
-    @Getter
-    private String rowIdField;
-    @Setter
-    @Getter
-    private boolean grouped;
+    @Getter private String rowIdField;
+    @Setter @Getter private boolean grouped;
 
-    private NativeClauseContext() {
-    }
+    private NativeClauseContext() {}
 
-    public NativeClauseContext(FLWOR_CLAUSES clauseType, StructType schema, DynamicContext context) {
+    public NativeClauseContext(
+            FLWOR_CLAUSES clauseType, StructType schema, DynamicContext context) {
         this.clauseType = clauseType;
         this.schema = schema;
         this.context = context;
@@ -102,7 +97,8 @@ public class NativeClauseContext {
         this.grouped = sibling.grouped;
     }
 
-    public NativeClauseContext(NativeClauseContext sibling, String newResultingQuery, SequenceType resultingType) {
+    public NativeClauseContext(
+            NativeClauseContext sibling, String newResultingQuery, SequenceType resultingType) {
         this.clauseType = sibling.clauseType;
         this.schema = sibling.schema;
         this.context = sibling.context;
@@ -123,7 +119,8 @@ public class NativeClauseContext {
 
     public NativeClauseContext createChild() {
         StructType schema = new StructType(((StructType) this.schema).fields());
-        NativeClauseContext result = new NativeClauseContext(FLWOR_CLAUSES.RETURN, schema, this.context);
+        NativeClauseContext result =
+                new NativeClauseContext(FLWOR_CLAUSES.RETURN, schema, this.context);
         result.conditionalColumns = new ArrayList<>();
         result.parent = this;
         result.view = this.view;
@@ -152,17 +149,21 @@ public class NativeClauseContext {
     }
 
     public Name addVariable() {
-        Name variable = Name.createVariableInNoNamespace(
-            SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId()
-        );
+        Name variable =
+                Name.createVariableInNoNamespace(
+                        SparkSessionManager.sparkSqlVariableName
+                                + "-"
+                                + this.getAndIncrementMonotonicallyIncreasingId());
         this.variables.put(variable, variable);
         return variable;
     }
 
     public Name addVariable(Name name) {
-        Name variable = Name.createVariableInNoNamespace(
-            SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId()
-        );
+        Name variable =
+                Name.createVariableInNoNamespace(
+                        SparkSessionManager.sparkSqlVariableName
+                                + "-"
+                                + this.getAndIncrementMonotonicallyIncreasingId());
         this.variables.put(name, variable);
         return variable;
     }

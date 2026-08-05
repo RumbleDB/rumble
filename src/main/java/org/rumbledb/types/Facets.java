@@ -1,15 +1,16 @@
 package org.rumbledb.types;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.rumbledb.api.Item;
-
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.api.Item;
+
 /**
- * Facets class represent a container with the ability to get and set facets and is intended to be a mutable proxy that
- * will be passed to a DerivedAtomicType to indicate the specified facets
+ * Facets class represent a container with the ability to get and set facets and is intended to be a
+ * mutable proxy that will be passed to a DerivedAtomicType to indicate the specified facets
  */
 @Getter
 public class Facets {
@@ -65,40 +66,30 @@ public class Facets {
         return facets;
     }
 
-    @Setter
-    private Item minInclusive;
-    @Setter
-    private Item maxInclusive;
-    @Setter
-    private Item minExclusive;
-    @Setter
-    private Item maxExclusive;
+    @Setter private Item minInclusive;
+    @Setter private Item maxInclusive;
+    @Setter private Item minExclusive;
+    @Setter private Item maxExclusive;
     private Integer minLength;
     private Integer length;
     private Integer maxLength;
     private Integer totalDigits;
-    @Setter
-    private Integer fractionDigits;
+    @Setter private Integer fractionDigits;
     private List<String> constraints = Collections.emptyList();
     private List<Item> enumeration;
-    @Setter
-    private TimezoneFacet explicitTimezone;
-    @Setter
-    private WhitespaceFacet whiteSpace;
-    @Setter
-    private List<String> pattern;
+    @Setter private TimezoneFacet explicitTimezone;
+    @Setter private WhitespaceFacet whiteSpace;
+    @Setter private List<String> pattern;
 
     // Fundamental facets (XSD 1.1 §4.2)
     private OrderedFacetValue ordered;
-    @Setter
-    private Boolean bounded;
-    @Setter
-    private CardinalityFacetValue cardinality;
+    @Setter private Boolean bounded;
+    @Setter private CardinalityFacetValue cardinality;
     private Boolean numeric;
 
     /**
-     * Creates a Facets with the given pattern regex strings.
-     * Multiple patterns in a single derivation step are OR-ed per XSD 1.1 §4.3.4.2.
+     * Creates a Facets with the given pattern regex strings. Multiple patterns in a single
+     * derivation step are OR-ed per XSD 1.1 §4.3.4.2.
      *
      * @param patterns regex strings for this derivation step
      * @return Facets containing the pattern
@@ -125,8 +116,7 @@ public class Facets {
             Item minExclusive,
             Item maxExclusive,
             Integer totalDigits,
-            Integer fractionDigits
-    ) {
+            Integer fractionDigits) {
         Facets facets = new Facets();
         facets.length = length;
         facets.enumeration = enumeration;

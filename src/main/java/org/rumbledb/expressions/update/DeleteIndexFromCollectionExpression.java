@@ -1,15 +1,16 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.update.primitives.Mode;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class DeleteIndexFromCollectionExpression extends Expression {
@@ -23,9 +24,9 @@ public class DeleteIndexFromCollectionExpression extends Expression {
             Expression numDelete,
             boolean isFirst,
             Mode mode,
-            ExceptionMetadata metadata
-    ) {
-        // TODO: The current implementations only accounts for two callening modes- table, and delta-file
+            ExceptionMetadata metadata) {
+        // TODO: The current implementations only accounts for two callening modes- table, and
+        // delta-file
         // Extension to other modes can be done by increasing flags for using enum instead
         super(metadata);
         if (collection == null) {
@@ -39,7 +40,9 @@ public class DeleteIndexFromCollectionExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return this.numDelete == null ? Arrays.asList(this.collection) : Arrays.asList(this.collection, this.numDelete);
+        return this.numDelete == null
+                ? Arrays.asList(this.collection)
+                : Arrays.asList(this.collection, this.numDelete);
     }
 
     @Override
@@ -57,5 +60,4 @@ public class DeleteIndexFromCollectionExpression extends Expression {
         this.collection.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
-
 }

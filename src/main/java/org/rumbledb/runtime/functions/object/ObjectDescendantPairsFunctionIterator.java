@@ -20,6 +20,13 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,25 +35,15 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private Queue<Item>
+            nextResults; // queue that holds the results created by the current item in inspection
 
     public ObjectDescendantPairsFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -72,15 +69,15 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
         if (this.hasNext) {
             Item result = this.nextResults.remove(); // save the result to be returned
             if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
+                // if there are no more results left in the queue, trigger calculation for the next
+                // result
                 setNextResult();
             }
             return result;
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " DESCENDANT-PAIRS function",
-                getMetadata()
-        );
+                getMetadata());
     }
 
     public void setNextResult() {
@@ -114,8 +111,9 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
                     List<String> keyList = Collections.singletonList(key);
                     List<Item> valueList = Collections.singletonList(value);
 
-                    Item result = ItemFactory.getInstance()
-                        .createObjectItem(keyList, valueList, getMetadata(), true);
+                    Item result =
+                            ItemFactory.getInstance()
+                                    .createObjectItem(keyList, valueList, getMetadata(), true);
                     this.nextResults.add(result);
                     getDescendantPairs(valueList);
                 }

@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -33,27 +38,21 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Runtime iterator for computed attribute constructors.
- * 
+ *
  * @see org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression
  */
 public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final Name staticAttributeName;
     private final DataFunctionIterator nameIterator;
     private final DataFunctionIterator contentExpression;
 
     /**
      * Constructor for static attribute name: attribute attributeName { value }
-     * 
+     *
      * @param staticAttributeName The static attribute name (expanded)
      * @param contentExpression The value iterator
      * @param staticContext The runtime static context
@@ -61,8 +60,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
     public ComputedAttributeConstructorRuntimeIterator(
             Name staticAttributeName,
             DataFunctionIterator contentExpression,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Collections.singletonList(contentExpression), staticContext);
         this.staticAttributeName = staticAttributeName;
         this.nameIterator = null;
@@ -71,7 +69,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
 
     /**
      * Constructor for dynamic attribute name: attribute { nameExpression } { value }
-     * 
+     *
      * @param nameIterator The dynamic attribute name iterator (wrapped in AtomizationIterator)
      * @param contentExpression The value iterator
      * @param staticContext The runtime static context
@@ -79,8 +77,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
     public ComputedAttributeConstructorRuntimeIterator(
             DataFunctionIterator nameIterator,
             DataFunctionIterator contentExpression,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(createChildList(nameIterator, contentExpression), staticContext);
         this.staticAttributeName = null;
         this.nameIterator = nameIterator;
@@ -101,8 +98,11 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item attributeName;
         if (this.staticAttributeName != null) {
-            attributeName = ItemFactory.getInstance()
-                .createQNameItem(NamespaceBindingUtils.normalizeComputedAttributeName(this.staticAttributeName));
+            attributeName =
+                    ItemFactory.getInstance()
+                            .createQNameItem(
+                                    NamespaceBindingUtils.normalizeComputedAttributeName(
+                                            this.staticAttributeName));
         } else {
             // Dynamic attribute name - evaluate the name expression
             // processing of the name expression according to
@@ -115,59 +115,69 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
-                        getMetadata()
-                );
+                        getMetadata());
             }
             Item atomizedNameItem = atomizedNameItems.get(0);
             if (!(atomizedNameItem.isAtomic())) {
                 throw new UnexpectedStaticTypeException(
                         "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
-                        getMetadata()
-                );
+                        getMetadata());
             }
 
             if (atomizedNameItem.isQName()) {
                 // 2. If the atomized value of the name expression is of type xs:QName:
-                // a. If the expanded QName returned by the atomized name expression has a namespace URI
+                // a. If the expanded QName returned by the atomized name expression has a namespace
+                // URI
                 // but has no prefix, it is given an implementation-dependent prefix.
                 // b. The resulting expanded QName (including its prefix) is used as the node-name
                 // property of the constructed attribute node.
-                attributeName = ItemFactory.getInstance()
-                    .createQNameItem(
-                        NamespaceBindingUtils.normalizeComputedAttributeName(atomizedNameItem.getQNameValue())
-                    );
+                attributeName =
+                        ItemFactory.getInstance()
+                                .createQNameItem(
+                                        NamespaceBindingUtils.normalizeComputedAttributeName(
+                                                atomizedNameItem.getQNameValue()));
             } else if (atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic()) {
-                // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic,
-                // that value is converted to an expanded QName. If the string value contains a namespace
-                // prefix, that prefix is resolved to a namespace URI using the statically known namespaces.
-                // If the string value contains no namespace prefix, it is treated as a local name in no
-                // namespace. The resulting expanded QName (including its prefix) is used as the node-name
-                // property of the constructed attribute. If conversion of the atomized name expression to
+                // 3. If the atomized value of the name expression is of type xs:string or
+                // xs:untypedAtomic,
+                // that value is converted to an expanded QName. If the string value contains a
+                // namespace
+                // prefix, that prefix is resolved to a namespace URI using the statically known
+                // namespaces.
+                // If the string value contains no namespace prefix, it is treated as a local name
+                // in no
+                // namespace. The resulting expanded QName (including its prefix) is used as the
+                // node-name
+                // property of the constructed attribute. If conversion of the atomized name
+                // expression to
                 // an expanded QName is not successful, a dynamic error is raised [err:XQDY0074].
-                String collapsed = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
+                String collapsed =
+                        NamespaceBindingUtils.collapseQNameLexical(
+                                atomizedNameItem.getStringValue());
                 try {
-                    attributeName = ItemFactory.getInstance()
-                        .createQNameItem(
-                            NamespaceBindingUtils.normalizeComputedAttributeName(
-                                NamespaceBindingUtils.parseLexicalQNameForComputedAttribute(
-                                    collapsed,
-                                    NamespaceBindingUtils.namespaceResolver(this.staticContext),
-                                    getMetadata()
-                                )
-                            )
-                        );
+                    attributeName =
+                            ItemFactory.getInstance()
+                                    .createQNameItem(
+                                            NamespaceBindingUtils.normalizeComputedAttributeName(
+                                                    NamespaceBindingUtils
+                                                            .parseLexicalQNameForComputedAttribute(
+                                                                    collapsed,
+                                                                    NamespaceBindingUtils
+                                                                            .namespaceResolver(
+                                                                                    this
+                                                                                            .staticContext),
+                                                                    getMetadata())));
                 } catch (InvalidLexicalValueException e) {
                     throw new InvalidElementNameExpressionException(e.getMessage(), getMetadata());
                 }
             } else {
                 throw new UnexpectedStaticTypeException(
                         "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
-                        getMetadata()
-                );
+                        getMetadata());
             }
         }
 
-        NamespaceBindingUtils.validateConstructedAttributeName(attributeName.getQNameValue(), getMetadata());
+        NamespaceBindingUtils.validateConstructedAttributeName(
+                attributeName.getQNameValue(), getMetadata());
 
         // Process content expression according to XQuery 3.1 spec
         // https://www.w3.org/TR/xquery-31/#id-computedAttributes
@@ -204,8 +214,12 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             attributeValue = attributeValue.replaceAll("\\s+", " ").trim();
         }
 
-        // 6: If the attribute name is xml:id, the is-id property of the resulting attribute node is set to true;
-        // otherwise the is-id property is set to false. The is-idrefs property of the attribute node is unconditionally
+        // 6: If the attribute name is xml:id, the is-id property of the resulting attribute node is
+        // set
+        // to true;
+        // otherwise the is-id property is set to false. The is-idrefs property of the attribute
+        // node is
+        // unconditionally
         // set to false.
         // Note: we currently do not support is-id and is-idrefs properties
 
@@ -216,11 +230,9 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
         // Create and return the attribute item
         // 4: The parent property of the attribute node is set to empty.
         this.hasNext = false;
-        Item attributeItem = ItemFactory.getInstance()
-            .createXmlAttributeNode(
-                attributeName.getQNameValue(),
-                attributeValue
-            );
+        Item attributeItem =
+                ItemFactory.getInstance()
+                        .createXmlAttributeNode(attributeName.getQNameValue(), attributeValue);
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             attributeItem.setXmlDocumentPosition(documentPath, 0);
@@ -230,7 +242,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
 
     private static boolean isXmlIdAttribute(Name attributeName) {
         return attributeName != null
-            && "id".equals(attributeName.getLocalName())
-            && Name.XML_NS.equals(attributeName.getNamespace());
+                && "id".equals(attributeName.getLocalName())
+                && Name.XML_NS.equals(attributeName.getNamespace());
     }
 }

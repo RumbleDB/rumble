@@ -1,5 +1,10 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
+import java.math.BigInteger;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.ibm.icu.util.ULocale;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -8,60 +13,53 @@ import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
-import java.math.BigInteger;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 public final class IntegerPictureFormatter {
 
-    private static final Map<String, FormatIntegerPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, FormatIntegerPicture> PICTURE_CACHE =
+            new ConcurrentHashMap<>();
 
-    private IntegerPictureFormatter() {
-    }
+    private IntegerPictureFormatter() {}
 
     /**
-     * <p>
      * Implementation-defined bounds and fallback behavior for fn:format-integer().
-     * </p>
      *
-     * <p>
-     * <b>Supported ranges:</b>
-     * </p>
+     * <p><b>Supported ranges:</b>
+     *
      * <ul>
-     * <li><b>Decimal patterns:</b> full BigInteger range.</li>
-     * <li><b>Roman numerals (I, i):</b> 1..3999; otherwise fallback to decimal.</li>
-     * <li><b>Alphabetic sequences (A, a):</b> 1..Integer.MAX_VALUE; otherwise fallback to decimal.</li>
-     * <li><b>Word formats (w, W, Ww):</b> ICU-backed locale data, up to Integer.MAX_VALUE;
-     * otherwise fallback to decimal.</li>
+     *   <li><b>Decimal patterns:</b> full BigInteger range.
+     *   <li><b>Roman numerals (I, i):</b> 1..3999; otherwise fallback to decimal.
+     *   <li><b>Alphabetic sequences (A, a):</b> 1..Integer.MAX_VALUE; otherwise fallback to
+     *       decimal.
+     *   <li><b>Word formats (w, W, Ww):</b> ICU-backed locale data, up to Integer.MAX_VALUE;
+     *       otherwise fallback to decimal.
      * </ul>
      *
-     * <p>
-     * <b>Fallback behavior:</b>
-     * </p>
+     * <p><b>Fallback behavior:</b>
+     *
      * <ul>
-     * <li>Unsupported format tokens use decimal formatting ("1"-style).</li>
-     * <li>Unsupported but valid combinations do not raise errors.</li>
+     *   <li>Unsupported format tokens use decimal formatting ("1"-style).
+     *   <li>Unsupported but valid combinations do not raise errors.
      * </ul>
      *
-     * <p>
-     * <b>Other notes:</b>
-     * </p>
+     * <p><b>Other notes:</b>
+     *
      * <ul>
-     * <li>Language parameter is resolved using ICU</li>
-     * <li>Ordinal modifier is supported where ICU provides ordinal data.</li>
+     *   <li>Language parameter is resolved using ICU
+     *   <li>Ordinal modifier is supported where ICU provides ordinal data.
      * </ul>
      */
-    public static String format(BigInteger value, String pictureString, String language, ExceptionMetadata metadata) {
+    public static String format(
+            BigInteger value, String pictureString, String language, ExceptionMetadata metadata) {
         // Invariant: value is neither null nor empty
 
         boolean isNegative = value.signum() < 0;
         BigInteger absValue = value.abs();
 
         // Resolve the locale once and pass it to the handlers.
-        ULocale locale = LanguageSupport.resolveULocale(
-            LanguageSupport.effectiveLanguageOf(LanguageSupport.normalizeLanguage(language))
-        );
+        ULocale locale =
+                LanguageSupport.resolveULocale(
+                        LanguageSupport.effectiveLanguageOf(
+                                LanguageSupport.normalizeLanguage(language)));
 
         FormatIntegerPicture picture = PICTURE_CACHE.get(pictureString);
         if (picture == null) {
@@ -103,8 +101,7 @@ public final class IntegerPictureFormatter {
             BigInteger value,
             PrimaryFormatToken primary,
             IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+            ULocale locale) {
         NumericPicture picture = primary.getNumericPicture();
 
         String digits = NumericFormattingSupport.toDecimalString(value);
@@ -115,7 +112,9 @@ public final class IntegerPictureFormatter {
         }
 
         digits = NumericFormattingSupport.applyGrouping(digits, picture);
-        digits = NumericFormattingSupport.mapAsciiDigits(digits, picture.getZeroDigit()); // TODO this is not spec
+        digits =
+                NumericFormattingSupport.mapAsciiDigits(
+                        digits, picture.getZeroDigit()); // TODO this is not spec
         // compliant, should be switched
         // with statement above. (But
         // breaks one test) (works for
@@ -132,30 +131,29 @@ public final class IntegerPictureFormatter {
             BigInteger value,
             PrimaryFormatToken primary,
             IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+            ULocale locale) {
         if (value.signum() == 0 || value.compareTo(BigInteger.valueOf(3999)) > 0) {
             return handleOther(value, modifier, locale);
         }
 
         // For Roman, unsupported ordinal handling is ignored and cardinal numbering is used.
-        return NumberWords.roman(value.intValueExact(), primary.getType().equals(PrimaryFormatToken.ROMAN_LOWER));
+        return NumberWords.roman(
+                value.intValueExact(), primary.getType().equals(PrimaryFormatToken.ROMAN_LOWER));
     }
 
     private static String handleAlphabetic(
             BigInteger value,
             PrimaryFormatToken primary,
             IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+            ULocale locale) {
         if (value.signum() == 0 || value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
             return handleOther(value, modifier, locale);
         }
 
-        String result = NumericFormattingSupport.integerToAlphabetic(
-            value.intValueExact(),
-            primary.getType().equals(PrimaryFormatToken.ALPHABETIC_LOWER)
-        );
+        String result =
+                NumericFormattingSupport.integerToAlphabetic(
+                        value.intValueExact(),
+                        primary.getType().equals(PrimaryFormatToken.ALPHABETIC_LOWER));
 
         // For alphabetic numbering, unsupported ordinal handling may be ignored per spec.
         return result;
@@ -165,8 +163,7 @@ public final class IntegerPictureFormatter {
             BigInteger value,
             PrimaryFormatToken primary,
             IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+            ULocale locale) {
         if (value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
             return handleOther(value, modifier, locale);
         }
@@ -174,9 +171,13 @@ public final class IntegerPictureFormatter {
         String result;
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {
-            result = NumberWords.ordinalWords(value.longValueExact(), locale, modifier.getFormatSpecifier());
+            result =
+                    NumberWords.ordinalWords(
+                            value.longValueExact(), locale, modifier.getFormatSpecifier());
         } else {
-            result = NumberWords.cardinal(value.longValueExact(), locale, modifier.getFormatSpecifier());
+            result =
+                    NumberWords.cardinal(
+                            value.longValueExact(), locale, modifier.getFormatSpecifier());
         }
 
         if (primary.getType().equals(PrimaryFormatToken.WORDS_LOWER)) {
@@ -188,10 +189,7 @@ public final class IntegerPictureFormatter {
     }
 
     private static String handleOther(
-            BigInteger value,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+            BigInteger value, IntegerFormatModifier modifier, ULocale locale) {
         String result = NumericFormattingSupport.toDecimalString(value);
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {

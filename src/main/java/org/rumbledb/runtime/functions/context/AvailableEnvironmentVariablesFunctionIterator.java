@@ -1,5 +1,9 @@
 package org.rumbledb.runtime.functions.context;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -8,20 +12,13 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class AvailableEnvironmentVariablesFunctionIterator extends LocalFunctionCallIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private List<String> names;
     private int index;
 
     public AvailableEnvironmentVariablesFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -44,8 +41,7 @@ public class AvailableEnvironmentVariablesFunctionIterator extends LocalFunction
         if (!this.hasNext) {
             throw new IteratorFlowException(
                     FLOW_EXCEPTION_MESSAGE + "available-environment-variables function",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         Item result = ItemFactory.getInstance().createStringItem(this.names.get(this.index));
         this.index++;

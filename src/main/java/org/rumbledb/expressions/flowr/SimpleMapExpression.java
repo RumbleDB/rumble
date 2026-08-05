@@ -20,15 +20,15 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.Arrays;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class SimpleMapExpression extends Expression {
@@ -36,10 +36,7 @@ public class SimpleMapExpression extends Expression {
     private final Expression rightExpression;
 
     public SimpleMapExpression(
-            Expression leftExpression,
-            Expression rightExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression leftExpression, Expression rightExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
@@ -64,7 +61,8 @@ public class SimpleMapExpression extends Expression {
         buffer.append(" (!)");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+                " | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -97,5 +95,4 @@ public class SimpleMapExpression extends Expression {
     public boolean isContextDependent() {
         return this.leftExpression.isContextDependent();
     }
-
 }

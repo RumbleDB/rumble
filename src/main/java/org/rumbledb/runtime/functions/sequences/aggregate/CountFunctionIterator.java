@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -34,25 +39,14 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    /**
-     *
-     */
-    @Serial
-    private static final long serialVersionUID = 1L;
+    /** */
+    @Serial private static final long serialVersionUID = 1L;
 
     public CountFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
-
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
@@ -64,47 +58,24 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (iterator instanceof VariableReferenceIterator expr) {
             // this.hasNext = false;
             return context.getVariableValues()
-                .getVariableCount(expr.getVariableName(), getMetadata());
+                    .getVariableCount(expr.getVariableName(), getMetadata());
         }
-        return computeCount(
-            iterator,
-            context,
-            getMetadata()
-        );
-
+        return computeCount(iterator, context, getMetadata());
     }
 
     public static Item computeCount(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            RuntimeIterator iterator, DynamicContext context, ExceptionMetadata metadata) {
         if (iterator.isDataFrame()) {
-            return computeDataFrame(
-                iterator,
-                context,
-                metadata
-            );
+            return computeDataFrame(iterator, context, metadata);
         } else if (iterator.isRDDOrDataFrame()) {
-            return computeRDD(
-                iterator,
-                context,
-                metadata
-            );
+            return computeRDD(iterator, context, metadata);
         } else {
-            return computeLocally(
-                iterator,
-                context,
-                metadata
-            );
+            return computeLocally(iterator, context, metadata);
         }
     }
 
     private static Item computeLocally(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            RuntimeIterator iterator, DynamicContext context, ExceptionMetadata metadata) {
         iterator.open(context);
         long result = 0;
 
@@ -117,10 +88,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item computeRDD(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            RuntimeIterator iterator, DynamicContext context, ExceptionMetadata metadata) {
         long count = iterator.getRDD(context).count();
         if (count > (long) Integer.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
@@ -130,17 +98,13 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item computeDataFrame(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            RuntimeIterator iterator, DynamicContext context, ExceptionMetadata metadata) {
         long count = iterator.getDataFrame(context).count();
         if (count > (long) Integer.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
         } else {
             return ItemFactory.getInstance().createLongItem(count);
         }
-
     }
 
     @Override
@@ -156,36 +120,50 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery =
+                this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             if (nativeChildQuery.getResultingQuery().trim().startsWith("explode")) {
                 return new NativeClauseContext(
                         nativeClauseContext,
                         "size"
-                            + nativeChildQuery.getResultingQuery()
-                                .substring(nativeChildQuery.getResultingQuery().indexOf("explode") + 7),
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                );
+                                + nativeChildQuery
+                                        .getResultingQuery()
+                                        .substring(
+                                                nativeChildQuery
+                                                                .getResultingQuery()
+                                                                .indexOf("explode")
+                                                        + 7),
+                        new SequenceType(
+                                BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
             } else if (nativeChildQuery.getResultingQuery().contains(".count")) {
                 return nativeChildQuery;
-            } else if (nativeChildQuery.getResultingType().getArity().equals(SequenceType.Arity.One)) {
+            } else if (nativeChildQuery
+                    .getResultingType()
+                    .getArity()
+                    .equals(SequenceType.Arity.One)) {
                 return new NativeClauseContext(
                         nativeChildQuery,
                         "1",
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                );
-            } else if (nativeChildQuery.getResultingType().getArity().equals(SequenceType.Arity.OneOrZero)) {
+                        new SequenceType(
+                                BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
+            } else if (nativeChildQuery
+                    .getResultingType()
+                    .getArity()
+                    .equals(SequenceType.Arity.OneOrZero)) {
                 return new NativeClauseContext(
                         nativeChildQuery,
-                        "CASE WHEN (" + nativeChildQuery.getResultingQuery() + ") IS NULL THEN 0 ELSE 1 END",
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                );
+                        "CASE WHEN ("
+                                + nativeChildQuery.getResultingQuery()
+                                + ") IS NULL THEN 0 ELSE 1 END",
+                        new SequenceType(
+                                BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
             } else {
                 return new NativeClauseContext(
                         nativeChildQuery,
                         "size (" + nativeChildQuery.getResultingQuery() + ")",
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                );
+                        new SequenceType(
+                                BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
             }
         }
         return NativeClauseContext.NoNativeQuery;

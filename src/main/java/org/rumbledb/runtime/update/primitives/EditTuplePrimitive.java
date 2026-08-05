@@ -3,12 +3,12 @@ package org.rumbledb.runtime.update.primitives;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.lit;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.spark.SparkSessionManager;
 
 public class EditTuplePrimitive implements UpdatePrimitive {
     private final Item target;
@@ -68,22 +68,20 @@ public class EditTuplePrimitive implements UpdatePrimitive {
         long targetRowID = this.target.getTopLevelID();
         double targetRowOrder = this.target.getTopLevelOrder();
 
-        this.contents = this.contents
-            .withColumn(SparkSessionManager.rowIdColumnName, lit(targetRowID))
-            .withColumn(SparkSessionManager.rowOrderColumnName, lit(targetRowOrder));
+        this.contents =
+                this.contents
+                        .withColumn(SparkSessionManager.rowIdColumnName, lit(targetRowID))
+                        .withColumn(SparkSessionManager.rowOrderColumnName, lit(targetRowOrder));
 
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 
-        String deleteQuery = String.format(
-            "DELETE FROM %s WHERE %s = %d",
-            collectionPath,
-            SparkSessionManager.rowIdColumnName,
-            targetRowID
-        );
+        String deleteQuery =
+                String.format(
+                        "DELETE FROM %s WHERE %s = %d",
+                        collectionPath, SparkSessionManager.rowIdColumnName, targetRowID);
         session.sql(deleteQuery);
 
         // Insert back the edited tuple
         this.collection.insertUnordered(this.contents);
     }
-
 }

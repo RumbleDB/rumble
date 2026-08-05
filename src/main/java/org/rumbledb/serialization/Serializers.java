@@ -1,15 +1,15 @@
 package org.rumbledb.serialization;
 
-import org.rumbledb.exceptions.UnsupportedNormalizationFormSerializationException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnsupportedNormalizationFormSerializationException;
 
 public final class Serializers {
 
-    private Serializers() {
-    }
+    private Serializers() {}
 
     public static Serializer from(SerializationParameters params) {
-        SerializationParameters effectiveParams = params != null ? params : SerializationParameters.defaults();
+        SerializationParameters effectiveParams =
+                params != null ? params : SerializationParameters.defaults();
         validateNormalizationForm(effectiveParams);
         String method = normalizeMethodName(effectiveParams.getMethod());
         if (method == null || method.equalsIgnoreCase("json")) {
@@ -36,11 +36,9 @@ public final class Serializers {
         if (method.equalsIgnoreCase("tyson")) {
             return new TysonSerializer(effectiveParams);
         }
-        if (
-            method.equalsIgnoreCase("xml_json_hybrid")
+        if (method.equalsIgnoreCase("xml_json_hybrid")
                 || method.equalsIgnoreCase("xml-json-hybrid")
-                || method.equalsIgnoreCase("xmljsonhybrid")
-        ) {
+                || method.equalsIgnoreCase("xmljsonhybrid")) {
             return new XmlJsonHybridSerializer(effectiveParams);
         }
         throw new OurBadException("Unsupported serialization method: " + method);
@@ -68,11 +66,9 @@ public final class Serializers {
 
     private static void validateNormalizationForm(SerializationParameters params) {
         String normalizationForm = params.getNormalizationForm();
-        if (
-            normalizationForm == null
+        if (normalizationForm == null
                 || normalizationForm.equals("none")
-                || normalizationForm.equals("NFC")
-        ) {
+                || normalizationForm.equals("NFC")) {
             return;
         }
         throw new UnsupportedNormalizationFormSerializationException(normalizationForm);

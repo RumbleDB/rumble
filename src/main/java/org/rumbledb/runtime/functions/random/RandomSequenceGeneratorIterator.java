@@ -1,20 +1,20 @@
 package org.rumbledb.runtime.functions.random;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class RandomSequenceGeneratorIterator extends LocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private GeneratedRandomsIterator generatedRandomsIterator;
 
-    public RandomSequenceGeneratorIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public RandomSequenceGeneratorIterator(
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -33,16 +33,14 @@ public class RandomSequenceGeneratorIterator extends LocalRuntimeIterator {
         if (this.getChildren().size() == 2) {
             // Seed is present as first argument
             int seed = this.getChild(0).materializeFirstItemOrNull(context).castToIntValue();
-            int sequenceLength = this.getChild(1).materializeFirstItemOrNull(context).castToIntValue();
-            this.generatedRandomsIterator = new GeneratedRandomDoublesIterator(
-                    sequenceLength,
-                    seed
-            );
+            int sequenceLength =
+                    this.getChild(1).materializeFirstItemOrNull(context).castToIntValue();
+            this.generatedRandomsIterator =
+                    new GeneratedRandomDoublesIterator(sequenceLength, seed);
         } else {
-            int sequenceLength = this.getChild(0).materializeFirstItemOrNull(context).castToIntValue();
-            this.generatedRandomsIterator = new GeneratedRandomDoublesIterator(
-                    sequenceLength
-            );
+            int sequenceLength =
+                    this.getChild(0).materializeFirstItemOrNull(context).castToIntValue();
+            this.generatedRandomsIterator = new GeneratedRandomDoublesIterator(sequenceLength);
         }
     }
 }

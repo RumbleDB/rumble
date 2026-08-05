@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.numerics.trigonometric;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,18 +33,12 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
 public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public ATan2FunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -63,31 +60,25 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (yQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext xQuery = this.getChild(1)
-            .generateNativeQuery(new NativeClauseContext(yQuery, null, null));
+        NativeClauseContext xQuery =
+                this.getChild(1).generateNativeQuery(new NativeClauseContext(yQuery, null, null));
         if (xQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (
-            SequenceType.Arity.OneOrMore.isSubtypeOf(yQuery.getResultingType().getArity())
-                ||
-                SequenceType.Arity.OneOrMore.isSubtypeOf(xQuery.getResultingType().getArity())
-        ) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(yQuery.getResultingType().getArity())
+                || SequenceType.Arity.OneOrMore.isSubtypeOf(xQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        SequenceType.Arity resultingArity = (yQuery.getResultingType().getArity() == SequenceType.Arity.One
-            && xQuery.getResultingType().getArity() == SequenceType.Arity.One)
-                ? SequenceType.Arity.One
-                : SequenceType.Arity.OneOrZero;
-        String resultingQuery = "ATAN2( "
-            + yQuery.getResultingQuery()
-            + ", "
-            + xQuery.getResultingQuery()
-            + " )";
+        SequenceType.Arity resultingArity =
+                (yQuery.getResultingType().getArity() == SequenceType.Arity.One
+                                && xQuery.getResultingType().getArity() == SequenceType.Arity.One)
+                        ? SequenceType.Arity.One
+                        : SequenceType.Arity.OneOrZero;
+        String resultingQuery =
+                "ATAN2( " + yQuery.getResultingQuery() + ", " + xQuery.getResultingQuery() + " )";
         return new NativeClauseContext(
                 xQuery,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity)
-        );
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity));
     }
 }

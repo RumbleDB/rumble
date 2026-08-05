@@ -20,31 +20,29 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.Collections;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.Collections;
-import java.util.List;
-
 @Getter
 public class FlworExpression extends Expression {
 
     private ReturnClause returnClause;
 
-    public FlworExpression(
-            ReturnClause returnClause,
-            ExceptionMetadata metadata
-    ) {
+    public FlworExpression(ReturnClause returnClause, ExceptionMetadata metadata) {
         super(metadata);
         Clause startClause = returnClause.getFirstClause();
-        if (
-            !List.of(FLWOR_CLAUSES.FOR, FLWOR_CLAUSES.LET, FLWOR_CLAUSES.WINDOW).contains(startClause.getClauseType())
-        ) {
-            throw new SemanticException("FLOWR clause must starts with a FOR, LET or WINDOW\n", this.getMetadata());
+        if (!List.of(FLWOR_CLAUSES.FOR, FLWOR_CLAUSES.LET, FLWOR_CLAUSES.WINDOW)
+                .contains(startClause.getClauseType())) {
+            throw new SemanticException(
+                    "FLOWR clause must starts with a FOR, LET or WINDOW\n", this.getMetadata());
         }
 
         this.returnClause = returnClause;
@@ -67,4 +65,3 @@ public class FlworExpression extends Expression {
         return visitor.visitFlowrExpression(this, argument);
     }
 }
-

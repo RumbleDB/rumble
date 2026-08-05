@@ -20,30 +20,33 @@
 
 package org.rumbledb.items.parsing;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import scala.Tuple2;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.StringReader;
 import java.util.Iterator;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
-public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<String, String>>, Item> {
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+import scala.Tuple2;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+
+public class XmlSyntaxToItemMapper
+        implements FlatMapFunction<Iterator<Tuple2<String, String>>, Item> {
+
+    @Serial private static final long serialVersionUID = 1L;
 
     @SuppressWarnings("unused")
     private final ExceptionMetadata metadata;
+
     private final boolean optimizeParentPointers;
 
     public XmlSyntaxToItemMapper(ExceptionMetadata metadata, boolean optimizeParentPointers) {
@@ -65,21 +68,22 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
                 String path = tuple._1;
                 String content = tuple._2;
                 try {
-                    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilderFactory documentBuilderFactory =
+                            DocumentBuilderFactory.newInstance();
                     documentBuilderFactory.setNamespaceAware(true);
                     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-                    Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(content)));
+                    Document xmlDocument =
+                            documentBuilder.parse(new InputSource(new StringReader(content)));
                     return ItemParser.getItemFromXML(
-                        xmlDocument,
-                        path,
-                        XmlSyntaxToItemMapper.this.optimizeParentPointers
-                    );
+                            xmlDocument, path, XmlSyntaxToItemMapper.this.optimizeParentPointers);
                 } catch (ParserConfigurationException e) {
                     throw new OurBadException("Document builder creation failed with: " + e);
                 } catch (IOException e) {
-                    throw new RuntimeException("IOException while reading XML document." + content + e);
+                    throw new RuntimeException(
+                            "IOException while reading XML document." + content + e);
                 } catch (SAXException e) {
-                    throw new RuntimeException("SAXException while reading XML document." + content + e);
+                    throw new RuntimeException(
+                            "SAXException while reading XML document." + content + e);
                 }
             }
 

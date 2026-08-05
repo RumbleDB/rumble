@@ -32,13 +32,10 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
-/**
- * XQuery 3.1 map constructor: atomized single-atomic keys and general- sequence values.
- */
+/** XQuery 3.1 map constructor: atomized single-atomic keys and general- sequence values. */
 public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final List<RuntimeIterator> keys;
     private final List<RuntimeIterator> values;
     private final boolean mutable;
@@ -47,8 +44,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             List<RuntimeIterator> keys,
             List<RuntimeIterator> values,
             RuntimeStaticContext staticContext,
-            boolean mutable
-    ) {
+            boolean mutable) {
         super(Stream.concat(keys.stream(), values.stream()).toList(), staticContext);
         this.keys = keys;
         this.values = values;
@@ -58,8 +54,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     private static Item atomizeSingleMapKey(
             RuntimeIterator keyIterator,
             DynamicContext dynamicContext,
-            org.rumbledb.exceptions.ExceptionMetadata metadata
-    ) {
+            org.rumbledb.exceptions.ExceptionMetadata metadata) {
         List<Item> keySequence = new ArrayList<>();
         keyIterator.materialize(dynamicContext, keySequence);
         List<Item> atomized = new ArrayList<>();
@@ -69,15 +64,13 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         if (atomized.size() != 1) {
             throw new UnexpectedTypeException(
                     "Map constructor key must atomize to a single atomic value [err:XPTY0004].",
-                    metadata
-            );
+                    metadata);
         }
         Item k = atomized.get(0);
         if (!k.isAtomic()) {
             throw new UnexpectedTypeException(
                     "Map constructor key must atomize to a single atomic value [err:XPTY0004].",
-                    metadata
-            );
+                    metadata);
         }
         return k;
     }
@@ -105,20 +98,16 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         this.hasNext = false;
         if (allKeysString && allValuesSingletons) {
             return ItemFactory.getInstance()
-                .createObjectItem(
-                    mapKeys.stream().map(Item::getStringValue).collect(Collectors.toList()),
-                    valueSequences.stream().map(values -> values.get(0)).collect(Collectors.toList()),
-                    getMetadata(),
-                    false
-                );
+                    .createObjectItem(
+                            mapKeys.stream().map(Item::getStringValue).collect(Collectors.toList()),
+                            valueSequences.stream()
+                                    .map(values -> values.get(0))
+                                    .collect(Collectors.toList()),
+                            getMetadata(),
+                            false);
         } else {
             return ItemFactory.getInstance()
-                .createMapItem(
-                    mapKeys,
-                    valueSequences,
-                    getMetadata(),
-                    this.mutable
-                );
+                    .createMapItem(mapKeys, valueSequences, getMetadata(), this.mutable);
         }
     }
 

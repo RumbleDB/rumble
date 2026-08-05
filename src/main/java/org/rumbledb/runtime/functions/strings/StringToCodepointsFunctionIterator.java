@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,21 +31,15 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private Item nextResult;
     private String input;
     private int currentPosition;
 
     public StringToCodepointsFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -53,7 +50,8 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
             setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "string-to-codepoints function", getMetadata());
+        throw new IteratorFlowException(
+                FLOW_EXCEPTION_MESSAGE + "string-to-codepoints function", getMetadata());
     }
 
     @Override
@@ -67,8 +65,10 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
     public void setNextResult() {
         if (this.input == null) {
             // Getting first parameter
-            Item stringItem = this.getChild(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item stringItem =
+                    this.getChild(0)
+                            .materializeFirstItemOrNull(
+                                    this.currentDynamicContextForLocalExecution);
 
             if (stringItem == null) {
                 this.hasNext = false;
@@ -83,7 +83,9 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
             this.currentPosition = 0;
         }
         if (this.currentPosition < this.input.length()) {
-            this.nextResult = ItemFactory.getInstance().createIntItem(this.input.codePointAt(this.currentPosition));
+            this.nextResult =
+                    ItemFactory.getInstance()
+                            .createIntItem(this.input.codePointAt(this.currentPosition));
             this.currentPosition = this.input.offsetByCodePoints(this.currentPosition, 1);
             this.hasNext = true;
         } else {

@@ -1,17 +1,16 @@
 package org.rumbledb.runtime.functions.random;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private Item low;
     private Item high;
     private Item type;
@@ -19,7 +18,8 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
     private int size;
     private GeneratedRandomsIterator generatedRandomsIterator;
 
-    public RandomSequenceWithBoundsAndSeedIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public RandomSequenceWithBoundsAndSeedIterator(
+            List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
@@ -36,19 +36,14 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
     private GeneratedRandomsIterator createRandomNumberStream() {
         if (this.type.getStringValue().equals("integer")) {
             return new GeneratedRandomIntegersIterator(
-                    this.size,
-                    this.low.castToIntValue(),
-                    this.high.castToIntValue(),
-                    this.seed
-            );
+                    this.size, this.low.castToIntValue(), this.high.castToIntValue(), this.seed);
         } else {
             // Generate doubles otherwise
             return new GeneratedRandomDoublesIterator(
                     this.size,
                     this.low.castToDoubleValue(),
                     this.high.castToDoubleValue(),
-                    this.seed
-            );
+                    this.seed);
         }
     }
 

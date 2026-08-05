@@ -1,6 +1,9 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
+import java.time.OffsetDateTime;
+
 import com.ibm.icu.util.Calendar;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
@@ -8,13 +11,10 @@ import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
 import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarFields;
 import org.rumbledb.runtime.functions.util.formatting.calendar.DateNames;
 
-import java.time.OffsetDateTime;
-
 final class VariableMarker {
 
     public static final class Kind {
-        private Kind() {
-        }
+        private Kind() {}
 
         public static final String DEFAULT = "DEFAULT";
         public static final String NUMERIC = "NUMERIC";
@@ -28,8 +28,7 @@ final class VariableMarker {
     }
 
     public static final class NameForm {
-        private NameForm() {
-        }
+        private NameForm() {}
 
         public static final String UPPER = "UPPER";
         public static final String LOWER = "LOWER";
@@ -37,8 +36,7 @@ final class VariableMarker {
     }
 
     public static final class WordCase {
-        private WordCase() {
-        }
+        private WordCase() {}
 
         public static final String UPPER = "UPPER";
         public static final String LOWER = "LOWER";
@@ -76,8 +74,7 @@ final class VariableMarker {
             ParsedTimezonePicture timezonePicture,
             String nameForm,
             String wordCase,
-            String formatSpecifier
-    ) {
+            String formatSpecifier) {
         this.component = component;
         this.presentation = presentation;
         this.minWidth = minWidth;
@@ -95,9 +92,10 @@ final class VariableMarker {
     }
 
     /**
-     * Builds a {@link VariableMarker}. The component, presentation, width, kind, and second presentation
-     * modifier are shared by every marker and required here; the remaining fields are meaningful to only one or two
-     * kinds each and default to "absent" ({@code false}/{@code null}) unless explicitly set.
+     * Builds a {@link VariableMarker}. The component, presentation, width, kind, and second
+     * presentation modifier are shared by every marker and required here; the remaining fields are
+     * meaningful to only one or two kinds each and default to "absent" ({@code false}/{@code null})
+     * unless explicitly set.
      */
     private static final class Builder {
         private final char component;
@@ -122,8 +120,7 @@ final class VariableMarker {
                 int minWidth,
                 int maxWidth,
                 String kind,
-                char secondPresentationModifier
-        ) {
+                char secondPresentationModifier) {
             this.component = component;
             this.presentation = presentation;
             this.minWidth = minWidth;
@@ -187,8 +184,7 @@ final class VariableMarker {
                     this.timezonePicture,
                     this.nameForm,
                     this.wordCase,
-                    this.formatSpecifier
-            );
+                    this.formatSpecifier);
         }
     }
 
@@ -200,8 +196,7 @@ final class VariableMarker {
             OffsetDateTime value,
             FormattingContext formattingContext,
             String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         switch (this.component) {
             case 'Y':
                 return CalendarFields.year(value, formattingContext);
@@ -236,23 +231,12 @@ final class VariableMarker {
             OffsetDateTime value,
             FormattingContext formattingContext,
             String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         switch (this.component) {
             case 'F':
-                return DateNames.dayName(
-                    value,
-                    formattingContext,
-                    this.minWidth,
-                    this.maxWidth
-                );
+                return DateNames.dayName(value, formattingContext, this.minWidth, this.maxWidth);
             case 'M':
-                return DateNames.monthName(
-                    value,
-                    formattingContext,
-                    this.minWidth,
-                    this.maxWidth
-                );
+                return DateNames.monthName(value, formattingContext, this.minWidth, this.maxWidth);
             case 'P':
                 Calendar calendar = CalendarFields.calendar(value, formattingContext);
                 return DateNames.amPmName(calendar, formattingContext);
@@ -275,7 +259,8 @@ final class VariableMarker {
         return this.component == 'Y';
     }
 
-    static VariableMarker forDefault(char c, String p, int min, int max, char secondPresentationModifier) {
+    static VariableMarker forDefault(
+            char c, String p, int min, int max, char secondPresentationModifier) {
         return new Builder(c, p, min, max, Kind.DEFAULT, secondPresentationModifier).build();
     }
 
@@ -286,51 +271,32 @@ final class VariableMarker {
             int max,
             char secondPresentationModifier,
             NumericPicture numericpicture,
-            boolean explicit
-    ) {
+            boolean explicit) {
         return new Builder(c, p, min, max, Kind.NUMERIC, secondPresentationModifier)
-            .numericPicture(numericpicture)
-            .explicitNumeric(explicit)
-            .build();
+                .numericPicture(numericpicture)
+                .explicitNumeric(explicit)
+                .build();
     }
 
     static VariableMarker forRoman(
-            char c,
-            String p,
-            int min,
-            int max,
-            char secondPresentationModifier,
-            boolean lower
-    ) {
+            char c, String p, int min, int max, char secondPresentationModifier, boolean lower) {
         return new Builder(c, p, min, max, Kind.ROMAN, secondPresentationModifier)
-            .lowerCaseRoman(lower)
-            .build();
+                .lowerCaseRoman(lower)
+                .build();
     }
 
     static VariableMarker forAlphabetic(
-            char c,
-            String p,
-            int min,
-            int max,
-            char secondPresentationModifier,
-            boolean lower
-    ) {
+            char c, String p, int min, int max, char secondPresentationModifier, boolean lower) {
         return new Builder(c, p, min, max, Kind.ALPHABETIC, secondPresentationModifier)
-            .lowerCaseAlphabetic(lower)
-            .build();
+                .lowerCaseAlphabetic(lower)
+                .build();
     }
 
     static VariableMarker forName(
-            char c,
-            String p,
-            int min,
-            int max,
-            char secondPresentationModifier,
-            String nameForm
-    ) {
+            char c, String p, int min, int max, char secondPresentationModifier, String nameForm) {
         return new Builder(c, p, min, max, Kind.NAME, secondPresentationModifier)
-            .nameForm(nameForm)
-            .build();
+                .nameForm(nameForm)
+                .build();
     }
 
     static VariableMarker forWords(
@@ -340,33 +306,22 @@ final class VariableMarker {
             int max,
             char secondPresentationModifier,
             String wordCase,
-            String formatSpecifier
-    ) {
+            String formatSpecifier) {
         return new Builder(c, p, min, max, Kind.WORDS, secondPresentationModifier)
-            .wordCase(wordCase)
-            .formatSpecifier(formatSpecifier)
-            .build();
+                .wordCase(wordCase)
+                .formatSpecifier(formatSpecifier)
+                .build();
     }
 
     static VariableMarker forFractionalSeconds(
-            char c,
-            String p,
-            int min,
-            int max,
-            char secondPresentationModifier
-    ) {
+            char c, String p, int min, int max, char secondPresentationModifier) {
         return new Builder(c, p, min, max, Kind.FRACTIONAL_SECONDS, secondPresentationModifier)
-            .lowerCaseRoman("i".equals(p))
-            .build();
+                .lowerCaseRoman("i".equals(p))
+                .build();
     }
 
     static VariableMarker forAmPm(
-            char c,
-            String p,
-            int min,
-            int max,
-            char secondPresentationModifier
-    ) {
+            char c, String p, int min, int max, char secondPresentationModifier) {
         return new Builder(c, p, min, max, Kind.AM_PM, secondPresentationModifier).build();
     }
 
@@ -376,11 +331,10 @@ final class VariableMarker {
             int min,
             int max,
             char secondPresentationModifier,
-            ParsedTimezonePicture tz
-    ) {
+            ParsedTimezonePicture tz) {
         return new Builder(c, p, min, max, Kind.TIMEZONE, secondPresentationModifier)
-            .timezonePicture(tz)
-            .build();
+                .timezonePicture(tz)
+                .build();
     }
 
     private static int hour12(int hour24) {
@@ -389,15 +343,11 @@ final class VariableMarker {
     }
 
     private static UnsupportedFeatureException unsupported(
-            String pictureString,
-            ExceptionMetadata metadata,
-            String modifier
-    ) {
-        String message = String.format(
-            "\"%s\": first presentation modifier not supported: %s",
-            pictureString,
-            modifier
-        );
+            String pictureString, ExceptionMetadata metadata, String modifier) {
+        String message =
+                String.format(
+                        "\"%s\": first presentation modifier not supported: %s",
+                        pictureString, modifier);
         return new UnsupportedFeatureException(message, metadata);
     }
 }

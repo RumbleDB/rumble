@@ -3,17 +3,18 @@ package org.rumbledb.expressions;
 /**
  * An ExpressionClassification classifies an expression under 4 possible classifications.
  *
- * A BASIC_UPDATING expression is classified as 1 of 5 expressions in the update package, that can alter the state of
- * an existing node.
+ * <p>A BASIC_UPDATING expression is classified as 1 of 5 expressions in the update package, that
+ * can alter the state of an existing node.
  *
- * An UPDATING expression is classified as a BASIC_UPDATING expression or any expression (excluding a
- * TransformExpression) that
- * directly contains an UPDATING expression and that can alter the state of an existing node.
+ * <p>An UPDATING expression is classified as a BASIC_UPDATING expression or any expression
+ * (excluding a TransformExpression) that directly contains an UPDATING expression and that can
+ * alter the state of an existing node.
  *
- * A SIMPLE expression is classified as an expression that is not an updating expression.
+ * <p>A SIMPLE expression is classified as an expression that is not an updating expression.
  *
- * A VACUOUS expression follows the definition of the XQuery Update Facility 1.0, but is largely classified as
- * an expression that can be determined statically to return an empty sequence or raise an error.
+ * <p>A VACUOUS expression follows the definition of the XQuery Update Facility 1.0, but is largely
+ * classified as an expression that can be determined statically to return an empty sequence or
+ * raise an error.
  */
 public enum ExpressionClassification {
     UNSET,
@@ -27,7 +28,8 @@ public enum ExpressionClassification {
     }
 
     public boolean isUpdating() {
-        return this == ExpressionClassification.BASIC_UPDATING || this == ExpressionClassification.UPDATING;
+        return this == ExpressionClassification.BASIC_UPDATING
+                || this == ExpressionClassification.UPDATING;
     }
 
     public boolean isSimple() {

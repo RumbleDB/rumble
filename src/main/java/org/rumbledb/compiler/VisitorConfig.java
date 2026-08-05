@@ -42,8 +42,7 @@ public class VisitorConfig {
                     this.suppressErrorsForFunctionSignatureCollision,
                     this.suppressErrorsForCallingMissingFunctions,
                     this.suppressErrorsForAccessingUnsetExecutionModes,
-                    this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal
-            );
+                    this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal);
         }
     }
 
@@ -51,11 +50,12 @@ public class VisitorConfig {
             boolean suppressErrorsForFunctionSignatureCollision,
             boolean suppressErrorsForCallingMissingFunctions,
             boolean suppressErrorsForAccessingUnsetExecutionModes,
-            boolean setUnsetToLocal
-    ) {
-        this.suppressErrorsForFunctionSignatureCollision = suppressErrorsForFunctionSignatureCollision;
+            boolean setUnsetToLocal) {
+        this.suppressErrorsForFunctionSignatureCollision =
+                suppressErrorsForFunctionSignatureCollision;
         this.suppressErrorsForCallingMissingFunctions = suppressErrorsForCallingMissingFunctions;
-        this.suppressErrorsForAccessingUnsetExecutionModes = suppressErrorsForAccessingUnsetExecutionModes;
+        this.suppressErrorsForAccessingUnsetExecutionModes =
+                suppressErrorsForAccessingUnsetExecutionModes;
         this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal = setUnsetToLocal;
     }
 
@@ -75,47 +75,49 @@ public class VisitorConfig {
         return this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal;
     }
 
-
     /**
      * The initial pass should collect all function declaration information to support hoisting.
-     * User defined functions'(UDF) signatures should not collide with each other or built-in functions.
-     * As Some functions may not be known yet, missing functions should not raise errors.
-     * Since unknown functions have unset execution modes, errors should not be raised for accessing these.
+     * User defined functions'(UDF) signatures should not collide with each other or built-in
+     * functions. As Some functions may not be known yet, missing functions should not raise errors.
+     * Since unknown functions have unset execution modes, errors should not be raised for accessing
+     * these.
      */
-    static final VisitorConfig staticContextVisitorInitialPassConfig = new VisitorConfig.Builder()
-        .withsuppressErrorsForFunctionSignatureCollision(false)
-        .withSuppressErrorsForCallingMissingFunctions(true)
-        .withSuppressErrorsForAccessingUnsetExecutionModes(true)
-        .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
-        .build();
+    static final VisitorConfig staticContextVisitorInitialPassConfig =
+            new VisitorConfig.Builder()
+                    .withsuppressErrorsForFunctionSignatureCollision(false)
+                    .withSuppressErrorsForCallingMissingFunctions(true)
+                    .withSuppressErrorsForAccessingUnsetExecutionModes(true)
+                    .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
+                    .build();
 
     /**
-     * Intermediate passes should update the execution modes of expressions as more UDFs can be resolved.
-     * As all UDFs should be known at this stage, missing functions should raise errors
-     * As UDFs may still have unresolved execution modes, errors should not be raised for accessing these.
+     * Intermediate passes should update the execution modes of expressions as more UDFs can be
+     * resolved. As all UDFs should be known at this stage, missing functions should raise errors As
+     * UDFs may still have unresolved execution modes, errors should not be raised for accessing
+     * these.
      */
-    static final VisitorConfig staticContextVisitorIntermediatePassConfig = new VisitorConfig.Builder()
-        .withsuppressErrorsForFunctionSignatureCollision(true)
-        .withSuppressErrorsForCallingMissingFunctions(false)
-        .withSuppressErrorsForAccessingUnsetExecutionModes(true)
-        .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
-        .build();
+    static final VisitorConfig staticContextVisitorIntermediatePassConfig =
+            new VisitorConfig.Builder()
+                    .withsuppressErrorsForFunctionSignatureCollision(true)
+                    .withSuppressErrorsForCallingMissingFunctions(false)
+                    .withSuppressErrorsForAccessingUnsetExecutionModes(true)
+                    .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
+                    .build();
 
-    /**
-     * All expression execution mode and UDF information should be available in the final pass
-     */
-    static final VisitorConfig staticContextVisitorFinalPassConfig = new VisitorConfig.Builder()
-        .withsuppressErrorsForFunctionSignatureCollision(true)
-        .withSuppressErrorsForCallingMissingFunctions(false)
-        .withSuppressErrorsForAccessingUnsetExecutionModes(false)
-        .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(true)
-        .build();
+    /** All expression execution mode and UDF information should be available in the final pass */
+    static final VisitorConfig staticContextVisitorFinalPassConfig =
+            new VisitorConfig.Builder()
+                    .withsuppressErrorsForFunctionSignatureCollision(true)
+                    .withSuppressErrorsForCallingMissingFunctions(false)
+                    .withSuppressErrorsForAccessingUnsetExecutionModes(false)
+                    .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(true)
+                    .build();
 
-    static final VisitorConfig runtimeIteratorVisitorConfig = new VisitorConfig.Builder()
-        .withsuppressErrorsForFunctionSignatureCollision(false)
-        .withSuppressErrorsForCallingMissingFunctions(false)
-        .withSuppressErrorsForAccessingUnsetExecutionModes(false)
-        .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
-        .build();
-
+    static final VisitorConfig runtimeIteratorVisitorConfig =
+            new VisitorConfig.Builder()
+                    .withsuppressErrorsForFunctionSignatureCollision(false)
+                    .withSuppressErrorsForCallingMissingFunctions(false)
+                    .withSuppressErrorsForAccessingUnsetExecutionModes(false)
+                    .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
+                    .build();
 }

@@ -1,15 +1,5 @@
 package org.rumbledb.items.xml;
 
-import lombok.Setter;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.typing.CastIterator;
-import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,9 +8,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.w3c.dom.Node;
+
+import lombok.Setter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
 public class ElementItem extends AbstractNodeItem {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private List<Item> children;
     private List<Item> attributes;
     private Map<String, String> namespaces;
@@ -28,13 +29,13 @@ public class ElementItem extends AbstractNodeItem {
     private String stringValue;
     private Item parent;
     private ItemType typeAnnotation;
-    @Setter
-    private boolean inheritNamespacesFromParent;
+    @Setter private boolean inheritNamespacesFromParent;
     // TODO: add base-uri, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
 
     /**
-     * Constructed element with a resolved expanded name (e.g. from XQuery direct/computed constructors).
+     * Constructed element with a resolved expanded name (e.g. from XQuery direct/computed
+     * constructors).
      */
     public ElementItem(Name dmNodeName, List<Item> children, List<Item> attributes) {
         this.dmNodeName = dmNodeName;
@@ -56,8 +57,7 @@ public class ElementItem extends AbstractNodeItem {
             Node elementNode,
             List<Item> children,
             List<Item> attributes,
-            Map<String, String> namespaceBindings
-    ) {
+            Map<String, String> namespaceBindings) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode);
         this.stringValue = elementNode.getTextContent();
         this.children = children;
@@ -68,8 +68,8 @@ public class ElementItem extends AbstractNodeItem {
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
                 addOrReplaceNamespace(
-                    ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue())
-                );
+                        ItemFactory.getInstance()
+                                .createXmlNamespaceNode(entry.getKey(), entry.getValue()));
             }
         }
     }
@@ -123,17 +123,17 @@ public class ElementItem extends AbstractNodeItem {
 
     @Override
     public void addParentToDescendants() {
-        this.children.forEach(child -> {
-            child.setParent(this);
-            child.addParentToDescendants();
-        });
-        this.attributes.forEach(attribute -> {
-            attribute.setParent(this);
-            attribute.addParentToDescendants();
-        });
+        this.children.forEach(
+                child -> {
+                    child.setParent(this);
+                    child.addParentToDescendants();
+                });
+        this.attributes.forEach(
+                attribute -> {
+                    attribute.setParent(this);
+                    attribute.addParentToDescendants();
+                });
     }
-
-
 
     @Override
     public boolean isNode() {
@@ -158,7 +158,7 @@ public class ElementItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — node-kind.
      *
-     * "For an Element Node, dm:node-kind returns the string \"element\"."
+     * <p>"For an Element Node, dm:node-kind returns the string \"element\"."
      */
     @Override
     public String nodeKind() {
@@ -168,10 +168,10 @@ public class ElementItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — base-uri.
      *
-     * "For an Element Node, dm:base-uri returns the base URI of the element node, if it has one;
+     * <p>"For an Element Node, dm:base-uri returns the base URI of the element node, if it has one;
      * otherwise it returns the empty sequence."
      *
-     * RumbleDB does not currently track base URIs for element nodes, so this implementation
+     * <p>RumbleDB does not currently track base URIs for element nodes, so this implementation
      * returns null to represent the empty sequence.
      */
     @Override
@@ -182,11 +182,11 @@ public class ElementItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — document-uri.
      *
-     * "For an Element Node, dm:document-uri returns the document URI of the document node
-     * that is the root of the tree containing the element, if it has one; otherwise it
-     * returns the empty sequence."
+     * <p>"For an Element Node, dm:document-uri returns the document URI of the document node that
+     * is the root of the tree containing the element, if it has one; otherwise it returns the empty
+     * sequence."
      *
-     * This implementation delegates to the parent, if any, otherwise returns null.
+     * <p>This implementation delegates to the parent, if any, otherwise returns null.
      */
     @Override
     public List<Item> documentUri() {
@@ -200,8 +200,9 @@ public class ElementItem extends AbstractNodeItem {
         }
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : this.namespaces.entrySet()) {
-            Item namespaceItem = ItemFactory.getInstance()
-                .createXmlNamespaceNode(entry.getKey(), entry.getValue());
+            Item namespaceItem =
+                    ItemFactory.getInstance()
+                            .createXmlNamespaceNode(entry.getKey(), entry.getValue());
             namespaceItem.setParent(this);
             result.add(namespaceItem);
         }
@@ -216,7 +217,7 @@ public class ElementItem extends AbstractNodeItem {
          * Recursion would instantiate namespace node instances for each ancestor element, resulting in a higher memory
          * footprint.
          * A LinkedHashMap is used so that:
-         * 
+         *
          * <ul>
          * <li>Insertion order is preserved for stable iteration.</li>
          * <li>Later puts for the same prefix override earlier values.</li>
@@ -224,13 +225,16 @@ public class ElementItem extends AbstractNodeItem {
          */
         LinkedHashMap<String, String> inScope = new LinkedHashMap<>();
 
-        // Step 1: Parent chaining -- collect ancestor declared namespaces from root to direct parent.
+        // Step 1: Parent chaining -- collect ancestor declared namespaces from root to direct
+        // parent.
         // Walk up the parent chain, collecting declared namespaces from each ancestor element.
-        // We collect frames in child-to-root order, then replay root-to-child for correct override semantics.
+        // We collect frames in child-to-root order, then replay root-to-child for correct override
+        // semantics.
         List<Map<String, String>> ancestorFrames = new ArrayList<>();
         if (this.inheritNamespacesFromParent) {
             Item current = this.parent;
-            // optimization: we know that no other node types apart from element nodes can have namespaces
+            // optimization: we know that no other node types apart from element nodes can have
+            // namespaces
             // so we stop the iteration when we encounter a non-element node
             while (current != null && current.isElementNode()) {
                 ancestorFrames.add(((ElementItem) current).namespaces);
@@ -252,8 +256,9 @@ public class ElementItem extends AbstractNodeItem {
         // Step 3: Create NamespaceItem nodes from the final in-scope map.
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : inScope.entrySet()) {
-            Item namespaceItem = ItemFactory.getInstance()
-                .createXmlNamespaceNode(entry.getKey(), entry.getValue());
+            Item namespaceItem =
+                    ItemFactory.getInstance()
+                            .createXmlNamespaceNode(entry.getKey(), entry.getValue());
             namespaceItem.setParent(this);
             result.add(namespaceItem);
         }
@@ -278,7 +283,7 @@ public class ElementItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-id.
      *
-     * "For an Element Node, dm:is-id returns false."
+     * <p>"For an Element Node, dm:is-id returns false."
      */
     @Override
     public boolean isId() {
@@ -288,7 +293,7 @@ public class ElementItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-idrefs.
      *
-     * "For an Element Node, dm:is-idrefs returns false."
+     * <p>"For an Element Node, dm:is-idrefs returns false."
      */
     @Override
     public boolean isIdrefs() {
@@ -298,10 +303,10 @@ public class ElementItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — nilled.
      *
-     * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
-     * not nilled, or the empty sequence if the concept of nilled does not apply."
+     * <p>"For an Element Node, dm:nilled returns true if the element is nilled, false if it is not
+     * nilled, or the empty sequence if the concept of nilled does not apply."
      *
-     * RumbleDB does not currently support XML Schema nilled elements, so this implementation
+     * <p>RumbleDB does not currently support XML Schema nilled elements, so this implementation
      * returns the empty sequence.
      */
     @Override
@@ -337,10 +342,10 @@ public class ElementItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — type-name.
      *
-     * "For an Element Node, dm:type-name returns the name of the dynamic type of the element
+     * <p>"For an Element Node, dm:type-name returns the name of the dynamic type of the element
      * node, or the empty sequence if the node is untyped."
      *
-     * RumbleDB does not currently support schema-validated element types, so the dynamic
+     * <p>RumbleDB does not currently support schema-validated element types, so the dynamic
      * type-name is not available and this method returns null to represent the empty sequence.
      */
     @Override
@@ -349,19 +354,17 @@ public class ElementItem extends AbstractNodeItem {
             return Collections.emptyList();
         }
         return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
-        );
+                ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName()));
     }
 
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — typed-value.
      *
-     * "For an Element Node, dm:typed-value returns the typed value of the element node as a
+     * <p>"For an Element Node, dm:typed-value returns the typed value of the element node as a
      * sequence of zero or more atomic values."
      *
-     * This implementation delegates to atomizedValue(), which currently computes a
-     * best-effort typed value by concatenating the atomized values of the element's
-     * children in document order.
+     * <p>This implementation delegates to atomizedValue(), which currently computes a best-effort
+     * typed value by concatenating the atomized values of the element's children in document order.
      */
     @Override
     public List<Item> typedValue() {
@@ -394,7 +397,11 @@ public class ElementItem extends AbstractNodeItem {
         // assigning a fresh prefix and declaring it for the original URI.
         if (hasConflictingPrefix(this.dmNodeName, prefix, uri)) {
             String replacement = freshPrefix();
-            this.dmNodeName = new Name(this.dmNodeName.getNamespace(), replacement, this.dmNodeName.getLocalName());
+            this.dmNodeName =
+                    new Name(
+                            this.dmNodeName.getNamespace(),
+                            replacement,
+                            this.dmNodeName.getLocalName());
             this.namespaces.put(replacement, this.dmNodeName.getNamespace());
         }
         this.namespaces.put(prefix, uri);
@@ -402,7 +409,8 @@ public class ElementItem extends AbstractNodeItem {
 
     /**
      * Declares or overrides a namespace binding on this element without rewriting the element name.
-     * This is used by constructor namespace-fixup after any necessary prefix rewrites have already been decided.
+     * This is used by constructor namespace-fixup after any necessary prefix rewrites have already
+     * been decided.
      */
     public void declareNamespaceBinding(String prefix, String uri) {
         if (this.namespaces == null) {
@@ -418,17 +426,17 @@ public class ElementItem extends AbstractNodeItem {
         }
     }
 
-    /**
-     * Updates the element node-name after namespace fixup chooses a non-conflicting prefix.
-     */
+    /** Updates the element node-name after namespace fixup chooses a non-conflicting prefix. */
     public void setNodeName(Name nodeName) {
         this.dmNodeName = nodeName;
     }
 
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {
         return name != null
-            && normalizeNamespaceComponent(name.getPrefix()).equals(normalizeNamespaceComponent(prefix))
-            && !normalizeNamespaceComponent(uri).equals(normalizeNamespaceComponent(name.getNamespace()));
+                && normalizeNamespaceComponent(name.getPrefix())
+                        .equals(normalizeNamespaceComponent(prefix))
+                && !normalizeNamespaceComponent(uri)
+                        .equals(normalizeNamespaceComponent(name.getNamespace()));
     }
 
     private String normalizeNamespaceComponent(String value) {
@@ -444,15 +452,14 @@ public class ElementItem extends AbstractNodeItem {
         return candidate;
     }
 
-
     @Override
     public List<Item> atomizedValue() {
         if (this.typeAnnotation != null) {
-            Item typedValue = CastIterator.castItemToType(
-                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
-                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
-            );
+            Item typedValue =
+                    CastIterator.castItemToType(
+                            ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
+                            this.typeAnnotation,
+                            org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA);
             return Collections.singletonList(typedValue);
         }
         // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
@@ -460,8 +467,7 @@ public class ElementItem extends AbstractNodeItem {
         // concatenation of descendant text nodes in document order and therefore excludes comment
         // and processing-instruction content.
         return Collections.singletonList(
-            ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue)
-        );
+                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
     @Override

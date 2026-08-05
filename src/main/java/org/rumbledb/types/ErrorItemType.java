@@ -3,22 +3,19 @@ package org.rumbledb.types;
 import java.io.Serial;
 import java.util.Set;
 
-
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
 /**
  * Bottom item type implementing {@code xs:error}.
  *
- * <p>
- * This type has an empty value space and behaves as the identity element for least-common-supertype
- * computations. That makes it useful both as the spec-facing {@code xs:error} type and as the merge
- * identity when inferring a type across many runtime items.
+ * <p>This type has an empty value space and behaves as the identity element for
+ * least-common-supertype computations. That makes it useful both as the spec-facing {@code
+ * xs:error} type and as the merge identity when inferring a type across many runtime items.
  */
 public class ErrorItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private static final Name name = new Name(Name.XS_NS, "xs", "error");
 
     @Override
@@ -104,16 +101,14 @@ public class ErrorItemType extends AbstractItemType {
     @Override
     public void resolve(
             org.rumbledb.context.DynamicContext context,
-            org.rumbledb.exceptions.ExceptionMetadata metadata
-    ) {
+            org.rumbledb.exceptions.ExceptionMetadata metadata) {
         // No resolution needed
     }
 
     @Override
     public void resolve(
             org.rumbledb.context.StaticContext context,
-            org.rumbledb.exceptions.ExceptionMetadata metadata
-    ) {
+            org.rumbledb.exceptions.ExceptionMetadata metadata) {
         // No resolution needed
     }
 }

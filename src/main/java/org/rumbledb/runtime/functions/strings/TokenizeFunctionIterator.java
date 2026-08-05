@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,21 +33,15 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private String[] results;
     private Item nextResult;
     private int currentPosition;
 
     public TokenizeFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -55,7 +52,8 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             setNextResult();
             return result;
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "tokenize function", getMetadata());
+        throw new IteratorFlowException(
+                FLOW_EXCEPTION_MESSAGE + "tokenize function", getMetadata());
     }
 
     @Override
@@ -72,7 +70,9 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             RuntimeIterator stringIterator = this.getChild(0);
             String input = null;
             String separator = null;
-            Item stringItem = stringIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item stringItem =
+                    stringIterator.materializeFirstItemOrNull(
+                            this.currentDynamicContextForLocalExecution);
             if (stringItem == null) {
                 this.hasNext = false;
                 return;
@@ -87,46 +87,49 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                 RuntimeIterator separatorIterator = this.getChild(1);
                 separatorIterator.open(this.currentDynamicContextForLocalExecution);
                 if (!separatorIterator.hasNext()) {
-                    throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
+                    throw new UnexpectedTypeException(
+                            "Second parameter of tokenize must be a string.", getMetadata());
                 }
                 stringItem = separatorIterator.next();
                 if (separatorIterator.hasNext()) {
-                    throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
+                    throw new UnexpectedTypeException(
+                            "Second parameter of tokenize must be a string.", getMetadata());
                 }
                 separatorIterator.close();
                 if (!stringItem.isString()) {
-                    throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
+                    throw new UnexpectedTypeException(
+                            "Second parameter of tokenize must be a string.", getMetadata());
                 }
                 try {
                     separator = stringItem.getStringValue();
                 } catch (Exception e) {
-                    throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
+                    throw new UnexpectedTypeException(
+                            "Second parameter of tokenize must be a string.", getMetadata());
                 }
                 String flags = null;
                 if (this.getChildren().size() == 3) {
-                    Item flagsItem = this.getChild(2)
-                        .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                    Item flagsItem =
+                            this.getChild(2)
+                                    .materializeFirstItemOrNull(
+                                            this.currentDynamicContextForLocalExecution);
                     if (flagsItem != null) {
                         flags = flagsItem.getStringValue();
                     }
                 }
-                RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
-                    separator,
-                    flags,
-                    getMetadata()
-                );
+                RegexPatternUtils.CompiledRegex compiledRegex =
+                        RegexPatternUtils.compileRegex(separator, flags, getMetadata());
                 if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
                     throw new MatchesEmptyStringException(
                             "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
                 this.results = RegexPatternUtils.tokenize(input, compiledRegex.getPattern());
                 this.currentPosition = 0;
             }
         }
         if (this.currentPosition < this.results.length) {
-            this.nextResult = ItemFactory.getInstance().createStringItem(this.results[this.currentPosition]);
+            this.nextResult =
+                    ItemFactory.getInstance().createStringItem(this.results[this.currentPosition]);
             this.currentPosition++;
             this.hasNext = true;
         } else {

@@ -1,5 +1,20 @@
 package org.rumbledb.serialization;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.context.Name;
@@ -11,27 +26,13 @@ import org.rumbledb.exceptions.InvalidSerializationParameterValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public final class SerializationParameterUtils {
 
-    public static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
+    public static final String SERIALIZATION_NAMESPACE =
+            "http://www.w3.org/2010/xslt-xquery-serialization";
 
-    private SerializationParameterUtils() {
-    }
+    private SerializationParameterUtils() {}
 
     public static SerializationParameters defaultsForSerializeFunction(String queryLanguage) {
         SerializationParameters params = SerializationParameters.defaults(queryLanguage);
@@ -41,10 +42,7 @@ public final class SerializationParameterUtils {
     }
 
     public static void applyParameterItems(
-            SerializationParameters params,
-            List<Item> optionsItems,
-            ExceptionMetadata metadata
-    ) {
+            SerializationParameters params, List<Item> optionsItems, ExceptionMetadata metadata) {
         applyParameterItems(params, optionsItems, null, metadata);
     }
 
@@ -52,8 +50,7 @@ public final class SerializationParameterUtils {
             SerializationParameters params,
             List<Item> optionsItems,
             Set<String> explicitParameterNames,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (optionsItems == null || optionsItems.isEmpty()) {
             return;
         }
@@ -65,8 +62,7 @@ public final class SerializationParameterUtils {
             if (!item.isElementNode()) {
                 throw new InvalidArgumentTypeException(
                         "The second argument of fn:serialize must be a map or serialization parameter elements.",
-                        metadata
-                );
+                        metadata);
             }
         }
         applyParameterElements(params, optionsItems, explicitParameterNames, metadata);
@@ -77,25 +73,23 @@ public final class SerializationParameterUtils {
             StaticContext staticContext,
             String location,
             Set<String> explicitParameterNames,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         try {
-            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), location, metadata);
+            URI uri =
+                    FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), location, metadata);
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            try (
-                InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
-                    uri,
-                    metadata
-                )
-            ) {
+            try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, metadata)) {
                 Document xmlDocument = documentBuilder.parse(xmlFileStream);
-                Item item = ItemParser.getItemFromXML(
-                    xmlDocument,
-                    uri.toString(),
-                    staticContext.getRumbleConfiguration().optimization().optimizeParentPointers()
-                );
+                Item item =
+                        ItemParser.getItemFromXML(
+                                xmlDocument,
+                                uri.toString(),
+                                staticContext
+                                        .getRumbleConfiguration()
+                                        .optimization()
+                                        .optimizeParentPointers());
                 applyParameterItem(params, item, explicitParameterNames, metadata);
             }
         } catch (ParserConfigurationException e) {
@@ -103,17 +97,16 @@ public final class SerializationParameterUtils {
         } catch (CannotRetrieveResourceException e) {
             throw e;
         } catch (IOException e) {
-            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
-                    "Unable to read the serialization parameter document.",
-                    metadata
-            );
+            CannotRetrieveResourceException ex =
+                    new CannotRetrieveResourceException(
+                            "Unable to read the serialization parameter document.", metadata);
             ex.initCause(e);
             throw ex;
         } catch (SAXException e) {
-            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
-                    "Unable to parse the serialization parameter document as well-formed XML.",
-                    metadata
-            );
+            CannotRetrieveResourceException ex =
+                    new CannotRetrieveResourceException(
+                            "Unable to parse the serialization parameter document as well-formed XML.",
+                            metadata);
             ex.initCause(e);
             throw ex;
         }
@@ -123,8 +116,7 @@ public final class SerializationParameterUtils {
             SerializationParameters params,
             Item options,
             Set<String> explicitParameterNames,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (options.isDocumentNode()) {
             List<Item> elementChildren = new ArrayList<>();
             for (Item child : options.children()) {
@@ -155,16 +147,14 @@ public final class SerializationParameterUtils {
         }
         throw new InvalidArgumentTypeException(
                 "The second argument of fn:serialize must be a map or serialization parameter elements.",
-                metadata
-        );
+                metadata);
     }
 
     private static void applyParameterMap(
             SerializationParameters params,
             Item options,
             Set<String> explicitParameterNames,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         for (Item key : options.getItemKeys()) {
             String parameterName = parameterNameFromKey(key, metadata);
             if (parameterName == null) {
@@ -175,11 +165,10 @@ public final class SerializationParameterUtils {
             }
             List<Item> valueSequence = options.getSequenceByKey(key);
             applyNormalizedParameter(
-                params,
-                parameterName,
-                sequenceToParameterValue(parameterName, valueSequence, null, metadata),
-                metadata
-            );
+                    params,
+                    parameterName,
+                    sequenceToParameterValue(parameterName, valueSequence, null, metadata),
+                    metadata);
         }
     }
 
@@ -187,8 +176,7 @@ public final class SerializationParameterUtils {
             SerializationParameters params,
             List<Item> elements,
             Set<String> explicitParameterNames,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         for (Item element : elements) {
             if (!element.isElementNode()) {
                 continue;
@@ -198,10 +186,13 @@ public final class SerializationParameterUtils {
                 continue;
             }
             String namespace = name.getNamespace();
-            if (namespace != null && !namespace.isEmpty() && !SERIALIZATION_NAMESPACE.equals(namespace)) {
+            if (namespace != null
+                    && !namespace.isEmpty()
+                    && !SERIALIZATION_NAMESPACE.equals(namespace)) {
                 continue;
             }
-            if (explicitParameterNames != null && explicitParameterNames.contains(name.getLocalName())) {
+            if (explicitParameterNames != null
+                    && explicitParameterNames.contains(name.getLocalName())) {
                 continue;
             }
             if ("use-character-maps".equals(name.getLocalName())) {
@@ -212,10 +203,8 @@ public final class SerializationParameterUtils {
             if (value == null) {
                 value = element.getStringValue();
             }
-            if (
-                "cdata-section-elements".equals(name.getLocalName())
-                    || "suppress-indentation".equals(name.getLocalName())
-            ) {
+            if ("cdata-section-elements".equals(name.getLocalName())
+                    || "suppress-indentation".equals(name.getLocalName())) {
                 value = expandLexicalQNames(value, element, false);
             }
             applyNormalizedParameter(params, name.getLocalName(), value, metadata);
@@ -225,26 +214,20 @@ public final class SerializationParameterUtils {
     private static void applyCharacterMapsParameter(
             SerializationParameters params,
             Item useCharacterMapsElement,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         Map<String, String> characterMaps = new HashMap<>();
         for (Item child : useCharacterMapsElement.children()) {
             if (!child.isElementNode()) {
                 continue;
             }
             Name childName = child.nodeName();
-            if (
-                childName == null
-                    || !"character-map".equals(childName.getLocalName())
-            ) {
+            if (childName == null || !"character-map".equals(childName.getLocalName())) {
                 continue;
             }
             String childNamespace = childName.getNamespace();
-            if (
-                childNamespace != null
+            if (childNamespace != null
                     && !childNamespace.isEmpty()
-                    && !SERIALIZATION_NAMESPACE.equals(childNamespace)
-            ) {
+                    && !SERIALIZATION_NAMESPACE.equals(childNamespace)) {
                 continue;
             }
             String character = attributeValue(child, "character");
@@ -254,8 +237,7 @@ public final class SerializationParameterUtils {
                         "use-character-maps",
                         child.getStringValue(),
                         "character-map elements with character and map-string attributes",
-                        metadata
-                );
+                        metadata);
             }
             characterMaps.put(character, mapString);
         }
@@ -266,13 +248,13 @@ public final class SerializationParameterUtils {
             SerializationParameters params,
             String parameterName,
             String value,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (value == null && "standalone".equals(parameterName)) {
             return;
         }
         if (value == null) {
-            throw new InvalidSerializationParameterValueException(parameterName, "()", "a valid value", metadata);
+            throw new InvalidSerializationParameterValueException(
+                    parameterName, "()", "a valid value", metadata);
         }
         SerializationParameterBuilder.update(params, parameterName, value);
     }
@@ -281,7 +263,9 @@ public final class SerializationParameterUtils {
         if (key.isQName()) {
             Name qName = key.getQNameValue();
             String namespace = qName.getNamespace();
-            if (namespace == null || namespace.isEmpty() || SERIALIZATION_NAMESPACE.equals(namespace)) {
+            if (namespace == null
+                    || namespace.isEmpty()
+                    || SERIALIZATION_NAMESPACE.equals(namespace)) {
                 return qName.getLocalName();
             }
             return null;
@@ -290,17 +274,14 @@ public final class SerializationParameterUtils {
             return key.getStringValue();
         }
         throw new InvalidArgumentTypeException(
-                "Serialization parameter map keys must be strings or QNames.",
-                metadata
-        );
+                "Serialization parameter map keys must be strings or QNames.", metadata);
     }
 
     private static String sequenceToParameterValue(
             String parameterName,
             List<Item> valueSequence,
             Item namespaceContext,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (valueSequence == null || valueSequence.isEmpty()) {
             return null;
         }
@@ -312,18 +293,16 @@ public final class SerializationParameterUtils {
     }
 
     private static List<String> itemToParameterTokens(
-            String parameterName,
-            Item item,
-            Item namespaceContext,
-            ExceptionMetadata metadata
-    ) {
+            String parameterName, Item item, Item namespaceContext, ExceptionMetadata metadata) {
         if (item == null) {
             return List.of();
         }
         if (item.isArray()) {
             List<String> values = new ArrayList<>();
             for (List<Item> memberSequence : item.getSequenceMembers()) {
-                String value = sequenceToParameterValue(parameterName, memberSequence, namespaceContext, metadata);
+                String value =
+                        sequenceToParameterValue(
+                                parameterName, memberSequence, namespaceContext, metadata);
                 if (value != null) {
                     values.add(value);
                 }
@@ -333,7 +312,8 @@ public final class SerializationParameterUtils {
         if (item.isQName()) {
             return List.of(expandedQName(item.getQNameValue()));
         }
-        if ("cdata-section-elements".equals(parameterName) || "suppress-indentation".equals(parameterName)) {
+        if ("cdata-section-elements".equals(parameterName)
+                || "suppress-indentation".equals(parameterName)) {
             return List.of(expandLexicalQNames(item.getStringValue(), namespaceContext, false));
         }
         return List.of(item.getStringValue());
@@ -350,18 +330,16 @@ public final class SerializationParameterUtils {
     private static boolean isSerializationParametersElement(Item item) {
         Name name = item.nodeName();
         return name != null
-            && "serialization-parameters".equals(name.getLocalName())
-            && SERIALIZATION_NAMESPACE.equals(name.getNamespace());
+                && "serialization-parameters".equals(name.getLocalName())
+                && SERIALIZATION_NAMESPACE.equals(name.getNamespace());
     }
 
     private static String attributeValue(Item element, String localName) {
         for (Item attribute : element.attributes()) {
             Name name = attribute.nodeName();
-            if (
-                name != null
+            if (name != null
                     && localName.equals(name.getLocalName())
-                    && (name.getNamespace() == null || name.getNamespace().isEmpty())
-            ) {
+                    && (name.getNamespace() == null || name.getNamespace().isEmpty())) {
                 return attribute.getStringValue();
             }
         }
@@ -369,10 +347,7 @@ public final class SerializationParameterUtils {
     }
 
     private static String expandLexicalQNames(
-            String value,
-            Item contextNode,
-            boolean useDefaultNamespaceForUnprefixed
-    ) {
+            String value, Item contextNode, boolean useDefaultNamespaceForUnprefixed) {
         if (value == null || value.trim().isEmpty()) {
             return value;
         }
@@ -382,17 +357,17 @@ public final class SerializationParameterUtils {
             if (token.isEmpty()) {
                 continue;
             }
-            sb.append(separator).append(expandLexicalQName(token, contextNode, useDefaultNamespaceForUnprefixed));
+            sb.append(separator)
+                    .append(
+                            expandLexicalQName(
+                                    token, contextNode, useDefaultNamespaceForUnprefixed));
             separator = " ";
         }
         return sb.toString();
     }
 
     private static String expandLexicalQName(
-            String token,
-            Item contextNode,
-            boolean useDefaultNamespaceForUnprefixed
-    ) {
+            String token, Item contextNode, boolean useDefaultNamespaceForUnprefixed) {
         if (token.startsWith("Q{")) {
             return token;
         }

@@ -18,7 +18,8 @@ public abstract class StepExpr extends Expression {
         return visitor.visitStepExpr(this, argument);
     }
 
-    public abstract AxisIterator accept(AxisIteratorVisitor visitor, RuntimeStaticContext staticContext);
+    public abstract AxisIterator accept(
+            AxisIteratorVisitor visitor, RuntimeStaticContext staticContext);
 
     public abstract NodeTest getNodeTest();
 }

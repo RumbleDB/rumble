@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.numerics.exponential;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,19 +33,12 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
 public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public Exp10FunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -52,7 +48,8 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (exponent == null) {
             return null;
         }
-        return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.getDoubleValue()));
+        return ItemFactory.getInstance()
+                .createDoubleItem(Math.pow(10.0, exponent.getDoubleValue()));
     }
 
     @Override
@@ -64,16 +61,12 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (SequenceType.Arity.OneOrMore.isSubtypeOf(powerQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "POW( "
-            + "10.0"
-            + ", "
-            + powerQuery.getResultingQuery()
-            + " )";
+        String resultingQuery = "POW( " + "10.0" + ", " + powerQuery.getResultingQuery() + " )";
         return new NativeClauseContext(
                 powerQuery,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, powerQuery.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.doubleItem,
+                        powerQuery.getResultingType().getArity()));
     }
-
 }

@@ -20,7 +20,13 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.*;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,21 +36,13 @@ import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.*;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-
 public class TextFileFunctionIterator extends RDDRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     public static final int MIN_PARTITIONS = 10;
 
     public TextFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -53,15 +51,11 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
         RuntimeIterator urlIterator = this.getChild(0);
         Item url = urlIterator.materializeFirstItemOrNull(context);
         if (url == null) {
-            return SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .emptyRDD();
+            return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
         }
-        URI uri = FileSystemUtil.resolveFileSystemURI(
-            this.staticContext.getStaticURI(),
-            url.getStringValue(),
-            getMetadata()
-        );
+        URI uri =
+                FileSystemUtil.resolveFileSystemURI(
+                        this.staticContext.getStaticURI(), url.getStringValue(), getMetadata());
         int partitions = MIN_PARTITIONS;
         if (this.getChildren().size() > 1) {
             Item partitionsItem = this.getChild(1).materializeFirstItemOrNull(context);
@@ -72,10 +66,7 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
 
         JavaRDD<String> strings;
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                getMetadata()
-            );
+            InputStream is = FileSystemUtil.getDataInputStream(uri, getMetadata());
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             List<String> lines = new ArrayList<>();
             String line = null;
@@ -86,16 +77,19 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
             } catch (IOException e) {
                 throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
             }
-            strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .parallelize(lines, partitions);
+            strings =
+                    SparkSessionManager.getInstance()
+                            .getJavaSparkContext()
+                            .parallelize(lines, partitions);
         } else {
             if (!FileSystemUtil.exists(uri, getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException(
+                        "File " + uri + " not found.", getMetadata());
             }
-            strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .textFile(FileSystemUtil.convertURIToStringForSpark(uri), partitions);
+            strings =
+                    SparkSessionManager.getInstance()
+                            .getJavaSparkContext()
+                            .textFile(FileSystemUtil.convertURIToStringForSpark(uri), partitions);
         }
         return strings.mapPartitions(new StringToStringItemMapper());
     }

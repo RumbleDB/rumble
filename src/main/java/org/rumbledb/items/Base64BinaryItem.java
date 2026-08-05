@@ -1,15 +1,16 @@
 package org.rumbledb.items;
 
-import lombok.Getter;
 import java.io.Serial;
 import java.util.Base64;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-
 
 public class Base64BinaryItem extends AbstractAtomicItem {
 
@@ -22,15 +23,14 @@ public class Base64BinaryItem extends AbstractAtomicItem {
     private static final String padded8 = B64S + B04S + "=\\s?=\\s?";
     private static final String padded16 = B64S + B64S + B16S + "=\\s?";
     private static final String b64finalQuad = B64S + B64S + B64S + B64;
-    private static final String b64final = "(" + b64finalQuad + "|" + padded16 + "|" + padded8 + ")";
+    private static final String b64final =
+            "(" + b64finalQuad + "|" + padded16 + "|" + padded8 + ")";
     private static final String b64quad = B64S + B64S + B64S + B64S;
     private static final String base64Binary = "((" + b64quad + ")*" + b64final + ")?";
     private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-    @Getter
-    private byte[] value;
+    @Serial private static final long serialVersionUID = 1L;
+    @Getter private byte[] value;
     private String stringValue;
 
     public Base64BinaryItem(String stringValue) {
@@ -68,8 +68,10 @@ public class Base64BinaryItem extends AbstractAtomicItem {
         return base64BinaryPattern.matcher(base64BinaryString).matches();
     }
 
-    static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
-        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString.replaceAll("\\s", ""))) {
+    static byte[] parseBase64BinaryString(String base64BinaryString)
+            throws IllegalArgumentException {
+        if (base64BinaryString == null
+                || !checkInvalidBase64BinaryFormat(base64BinaryString.replaceAll("\\s", ""))) {
             throw new IllegalArgumentException();
         }
         return Base64.getDecoder().decode(base64BinaryString);

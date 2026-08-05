@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -30,31 +33,26 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.io.Serial;
-import java.util.List;
-
 public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public NumberFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (this.getChildren().size() == 0) {
-            List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            List<Item> items =
+                    context.getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return CastIterator.castItemToType(
-                items.get(0),
-                BuiltinTypesCatalogue.doubleItem,
-                getMetadata(),
-                this.staticContext
-            );
+                    items.get(0),
+                    BuiltinTypesCatalogue.doubleItem,
+                    getMetadata(),
+                    this.staticContext);
         }
 
         Item anyItem = this.getChild(0).materializeFirstItemOrNull(context);
@@ -62,12 +60,12 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
         try {
-            Item result = CastIterator.castItemToType(
-                anyItem,
-                BuiltinTypesCatalogue.doubleItem,
-                getMetadata(),
-                this.staticContext
-            );
+            Item result =
+                    CastIterator.castItemToType(
+                            anyItem,
+                            BuiltinTypesCatalogue.doubleItem,
+                            getMetadata(),
+                            this.staticContext);
             if (result != null) {
                 return result;
             }

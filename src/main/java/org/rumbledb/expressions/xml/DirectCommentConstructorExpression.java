@@ -24,14 +24,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-/**
- * An expression representing a direct comment constructor.
- */
+/** An expression representing a direct comment constructor. */
 @Getter
 public class DirectCommentConstructorExpression extends Expression {
 
@@ -67,4 +66,3 @@ public class DirectCommentConstructorExpression extends Expression {
         sb.append("-->");
     }
 }
-

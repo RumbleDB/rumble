@@ -1,6 +1,13 @@
 package org.rumbledb.runtime.functions.maps;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -13,26 +20,20 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 /**
  * W3C XPath/XQuery {@code map:get}:
+ *
  * <ul>
- * <li>requires exactly one map argument</li>
- * <li>atomizes the key and requires exactly one atomic value</li>
- * <li>returns the associated value sequence, if present</li>
+ *   <li>requires exactly one map argument
+ *   <li>atomizes the key and requires exactly one atomic value
+ *   <li>returns the associated value sequence, if present
  * </ul>
  *
  * This built-in is local execution only (consistent with map/array accessors).
  */
 public class MapGetFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator mapIterator;
     private final RuntimeIterator keyIterator;
@@ -40,9 +41,7 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
     private Queue<Item> pendingResults;
 
     public MapGetFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("map:get must have exactly two arguments.");
@@ -66,16 +65,12 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
             mapItem = this.mapIterator.materializeExactlyOneItem(context);
         } catch (NoItemException | MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "map:get expects exactly one map argument.",
-                    getMetadata()
-            );
+                    "map:get expects exactly one map argument.", getMetadata());
         }
 
         if (mapItem == null || !mapItem.isMap()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to map:get must be a map.",
-                    getMetadata()
-            );
+                    "Type error; first argument to map:get must be a map.", getMetadata());
         }
 
         // Atomize $key and require that it atomizes to exactly one atomic value.
@@ -90,8 +85,7 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
             throw new UnexpectedTypeException(
                     "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         Item key = atomized.get(0);
@@ -146,4 +140,3 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
         throw new OurBadException("map:get is currently supported only in local execution mode.");
     }
 }
-

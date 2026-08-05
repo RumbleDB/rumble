@@ -20,6 +20,9 @@ package org.rumbledb.cli.commands;
 
 import java.util.concurrent.Callable;
 
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+
 import org.rumbledb.cli.CLIInvocation;
 import org.rumbledb.cli.arguments.AnalysisArguments;
 import org.rumbledb.cli.arguments.BindingsArguments;
@@ -31,42 +34,32 @@ import org.rumbledb.cli.arguments.SemanticsArguments;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.model.RumbleMode;
 
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-
-
 @Command
 public abstract class BaseCommand implements Callable<CLIInvocation> {
-    @Mixin
-    RuntimeArguments runtime;
+    @Mixin RuntimeArguments runtime;
 
-    @Mixin
-    DebugArguments debug;
+    @Mixin DebugArguments debug;
 
-    @Mixin
-    AnalysisArguments analysis;
+    @Mixin AnalysisArguments analysis;
 
-    @Mixin
-    OptimizationArguments optimization;
+    @Mixin OptimizationArguments optimization;
 
-    @Mixin
-    SemanticsArguments semantics;
+    @Mixin SemanticsArguments semantics;
 
-    @Mixin
-    FormattingArguments formatting;
+    @Mixin FormattingArguments formatting;
 
-    @Mixin
-    BindingsArguments bindings;
+    @Mixin BindingsArguments bindings;
 
-    protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(RumbleMode mode) {
+    protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(
+            RumbleMode mode) {
         return RumbleConfiguration.builder()
-            .mode(mode)
-            .runtime(this.runtime.toConfig())
-            .debug(this.debug.toConfig())
-            .analysis(this.analysis.toConfig())
-            .optimization(this.optimization.toConfig())
-            .semantics(this.semantics.toConfig())
-            .formatting(this.formatting.toConfig());
+                .mode(mode)
+                .runtime(this.runtime.toConfig())
+                .debug(this.debug.toConfig())
+                .analysis(this.analysis.toConfig())
+                .optimization(this.optimization.toConfig())
+                .semantics(this.semantics.toConfig())
+                .formatting(this.formatting.toConfig());
     }
 
     protected final CLIInvocation invocation(RumbleConfiguration configuration) {

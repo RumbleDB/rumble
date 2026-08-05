@@ -1,33 +1,32 @@
 package org.rumbledb.runtime.functions.random;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class RandomNumberGeneratorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public RandomNumberGeneratorFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         long seed;
-        Item seedItem = this.getChildren().isEmpty()
-            ? null
-            : this.getChild(0).materializeFirstItemOrNull(context);
+        Item seedItem =
+                this.getChildren().isEmpty()
+                        ? null
+                        : this.getChild(0).materializeFirstItemOrNull(context);
         if (seedItem == null) {
-            // No seed (or an empty-sequence seed) means an implementation-dependent default. Per F&O 3.1
+            // No seed (or an empty-sequence seed) means an implementation-dependent default. Per
+            // F&O 3.1
             // 4.9.1, calling the function twice with the same (here: no) arguments within a single
             // execution scope must produce the same result, so the default seed is derived from the
             // RumbleRuntimeConfiguration instance, which is shared by every call within one query
@@ -37,10 +36,9 @@ public class RandomNumberGeneratorFunctionIterator extends AtMostOneItemLocalRun
             seed = seedItem.getStringValue().hashCode();
         }
         return RandomNumberGeneratorMapBuilder.build(
-            seed,
-            this.staticContext,
-            new DynamicContext(context.getRumbleConfiguration()),
-            getMetadata()
-        );
+                seed,
+                this.staticContext,
+                new DynamicContext(context.getRumbleConfiguration()),
+                getMetadata());
     }
 }

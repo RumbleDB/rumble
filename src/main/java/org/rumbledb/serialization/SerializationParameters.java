@@ -17,10 +17,6 @@
 
 package org.rumbledb.serialization;
 
-
-import lombok.Getter;
-import lombok.Setter;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -28,216 +24,194 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Default serialization parameters stored in the XQuery static context.
  *
- * Specification references:
- * 
- * <ul>
- * <li>XQuery 3.1 Static Context Components — default serialization parameters (link:
- * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
- * <li>XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
- * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)</li>
- * </ul>
+ * <p>Specification references:
  *
+ * <ul>
+ *   <li>XQuery 3.1 Static Context Components — default serialization parameters (link:
+ *       https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
+ *   <li>XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+ *       https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+ * </ul>
  */
 @Setter
 public class SerializationParameters implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     // Getters and setters
     /**
-     * Serialization method.
-     * "method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
-     * Note: RumbleDB supports additional methods in addition to the XQuery 3.1 specification.
+     * Serialization method. "method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters
+     * (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam) Note: RumbleDB supports
+     * additional methods in addition to the XQuery 3.1 specification.
      */
-    @Getter
-    private String method;
+    @Getter private String method;
 
     /**
-     * Character encoding.
-     * "encoding" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * Character encoding. "encoding" — XSLT and XQuery Serialization 3.1 — Serialization Parameters
+     * (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String encoding;
+    @Getter private String encoding;
 
     /**
-     * Output version (for example XML 1.0/1.1 or HTML 4.0/5.0 depending on the method).
-     * "version" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Output version (for example XML 1.0/1.1 or HTML 4.0/5.0 depending on the method). "version" —
+     * XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String version;
+    @Getter private String version;
 
     /**
-     * Whether to omit the XML declaration.
-     * "omit-xml-declaration" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Whether to omit the XML declaration. "omit-xml-declaration" — XSLT and XQuery Serialization
+     * 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean omitXmlDeclaration;
 
     public enum Standalone {
-        YES, NO, OMIT
+        YES,
+        NO,
+        OMIT
     }
 
     /**
-     * XML standalone declaration.
-     * "standalone" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * XML standalone declaration. "standalone" — XSLT and XQuery Serialization 3.1 — Serialization
+     * Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private Standalone standalone;
+    @Getter private Standalone standalone;
 
     /**
-     * DocType system identifier.
-     * "doctype-system" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * DocType system identifier. "doctype-system" — XSLT and XQuery Serialization 3.1 —
+     * Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String doctypeSystem;
+    @Getter private String doctypeSystem;
 
     /**
-     * DocType public identifier.
-     * "doctype-public" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * DocType public identifier. "doctype-public" — XSLT and XQuery Serialization 3.1 —
+     * Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String doctypePublic;
+    @Getter private String doctypePublic;
 
     /**
-     * Media type.
-     * "media-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * Media type. "media-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters
+     * (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String mediaType;
+    @Getter private String mediaType;
 
     /**
-     * Normalize characters using a Unicode normalization form.
-     * "normalization-form" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Normalize characters using a Unicode normalization form. "normalization-form" — XSLT and
+     * XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String normalizationForm;
+    @Getter private String normalizationForm;
 
     /**
-     * Whether to declare namespace undeclarations.
-     * "undeclare-prefixes" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Whether to declare namespace undeclarations. "undeclare-prefixes" — XSLT and XQuery
+     * Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean undeclarePrefixes;
 
     /**
-     * Character maps, mapping strings to strings.
-     * "use-character-maps" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Character maps, mapping strings to strings. "use-character-maps" — XSLT and XQuery
+     * Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private Map<String, String> characterMaps;
+    @Getter private Map<String, String> characterMaps;
 
     /**
-     * Element QNames to output using CDATA sections.
-     * "cdata-section-elements" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Element QNames to output using CDATA sections. "cdata-section-elements" — XSLT and XQuery
+     * Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private Set<String> cdataSectionElements;
+    @Getter private Set<String> cdataSectionElements;
 
     /**
-     * Include meta http-equiv content-type.
-     * "include-content-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Include meta http-equiv content-type. "include-content-type" — XSLT and XQuery Serialization
+     * 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean includeContentType;
 
     /**
-     * Escape URI attributes.
-     * "escape-uri-attributes" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * Escape URI attributes. "escape-uri-attributes" — XSLT and XQuery Serialization 3.1 —
+     * Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean escapeUriAttributes;
 
     /**
-     * HTML version (implementation-defined default).
-     * "html-version" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * HTML version (implementation-defined default). "html-version" — XSLT and XQuery Serialization
+     * 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String htmlVersion;
+    @Getter private String htmlVersion;
 
     /**
-     * Insert byte-order mark.
-     * "byte-order-mark" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * Insert byte-order mark. "byte-order-mark" — XSLT and XQuery Serialization 3.1 — Serialization
+     * Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean byteOrderMark;
 
     /**
-     * Indentation control.
-     * "indent" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * Indentation control. "indent" — XSLT and XQuery Serialization 3.1 — Serialization Parameters
+     * (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean indent;
 
     /**
-     * Number of spaces for indentation (implementation-defined default).
-     * "indent-spaces" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Number of spaces for indentation (implementation-defined default). "indent-spaces" — XSLT and
+     * XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private int indentSpaces; // -1 means unspecified
+    @Getter private int indentSpaces; // -1 means unspecified
 
     /**
-     * Elements whose content should not be indented.
-     * "suppress-indentation" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Elements whose content should not be indented. "suppress-indentation" — XSLT and XQuery
+     * Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private Set<String> suppressIndentation;
+    @Getter private Set<String> suppressIndentation;
 
     /**
-     * Separator between items of the top-level sequence.
-     * "item-separator" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * Separator between items of the top-level sequence. "item-separator" — XSLT and XQuery
+     * Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String itemSeparator;
+    @Getter private String itemSeparator;
 
     /**
-     * JSON: allow duplicate map keys.
-     * "allow-duplicate-names" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * JSON: allow duplicate map keys. "allow-duplicate-names" — XSLT and XQuery Serialization 3.1 —
+     * Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean allowDuplicateNames;
 
     public enum JsonNodeOutputMethod {
-        UNSPECIFIED, JSON, XML, XHTML, HTML, TEXT
+        UNSPECIFIED,
+        JSON,
+        XML,
+        XHTML,
+        HTML,
+        TEXT
     }
 
     /**
-     * JSON node output method.
-     * "json-node-output-method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * JSON node output method. "json-node-output-method" — XSLT and XQuery Serialization 3.1 —
+     * Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private JsonNodeOutputMethod jsonNodeOutputMethod;
+    @Getter private JsonNodeOutputMethod jsonNodeOutputMethod;
+
+    /** Extension/unknown parameters preserved for forward compatibility. */
+    @Getter private Map<String, String> extensionParameters;
 
     /**
-     * Extension/unknown parameters preserved for forward compatibility.
+     * Spark-specific options for DataFrameWriter (e.g., CSV delimiter, compression, etc.). These
+     * are passed directly to Spark's DataFrameWriter.option() method.
      */
-    @Getter
-    private Map<String, String> extensionParameters;
-
-    /**
-     * Spark-specific options for DataFrameWriter (e.g., CSV delimiter, compression, etc.).
-     * These are passed directly to Spark's DataFrameWriter.option() method.
-     */
-    @Getter
-    private Map<String, String> sparkOptions;
+    @Getter private Map<String, String> sparkOptions;
 
     public static SerializationParameters defaults() {
         return defaults(null);
@@ -299,9 +273,8 @@ public class SerializationParameters implements Serializable {
     /**
      * Requested HTML version for the HTML/XHTML output methods.
      *
-     * Per XSLT and XQuery Serialization 3.1, the requested HTML version is the
-     * value of {@code html-version} when that parameter is present; otherwise it
-     * falls back to {@code version}.
+     * <p>Per XSLT and XQuery Serialization 3.1, the requested HTML version is the value of {@code
+     * html-version} when that parameter is present; otherwise it falls back to {@code version}.
      *
      * @return the requested HTML version, or {@code null} if neither parameter is set
      */
@@ -312,9 +285,9 @@ public class SerializationParameters implements Serializable {
     /**
      * Whether the requested HTML version denotes HTML5.
      *
-     * This check is intentionally narrow: we recognize the specific lexical forms
-     * that should trigger the HTML5 branch ({@code 5} and {@code 5.0}) without
-     * treating arbitrary version strings as decimals.
+     * <p>This check is intentionally narrow: we recognize the specific lexical forms that should
+     * trigger the HTML5 branch ({@code 5} and {@code 5.0}) without treating arbitrary version
+     * strings as decimals.
      *
      * @return {@code true} if the requested HTML version is {@code "5"} or {@code "5.0"}
      */
@@ -339,10 +312,9 @@ public class SerializationParameters implements Serializable {
         return this.allowDuplicateNames;
     }
 
-
     /**
      * Returns a copy of the SerializationParameters instance.
-     * 
+     *
      * @param parameters the SerializationParameters instance to copy
      * @return a copy of the SerializationParameters instance
      */

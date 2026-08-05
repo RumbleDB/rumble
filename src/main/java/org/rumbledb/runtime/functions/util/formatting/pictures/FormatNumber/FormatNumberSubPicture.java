@@ -1,42 +1,29 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
-import lombok.Getter;
-import org.rumbledb.runtime.functions.util.formatting.GroupingPos;
-
 import java.util.List;
 
+import lombok.Getter;
+
+import org.rumbledb.runtime.functions.util.formatting.GroupingPos;
+
 public final class FormatNumberSubPicture {
-    @Getter
-    private final String rawPictureString;
-    @Getter
-    private final String prefix;
-    @Getter
-    private final String suffix;
-    @Getter
-    private final String integerPart;
-    @Getter
-    private final String fractionalPart;
-    @Getter
-    private final String exponentPart;
+    @Getter private final String rawPictureString;
+    @Getter private final String prefix;
+    @Getter private final String suffix;
+    @Getter private final String integerPart;
+    @Getter private final String fractionalPart;
+    @Getter private final String exponentPart;
     private final boolean hasExponent;
     private final boolean hasPercent;
     private final boolean hasPerMille;
-    @Getter
-    private final List<GroupingPos> integerPartGroupingPositions;
-    @Getter
-    private final Integer repeatingIntegerGroupingInterval;
-    @Getter
-    private final List<GroupingPos> fractionalPartGroupingPositions;
-    @Getter
-    private final int minimumIntegerPartSize;
-    @Getter
-    private final int minimumFractionalPartSize;
-    @Getter
-    private final int maximumFractionalPartSize;
-    @Getter
-    private final int minimumExponentPartSize;
-    @Getter
-    private final int scalingFactor;
+    @Getter private final List<GroupingPos> integerPartGroupingPositions;
+    @Getter private final Integer repeatingIntegerGroupingInterval;
+    @Getter private final List<GroupingPos> fractionalPartGroupingPositions;
+    @Getter private final int minimumIntegerPartSize;
+    @Getter private final int minimumFractionalPartSize;
+    @Getter private final int maximumFractionalPartSize;
+    @Getter private final int minimumExponentPartSize;
+    @Getter private final int scalingFactor;
 
     public FormatNumberSubPicture(
             String rawPictureString,
@@ -55,8 +42,7 @@ public final class FormatNumberSubPicture {
             int minimumFractionalPartSize,
             int maximumFractionalPartSize,
             int minimumExponentPartSize,
-            int scalingFactor
-    ) {
+            int scalingFactor) {
         this.rawPictureString = rawPictureString;
         this.prefix = prefix;
         this.suffix = suffix;
@@ -87,5 +73,4 @@ public final class FormatNumberSubPicture {
     public boolean getHasPerMille() {
         return this.hasPerMille;
     }
-
 }

@@ -17,6 +17,10 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -26,22 +30,18 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.List;
-
 /**
  * fn:function-lookup($name as xs:QName, $arity as xs:integer) as function(*)?
  *
- * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-function-lookup">XPath and XQuery Functions and
- *      Operators 3.1</a>
+ * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-function-lookup">XPath and XQuery
+ *     Functions and Operators 3.1</a>
  */
 public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    public FunctionLookupFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public FunctionLookupFunctionIterator(
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -50,24 +50,18 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
         Item nameItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (!nameItem.isQName()) {
             throw new UnexpectedTypeException(
-                    "function-lookup: first argument must be xs:QName",
-                    getMetadata()
-            );
+                    "function-lookup: first argument must be xs:QName", getMetadata());
         }
         Name fnName = nameItem.getQNameValue();
 
         Item arityItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (arityItem == null) {
             throw new UnexpectedTypeException(
-                    "function-lookup: second argument must be xs:integer",
-                    getMetadata()
-            );
+                    "function-lookup: second argument must be xs:integer", getMetadata());
         }
         if (!arityItem.isNumeric()) {
             throw new UnexpectedTypeException(
-                    "function-lookup: second argument must be xs:integer",
-                    getMetadata()
-            );
+                    "function-lookup: second argument must be xs:integer", getMetadata());
         }
         BigInteger big = arityItem.castToIntegerValue();
         int arity;

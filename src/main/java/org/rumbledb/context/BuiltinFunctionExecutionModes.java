@@ -21,22 +21,21 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 
 /**
- * Resolves {@link ExecutionMode} for a builtin from its catalogue metadata and the first argument mode.
+ * Resolves {@link ExecutionMode} for a builtin from its catalogue metadata and the first argument
+ * mode.
  */
 public final class BuiltinFunctionExecutionModes {
 
-    private BuiltinFunctionExecutionModes() {
-    }
+    private BuiltinFunctionExecutionModes() {}
 
     public static ExecutionMode resolve(
             BuiltinFunction builtinFunction,
             ExecutionMode firstArgumentMode,
-            RumbleConfiguration configuration
-    ) {
+            RumbleConfiguration configuration) {
         ExecutionMode firstMode =
-            firstArgumentMode != null ? firstArgumentMode : ExecutionMode.LOCAL;
+                firstArgumentMode != null ? firstArgumentMode : ExecutionMode.LOCAL;
         BuiltinFunction.BuiltinFunctionExecutionMode functionExecutionMode =
-            builtinFunction.getBuiltinFunctionExecutionMode();
+                builtinFunction.getBuiltinFunctionExecutionMode();
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL) {
             return ExecutionMode.LOCAL;
         }
@@ -46,7 +45,8 @@ public final class BuiltinFunctionExecutionModes {
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME) {
             return dataFrameIfConfigurationAllows(configuration);
         }
-        if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
+        if (functionExecutionMode
+                == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
             if (firstMode.isDataFrame()) {
                 return dataFrameIfConfigurationAllows(configuration);
             }
@@ -55,17 +55,16 @@ public final class BuiltinFunctionExecutionModes {
             }
             return ExecutionMode.LOCAL;
         }
-        if (
-            functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
-        ) {
+        if (functionExecutionMode
+                == BuiltinFunction.BuiltinFunctionExecutionMode
+                        .INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL) {
             if (firstMode.isRDDOrDataFrame() && !firstMode.isDataFrame()) {
                 return ExecutionMode.RDD;
             }
             return ExecutionMode.LOCAL;
         }
         throw new OurBadException(
-                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function."
-        );
+                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function.");
     }
 
     public static ExecutionMode dataFrameIfConfigurationAllows(RumbleConfiguration configuration) {

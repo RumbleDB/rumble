@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,12 +37,12 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 /**
- * F&amp;O 3.1 array:append — returns a new array with one additional member (the appendage sequence).
+ * F&amp;O 3.1 array:append — returns a new array with one additional member (the appendage
+ * sequence).
  */
 public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator appendageIterator;
@@ -49,9 +50,7 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
     private boolean hasProducedResult;
 
     public ArrayAppendFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("array:append must have exactly two arguments.");
@@ -64,7 +63,8 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        // Do not open child iterators here: materializeExactlyOneItem / materialize open and close them.
+        // Do not open child iterators here: materializeExactlyOneItem / materialize open and close
+        // them.
         initializeResult(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.resultItem != null;
         this.hasProducedResult = false;
@@ -76,21 +76,15 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
             arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
         } catch (NoItemException e) {
             throw new UnexpectedTypeException(
-                    "array:append expects exactly one array as the first argument.",
-                    getMetadata()
-            );
+                    "array:append expects exactly one array as the first argument.", getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:append expects exactly one array as the first argument.",
-                    getMetadata()
-            );
+                    "array:append expects exactly one array as the first argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:append must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:append must be an array.", getMetadata());
         }
 
         List<Item> appendage = this.appendageIterator.materialize(context);
@@ -99,14 +93,20 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
             List<Item> newItems = new ArrayList<>(arrayItem.getSize() + 1);
             newItems.addAll(arrayItem.getItemMembers());
             newItems.add(appendage.get(0));
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    newItems,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> newMemberSequences = new ArrayList<>(arrayItem.getSize() + 1);
             newMemberSequences.addAll(arrayItem.getSequenceMembers());
             newMemberSequences.add(appendage);
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    newMemberSequences,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
@@ -140,8 +140,7 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:append is currently supported only in local execution mode."
-        );
+                "array:append is currently supported only in local execution mode.");
     }
 
     @Override
@@ -152,7 +151,6 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:append is currently supported only in local execution mode."
-        );
+                "array:append is currently supported only in local execution mode.");
     }
 }

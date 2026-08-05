@@ -1,38 +1,34 @@
 package org.rumbledb.runtime.xml;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
-import scala.Tuple2;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import scala.Tuple2;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.runtime.RuntimeIterator;
+
 public class SlashExprClosureZipped implements FlatMapFunction<Tuple2<Item, Long>, Item> {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator rightIterator;
     private final DynamicContext dynamicContext;
     private final long contextSize;
 
     public SlashExprClosureZipped(
-            RuntimeIterator rightIterator,
-            DynamicContext dynamicContext,
-            long contextSize
-    ) {
+            RuntimeIterator rightIterator, DynamicContext dynamicContext, long contextSize) {
         this.rightIterator = rightIterator;
         if (this.rightIterator.isSparkJobNeeded()) {
             throw new JobWithinAJobException(
                     "The right-hand side of this slash expression requires parallel execution, but the slash expression is itself executed in parallel.",
-                    this.rightIterator.getMetadata()
-            );
+                    this.rightIterator.getMetadata());
         }
         this.dynamicContext = dynamicContext;
         this.contextSize = contextSize;

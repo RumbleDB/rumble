@@ -20,10 +20,16 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.*;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -32,31 +38,23 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import scala.Tuple2;
-
-import java.io.Serial;
-import java.util.*;
 
 public class SlashExprIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
-        Item::getXmlDocumentPosition,
-        Comparator.nullsLast(Comparator.naturalOrder())
-    );
+    @Serial private static final long serialVersionUID = 1L;
+    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR =
+            Comparator.comparing(
+                    Item::getXmlDocumentPosition, Comparator.nullsLast(Comparator.naturalOrder()));
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
     private List<Item> results = null;
     private int nextResultCounter = 0;
     private Item nextResult;
 
-
     public SlashExprIterator(
             RuntimeIterator sequence,
             RuntimeIterator stepIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(sequence, stepIterator), staticContext);
         this.leftIterator = sequence;
         this.rightIterator = stepIterator;
@@ -69,11 +67,8 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         long count = childRDD.count();
 
         // apply right iterator, usually a step
-        FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SlashExprClosureZipped(
-                this.rightIterator,
-                dynamicContext,
-                count
-        );
+        FlatMapFunction<Tuple2<Item, Long>, Item> transformation =
+                new SlashExprClosureZipped(this.rightIterator, dynamicContext, count);
         JavaRDD<Item> result = zippedChildRDD.flatMap(transformation);
 
         boolean allNodes;
@@ -81,40 +76,41 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         if (this.rightIterator instanceof StepExprIterator) {
             allNodes = true;
         } else {
-            if (result.isEmpty())
-                return result;
+            if (result.isEmpty()) return result;
             allNodes = result.map(Item::isNode).reduce(Boolean::logicalAnd);
             allNonNodes = !result.map(Item::isNode).reduce(Boolean::logicalOr);
         }
 
         if (allNodes) {
             if (this.getConfiguration().optimization().optimizeSteps()) {
-                if (
-                    this.getConfiguration().optimization().optimizeStepsExperimental()
-                        && this.getConfiguration().optimization().optimizeParentPointers()
-                ) {
+                if (this.getConfiguration().optimization().optimizeStepsExperimental()
+                        && this.getConfiguration().optimization().optimizeParentPointers()) {
                     // skip sorting and uniqueness if not needed
                     // use optimizeParent as approximation for now, this is not verified
                     return result;
                 }
                 // faster because we avoid shuffle for uniqueness and global sorting
-                // but could theoretically violate document order over multiple calls if spark groupby order is not
+                // but could theoretically violate document order over multiple calls if spark
+                // groupby order
+                // is not
                 // stable
 
                 // group by document
-                JavaPairRDD<Object, Iterable<Item>> res = result.groupBy(
-                    (Function<Item, Object>) item -> item.getXmlDocumentPosition().getPath()
-                );
+                JavaPairRDD<Object, Iterable<Item>> res =
+                        result.groupBy(
+                                (Function<Item, Object>)
+                                        item -> item.getXmlDocumentPosition().getPath());
                 // sort and uniqueness per document
-                JavaRDD<Iterator<Item>> r2 = res.map(
-                    (Function<Tuple2<Object, Iterable<Item>>, Iterator<Item>>) tuple -> {
-                        ArrayList<Item> l = new ArrayList<>();
-                        tuple._2().iterator().forEachRemaining(l::add);
-                        l = new ArrayList<>(new HashSet<>(l));
-                        l.sort(DOCUMENT_ORDER_COMPARATOR);
-                        return l.iterator();
-                    }
-                );
+                JavaRDD<Iterator<Item>> r2 =
+                        res.map(
+                                (Function<Tuple2<Object, Iterable<Item>>, Iterator<Item>>)
+                                        tuple -> {
+                                            ArrayList<Item> l = new ArrayList<>();
+                                            tuple._2().iterator().forEachRemaining(l::add);
+                                            l = new ArrayList<>(new HashSet<>(l));
+                                            l.sort(DOCUMENT_ORDER_COMPARATOR);
+                                            return l.iterator();
+                                        });
                 // put all documents together again
                 return r2.flatMap((FlatMapFunction<Iterator<Item>, Item>) it -> it);
             } else {
@@ -128,11 +124,8 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         } else {
             throw new NodeAndNonNodeException(
                     "A mix of nodes and non-nodes was encountered as a result of a step expression.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-
-
     }
 
     @Override
@@ -163,21 +156,23 @@ public class SlashExprIterator extends HybridRuntimeIterator {
             return nextResult;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in Slash Expression",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in Slash Expression", getMetadata());
     }
 
     private void setNextResult() {
         if (this.results == null) {
-            List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
+            List<Item> left =
+                    this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
             this.results = new ArrayList<>();
             long last = left.size();
             long position = 0;
             for (Item currentItem : left) {
-                DynamicContext currentContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-                currentContext.getVariableValues()
-                    .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
+                DynamicContext currentContext =
+                        new DynamicContext(this.currentDynamicContextForLocalExecution);
+                currentContext
+                        .getVariableValues()
+                        .addVariableValue(
+                                Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
                 currentContext.getVariableValues().setPosition(++position);
                 currentContext.getVariableValues().setLast(last);
                 this.results.addAll(this.rightIterator.materialize(currentContext));
@@ -200,8 +195,7 @@ public class SlashExprIterator extends HybridRuntimeIterator {
             } else if (!allNonNodes) {
                 throw new NodeAndNonNodeException(
                         "A mix of nodes and non-nodes was encountered as a result of a step expression.",
-                        getMetadata()
-                );
+                        getMetadata());
             }
         }
         if (this.nextResultCounter < this.results.size()) {

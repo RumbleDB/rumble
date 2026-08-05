@@ -17,8 +17,20 @@
 
 package iq.base;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.net.URI;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.Assertions;
+
+import utils.annotations.AnnotationParseException;
+import utils.annotations.AnnotationProcessor;
+import utils.annotations.AnnotationProcessor.AnnotationExpectation;
+import utils.annotations.AnnotationProcessor.TestStage;
+
 import org.rumbledb.api.ExternalBindings;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
@@ -29,23 +41,13 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import utils.annotations.AnnotationParseException;
-import utils.annotations.AnnotationProcessor;
-import utils.annotations.AnnotationProcessor.AnnotationExpectation;
-import utils.annotations.AnnotationProcessor.TestStage;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.net.URI;
 
 public final class AnnotationTestExecutor {
 
-    private AnnotationTestExecutor() {
-    }
+    private AnnotationTestExecutor() {}
 
-    private record QueryExecutionResult(SequenceOfItems sequence, TestStage failureStage, String failureMessage) {
+    private record QueryExecutionResult(
+            SequenceOfItems sequence, TestStage failureStage, String failureMessage) {
         private static QueryExecutionResult success(SequenceOfItems sequence) {
             return new QueryExecutionResult(sequence, null, null);
         }
@@ -59,11 +61,7 @@ public final class AnnotationTestExecutor {
         }
     }
 
-    public static void run(
-            File testFile,
-            RumbleConfiguration configuration,
-            boolean checkOutput
-    )
+    public static void run(File testFile, RumbleConfiguration configuration, boolean checkOutput)
             throws IOException {
         run(testFile, configuration, ExternalBindings.empty(), checkOutput);
     }
@@ -72,17 +70,15 @@ public final class AnnotationTestExecutor {
             File testFile,
             RumbleConfiguration configuration,
             ExternalBindings externalBindings,
-            boolean checkOutput
-    )
+            boolean checkOutput)
             throws IOException {
         run(
-            testFile.getAbsolutePath(),
-            configuration,
-            externalBindings,
-            checkOutput,
-            configuration.runtime().shouldApplyUpdates(),
-            configuration.runtime().resultsSizeCap()
-        );
+                testFile.getAbsolutePath(),
+                configuration,
+                externalBindings,
+                checkOutput,
+                configuration.runtime().shouldApplyUpdates(),
+                configuration.runtime().resultsSizeCap());
     }
 
     static void run(
@@ -91,8 +87,7 @@ public final class AnnotationTestExecutor {
             ExternalBindings externalBindings,
             boolean checkOutput,
             boolean applyUpdates,
-            int resultSizeCap
-    )
+            int resultSizeCap)
             throws IOException {
         AnnotationProcessor.TestAnnotation annotation = readAnnotation(path);
         QueryExecutionResult executionResult = executeQuery(path, configuration, externalBindings);
@@ -104,28 +99,33 @@ public final class AnnotationTestExecutor {
 
         switch (annotation.expectation()) {
             case UNPARSABLE, UNCOMPILABLE:
-                Assertions.fail(withTestFile(path, unexpectedSuccessMessage(annotation.expectation().stage())));
+                Assertions.fail(
+                        withTestFile(
+                                path, unexpectedSuccessMessage(annotation.expectation().stage())));
                 return;
             case PARSABLE, COMPILABLE:
                 return;
             case RUNNABLE:
-                assertOutput(path, annotation, executionResult.sequence(), checkOutput, applyUpdates, resultSizeCap);
+                assertOutput(
+                        path,
+                        annotation,
+                        executionResult.sequence(),
+                        checkOutput,
+                        applyUpdates,
+                        resultSizeCap);
                 return;
             case UNRUNNABLE:
                 assertExpectedRuntimeFailureDuringMaterialization(
-                    annotation,
-                    path,
-                    executionResult.sequence(),
-                    applyUpdates,
-                    resultSizeCap
-                );
+                        annotation, path, executionResult.sequence(), applyUpdates, resultSizeCap);
                 return;
             default:
-                throw new IllegalStateException("Unhandled expectation: " + annotation.expectation());
+                throw new IllegalStateException(
+                        "Unhandled expectation: " + annotation.expectation());
         }
     }
 
-    private static AnnotationProcessor.TestAnnotation readAnnotation(String path) throws IOException {
+    private static AnnotationProcessor.TestAnnotation readAnnotation(String path)
+            throws IOException {
         try (Reader annotationReader = new FileReader(path)) {
             return AnnotationProcessor.readAnnotation(annotationReader);
         } catch (AnnotationParseException exception) {
@@ -134,15 +134,11 @@ public final class AnnotationTestExecutor {
     }
 
     private static QueryExecutionResult executeQuery(
-            String path,
-            RumbleConfiguration configuration,
-            ExternalBindings externalBindings
-    ) {
+            String path, RumbleConfiguration configuration, ExternalBindings externalBindings) {
         try {
-            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                path,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            URI uri =
+                    FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                            path, ExceptionMetadata.EMPTY_METADATA);
             Rumble rumble = new Rumble(configuration);
             return QueryExecutionResult.success(rumble.runQuery(uri, externalBindings));
         } catch (ParsingException exception) {
@@ -157,40 +153,40 @@ public final class AnnotationTestExecutor {
     }
 
     private static void assertExpectedFailure(
-            AnnotationProcessor.TestAnnotation annotation,
-            QueryExecutionResult executionResult
-    ) {
+            AnnotationProcessor.TestAnnotation annotation, QueryExecutionResult executionResult) {
         AnnotationExpectation expectation = annotation.expectation();
         if (!expectation.acceptsFailureAt(executionResult.failureStage())) {
             Assertions.fail(unexpectedFailureMessage(expectation, executionResult));
         }
 
         checkErrorCode(
-            executionResult.failureMessage(),
-            annotation.errorCode(),
-            annotation.errorMetadata()
-        );
+                executionResult.failureMessage(),
+                annotation.errorCode(),
+                annotation.errorMetadata());
         System.out.println(executionResult.failureMessage());
     }
 
     private static String unexpectedFailureMessage(
-            AnnotationExpectation expectation,
-            QueryExecutionResult executionResult
-    ) {
+            AnnotationExpectation expectation, QueryExecutionResult executionResult) {
         if (expectation.expectsSuccess()) {
-            return unexpectedFailureMessage(executionResult.failureStage(), executionResult.failureMessage());
+            return unexpectedFailureMessage(
+                    executionResult.failureStage(), executionResult.failureMessage());
         }
         return "Program failed during "
-            + executionResult.failureStage().verb()
-            + " when expected to fail during "
-            + expectation.stage().verb()
-            + ".\nError output: "
-            + executionResult.failureMessage()
-            + "\n";
+                + executionResult.failureStage().verb()
+                + " when expected to fail during "
+                + expectation.stage().verb()
+                + ".\nError output: "
+                + executionResult.failureMessage()
+                + "\n";
     }
 
     private static String unexpectedFailureMessage(TestStage stage, String errorOutput) {
-        return "Program did not " + stage.verb() + " when expected to.\nError output: " + errorOutput + "\n";
+        return "Program did not "
+                + stage.verb()
+                + " when expected to.\nError output: "
+                + errorOutput
+                + "\n";
     }
 
     private static String unexpectedSuccessMessage(TestStage stage) {
@@ -203,15 +199,21 @@ public final class AnnotationTestExecutor {
             SequenceOfItems sequence,
             boolean checkOutput,
             boolean applyUpdates,
-            int resultSizeCap
-    ) {
+            int resultSizeCap) {
         try {
-            checkExpectedOutput(path, annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
+            checkExpectedOutput(
+                    path, annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
         } catch (RumbleException exception) {
-            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput(exception))));
+            Assertions.fail(
+                    withTestFile(
+                            path,
+                            unexpectedFailureMessage(TestStage.RUNTIME, errorOutput(exception))));
         } catch (Throwable exception) {
             // Catch all other exceptions not given by Rumble
-            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput(exception))));
+            Assertions.fail(
+                    withTestFile(
+                            path,
+                            unexpectedFailureMessage(TestStage.RUNTIME, errorOutput(exception))));
         }
     }
 
@@ -220,14 +222,14 @@ public final class AnnotationTestExecutor {
             String path,
             SequenceOfItems sequence,
             boolean applyUpdates,
-            int resultSizeCap
-    ) {
+            int resultSizeCap) {
         try {
             materializeSequence(sequence, applyUpdates, resultSizeCap);
             Assertions.fail(withTestFile(path, unexpectedSuccessMessage(TestStage.RUNTIME)));
         } catch (Throwable exception) {
             try {
-                checkErrorCode(errorOutput(exception), annotation.errorCode(), annotation.errorMetadata());
+                checkErrorCode(
+                        errorOutput(exception), annotation.errorCode(), annotation.errorMetadata());
             } catch (AssertionError assertionError) {
                 Assertions.fail(withTestFile(path, assertionError.getMessage()), assertionError);
             }
@@ -240,8 +242,7 @@ public final class AnnotationTestExecutor {
             SequenceOfItems sequence,
             boolean checkOutput,
             boolean applyUpdates,
-            int resultSizeCap
-    ) {
+            int resultSizeCap) {
         if (!checkOutput) {
             if (applyUpdates && sequence.availableAsPUL()) {
                 sequence.applyPUL();
@@ -250,7 +251,8 @@ public final class AnnotationTestExecutor {
         }
 
         String actualOutput = materializeSequence(sequence, applyUpdates, resultSizeCap);
-        Assertions.assertEquals(expectedOutput, actualOutput, withTestFile(path, "Unexpected query output."));
+        Assertions.assertEquals(
+                expectedOutput, actualOutput, withTestFile(path, "Unexpected query output."));
     }
 
     private static String withTestFile(String path, String message) {
@@ -258,10 +260,7 @@ public final class AnnotationTestExecutor {
     }
 
     private static String materializeSequence(
-            SequenceOfItems sequence,
-            boolean applyUpdates,
-            int resultSizeCap
-    ) {
+            SequenceOfItems sequence, boolean applyUpdates, int resultSizeCap) {
         String output = formatSequenceForLegacyRuntimeAssertions(sequence, resultSizeCap);
         if (applyUpdates && sequence.availableAsPUL()) {
             sequence.applyPUL();
@@ -270,13 +269,11 @@ public final class AnnotationTestExecutor {
     }
 
     /**
-     * Runtime annotation tests historically compare against a legacy sequence presentation
-     * format rather than against W3C serializer output.
+     * Runtime annotation tests historically compare against a legacy sequence presentation format
+     * rather than against W3C serializer output.
      */
     private static String formatSequenceForLegacyRuntimeAssertions(
-            SequenceOfItems sequence,
-            int resultSizeCap
-    ) {
+            SequenceOfItems sequence, int resultSizeCap) {
         if (sequence.availableAsPUL()) {
             return "";
         }
@@ -306,10 +303,9 @@ public final class AnnotationTestExecutor {
 
             if (sequence.hasNext() && resultSizeCap > 0 && itemCount == resultSizeCap) {
                 System.err.println(
-                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + resultSizeCap
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
+                        "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                                + resultSizeCap
+                                + " items. This value can be configured with the --result-size parameter at startup");
             }
 
             return sb.toString();
@@ -326,20 +322,21 @@ public final class AnnotationTestExecutor {
         return exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
     }
 
-    private static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
+    private static void checkErrorCode(
+            String errorOutput, String expectedErrorCode, String errorMetadata) {
         assertErrorContains(errorOutput, "error code", expectedErrorCode);
         assertErrorContains(errorOutput, "metadata", errorMetadata);
     }
 
-    private static void assertErrorContains(String errorOutput, String label, String expectedValue) {
+    private static void assertErrorContains(
+            String errorOutput, String label, String expectedValue) {
         if (expectedValue == null) {
             return;
         }
-        Assertions.assertNotNull(errorOutput, "Missing error output; Expected " + label + ": " + expectedValue);
+        Assertions.assertNotNull(
+                errorOutput, "Missing error output; Expected " + label + ": " + expectedValue);
         Assertions.assertTrue(
-            errorOutput.contains(expectedValue),
-            "Unexpected " + label + "; Expected: " + expectedValue + "; Error: " + errorOutput
-        );
+                errorOutput.contains(expectedValue),
+                "Unexpected " + label + "; Expected: " + expectedValue + "; Error: " + errorOutput);
     }
-
 }

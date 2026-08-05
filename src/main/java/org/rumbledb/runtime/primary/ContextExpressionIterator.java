@@ -20,9 +20,15 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -36,35 +42,27 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public ContextExpressionIterator(RuntimeStaticContext staticContext) {
         super(null, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
-            DynamicContext dynamicContext
-    ) {
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         return getContextItem(dynamicContext);
     }
 
     private Item getContextItem(DynamicContext dynamicContext) {
-        List<Item> items = dynamicContext.getVariableValues()
-            .getLocalVariableValue(
-                Name.CONTEXT_ITEM,
-                getMetadata()
-            );
+        List<Item> items =
+                dynamicContext
+                        .getVariableValues()
+                        .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
         if (items.isEmpty()) {
-            throw new UnexpectedTypeException("The context item cannot be an empty sequence.", getMetadata());
+            throw new UnexpectedTypeException(
+                    "The context item cannot be an empty sequence.", getMetadata());
         }
         return items.get(0);
     }
@@ -84,20 +82,21 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
         }
         // check if name is in the schema
         if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, Name.CONTEXT_ITEM)) {
-            return getContextItem(nativeClauseContext.getContext()).generateNativeQuery(nativeClauseContext);
+            return getContextItem(nativeClauseContext.getContext())
+                    .generateNativeQuery(nativeClauseContext);
         }
         if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, Name.CONTEXT_ITEM)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        StructField field = structSchema.fields()[structSchema.fieldIndex(
-            SparkSessionManager.nonObjectJSONiqItemColumnName
-        )];
+        StructField field =
+                structSchema
+                        .fields()[
+                        structSchema.fieldIndex(SparkSessionManager.nonObjectJSONiqItemColumnName)];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
         return new NativeClauseContext(
                 nativeClauseContext,
                 "`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`",
-                new SequenceType(variableType, SequenceType.Arity.One)
-        );
+                new SequenceType(variableType, SequenceType.Arity.One));
     }
 }

@@ -23,12 +23,13 @@ package org.rumbledb.runtime.flwor;
 import java.io.Serial;
 import java.io.Serializable;
 
-import lombok.EqualsAndHashCode;
-
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.ItemType;
@@ -39,8 +40,7 @@ import org.rumbledb.types.TypeMappings;
 @EqualsAndHashCode
 public class FlworDataFrameColumn implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public enum ColumnFormat {
         SERIALIZED_SEQUENCE,
@@ -53,19 +53,15 @@ public class FlworDataFrameColumn implements Serializable {
         AVERAGE
     };
 
-    @Setter
-    @Getter
-    private String tableName;
-    @Getter
-    private Name variableName;
+    @Setter @Getter private String tableName;
+    @Getter private Name variableName;
     private ColumnFormat columnFormat;
 
     public FlworDataFrameColumn(
             String tableName,
             Name variableName,
             ColumnFormat columnFormat,
-            SequenceType sequenceType
-    ) {
+            SequenceType sequenceType) {
         this.tableName = tableName;
         this.variableName = variableName;
         this.columnFormat = columnFormat;
@@ -93,14 +89,17 @@ public class FlworDataFrameColumn implements Serializable {
         }
     }
 
-    public static SequenceType getSequenceTypeFromColumn(String columnName, StructType inputSchema) {
+    public static SequenceType getSequenceTypeFromColumn(
+            String columnName, StructType inputSchema) {
         int pos = columnName.indexOf(".");
         if (pos == -1) {
             int index = inputSchema.fieldIndex(columnName);
             if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
                 return SequenceType.createSequenceType("item*");
             }
-            ItemType itemType = TypeMappings.getItemTypeFromDataFrameDataType(inputSchema.fields()[index].dataType());
+            ItemType itemType =
+                    TypeMappings.getItemTypeFromDataFrameDataType(
+                            inputSchema.fields()[index].dataType());
             return new SequenceType(itemType, Arity.ZeroOrMore);
         } else {
             switch (columnName.substring(pos)) {
@@ -210,5 +209,4 @@ public class FlworDataFrameColumn implements Serializable {
     public boolean isAverage() {
         return this.columnFormat.equals(ColumnFormat.AVERAGE);
     }
-
 }

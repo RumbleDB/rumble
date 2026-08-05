@@ -20,28 +20,28 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
 
+import org.rumbledb.errorcodes.ErrorCode;
+
 /**
- * Exception for XQST0070: It is a static error if a namespace declaration attribute attempts to do any of the
- * following:
- * 
+ * Exception for XQST0070: It is a static error if a namespace declaration attribute attempts to do
+ * any of the following:
+ *
  * <ul>
- * <li>Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace</li>
- * <li>Bind the prefix xmlns to any namespace URI</li>
- * <li>Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/</li>
+ *   <li>Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace
+ *   <li>Bind the prefix xmlns to any namespace URI
+ *   <li>Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/
  * </ul>
  *
  * @see <a href="https://www.w3.org/TR/xquery-31/#ERRXQST0070">XQuery 3.1, F: XQST0070</a>
  */
 public class PredefinedPrefixInNamespaceDeclarationException extends RumbleException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    public PredefinedPrefixInNamespaceDeclarationException(String message, ExceptionMetadata metadata) {
+    public PredefinedPrefixInNamespaceDeclarationException(
+            String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.PredefinedPrefixInNamespaceDeclarationErrorCode, metadata);
     }
 
@@ -49,4 +49,3 @@ public class PredefinedPrefixInNamespaceDeclarationException extends RumbleExcep
         super(message, ErrorCode.PredefinedPrefixInNamespaceDeclarationErrorCode);
     }
 }
-

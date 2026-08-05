@@ -20,24 +20,22 @@
 
 package org.rumbledb.items;
 
-import lombok.Getter;
 import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import lombok.Getter;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class AnyURIItem extends AbstractAtomicItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private String lexicalValue;
 
-    @Getter
-    private URI value;
+    @Getter private URI value;
 
     public AnyURIItem(String value) {
         if (value == null) {
@@ -53,8 +51,7 @@ public class AnyURIItem extends AbstractAtomicItem {
     }
 
     static URI parseAnyURIString(String anyURIString) throws IllegalArgumentException {
-        if (anyURIString == null)
-            throw new IllegalArgumentException();
+        if (anyURIString == null) throw new IllegalArgumentException();
         try {
             return new URI(anyURIString);
         } catch (URISyntaxException e) {

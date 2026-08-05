@@ -20,15 +20,15 @@
 
 package org.rumbledb.expressions.arithmetic;
 
+import java.util.Arrays;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class AdditiveExpression extends Expression {
@@ -40,8 +40,7 @@ public class AdditiveExpression extends Expression {
             Expression leftExpression,
             Expression rightExpression,
             boolean isMinus,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
@@ -67,7 +66,8 @@ public class AdditiveExpression extends Expression {
         buffer.append(" (" + (this.isMinus ? "-" : "+") + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+                " | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -85,10 +85,8 @@ public class AdditiveExpression extends Expression {
         sb.append(")\n");
 
         indentIt(sb, indent);
-        if (this.isMinus)
-            sb.append("-\n");
-        else
-            sb.append("+\n");
+        if (this.isMinus) sb.append("-\n");
+        else sb.append("+\n");
 
         indentIt(sb, indent);
         sb.append("(\n");
@@ -98,5 +96,4 @@ public class AdditiveExpression extends Expression {
         indentIt(sb, indent);
         sb.append(")\n");
     }
-
 }

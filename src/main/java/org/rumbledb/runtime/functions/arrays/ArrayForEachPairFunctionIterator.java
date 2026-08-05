@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
@@ -43,13 +44,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
 /**
- * XPath and XQuery Functions and Operators 3.1 {@code array:for-each-pair}:
- * {@code array:for-each-pair($array1 as array(*), $array2 as array(*), $function as function(item()*, item()*) as item()*) as array(*)}.
+ * XPath and XQuery Functions and Operators 3.1 {@code array:for-each-pair}: {@code
+ * array:for-each-pair($array1 as array(*), $array2 as array(*), $function as function(item()*,
+ * item()*) as item()*) as array(*)}.
  */
 public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator1;
     private final RuntimeIterator arrayIterator2;
@@ -59,9 +60,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
     private boolean hasProducedResult;
 
     public ArrayForEachPairFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("array:for-each-pair must have exactly three arguments.");
@@ -90,15 +89,13 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:for-each-pair expects exactly one array as the first argument.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         if (!arrayItem1.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to array:for-each-pair must be an array.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         Item arrayItem2;
@@ -110,15 +107,13 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:for-each-pair expects exactly one array as the second argument.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         if (!arrayItem2.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to array:for-each-pair must be an array.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         List<List<Item>> members1 = arrayItem1.getSequenceMembers();
@@ -130,14 +125,12 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         if (functionItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:for-each-pair must be a function item.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:for-each-pair must be a single function item.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         FunctionItem functionItem = (FunctionItem) functionItems.get(0);
@@ -145,7 +138,8 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         boolean allSingleton = true;
         List<List<Item>> resultMemberSequences = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            List<Item> result = applyFunction(functionItem, members1.get(i), members2.get(i), context);
+            List<Item> result =
+                    applyFunction(functionItem, members1.get(i), members2.get(i), context);
             if (allSingleton && result.size() != 1) {
                 allSingleton = false;
             }
@@ -157,42 +151,50 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : resultMemberSequences) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    items, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    resultMemberSequences,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
-            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+            RuntimeStaticContext staticContext =
+                    RuntimeStaticContext.builder()
+                            .configuration(getConfiguration())
+                            .staticType(SequenceType.createSequenceType("item*"))
+                            .executionMode(ExecutionMode.LOCAL)
+                            .metadata(getMetadata())
+                            .build();
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
         List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
-            RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+            RuntimeStaticContext childStaticContext =
+                    RuntimeStaticContext.builder()
+                            .configuration(getConfiguration())
+                            .staticType(SequenceType.createSequenceType("item*"))
+                            .executionMode(ExecutionMode.LOCAL)
+                            .metadata(getMetadata())
+                            .build();
             childIterators.add(new ConstantRuntimeIterator(item, childStaticContext));
         }
 
-        RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        RuntimeStaticContext staticContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
         return new CommaExpressionIterator(childIterators, staticContext);
     }
 
@@ -200,8 +202,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
             FunctionItem functionItem,
             List<Item> memberSequence1,
             List<Item> memberSequence2,
-            DynamicContext context
-    ) {
+            DynamicContext context) {
         RuntimeIterator firstArg = createSequenceIterator(memberSequence1);
         RuntimeIterator secondArg = createSequenceIterator(memberSequence2);
 
@@ -209,13 +210,9 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         arguments.add(firstArg);
         arguments.add(secondArg);
 
-        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
-        );
+        RuntimeIterator functionCall =
+                NamedFunctions.buildFunctionItemCallIterator(
+                        functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
         return functionCall.materialize(context);
     }
 
@@ -252,8 +249,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:for-each-pair is currently supported only in local execution mode."
-        );
+                "array:for-each-pair is currently supported only in local execution mode.");
     }
 
     @Override
@@ -264,7 +260,6 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:for-each-pair is currently supported only in local execution mode."
-        );
+                "array:for-each-pair is currently supported only in local execution mode.");
     }
 }

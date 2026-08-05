@@ -1,8 +1,5 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
-import com.ibm.icu.text.TimeZoneNames;
-import com.ibm.icu.util.TimeZone;
-
 import java.time.DateTimeException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -10,16 +7,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
+import com.ibm.icu.text.TimeZoneNames;
+import com.ibm.icu.util.TimeZone;
+
 public final class TimezoneNames {
 
-    private TimezoneNames() {
-    }
+    private TimezoneNames() {}
 
-    public static String name(
-            OffsetDateTime value,
-            FormattingContext context,
-            boolean longName
-    ) {
+    public static String name(OffsetDateTime value, FormattingContext context, boolean longName) {
         String zoneId = resolveZoneId(value, context);
         if (zoneId == null) {
             return null;
@@ -35,22 +30,17 @@ public final class TimezoneNames {
         boolean daylight = zone.inDaylightTime(new Date(millis));
         TimeZoneNames.NameType type = nameType(daylight, longName);
 
-        return TimeZoneNames
-            .getInstance(context.uLocale)
-            .getDisplayName(zoneId, type, millis);
+        return TimeZoneNames.getInstance(context.uLocale).getDisplayName(zoneId, type, millis);
     }
 
     private static String javaDisplayName(
-            OffsetDateTime value,
-            FormattingContext context,
-            String zoneId,
-            boolean longName
-    ) {
+            OffsetDateTime value, FormattingContext context, String zoneId, boolean longName) {
         try {
             ZoneId zone = ZoneId.of(zoneId);
             String pattern = longName ? "zzzz" : "z";
-            String name = DateTimeFormatter.ofPattern(pattern, context.javaLocale)
-                .format(value.toInstant().atZone(zone));
+            String name =
+                    DateTimeFormatter.ofPattern(pattern, context.javaLocale)
+                            .format(value.toInstant().atZone(zone));
 
             return name == null || name.isEmpty() ? null : name;
         } catch (DateTimeException | IllegalArgumentException e) {
@@ -60,9 +50,13 @@ public final class TimezoneNames {
 
     private static TimeZoneNames.NameType nameType(boolean daylight, boolean longName) {
         if (longName) {
-            return daylight ? TimeZoneNames.NameType.LONG_DAYLIGHT : TimeZoneNames.NameType.LONG_STANDARD;
+            return daylight
+                    ? TimeZoneNames.NameType.LONG_DAYLIGHT
+                    : TimeZoneNames.NameType.LONG_STANDARD;
         }
-        return daylight ? TimeZoneNames.NameType.SHORT_DAYLIGHT : TimeZoneNames.NameType.SHORT_STANDARD;
+        return daylight
+                ? TimeZoneNames.NameType.SHORT_DAYLIGHT
+                : TimeZoneNames.NameType.SHORT_STANDARD;
     }
 
     private static String resolveZoneId(OffsetDateTime value, FormattingContext context) {

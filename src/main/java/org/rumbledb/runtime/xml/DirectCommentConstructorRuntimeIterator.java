@@ -20,14 +20,14 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-
-import java.io.Serial;
-import java.util.Collections;
 
 /**
  * Runtime iterator for direct comment node constructors.
@@ -36,11 +36,11 @@ import java.util.Collections;
  */
 public class DirectCommentConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final String content;
 
-    public DirectCommentConstructorRuntimeIterator(String content, RuntimeStaticContext staticContext) {
+    public DirectCommentConstructorRuntimeIterator(
+            String content, RuntimeStaticContext staticContext) {
         super(Collections.emptyList(), staticContext);
         this.content = content;
     }
@@ -53,4 +53,3 @@ public class DirectCommentConstructorRuntimeIterator extends AtMostOneItemLocalR
         return ItemFactory.getInstance().createXmlCommentNode(this.content);
     }
 }
-

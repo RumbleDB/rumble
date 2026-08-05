@@ -20,7 +20,11 @@
 
 package org.rumbledb.runtime.control;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,35 +34,23 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-import java.io.Serial;
-import java.util.List;
-
 public class IfRuntimeIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private RuntimeIterator selectedIterator = null;
 
     public IfRuntimeIterator(
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
-            RuntimeStaticContext staticContext
-    ) {
-        super(
-            List.of(
-                condition,
-                branch,
-                elseBranch
-            ),
-            staticContext
-        );
+            RuntimeStaticContext staticContext) {
+        super(List.of(condition, branch, elseBranch), staticContext);
     }
 
     @Override
     public void openLocal() {
-        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.selectedIterator =
+                selectApplicableIterator(this.currentDynamicContextForLocalExecution);
         this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.selectedIterator.hasNext();
     }

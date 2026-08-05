@@ -20,11 +20,23 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import lombok.Getter;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -38,34 +50,18 @@ import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
-
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
+import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 
 public class CountClauseIterator extends RuntimeTupleIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-    @Getter
-    private final Name variableName;
+    @Serial private static final long serialVersionUID = 1L;
+    @Getter private final Name variableName;
     private FlworTuple nextLocalTupleResult;
     private int currentCountIndex;
 
     public CountClauseIterator(
-            RuntimeTupleIterator child,
-            Name variableName,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeTupleIterator child, Name variableName, RuntimeStaticContext staticContext) {
         super(child, staticContext);
         this.variableName = variableName;
         this.currentCountIndex = 1; // indices start at 1 in JSONiq
@@ -106,7 +102,8 @@ public class CountClauseIterator extends RuntimeTupleIterator {
             List<Item> results = new ArrayList<>();
             results.add(ItemFactory.getInstance().createIntItem(this.currentCountIndex++));
 
-            this.nextLocalTupleResult = new FlworTuple(inputTuple).putValue(this.variableName, results);
+            this.nextLocalTupleResult =
+                    new FlworTuple(inputTuple).putValue(this.variableName, results);
             this.hasNext = true;
         } else {
             this.child.close();
@@ -115,9 +112,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworDataFrame getDataFrame(
-            DynamicContext context
-    ) {
+    public FlworDataFrame getDataFrame(DynamicContext context) {
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
@@ -126,56 +121,52 @@ public class CountClauseIterator extends RuntimeTupleIterator {
             return new FlworDataFrame(df);
         }
 
-        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, this.outputTupleProjection, this.variableName);
+        Dataset<Row> dfWithIndex =
+                addSerializedCountColumn(df, this.outputTupleProjection, this.variableName);
         return new FlworDataFrame(dfWithIndex);
     }
 
-    // This method, which implements count semantics, is also intended for use by other clauses (e.g., for clause with
+    // This method, which implements count semantics, is also intended for use by other clauses
+    // (e.g.,
+    // for clause with
     // positional variables).
     public static Dataset<Row> addSerializedCountColumn(
             Dataset<Row> df,
             Map<Name, DynamicContext.VariableDependency> outputDependencies,
-            Name variableName
-    ) {
+            Name variableName) {
         StructType inputSchema = df.schema();
 
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-            inputSchema,
-            outputDependencies,
-            null,
-            Collections.singletonList(variableName)
-        );
+        List<FlworDataFrameColumn> allColumns =
+                FlworDataFrameUtils.getColumns(
+                        inputSchema,
+                        outputDependencies,
+                        null,
+                        Collections.singletonList(variableName));
 
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
 
-        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
+        Dataset<Row> dfWithIndex =
+                FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
 
         df.sparkSession()
-            .udf()
-            .register(
-                "serializeCountIndex",
-                new LongSerializeUDF(),
-                DataTypes.BinaryType
-            );
+                .udf()
+                .register("serializeCountIndex", new LongSerializeUDF(), DataTypes.BinaryType);
 
         String viewName = FlworDataFrameUtils.createTempView(dfWithIndex);
-        dfWithIndex = dfWithIndex.sparkSession()
-            .sql(
-                String.format(
-                    "select %s serializeCountIndex(`%s`) as `%s` from %s",
-                    selectSQL,
-                    variableName,
-                    variableName,
-                    viewName
-                )
-            );
+        dfWithIndex =
+                dfWithIndex
+                        .sparkSession()
+                        .sql(
+                                String.format(
+                                        "select %s serializeCountIndex(`%s`) as `%s` from %s",
+                                        selectSQL, variableName, variableName, viewName));
         return dfWithIndex;
     }
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<Name, DynamicContext.VariableDependency>();
+                new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
@@ -200,11 +191,10 @@ public class CountClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> parentProjection
-    ) {
+            Map<Name, DynamicContext.VariableDependency> parentProjection) {
         // start with an empty projection.
         Map<Name, DynamicContext.VariableDependency> projection =
-            new TreeMap<Name, DynamicContext.VariableDependency>();
+                new TreeMap<Name, DynamicContext.VariableDependency>();
 
         // copy over the projection needed by the parent clause.
         projection.putAll(parentProjection);
@@ -258,59 +248,54 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-            (StructType) childContext.getSchema(),
-            null,
-            null,
-            null
-        );
+        List<FlworDataFrameColumn> allColumns =
+                FlworDataFrameUtils.getColumns(
+                        (StructType) childContext.getSchema(), null, null, null);
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String variableName = childContext.addVariable(this.variableName).toString();
         String resultingQuery;
         if (childContext.isExplodedView()) {
-            Map<String, Boolean> sortingColumns = childContext.getSortingColumns().isEmpty()
-                ? Collections.singletonMap(childContext.getPositionalVariableName().toString(), false)
-                : childContext.getSortingColumns();
+            Map<String, Boolean> sortingColumns =
+                    childContext.getSortingColumns().isEmpty()
+                            ? Collections.singletonMap(
+                                    childContext.getPositionalVariableName().toString(), false)
+                            : childContext.getSortingColumns();
             String aggregateString;
             if (childContext.getConditionalColumns().size() > 0) {
-                String condition = childContext.getConditionalColumns()
-                    .stream()
-                    .map(name -> "`" + name + "`")
-                    .collect(Collectors.joining(" and "));
-                aggregateString = String.format(
-                    "if((%s) ,`%s`, null)",
-                    condition,
-                    childContext.getRowIdField()
-                );
+                String condition =
+                        childContext.getConditionalColumns().stream()
+                                .map(name -> "`" + name + "`")
+                                .collect(Collectors.joining(" and "));
+                aggregateString =
+                        String.format(
+                                "if((%s) ,`%s`, null)", condition, childContext.getRowIdField());
             } else {
                 aggregateString = String.format("`%s`", childContext.getRowIdField());
             }
-            resultingQuery = String.format(
-                "select %s count(%s) over (partition by `%s` order by %s) as `%s` from (%s)",
-                selectSQL,
-                aggregateString,
-                childContext.getRowIdField(),
-                sortingColumns.entrySet()
-                    .stream()
-                    .map(entry -> String.format("`%s` %s", entry.getKey(), entry.getValue() ? "desc" : "asc"))
-                    .collect(Collectors.joining(",")),
-                variableName,
-                childContext.getView()
-            );
+            resultingQuery =
+                    String.format(
+                            "select %s count(%s) over (partition by `%s` order by %s) as `%s` from (%s)",
+                            selectSQL,
+                            aggregateString,
+                            childContext.getRowIdField(),
+                            sortingColumns.entrySet().stream()
+                                    .map(
+                                            entry ->
+                                                    String.format(
+                                                            "`%s` %s",
+                                                            entry.getKey(),
+                                                            entry.getValue() ? "desc" : "asc"))
+                                    .collect(Collectors.joining(",")),
+                            variableName,
+                            childContext.getView());
         } else {
-            resultingQuery = String.format(
-                "select %s 1 as `%s` from (%s)",
-                selectSQL,
-                variableName,
-                childContext.getView()
-            );
+            resultingQuery =
+                    String.format(
+                            "select %s 1 as `%s` from (%s)",
+                            selectSQL, variableName, childContext.getView());
         }
         childContext.setSchema(
-            ((StructType) childContext.getSchema()).add(
-                variableName,
-                DataTypes.IntegerType
-            )
-        );
+                ((StructType) childContext.getSchema()).add(variableName, DataTypes.IntegerType));
         childContext.setView(resultingQuery);
         return new NativeClauseContext(childContext, null, null);
     }

@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,19 +32,11 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
-import java.io.Serial;
-import java.util.List;
-
 public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial private static final long serialVersionUID = 1L;
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    public ExactlyOneIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ExactlyOneIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -52,16 +47,13 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
             if (value == null) {
                 throw new SequenceExceptionExactlyOne(
                         "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                        getMetadata()
-                );
-
+                        getMetadata());
             }
             return value;
         } catch (MoreThanOneItemException e) {
             throw new SequenceExceptionExactlyOne(
                     "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                    getMetadata()
-            );
+                    getMetadata());
         }
     }
 
@@ -69,5 +61,4 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return this.getChild(0).generateNativeQuery(nativeClauseContext);
     }
-
 }

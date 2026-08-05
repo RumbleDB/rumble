@@ -1,5 +1,11 @@
 package org.rumbledb.runtime.scripting.control;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -9,15 +15,8 @@ import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
 public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
@@ -28,16 +27,16 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
             RuntimeIterator testField,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.of(
-                Stream.of(testField),
-                cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator),
-                Stream.of(defaultCase.getReturnIterator())
-            ).flatMap(Function.identity()).toList(),
-            staticContext
-        );
+                Stream.of(
+                                Stream.of(testField),
+                                cases.stream()
+                                        .map(TypeswitchRuntimeIteratorCase::getReturnIterator),
+                                Stream.of(defaultCase.getReturnIterator()))
+                        .flatMap(Function.identity())
+                        .toList(),
+                staticContext);
         this.testField = testField;
         this.cases = cases;
         this.defaultCase = defaultCase;
@@ -54,17 +53,19 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
 
     private void initializeIterator() {
 
-        this.testValue = this.testField.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.testValue =
+                this.testField.materializeFirstItemOrNull(
+                        this.currentDynamicContextForLocalExecution);
 
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
             this.matchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
             if (this.matchingIterator != null) {
                 if (typeSwitchCase.getVariableName() != null) {
-                    this.currentDynamicContextForLocalExecution.getVariableValues()
-                        .addVariableValue(
-                            typeSwitchCase.getVariableName(),
-                            Collections.singletonList(this.testValue)
-                        );
+                    this.currentDynamicContextForLocalExecution
+                            .getVariableValues()
+                            .addVariableValue(
+                                    typeSwitchCase.getVariableName(),
+                                    Collections.singletonList(this.testValue));
                 }
                 break;
             }
@@ -72,26 +73,26 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
 
         if (this.matchingIterator == null) {
             if (this.defaultCase.getVariableName() != null) {
-                this.currentDynamicContextForLocalExecution.getVariableValues()
-                    .addVariableValue(
-                        this.defaultCase.getVariableName(),
-                        Collections.singletonList(this.testValue)
-                    );
+                this.currentDynamicContextForLocalExecution
+                        .getVariableValues()
+                        .addVariableValue(
+                                this.defaultCase.getVariableName(),
+                                Collections.singletonList(this.testValue));
             }
             this.matchingIterator = this.defaultCase.getReturnIterator();
         }
     }
 
-    private RuntimeIterator testTypeMatchAndReturnCorrespondingIterator(TypeswitchRuntimeIteratorCase typeSwitchCase) {
+    private RuntimeIterator testTypeMatchAndReturnCorrespondingIterator(
+            TypeswitchRuntimeIteratorCase typeSwitchCase) {
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
             for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
                 if (this.testValue == null && sequenceType.isEmptySequence()) {
                     return typeSwitchCase.getReturnIterator();
                 }
-                if (
-                    this.testValue != null
-                        && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), this.testValue)
-                ) {
+                if (this.testValue != null
+                        && InstanceOfIterator.doesItemTypeMatchItem(
+                                sequenceType.getItemType(), this.testValue)) {
                     return typeSwitchCase.getReturnIterator();
                 }
             }

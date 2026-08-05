@@ -1,6 +1,11 @@
 package org.rumbledb.runtime.functions.base;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -19,20 +24,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class ApplyFunctionIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private RuntimeIterator delegate;
     private Item nextResult;
 
     public ApplyFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -52,9 +50,7 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
     protected Item nextLocal() {
         if (!this.hasNext) {
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "in fn:apply",
-                    getMetadata()
-            );
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "in fn:apply", getMetadata());
         }
         Item result = this.nextResult;
         setNextResult();
@@ -92,25 +88,23 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:apply expects exactly one function item and exactly one array item.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        RuntimeStaticContext localItemStarContext = this.staticContext
-            .toBuilder()
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .build();
+        RuntimeStaticContext localItemStarContext =
+                this.staticContext.toBuilder()
+                        .staticType(SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .build();
 
         if (functionItem.getParameterNames().size() != argumentsArray.getSize()) {
             throw new RumbleException(
                     "fn:apply called with a function of arity "
-                        + functionItem.getParameterNames().size()
-                        + " and an array of size "
-                        + argumentsArray.getSize()
-                        + ".",
+                            + functionItem.getParameterNames().size()
+                            + " and an array of size "
+                            + argumentsArray.getSize()
+                            + ".",
                     ErrorCode.ApplyFunctionArityMismatch,
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         List<RuntimeIterator> argumentIterators = new ArrayList<>();
@@ -118,25 +112,19 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
             argumentIterators.add(buildArgumentIterator(memberSequence, localItemStarContext));
         }
 
-        RuntimeIterator functionItemIterator = new ConstantRuntimeIterator(
-                functionItem,
-                this.staticContext
-                    .toBuilder()
-                    .staticType(SequenceType.createSequenceType("function(*)"))
-                    .executionMode(ExecutionMode.LOCAL)
-                    .build()
-        );
+        RuntimeIterator functionItemIterator =
+                new ConstantRuntimeIterator(
+                        functionItem,
+                        this.staticContext.toBuilder()
+                                .staticType(SequenceType.createSequenceType("function(*)"))
+                                .executionMode(ExecutionMode.LOCAL)
+                                .build());
         return new DynamicFunctionCallIterator(
-                functionItemIterator,
-                argumentIterators,
-                this.staticContext
-        );
+                functionItemIterator, argumentIterators, this.staticContext);
     }
 
     private RuntimeIterator buildArgumentIterator(
-            List<Item> memberSequence,
-            RuntimeStaticContext localItemStarContext
-    ) {
+            List<Item> memberSequence, RuntimeStaticContext localItemStarContext) {
         if (memberSequence.isEmpty()) {
             return new EmptySequenceIterator(localItemStarContext);
         }

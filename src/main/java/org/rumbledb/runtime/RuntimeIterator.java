@@ -25,9 +25,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.apache.spark.api.java.JavaRDD;
+
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -54,21 +56,20 @@ import org.rumbledb.types.SequenceType;
 public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
-    @Getter
-    protected transient boolean isOpen;
+    @Getter protected transient boolean isOpen;
     private List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
 
-    protected RuntimeIterator(List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
+    protected RuntimeIterator(
+            List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
         if (this.staticContext.getStaticType() == null) {
             throw new OurBadException(
-                    "Runtime iterator created without a static type! " + this.getClass().getCanonicalName()
-            );
+                    "Runtime iterator created without a static type! "
+                            + this.getClass().getCanonicalName());
         }
         this.isOpen = false;
 
@@ -77,19 +78,19 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
 
     /**
      * This function calculates the effective boolean value of the sequence given by iterator.
-     * Non-empty objects and arrays always return true.
-     * Empty sequence returns false.
-     * Singleton atomic values are evaluated to their effective boolean value.
-     * Multiple atomic values throw an exception.
+     * Non-empty objects and arrays always return true. Empty sequence returns false. Singleton
+     * atomic values are evaluated to their effective boolean value. Multiple atomic values throw an
+     * exception.
      *
-     * If the sequence is a single numeric item and a non-null position is supplied, then instead
+     * <p>If the sequence is a single numeric item and a non-null position is supplied, then instead
      * it is checked whether the numeric item is equal to the position.
      *
      * @param dynamicContext the dynamic context
      * @param position the context position, or null if none
      * @return the effective boolean value.
      */
-    public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
+    public boolean getEffectiveBooleanValueOrCheckPosition(
+            DynamicContext dynamicContext, Item position) {
         try {
             open(dynamicContext);
             if (hasNext()) {
@@ -111,20 +112,21 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
                             result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
                         } else {
                             throw new OurBadException(
-                                    "Unexpected numeric type found while calculating effective boolean value."
-                            );
+                                    "Unexpected numeric type found while calculating effective boolean value.");
                         }
                     } else {
-                        result = ComparisonIterator.compareItems(
-                            item,
-                            position,
-                            ComparisonOperator.VC_EQ,
-                            getMetadata()
-                        ) == 0;
+                        result =
+                                ComparisonIterator.compareItems(
+                                                item,
+                                                position,
+                                                ComparisonOperator.VC_EQ,
+                                                getMetadata())
+                                        == 0;
                     }
                 } else if (item.isNull()) {
                     result = false;
-                } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
+                } else if (item.getDynamicType()
+                        .canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                     result = !item.getStringValue().isEmpty();
                 } else if (item.isNode()) {
                     // returns true even if sequence has more items according to spec
@@ -137,28 +139,24 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
                     } else {
                         if (item.isObject() || item.isArray()) {
                             System.err.println(
-                                "Note: effective boolean value of "
-                                    + (item.isObject() ? "Object " : "Array ")
-                                    + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
-                            );
+                                    "Note: effective boolean value of "
+                                            + (item.isObject() ? "Object " : "Array ")
+                                            + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option");
                         }
                     }
                     throw new InvalidArgumentTypeException(
                             "Effective boolean value not defined for items of type "
-                                +
-                                item.getDynamicType().toString(),
-                            getMetadata()
-                    );
+                                    + item.getDynamicType().toString(),
+                            getMetadata());
                 }
 
                 if (hasNext()) {
                     throw new InvalidArgumentTypeException(
                             "Effective boolean value not defined for sequences of more than one atomic item. "
-                                + "Sequence containing: "
-                                + item.serialize()
-                                + " must be a singleton.",
-                            getMetadata()
-                    );
+                                    + "Sequence containing: "
+                                    + item.serialize()
+                                    + " must be a singleton.",
+                            getMetadata());
                 }
 
                 return result;
@@ -172,10 +170,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
 
     /**
      * This function calculates the effective boolean value of the sequence given by iterator.
-     * Non-empty objects and arrays always return true.
-     * Empty sequence returns false.
-     * Singleton atomic values are evaluated to their effective boolean value.
-     * Multiple atomic values throw an exception.
+     * Non-empty objects and arrays always return true. Empty sequence returns false. Singleton
+     * atomic values are evaluated to their effective boolean value. Multiple atomic values throw an
+     * exception.
      *
      * @param dynamicContext the dynamic context
      * @return the effective boolean value.
@@ -188,12 +185,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     public void open(DynamicContext context) {
         if (context == null) {
             throw new IteratorFlowException(
-                    "No dynamic context was provided when opening an interator.",
-                    getMetadata()
-            );
+                    "No dynamic context was provided when opening an interator.", getMetadata());
         }
         if (this.isOpen) {
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice.", getMetadata());
+            throw new IteratorFlowException(
+                    "Runtime iterator cannot be opened twice.", getMetadata());
         }
         this.isOpen = true;
         this.hasNext = true;
@@ -204,8 +200,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     public void close() {
         this.isOpen = false;
     }
-
-
 
     @Override
     public boolean hasNext() {
@@ -242,7 +236,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
 
     public boolean isRDDOrDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
-            throw new OurBadException("isRDDorDataFrame field in iterator without execution mode being set.");
+            throw new OurBadException(
+                    "isRDDorDataFrame field in iterator without execution mode being set.");
         }
         return this.staticContext.getExecutionMode().isRDDOrDataFrame();
     }
@@ -256,7 +251,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
 
     public boolean isLocal() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
-            throw new OurBadException("isLocal field in iterator without execution mode being set.");
+            throw new OurBadException(
+                    "isLocal field in iterator without execution mode being set.");
         }
         return this.staticContext.getExecutionMode().isLocal();
     }
@@ -264,42 +260,44 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     public JavaRDD<Item> getRDD(DynamicContext context) {
         throw new OurBadException(
                 "RDDs are not implemented for the iterator " + getClass().getCanonicalName(),
-                getMetadata()
-        );
+                getMetadata());
     }
 
     /**
      * Checks whether this iterator natively produces DataFrames.
-     * 
+     *
      * @return true if it does, false otherwise.
      */
     public boolean isDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
-            throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
+            throw new OurBadException(
+                    "isDataFrame accessed in iterator without execution mode being set.");
         }
         return this.staticContext.getExecutionMode().isDataFrame();
     }
 
     /**
      * Checks whether this iterator can produce valid DataFrames with no error (natively or not).
-     * 
+     *
      * @return true if it can, false otherwise.
      */
     public boolean canProduceDataFrame() {
         return isDataFrame()
-            || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
+                || this.getStaticType()
+                        .getItemType()
+                        .isCompatibleWithDataFrames(this.getConfiguration());
     }
 
     public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         throw new OurBadException(
                 "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
-                getMetadata()
-        );
+                getMetadata());
     }
 
     /**
-     * Gets the output as a DataFrame. If necessary and possible, forcibly converts the items to a DataFrame.
-     * 
+     * Gets the output as a DataFrame. If necessary and possible, forcibly converts the items to a
+     * DataFrame.
+     *
      * @return the DataFrame.
      */
     public final RuntimeDataFrame<Item> getOrCreateDataFrame(DynamicContext context) {
@@ -307,9 +305,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
             return this.getDataFrame(context);
         }
         if (isRDD()) {
-            return ItemRuntimeDataFrameFactory.INSTANCE.fromRDD(this.getRDD(context), context, this.staticContext);
+            return ItemRuntimeDataFrameFactory.INSTANCE.fromRDD(
+                    this.getRDD(context), context, this.staticContext);
         }
-        return ItemRuntimeDataFrameFactory.INSTANCE.fromList(this.materialize(context), context, this.staticContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromList(
+                this.materialize(context), context, this.staticContext);
     }
 
     public boolean isUpdating() {
@@ -318,9 +318,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
 
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         throw new OurBadException(
-                "Pending Update Lists are not implemented for the iterator " + getClass().getCanonicalName(),
-                getMetadata()
-        );
+                "Pending Update Lists are not implemented for the iterator "
+                        + getClass().getCanonicalName(),
+                getMetadata());
     }
 
     public boolean isSequential() {
@@ -345,9 +345,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
 
     /**
      * Materialize the items of the iterator into the result list.
-     * 
+     *
      * @param context the dynamic context
-     * @param result the list to materialize the items into. The list is cleared before the materialization.
+     * @param result the list to materialize the items into. The list is cleared before the
+     *     materialization.
      */
     public void materialize(DynamicContext context, List<Item> result) {
         result.clear();
@@ -375,9 +376,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         }
     }
 
-    public Item materializeFirstItemOrNull(
-            DynamicContext context
-    ) {
+    public Item materializeFirstItemOrNull(DynamicContext context) {
         try {
             this.open(context);
             return this.hasNext() ? this.next() : null;
@@ -386,11 +385,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         }
     }
 
-    public Item materializeExactlyOneItem(
-            DynamicContext context
-    )
-            throws NoItemException,
-                MoreThanOneItemException {
+    public Item materializeExactlyOneItem(DynamicContext context)
+            throws NoItemException, MoreThanOneItemException {
         try {
             this.open(context);
             if (!this.hasNext()) {
@@ -406,9 +402,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         }
     }
 
-    public Item materializeAtMostOneItemOrNull(
-            DynamicContext context
-    )
+    public Item materializeAtMostOneItemOrNull(DynamicContext context)
             throws MoreThanOneItemException {
         try {
             this.open(context);
@@ -425,10 +419,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         }
     }
 
-    public Item materializeAtMostOneItemOrDefault(
-            DynamicContext context,
-            Item item
-    )
+    public Item materializeAtMostOneItemOrDefault(DynamicContext context, Item item)
             throws MoreThanOneItemException {
         Item result = materializeAtMostOneItemOrNull(context);
         if (result == null) {
@@ -439,8 +430,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>();
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (RuntimeIterator iterator : this.children) {
             DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
         }
@@ -474,16 +464,19 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     }
 
     public void bindToVariableInDynamicContext(
-            DynamicContext targetContext,
-            Name variable,
-            DynamicContext executionContext
-    ) {
+            DynamicContext targetContext, Name variable, DynamicContext executionContext) {
         if (this.isDataFrame()) {
-            targetContext.getVariableValues().addVariableValue(variable, this.getDataFrame(executionContext));
+            targetContext
+                    .getVariableValues()
+                    .addVariableValue(variable, this.getDataFrame(executionContext));
         } else if (this.isRDDOrDataFrame()) {
-            targetContext.getVariableValues().addVariableValue(variable, this.getRDD(executionContext));
+            targetContext
+                    .getVariableValues()
+                    .addVariableValue(variable, this.getRDD(executionContext));
         } else {
-            targetContext.getVariableValues().addVariableValue(variable, this.materialize(executionContext));
+            targetContext
+                    .getVariableValues()
+                    .addVariableValue(variable, this.materialize(executionContext));
         }
     }
 
@@ -498,20 +491,20 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
             ObjectInputStream ois = new ObjectInputStream(bis);
             return (RuntimeIterator) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            RumbleException rumbleException = new OurBadException(
-                    "Error while deep copying the function body runtimeIterator"
-            );
+            RumbleException rumbleException =
+                    new OurBadException(
+                            "Error while deep copying the function body runtimeIterator");
             rumbleException.initCause(e);
             throw rumbleException;
         }
     }
 
     /**
-     * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
+     * This function generate (if possible) a native spark-sql query that maps the inner working of
+     * the iterator
      *
-     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or
-     *         [NativeClauseContext.NoNativeQuery] if
-     *         it is not possible
+     * @return a native clause context with the spark-sql native query to get an equivalent result
+     *     of the iterator, or [NativeClauseContext.NoNativeQuery] if it is not possible
      * @param nativeClauseContext context information to generate the native query
      */
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {

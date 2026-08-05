@@ -2,6 +2,8 @@ package org.rumbledb.runtime.functions.datetime;
 
 import java.io.Serial;
 import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -11,15 +13,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.time.OffsetTime;
-import java.util.List;
-
 public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    public DateTimeFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public DateTimeFunctionIterator(
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -36,13 +35,13 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
         if (dateItem.hasTimeZone() && timeItem.hasTimeZone()) {
             if (dateDt.getOffset() == timeDt.getOffset()) {
-                dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
+                dt =
+                        OffsetDateTime.of(
+                                dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
                 return ItemFactory.getInstance().createDateTimeItem(dt, true);
             } else {
                 throw new InconsistentTimezonesException(
-                        "The two arguments have inconsistent timezones",
-                        getMetadata()
-                );
+                        "The two arguments have inconsistent timezones", getMetadata());
             }
         } else if (dateItem.hasTimeZone() && !timeItem.hasTimeZone()) {
             dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());

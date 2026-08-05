@@ -29,12 +29,11 @@ import org.rumbledb.items.ItemFactory;
  */
 public final class AtomicDeepEqual {
 
-    private AtomicDeepEqual() {
-    }
+    private AtomicDeepEqual() {}
 
     /**
-     * Deep equality for individual items when neither side is an array or node
-     * (NaN float/double pairs compare equal, as required by FO 3.1).
+     * Deep equality for individual items when neither side is an array or node (NaN float/double
+     * pairs compare equal, as required by FO 3.1).
      */
     public static boolean deepEqual(Item item1, Item item2) {
         if (bothFloatOrDoubleNaN(item1, item2)) {
@@ -46,21 +45,20 @@ public final class AtomicDeepEqual {
         if (item2.isUntypedAtomic()) {
             item2 = ItemFactory.getInstance().createStringItem(item2.getStringValue());
         }
-        long comparison = ComparisonIterator.compareItems(
-            item1,
-            item2,
-            ComparisonOperator.VC_EQ,
-            ExceptionMetadata.EMPTY_METADATA
-        );
+        long comparison =
+                ComparisonIterator.compareItems(
+                        item1, item2, ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
         // The low-level comparator reports non-comparable types with Long.MIN_VALUE.
         return comparison != Long.MIN_VALUE && comparison == 0;
     }
 
     private static boolean bothFloatOrDoubleNaN(Item item1, Item item2) {
-        boolean n1 = (item1.isFloat() && Float.isNaN(item1.getFloatValue()))
-            || (item1.isDouble() && Double.isNaN(item1.getDoubleValue()));
-        boolean n2 = (item2.isFloat() && Float.isNaN(item2.getFloatValue()))
-            || (item2.isDouble() && Double.isNaN(item2.getDoubleValue()));
+        boolean n1 =
+                (item1.isFloat() && Float.isNaN(item1.getFloatValue()))
+                        || (item1.isDouble() && Double.isNaN(item1.getDoubleValue()));
+        boolean n2 =
+                (item2.isFloat() && Float.isNaN(item2.getFloatValue()))
+                        || (item2.isDouble() && Double.isNaN(item2.getDoubleValue()));
         return n1 && n2;
     }
 }

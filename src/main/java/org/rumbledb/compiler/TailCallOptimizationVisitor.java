@@ -12,13 +12,13 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
 
     @Override
     public Node visitFunctionDeclaration(FunctionDeclaration expression, Node argument) {
-        FunctionDeclaration fd = new FunctionDeclaration(
-                (InlineFunctionExpression) visit(expression.getExpression(), argument),
-                expression.getMetadata()
-        );
+        FunctionDeclaration fd =
+                new FunctionDeclaration(
+                        (InlineFunctionExpression) visit(expression.getExpression(), argument),
+                        expression.getMetadata());
 
         InlineFunctionExpression inlineFunctionExpression =
-            (InlineFunctionExpression) fd.getExpression();
+                (InlineFunctionExpression) fd.getExpression();
 
         Expression body = inlineFunctionExpression.getBody().getExpression();
 
@@ -34,7 +34,8 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
 
         if (expression instanceof FunctionCallExpression functionCall) {
             if (isTailRecursiveCall(functionCall, fd)) {
-                // System.err.println("Set tail call optimization for function " + fd.getFunctionIdentifier());
+                // System.err.println("Set tail call optimization for function " +
+                // fd.getFunctionIdentifier());
                 functionCall.setTailCallOptimization(true);
             }
 
@@ -47,9 +48,10 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
         }
     }
 
-    private boolean isTailRecursiveCall(FunctionCallExpression functionCall, FunctionIdentifier fd) {
+    private boolean isTailRecursiveCall(
+            FunctionCallExpression functionCall, FunctionIdentifier fd) {
         return functionCall.getFunctionIdentifier().equals(fd)
-            && functionCall.getArguments().size() == fd.getArity()
-            && !functionCall.isPartialApplication();
+                && functionCall.getArguments().size() == fd.getArity()
+                && !functionCall.isPartialApplication();
     }
 }

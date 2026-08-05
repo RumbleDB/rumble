@@ -24,27 +24,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * An expression representing a text node, as part of a direct element constructor content.
- * 
- * @see <a href="https://www.w3.org/TR/xquery-31/#id-element-constructor">XQuery 3.1, 3.9.1: Direct Element
- *      Constructors</a>
+ *
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-element-constructor">XQuery 3.1, 3.9.1: Direct
+ *     Element Constructors</a>
  */
 @Getter
 public class TextNodeExpression extends Expression {
 
     /** The content of the text node */
     private final String content;
+
     private final boolean boundaryWhitespace;
 
     /**
      * Constructor for a text node.
-     * 
+     *
      * @param content The content of the text node
      * @param metadata The exception metadata
      */
@@ -52,7 +54,8 @@ public class TextNodeExpression extends Expression {
         this(content, metadata, false);
     }
 
-    public TextNodeExpression(String content, ExceptionMetadata metadata, boolean boundaryWhitespace) {
+    public TextNodeExpression(
+            String content, ExceptionMetadata metadata, boolean boundaryWhitespace) {
         super(metadata);
         this.content = content;
         this.boundaryWhitespace = boundaryWhitespace;

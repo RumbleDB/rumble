@@ -19,7 +19,9 @@ package iq.base;
 
 import org.apache.spark.SparkConf;
 import org.junit.jupiter.api.BeforeAll;
+
 import scala.util.Properties;
+
 import org.rumbledb.spark.SparkSessionManager;
 
 public abstract class SparkAnnotationsTestsBase extends AnnotationsTestsBase {
@@ -28,7 +30,8 @@ public abstract class SparkAnnotationsTestsBase extends AnnotationsTestsBase {
     final void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + System.getProperty("java.version"));
-        System.err.println("Scala version: " + Properties.scalaPropOrElse("version.number", () -> "unknown"));
+        System.err.println(
+                "Scala version: " + Properties.scalaPropOrElse("version.number", () -> "unknown"));
 
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
@@ -40,8 +43,11 @@ public abstract class SparkAnnotationsTestsBase extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.log.level", "ERROR");
         configureSpark(sparkConfiguration);
 
-        SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
+        SparkSessionManager.getInstance()
+                .initializeConfigurationAndSession(sparkConfiguration, true);
+        System.err.println(
+                "Spark version: "
+                        + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     protected void configureSpark(SparkConf sparkConfiguration) {

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -17,8 +18,7 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class TransformExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final Map<Name, RuntimeIterator> copyDeclMap;
     private final RuntimeIterator modifyIterator;
     private final RuntimeIterator returnIterator;
@@ -32,15 +32,13 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator returnIterator,
             RuntimeStaticContext staticContext,
             int mutabilityLevel,
-            boolean resultMutable
-    ) {
+            boolean resultMutable) {
         super(
-            Stream.concat(
-                copyDeclMap.values().stream(),
-                Stream.of(modifyIterator, returnIterator)
-            ).toList(),
-            staticContext.toBuilder().isUpdating(false).build()
-        );
+                Stream.concat(
+                                copyDeclMap.values().stream(),
+                                Stream.of(modifyIterator, returnIterator))
+                        .toList(),
+                staticContext.toBuilder().isUpdating(false).build());
 
         this.copyDeclMap = copyDeclMap;
         this.modifyIterator = modifyIterator;
@@ -80,7 +78,8 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     protected Item nextLocal() {
         Item result = this.returnIterator.next();
         if (this.mutable) {
-            result.setMutabilityLevel(this.currentDynamicContextForLocalExecution.getCurrentMutabilityLevel());
+            result.setMutabilityLevel(
+                    this.currentDynamicContextForLocalExecution.getCurrentMutabilityLevel());
         }
         return result;
     }
@@ -109,5 +108,4 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             context.getVariableValues().addVariableValue(copyVar, copy);
         }
     }
-
 }

@@ -13,13 +13,12 @@ public class Profiler {
 
     public static void increase() {
         ++counter;
-        String stackTrace = String.join(
-            "\n",
-            Arrays.asList(Thread.currentThread().getStackTrace())
-                .stream()
-                .map(x -> x.toString())
-                .collect(Collectors.toList())
-        );
+        String stackTrace =
+                String.join(
+                        "\n",
+                        Arrays.asList(Thread.currentThread().getStackTrace()).stream()
+                                .map(x -> x.toString())
+                                .collect(Collectors.toList()));
         if (!stacks.containsKey(stackTrace)) {
             stacks.put(stackTrace, 1);
         } else {
@@ -35,8 +34,7 @@ public class Profiler {
         int total = 0;
         for (String key : stacks.keySet()) {
             total += stacks.get(key);
-            if (stacks.get(key) != max)
-                continue;
+            if (stacks.get(key) != max) continue;
             System.err.println("Occurrences: " + stacks.get(key));
             System.err.println(key);
             System.err.println();
@@ -45,5 +43,4 @@ public class Profiler {
         System.err.println("Total: " + total);
         return counter;
     }
-
 }

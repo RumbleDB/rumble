@@ -20,6 +20,13 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -28,35 +35,25 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 /**
- * Unary lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
- * per XPath and XQuery Functions 3.1.
+ * Unary lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001 per XPath
+ * and XQuery Functions 3.1.
  */
 public class UnaryLookupIterator extends LocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator lookupIterator;
     private List<Item> lookupKeys;
     private List<Item> contextItem;
     private final Queue<Item> nextResult;
     private final boolean wildcard;
 
-    public UnaryLookupIterator(
-            RuntimeIterator lookupIterator,
-            RuntimeStaticContext staticContext
-    ) {
+    public UnaryLookupIterator(RuntimeIterator lookupIterator, RuntimeStaticContext staticContext) {
         super(
-            (lookupIterator != null) ? Collections.singletonList(lookupIterator) : new ArrayList<>(),
-            staticContext
-        );
+                (lookupIterator != null)
+                        ? Collections.singletonList(lookupIterator)
+                        : new ArrayList<>(),
+                staticContext);
         this.nextResult = new LinkedList<>();
         this.lookupIterator = lookupIterator;
         this.wildcard = this.lookupIterator == null;
@@ -66,10 +63,11 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
     public void open(DynamicContext context) {
         super.open(context);
         this.hasNext = true;
-        this.contextItem = this.currentDynamicContextForLocalExecution.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-        if (!this.wildcard)
-            this.lookupKeys = this.lookupIterator.materialize(context);
+        this.contextItem =
+                this.currentDynamicContextForLocalExecution
+                        .getVariableValues()
+                        .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+        if (!this.wildcard) this.lookupKeys = this.lookupIterator.materialize(context);
 
         for (Item item : this.contextItem) {
             if (item.isMap()) {
@@ -88,8 +86,7 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
                             throw new UnexpectedTypeException(
                                     "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
-                                    getMetadata()
-                            );
+                                    getMetadata());
                         }
                         Item key = atomized.get(0);
                         if (item.isObject()) {
@@ -120,8 +117,7 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                         if (key.isString()) {
                             throw new UnexpectedTypeException(
                                     "Type error; Lookup with String on Arrays is not possible",
-                                    getMetadata()
-                            );
+                                    getMetadata());
                         }
                         if (key.isNumeric()) {
                             int idx = key.castToIntValue() - 1;
@@ -137,10 +133,9 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
             } else {
                 throw new UnexpectedTypeException(
                         "Type error; Lookup is only possible on Maps and Arrays, "
-                            + item.getDynamicType().toString()
-                            + " detected instead",
-                        getMetadata()
-                );
+                                + item.getDynamicType().toString()
+                                + " detected instead",
+                        getMetadata());
             }
         }
         this.hasNext = !this.nextResult.isEmpty();

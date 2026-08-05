@@ -20,9 +20,23 @@
 
 package org.rumbledb.items.parsing;
 
-import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
+import java.io.IOException;
+import java.io.StringReader;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.linalg.SparseVector;
@@ -35,8 +49,17 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import java.time.ZoneId;
-import java.time.OffsetDateTime;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import scala.collection.Iterator;
+import scala.collection.immutable.ArraySeq;
+
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidJSONException;
@@ -44,33 +67,12 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-
 import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import scala.collection.immutable.ArraySeq;
-import scala.collection.Iterator;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Collections;
-import java.util.Set;
 
 public class ItemParser {
 
@@ -82,7 +84,8 @@ public class ItemParser {
      * @return the parsed item.
      */
     @Deprecated
-    public static Item getItemFromString(String string, ExceptionMetadata metadata, boolean mutable) {
+    public static Item getItemFromString(
+            String string, ExceptionMetadata metadata, boolean mutable) {
         string = "[ " + string + " ]";
         JsonReader object = new JsonReader(new StringReader(string));
         Item arrayItem = ItemParser.parseOptionlessJSON(object, metadata, mutable);
@@ -97,18 +100,20 @@ public class ItemParser {
             JSONParsingOptions options,
             String xmlVersion,
             boolean isJSONiq10,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         return JSONParser.parse(string, options, xmlVersion, isJSONiq10, metadata);
     }
 
     /**
-     * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, String, ExceptionMetadata, boolean)}
-     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
+     * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, String, ExceptionMetadata,
+     *     boolean)} instead. This method is kept for backward compatibility and defaults to JSONiq
+     *     mode.
      */
     @Deprecated
-    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
-        return getItemFromObject(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
+    public static Item getItemFromObject(
+            JsonReader object, ExceptionMetadata metadata, boolean mutable) {
+        return getItemFromObject(
+                object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
     }
 
     /**
@@ -123,8 +128,7 @@ public class ItemParser {
             boolean isJSONiq10,
             String numberFormat,
             ExceptionMetadata metadata,
-            boolean mutable
-    ) {
+            boolean mutable) {
         try {
             Item result = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata, mutable);
             object.peek();
@@ -137,12 +141,15 @@ public class ItemParser {
     }
 
     /**
-     * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, String, ExceptionMetadata, boolean)}
-     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
+     * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, String, ExceptionMetadata,
+     *     boolean)} instead. This method is kept for backward compatibility and defaults to JSONiq
+     *     mode.
      */
     @Deprecated
-    public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
-        return parseOptionlessJSON(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
+    public static Item parseOptionlessJSON(
+            JsonReader object, ExceptionMetadata metadata, boolean mutable) {
+        return parseOptionlessJSON(
+                object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
     }
 
     /**
@@ -151,15 +158,13 @@ public class ItemParser {
      * @param object the JSON reader.
      * @param metadata exception metadata is an error is thrown.
      * @return the parsed item.
-     *
      */
     public static Item parseOptionlessJSON(
             JsonReader object,
             boolean isJSONiq10,
             String numberFormat,
             ExceptionMetadata metadata,
-            boolean mutable
-    ) {
+            boolean mutable) {
         try {
             if (object.peek() == JsonToken.STRING) {
                 return ItemFactory.getInstance().createStringItem(object.nextString());
@@ -180,7 +185,9 @@ public class ItemParser {
 
                 object.beginArray();
                 while (object.hasNext()) {
-                    Item value = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata, mutable);
+                    Item value =
+                            parseOptionlessJSON(
+                                    object, isJSONiq10, numberFormat, metadata, mutable);
 
                     if (value == null) {
                         containsJavaNull = true;
@@ -222,7 +229,9 @@ public class ItemParser {
                         continue;
                     }
 
-                    Item value = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata, mutable);
+                    Item value =
+                            parseOptionlessJSON(
+                                    object, isJSONiq10, numberFormat, metadata, mutable);
 
                     if (value == null) {
                         containsJavaNull = true;
@@ -235,7 +244,8 @@ public class ItemParser {
                 object.endObject();
 
                 if (!containsJavaNull) {
-                    return ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
+                    return ItemFactory.getInstance()
+                            .createObjectItem(keys, values, metadata, false);
                 }
 
                 List<Item> mapKeys = new ArrayList<>();
@@ -266,26 +276,27 @@ public class ItemParser {
                 return null;
             }
 
-            throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
+            throw new ParsingException(
+                    "Invalid value found while parsing. JSON is not well-formed!", metadata);
         } catch (Exception e) {
-            RumbleException r = new ParsingException(
-                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-lines(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
-                    metadata
-            );
+            RumbleException r =
+                    new ParsingException(
+                            "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-lines(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                            metadata);
             r.initCause(e);
             throw r;
         }
     }
 
     /**
-     * Returns the appropriate numeric Item for a JSON number.
-     * Since XQuery 4.0 introduces the `number-format` option for `json-doc` and `parse-json`,
-     * the returned Item type depends on the resolved number format.
+     * Returns the appropriate numeric Item for a JSON number. Since XQuery 4.0 introduces the
+     * `number-format` option for `json-doc` and `parse-json`, the returned Item type depends on the
+     * resolved number format.
      *
      * @param number the JSON number as a string
      * @param numberFormat the resolved number-format option from the JSON parsing options
-     * @return a DoubleItem or DecimalItem if explicitly requested; if the format is adaptive,
-     *         the method returns the most appropriate numeric Item based on the input value
+     * @return a DoubleItem or DecimalItem if explicitly requested; if the format is adaptive, the
+     *     method returns the most appropriate numeric Item based on the input value
      */
     static Item getItemFromJSONNumber(String number, String numberFormat) {
         return JSONLiteralParsingUtils.getItemFromJSONNumber(number, numberFormat);
@@ -293,7 +304,7 @@ public class ItemParser {
 
     /**
      * Parses a JSON string, accessible via a reader, to an item.
-     * 
+     *
      * @param parser the YAML parser.
      * @param lookahead the lookahead token.
      * @param metadata exception metadata is an error is thrown.
@@ -302,8 +313,7 @@ public class ItemParser {
     public static Item getItemFromYAML(
             YAMLParser parser,
             com.fasterxml.jackson.core.JsonToken lookahead,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         try {
             if (lookahead == null) {
                 // System.err.println("End of file.");
@@ -368,29 +378,29 @@ public class ItemParser {
                     // System.err.println("Next token (reading object): " + nt.toString());
                 }
                 // System.err.println("Finished reading object.");
-                return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, metadata, false);
+                return ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
             }
             if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
                 return ItemFactory.getInstance().createNullItem();
             }
             throw new ParsingException(
-                    "Invalid value found while parsing. YAML is not well-formed! Unexpected " + lookahead.toString(),
-                    metadata
-            );
+                    "Invalid value found while parsing. YAML is not well-formed! Unexpected "
+                            + lookahead.toString(),
+                    metadata);
         } catch (IOException e) {
-            RumbleException r = new ParsingException(
-                    "An error happened while parsing YAML. YAML is not well-formed!",
-                    metadata
-            );
+            RumbleException r =
+                    new ParsingException(
+                            "An error happened while parsing YAML. YAML is not well-formed!",
+                            metadata);
             r.initCause(e);
             throw r;
         }
     }
 
     /**
-     * Check fields columns consistency and return the index of the non-object JSONiq item column if present.
-     * 
+     * Check fields columns consistency and return the index of the non-object JSONiq item column if
+     * present.
+     *
      * @param fieldNames the field names of the DataFrame schema.
      * @return the index of the non-object JSONiq item column if present, -1 otherwise.
      */
@@ -402,17 +412,11 @@ public class ItemParser {
                 result = i;
                 break;
             }
-            if (
-                fieldNames[i].equals(SparkSessionManager.mutabilityLevelColumnName)
-                    ||
-                    fieldNames[i].equals(SparkSessionManager.rowIdColumnName)
-                    ||
-                    fieldNames[i].equals(SparkSessionManager.pathInColumnName)
-                    ||
-                    fieldNames[i].equals(SparkSessionManager.tableLocationColumnName)
-                    ||
-                    fieldNames[i].equals(SparkSessionManager.rowOrderColumnName)
-            ) {
+            if (fieldNames[i].equals(SparkSessionManager.mutabilityLevelColumnName)
+                    || fieldNames[i].equals(SparkSessionManager.rowIdColumnName)
+                    || fieldNames[i].equals(SparkSessionManager.pathInColumnName)
+                    || fieldNames[i].equals(SparkSessionManager.tableLocationColumnName)
+                    || fieldNames[i].equals(SparkSessionManager.rowOrderColumnName)) {
                 continue;
             }
             otherColumnsFound = true;
@@ -420,8 +424,7 @@ public class ItemParser {
 
         if (otherColumnsFound && result != -1) {
             throw new OurBadException(
-                    "The presence of other columns alongside the non-object JSONiq item column is not supported."
-            );
+                    "The presence of other columns alongside the non-object JSONiq item column is not supported.");
         }
 
         return result;
@@ -429,10 +432,11 @@ public class ItemParser {
 
     /**
      * Converts a DataFrame row to an item.
-     * 
+     *
      * @param row the DataFrame row.
      * @param metadata exception metadata is an error is thrown.
-     * @param itemType the type to annotate the output item with (for now, it can be null for no annotation).
+     * @param itemType the type to annotate the output item with (for now, it can be null for no
+     *     annotation).
      * @return the converted item.
      */
     public static Item getItemFromRow(Row row, ExceptionMetadata metadata, ItemType itemType) {
@@ -445,14 +449,14 @@ public class ItemParser {
         // Atomic case
         int nonObjectColumnIndex = findNonObjectColumnIndexAndCheckConsistency(fieldnames);
         if (nonObjectColumnIndex != -1) {
-            Item atomicItem = convertValueToItem(
-                row,
-                nonObjectColumnIndex,
-                null,
-                fields[nonObjectColumnIndex].dataType(),
-                metadata,
-                itemType
-            );
+            Item atomicItem =
+                    convertValueToItem(
+                            row,
+                            nonObjectColumnIndex,
+                            null,
+                            fields[nonObjectColumnIndex].dataType(),
+                            metadata,
+                            itemType);
             int mutabilityLevel = -1;
             long topLevelID = -1;
             String pathIn = "null";
@@ -522,32 +526,27 @@ public class ItemParser {
                 continue;
             }
 
-            if (
-                itemType != null
+            if (itemType != null
                     && itemType.isObjectItemType()
-                    && (itemType.getObjectKeysFacet().size() != 0 || itemType.getClosedFacet())
-            ) {
+                    && (itemType.getObjectKeysFacet().size() != 0 || itemType.getClosedFacet())) {
                 FieldDescriptor descriptor = itemType.getObjectContentFacet(fieldName);
                 if (descriptor != null) {
                     fieldItemType = descriptor.getType();
                     if (fieldItemType == null) {
                         throw new OurBadException(
                                 "Type for field "
-                                    + fieldName
-                                    + " in type "
-                                    + itemType.getIdentifierString()
-                                    + " is null."
-                        );
+                                        + fieldName
+                                        + " in type "
+                                        + itemType.getIdentifierString()
+                                        + " is null.");
                     }
                 }
             }
             Item newItem = convertValueToItem(row, i, null, fieldType, metadata, fieldItemType);
             // NULL values in DataFrames are mapped to absent in JSONiq.
-            if (
-                !newItem.isNull()
+            if (!newItem.isNull()
                     || (!fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
-                        && fieldType.equals(DataTypes.NullType))
-            ) {
+                            && fieldType.equals(DataTypes.NullType))) {
                 // don't return array for single sequence item
                 if (fieldName.endsWith(SparkSessionManager.sequenceColumnName)) {
                     if (newItem.getSize() == 0) {
@@ -557,7 +556,9 @@ public class ItemParser {
                     } else {
                         values.add(newItem);
                     }
-                    keys.add(fieldName.substring(0, fieldName.indexOf(SparkSessionManager.sequenceColumnName)));
+                    keys.add(
+                            fieldName.substring(
+                                    0, fieldName.indexOf(SparkSessionManager.sequenceColumnName)));
                 } else {
                     keys.add(fieldName);
                     values.add(newItem);
@@ -575,11 +576,7 @@ public class ItemParser {
     }
 
     public static Item convertValueToItem(
-            Object o,
-            DataType fieldType,
-            ExceptionMetadata metadata,
-            ItemType itemType
-    ) {
+            Object o, DataType fieldType, ExceptionMetadata metadata, ItemType itemType) {
         return convertValueToItem(null, 0, o, fieldType, metadata, itemType);
     }
 
@@ -590,8 +587,7 @@ public class ItemParser {
             Object o,
             DataType fieldType,
             ExceptionMetadata metadata,
-            ItemType itemType
-    ) {
+            ItemType itemType) {
         if (row != null && row.isNullAt(i)) {
             return ItemFactory.getInstance().createNullItem();
         } else if (fieldType.equals(DataTypes.StringType)) {
@@ -602,11 +598,9 @@ public class ItemParser {
                 s = (String) o;
             }
             Item item = ItemFactory.getInstance().createStringItem(s);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.stringItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -619,11 +613,9 @@ public class ItemParser {
                 b = (Boolean) o;
             }
             Item item = ItemFactory.getInstance().createBooleanItem(b);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.booleanItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -636,11 +628,9 @@ public class ItemParser {
                 value = (Double) o;
             }
             Item item = ItemFactory.getInstance().createDoubleItem(value);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.doubleItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -653,11 +643,9 @@ public class ItemParser {
                 value = (Integer) o;
             }
             Item item = ItemFactory.getInstance().createIntItem(value);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.intItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -670,11 +658,9 @@ public class ItemParser {
                 value = (Float) o;
             }
             Item item = ItemFactory.getInstance().createFloatItem(value);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.floatItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -688,11 +674,9 @@ public class ItemParser {
             }
             BigInteger integerValue = value.toBigIntegerExact();
             Item item = ItemFactory.getInstance().createIntegerItem(integerValue);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.integerItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -705,11 +689,9 @@ public class ItemParser {
                 value = (BigDecimal) o;
             }
             Item item = ItemFactory.getInstance().createDecimalItem(value);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.decimalItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -722,11 +704,9 @@ public class ItemParser {
                 value = ((Long) o).longValue();
             }
             Item item = ItemFactory.getInstance().createLongItem(value);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.longItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -767,11 +747,9 @@ public class ItemParser {
             Instant instant = value.toInstant();
             OffsetDateTime dt = OffsetDateTime.ofInstant(instant, ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateTimeItem(dt, false);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -784,13 +762,12 @@ public class ItemParser {
                 value = (Date) o;
             }
             long instant = value.getTime();
-            OffsetDateTime dt = OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
+            OffsetDateTime dt =
+                    OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateItem(dt, false);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.dateItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -803,11 +780,9 @@ public class ItemParser {
                 value = (byte[]) o;
             }
             Item item = ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value));
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -820,11 +795,9 @@ public class ItemParser {
                 value = (Row) o;
             }
             Item item = getItemFromRow(value, metadata, itemType);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.objectItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -832,7 +805,9 @@ public class ItemParser {
         } else if (fieldType instanceof ArrayType arrayType) {
             DataType dataType = arrayType.elementType();
             ItemType memberType = null;
-            if (itemType != null && itemType.isArrayItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
+            if (itemType != null
+                    && itemType.isArrayItemType()
+                    && !itemType.equals(BuiltinTypesCatalogue.item)) {
                 memberType = itemType.getArrayContentFacet();
             }
             List<Item> members = new ArrayList<>();
@@ -854,11 +829,9 @@ public class ItemParser {
                 }
             }
             Item item = ItemFactory.getInstance().createArrayItem(members, false);
-            if (
-                itemType == null
+            if (itemType == null
                     || itemType.equals(BuiltinTypesCatalogue.arrayItem)
-                    || itemType.getName() == null
-            ) {
+                    || itemType.getName() == null) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -877,37 +850,39 @@ public class ItemParser {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
                 Item item = ItemFactory.getInstance().createArrayItem(members, false);
-                if (
-                    itemType == null
+                if (itemType == null
                         || itemType.equals(BuiltinTypesCatalogue.arrayItem)
-                        || itemType.getName() == null
-                ) {
+                        || itemType.getName() == null) {
                     return item;
                 } else {
                     return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
                 }
             } else if (vector instanceof SparseVector sparseVector) {
-                // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
+                // a sparse vector is mapped to a Rumble object where keys are indices of the non-0
+                // values
+                // in the vector
                 List<String> objectKeyList = new ArrayList<>();
                 List<Item> objectValueList = new ArrayList<>();
                 int[] vectorIndices = sparseVector.indices();
                 double[] vectorValues = sparseVector.values();
                 for (int j = 0; j < vectorIndices.length; j++) {
                     objectKeyList.add(String.valueOf(vectorIndices[j]));
-                    objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
+                    objectValueList.add(
+                            ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
-                Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata, false);
-                if (
-                    itemType == null
+                Item item =
+                        ItemFactory.getInstance()
+                                .createObjectItem(objectKeyList, objectValueList, metadata, false);
+                if (itemType == null
                         || itemType.equals(BuiltinTypesCatalogue.objectItem)
-                        || itemType.getName() == null
-                ) {
+                        || itemType.getName() == null) {
                     return item;
                 } else {
                     return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
                 }
             } else {
-                throw new OurBadException("Unexpected program state reached while converting vectorUDT to rumble item");
+                throw new OurBadException(
+                        "Unexpected program state reached while converting vectorUDT to rumble item");
             }
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
@@ -934,22 +909,27 @@ public class ItemParser {
         return getElementNodeItem(currentNode, path, removeParentPointers);
     }
 
-    private static Item getDocumentNodeItem(Node currentNode, String path, boolean removeParentPointers) {
+    private static Item getDocumentNodeItem(
+            Node currentNode, String path, boolean removeParentPointers) {
         List<Item> children = getChildren(currentNode, path, removeParentPointers);
         Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
-        if (!removeParentPointers)
-            addParentToChildrenAndAttributes(documentItem);
+        if (!removeParentPointers) addParentToChildrenAndAttributes(documentItem);
         documentItem.setXmlDocumentPosition(path, 0);
         return documentItem;
     }
 
-    private static Item getElementNodeItem(Node currentNode, String path, boolean removeParentPointers) {
+    private static Item getElementNodeItem(
+            Node currentNode, String path, boolean removeParentPointers) {
         List<Item> children = getChildren(currentNode, path, removeParentPointers);
         ParsedDomAttributes parsedAttributes = getAttributesAndNamespaces(currentNode);
-        Item elementItem = ItemFactory.getInstance()
-            .createXmlElementNode(currentNode, children, parsedAttributes.attributes, parsedAttributes.namespaces);
-        if (!removeParentPointers)
-            addParentToChildrenAndAttributes(elementItem);
+        Item elementItem =
+                ItemFactory.getInstance()
+                        .createXmlElementNode(
+                                currentNode,
+                                children,
+                                parsedAttributes.attributes,
+                                parsedAttributes.namespaces);
+        if (!removeParentPointers) addParentToChildrenAndAttributes(elementItem);
         elementItem.setXmlDocumentPosition(path, 0);
         return elementItem;
     }
@@ -960,7 +940,8 @@ public class ItemParser {
         return content.trim().isEmpty();
     }
 
-    private static List<Item> getChildren(Node currentNode, String path, boolean removeParentPointers) {
+    private static List<Item> getChildren(
+            Node currentNode, String path, boolean removeParentPointers) {
         List<Item> children = new ArrayList<>();
         NodeList nodeList = currentNode.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); ++i) {
@@ -970,11 +951,11 @@ public class ItemParser {
             } else if (childNode.getNodeType() == Node.COMMENT_NODE) {
                 children.add(ItemFactory.getInstance().createXmlCommentNode(childNode));
             } else if (childNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
-                children.add(ItemFactory.getInstance().createXmlProcessingInstructionNode(childNode));
-            } else if (
-                (childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
-                    && !hasWhitespaceText(childNode)
-            ) {
+                children.add(
+                        ItemFactory.getInstance().createXmlProcessingInstructionNode(childNode));
+            } else if ((childNode.getNodeType() == Node.TEXT_NODE
+                            || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
+                    && !hasWhitespaceText(childNode)) {
                 children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
             }
         }
@@ -993,13 +974,14 @@ public class ItemParser {
             String localName = attribute.getLocalName();
 
             boolean isNamespaceDeclaration =
-                NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri)
-                    || "xmlns".equals(nodeName)
-                    || (nodeName != null && nodeName.startsWith("xmlns:"));
+                    NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri)
+                            || "xmlns".equals(nodeName)
+                            || (nodeName != null && nodeName.startsWith("xmlns:"));
             if (isNamespaceDeclaration) {
                 String prefix = "";
                 if (!"xmlns".equals(nodeName)) {
-                    if (NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri) && localName != null) {
+                    if (NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri)
+                            && localName != null) {
                         prefix = localName;
                     } else if (nodeName != null && nodeName.startsWith("xmlns:")) {
                         prefix = nodeName.substring("xmlns:".length());
@@ -1042,7 +1024,8 @@ public class ItemParser {
     }
 
     private static Item getProcessingInstructionNodeItem(Node currentNode, String path) {
-        Item processingInstructionItem = ItemFactory.getInstance().createXmlProcessingInstructionNode(currentNode);
+        Item processingInstructionItem =
+                ItemFactory.getInstance().createXmlProcessingInstructionNode(currentNode);
         processingInstructionItem.setXmlDocumentPosition(path, 0);
         return processingInstructionItem;
     }

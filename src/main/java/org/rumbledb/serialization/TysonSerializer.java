@@ -1,16 +1,16 @@
 package org.rumbledb.serialization;
 
+import java.io.Serial;
+
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.items.xml.NamespaceItem;
 
-import java.io.Serial;
-
 public class TysonSerializer implements Serializer, java.io.Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final org.rumbledb.serialization.SerializationParameters params;
 
@@ -87,7 +87,10 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
                     firstTime = false;
                 }
                 Item value = item.getItemByKey(key);
-                sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
+                sb.append("\"")
+                        .append(StringEscapeUtils.escapeJson(key))
+                        .append("\"")
+                        .append(" : ");
                 if (this.params.getIndent()) {
                     serialize(value, sb, indent + "  ", false);
                 } else {
@@ -103,16 +106,17 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isMap()) {
-            String tysonPrefix =
-                "(\"" + item.getDynamicType().getIdentifierString() + "\") ";
-            SerializerUtils.serializeMapAsJsonSafeObject(this, this.params, item, sb, indent, tysonPrefix);
+            String tysonPrefix = "(\"" + item.getDynamicType().getIdentifierString() + "\") ";
+            SerializerUtils.serializeMapAsJsonSafeObject(
+                    this, this.params, item, sb, indent, tysonPrefix);
             return;
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
                 StringBuilder childBuffer = new StringBuilder();
                 serialize(child, childBuffer, indent, isTopLevel);
-                if (childBuffer.length() > 0 && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
+                if (childBuffer.length() > 0
+                        && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
                     childBuffer.setLength(childBuffer.length() - 1);
                 }
                 sb.append(childBuffer);

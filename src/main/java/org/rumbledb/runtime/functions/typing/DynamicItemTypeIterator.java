@@ -1,5 +1,8 @@
 package org.rumbledb.runtime.functions.typing;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -8,16 +11,13 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-import java.util.List;
-
 public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private List<Item> materializedArgument;
     private ItemType itemType;
 
-    public DynamicItemTypeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public DynamicItemTypeIterator(
+            List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
@@ -40,9 +40,11 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
         List<Item> structureItems = getStructureItems();
         ItemType structureCommonType = structureItems.get(0).getDynamicType();
         for (Item item : structureItems) {
-            structureCommonType = structureCommonType.findLeastCommonSuperTypeWith(item.getDynamicType());
+            structureCommonType =
+                    structureCommonType.findLeastCommonSuperTypeWith(item.getDynamicType());
         }
-        return ItemFactory.getInstance().createStringItem(structureCommonType.getIdentifierString());
+        return ItemFactory.getInstance()
+                .createStringItem(structureCommonType.getIdentifierString());
     }
 
     private List<Item> getStructureItems() {

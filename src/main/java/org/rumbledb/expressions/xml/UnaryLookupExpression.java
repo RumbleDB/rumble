@@ -20,21 +20,22 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 // clone of ObjectLookupExpression but for xquery lookup
 @Getter
 public class UnaryLookupExpression extends Expression {
 
     private final Expression lookupExpression;
+
     // lookupexpression is null if we have a wildcard!!
 
     public UnaryLookupExpression(Expression lookupExpression, ExceptionMetadata metadata) {
@@ -45,8 +46,7 @@ public class UnaryLookupExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.lookupExpression != null)
-            result.add(this.lookupExpression);
+        if (this.lookupExpression != null) result.add(this.lookupExpression);
         return result;
     }
 
@@ -54,10 +54,8 @@ public class UnaryLookupExpression extends Expression {
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("?");
-        if (this.lookupExpression != null)
-            this.lookupExpression.serializeToJSONiq(sb, 0);
-        else
-            sb.append("*");
+        if (this.lookupExpression != null) this.lookupExpression.serializeToJSONiq(sb, 0);
+        else sb.append("*");
         sb.append("\n");
     }
 

@@ -20,31 +20,28 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
+
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
 
 public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public ParquetFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -53,7 +50,9 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
 
         String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
 
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri =
+                FileSystemUtil.resolveFileSystemURI(
+                        this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
@@ -62,17 +61,19 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
             partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
         }
         try {
-            Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .parquet(FileSystemUtil.convertURIToStringForSpark(uri));
+            Dataset<Row> dataFrame =
+                    SparkSessionManager.getInstance()
+                            .getOrCreateSession()
+                            .read()
+                            .parquet(FileSystemUtil.convertURIToStringForSpark(uri));
             if (partitions != -1) {
                 dataFrame = dataFrame.repartition(partitions);
             }
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException(
+                        "File " + uri + " not found.", getMetadata());
             }
             throw e;
         }

@@ -1,7 +1,5 @@
 package org.rumbledb.bindings;
 
-import org.rumbledb.context.Name;
-
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -9,12 +7,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.rumbledb.context.Name;
+
 /**
  * Query-scoped external bindings supplied at execution time.
  *
- * This is intentionally separate from {@code RumbleConfiguration}: bindings are execution inputs, not engine
- * configuration. The model is broader than what the current runtime bridge can consume so the public API can settle
- * while the remaining binding kinds are connected to the execution pipeline.
+ * <p>This is intentionally separate from {@code RumbleConfiguration}: bindings are execution
+ * inputs, not engine configuration. The model is broader than what the current runtime bridge can
+ * consume so the public API can settle while the remaining binding kinds are connected to the
+ * execution pipeline.
  */
 public final class ExternalBindings implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -52,9 +53,7 @@ public final class ExternalBindings implements Serializable {
     }
 
     public <T extends Binding> Optional<T> get(Name name, Class<T> bindingClass) {
-        return this.get(name)
-            .filter(bindingClass::isInstance)
-            .map(bindingClass::cast);
+        return this.get(name).filter(bindingClass::isInstance).map(bindingClass::cast);
     }
 
     public Set<Name> names() {

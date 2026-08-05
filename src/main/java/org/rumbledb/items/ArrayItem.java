@@ -35,12 +35,9 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
-
 public class ArrayItem extends AbstractArrayItem {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final List<Item> arrayItems;
     private int mutabilityLevel;
     private long topLevelID;
@@ -115,11 +112,10 @@ public class ArrayItem extends AbstractArrayItem {
         if (position >= this.arrayItems.size() || position < 0) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: "
-                        + (position + 1)
-                        + ", of array with length: "
-                        + this.arrayItems.size(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                            + (position + 1)
+                            + ", of array with length: "
+                            + this.arrayItems.size(),
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         return this.arrayItems.get(position);
     }
@@ -186,8 +182,6 @@ public class ArrayItem extends AbstractArrayItem {
     }
 
     // endregion arrays
-
-
 
     @Override
     public ItemType getDynamicType() {
@@ -311,9 +305,7 @@ public class ArrayItem extends AbstractArrayItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override

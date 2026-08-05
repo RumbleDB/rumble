@@ -20,8 +20,14 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,28 +36,19 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.navigation.ArrayMembersClosure;
 
-import java.io.Serial;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
-    private final Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private final Queue<Item>
+            nextResults; // queue that holds the results created by the current item in inspection
 
     public ArrayMembersFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
         this.nextResults = new LinkedList<>();
     }
-
 
     @Override
     protected void openLocal() {
@@ -75,15 +72,14 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
         if (this.hasNext) {
             Item result = this.nextResults.remove(); // save the result to be returned
             if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
+                // if there are no more results left in the queue, trigger calculation for the next
+                // result
                 setNextResult();
             }
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "MEMBERS function",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "MEMBERS function", getMetadata());
     }
 
     public void setNextResult() {
@@ -107,7 +103,6 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
-
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
@@ -115,7 +110,4 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
     }
-
-
-
 }

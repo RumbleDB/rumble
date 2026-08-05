@@ -1,12 +1,5 @@
 package org.rumbledb.serialization;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.FunctionsNonSerializableException;
-import org.rumbledb.exceptions.RumbleException;
-
 import java.io.Serial;
 import java.text.Normalizer;
 import java.util.HashSet;
@@ -14,10 +7,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FunctionsNonSerializableException;
+import org.rumbledb.exceptions.RumbleException;
+
 public class JsonSerializer implements Serializer, java.io.Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final org.rumbledb.serialization.SerializationParameters params;
 
@@ -41,13 +40,11 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             appendJSONAtomicItem(item, sb);
             return;
         }
-        if (
-            item.isDocumentNode()
+        if (item.isDocumentNode()
                 || item.isElementNode()
                 || item.isProcessingInstructionNode()
                 || item.isTextNode()
-                || item.isCommentNode()
-        ) {
+                || item.isCommentNode()) {
             appendJsonString(serializeNodeAsString(item), sb);
             return;
         }
@@ -99,15 +96,13 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         }
         if (item.isNamespaceNode()) {
             throw jsonSerializationError(
-                "JSON serialization does not support attribute or namespace nodes.",
-                "SENR0001"
-            );
+                    "JSON serialization does not support attribute or namespace nodes.",
+                    "SENR0001");
         }
         if (item.isAttributeNode()) {
             throw jsonSerializationError(
-                "JSON serialization does not support attribute or namespace nodes.",
-                "SENR0001"
-            );
+                    "JSON serialization does not support attribute or namespace nodes.",
+                    "SENR0001");
         }
         if (item.isCommentNode()) {
             appendJsonString(serializeNodeAsString(item), sb);
@@ -119,21 +114,20 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             sb.append("null");
             return;
         }
-        boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
+        boolean isStringValue =
+                item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
         if (item.isDouble()) {
             if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
                 throw jsonSerializationError(
-                    "JSON serialization does not allow NaN or infinite xs:double values.",
-                    "SERE0020"
-                );
+                        "JSON serialization does not allow NaN or infinite xs:double values.",
+                        "SERE0020");
             }
         }
         if (item.isFloat()) {
             if (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())) {
                 throw jsonSerializationError(
-                    "JSON serialization does not allow NaN or infinite xs:float values.",
-                    "SERE0020"
-                );
+                        "JSON serialization does not allow NaN or infinite xs:float values.",
+                        "SERE0020");
             }
         }
         if (isStringValue) {
@@ -169,7 +163,8 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         }
     }
 
-    private void appendArraySequenceMembers(List<List<Item>> memberSequences, StringBuilder sb, String indent) {
+    private void appendArraySequenceMembers(
+            List<List<Item>> memberSequences, StringBuilder sb, String indent) {
         String separator = "";
         if (this.params.getIndent()) {
             separator = "\n" + indent + "  ";
@@ -183,9 +178,8 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             }
             if (memberSequence != null && memberSequence.size() > 1) {
                 throw jsonSerializationError(
-                    "JSON serialization does not allow sequences of length greater than one inside arrays.",
-                    "SERE0023"
-                );
+                        "JSON serialization does not allow sequences of length greater than one inside arrays.",
+                        "SERE0023");
             }
             appendJsonSequenceAsValue(memberSequence, sb, indent + "  ");
         }
@@ -205,9 +199,8 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             return;
         }
         throw jsonSerializationError(
-            "JSON serialization does not allow sequences of length greater than one as a value.",
-            "SERE0023"
-        );
+                "JSON serialization does not allow sequences of length greater than one as a value.",
+                "SERE0023");
     }
 
     private void serializeMapAsJsonObject(Item mapItem, StringBuilder sb, String indent) {
@@ -222,9 +215,8 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             String keyString = key.getStringValue();
             if (serializedKeys != null && !serializedKeys.add(keyString)) {
                 throw jsonSerializationError(
-                    "JSON serialization does not allow duplicate map key string values.",
-                    "SERE0022"
-                );
+                        "JSON serialization does not allow duplicate map key string values.",
+                        "SERE0022");
             }
             sb.append(separator);
             if (firstTime) {
@@ -247,13 +239,12 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
     private String serializeNodeAsString(Item item) {
         SerializationParameters nodeParams = SerializationParameters.defaults();
         nodeParams.setIndent(false);
-        SerializationParameters.JsonNodeOutputMethod nodeOutputMethod = this.params.getJsonNodeOutputMethod();
+        SerializationParameters.JsonNodeOutputMethod nodeOutputMethod =
+                this.params.getJsonNodeOutputMethod();
         Serializer serializer;
-        if (
-            nodeOutputMethod == null
+        if (nodeOutputMethod == null
                 || nodeOutputMethod == SerializationParameters.JsonNodeOutputMethod.UNSPECIFIED
-                || nodeOutputMethod == SerializationParameters.JsonNodeOutputMethod.XML
-        ) {
+                || nodeOutputMethod == SerializationParameters.JsonNodeOutputMethod.XML) {
             nodeParams.setMethod("xml");
             nodeParams.setOmitXmlDeclaration(true);
             serializer = new XmlSerializer(nodeParams);
@@ -295,7 +286,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         }
         StringBuilder pendingUnmapped = new StringBuilder();
         Map<String, String> characterMaps = this.params.getCharacterMaps();
-        for (int index = 0; index < value.length();) {
+        for (int index = 0; index < value.length(); ) {
             int codePoint = value.codePointAt(index);
             String current = new String(Character.toChars(codePoint));
             String replacement = characterMaps == null ? null : characterMaps.get(current);
@@ -310,7 +301,8 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         appendEscapedNormalizedUnmappedRun(pendingUnmapped, sb);
     }
 
-    private void appendEscapedNormalizedUnmappedRun(StringBuilder pendingUnmapped, StringBuilder sb) {
+    private void appendEscapedNormalizedUnmappedRun(
+            StringBuilder pendingUnmapped, StringBuilder sb) {
         if (pendingUnmapped.length() == 0) {
             return;
         }
@@ -323,7 +315,6 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         return new RumbleException(
                 message,
                 new ErrorCode(new Name(Name.ERROR_NS, "err", errorCode)),
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                ExceptionMetadata.EMPTY_METADATA);
     }
 }

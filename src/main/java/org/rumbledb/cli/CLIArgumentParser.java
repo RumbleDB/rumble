@@ -20,27 +20,22 @@ package org.rumbledb.cli;
 
 import java.util.List;
 
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+
 import org.rumbledb.cli.commands.Repl;
 import org.rumbledb.cli.commands.Run;
 import org.rumbledb.exceptions.CliException;
 
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
-
 @Command(
-    name = "rumbledb",
-    description = "RumbleDB command line interface.",
-    subcommands = {
-        Run.class,
-        Repl.class
-    },
-    mixinStandardHelpOptions = true
-)
+        name = "rumbledb",
+        description = "RumbleDB command line interface.",
+        subcommands = {Run.class, Repl.class},
+        mixinStandardHelpOptions = true)
 public final class CLIArgumentParser {
     public static CLIInvocation parse(String... args) {
         CommandLine commandLine = new CommandLine(new CLIArgumentParser());
-        CommandLine.ParseResult parseResult =
-            commandLine.parseArgs(args);
+        CommandLine.ParseResult parseResult = commandLine.parseArgs(args);
 
         try {
             commandLine.getExecutionStrategy().execute(parseResult);

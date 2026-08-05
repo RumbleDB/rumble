@@ -10,22 +10,16 @@ public class IntegerFormatModifier {
     public static final String ALPHABETIC = "ALPHABETIC";
     public static final String TRADITIONAL = "TRADITIONAL";
 
-    @Getter
-    private final String numberType;
-    @Getter
-    private final String formatSpecifier;
+    @Getter private final String numberType;
+    @Getter private final String formatSpecifier;
 
     @SuppressWarnings("unused")
     private final String numberingVariant; // not supported yet
 
     public IntegerFormatModifier(
-            String numberType,
-            String formatSpecifier,
-            String numberingVariant
-    ) {
+            String numberType, String formatSpecifier, String numberingVariant) {
         this.numberType = numberType;
         this.formatSpecifier = formatSpecifier;
         this.numberingVariant = numberingVariant;
     }
-
 }

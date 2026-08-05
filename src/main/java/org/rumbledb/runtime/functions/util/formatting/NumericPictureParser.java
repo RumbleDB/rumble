@@ -1,32 +1,29 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
 import org.rumbledb.exceptions.RumbleException;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public final class NumericPictureParser {
 
     public static class NumericPictureKind {
-        private NumericPictureKind() {
-        }
+        private NumericPictureKind() {}
 
         public static final String DATE = "DATE";
         public static final String INTEGER = "INTEGER";
     }
 
-    private NumericPictureParser() {
-    }
+    private NumericPictureParser() {}
 
     private static NumericPicture parse(
             String picture,
             String pictureStringForErrors,
             ExceptionMetadata metadata,
-            String kind
-    ) {
+            String kind) {
         if (picture == null || picture.isEmpty()) {
             throw invalidPicture(pictureStringForErrors, metadata, kind);
         }
@@ -96,23 +93,16 @@ public final class NumericPictureParser {
                 activeCount,
                 groupings,
                 repeatingInfo.repeating,
-                repeatingInfo.interval
-        );
+                repeatingInfo.interval);
     }
 
     public static NumericPicture parseForDate(
-            String picture,
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            String picture, String pictureStringForErrors, ExceptionMetadata metadata) {
         return parse(picture, pictureStringForErrors, metadata, NumericPictureKind.DATE);
     }
 
     public static NumericPicture parseForInteger(
-            String picture,
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            String picture, String pictureStringForErrors, ExceptionMetadata metadata) {
         return parse(picture, pictureStringForErrors, metadata, NumericPictureKind.INTEGER);
     }
 
@@ -176,10 +166,7 @@ public final class NumericPictureParser {
     }
 
     private static RepeatingGroupingInfo detectRepeatingGrouping(
-            List<GroupingPos> groupings,
-            List<Integer> runLengths,
-            String kind
-    ) {
+            List<GroupingPos> groupings, List<Integer> runLengths, String kind) {
         if (!kind.equals(NumericPictureKind.INTEGER)) {
             return new RepeatingGroupingInfo(false, 0);
         }
@@ -234,10 +221,7 @@ public final class NumericPictureParser {
     }
 
     private static RumbleException invalidPicture(
-            String pictureStringForErrors,
-            ExceptionMetadata metadata,
-            String kind
-    ) {
+            String pictureStringForErrors, ExceptionMetadata metadata, String kind) {
         String message = "\"" + pictureStringForErrors + "\": invalid picture string";
 
         if (kind == NumericPictureKind.DATE) {

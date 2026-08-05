@@ -1,16 +1,15 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
+import java.util.Set;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
-import java.io.Serial;
-import java.util.Set;
-
 public class FunctionItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final boolean isGeneric;
     private final FunctionSignature signature;
@@ -30,8 +29,6 @@ public class FunctionItemType extends AbstractItemType {
         this.isGeneric = true;
         this.signature = null;
     }
-
-
 
     @Override
     public Name getName() {
@@ -55,15 +52,16 @@ public class FunctionItemType extends AbstractItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        if (
-            this.equals(superType) || superType.equals(anyFunctionItem) || superType.equals(BuiltinTypesCatalogue.item)
-        ) {
+        if (this.equals(superType)
+                || superType.equals(anyFunctionItem)
+                || superType.equals(BuiltinTypesCatalogue.item)) {
             return true;
         }
         if (this.signature == null) {
             return false;
         }
-        if (superType.isFunctionItemType() && this.signature.isSubtypeOf(superType.getSignature())) {
+        if (superType.isFunctionItemType()
+                && this.signature.isSubtypeOf(superType.getSignature())) {
             return true;
         }
         return false;

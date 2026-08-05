@@ -13,24 +13,22 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class DayTimeDurationItem extends AbstractAtomicItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private Duration value;
-    private static final Pattern durationRegex = Pattern.compile(
-        "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
-    );
+    private static final Pattern durationRegex =
+            Pattern.compile(
+                    "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))");
     private static final Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
-
 
     public DayTimeDurationItem(Duration value) {
         this.value = value;
     }
 
     public DayTimeDurationItem(String value) {
-        if (!durationRegex.matcher(value).matches() || !dayTimeDurationRegex.matcher(value).matches()) {
+        if (!durationRegex.matcher(value).matches()
+                || !dayTimeDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:dayTimeDuration: \"" + value + "\"");
         }
         try {
@@ -38,8 +36,7 @@ public class DayTimeDurationItem extends AbstractAtomicItem {
         } catch (DateTimeParseException e) {
             throw new DurationOverflowOrUnderflow(
                     "Invalid xs:dayTimeDuration: \"" + value + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -116,19 +113,15 @@ public class DayTimeDurationItem extends AbstractAtomicItem {
         double fractionalSeconds = seconds + nanos / 1_000_000_000.0;
 
         StringBuilder sb = new StringBuilder();
-        if (isNegative)
-            sb.append("-");
+        if (isNegative) sb.append("-");
 
         sb.append("P");
-        if (days > 0)
-            sb.append(days).append("D");
+        if (days > 0) sb.append(days).append("D");
 
         if (hours > 0 || minutes > 0 || fractionalSeconds > 0 || sb.toString().endsWith("P")) {
             sb.append("T");
-            if (hours > 0)
-                sb.append(hours).append("H");
-            if (minutes > 0)
-                sb.append(minutes).append("M");
+            if (hours > 0) sb.append(hours).append("H");
+            if (minutes > 0) sb.append(minutes).append("M");
 
             if (fractionalSeconds > 0) {
                 // Format seconds with optional fraction
@@ -147,7 +140,8 @@ public class DayTimeDurationItem extends AbstractAtomicItem {
 
     @Override
     public int getDay() {
-        return (int) ((this.value.getSeconds() + this.value.getNano() / 1_000_000_000.0) / 3600 / 24);
+        return (int)
+                ((this.value.getSeconds() + this.value.getNano() / 1_000_000_000.0) / 3600 / 24);
     }
 
     @Override

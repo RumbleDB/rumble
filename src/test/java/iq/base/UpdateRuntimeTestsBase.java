@@ -17,11 +17,6 @@
 
 package iq.base;
 
-import org.apache.spark.SparkConf;
-import org.rumbledb.config.RumbleConfiguration;
-import utils.annotations.AnnotationParseException;
-import utils.annotations.AnnotationProcessor;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -30,17 +25,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.spark.SparkConf;
+
+import utils.annotations.AnnotationParseException;
+import utils.annotations.AnnotationProcessor;
+
+import org.rumbledb.config.RumbleConfiguration;
+
 public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
 
     @Override
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureDebug(debug -> debug.showErrorInfo(true))
-            .configureRuntime(
-                runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)
-            )
-            .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
-            .build();
+                .configureDebug(debug -> debug.showErrorInfo(true))
+                .configureRuntime(
+                        runtime ->
+                                runtime.materializationCap(900000)
+                                        .resultsSizeCap(900000)
+                                        .shouldApplyUpdates(true))
+                .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
+                .build();
     }
 
     @Override
@@ -53,8 +57,8 @@ public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
                 dimensions = AnnotationProcessor.readUpdateDimensions(reader);
             }
             filesByDimension
-                .computeIfAbsent(dimensions.dimension1(), ignored -> new TreeMap<>())
-                .put(dimensions.dimension2(), file);
+                    .computeIfAbsent(dimensions.dimension1(), ignored -> new TreeMap<>())
+                    .put(dimensions.dimension2(), file);
         }
 
         List<File> result = new ArrayList<>();
@@ -64,9 +68,10 @@ public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
 
     private File selectedDirectory() throws IOException {
         String subDirectory = System.getProperty("dir");
-        File selected = subDirectory == null || subDirectory.isBlank()
-            ? testDirectory()
-            : new File(testDirectory(), subDirectory.trim());
+        File selected =
+                subDirectory == null || subDirectory.isBlank()
+                        ? testDirectory()
+                        : new File(testDirectory(), subDirectory.trim());
         if (!selected.isDirectory()) {
             throw new IOException("Update test directory not found: " + selected.getAbsolutePath());
         }

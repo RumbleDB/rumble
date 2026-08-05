@@ -1,25 +1,26 @@
 package org.rumbledb.expressions.xml.node_test;
 
-import lombok.NoArgsConstructor;
-import lombok.Getter;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import org.rumbledb.context.Name;
 
 @NoArgsConstructor(force = true)
 public class ElementTest implements NodeTest {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
+
     /**
-     * Expanded name from the kind test (namespace URI + local name).
-     * Only valid when isNameWithoutTypeCheck is true.
+     * Expanded name from the kind test (namespace URI + local name). Only valid when
+     * isNameWithoutTypeCheck is true.
      */
-    @Getter
-    private final Name elementName;
+    @Getter private final Name elementName;
+
     private final boolean hasWildcard;
     private final Name typeName;
-    // TODO: add support for optional type
 
+    // TODO: add support for optional type
 
     public ElementTest(Name elementName, Name typeName) {
         this.elementName = elementName;
@@ -65,6 +66,4 @@ public class ElementTest implements NodeTest {
     public boolean isWildcardOnly() {
         return this.elementName == null && this.typeName == null && this.hasWildcard;
     }
-
-
 }
