@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.bindings.FileBinding;
@@ -40,10 +41,16 @@ import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.serializers.FieldSerializer;
 
 public class KryoFieldSerializationTest {
+    static private final Kryo kryo = new Kryo();
+
+    static {
+        kryo.setInstantiatorStrategy(
+            new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy())
+        );
+    }
 
     @Test
     public void configurationRoundTripsWithFieldSerializer() {
-        Kryo kryo = new Kryo();
         RumbleConfiguration configuration = RumbleConfiguration.builder()
             .mode(RumbleMode.REPL)
             .configureInput(input -> input.query("1 + 1"))
@@ -88,7 +95,6 @@ public class KryoFieldSerializationTest {
 
     @Test
     public void polymorphicBindingsRoundTripWithFieldSerializer() {
-        Kryo kryo = new Kryo();
         ExternalBindings bindings = ExternalBindings.empty();
         bindings.bind(Name.createVariableInNoNamespace("lexical"), new LexicalBinding("42"));
         bindings.bind(
