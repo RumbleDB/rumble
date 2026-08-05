@@ -147,7 +147,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        String moduleLocation = libraryModule.getLocation();
+        String moduleLocation = libraryModule.getModuleIdentityOrLocation();
         if (!this.importedModuleContexts.containsKey(moduleLocation)) {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);

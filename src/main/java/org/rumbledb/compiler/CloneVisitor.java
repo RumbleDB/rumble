@@ -135,6 +135,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(module.getStaticContext());
         result.setLocation(module.getLocation());
+        result.setModuleIdentity(module.getModuleIdentity());
         return result;
     }
 

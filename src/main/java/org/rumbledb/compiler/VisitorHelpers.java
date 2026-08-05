@@ -245,9 +245,11 @@ public class VisitorHelpers {
             importingModuleContext,
             compilationConfiguration
         );
-        // Keep the requested absolute import location as the module identity for duplicate-import semantics,
-        // while using the resolved resource system ID as the library module's static base URI.
+        // Keep the requested absolute import location for diagnostics and spec-visible import behavior,
+        // but deduplicate module loading by the resolved resource identity when the implementation can
+        // determine that distinct import URIs refer to the same underlying resource.
         libraryModule.setLocation(location.toString());
+        libraryModule.setModuleIdentity(source.systemId().toString());
         return libraryModule;
     }
 
@@ -492,6 +494,7 @@ public class VisitorHelpers {
             JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             libraryModule.setLocation(uri.toString());
+            libraryModule.setModuleIdentity(uri.toString());
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;
@@ -539,6 +542,7 @@ public class VisitorHelpers {
             XQueryParser.ModuleContext main = parser.module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             libraryModule.setLocation(uri.toString());
+            libraryModule.setModuleIdentity(uri.toString());
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;

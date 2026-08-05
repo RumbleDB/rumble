@@ -52,7 +52,7 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitLibraryModule(LibraryModule libraryModule, Void argument) {
-        String moduleOrigin = libraryModule.getLocation();
+        String moduleOrigin = libraryModule.getModuleIdentityOrLocation();
         if (this.visitedModules.contains(moduleOrigin)) {
             Prolog prolog = libraryModule.getProlog();
             prolog.clearDeclarations();

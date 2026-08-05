@@ -367,7 +367,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
-        String moduleLocation = module.getLocation();
+        String moduleLocation = module.getModuleIdentityOrLocation();
         if (!this.importedModuleContexts.containsKey(moduleLocation)) {
             DynamicContext newContext = new DynamicContext(this.configuration, this.externalBindings);
             newContext.setNamedFunctions(argument.getNamedFunctions());
