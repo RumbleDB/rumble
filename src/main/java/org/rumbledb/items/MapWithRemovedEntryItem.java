@@ -46,9 +46,11 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
      */
     private final Item original;
     private final Set<Item> removedKeys;
+    private final int chainLength;
 
     public MapWithRemovedEntryItem(Item original, List<Item> removedKeys) {
         this.original = original;
+        this.chainLength = ItemFactory.getMapOverlayChainLength(original) + 1;
         this.removedKeys = new HashSet<>();
         for (Item key : removedKeys) {
             if (this.original.isObject()) {
@@ -64,6 +66,10 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
                 }
             }
         }
+    }
+
+    int getOverlayChainLength() {
+        return this.chainLength;
     }
 
     @Override
