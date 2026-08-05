@@ -38,17 +38,27 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    static final int MAX_OVERLAY_CHAIN_LENGTH = 32;
+
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
     private final Item original;
     private final Item additionalKey;
     private final List<Item> additionalValue;
+    private final int size;
+    private final int chainLength;
 
     public MapWithAdditionalEntryItem(Item original, Item additionalKey, List<Item> additionalValue) {
         this.original = original;
         this.additionalKey = additionalKey;
         this.additionalValue = additionalValue;
+        this.size = original.getSize() + (original.hasKey(additionalKey) ? 0 : 1);
+        this.chainLength = ItemFactory.getMapOverlayChainLength(original) + 1;
+    }
+
+    int getOverlayChainLength() {
+        return this.chainLength;
     }
 
     @Override
@@ -114,10 +124,7 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Override
     public int getSize() {
-        if (this.original.hasKey(this.additionalKey)) {
-            return this.original.getSize();
-        }
-        return this.original.getSize() + 1;
+        return this.size;
     }
 
     @Override
