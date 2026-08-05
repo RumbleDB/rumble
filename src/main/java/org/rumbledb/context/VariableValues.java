@@ -23,7 +23,7 @@ package org.rumbledb.context;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
@@ -31,7 +31,7 @@ import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -53,9 +53,9 @@ public class VariableValues implements Serializable {
     private final Map<Name, JSoundDataFrame> dataFrameVariableValues;
     private transient boolean nestedQuery;
     private final VariableValues parent;
-    private final RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
 
-    public VariableValues(RumbleRuntimeConfiguration configuration) {
+    public VariableValues(RumbleConfiguration configuration) {
         this.parent = null;
         this.localVariableCounts = new HashMap<>();
         this.localVariableValues = new HashMap<>();

@@ -54,12 +54,12 @@ import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
-import sparksoniq.jsoniq.tuple.FlworKey;
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.tuple.FlworKey;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.apache.spark.api.java.JavaRDD;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -467,7 +467,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         String input = FlworDataFrameUtils.createTempView(df);
 
         Dataset<Row> nativeQueryResult = null;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                 df,
                 variableAccessNames,

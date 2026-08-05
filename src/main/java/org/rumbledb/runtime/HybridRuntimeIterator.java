@@ -23,7 +23,7 @@ package org.rumbledb.runtime;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotMaterializeException;
@@ -34,8 +34,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
-
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.List;
@@ -158,18 +157,19 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     public static List<Item> collectRDDwithLimit(
             JavaRDD<Item> rdd,
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
             ExceptionMetadata metadata
     ) {
-        if (configuration.getMaterializationCap() > 0) {
-            List<Item> result = rdd.take(configuration.getMaterializationCap() + 1);
-            if (result.size() == configuration.getMaterializationCap() + 1) {
+        int materializationCap = configuration.runtime().materializationCap();
+        if (materializationCap > 0) {
+            List<Item> result = rdd.take(materializationCap + 1);
+            if (result.size() == materializationCap + 1) {
                 long count = rdd.count();
                 throw new CannotMaterializeException(
                         "Cannot materialize a sequence of "
                             + count
                             + " items because the limit is set to "
-                            + configuration.getMaterializationCap()
+                            + materializationCap
                             + ". This value can be configured with the --materialization-cap parameter at startup",
                         metadata
                 );

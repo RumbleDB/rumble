@@ -8,7 +8,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.lit;
 

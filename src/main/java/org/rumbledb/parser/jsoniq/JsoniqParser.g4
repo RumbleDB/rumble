@@ -156,9 +156,7 @@ namespaceDecl
    ;
 
 varDecl
-   : KW_DECLARE (annotations | ncName) KW_VARIABLE
-   // replaced "$" varName with varRef to match the JSONiq grammar
-   varRef
+   : KW_DECLARE (annotations | ncName) KW_VARIABLE varBinding
    // replaced with the typeDeclaration production to match the JSONiq grammar
    (KW_AS sequenceType)? (
    // replaced with the varValue production to match the JSONiq grammar
@@ -198,7 +196,7 @@ paramList
     Renamed from functionParam to param to match the JSONiq grammar
     Replaced with the typeDeclaration production to match the JSONiq grammar
 */ param
-   : DOLLAR name = qname (KW_AS sequenceType)?
+   : name = varBinding (KW_AS sequenceType)?
    ;
 
 annotations
@@ -245,11 +243,11 @@ forClause
    // renamed from forBinding to forVar to match the JSONiq grammar
    
 forVar
-   : var_ref = varRef
+   : var_ref = varBinding
    // replaced with the typeDeclaration production to match the JSONiq grammar
    (KW_AS seq = sequenceType)? (flag = allowingEmpty)?
    // replaced with the positionalVar production to match the JSONiq grammar
-   (KW_AT at = varRef)? KW_IN ex = exprSingle
+   (KW_AT at = varBinding)? KW_IN ex = exprSingle
    ;
 
 allowingEmpty
@@ -257,7 +255,7 @@ allowingEmpty
    ;
 
 positionalVar
-   : KW_AT DOLLAR pvar = varName
+   : KW_AT pvar = varBinding
    ;
 
 letClause
@@ -266,7 +264,7 @@ letClause
    // renamed from letBinding to letVar to match the JSONiq grammar
    
 letVar
-   : var_ref = varRef
+   : var_ref = varBinding
    // replaced with the typeDeclaration production to match the JSONiq grammar
    (KW_AS seq = sequenceType)? COLON_EQ ex = exprSingle
    ;
@@ -276,11 +274,11 @@ windowClause
    ;
 
 tumblingWindowClause
-   : KW_TUMBLING KW_WINDOW DOLLAR name = varName type = typeDeclaration? KW_IN exprSingle windowStartCondition windowEndCondition?
+   : KW_TUMBLING KW_WINDOW name = varBinding type = typeDeclaration? KW_IN exprSingle windowStartCondition windowEndCondition?
    ;
 
 slidingWindowClause
-   : KW_SLIDING KW_WINDOW DOLLAR name = varName type = typeDeclaration? KW_IN exprSingle windowStartCondition windowEndCondition
+   : KW_SLIDING KW_WINDOW name = varBinding type = typeDeclaration? KW_IN exprSingle windowStartCondition windowEndCondition
    ;
 
 windowStartCondition
@@ -292,11 +290,11 @@ windowEndCondition
    ;
 
 windowVars
-   : (DOLLAR currentItem = eqName)? positionalVar? (KW_PREVIOUS DOLLAR previousItem = eqName)? (KW_NEXT DOLLAR nextItem = eqName)?
+   : (currentItem = varBinding)? positionalVar? (KW_PREVIOUS previousItem = varBinding)? (KW_NEXT nextItem = varBinding)?
    ;
 
 countClause
-   : KW_COUNT varRef
+   : KW_COUNT varBinding
    ;
 
 whereClause
@@ -310,7 +308,7 @@ groupByClause
 
 groupByVar
    // renamed from groupingSpec to groupByVar to match the JSONiq grammar
-   : var_ref = varRef
+   : var_ref = varBinding
    // replaced with the typeDeclaration production to match the JSONiq grammar
    ((KW_AS seq = sequenceType)? decl = COLON_EQ ex = exprSingle)? (KW_COLLATION uri = uriLiteral)?
    ;
@@ -330,7 +328,7 @@ quantifiedExpr
 
 quantifiedExprVar
    // renamed from quantifiedVar to quantifiedExprVar to match the JSONiq grammar
-   : var_ref = varRef
+   : var_ref = varBinding
    // replaced with the typeDeclaration production to match the JSONiq grammar
    (KW_AS seq = sequenceType)? KW_IN exprSingle
    ;
@@ -344,11 +342,11 @@ switchCaseClause
    ;
 
 typeswitchExpr
-   : KW_TYPESWITCH LPAREN cond = expr RPAREN cses += caseClause+ KW_DEFAULT (var_ref = varRef)? KW_RETURN def = exprSingle
+   : KW_TYPESWITCH LPAREN cond = expr RPAREN cses += caseClause+ KW_DEFAULT (var_ref = varBinding)? KW_RETURN def = exprSingle
    ;
 
 caseClause
-   : KW_CASE (var_ref = varRef KW_AS)? union += sequenceType (VBAR union += sequenceType)* KW_RETURN ret = exprSingle
+   : KW_CASE (var_ref = varBinding KW_AS)? union += sequenceType (VBAR union += sequenceType)* KW_RETURN ret = exprSingle
    ;
 
 ifExpr
@@ -363,7 +361,7 @@ tryCatchExpr
 catchClause
    : KW_CATCH
    // replaced with the catchErrorList production to match the JSONiq grammar
-   ((jokers += wildcard | errors += eqName) (VBAR (jokers += wildcard | errors += eqName))* | (LPAREN DOLLAR varName RPAREN))
+   ((jokers += wildcard | errors += eqName) (VBAR (jokers += wildcard | errors += eqName))* | (LPAREN catch_var = varBinding RPAREN))
    // replaced with the enclosedExpression production to match the JSONiq grammar
    LBRACE catch_expression = expr? RBRACE
    ;
@@ -648,8 +646,11 @@ varRef
    : DOLLAR var_name = eqName
    ;
 
-varName
-   : eqName
+/**
+ * Variable bindings and references have the same lexical form, but distinct parser contexts make
+ * their semantic roles explicit to parse-tree consumers.
+ */ varBinding
+   : DOLLAR var_name = eqName
    ;
 
 parenthesizedExpr
@@ -1361,7 +1362,7 @@ applyStatement
    ;
 
 assignStatement
-   : DOLLAR varName COLON_EQ exprSingle SEMICOLON
+   : var_ref = varRef COLON_EQ exprSingle SEMICOLON
    ;
 
 blockStatement
@@ -1414,15 +1415,15 @@ tryCatchStatement
 catchCaseStatement
    : KW_CATCH (jokers += wildcard | errors += eqName) (VBAR (jokers += wildcard | errors += eqName))* catch_block = blockStatement
    ;
-   // replaced "$" varName with varRef to match the JSONiq grammar
+   // The optional variable is local to the default branch.
    
 typeSwitchStatement
-   : KW_TYPESWITCH LPAREN cond = expr RPAREN cases += caseStatement+ KW_DEFAULT (var_ref = varRef)? (KW_RETURN) def = statement
+   : KW_TYPESWITCH LPAREN cond = expr RPAREN cases += caseStatement+ KW_DEFAULT (var_ref = varBinding)? (KW_RETURN) def = statement
    ;
-   // replaced "$" varName with varRef to match the JSONiq grammar
+   // The optional variable is local to this case branch.
    
 caseStatement
-   : KW_CASE (var_ref = varRef KW_AS)? union += sequenceType (VBAR union += sequenceType)* (KW_RETURN) ret = statement
+   : KW_CASE (var_ref = varBinding KW_AS)? union += sequenceType (VBAR union += sequenceType)* (KW_RETURN) ret = statement
    ;
 
 varDeclStatement
@@ -1431,7 +1432,7 @@ varDeclStatement
    // added to match the JSONiq grammar
    
 varDeclForStatement
-   : var_ref = varRef (KW_AS sequenceType)? (COLON_EQ expr_vals += exprSingle)?
+   : var_ref = varBinding (KW_AS sequenceType)? (COLON_EQ expr_vals += exprSingle)?
    ;
 
 whileStatement
@@ -1508,7 +1509,7 @@ updateLocator
    ;
 
 copyDecl
-   : var_ref = varRef COLON_EQ src_expr = exprSingle
+   : var_ref = varBinding COLON_EQ src_expr = exprSingle
    ;
    ///////////////////////// Top Level Updating Expressions
    

@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -423,7 +423,7 @@ public class DerivedAtomicItemType extends AbstractItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return this.baseType.isCompatibleWithDataFrames(configuration);
     }
 
