@@ -29,8 +29,9 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.XmlSyntaxToItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
+
 import scala.Tuple2;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.*;
 import java.net.URI;
@@ -64,7 +65,6 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                context.getRumbleRuntimeConfiguration(),
                 getMetadata()
             );
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -87,7 +87,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
                     partitions
                 );
         } else {
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 
@@ -100,7 +100,10 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
                 );
         }
         return strings.mapPartitions(
-            new XmlSyntaxToItemMapper(getMetadata(), context.getRumbleRuntimeConfiguration().optimizeParentPointers())
+            new XmlSyntaxToItemMapper(
+                    getMetadata(),
+                    context.getRumbleConfiguration().optimization().optimizeParentPointers()
+            )
         );
     }
 }

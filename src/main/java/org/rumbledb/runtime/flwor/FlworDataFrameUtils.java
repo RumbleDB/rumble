@@ -50,7 +50,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -85,6 +85,7 @@ import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -94,7 +95,6 @@ import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.immutable.ArraySeq;
 import scala.collection.Iterator;
-import sparksoniq.spark.SparkSessionManager;
 
 public class FlworDataFrameUtils {
 
@@ -141,7 +141,7 @@ public class FlworDataFrameUtils {
 
         kryo.register(ArrayList.class);
 
-        kryo.register(RumbleRuntimeConfiguration.class);
+        kryo.register(RumbleConfiguration.class);
 
         kryo.register(DocumentItem.class);
         kryo.register(ElementItem.class);

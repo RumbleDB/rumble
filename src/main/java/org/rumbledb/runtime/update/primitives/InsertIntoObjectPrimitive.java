@@ -4,7 +4,7 @@ import org.apache.spark.sql.AnalysisException;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.List;

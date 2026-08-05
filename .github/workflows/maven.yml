@@ -80,7 +80,8 @@ jobs:
           "XMLTests",
           "XQueryTests",
           "DeltaUpdateRuntimeTests",
-          "IcebergUpdateRuntimeTests"
+          "IcebergUpdateRuntimeTests",
+          "org.rumbledb.**.*Test"
         ]
     steps:
       - uses: actions/checkout@v5
@@ -100,7 +101,7 @@ jobs:
           name: Package 
           path: target
       - name: Run Test ${{ matrix.test_class }}
-        run: mvn -Dtest=${{ matrix.test_class }} test
+        run: mvn -Dtest='${{ matrix.test_class }}' test
       - name: Publish Surefire Report ${{ matrix.test_class }}
         if: always()
         uses: ScalableCapital/action-surefire-report@v2

@@ -2,7 +2,7 @@ package org.rumbledb.types;
 
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
@@ -140,7 +140,7 @@ public class PINodeItemType extends AbstractItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 }

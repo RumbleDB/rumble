@@ -30,7 +30,7 @@ public class RandomNumberGeneratorNextBodyIterator extends AtMostOneItemLocalRun
         return RandomNumberGeneratorMapBuilder.build(
             nextSeed,
             this.staticContext,
-            new DynamicContext(context.getRumbleRuntimeConfiguration()),
+            new DynamicContext(context.getRumbleConfiguration()),
             getMetadata()
         );
     }

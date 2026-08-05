@@ -30,7 +30,7 @@ import java.util.Set;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -100,15 +100,13 @@ public class StaticContext {
         defaultBindings.put("an", Name.JSONIQ_ANNOTATIONS_NS);
     }
 
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
 
-    public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
+    public StaticContext(URI staticBaseURI, RumbleConfiguration configuration) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
         this.staticBaseUriString = staticBaseURI == null ? null : staticBaseURI.toString();
-        this.queryLanguage = configuration.getQueryLanguage() != null
-            ? configuration.getQueryLanguage()
-            : this.queryLanguage;
+        this.queryLanguage = configuration.semantics().queryLanguage();
         this.configuration = configuration;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
@@ -120,7 +118,12 @@ public class StaticContext {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
-        this.serializationParameters = SerializationParameters.copy(configuration.getSerializationParameters());
+        SerializationParameters configuredSerializationParameters = configuration
+            .output()
+            .serializationParameters();
+        this.serializationParameters = configuredSerializationParameters == null
+            ? SerializationParameters.defaults(this.queryLanguage)
+            : SerializationParameters.copy(configuredSerializationParameters);
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
         this.isQuerySideEffecting = false;
@@ -162,7 +165,7 @@ public class StaticContext {
         }
     }
 
-    public RumbleRuntimeConfiguration getRumbleConfiguration() {
+    public RumbleConfiguration getRumbleConfiguration() {
         if (this.configuration != null) {
             return this.configuration;
         }

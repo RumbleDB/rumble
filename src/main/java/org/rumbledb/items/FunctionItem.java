@@ -41,15 +41,14 @@ import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
+import org.rumbledb.spark.ml.ApplyEstimatorRuntimeIterator;
+import org.rumbledb.spark.ml.ApplyTransformerRuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
-
-import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
-import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
-import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // For Kryo serialization
 public class FunctionItem implements Item {

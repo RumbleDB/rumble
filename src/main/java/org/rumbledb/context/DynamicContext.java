@@ -28,7 +28,8 @@ import org.apache.spark.api.java.JavaRDD;
 import java.io.Serial;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -43,7 +44,8 @@ public class DynamicContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private DynamicContext parent;
-    private RumbleRuntimeConfiguration conf;
+    private RumbleConfiguration conf;
+    private ExternalBindings externalBindings;
     @Getter
     private VariableValues variableValues;
     private NamedFunctions namedFunctions;
@@ -68,6 +70,7 @@ public class DynamicContext implements Serializable {
         this.parent = null;
         this.variableValues = null;
         this.conf = null;
+        this.externalBindings = null;
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
         this.currentDateTime = OffsetDateTime.now();
@@ -81,10 +84,15 @@ public class DynamicContext implements Serializable {
      * 
      * @param conf the Rumble configuration.
      */
-    public DynamicContext(RumbleRuntimeConfiguration conf) {
+    public DynamicContext(RumbleConfiguration conf) {
+        this(conf, ExternalBindings.empty());
+    }
+
+    public DynamicContext(RumbleConfiguration conf, ExternalBindings externalBindings) {
         this.parent = null;
         this.variableValues = new VariableValues(conf);
         this.conf = conf;
+        this.externalBindings = externalBindings;
         this.namedFunctions = new NamedFunctions();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentDateTime = OffsetDateTime.now();
@@ -100,6 +108,7 @@ public class DynamicContext implements Serializable {
         this.parent = parent;
         this.variableValues = new VariableValues(this.parent.variableValues);
         this.conf = null;
+        this.externalBindings = null;
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
@@ -130,12 +139,22 @@ public class DynamicContext implements Serializable {
         this.topLevelRuntimeIterator = parent.topLevelRuntimeIterator;
     }
 
-    public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {
+    public RumbleConfiguration getRumbleConfiguration() {
         if (this.conf != null) {
             return this.conf;
         }
         if (this.parent != null) {
-            return this.parent.getRumbleRuntimeConfiguration();
+            return this.parent.getRumbleConfiguration();
+        }
+        return null;
+    }
+
+    public ExternalBindings getExternalBindings() {
+        if (this.externalBindings != null) {
+            return this.externalBindings;
+        }
+        if (this.parent != null) {
+            return this.parent.getExternalBindings();
         }
         return null;
     }
@@ -245,4 +264,3 @@ public class DynamicContext implements Serializable {
     }
 
 }
-

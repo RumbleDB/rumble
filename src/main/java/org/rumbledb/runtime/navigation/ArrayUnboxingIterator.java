@@ -42,7 +42,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -145,7 +145,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         ItemType newContextType = newContext.getResultingType().getItemType();
         if (!newContextType.isArrayItemType()) {
             // let control to UDF when what we are unboxing is not an array
-            if (getConfiguration().doStaticAnalysis()) {
+            if (getConfiguration().analysis().enableStaticTyping()) {
                 throw new UnexpectedStaticTypeException(
                         "This is not a sequence of arrays,"
                             + " so that the lookup will always result in the empty sequence no matter what. "
@@ -322,7 +322,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             }
             return res;
         }
-        if (getConfiguration().doStaticAnalysis()) {
+        if (getConfiguration().analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     "This is not a sequence of arrays,"
                         + " so that the lookup will always result in the empty sequence no matter what. "
