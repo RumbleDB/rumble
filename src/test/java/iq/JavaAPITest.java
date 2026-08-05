@@ -209,7 +209,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testGetAsDataFrameFromRDD() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("parallelize(({ \"x\" : 1 }, { \"x\" : 2 }))");
 
         List<Row> rows = iterator.getAsDataFrame().collectAsList();
