@@ -103,10 +103,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
     private final Map<String, StaticContext> importedModuleContexts;
+    private final Map<String, ModuleImportSurface> importedModuleSurfaces;
     private final IdentityHashMap<StaticContext, Set<String>> importedModuleLocationsByContext;
 
     StaticContextVisitor() {
         this.importedModuleContexts = new HashMap<>();
+        this.importedModuleSurfaces = new HashMap<>();
         this.importedModuleLocationsByContext = new IdentityHashMap<>();
     }
 
@@ -137,6 +139,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
         this.importedModuleContexts.clear();
+        this.importedModuleSurfaces.clear();
         this.importedModuleLocationsByContext.clear();
         StaticContext generatedContext = visitDescendants(mainModule, argument);
         return generatedContext;
@@ -149,6 +152,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
             this.importedModuleContexts.put(moduleLocation, moduleContext);
+            this.importedModuleSurfaces.put(
+                moduleLocation,
+                buildImportSurface(libraryModule.getProlog(), moduleContext)
+            );
         }
         Set<String> importedModuleLocations = this.importedModuleLocationsByContext.computeIfAbsent(
             argument,
@@ -158,12 +165,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             return argument;
         }
         StaticContext importedContext = this.importedModuleContexts.get(moduleLocation);
-        for (Name variableName : importedContext.getInScopeVariables().keySet()) {
+        ModuleImportSurface importedSurface = this.importedModuleSurfaces.get(moduleLocation);
+        for (ModuleImportSurface.ImportedVariableBinding binding : importedSurface.getVariableBindings().values()) {
+            Name variableName = binding.getName();
             if (argument.hasVariableInScopeOnly(variableName)) {
                 throw new VariableAlreadyExistsException(variableName, libraryModule.getMetadata());
             }
         }
-        for (FunctionIdentifier functionIdentifier : importedContext.getStaticallyKnownFunctionSignatures().keySet()) {
+        for (FunctionIdentifier functionIdentifier : importedSurface.getFunctionSignatures().keySet()) {
             if (
                 BuiltinFunctionCatalogue.exists(functionIdentifier, argument.getQueryLanguage())
                     || argument.hasFunctionSignatureInScopeOnly(functionIdentifier)
@@ -171,13 +180,58 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 throw new DuplicateFunctionIdentifierException(functionIdentifier, libraryModule.getMetadata());
             }
         }
-        argument.importModuleContext(importedContext);
+        for (ModuleImportSurface.ImportedVariableBinding binding : importedSurface.getVariableBindings().values()) {
+            Name variableName = binding.getName();
+            argument.addVariable(
+                variableName,
+                binding.getSequenceType(),
+                binding.getMetadata(),
+                binding.isAssignable()
+            );
+            argument.setVariableStorageMode(
+                variableName,
+                binding.getStorageMode()
+            );
+        }
+        for (
+            Map.Entry<FunctionIdentifier, FunctionSignature> entry : importedSurface.getFunctionSignatures()
+                .entrySet()
+        ) {
+            argument.addFunctionSignature(
+                entry.getKey(),
+                entry.getValue()
+            );
+        }
         importedModuleLocations.add(moduleLocation);
         argument.getInScopeSchemaTypes()
             .importModuleTypes(
                 importedContext.getInScopeSchemaTypes()
             );
         return argument;
+    }
+
+    private static ModuleImportSurface buildImportSurface(Prolog prolog, StaticContext moduleContext) {
+        ModuleImportSurface surface = new ModuleImportSurface();
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            Name variableName = declaration.getVariableName();
+            surface.addVariableBinding(
+                new ModuleImportSurface.ImportedVariableBinding(
+                        variableName,
+                        moduleContext.getVariableSequenceType(variableName),
+                        moduleContext.getVariableMetadata(variableName),
+                        moduleContext.getVariableStorageMode(variableName),
+                        moduleContext.getIsAssignable(variableName)
+                )
+            );
+        }
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            FunctionIdentifier functionIdentifier = declaration.getFunctionIdentifier();
+            surface.addFunctionSignature(
+                functionIdentifier,
+                moduleContext.getFunctionSignature(functionIdentifier)
+            );
+        }
+        return surface;
     }
 
     // region primary

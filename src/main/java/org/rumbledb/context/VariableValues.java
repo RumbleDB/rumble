@@ -466,4 +466,3 @@ public class VariableValues implements Serializable {
         nodeWithVariableDecl.dataFrameVariableValues.put(varName, value);
     }
 }
-
