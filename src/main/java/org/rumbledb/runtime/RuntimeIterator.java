@@ -42,16 +42,14 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.runtime.typing.TypeInferrenceUtils;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> {
 
@@ -292,7 +290,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
             || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         throw new OurBadException(
                 "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
@@ -304,62 +302,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
      * 
      * @return the DataFrame.
      */
-    public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
+    public final RuntimeDataFrame<Item> getOrCreateDataFrame(DynamicContext context) {
         if (isDataFrame()) {
             return this.getDataFrame(context);
         }
         if (isRDD()) {
-            if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
-                return ValidateTypeIterator.convertRDDToValidDataFrame(
-                    this.getRDD(context),
-                    this.getStaticType().getItemType(),
-                    context,
-                    true,
-                    this.staticContext
-                );
-            } else {
-                JavaRDD<Item> rdd = this.getRDD(context);
-                ItemType type = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                    rdd,
-                    getMetadata(),
-                    TypeInferrenceUtils.TypeMergeMode.LAX
-                );
-                return ValidateTypeIterator.convertRDDToValidDataFrame(
-                    rdd,
-                    type,
-                    context,
-                    true,
-                    this.staticContext
-                );
-            }
+            return ItemRuntimeDataFrameFactory.INSTANCE.fromRDD(this.getRDD(context), context, this.staticContext);
         }
-        List<Item> items = new ArrayList<>();
-        materialize(context, items);
-        if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
-            return ValidateTypeIterator.convertLocalItemsToDataFrame(
-                items,
-                this.getStaticType().getItemType(),
-                context,
-                true,
-                this.staticContext
-            );
-        } else {
-            ItemType type = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items,
-                getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
-            if (this.getConfiguration().analysis().printInferredTypes()) {
-                System.err.println("Inferred DataFrame type:\n" + this.getStaticType().getItemType());
-            }
-            return ValidateTypeIterator.convertLocalItemsToDataFrame(
-                items,
-                type,
-                context,
-                true,
-                this.staticContext
-            );
-        }
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromList(this.materialize(context), context, this.staticContext);
     }
 
     public boolean isUpdating() {

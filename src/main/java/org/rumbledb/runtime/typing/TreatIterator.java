@@ -20,7 +20,7 @@ import org.rumbledb.exceptions.TreatException;
 import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -216,11 +216,11 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
-        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
         checkEmptySequence(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;
@@ -244,7 +244,7 @@ public class TreatIterator extends HybridRuntimeIterator {
      * @param itemType the dynamic type of these values.
      * @return
      */
-    public static JSoundDataFrame convertToDataFrame(
+    public static HomogeneousItemDataFrame convertToDataFrame(
             JavaRDD<?> rdd,
             ItemType itemType,
             RuntimeStaticContext staticContext
@@ -262,7 +262,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
         // apply the schema to row RDD
         Dataset<Row> df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
-        return new JSoundDataFrame(df, itemType);
+        return new HomogeneousItemDataFrame(df, itemType);
     }
 
     private void checkEmptySequence(int size) {

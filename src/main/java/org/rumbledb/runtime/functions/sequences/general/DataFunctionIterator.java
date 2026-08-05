@@ -28,7 +28,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.exceptions.OurBadException;
@@ -68,8 +68,8 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        JSoundDataFrame childDF = this.sequenceIterator.getDataFrame(dynamicContext);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame childDF = this.sequenceIterator.getDataFrame(dynamicContext);
         if (childDF.getItemType().isAtomicItemType()) {
             return childDF;
         }

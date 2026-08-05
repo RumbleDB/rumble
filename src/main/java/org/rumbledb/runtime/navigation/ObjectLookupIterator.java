@@ -48,7 +48,7 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -382,8 +382,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         initLookupKey(context);
         String key;
         if (this.contextLookup) {
@@ -421,14 +421,14 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 } else {
                     sql = String.format("SELECT `%s`.* FROM %s", key, object);
                 }
-                JSoundDataFrame result = childDataFrame.evaluateSQL(
+                HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
                     sql,
                     type
                 );
                 return result;
             } else {
                 String sql;
-                JSoundDataFrame result;
+                HomogeneousItemDataFrame result;
                 if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
                     sql = String.format(
                         "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
@@ -443,7 +443,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         object
                     );
                     Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                    result = new JSoundDataFrame(df, type);
+                    result = new HomogeneousItemDataFrame(df, type);
                 } else {
                     sql = String.format(
                         "SELECT `%s` AS `%s` FROM %s",
@@ -463,7 +463,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             .warn(
                 "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
             );
-        JSoundDataFrame result = JSoundDataFrame.emptyDataFrame();
+        HomogeneousItemDataFrame result = HomogeneousItemDataFrame.emptyDataFrame();
         return result;
     }
 }

@@ -26,7 +26,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -49,7 +49,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
 
         String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
 
@@ -69,7 +69,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
             if (partitions != -1) {
                 dataFrame = dataFrame.repartition(partitions);
             }
-            return new JSoundDataFrame(dataFrame);
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());

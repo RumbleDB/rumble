@@ -5,7 +5,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidInstanceException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
@@ -28,7 +28,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator inputDataIterator = this.getChild(0);
         RuntimeIterator schemaIterator = this.getChild(1);
         Item schemaItem = schemaIterator.materializeFirstItemOrNull(context);
@@ -37,14 +37,14 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
         try {
 
             if (inputDataIterator.isDataFrame()) {
-                JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
+                HomogeneousItemDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
                 ItemType actualSchemaType = ItemTypeFactory.createItemType(
                     inputDataAsDataFrame.getDataFrame().schema()
                 );
                 if (actualSchemaType.isSubtypeOf(schemaType)) {
                     return inputDataAsDataFrame;
                 }
-                JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
+                JavaRDD<Item> inputDataAsRDDOfItems = inputDataAsDataFrame.toRDD(getMetadata());
                 return ValidateTypeIterator.convertRDDToValidDataFrame(
                     inputDataAsRDDOfItems,
                     schemaType,

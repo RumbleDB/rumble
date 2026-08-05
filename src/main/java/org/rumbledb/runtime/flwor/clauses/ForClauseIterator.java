@@ -41,7 +41,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -753,7 +753,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         Dataset<Row> df = null;
         SequenceType sequenceType = null;
         if (iterator.isDataFrame()) {
-            JSoundDataFrame rows = iterator.getDataFrame(context);
+            HomogeneousItemDataFrame rows = iterator.getDataFrame(context);
             if (allowingEmpty) {
                 sequenceType = new SequenceType(rows.getItemType(), Arity.OneOrZero);
             } else {
