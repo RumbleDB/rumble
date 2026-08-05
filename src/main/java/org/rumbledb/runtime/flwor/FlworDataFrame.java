@@ -18,9 +18,8 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.types.SequenceType;
-
-import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializable {
     @Serial

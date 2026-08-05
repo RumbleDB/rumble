@@ -56,6 +56,10 @@ public class FunctionDeclaration extends Node {
         return this.functionExpression.getFunctionIdentifier();
     }
 
+    public ExceptionMetadata getNameMetadata() {
+        return this.functionExpression.getNameMetadata();
+    }
+
     @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.functionExpression);
@@ -93,4 +97,3 @@ public class FunctionDeclaration extends Node {
     }
 
 }
-

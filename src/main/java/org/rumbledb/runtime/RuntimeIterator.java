@@ -29,7 +29,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -232,7 +232,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         return this.staticContext.getStaticType();
     }
 
-    public RumbleRuntimeConfiguration getConfiguration() {
+    public RumbleConfiguration getConfiguration() {
         return this.staticContext.getConfiguration();
     }
 

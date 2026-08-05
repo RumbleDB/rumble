@@ -34,8 +34,6 @@ public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ArrayUnboxingClosure() {
-    }
 
     @Override
     public Iterator<Item> call(Item arg0) throws Exception {

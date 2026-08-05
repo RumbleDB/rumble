@@ -1,6 +1,5 @@
 package org.rumbledb.items;
 
-import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -28,7 +27,6 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-@NoArgsConstructor(force = true)
 public class AnnotatedItem implements Item {
 
     @Serial

@@ -14,8 +14,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -26,11 +24,10 @@ import org.rumbledb.runtime.RuntimeIterator;
  * Ordinary bodies are serialized once when the factory is created. Creating an execution only deserializes that
  * immutable snapshot; it never serializes a live or previously executed iterator tree. Bodies that own Spark runtime
  * state are retained instead.
- * 
+ *
  * Note: this is just a temporary solution to reduce the expense of deep copy operations on function body iterators.
  * We will switch to a cheaper and generic cursor-based solution in the future.
  */
-@NoArgsConstructor(force = true, access = AccessLevel.PUBLIC) // For Kryo serialization
 public final class FunctionBodyIteratorFactory implements Serializable {
 
     private static final long serialVersionUID = 1L;

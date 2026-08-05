@@ -21,7 +21,6 @@
 package org.rumbledb.items;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -34,7 +33,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @Getter
-@NoArgsConstructor // For Kryo serialization
 public class StringItem extends AbstractAtomicItem {
 
     @Serial

@@ -102,7 +102,7 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
 
         Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(List.of(root));
-        boolean removeParentPointers = context.getRumbleRuntimeConfiguration().optimizeParentPointers();
+        boolean removeParentPointers = context.getRumbleConfiguration().optimization().optimizeParentPointers();
         if (!removeParentPointers) {
             documentItem.addParentToDescendants();
         }

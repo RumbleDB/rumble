@@ -115,5 +115,3 @@ public class YamlSerializer implements Serializer, java.io.Serializable {
         }
     }
 }
-
-

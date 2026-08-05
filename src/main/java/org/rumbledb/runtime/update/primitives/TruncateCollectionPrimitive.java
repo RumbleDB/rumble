@@ -1,11 +1,9 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.net.URI;
 
@@ -13,17 +11,14 @@ import org.apache.spark.sql.SparkSession;
 
 public class TruncateCollectionPrimitive implements UpdatePrimitive {
     private final Collection collection;
-    private final ExceptionMetadata metadata;
-    private final RumbleRuntimeConfiguration configuration;
+    private ExceptionMetadata metadata;
 
     public TruncateCollectionPrimitive(
             Collection collection,
-            ExceptionMetadata metadata,
-            RumbleRuntimeConfiguration configuration
+            ExceptionMetadata metadata
     ) {
         this.collection = collection;
         this.metadata = metadata;
-        this.configuration = configuration;
     }
 
     @Override
@@ -62,10 +57,9 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
         if (mode == Mode.DELTA) {
             URI collectionURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 this.collection.getLogicalName(),
-                this.configuration,
                 this.metadata
             );
-            FileSystemUtil.delete(collectionURI, this.configuration, this.metadata);
+            FileSystemUtil.delete(collectionURI, this.metadata);
             return;
         }
 
