@@ -360,7 +360,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             );
             newContext.setSchema(field.dataType());
         } else {
-            if (this.children.get(1) instanceof StringRuntimeIterator) {
+            if (this.getChild(1) instanceof StringRuntimeIterator) {
                 log.warn(
                     "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
                 );

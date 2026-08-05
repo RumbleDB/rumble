@@ -64,13 +64,11 @@ public class DebugConfig implements Serializable {
     /**
      * The diagnostic logging level requested by the user. A null value means the CLI startup chooses the default.
      */
-    @NonFinal
     private String logLevel;
 
     /**
      * The Spark logging level requested by the user.
      */
-    @NonFinal
     @Default
     private String sparkLogLevel = "off";
 
