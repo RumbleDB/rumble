@@ -20,9 +20,12 @@
 
 package org.rumbledb.expressions.module;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -31,17 +34,11 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.Program;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MainModule extends Module {
 
-    @Setter
-    protected StaticContext staticContext;
-    @Getter
-    private final Prolog prolog;
-    @Getter
-    private final Program program;
+    @Setter protected StaticContext staticContext;
+    @Getter private final Prolog prolog;
+    @Getter private final Program program;
 
     public MainModule(Prolog prolog, Program program, ExceptionMetadata metadata) {
         super(metadata);
@@ -82,4 +79,3 @@ public class MainModule extends Module {
         return visitor.visitMainModule(this, argument);
     }
 }
-

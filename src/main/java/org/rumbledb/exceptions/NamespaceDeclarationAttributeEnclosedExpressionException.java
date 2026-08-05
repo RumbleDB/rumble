@@ -20,21 +20,25 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
 
+import org.rumbledb.errorcodes.ErrorCode;
+
 /**
- * Exception for XQST0022: It is a static error if a namespace declaration attribute contains an enclosed expression.
+ * Exception for XQST0022: It is a static error if a namespace declaration attribute contains an
+ * enclosed expression.
  *
  * @see <a href="https://www.w3.org/TR/xquery-31/#ERRXQST0022">XQuery 3.1, F: XQST0022</a>
  */
 public class NamespaceDeclarationAttributeEnclosedExpressionException extends RumbleException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    public NamespaceDeclarationAttributeEnclosedExpressionException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.NamespaceDeclarationAttributeEnclosedExpressionErrorCode, metadata);
+    public NamespaceDeclarationAttributeEnclosedExpressionException(
+            String message, ExceptionMetadata metadata) {
+        super(
+                message,
+                ErrorCode.NamespaceDeclarationAttributeEnclosedExpressionErrorCode,
+                metadata);
     }
 }

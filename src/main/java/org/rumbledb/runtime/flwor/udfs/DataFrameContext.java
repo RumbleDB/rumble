@@ -20,15 +20,25 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.IOException;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import lombok.Getter;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.objenesis.strategy.StdInstantiatorStrategy;
+
+import lombok.Getter;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -38,57 +48,38 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.ItemType;
-import org.objenesis.strategy.StdInstantiatorStrategy;
-
-import java.io.IOException;
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
- * This class exposes a reusable context that is dynamically populated from the input tuples stored in DataFrames.
- * It also pools Kryo objects, inputs and outputs for better performance.
- * This class is meant to be used by various FLWOR clauses to get a context in which to evaluate their expressions.
- * 
- * @author Ghislain Fourny
+ * This class exposes a reusable context that is dynamically populated from the input tuples stored
+ * in DataFrames. It also pools Kryo objects, inputs and outputs for better performance. This class
+ * is meant to be used by various FLWOR clauses to get a context in which to evaluate their
+ * expressions.
  *
+ * @author Ghislain Fourny
  */
 public class DataFrameContext implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private List<FlworDataFrameColumn> columns;
 
     /**
      * Currently populated dynamic context. It is a child of the context passed to the constructor,
      * populated with the current input tuple with one of the two set* functions.
      */
-    @Getter
-    private DynamicContext context;
+    @Getter private DynamicContext context;
+
+    /** Kryo object that the caller can use for serialization and deserialization purposes. */
+    @Getter private transient Kryo kryo;
+
+    /** Kryo output that the caller can use for serialization purposes. */
+    @Getter private transient Output output;
+
+    /** Kryo input that the caller can use for deserialization purposes. */
+    @Getter private transient Input input;
 
     /**
-     * Kryo object that the caller can use for serialization and deserialization purposes.
-     */
-    @Getter
-    private transient Kryo kryo;
-
-    /**
-     * Kryo output that the caller can use for serialization purposes.
-     */
-    @Getter
-    private transient Output output;
-
-    /**
-     * Kryo input that the caller can use for deserialization purposes.
-     */
-    @Getter
-    private transient Input input;
-
-    /**
-     * Builds a new data frame context that only serves to pool Kryo objects.
-     * The only allowed methods are getKryo, getInput and getOutput.
+     * Builds a new data frame context that only serves to pool Kryo objects. The only allowed
+     * methods are getKryo, getInput and getOutput.
      */
     public DataFrameContext() {
         initializeKryo();
@@ -96,14 +87,12 @@ public class DataFrameContext implements Serializable {
 
     /**
      * Builds a new data frame context.
-     * 
-     * @param context the parent dynamic context, which contains all variable values except those in input tuples.
+     *
+     * @param context the parent dynamic context, which contains all variable values except those in
+     *     input tuples.
      * @param columns the DataFrame columns applicable to the calling clause.
      */
-    public DataFrameContext(
-            DynamicContext context,
-            List<FlworDataFrameColumn> columns
-    ) {
+    public DataFrameContext(DynamicContext context, List<FlworDataFrameColumn> columns) {
         this.columns = columns;
 
         this.context = new DynamicContext(context);
@@ -113,9 +102,9 @@ public class DataFrameContext implements Serializable {
 
     /**
      * Sets the context from a DataFrame row.
-     * 
-     * @param row An row, the column names and types of which must correspond to those passed in the constructor.
-     * 
+     *
+     * @param row An row, the column names and types of which must correspond to those passed in the
+     *     constructor.
      */
     public void setFromRow(Row row) {
         setFromRow(row, null);
@@ -124,9 +113,9 @@ public class DataFrameContext implements Serializable {
     /**
      * Sets the context from a DataFrame row.
      *
-     * @param row An row, the column names and types of which must correspond to those passed in the constructor.
+     * @param row An row, the column names and types of which must correspond to those passed in the
+     *     constructor.
      * @param itemType the itemType to use for the conversion.
-     *
      */
     public void setFromRow(Row row, ItemType itemType) {
         this.context.getVariableValues().removeAllVariables();
@@ -136,35 +125,22 @@ public class DataFrameContext implements Serializable {
             int columnIndex = row.fieldIndex(column.getColumnName());
             if (column.isNativeSequence()) {
                 List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
-                this.context.getVariableValues()
-                    .addVariableValue(
-                        column.getVariableName(),
-                        i
-                    );
+                this.context.getVariableValues().addVariableValue(column.getVariableName(), i);
             }
             if (!column.isCount()) {
                 List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
-                this.context.getVariableValues()
-                    .addVariableValue(
-                        column.getVariableName(),
-                        i
-                    );
+                this.context.getVariableValues().addVariableValue(column.getVariableName(), i);
             } else {
                 long count = FlworDataFrameUtils.getCountOfField(row, columnIndex);
                 Item i = ItemFactory.getInstance().createLongItem(count);
-                this.context.getVariableValues()
-                    .addVariableCount(
-                        column.getVariableName(),
-                        i
-                    );
+                this.context.getVariableValues().addVariableCount(column.getVariableName(), i);
             }
         }
     }
 
     @Serial
     private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
+            throws IOException, ClassNotFoundException {
         in.defaultReadObject();
 
         initializeKryo();
@@ -173,8 +149,7 @@ public class DataFrameContext implements Serializable {
     private void initializeKryo() {
         this.kryo = new Kryo();
         this.kryo.setInstantiatorStrategy(
-            new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy())
-        );
+                new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
         this.kryo.setReferences(true);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
@@ -199,9 +174,10 @@ public class DataFrameContext implements Serializable {
             try {
                 return (List<Item>) this.kryo.readClassAndObject(this.input);
             } catch (Exception e) {
-                RuntimeException ex = new OurBadException(
-                        "Error while deserializing column " + row.schema().fields()[columnIndex].name()
-                );
+                RuntimeException ex =
+                        new OurBadException(
+                                "Error while deserializing column "
+                                        + row.schema().fields()[columnIndex].name());
                 ex.initCause(e);
                 throw ex;
             }
@@ -218,27 +194,27 @@ public class DataFrameContext implements Serializable {
                 }
                 return items;
             }
-            FlworDataFrameColumn dfColumn = new FlworDataFrameColumn(
-                    row.schema().fields()[columnIndex].name(),
-                    row.schema()
-            );
+            FlworDataFrameColumn dfColumn =
+                    new FlworDataFrameColumn(
+                            row.schema().fields()[columnIndex].name(), row.schema());
 
             if (dfColumn.isNativeSequence()) {
                 List<Object> objects = row.getList(columnIndex);
                 List<Item> items = new ArrayList<>();
                 for (Object object : objects) {
-                    Item item = ItemParser.convertValueToItem(
-                        object,
-                        (arrayType).elementType(),
-                        ExceptionMetadata.EMPTY_METADATA,
-                        itemType == null ? null : itemType.getArrayContentFacet()
-                    );
+                    Item item =
+                            ItemParser.convertValueToItem(
+                                    object,
+                                    (arrayType).elementType(),
+                                    ExceptionMetadata.EMPTY_METADATA,
+                                    itemType == null ? null : itemType.getArrayContentFacet());
                     items.add(item);
                 }
                 return items;
             }
         }
-        Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA, itemType);
+        Item item =
+                ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA, itemType);
         return Collections.singletonList(item);
     }
 }

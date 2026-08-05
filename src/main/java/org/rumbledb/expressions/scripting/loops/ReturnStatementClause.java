@@ -1,6 +1,10 @@
 package org.rumbledb.expressions.scripting.loops;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
@@ -8,17 +12,11 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.scripting.statement.Statement;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Getter
 public class ReturnStatementClause extends Clause {
     private final Statement returnStatement;
 
-    public ReturnStatementClause(
-            Statement returnStatement,
-            ExceptionMetadata metadata
-    ) {
+    public ReturnStatementClause(Statement returnStatement, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.RETURN, metadata);
         this.returnStatement = returnStatement;
     }
@@ -46,5 +44,4 @@ public class ReturnStatementClause extends Clause {
         sb.append("return ");
         this.returnStatement.serializeToJSONiq(sb, 0);
     }
-
 }

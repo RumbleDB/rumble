@@ -20,15 +20,16 @@
 
 package org.rumbledb.expressions.comparison;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class ComparisonExpression extends Expression {
 
@@ -47,8 +48,7 @@ public class ComparisonExpression extends Expression {
         GC_GE(">=");
 
         private final String name;
-        @Getter
-        private final boolean isValueComparison;
+        @Getter private final boolean isValueComparison;
 
         ComparisonOperator(String name) {
             switch (name) {
@@ -130,7 +130,8 @@ public class ComparisonExpression extends Expression {
             throw new OurBadException("Unrecognized comparison symbol: " + symbol);
         }
 
-        public static ComparisonOperator getValueComparisonFromComparison(ComparisonOperator operator) {
+        public static ComparisonOperator getValueComparisonFromComparison(
+                ComparisonOperator operator) {
             switch (operator) {
                 case VC_EQ:
                 case GC_EQ:
@@ -158,15 +159,13 @@ public class ComparisonExpression extends Expression {
 
     private final Expression leftExpression;
     private final Expression rightExpression;
-    @Getter
-    private final ComparisonOperator comparisonOperator;
+    @Getter private final ComparisonOperator comparisonOperator;
 
     public ComparisonExpression(
             Expression leftExpression,
             Expression rightExpression,
             ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
@@ -192,7 +191,8 @@ public class ComparisonExpression extends Expression {
         buffer.append(" (" + (this.comparisonOperator) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+                " | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

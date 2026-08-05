@@ -18,32 +18,32 @@
 
 package org.rumbledb.config;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.Value;
-import lombok.experimental.Accessors;
-import lombok.extern.jackson.Jacksonized;
-import org.rumbledb.config.model.AnalysisConfig;
-import org.rumbledb.config.model.DebugConfig;
-import org.rumbledb.config.model.RumbleMode;
-import org.rumbledb.config.model.FormattingConfig;
-import org.rumbledb.config.model.InputConfig;
-import org.rumbledb.config.model.OptimizationConfig;
-import org.rumbledb.config.model.OutputConfig;
-import org.rumbledb.config.model.RuntimeConfig;
-import org.rumbledb.config.model.SemanticsConfig;
-
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/**
- * Temporary aggregate for the new typed configuration model.
- */
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.Value;
+import lombok.experimental.Accessors;
+import lombok.extern.jackson.Jacksonized;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+
+import org.rumbledb.config.model.AnalysisConfig;
+import org.rumbledb.config.model.DebugConfig;
+import org.rumbledb.config.model.FormattingConfig;
+import org.rumbledb.config.model.InputConfig;
+import org.rumbledb.config.model.OptimizationConfig;
+import org.rumbledb.config.model.OutputConfig;
+import org.rumbledb.config.model.RumbleMode;
+import org.rumbledb.config.model.RuntimeConfig;
+import org.rumbledb.config.model.SemanticsConfig;
+
+/** Temporary aggregate for the new typed configuration model. */
 @Value
 @Jacksonized
 @Accessors(fluent = true)
@@ -52,9 +52,7 @@ import java.util.function.Consumer;
 public class RumbleConfiguration implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Application execution mode.
-     */
+    /** Application execution mode. */
     private RumbleMode mode;
 
     private InputConfig input;
@@ -87,17 +85,22 @@ public class RumbleConfiguration implements Serializable {
             AnalysisConfig analysis,
             OptimizationConfig optimization,
             SemanticsConfig semantics,
-            FormattingConfig formatting
-    ) {
+            FormattingConfig formatting) {
         this.mode = Objects.requireNonNullElse(mode, RumbleMode.RUN);
         this.input = Objects.requireNonNullElseGet(input, () -> InputConfig.builder().build());
         this.output = Objects.requireNonNullElseGet(output, () -> OutputConfig.builder().build());
-        this.runtime = Objects.requireNonNullElseGet(runtime, () -> RuntimeConfig.builder().build());
+        this.runtime =
+                Objects.requireNonNullElseGet(runtime, () -> RuntimeConfig.builder().build());
         this.debug = Objects.requireNonNullElseGet(debug, () -> DebugConfig.builder().build());
-        this.analysis = Objects.requireNonNullElseGet(analysis, () -> AnalysisConfig.builder().build());
-        this.optimization = Objects.requireNonNullElseGet(optimization, () -> OptimizationConfig.builder().build());
-        this.semantics = Objects.requireNonNullElseGet(semantics, () -> SemanticsConfig.builder().build());
-        this.formatting = Objects.requireNonNullElseGet(formatting, () -> FormattingConfig.builder().build());
+        this.analysis =
+                Objects.requireNonNullElseGet(analysis, () -> AnalysisConfig.builder().build());
+        this.optimization =
+                Objects.requireNonNullElseGet(
+                        optimization, () -> OptimizationConfig.builder().build());
+        this.semantics =
+                Objects.requireNonNullElseGet(semantics, () -> SemanticsConfig.builder().build());
+        this.formatting =
+                Objects.requireNonNullElseGet(formatting, () -> FormattingConfig.builder().build());
     }
 
     @JsonPOJOBuilder(withPrefix = "")
@@ -105,94 +108,93 @@ public class RumbleConfiguration implements Serializable {
         private final Map<String, Object> withEntries = new LinkedHashMap<>();
 
         public RumbleConfigurationBuilder with(String key, Object value) {
-            this.withEntries.put(Objects.requireNonNull(key, "Configuration key cannot be null."), value);
+            this.withEntries.put(
+                    Objects.requireNonNull(key, "Configuration key cannot be null."), value);
             return this;
         }
 
         public RumbleConfiguration build() {
-            RumbleConfiguration baseConfiguration = new RumbleConfiguration(
-                    this.mode,
-                    this.input,
-                    this.output,
-                    this.runtime,
-                    this.debug,
-                    this.analysis,
-                    this.optimization,
-                    this.semantics,
-                    this.formatting
-            );
+            RumbleConfiguration baseConfiguration =
+                    new RumbleConfiguration(
+                            this.mode,
+                            this.input,
+                            this.output,
+                            this.runtime,
+                            this.debug,
+                            this.analysis,
+                            this.optimization,
+                            this.semantics,
+                            this.formatting);
             if (this.withEntries.isEmpty()) {
                 return baseConfiguration;
             }
             return RumbleConfigurationResolver.apply(baseConfiguration, this.withEntries);
         }
 
-        public RumbleConfigurationBuilder configureInput(Consumer<InputConfig.InputConfigBuilder> customizer) {
-            InputConfig.InputConfigBuilder builder = this.input == null
-                ? InputConfig.builder()
-                : this.input.toBuilder();
+        public RumbleConfigurationBuilder configureInput(
+                Consumer<InputConfig.InputConfigBuilder> customizer) {
+            InputConfig.InputConfigBuilder builder =
+                    this.input == null ? InputConfig.builder() : this.input.toBuilder();
             customizer.accept(builder);
             return input(builder.build());
         }
 
-        public RumbleConfigurationBuilder configureOutput(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
-            OutputConfig.OutputConfigBuilder builder = this.output == null
-                ? OutputConfig.builder()
-                : this.output.toBuilder();
+        public RumbleConfigurationBuilder configureOutput(
+                Consumer<OutputConfig.OutputConfigBuilder> customizer) {
+            OutputConfig.OutputConfigBuilder builder =
+                    this.output == null ? OutputConfig.builder() : this.output.toBuilder();
             customizer.accept(builder);
             return output(builder.build());
         }
 
-        public RumbleConfigurationBuilder configureRuntime(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
-            RuntimeConfig.RuntimeConfigBuilder builder = this.runtime == null
-                ? RuntimeConfig.builder()
-                : this.runtime.toBuilder();
+        public RumbleConfigurationBuilder configureRuntime(
+                Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
+            RuntimeConfig.RuntimeConfigBuilder builder =
+                    this.runtime == null ? RuntimeConfig.builder() : this.runtime.toBuilder();
             customizer.accept(builder);
             return runtime(builder.build());
         }
 
-        public RumbleConfigurationBuilder configureDebug(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
-            DebugConfig.DebugConfigBuilder builder = this.debug == null
-                ? DebugConfig.builder()
-                : this.debug.toBuilder();
+        public RumbleConfigurationBuilder configureDebug(
+                Consumer<DebugConfig.DebugConfigBuilder> customizer) {
+            DebugConfig.DebugConfigBuilder builder =
+                    this.debug == null ? DebugConfig.builder() : this.debug.toBuilder();
             customizer.accept(builder);
             return debug(builder.build());
         }
 
-        public RumbleConfigurationBuilder configureAnalysis(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
-            AnalysisConfig.AnalysisConfigBuilder builder = this.analysis == null
-                ? AnalysisConfig.builder()
-                : this.analysis.toBuilder();
+        public RumbleConfigurationBuilder configureAnalysis(
+                Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
+            AnalysisConfig.AnalysisConfigBuilder builder =
+                    this.analysis == null ? AnalysisConfig.builder() : this.analysis.toBuilder();
             customizer.accept(builder);
             return analysis(builder.build());
         }
 
         public RumbleConfigurationBuilder configureOptimization(
-                Consumer<OptimizationConfig.OptimizationConfigBuilder> customizer
-        ) {
-            OptimizationConfig.OptimizationConfigBuilder builder = this.optimization == null
-                ? OptimizationConfig.builder()
-                : this.optimization.toBuilder();
+                Consumer<OptimizationConfig.OptimizationConfigBuilder> customizer) {
+            OptimizationConfig.OptimizationConfigBuilder builder =
+                    this.optimization == null
+                            ? OptimizationConfig.builder()
+                            : this.optimization.toBuilder();
             customizer.accept(builder);
             return optimization(builder.build());
         }
 
         public RumbleConfigurationBuilder configureSemantics(
-                Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer
-        ) {
-            SemanticsConfig.SemanticsConfigBuilder builder = this.semantics == null
-                ? SemanticsConfig.builder()
-                : this.semantics.toBuilder();
+                Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer) {
+            SemanticsConfig.SemanticsConfigBuilder builder =
+                    this.semantics == null ? SemanticsConfig.builder() : this.semantics.toBuilder();
             customizer.accept(builder);
             return semantics(builder.build());
         }
 
         public RumbleConfigurationBuilder configureFormatting(
-                Consumer<FormattingConfig.FormattingConfigBuilder> customizer
-        ) {
-            FormattingConfig.FormattingConfigBuilder builder = this.formatting == null
-                ? FormattingConfig.builder()
-                : this.formatting.toBuilder();
+                Consumer<FormattingConfig.FormattingConfigBuilder> customizer) {
+            FormattingConfig.FormattingConfigBuilder builder =
+                    this.formatting == null
+                            ? FormattingConfig.builder()
+                            : this.formatting.toBuilder();
             customizer.accept(builder);
             return formatting(builder.build());
         }

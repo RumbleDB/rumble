@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -27,38 +29,29 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
-import java.io.Serial;
-
 public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final FunctionIdentifier functionIdentifier;
 
     public NamedFunctionRefRuntimeIterator(
-            FunctionIdentifier functionIdentifier,
-            RuntimeStaticContext staticContext
-    ) {
+            FunctionIdentifier functionIdentifier, RuntimeStaticContext staticContext) {
         super(null, staticContext);
         this.functionIdentifier = functionIdentifier;
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item resolved = NamedFunctionLookup.lookupOrNull(
-            this.functionIdentifier,
-            dynamicContext,
-            getConfiguration(),
-            getMetadata()
-        );
+        Item resolved =
+                NamedFunctionLookup.lookupOrNull(
+                        this.functionIdentifier, dynamicContext, getConfiguration(), getMetadata());
         if (resolved != null) {
             return resolved;
         }
         throw new UnknownFunctionCallException(
                 this.functionIdentifier.getName(),
                 this.functionIdentifier.getArity(),
-                getMetadata()
-        );
+                getMetadata());
     }
 }

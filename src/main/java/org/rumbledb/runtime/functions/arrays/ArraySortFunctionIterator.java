@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
@@ -47,14 +48,12 @@ import org.rumbledb.runtime.misc.SortKeyComparison;
 import org.rumbledb.types.SequenceType;
 
 /**
- * XPath and XQuery Functions and Operators 3.1 {@code array:sort}:
- * {@code array:sort($array)}, {@code array:sort($array, $collation?)},
- * {@code array:sort($array, $collation?, $key)}.
+ * XPath and XQuery Functions and Operators 3.1 {@code array:sort}: {@code array:sort($array)},
+ * {@code array:sort($array, $collation?)}, {@code array:sort($array, $collation?, $key)}.
  */
 public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator collationIterator;
@@ -64,9 +63,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     private boolean hasProducedResult;
 
     public ArraySortFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         int n = arguments.size();
         if (n < 1 || n > 3) {
@@ -95,16 +92,12 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             return;
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:sort expects exactly one array argument.",
-                    getMetadata()
-            );
+                    "array:sort expects exactly one array argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:sort must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:sort must be an array.", getMetadata());
         }
 
         String collationUri = resolveCollationUri(context);
@@ -120,13 +113,17 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         }
 
         RuntimeStaticContext sortStaticContext = localStaticContext();
-        Comparator<SortRow> cmp = (r1, r2) -> {
-            if (SortKeyComparison.sortKeysDeepEqual(r1.keys, r2.keys, collationUri, sortStaticContext)) {
-                return 0;
-            }
-            boolean less = SortKeyComparison.sortKeysDeepLessThan(r1.keys, r2.keys, collationUri, sortStaticContext);
-            return less ? -1 : 1;
-        };
+        Comparator<SortRow> cmp =
+                (r1, r2) -> {
+                    if (SortKeyComparison.sortKeysDeepEqual(
+                            r1.keys, r2.keys, collationUri, sortStaticContext)) {
+                        return 0;
+                    }
+                    boolean less =
+                            SortKeyComparison.sortKeysDeepLessThan(
+                                    r1.keys, r2.keys, collationUri, sortStaticContext);
+                    return less ? -1 : 1;
+                };
         rows.sort(cmp);
 
         boolean allSingleton = true;
@@ -142,11 +139,16 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : sortedMembers) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    items, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    sortedMembers,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
@@ -161,8 +163,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         if (c.size() != 1 || !c.get(0).isString()) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to array:sort must be empty sequence or a single xs:string.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return c.get(0).getStringValue();
     }
@@ -175,14 +176,12 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         if (keySpec.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:sort must be exactly one item.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (keySpec.size() != 1) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:sort must be exactly one item.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         Item spec = keySpec.get(0);
         if (spec.isFunction()) {
@@ -199,13 +198,12 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         }
         throw new UnexpectedTypeException(
                 "Type error; third argument to array:sort must be a function item, map, or array.",
-                getMetadata()
-        );
+                getMetadata());
     }
 
     /**
-     * F&amp;O {@code fn:data} on a member sequence: arrays are flattened by member (recursive); maps and functions
-     * error; nodes and atomics are atomized.
+     * F&amp;O {@code fn:data} on a member sequence: arrays are flattened by member (recursive);
+     * maps and functions error; nodes and atomics are atomized.
      */
     private List<Item> fnDataKeySequence(List<Item> member) {
         List<Item> out = new ArrayList<>();
@@ -236,49 +234,38 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> invokeKeyFunction(
-            FunctionItem functionItem,
-            List<Item> memberSequence,
-            DynamicContext context
-    ) {
+            FunctionItem functionItem, List<Item> memberSequence, DynamicContext context) {
         RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
         List<RuntimeIterator> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        RuntimeIterator call = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
-        );
+        RuntimeIterator call =
+                NamedFunctions.buildFunctionItemCallIterator(
+                        functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
         return materializeKeyIterator(call, context);
     }
 
-    private List<Item> keyFromArrayLookup(Item keyArray, List<Item> memberSequence, DynamicContext context) {
+    private List<Item> keyFromArrayLookup(
+            Item keyArray, List<Item> memberSequence, DynamicContext context) {
         if (memberSequence.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; when the key is an array, each member must be exactly one numeric index.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (memberSequence.size() != 1) {
             throw new UnexpectedTypeException(
                     "Type error; when the key is an array, each member must be exactly one numeric index.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         Item indexItem = memberSequence.get(0);
         if (!indexItem.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; when the key is an array, each member must be exactly one numeric index.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        RuntimeIterator indexIterator = new ConstantRuntimeIterator(indexItem, localStaticContext());
-        ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(
-                keyArray,
-                indexIterator,
-                localStaticContext()
-        );
+        RuntimeIterator indexIterator =
+                new ConstantRuntimeIterator(indexItem, localStaticContext());
+        ArrayFunctionCallIterator lookup =
+                new ArrayFunctionCallIterator(keyArray, indexIterator, localStaticContext());
         return materializeKeyIterator(lookup, context);
     }
 
@@ -287,8 +274,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         if (atomized.size() != 1) {
             throw new UnexpectedTypeException(
                     "Type error; map key function expects each member to atomize to a single atomic value.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         String key = atomized.get(0).getStringValue();
         Item value = mapItem.getItemByKey(key);
@@ -316,20 +302,16 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private RuntimeStaticContext localStaticContext() {
-        return getRuntimeStaticContext()
-            .toBuilder()
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        return getRuntimeStaticContext().toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
-            return new CommaExpressionIterator(
-                    Collections.emptyList(),
-                    localStaticContext()
-            );
+            return new CommaExpressionIterator(Collections.emptyList(), localStaticContext());
         }
         List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
@@ -370,7 +352,8 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException("array:sort is currently supported only in local execution mode.");
+        throw new OurBadException(
+                "array:sort is currently supported only in local execution mode.");
     }
 
     @Override
@@ -380,7 +363,8 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("array:sort is currently supported only in local execution mode.");
+        throw new OurBadException(
+                "array:sort is currently supported only in local execution mode.");
     }
 
     @FunctionalInterface

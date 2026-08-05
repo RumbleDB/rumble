@@ -17,34 +17,31 @@
 
 package org.rumbledb.config;
 
-import org.rumbledb.exceptions.InvalidSerializationParameterValueException;
-import org.rumbledb.serialization.SerializationParameters;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.rumbledb.exceptions.InvalidSerializationParameterValueException;
+import org.rumbledb.serialization.SerializationParameters;
+
 /**
  * Builder class for constructing and updating SerializationParameters from string parameters.
- * Handles parsing and validation of serialization parameter values according to the
- * XQuery 3.1 Serialization Parameters specification.
+ * Handles parsing and validation of serialization parameter values according to the XQuery 3.1
+ * Serialization Parameters specification.
  */
 public final class SerializationParameterBuilder {
 
-    /**
-     * Private constructor to prevent instantiation.
-     */
+    /** Private constructor to prevent instantiation. */
     private SerializationParameterBuilder() {
         // empty
     }
 
     /**
-     * Builds a fresh {@link SerializationParameters} instance from the provided parameters.
-     * This is equivalent to calling {@link #build(Map, SerializationParameters)} with
-     * {@link SerializationParameters#defaults()}.
-     * All parameter values are validated and an {@link InvalidSerializationParameterValueException} is thrown for
-     * invalid inputs.
+     * Builds a fresh {@link SerializationParameters} instance from the provided parameters. This is
+     * equivalent to calling {@link #build(Map, SerializationParameters)} with {@link
+     * SerializationParameters#defaults()}. All parameter values are validated and an {@link
+     * InvalidSerializationParameterValueException} is thrown for invalid inputs.
      *
      * @param parameters the raw parameter map (name → value) to apply
      * @return a configured {@link SerializationParameters} instance
@@ -54,22 +51,24 @@ public final class SerializationParameterBuilder {
         return build(parameters, SerializationParameters.defaults());
     }
 
-    public static SerializationParameters build(Map<String, String> parameters, String queryLanguage) {
+    public static SerializationParameters build(
+            Map<String, String> parameters, String queryLanguage) {
         return build(parameters, SerializationParameters.defaults(queryLanguage));
     }
 
     /**
-     * Builds a {@link SerializationParameters} instance by copying an existing template and applying overrides.
-     * A defensive copy of {@code defaults} is created so that the original instance is never mutated.
-     * Each provided entry is applied via {@link #update(SerializationParameters, String, String)}, guaranteeing
-     * consistent validation.
+     * Builds a {@link SerializationParameters} instance by copying an existing template and
+     * applying overrides. A defensive copy of {@code defaults} is created so that the original
+     * instance is never mutated. Each provided entry is applied via {@link
+     * #update(SerializationParameters, String, String)}, guaranteeing consistent validation.
      *
      * @param parameters the override map (name → value) to apply
      * @param defaults the template to inherit unspecified parameters from
      * @return a configured {@link SerializationParameters} instance
      * @throws InvalidSerializationParameterValueException if any parameter value is invalid
      */
-    public static SerializationParameters build(Map<String, String> parameters, SerializationParameters defaults) {
+    public static SerializationParameters build(
+            Map<String, String> parameters, SerializationParameters defaults) {
         SerializationParameters params = SerializationParameters.copy(defaults);
 
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
@@ -79,8 +78,9 @@ public final class SerializationParameterBuilder {
     }
 
     /**
-     * Updates a {@link SerializationParameters} instance in place with the provided parameter name and value.
-     * Each update is validated; unknown parameter names are forwarded to {@code sparkOptions}.
+     * Updates a {@link SerializationParameters} instance in place with the provided parameter name
+     * and value. Each update is validated; unknown parameter names are forwarded to {@code
+     * sparkOptions}.
      *
      * @param params the {@link SerializationParameters} instance to mutate (typically a local copy)
      * @param optionName the name of the parameter to update
@@ -92,10 +92,7 @@ public final class SerializationParameterBuilder {
 
         if (optionValue == null) {
             throw new InvalidSerializationParameterValueException(
-                    optionName,
-                    "null",
-                    "a valid value"
-            );
+                    optionName, "null", "a valid value");
         }
 
         try {
@@ -157,7 +154,8 @@ public final class SerializationParameterBuilder {
                     params.setAllowDuplicateNames(parseBoolean(optionName, optionValue));
                     break;
                 case "json-node-output-method":
-                    params.setJsonNodeOutputMethod(parseJsonNodeOutputMethod(optionName, optionValue));
+                    params.setJsonNodeOutputMethod(
+                            parseJsonNodeOutputMethod(optionName, optionValue));
                     break;
                 case "use-character-maps":
                     params.setCharacterMaps(parseCharacterMaps(optionName, optionValue));
@@ -178,55 +176,41 @@ public final class SerializationParameterBuilder {
             // InvalidSerializationParameterValueException
             // But keeping as fallback
             throw new InvalidSerializationParameterValueException(
-                    optionName,
-                    optionValue,
-                    "a valid value (" + e.getMessage() + ")"
-            );
+                    optionName, optionValue, "a valid value (" + e.getMessage() + ")");
         }
     }
 
-    /**
-     * Validates the method parameter value.
-     */
+    /** Validates the method parameter value. */
     private static void validateMethod(String parameterName, String value) {
         if (value == null || value.trim().isEmpty()) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value == null ? "null" : "''",
-                    "a non-empty string (e.g., 'xml', 'html', 'xhtml', 'text', 'json')"
-            );
+                    "a non-empty string (e.g., 'xml', 'html', 'xhtml', 'text', 'json')");
         }
         // Method validation: should be a valid serialization method
         // Common values: xml, html, xhtml, text, json, etc.
         // We accept any non-empty string as method names can be implementation-defined
     }
 
-    /**
-     * Validates the encoding parameter value.
-     */
+    /** Validates the encoding parameter value. */
     private static void validateEncoding(String parameterName, String value) {
         if (value == null || value.trim().isEmpty()) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value == null ? "null" : "''",
-                    "a non-empty string (e.g., 'UTF-8', 'UTF-16', 'ISO-8859-1')"
-            );
+                    "a non-empty string (e.g., 'UTF-8', 'UTF-16', 'ISO-8859-1')");
         }
         // Encoding validation: should be a valid IANA character encoding name
         // Common values: UTF-8, UTF-16, ISO-8859-1, etc.
         // We accept any non-empty string as encoding names can vary
     }
 
-    /**
-     * Parses a boolean value from string, accepting yes/no, true/false, or 1/0.
-     */
+    /** Parses a boolean value from string, accepting yes/no, true/false, or 1/0. */
     private static boolean parseBoolean(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
-                    parameterName,
-                    "null",
-                    "'yes'/'no', 'true'/'false', or '1'/'0'"
-            );
+                    parameterName, "null", "'yes'/'no', 'true'/'false', or '1'/'0'");
         }
         String lower = value.toLowerCase().trim();
         if (lower.equals("yes") || lower.equals("true") || lower.equals("1")) {
@@ -235,24 +219,16 @@ public final class SerializationParameterBuilder {
             return false;
         } else {
             throw new InvalidSerializationParameterValueException(
-                    parameterName,
-                    value,
-                    "'yes'/'no', 'true'/'false', or '1'/'0'"
-            );
+                    parameterName, value, "'yes'/'no', 'true'/'false', or '1'/'0'");
         }
     }
 
-    /**
-     * Parses a Standalone enum value from string.
-     * Accepts: yes, no, true, false, 1, 0, or omit.
-     */
-    private static SerializationParameters.Standalone parseStandalone(String parameterName, String value) {
+    /** Parses a Standalone enum value from string. Accepts: yes, no, true, false, 1, 0, or omit. */
+    private static SerializationParameters.Standalone parseStandalone(
+            String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
-                    parameterName,
-                    "null",
-                    "'yes', 'no', 'true', 'false', '1', '0', or 'omit'"
-            );
+                    parameterName, "null", "'yes', 'no', 'true', 'false', '1', '0', or 'omit'");
         }
         String lower = value.toLowerCase().trim();
         // Map boolean-like values to yes/no, then to enum
@@ -267,54 +243,39 @@ public final class SerializationParameterBuilder {
                 return SerializationParameters.Standalone.valueOf(upper);
             } catch (IllegalArgumentException e) {
                 throw new InvalidSerializationParameterValueException(
-                        parameterName,
-                        value,
-                        "'yes', 'no', 'true', 'false', '1', '0', or 'omit'"
-                );
+                        parameterName, value, "'yes', 'no', 'true', 'false', '1', '0', or 'omit'");
             }
         }
     }
 
     /**
-     * Parses a normalization-form parameter value.
-     * The host language may choose to pass through values that the serializer does not support;
-     * those are then reported by the serializer as SESU0011 rather than being rejected here.
+     * Parses a normalization-form parameter value. The host language may choose to pass through
+     * values that the serializer does not support; those are then reported by the serializer as
+     * SESU0011 rather than being rejected here.
      */
-    private static String parseNormalizationForm(
-            String parameterName,
-            String value
-    ) {
+    private static String parseNormalizationForm(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     "null",
-                    "'NFC', 'NFD', 'NFKC', 'NFKD', 'fully-normalized', or 'none'"
-            );
+                    "'NFC', 'NFD', 'NFKC', 'NFKD', 'fully-normalized', or 'none'");
         }
         String trimmed = value.trim();
         if (trimmed.isEmpty()) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
-                    "'NFC', 'NFD', 'NFKC', 'NFKD', 'fully-normalized', or 'none'"
-            );
+                    "'NFC', 'NFD', 'NFKC', 'NFKD', 'fully-normalized', or 'none'");
         }
         return trimmed;
     }
 
-    /**
-     * Parses a JsonNodeOutputMethod enum value from string.
-     */
+    /** Parses a JsonNodeOutputMethod enum value from string. */
     private static SerializationParameters.JsonNodeOutputMethod parseJsonNodeOutputMethod(
-            String parameterName,
-            String value
-    ) {
+            String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
-                    parameterName,
-                    "null",
-                    "'UNSPECIFIED', 'JSON', 'XML', 'HTML', or 'TEXT'"
-            );
+                    parameterName, "null", "'UNSPECIFIED', 'JSON', 'XML', 'HTML', or 'TEXT'");
         }
         String normalized = value.trim();
         if (normalized.startsWith("Q{") && normalized.endsWith("}xml")) {
@@ -336,44 +297,30 @@ public final class SerializationParameterBuilder {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
-                    "'XML', 'XHTML', 'HTML', 'TEXT', or the equivalent no-namespace EQName form"
-            );
+                    "'XML', 'XHTML', 'HTML', 'TEXT', or the equivalent no-namespace EQName form");
         }
     }
 
-    /**
-     * Parses indent-spaces as an integer.
-     */
+    /** Parses indent-spaces as an integer. */
     private static int parseIndentSpaces(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
-                    parameterName,
-                    "null",
-                    "a non-negative integer"
-            );
+                    parameterName, "null", "a non-negative integer");
         }
         try {
             int spaces = Integer.parseInt(value.trim());
             if (spaces < 0) {
                 throw new InvalidSerializationParameterValueException(
-                        parameterName,
-                        String.valueOf(spaces),
-                        "a non-negative integer"
-                );
+                        parameterName, String.valueOf(spaces), "a non-negative integer");
             }
             return spaces;
         } catch (NumberFormatException e) {
             throw new InvalidSerializationParameterValueException(
-                    parameterName,
-                    value,
-                    "a valid non-negative integer"
-            );
+                    parameterName, value, "a valid non-negative integer");
         }
     }
 
-    /**
-     * Parses a whitespace- or comma-separated string into a Set of strings.
-     */
+    /** Parses a whitespace- or comma-separated string into a Set of strings. */
     private static Set<String> parseStringSet(String parameterName, String value) {
         Set<String> result = new HashSet<>();
         if (value != null && !value.trim().isEmpty()) {
@@ -389,15 +336,12 @@ public final class SerializationParameterBuilder {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
-                    "a comma-separated list with at least one non-empty value"
-            );
+                    "a comma-separated list with at least one non-empty value");
         }
         return result;
     }
 
-    /**
-     * Parses character maps from string format: key1=value1,key2=value2
-     */
+    /** Parses character maps from string format: key1=value1,key2=value2 */
     private static Map<String, String> parseCharacterMaps(String parameterName, String value) {
         Map<String, String> result = new HashMap<>();
         if (value != null && !value.trim().isEmpty()) {
@@ -415,15 +359,11 @@ public final class SerializationParameterBuilder {
                             throw new InvalidSerializationParameterValueException(
                                     parameterName,
                                     trimmed,
-                                    "a key=value pair with non-empty key and value"
-                            );
+                                    "a key=value pair with non-empty key and value");
                         }
                     } else {
                         throw new InvalidSerializationParameterValueException(
-                                parameterName,
-                                trimmed,
-                                "a key=value pair"
-                        );
+                                parameterName, trimmed, "a key=value pair");
                     }
                 }
             }
@@ -432,8 +372,7 @@ public final class SerializationParameterBuilder {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
-                    "a comma-separated list of key=value pairs with at least one valid pair"
-            );
+                    "a comma-separated list of key=value pairs with at least one valid pair");
         }
         return result;
     }

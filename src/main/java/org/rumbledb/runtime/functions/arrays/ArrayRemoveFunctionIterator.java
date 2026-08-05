@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -40,13 +41,12 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 /**
- * F&amp;O 3.1 array:remove — returns a new array with members at the given 1-based positions omitted
- * (distinct positions; order preserved). Raises FOAY0001 if any position is out of bounds.
+ * F&amp;O 3.1 array:remove — returns a new array with members at the given 1-based positions
+ * omitted (distinct positions; order preserved). Raises FOAY0001 if any position is out of bounds.
  */
 public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator positionsIterator;
@@ -54,9 +54,7 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
     private boolean hasProducedResult;
 
     public ArrayRemoveFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("array:remove must have exactly two arguments.");
@@ -80,21 +78,15 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
             arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
         } catch (NoItemException e) {
             throw new UnexpectedTypeException(
-                    "array:remove expects exactly one array as the first argument.",
-                    getMetadata()
-            );
+                    "array:remove expects exactly one array as the first argument.", getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:remove expects exactly one array as the first argument.",
-                    getMetadata()
-            );
+                    "array:remove expects exactly one array as the first argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:remove must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:remove must be an array.", getMetadata());
         }
 
         int size = arrayItem.getSize();
@@ -112,16 +104,14 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
         for (Item p : positionItems) {
             if (!p.isNumeric()) {
                 throw new UnexpectedTypeException(
-                        "Type error; positions in array:remove must be numeric.",
-                        getMetadata()
-                );
+                        "Type error; positions in array:remove must be numeric.", getMetadata());
             }
-            BigInteger pos = p.isInteger() ? p.castToIntegerValue() : BigInteger.valueOf(p.castToIntValue());
+            BigInteger pos =
+                    p.isInteger() ? p.castToIntegerValue() : BigInteger.valueOf(p.castToIntValue());
             if (pos.compareTo(min) < 0 || pos.compareTo(max) > 0) {
                 throw new ArrayIndexOutOfBoundsException(
                         "array:remove position out of bounds: " + pos + ", array length: " + size,
-                        getMetadata()
-                );
+                        getMetadata());
             }
             positionsToRemove.add(pos);
         }
@@ -135,19 +125,26 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
                     keptMembers.add(originalMembers.get(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    keptMembers,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
-            List<List<Item>> keptMembers = new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
+            List<List<Item>> keptMembers =
+                    new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
             for (int i = 0; i < size; i++) {
                 BigInteger oneBased = BigInteger.valueOf((long) i + 1);
                 if (!positionsToRemove.contains(oneBased)) {
                     keptMembers.add(originalMembers.get(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    keptMembers,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
@@ -181,8 +178,7 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:remove is currently supported only in local execution mode."
-        );
+                "array:remove is currently supported only in local execution mode.");
     }
 
     @Override
@@ -193,7 +189,6 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:remove is currently supported only in local execution mode."
-        );
+                "array:remove is currently supported only in local execution mode.");
     }
 }

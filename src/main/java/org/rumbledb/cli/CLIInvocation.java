@@ -17,15 +17,11 @@
 
 package org.rumbledb.cli;
 
-
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
 
 /**
- * Parsed command-line inputs, kept separate because bindings are query inputs
- * rather than engine configuration.
+ * Parsed command-line inputs, kept separate because bindings are query inputs rather than engine
+ * configuration.
  */
-public record CLIInvocation(
-        RumbleConfiguration configuration,
-        ExternalBindings bindings) {
-}
+public record CLIInvocation(RumbleConfiguration configuration, ExternalBindings bindings) {}

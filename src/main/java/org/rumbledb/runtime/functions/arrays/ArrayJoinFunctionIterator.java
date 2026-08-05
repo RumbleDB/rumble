@@ -17,7 +17,12 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,26 +34,20 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * F&amp;O 3.1 array:join — concatenates the members of a sequence of arrays in order into one array.
+ * F&amp;O 3.1 array:join — concatenates the members of a sequence of arrays in order into one
+ * array.
  */
 public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arraysIterator;
     private Item resultItem;
     private boolean hasProducedResult;
 
     public ArrayJoinFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 1) {
             throw new OurBadException("array:join must have exactly one argument.");
@@ -71,9 +70,7 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
         for (Item arrayItem : arrays) {
             if (!arrayItem.isArray()) {
                 throw new UnexpectedTypeException(
-                        "Type error; array:join expects a sequence of arrays.",
-                        getMetadata()
-                );
+                        "Type error; array:join expects a sequence of arrays.", getMetadata());
             }
             int n = arrayItem.getSize();
             for (int i = 0; i < n; i++) {
@@ -111,8 +108,7 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:join is currently supported only in local execution mode."
-        );
+                "array:join is currently supported only in local execution mode.");
     }
 
     @Override
@@ -123,7 +119,6 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:join is currently supported only in local execution mode."
-        );
+                "array:join is currently supported only in local execution mode.");
     }
 }

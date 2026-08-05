@@ -32,37 +32,34 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinNamedFunctionReferenceMarkerIterator;
 import org.rumbledb.types.SequenceType;
 
-/**
- * Construction helpers for {@link FunctionItem} values used by the runtime.
- */
+/** Construction helpers for {@link FunctionItem} values used by the runtime. */
 public final class FunctionItemFactory {
 
-    private FunctionItemFactory() {
-    }
+    private FunctionItemFactory() {}
 
     /**
-     * Builds a function item for a builtin named function reference, using synthetic parameter names
-     * {@code $p0}, {@code $p1}, ... aligned with the catalogue signature order.
+     * Builds a function item for a builtin named function reference, using synthetic parameter
+     * names {@code $p0}, {@code $p1}, ... aligned with the catalogue signature order.
      */
     public static FunctionItem createBuiltinNamedReference(
             FunctionIdentifier identifier,
             DynamicContext moduleContext,
             RumbleConfiguration conf,
             ExceptionMetadata metadata,
-            BuiltinFunction builtinFunction
-    ) {
+            BuiltinFunction builtinFunction) {
         List<Name> paramNames = new ArrayList<>();
         int arity = builtinFunction.getSignature().getParameterTypes().size();
         for (int i = 0; i < arity; i++) {
             paramNames.add(Name.createVariableInNoNamespace("$p" + i));
         }
         SequenceType returnType = builtinFunction.getSignature().getReturnType();
-        RuntimeStaticContext markerContext = RuntimeStaticContext.builder()
-            .configuration(conf)
-            .staticType(returnType)
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(metadata)
-            .build();
+        RuntimeStaticContext markerContext =
+                RuntimeStaticContext.builder()
+                        .configuration(conf)
+                        .staticType(returnType)
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(metadata)
+                        .build();
         RuntimeIterator markerBody = new BuiltinNamedFunctionReferenceMarkerIterator(markerContext);
         return new FunctionItem(
                 identifier,
@@ -70,7 +67,6 @@ public final class FunctionItemFactory {
                 builtinFunction.getSignature(),
                 moduleContext,
                 markerBody,
-                true
-        );
+                true);
     }
 }

@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -27,21 +30,15 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private String input1;
     private String input2;
     private Item nextResult;
 
     public CodepointEqualFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -56,10 +53,8 @@ public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     public void setNextResult(DynamicContext context) {
         if (this.input1 == null || this.input2 == null) {
-            Item operandOneItem = this.getChild(0)
-                .materializeFirstItemOrNull(context);
-            Item operandTwoItem = this.getChild(1)
-                .materializeFirstItemOrNull(context);
+            Item operandOneItem = this.getChild(0).materializeFirstItemOrNull(context);
+            Item operandTwoItem = this.getChild(1).materializeFirstItemOrNull(context);
             if (operandOneItem == null || operandTwoItem == null) {
                 this.hasNext = false;
                 return;
@@ -67,7 +62,8 @@ public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIte
             this.hasNext = true;
             this.input1 = operandOneItem.getStringValue();
             this.input2 = operandTwoItem.getStringValue();
-            this.nextResult = ItemFactory.getInstance().createBooleanItem(this.input1.equals(this.input2));
+            this.nextResult =
+                    ItemFactory.getInstance().createBooleanItem(this.input1.equals(this.input2));
         } else {
             this.hasNext = false;
         }

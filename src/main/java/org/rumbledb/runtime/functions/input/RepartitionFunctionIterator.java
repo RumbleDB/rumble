@@ -20,30 +20,27 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-
-import java.io.Serial;
-import java.util.List;
 
 public class RepartitionFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private int numberPartitions;
 
     public RepartitionFunctionIterator(
-            List<RuntimeIterator> inputIterators,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> inputIterators, RuntimeStaticContext staticContext) {
         super(inputIterators, staticContext);
         this.iterator = inputIterators.get(0);
     }
@@ -71,7 +68,8 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
-        this.numberPartitions = this.getChild(1).materializeFirstItemOrNull(dynamicContext).getIntValue();
+        this.numberPartitions =
+                this.getChild(1).materializeFirstItemOrNull(dynamicContext).getIntValue();
         JavaRDD<Item> resultRDD = childRDD.repartition(this.numberPartitions);
         return resultRDD;
     }

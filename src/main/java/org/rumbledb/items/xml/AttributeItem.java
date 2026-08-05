@@ -1,5 +1,11 @@
 package org.rumbledb.items.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -7,20 +13,15 @@ import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
 
 public class AttributeItem extends AbstractNodeItem {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
     private ItemType typeAnnotation;
+
     // TODO: add is-id, is-idrefs
 
     public AttributeItem(Node attributeNode) {
@@ -52,8 +53,6 @@ public class AttributeItem extends AbstractNodeItem {
     public XMLDocumentPosition getXmlDocumentPosition() {
         return this.documentPos;
     }
-
-
 
     @Override
     public Name nodeName() {
@@ -92,7 +91,7 @@ public class AttributeItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.3 Attribute Node Accessors — node-kind.
      *
-     * "For an Attribute Node, dm:node-kind returns the string \"attribute\"."
+     * <p>"For an Attribute Node, dm:node-kind returns the string \"attribute\"."
      */
     @Override
     public String nodeKind() {
@@ -102,7 +101,7 @@ public class AttributeItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.3 Attribute Node Accessors — children.
      *
-     * "For an Attribute Node, dm:children returns the empty sequence."
+     * <p>"For an Attribute Node, dm:children returns the empty sequence."
      */
     @Override
     public List<Item> children() {
@@ -112,7 +111,7 @@ public class AttributeItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.3 Attribute Node Accessors — attributes.
      *
-     * "For an Attribute Node, dm:attributes returns the empty sequence."
+     * <p>"For an Attribute Node, dm:attributes returns the empty sequence."
      */
     @Override
     public List<Item> attributes() {
@@ -122,10 +121,10 @@ public class AttributeItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.3 Attribute Node Accessors — is-id.
      *
-     * "For an Attribute Node, dm:is-id returns true if the attribute node is of type xs:ID or
-     * is derived by restriction from xs:ID; otherwise it returns false."
+     * <p>"For an Attribute Node, dm:is-id returns true if the attribute node is of type xs:ID or is
+     * derived by restriction from xs:ID; otherwise it returns false."
      *
-     * RumbleDB does not currently support schema type annotations on attributes, so this
+     * <p>RumbleDB does not currently support schema type annotations on attributes, so this
      * implementation always returns false.
      */
     @Override
@@ -136,11 +135,11 @@ public class AttributeItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.3 Attribute Node Accessors — is-idrefs.
      *
-     * "For an Attribute Node, dm:is-idrefs returns true if the attribute node is of type
-     * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise
-     * it returns false."
+     * <p>"For an Attribute Node, dm:is-idrefs returns true if the attribute node is of type
+     * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise it
+     * returns false."
      *
-     * RumbleDB does not currently support schema type annotations on attributes, so this
+     * <p>RumbleDB does not currently support schema type annotations on attributes, so this
      * implementation always returns false.
      */
     @Override
@@ -161,14 +160,15 @@ public class AttributeItem extends AbstractNodeItem {
     @Override
     public List<Item> atomizedValue() {
         if (this.typeAnnotation != null) {
-            Item typedValue = CastIterator.castItemToType(
-                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
-                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
-            );
+            Item typedValue =
+                    CastIterator.castItemToType(
+                            ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
+                            this.typeAnnotation,
+                            org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA);
             return Collections.singletonList(typedValue);
         }
-        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
+        return Collections.singletonList(
+                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
     @Override
@@ -184,7 +184,7 @@ public class AttributeItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.3 Attribute Node Accessors — base-uri.
      *
-     * For an Attribute Node, dm:base-uri returns the base URI of the parent element or document
+     * <p>For an Attribute Node, dm:base-uri returns the base URI of the parent element or document
      * node, if it has one; otherwise it returns the empty sequence.
      */
     @Override
@@ -198,7 +198,7 @@ public class AttributeItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.3 Attribute Node Accessors — document-uri.
      *
-     * For an Attribute Node, dm:document-uri returns the document-uri of the document node that
+     * <p>For an Attribute Node, dm:document-uri returns the document-uri of the document node that
      * is the root of the tree containing the attribute, if it has one; otherwise it returns the
      * empty sequence.
      */
@@ -213,7 +213,7 @@ public class AttributeItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.3 Attribute Node Accessors — nilled.
      *
-     * For an Attribute Node, dm:nilled returns the empty sequence.
+     * <p>For an Attribute Node, dm:nilled returns the empty sequence.
      */
     @Override
     public List<Item> nilled() {
@@ -223,10 +223,10 @@ public class AttributeItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.3 Attribute Node Accessors — type-name.
      *
-     * For an Attribute Node, dm:type-name returns the name of the dynamic type of the attribute
+     * <p>For an Attribute Node, dm:type-name returns the name of the dynamic type of the attribute
      * node, or the empty sequence if the node is untyped.
      *
-     * RumbleDB does not currently support schema-validated attribute types, so this
+     * <p>RumbleDB does not currently support schema-validated attribute types, so this
      * implementation returns the empty sequence.
      */
     @Override
@@ -235,8 +235,7 @@ public class AttributeItem extends AbstractNodeItem {
             return Collections.emptyList();
         }
         return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
-        );
+                ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName()));
     }
 
     @Override

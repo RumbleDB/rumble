@@ -24,32 +24,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * Expression representing an attribute node in a direct element constructor.
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-attributes">XQuery 3.1, 3.9.1.1: Attributes</a>
  */
 public class AttributeNodeExpression extends Expression {
-    /**
-     * Resolved expanded name of the attribute (compile-time).
-     */
+    /** Resolved expanded name of the attribute (compile-time). */
     private final Name attributeName;
+
     /**
      * The value of the attribute node.
-     * 
-     * The value is a list of expressions. This is because an attribute node can be
-     * constructed from multiple expressions and literals, which are materialized at runtime.
+     *
+     * <p>The value is a list of expressions. This is because an attribute node can be constructed
+     * from multiple expressions and literals, which are materialized at runtime.
      */
-    @Getter
-    private final List<Expression> value;
+    @Getter private final List<Expression> value;
 
-    public AttributeNodeExpression(Name attributeName, List<Expression> value, ExceptionMetadata metadata) {
+    public AttributeNodeExpression(
+            Name attributeName, List<Expression> value, ExceptionMetadata metadata) {
         super(metadata);
         this.attributeName = attributeName;
         this.value = value;

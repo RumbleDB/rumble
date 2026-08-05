@@ -20,17 +20,17 @@
 
 package org.rumbledb.expressions.control;
 
-
-import lombok.Getter;
-import org.rumbledb.expressions.Expression;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+
+import org.rumbledb.expressions.Expression;
+
 /**
- * This is a helper class that organizes the children expressions of a switch expression.
- * From a tree perspective, all expressions in this class are considered
- * to be direct children of the SwitchExpression.
+ * This is a helper class that organizes the children expressions of a switch expression. From a
+ * tree perspective, all expressions in this class are considered to be direct children of the
+ * SwitchExpression.
  */
 @Getter
 public class SwitchCase {
@@ -38,10 +38,7 @@ public class SwitchCase {
     private final List<Expression> conditionExpressions;
     private final Expression returnExpression;
 
-    public SwitchCase(
-            List<Expression> conditionExpressions,
-            Expression returnExpression
-    ) {
+    public SwitchCase(List<Expression> conditionExpressions, Expression returnExpression) {
         this.conditionExpressions = conditionExpressions;
         this.returnExpression = returnExpression;
     }
@@ -52,5 +49,4 @@ public class SwitchCase {
         result.add(this.returnExpression);
         return result;
     }
-
 }

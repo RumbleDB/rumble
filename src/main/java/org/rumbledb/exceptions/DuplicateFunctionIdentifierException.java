@@ -20,21 +20,23 @@
 
 package org.rumbledb.exceptions;
 
+import java.io.Serial;
+
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.errorcodes.ErrorCode;
 
-import java.io.Serial;
-
 public class DuplicateFunctionIdentifierException extends RumbleException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    public DuplicateFunctionIdentifierException(FunctionIdentifier identifier, ExceptionMetadata metadata) {
+    public DuplicateFunctionIdentifierException(
+            FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(
-            "Function already exists; \"" + identifier.getName() + "\" with arity: " + identifier.getArity(),
-            ErrorCode.DuplicateFunctionIdentifier,
-            metadata
-        );
+                "Function already exists; \""
+                        + identifier.getName()
+                        + "\" with arity: "
+                        + identifier.getArity(),
+                ErrorCode.DuplicateFunctionIdentifier,
+                metadata);
     }
 }

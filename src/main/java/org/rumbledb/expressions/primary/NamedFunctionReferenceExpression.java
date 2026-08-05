@@ -20,23 +20,24 @@
 
 package org.rumbledb.expressions.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
 @Getter
 public class NamedFunctionReferenceExpression extends Expression {
 
     private final FunctionIdentifier identifier;
 
-    public NamedFunctionReferenceExpression(FunctionIdentifier identifier, ExceptionMetadata metadata) {
+    public NamedFunctionReferenceExpression(
+            FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(metadata);
         this.identifier = identifier;
     }
@@ -59,7 +60,8 @@ public class NamedFunctionReferenceExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + this.identifier.getName() + "#" + this.identifier.getArity() + ") ");
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+                " | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
     }
 

@@ -21,19 +21,15 @@ package org.rumbledb.items;
 import java.io.Serial;
 import java.util.Objects;
 
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-/**
- * Atomic item representing an {@code xs:QName} value as an expanded name ({@link Name}).
- */
+/** Atomic item representing an {@code xs:QName} value as an expanded name ({@link Name}). */
 public class QNameItem extends AbstractAtomicItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private Name name;
 
@@ -55,8 +51,6 @@ public class QNameItem extends AbstractAtomicItem {
     public Object getVariantValue() {
         return this.name;
     }
-
-
 
     @Override
     public boolean isQName() {

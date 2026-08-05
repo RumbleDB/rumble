@@ -20,8 +20,12 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,14 +35,9 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
-import java.io.Serial;
-import java.util.List;
-
 public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator sequenceIterator;
     private final RuntimeIterator searchIterator;
     private Item search;
@@ -46,9 +45,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     private int currentIndex;
 
     public IndexOfFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.searchIterator = this.getChild(1);
@@ -56,9 +53,8 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
     private void checkCollation(DynamicContext context) {
         if (this.getChildren().size() == 3) {
-            String collation = this.getChild(2)
-                .materializeFirstItemOrNull(context)
-                .getStringValue();
+            String collation =
+                    this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
@@ -72,8 +68,10 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
         this.search = this.searchIterator.materializeFirstItemOrNull(context);
 
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
-        JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((item) -> item._1().equals(this.search));
-        return filteredRDD.map((item) -> ItemFactory.getInstance().createIntItem(item._2.intValue() + 1));
+        JavaPairRDD<Item, Long> filteredRDD =
+                zippedRDD.filter((item) -> item._1().equals(this.search));
+        return filteredRDD.map(
+                (item) -> ItemFactory.getInstance().createIntItem(item._2.intValue() + 1));
     }
 
     @Override
@@ -81,7 +79,9 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
         this.currentIndex = 0;
         checkCollation(this.currentDynamicContextForLocalExecution);
         this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.search = this.searchIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.search =
+                this.searchIterator.materializeFirstItemOrNull(
+                        this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -102,7 +102,8 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
             setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "index-of function", getMetadata());
+        throw new IteratorFlowException(
+                FLOW_EXCEPTION_MESSAGE + "index-of function", getMetadata());
     }
 
     public void setNextResult() {
@@ -114,13 +115,15 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
-                        getMetadata()
-                );
+                        getMetadata());
             } else {
-                // index-of uses eq semantics, except that untyped atomic values are compared as strings
-                // and non-comparable values simply do not match. Atomic deep equality provides exactly
+                // index-of uses eq semantics, except that untyped atomic values are compared as
+                // strings
+                // and non-comparable values simply do not match. Atomic deep equality provides
+                // exactly
                 // those rules, with the exception of NaN, which eq never considers equal.
-                boolean searchIsNaN = (this.search.isDouble() || this.search.isFloat()) && this.search.isNaN();
+                boolean searchIsNaN =
+                        (this.search.isDouble() || this.search.isFloat()) && this.search.isNaN();
                 if (!searchIsNaN && AtomicDeepEqual.deepEqual(item, this.search)) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
                     break;

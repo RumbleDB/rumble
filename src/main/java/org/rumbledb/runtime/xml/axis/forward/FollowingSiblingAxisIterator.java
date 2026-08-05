@@ -1,19 +1,18 @@
 package org.rumbledb.runtime.xml.axis.forward;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 public class FollowingSiblingAxisIterator extends AxisIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public FollowingSiblingAxisIterator(RuntimeStaticContext staticContext) {
         super(staticContext);
@@ -23,10 +22,13 @@ public class FollowingSiblingAxisIterator extends AxisIterator {
     protected void setNextResult() {
         if (this.results == null) {
             this.results = new ArrayList<>();
-            List<Item> currentContext = this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            List<Item> currentContext =
+                    this.currentDynamicContextForLocalExecution
+                            .getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             if (currentContext.isEmpty()) {
-                throw new UnexpectedNodeException("Expected at least a node type as context item", getMetadata());
+                throw new UnexpectedNodeException(
+                        "Expected at least a node type as context item", getMetadata());
             }
             for (Item node : currentContext) {
                 this.results.addAll(getFollowingSiblings(node));

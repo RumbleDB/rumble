@@ -1,5 +1,8 @@
 package org.rumbledb.runtime.scripting.block;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -8,20 +11,18 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private int childIndex;
 
-    public StatementsOnlyIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public StatementsOnlyIterator(
+            List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(
-            children,
-            staticContext.toBuilder().isSequential(children.stream().anyMatch(RuntimeIterator::isSequential)).build()
-        );
+                children,
+                staticContext.toBuilder()
+                        .isSequential(children.stream().anyMatch(RuntimeIterator::isSequential))
+                        .build());
     }
 
     @Override
@@ -82,6 +83,7 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
             // Always return null
             return ItemFactory.getInstance().createNullItem();
         }
-        throw new IteratorFlowException("Invalid next() call in StatementsWithExpression", getMetadata());
+        throw new IteratorFlowException(
+                "Invalid next() call in StatementsWithExpression", getMetadata());
     }
 }

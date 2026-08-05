@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -22,8 +23,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator positionIterator;
@@ -32,9 +32,7 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
     private boolean hasProducedResult;
 
     public ArrayInsertBeforeFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("array:insert-before must have exactly three arguments.");
@@ -48,7 +46,8 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        // Do not open child iterators here: materializeExactlyOneItem / materialize open and close them.
+        // Do not open child iterators here: materializeExactlyOneItem / materialize open and close
+        // them.
         initializeResult(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.resultItem != null;
         this.hasProducedResult = false;
@@ -63,16 +62,13 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
             return;
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:insert-before expects exactly one array argument.",
-                    getMetadata()
-            );
+                    "array:insert-before expects exactly one array argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to array:insert-before must be an array.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         Item positionItem;
@@ -80,21 +76,16 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
             positionItem = this.positionIterator.materializeExactlyOneItem(context);
         } catch (NoItemException e) {
             throw new UnexpectedTypeException(
-                    "array:insert-before expects exactly one position argument.",
-                    getMetadata()
-            );
+                    "array:insert-before expects exactly one position argument.", getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:insert-before expects exactly one position argument.",
-                    getMetadata()
-            );
+                    "array:insert-before expects exactly one position argument.", getMetadata());
         }
 
         if (!positionItem.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; position argument to array:insert-before must be numeric.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         BigInteger positionInteger;
@@ -110,11 +101,10 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
         if (positionInteger.compareTo(min) < 0 || positionInteger.compareTo(max) > 0) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to insert at array index: "
-                        + positionInteger
-                        + ", of array with length: "
-                        + size,
-                    getMetadata()
-            );
+                            + positionInteger
+                            + ", of array with length: "
+                            + size,
+                    getMetadata());
         }
 
         int insertIndex = positionInteger.intValue() - 1;
@@ -132,8 +122,11 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
             for (int i = insertIndex; i < size; i++) {
                 newItems.add(arrayItem.getItemAt(i));
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    newItems,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> newMemberSequences = new ArrayList<>(size + 1);
             // add items before the insert index
@@ -146,8 +139,11 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
             for (int i = insertIndex; i < size; i++) {
                 newMemberSequences.add(arrayItem.getSequenceAt(i));
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    newMemberSequences,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
@@ -184,8 +180,7 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:insert-before is currently supported only in local execution mode."
-        );
+                "array:insert-before is currently supported only in local execution mode.");
     }
 
     @Override
@@ -196,7 +191,6 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:insert-before is currently supported only in local execution mode."
-        );
+                "array:insert-before is currently supported only in local execution mode.");
     }
 }

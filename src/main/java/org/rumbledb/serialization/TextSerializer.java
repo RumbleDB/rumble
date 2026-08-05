@@ -1,5 +1,7 @@
 package org.rumbledb.serialization;
 
+import java.io.Serial;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -7,12 +9,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 
-import java.io.Serial;
-
 public class TextSerializer implements Serializer, java.io.Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     @SuppressWarnings("unused")
     private final SerializationParameters params;
@@ -37,10 +36,12 @@ public class TextSerializer implements Serializer, java.io.Serializable {
             throw new RumbleException(
                     "Top-level attribute and namespace nodes cannot be serialized with the text method.",
                     ErrorCode.FunctionsNonSerializable,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
-        if (item.isAtomic() || item.isTextNode() || item.isCommentNode() || item.isProcessingInstructionNode()) {
+        if (item.isAtomic()
+                || item.isTextNode()
+                || item.isCommentNode()
+                || item.isProcessingInstructionNode()) {
             sb.append(item.getStringValue());
             return;
         }
@@ -56,8 +57,7 @@ public class TextSerializer implements Serializer, java.io.Serializable {
             throw new RumbleException(
                     "Serialization method text does not support arrays or maps.",
                     new ErrorCode(new Name(Name.ERROR_NS, "err", "SENR0001")),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 

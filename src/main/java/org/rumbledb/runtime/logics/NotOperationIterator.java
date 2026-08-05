@@ -35,14 +35,10 @@ import org.rumbledb.types.SequenceType;
 
 public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
 
-    public NotOperationIterator(
-            RuntimeIterator child,
-            RuntimeStaticContext staticContext
-    ) {
+    public NotOperationIterator(RuntimeIterator child, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(child), staticContext);
         this.child = child;
     }
@@ -66,7 +62,8 @@ public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.booleanItem, childResult.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.booleanItem,
+                        childResult.getResultingType().getArity()));
     }
 }

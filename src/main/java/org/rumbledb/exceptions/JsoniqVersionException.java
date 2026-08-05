@@ -20,21 +20,18 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class JsoniqVersionException extends ParsingException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public JsoniqVersionException(ExceptionMetadata expressionMetadata) {
         super(
-            "Static error; The version number specified in a version declaration is not supported by the implementation.",
-            ErrorCode.InvalidJsoniqVersionErrorCode,
-            expressionMetadata
-        );
+                "Static error; The version number specified in a version declaration is not supported by the implementation.",
+                ErrorCode.InvalidJsoniqVersionErrorCode,
+                expressionMetadata);
     }
-
 }

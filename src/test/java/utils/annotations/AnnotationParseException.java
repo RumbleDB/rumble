@@ -20,9 +20,7 @@
 
 package utils.annotations;
 
-/**
- * Thrown when a test annotation cannot be processed by the test suite.
- */
+/** Thrown when a test annotation cannot be processed by the test suite. */
 public class AnnotationParseException extends Exception {
 
     private static final long serialVersionUID = 1L;
@@ -37,10 +35,7 @@ public class AnnotationParseException extends Exception {
 
     private static String formatMessage(String annotationText, String errorMessage) {
         return String.format(
-            "Could not parse annotation.\n Reason: [%s]\nAnnotation text: [%s]",
-            errorMessage,
-            annotationText
-        );
+                "Could not parse annotation.\n Reason: [%s]\nAnnotation text: [%s]",
+                errorMessage, annotationText);
     }
 }
-

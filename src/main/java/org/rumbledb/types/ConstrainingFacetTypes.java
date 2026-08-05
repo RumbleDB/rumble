@@ -1,12 +1,12 @@
 package org.rumbledb.types;
 
 /**
- * Constraining facet kinds per XSD 1.1 Part 2 §4.3.
- * Constraining facets restrict the value or lexical space during type derivation.
+ * Constraining facet kinds per XSD 1.1 Part 2 §4.3. Constraining facets restrict the value or
+ * lexical space during type derivation.
  *
- * Entries CONTENT, CLOSED, METADATA, and CONSTRAINTS are JSONiq-specific
- * extensions used by object/array types.
- **/
+ * <p>Entries CONTENT, CLOSED, METADATA, and CONSTRAINTS are JSONiq-specific extensions used by
+ * object/array types.
+ */
 public enum ConstrainingFacetTypes {
     LENGTH("length"),
     MINLENGTH("minLength"),

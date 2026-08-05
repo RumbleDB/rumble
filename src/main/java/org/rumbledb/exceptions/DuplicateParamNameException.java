@@ -20,25 +20,19 @@
 
 package org.rumbledb.exceptions;
 
+import java.io.Serial;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 
-import java.io.Serial;
-
 public class DuplicateParamNameException extends RumbleException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    public DuplicateParamNameException(
-            Name fnName,
-            Name paramName,
-            ExceptionMetadata metadata
-    ) {
+    public DuplicateParamNameException(Name fnName, Name paramName, ExceptionMetadata metadata) {
         super(
-            "Duplicate parameter name; Function: " + fnName + " - parameter name: " + paramName,
-            ErrorCode.DuplicateParamName,
-            metadata
-        );
+                "Duplicate parameter name; Function: " + fnName + " - parameter name: " + paramName,
+                ErrorCode.DuplicateParamName,
+                metadata);
     }
 }

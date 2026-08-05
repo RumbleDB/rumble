@@ -1,24 +1,22 @@
 package org.rumbledb.exceptions;
 
-import lombok.Getter;
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-import java.io.Serial;
-import java.util.List;
-
 public class ExitStatementException extends RuntimeException {
-    @Serial
-    private static final long serialVersionUID = 1L;
-    @Getter
-    private final PendingUpdateList pendingUpdateList;
+    @Serial private static final long serialVersionUID = 1L;
+    @Getter private final PendingUpdateList pendingUpdateList;
     private final List<Item> localResult;
-    @Getter
-    private final JavaRDD<Item> rddResult;
-    @Getter
-    private final HomogeneousItemDataFrame dataFrameResult;
+    @Getter private final JavaRDD<Item> rddResult;
+    @Getter private final HomogeneousItemDataFrame dataFrameResult;
     private final ExceptionMetadata exceptionMetadata;
 
     public ExitStatementException(
@@ -26,8 +24,7 @@ public class ExitStatementException extends RuntimeException {
             List<Item> localResult,
             JavaRDD<Item> rddResult,
             HomogeneousItemDataFrame dataFrameResult,
-            ExceptionMetadata exceptionMetadata
-    ) {
+            ExceptionMetadata exceptionMetadata) {
         this.pendingUpdateList = pendingUpdateList;
         this.localResult = localResult;
         this.rddResult = rddResult;
@@ -43,7 +40,8 @@ public class ExitStatementException extends RuntimeException {
         } else if (hasDataFrameResult()) {
             return this.dataFrameResult.toRDD(this.exceptionMetadata).collect();
         }
-        throw new OurBadException("Expected local result but there was nothing to return from the exit statement!");
+        throw new OurBadException(
+                "Expected local result but there was nothing to return from the exit statement!");
     }
 
     public boolean hasLocalResult() {

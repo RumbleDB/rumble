@@ -1,6 +1,7 @@
 package org.rumbledb.compiler;
 
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
@@ -9,16 +10,14 @@ import org.rumbledb.exceptions.ParsingException;
 final class StringLiteralUtils {
 
     /** Utility class; instances carry no state. */
-    private StringLiteralUtils() {
-    }
+    private StringLiteralUtils() {}
 
     /**
      * Validates and decodes a complete JSONiq string literal.
      *
-     * <p>
-     * The surrounding quote or apostrophe is removed, JSON escapes are expanded, and malformed simple or
-     * Unicode escapes are reported with the supplied query metadata. A string may escape its own delimiter but not
-     * the other delimiter.
+     * <p>The surrounding quote or apostrophe is removed, JSON escapes are expanded, and malformed
+     * simple or Unicode escapes are reported with the supplied query metadata. A string may escape
+     * its own delimiter but not the other delimiter.
      *
      * @param source the complete literal, including matching delimiters
      * @param metadata location to attach to a syntax error
@@ -33,7 +32,8 @@ final class StringLiteralUtils {
                 continue;
             }
             if (++i == raw.length()) {
-                throw new ParsingException("A JSONiq string literal must not end with a backslash.", metadata);
+                throw new ParsingException(
+                        "A JSONiq string literal must not end with a backslash.", metadata);
             }
 
             char escaped = raw.charAt(i);
@@ -52,7 +52,8 @@ final class StringLiteralUtils {
 
             String simpleEscapes = delimiter == '"' ? "\"\\/bfnrt" : "'\\/bfnrt";
             if (simpleEscapes.indexOf(escaped) < 0) {
-                throw new ParsingException("Invalid escape sequence in a JSONiq string literal.", metadata);
+                throw new ParsingException(
+                        "Invalid escape sequence in a JSONiq string literal.", metadata);
             }
         }
         return StringEscapeUtils.unescapeJson(raw);
@@ -61,9 +62,8 @@ final class StringLiteralUtils {
     /**
      * Decodes a complete XQuery string literal.
      *
-     * <p>
-     * The surrounding delimiter is removed, a doubled delimiter is collapsed, and XML character and predefined
-     * entity references are expanded.
+     * <p>The surrounding delimiter is removed, a doubled delimiter is collapsed, and XML character
+     * and predefined entity references are expanded.
      *
      * @param source the complete literal, including matching delimiters
      * @return the decoded string value
@@ -72,7 +72,8 @@ final class StringLiteralUtils {
         char delimiter = getDelimiter(source);
         String raw = source.substring(1, source.length() - 1);
         String escapedDelimiter = String.valueOf(delimiter) + delimiter;
-        return StringEscapeUtils.unescapeXml(raw.replace(escapedDelimiter, String.valueOf(delimiter)));
+        return StringEscapeUtils.unescapeXml(
+                raw.replace(escapedDelimiter, String.valueOf(delimiter)));
     }
 
     /**
@@ -85,7 +86,8 @@ final class StringLiteralUtils {
             throw new OurBadException("Invalid string literal: " + source);
         }
         char delimiter = source.charAt(0);
-        if ((delimiter != '"' && delimiter != '\'') || delimiter != source.charAt(source.length() - 1)) {
+        if ((delimiter != '"' && delimiter != '\'')
+                || delimiter != source.charAt(source.length() - 1)) {
             throw new OurBadException("Invalid string literal: " + source);
         }
         return delimiter;
@@ -93,6 +95,7 @@ final class StringLiteralUtils {
 
     /** Creates syntax error used for malformed four-digit Unicode escapes. */
     private static ParsingException invalidUnicodeEscape(ExceptionMetadata metadata) {
-        return new ParsingException("A JSONiq Unicode escape must contain four hexadecimal digits.", metadata);
+        return new ParsingException(
+                "A JSONiq Unicode escape must contain four hexadecimal digits.", metadata);
     }
 }

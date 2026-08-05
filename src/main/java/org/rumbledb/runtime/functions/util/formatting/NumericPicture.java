@@ -1,8 +1,8 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
-import lombok.Getter;
-
 import java.util.List;
+
+import lombok.Getter;
 
 @Getter
 public final class NumericPicture {
@@ -19,8 +19,7 @@ public final class NumericPicture {
             int activeDigitCount,
             List<GroupingPos> groupingPositions,
             boolean repeatingGrouping,
-            int repeatingGroupingInterval
-    ) {
+            int repeatingGroupingInterval) {
         this.zeroDigit = zeroDigit;
         this.mandatoryDigitCount = mandatoryDigitCount;
         this.activeDigitCount = activeDigitCount;
@@ -28,5 +27,4 @@ public final class NumericPicture {
         this.repeatingGrouping = repeatingGrouping;
         this.repeatingGroupingInterval = repeatingGroupingInterval;
     }
-
 }

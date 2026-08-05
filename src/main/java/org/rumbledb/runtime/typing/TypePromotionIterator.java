@@ -1,10 +1,14 @@
 package org.rumbledb.runtime.typing;
 
+import java.io.Serial;
+import java.util.Collections;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -16,20 +20,15 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.util.Collections;
-
 public class TypePromotionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
     private final RuntimeIterator iterator;
     private final SequenceType sequenceType;
@@ -43,21 +42,17 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             RuntimeIterator iterator,
             SequenceType sequenceType,
             String exceptionMessage,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Collections.singletonList(iterator), staticContext);
         this.exceptionMessage = exceptionMessage;
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
-        if (
-            (sequenceType.isEmptySequence()
+        if ((sequenceType.isEmptySequence()
                 || sequenceType.getArity().equals(Arity.One)
-                || sequenceType.getArity().equals(Arity.OneOrZero))
-        ) {
+                || sequenceType.getArity().equals(Arity.OneOrZero))) {
             throw new OurBadException(
-                    "This promotion iterator is not meant to be used if the sequence type arity is 0, 1 or ?."
-            );
+                    "This promotion iterator is not meant to be used if the sequence type arity is 0, 1 or ?.");
         }
     }
 
@@ -78,7 +73,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.setNextResult();
     }
 
-
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
@@ -95,7 +89,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         if (this.iterator.hasNext()) {
             this.nextResult = this.iterator.next();
             if (this.nextResult != null && !this.nextResult.getDynamicType().isResolved()) {
-                this.nextResult.getDynamicType().resolve(this.currentDynamicContextForLocalExecution, getMetadata());
+                this.nextResult
+                        .getDynamicType()
+                        .resolve(this.currentDynamicContextForLocalExecution, getMetadata());
             }
             this.childIndex++;
         } else {
@@ -114,17 +110,15 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkEmptySequence(long size) {
-        if (
-            size == 0
-                && this.sequenceType.getArity() == SequenceType.Arity.OneOrMore
-        ) {
+        if (size == 0 && this.sequenceType.getArity() == SequenceType.Arity.OneOrMore) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
-                        + "Expecting"
-                        + ((this.sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? " at least" : "")
-                        + " one item, but the value provided is the empty sequence.",
-                    getMetadata()
-            );
+                            + "Expecting"
+                            + ((this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)
+                                    ? " at least"
+                                    : "")
+                            + " one item, but the value provided is the empty sequence.",
+                    getMetadata());
         }
     }
 
@@ -132,9 +126,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         if (size > 0 && this.sequenceType.isEmptySequence()) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
-                        + "Expecting empty sequence, but the value provided has at least one item.",
-                    getMetadata()
-            );
+                            + "Expecting empty sequence, but the value provided has at least one item.",
+                    getMetadata());
         }
     }
 
@@ -145,11 +138,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         int count = childRDD.take(2).size();
         checkEmptySequence(count);
         checkItemsSize(count);
-        Function<Item, Item> transformation = new TypePromotionClosure(
-                this.exceptionMessage,
-                this.sequenceType,
-                getMetadata()
-        );
+        Function<Item, Item> transformation =
+                new TypePromotionClosure(this.exceptionMessage, this.sequenceType, getMetadata());
         return childRDD.map(transformation);
     }
 
@@ -166,22 +156,19 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             return df;
         }
         ItemType dataItemType = df.getItemType();
-        if (
-            dataItemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
-                && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
-        ) {
+        if (dataItemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+                && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-            df = df.evaluateSQL(
-                String.format(
-                    "SELECT CAST (`"
-                        + SparkSessionManager.nonObjectJSONiqItemColumnName
-                        + "` AS double) AS `"
-                        + SparkSessionManager.nonObjectJSONiqItemColumnName
-                        + "` FROM %s",
-                    input
-                ),
-                this.itemType
-            );
+            df =
+                    df.evaluateSQL(
+                            String.format(
+                                    "SELECT CAST (`"
+                                            + SparkSessionManager.nonObjectJSONiqItemColumnName
+                                            + "` AS double) AS `"
+                                            + SparkSessionManager.nonObjectJSONiqItemColumnName
+                                            + "` FROM %s",
+                                    input),
+                            this.itemType);
         }
         dataItemType = df.getItemType();
         if (dataItemType.isSubtypeOf(this.itemType)) {
@@ -189,12 +176,11 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         }
         throw new UnexpectedTypeException(
                 this.exceptionMessage
-                    + dataItemType
-                    + " cannot be promoted to type "
-                    + this.sequenceType
-                    + ".",
-                getMetadata()
-        );
+                        + dataItemType
+                        + " cannot be promoted to type "
+                        + this.sequenceType
+                        + ".",
+                getMetadata());
     }
 
     @Override
@@ -209,62 +195,60 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         if (childContext.getResultingType().getItemType().isSubtypeOf(this.itemType)) {
             return childContext;
         }
-        if (
-            childContext.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
-                && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
-        ) {
+        if (childContext
+                        .getResultingType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+                && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return new NativeClauseContext(
                     childContext,
                     "CAST (" + childContext.getResultingQuery() + " AS DOUBLE)",
-                    new SequenceType(BuiltinTypesCatalogue.doubleItem, childContext.getResultingType().getArity())
-            );
+                    new SequenceType(
+                            BuiltinTypesCatalogue.doubleItem,
+                            childContext.getResultingType().getArity()));
         }
         return NativeClauseContext.NoNativeQuery;
     }
 
     private void checkTypePromotion() {
-        if (
-            this.nextResult.isFunction()
+        if (this.nextResult.isFunction()
                 && this.nextResult.getIdentifier() != null
                 && this.nextResult.getIdentifier().getArity() == 0
-                && Name.TAIL_CALL_OPTIMIZATION.equals(this.nextResult.getIdentifier().getName())
-        ) {
+                && Name.TAIL_CALL_OPTIMIZATION.equals(this.nextResult.getIdentifier().getName())) {
             return;
         }
-        if (
-            (this.nextResult.isFunction() || this.nextResult.isMap() || this.nextResult.isArray())
+        if ((this.nextResult.isFunction() || this.nextResult.isMap() || this.nextResult.isArray())
                 && this.itemType.isFunctionItemType()
-                && this.itemType.getSignature() != null
-        ) {
-            this.nextResult = FunctionCoercion.coerceToFunctionItem(
-                this.nextResult,
-                this.itemType,
-                getRuntimeStaticContext(),
-                this.exceptionMessage
-            );
+                && this.itemType.getSignature() != null) {
+            this.nextResult =
+                    FunctionCoercion.coerceToFunctionItem(
+                            this.nextResult,
+                            this.itemType,
+                            getRuntimeStaticContext(),
+                            this.exceptionMessage);
             return;
         }
         if (!this.nextResult.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
-                        + this.nextResult.getDynamicType().toString()
-                        + " cannot be promoted to type "
-                        + this.sequenceType
-                        + ".",
-                    getMetadata()
-            );
+                            + this.nextResult.getDynamicType().toString()
+                            + " cannot be promoted to type "
+                            + this.sequenceType
+                            + ".",
+                    getMetadata());
         }
-        this.nextResult = CastIterator.castItemToType(
-            this.nextResult,
-            this.sequenceType.getItemType(),
-            getMetadata(),
-            this.staticContext
-        );
+        this.nextResult =
+                CastIterator.castItemToType(
+                        this.nextResult,
+                        this.sequenceType.getItemType(),
+                        getMetadata(),
+                        this.staticContext);
         if (this.nextResult == null) {
             throw new OurBadException(
-                    "We were not able to promote " + this.nextResult + " to type " + this.sequenceType.getItemType()
-            );
+                    "We were not able to promote "
+                            + this.nextResult
+                            + " to type "
+                            + this.sequenceType.getItemType());
         }
     }
-
 }

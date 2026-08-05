@@ -18,8 +18,10 @@
  *
  */
 
-
 package org.rumbledb.runtime.functions.io;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,18 +30,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class UnparsedTextFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public UnparsedTextFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -55,13 +51,13 @@ public class UnparsedTextFunctionIterator extends AtMostOneItemLocalRuntimeItera
             encoding = encodingItem.getStringValue();
         }
 
-        String result = UnparsedTextReader.read(
-            this.staticContext.getStaticURI(),
-            hrefItem.getStringValue(),
-            encoding,
-            getConfiguration().semantics().xmlVersion(),
-            getMetadata()
-        );
+        String result =
+                UnparsedTextReader.read(
+                        this.staticContext.getStaticURI(),
+                        hrefItem.getStringValue(),
+                        encoding,
+                        getConfiguration().semantics().xmlVersion(),
+                        getMetadata());
         return ItemFactory.getInstance().createStringItem(result);
     }
 }

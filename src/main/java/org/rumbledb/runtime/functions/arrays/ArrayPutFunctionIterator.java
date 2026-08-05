@@ -17,7 +17,13 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,19 +38,13 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * F&amp;O 3.1 array:put — returns a new array with the member at a 1-based position replaced
- * by a given sequence (FOAY0001 if position is out of bounds).
+ * F&amp;O 3.1 array:put — returns a new array with the member at a 1-based position replaced by a
+ * given sequence (FOAY0001 if position is out of bounds).
  */
 public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator positionIterator;
@@ -53,9 +53,7 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
     private boolean hasProducedResult;
 
     public ArrayPutFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("array:put must have exactly three arguments.");
@@ -80,21 +78,15 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
             arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
         } catch (NoItemException e) {
             throw new UnexpectedTypeException(
-                    "array:put expects exactly one array as the first argument.",
-                    getMetadata()
-            );
+                    "array:put expects exactly one array as the first argument.", getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:put expects exactly one array as the first argument.",
-                    getMetadata()
-            );
+                    "array:put expects exactly one array as the first argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:put must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:put must be an array.", getMetadata());
         }
 
         Item positionItem;
@@ -102,21 +94,15 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
             positionItem = this.positionIterator.materializeExactlyOneItem(context);
         } catch (NoItemException e) {
             throw new UnexpectedTypeException(
-                    "array:put expects exactly one position argument.",
-                    getMetadata()
-            );
+                    "array:put expects exactly one position argument.", getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:put expects exactly one position argument.",
-                    getMetadata()
-            );
+                    "array:put expects exactly one position argument.", getMetadata());
         }
 
         if (!positionItem.isNumeric()) {
             throw new UnexpectedTypeException(
-                    "Type error; position argument to array:put must be numeric.",
-                    getMetadata()
-            );
+                    "Type error; position argument to array:put must be numeric.", getMetadata());
         }
 
         BigInteger positionInteger;
@@ -132,11 +118,10 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
         if (positionInteger.compareTo(min) < 0 || positionInteger.compareTo(max) > 0) {
             throw new ArrayIndexOutOfBoundsException(
                     "array:put position out of bounds: "
-                        + positionInteger
-                        + ", array length: "
-                        + size,
-                    getMetadata()
-            );
+                            + positionInteger
+                            + ", array length: "
+                            + size,
+                    getMetadata());
         }
 
         int replaceIndex = positionInteger.intValue() - 1;
@@ -151,8 +136,11 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
                     newItems.add(arrayItem.getItemAt(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    newItems,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> newMemberSequences = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
@@ -162,8 +150,11 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
                     newMemberSequences.add(arrayItem.getSequenceAt(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    newMemberSequences,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
@@ -199,9 +190,7 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:put is currently supported only in local execution mode."
-        );
+        throw new OurBadException("array:put is currently supported only in local execution mode.");
     }
 
     @Override
@@ -211,8 +200,6 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:put is currently supported only in local execution mode."
-        );
+        throw new OurBadException("array:put is currently supported only in local execution mode.");
     }
 }

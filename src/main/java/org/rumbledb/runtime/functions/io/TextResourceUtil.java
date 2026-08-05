@@ -1,26 +1,24 @@
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+
 public final class TextResourceUtil {
 
-    private TextResourceUtil() {
-    }
+    private TextResourceUtil() {}
 
-    public static byte[] fetchBytes(URI uri, ExceptionMetadata metadata)
-            throws IOException {
+    public static byte[] fetchBytes(URI uri, ExceptionMetadata metadata) throws IOException {
         try (InputStream is = FileSystemUtil.getDataInputStream(uri, metadata)) {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             byte[] data = new byte[8192];
@@ -34,18 +32,18 @@ public final class TextResourceUtil {
 
     public static CharsetDecoder strictDecoder(Charset charset) {
         return charset.newDecoder()
-            .onMalformedInput(CodingErrorAction.REPORT)
-            .onUnmappableCharacter(CodingErrorAction.REPORT);
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
     }
 
-    public static String decodeStrict(byte[] bytes, Charset charset) throws CharacterCodingException {
+    public static String decodeStrict(byte[] bytes, Charset charset)
+            throws CharacterCodingException {
         return strictDecoder(charset).decode(ByteBuffer.wrap(bytes)).toString();
     }
 
     /**
-     * Detects the resource encoding as required by fn:json-doc and fn:unparsed-text: UTF-8, UTF-16, or UTF-32,
-     * from a leading byte-order mark or from the NUL pattern of the first
-     * bytes.
+     * Detects the resource encoding as required by fn:json-doc and fn:unparsed-text: UTF-8, UTF-16,
+     * or UTF-32, from a leading byte-order mark or from the NUL pattern of the first bytes.
      */
     public static Charset detectEncoding(byte[] b) {
         int b0 = b.length > 0 ? b[0] & 0xFF : -1;

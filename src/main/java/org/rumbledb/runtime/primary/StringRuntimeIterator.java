@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.io.Serial;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,12 +30,9 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-
 public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final Item item;
 
     public StringRuntimeIterator(String value, RuntimeStaticContext staticContext) {
@@ -52,7 +51,6 @@ public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 '"' + this.item.getStringValue() + '"',
-                SequenceType.createSequenceType("string")
-        );
+                SequenceType.createSequenceType("string"));
     }
 }

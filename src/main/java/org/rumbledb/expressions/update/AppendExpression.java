@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class AppendExpression extends Expression {
@@ -17,16 +18,14 @@ public class AppendExpression extends Expression {
     private Expression toAppendExpression;
 
     public AppendExpression(
-            Expression arrayExpression,
-            Expression toAppendExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression arrayExpression, Expression toAppendExpression, ExceptionMetadata metadata) {
         super(metadata);
         if (arrayExpression == null) {
             throw new OurBadException("Array expression cannot be null in a append expression.");
         }
         if (toAppendExpression == null) {
-            throw new OurBadException("Expression to append cannot be null in a append expression.");
+            throw new OurBadException(
+                    "Expression to append cannot be null in a append expression.");
         }
         this.arrayExpression = arrayExpression;
         this.toAppendExpression = toAppendExpression;

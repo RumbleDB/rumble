@@ -20,9 +20,15 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,22 +36,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-
 public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    /**
-     *
-     */
-    @Serial
-    private static final long serialVersionUID = 1L;
+    /** */
+    @Serial private static final long serialVersionUID = 1L;
 
     public ObjectAccumulateFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -75,7 +71,9 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
                     }
                 }
 
-                Item result = ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
+                Item result =
+                        ItemFactory.getInstance()
+                                .createObjectItemFromValueLists(keyValuePairs, true);
 
                 this.hasNext = false;
                 return result;
@@ -83,17 +81,14 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
         }
 
         JavaRDD<Item> childRDD = iterator.getRDD(context);
-        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure(
-                this.getRuntimeStaticContext().isQuerySideEffecting()
-        );
+        Function<Item, Item> mapTransformation =
+                new ObjectIntersectMapClosure(
+                        this.getRuntimeStaticContext().isQuerySideEffecting());
         JavaRDD<Item> mapResult = childRDD.map(mapTransformation);
 
         Function2<Item, Item, Item> reductionTransformation = new ObjectIntersectReduceClosure();
         Item result = mapResult.reduce(reductionTransformation);
 
         return result;
-
-
     }
-
 }

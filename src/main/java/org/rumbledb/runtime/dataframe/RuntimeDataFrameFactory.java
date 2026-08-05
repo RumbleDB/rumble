@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 
@@ -22,14 +23,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 public interface RuntimeDataFrameFactory<T> extends Serializable {
 
     RuntimeDataFrame<T> fromList(
-            List<T> values,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    );
+            List<T> values, DynamicContext context, RuntimeStaticContext staticContext);
 
     RuntimeDataFrame<T> fromRDD(
-            JavaRDD<T> rdd,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    );
+            JavaRDD<T> rdd, DynamicContext context, RuntimeStaticContext staticContext);
 }

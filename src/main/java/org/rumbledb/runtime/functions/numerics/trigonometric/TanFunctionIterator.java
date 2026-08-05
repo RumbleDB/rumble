@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.numerics.trigonometric;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,19 +33,12 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
 public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public TanFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -57,7 +53,6 @@ public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
         return ItemFactory.getInstance().createDoubleItem(Math.tan(dvalue));
-
     }
 
     @Override
@@ -69,14 +64,12 @@ public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (SequenceType.Arity.OneOrMore.isSubtypeOf(childQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "TAN( "
-            + childQuery.getResultingQuery()
-            + " )";
+        String resultingQuery = "TAN( " + childQuery.getResultingQuery() + " )";
         return new NativeClauseContext(
                 childQuery,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.doubleItem,
+                        childQuery.getResultingType().getArity()));
     }
-
 }

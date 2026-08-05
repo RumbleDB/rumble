@@ -22,40 +22,25 @@ public final class ErrorVariables {
 
     public static void injectStaticContext(StaticContext context, ExceptionMetadata metadata) {
         context.addVariable(
-            ErrorVariables.ERROR_CODE,
-            SequenceType.createSequenceType("QName"),
-            metadata
-        );
+                ErrorVariables.ERROR_CODE, SequenceType.createSequenceType("QName"), metadata);
         context.addVariable(
-            ErrorVariables.ERROR_DESCRIPTION,
-            SequenceType.createSequenceType("string?"),
-            metadata
-        );
+                ErrorVariables.ERROR_DESCRIPTION,
+                SequenceType.createSequenceType("string?"),
+                metadata);
         context.addVariable(
-            ErrorVariables.ERROR_VALUE,
-            SequenceType.createSequenceType("item*"),
-            metadata
-        );
+                ErrorVariables.ERROR_VALUE, SequenceType.createSequenceType("item*"), metadata);
         context.addVariable(
-            ErrorVariables.ERROR_MODULE,
-            SequenceType.createSequenceType("string?"),
-            metadata
-        );
+                ErrorVariables.ERROR_MODULE, SequenceType.createSequenceType("string?"), metadata);
         context.addVariable(
-            ErrorVariables.ERROR_LINE_NUMBER,
-            SequenceType.createSequenceType("integer?"),
-            metadata
-        );
+                ErrorVariables.ERROR_LINE_NUMBER,
+                SequenceType.createSequenceType("integer?"),
+                metadata);
         context.addVariable(
-            ErrorVariables.ERROR_COLUMN_NUMBER,
-            SequenceType.createSequenceType("integer?"),
-            metadata
-        );
+                ErrorVariables.ERROR_COLUMN_NUMBER,
+                SequenceType.createSequenceType("integer?"),
+                metadata);
         context.addVariable(
-            ErrorVariables.ERROR_ADITIONAL,
-            SequenceType.createSequenceType("item*"),
-            metadata
-        );
+                ErrorVariables.ERROR_ADITIONAL, SequenceType.createSequenceType("item*"), metadata);
     }
 
     public static void injectDynamicContext(DynamicContext context, RumbleException exception) {
@@ -63,37 +48,30 @@ public final class ErrorVariables {
         ItemFactory itemFactory = ItemFactory.getInstance();
 
         variableValues.addVariableValue(
-            ErrorVariables.ERROR_CODE,
-            Collections
-                .singletonList(itemFactory.createQNameItem(exception.getErrorCode().getName()))
-        );
+                ErrorVariables.ERROR_CODE,
+                Collections.singletonList(
+                        itemFactory.createQNameItem(exception.getErrorCode().getName())));
         variableValues.addVariableValue(
-            ErrorVariables.ERROR_DESCRIPTION,
-            Collections.singletonList(itemFactory.createStringItem(exception.getJSONiqErrorMessage()))
-        );
+                ErrorVariables.ERROR_DESCRIPTION,
+                Collections.singletonList(
+                        itemFactory.createStringItem(exception.getJSONiqErrorMessage())));
+        variableValues.addVariableValue(ErrorVariables.ERROR_VALUE, exception.getErrorValue());
         variableValues.addVariableValue(
-            ErrorVariables.ERROR_VALUE,
-            exception.getErrorValue()
-        );
+                ErrorVariables.ERROR_MODULE,
+                Collections.singletonList(
+                        itemFactory.createStringItem(exception.getMetadata().getLocation())));
         variableValues.addVariableValue(
-            ErrorVariables.ERROR_MODULE,
-            Collections.singletonList(itemFactory.createStringItem(exception.getMetadata().getLocation()))
-        );
+                ErrorVariables.ERROR_LINE_NUMBER,
+                Collections.singletonList(
+                        itemFactory.createIntItem(exception.getMetadata().getStart().line())));
         variableValues.addVariableValue(
-            ErrorVariables.ERROR_LINE_NUMBER,
-            Collections.singletonList(itemFactory.createIntItem(exception.getMetadata().getStart().line()))
-        );
-        variableValues.addVariableValue(
-            ErrorVariables.ERROR_COLUMN_NUMBER,
-            Collections.singletonList(itemFactory.createIntItem(exception.getMetadata().getStart().column()))
-        );
+                ErrorVariables.ERROR_COLUMN_NUMBER,
+                Collections.singletonList(
+                        itemFactory.createIntItem(exception.getMetadata().getStart().column())));
 
         // Value of err:additional is implementation-defined.
         // For now, we set it to an empty sequence, but in the future,
         // it could be used to provide additional information about the error.
-        variableValues.addVariableValue(
-            ErrorVariables.ERROR_ADITIONAL,
-            Collections.emptyList()
-        );
+        variableValues.addVariableValue(ErrorVariables.ERROR_ADITIONAL, Collections.emptyList());
     }
 }

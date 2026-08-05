@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.misc;
 
+import java.io.Serial;
+import java.util.Arrays;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,19 +35,15 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.Arrays;
-
 /**
  * Runtime iterator for node comparisons.
- * 
- * Node comparisons are used to compare two nodes, by their identity or by their document order.
- * 
+ *
+ * <p>Node comparisons are used to compare two nodes, by their identity or by their document order.
+ *
  * @see org.rumbledb.expressions.comparison.NodeComparisonExpression
  */
 public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final NodeComparisonExpression.NodeComparisonOperator operator;
     private final RuntimeIterator leftIterator;
@@ -54,8 +53,7 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
             NodeComparisonExpression.NodeComparisonOperator operator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
@@ -73,8 +71,7 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Left operand of node comparison must be a single node or empty sequence, got more than one item",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         try {
@@ -82,13 +79,14 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Right operand of node comparison must be a single node or empty sequence, got more than one item",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
-        // 2. If either operand is an empty sequence, the result of the comparison is an empty sequence,
+        // 2. If either operand is an empty sequence, the result of the comparison is an empty
+        // sequence,
         // and the implementation need not evaluate the other operand or apply the operator.
-        // However, an implementation may choose to evaluate the other operand in order to determine whether it raises
+        // However, an implementation may choose to evaluate the other operand in order to determine
+        // whether it raises
         // an error.
         if (leftItem == null || rightItem == null) {
             return null;
@@ -98,22 +96,23 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         // is raised [err:XPTY0004].
         if (!leftItem.isNode()) {
             throw new UnexpectedTypeException(
-                    "Left operand of node comparison must be a node, got: " + leftItem.getDynamicType(),
-                    getMetadata()
-            );
+                    "Left operand of node comparison must be a node, got: "
+                            + leftItem.getDynamicType(),
+                    getMetadata());
         }
 
         if (!rightItem.isNode()) {
             throw new UnexpectedTypeException(
-                    "Right operand of node comparison must be a node, got: " + rightItem.getDynamicType(),
-                    getMetadata()
-            );
+                    "Right operand of node comparison must be a node, got: "
+                            + rightItem.getDynamicType(),
+                    getMetadata());
         }
 
         boolean result;
         switch (this.operator) {
             case NC_IS: // is
-                // 4. A comparison with the is operator is true if the two operand nodes are the same node;
+                // 4. A comparison with the is operator is true if the two operand nodes are the
+                // same node;
                 // otherwise it is false.
                 result = leftItem.equals(rightItem);
                 break;
@@ -124,16 +123,17 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                 if (leftPos == null || rightPos == null) {
                     throw new UnexpectedTypeException(
                             "Node comparison in document order requires both operands to have a document position.",
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
                 int comparison = leftPos.compareTo(rightPos);
-                result = this.operator == NodeComparisonExpression.NodeComparisonOperator.NC_PRECEDES
-                    ? comparison < 0
-                    : comparison > 0;
+                result =
+                        this.operator == NodeComparisonExpression.NodeComparisonOperator.NC_PRECEDES
+                                ? comparison < 0
+                                : comparison > 0;
                 break;
             default:
-                throw new OurBadException("Unrecognized node comparison operator: " + this.operator);
+                throw new OurBadException(
+                        "Unrecognized node comparison operator: " + this.operator);
         }
 
         return ItemFactory.getInstance().createBooleanItem(result);

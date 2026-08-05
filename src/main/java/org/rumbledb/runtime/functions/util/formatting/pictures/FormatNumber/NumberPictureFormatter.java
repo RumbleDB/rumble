@@ -1,29 +1,28 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DecimalFormatDefinition;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DecimalFormatDefinition;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
+
 public class NumberPictureFormatter {
 
-    private static final Map<PictureKey, FormatNumberPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<PictureKey, FormatNumberPicture> PICTURE_CACHE =
+            new ConcurrentHashMap<>();
 
-    private NumberPictureFormatter() {
-    }
+    private NumberPictureFormatter() {}
 
     public static String format(
             Item valueItem,
             String pictureString,
             DecimalFormatDefinition decimalFormat,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         PictureKey key = new PictureKey(pictureString, decimalFormat);
         FormatNumberPicture picture = PICTURE_CACHE.get(key);
         if (picture == null) {
@@ -56,33 +55,34 @@ public class NumberPictureFormatter {
 
         ResolvedNumber resolvedNumber = FormatNumberTypeResolver.getValue(valueItem);
         if (resolvedNumber.isNegative) {
-            return applySubPictureFormatting(resolvedNumber, picture.getNegativeSubPicture(), decimalFormat);
+            return applySubPictureFormatting(
+                    resolvedNumber, picture.getNegativeSubPicture(), decimalFormat);
         } else {
-            return applySubPictureFormatting(resolvedNumber, picture.getPositiveSubPicture(), decimalFormat);
+            return applySubPictureFormatting(
+                    resolvedNumber, picture.getPositiveSubPicture(), decimalFormat);
         }
     }
 
     /**
      * Formats a number according to the second phase of fn:format-number.
      *
-     * <p>
-     * The following should have already happened and will therefore be ignored:
-     * </p>
+     * <p>The following should have already happened and will therefore be ignored:
      *
      * <ol>
-     * <li>If the input number is NaN, return the NaN symbol without prefix or suffix.</li>
-     * <li>Choose the positive sub-picture for positive numbers and positive zero,
-     * otherwise choose the negative sub-picture. Negative zero is treated as negative.</li>
-     * <li>If the number is positive or negative infinity, return
-     * prefix + infinity symbol + suffix.</li>
+     *   <li>If the input number is NaN, return the NaN symbol without prefix or suffix.
+     *   <li>Choose the positive sub-picture for positive numbers and positive zero, otherwise
+     *       choose the negative sub-picture. Negative zero is treated as negative.
+     *   <li>If the number is positive or negative infinity, return prefix + infinity symbol +
+     *       suffix.
      * </ol>
      */
     private static String applySubPictureFormatting(
             ResolvedNumber resolvedNumber,
             FormatNumberSubPicture picture,
-            DecimalFormatDefinition decimalFormat
-    ) {
-        // 1. If the sub-picture contains a percent sign, multiply the number by 100. If it contains a per-mille sign,
+            DecimalFormatDefinition decimalFormat) {
+        // 1. If the sub-picture contains a percent sign, multiply the number by 100. If it contains
+        // a
+        // per-mille sign,
         // multiply the number by 1000.
         // 2. Convert the adjusted number to an arbitrary-precision decimal representation.
         AdjustedNumber adjusted = computeAdjustedNumber(resolvedNumber, picture);
@@ -95,15 +95,16 @@ public class NumberPictureFormatter {
         BigDecimal mantissa = adjusted.value;
         Integer exponent = null;
 
-        // 3. If the minimum exponent size is non-zero, then the adjusted number is scaled to establish a mantissa and
+        // 3. If the minimum exponent size is non-zero, then the adjusted number is scaled to
+        // establish
+        // a mantissa and
         // an integer exponent. The mantissa and exponent are chosen such that:
-        // - the mantissa multiplied by ten to the power of the exponent is equal to the adjusted number, and
+        // - the mantissa multiplied by ten to the power of the exponent is equal to the adjusted
+        // number, and
         // - the mantissa is less than 10^N and at least 10^(N-1), where N is the scaling factor.
         if (picture.getMinimumExponentPartSize() != 0) {
-            MantissaExponentPair mantissaExponentPair = computeMantissaExponent(
-                adjusted.value,
-                picture.getScalingFactor()
-            );
+            MantissaExponentPair mantissaExponentPair =
+                    computeMantissaExponent(adjusted.value, picture.getScalingFactor());
             mantissa = mantissaExponentPair.mantissa;
             exponent = mantissaExponentPair.exponent;
         }
@@ -113,27 +114,24 @@ public class NumberPictureFormatter {
         int maxFrac = picture.getMaximumFractionalPartSize();
         mantissa = mantissa.setScale(maxFrac, RoundingMode.HALF_EVEN);
 
-        // If rounding causes the mantissa to overflow its allowed range, normalize it and adjust the exponent.
+        // If rounding causes the mantissa to overflow its allowed range, normalize it and adjust
+        // the
+        // exponent.
         if (exponent != null) {
-            MantissaExponentPair normalized = normalizeMantissaAfterRounding(
-                mantissa,
-                exponent,
-                picture.getScalingFactor()
-            );
+            MantissaExponentPair normalized =
+                    normalizeMantissaAfterRounding(mantissa, exponent, picture.getScalingFactor());
             mantissa = normalized.mantissa;
             exponent = normalized.exponent;
         }
 
         String formattedNumber = formatMantissa(mantissa, picture, decimalFormat);
 
-        // If an exponent exists, append exponent-separator, optional minus-sign, and the exponent digits padded
+        // If an exponent exists, append exponent-separator, optional minus-sign, and the exponent
+        // digits padded
         // to the minimum exponent size.
         if (exponent != null) {
-            formattedNumber += formatExponent(
-                exponent,
-                picture.getMinimumExponentPartSize(),
-                decimalFormat
-            );
+            formattedNumber +=
+                    formatExponent(exponent, picture.getMinimumExponentPartSize(), decimalFormat);
         }
 
         return picture.getPrefix() + formattedNumber + picture.getSuffix();
@@ -142,16 +140,21 @@ public class NumberPictureFormatter {
     private static String formatMantissa(
             BigDecimal number,
             FormatNumberSubPicture picture,
-            DecimalFormatDefinition decimalFormat
-    ) {
-        // 5. Convert the absolute rounded number to decimal notation using the decimal digit family and decimal
-        // separator, with no insignificant leading or trailing zeroes. At this stage the string must always contain
+            DecimalFormatDefinition decimalFormat) {
+        // 5. Convert the absolute rounded number to decimal notation using the decimal digit family
+        // and
+        // decimal
+        // separator, with no insignificant leading or trailing zeroes. At this stage the string
+        // must
+        // always contain
         // a decimal separator; zero is represented by the decimal separator on its own.
         number = number.abs();
         String numberString = toCanonicalDecimalString(number);
 
-        // If the integer part has fewer than minimum-integer-part-size digits, pad it with leading zeroes.
-        // If the fractional part has fewer than minimum-fractional-part-size digits, pad it with trailing zeroes.
+        // If the integer part has fewer than minimum-integer-part-size digits, pad it with leading
+        // zeroes.
+        // If the fractional part has fewer than minimum-fractional-part-size digits, pad it with
+        // trailing zeroes.
         String integerPart;
         String fractionalPart;
 
@@ -170,21 +173,30 @@ public class NumberPictureFormatter {
         String paddedIntegerPart = leading + integerPart;
         String paddedFractionalPart = fractionalPart + trailing;
 
-        // Insert grouping separators in the integer part according to the integer-part-grouping-positions.
-        paddedIntegerPart = FormatNumberPictureSupport.applyIntegerPartGrouping(paddedIntegerPart, picture);
+        // Insert grouping separators in the integer part according to the
+        // integer-part-grouping-positions.
+        paddedIntegerPart =
+                FormatNumberPictureSupport.applyIntegerPartGrouping(paddedIntegerPart, picture);
 
-        // Insert grouping separators in the fractional part according to the fractional-part-grouping-positions.
-        paddedFractionalPart = FormatNumberPictureSupport.applyFractionalPartGrouping(paddedFractionalPart, picture);
+        // Insert grouping separators in the fractional part according to the
+        // fractional-part-grouping-positions.
+        paddedFractionalPart =
+                FormatNumberPictureSupport.applyFractionalPartGrouping(
+                        paddedFractionalPart, picture);
 
-        // Remove the decimal separator if the sub-picture does not contain one, or if no fractional digits remain.
+        // Remove the decimal separator if the sub-picture does not contain one, or if no fractional
+        // digits remain.
         String formattedNumber = paddedIntegerPart;
 
         if (!paddedFractionalPart.isEmpty()) {
-            formattedNumber += new String(Character.toChars(decimalFormat.getDecimalSeparator()))
-                + paddedFractionalPart;
+            formattedNumber +=
+                    new String(Character.toChars(decimalFormat.getDecimalSeparator()))
+                            + paddedFractionalPart;
         }
 
-        formattedNumber = NumericFormattingSupport.mapAsciiDigits(formattedNumber, decimalFormat.getZeroDigit());
+        formattedNumber =
+                NumericFormattingSupport.mapAsciiDigits(
+                        formattedNumber, decimalFormat.getZeroDigit());
 
         return formattedNumber;
     }
@@ -210,10 +222,7 @@ public class NumberPictureFormatter {
     }
 
     private static String formatExponent(
-            int exponent,
-            int minimumExponentSize,
-            DecimalFormatDefinition decimalFormat
-    ) {
+            int exponent, int minimumExponentSize, DecimalFormatDefinition decimalFormat) {
         StringBuilder result = new StringBuilder();
 
         result.appendCodePoint(decimalFormat.getExponentSeparator());
@@ -234,28 +243,26 @@ public class NumberPictureFormatter {
     }
 
     private static String infinityRepresentation(
-            FormatNumberSubPicture picture,
-            DecimalFormatDefinition decimalFormat
-    ) {
+            FormatNumberSubPicture picture, DecimalFormatDefinition decimalFormat) {
         return picture.getPrefix() + decimalFormat.getInfinity() + picture.getSuffix();
     }
 
     // Returns ASCII Zero Padding
-    private static String getZeroPadding(String numberPart, FormatNumberSubPicture picture, boolean isFractional) {
+    private static String getZeroPadding(
+            String numberPart, FormatNumberSubPicture picture, boolean isFractional) {
         int zeroesRequired = 0;
         if (!isFractional)
-            zeroesRequired = picture.getMinimumIntegerPartSize() - numberPart.length(); // IntegerPart
+            zeroesRequired =
+                    picture.getMinimumIntegerPartSize() - numberPart.length(); // IntegerPart
         else
-            zeroesRequired = picture.getMinimumFractionalPartSize() - numberPart.length(); // FractionalPart
-        if (zeroesRequired > 0)
-            return "0".repeat(zeroesRequired);
+            zeroesRequired =
+                    picture.getMinimumFractionalPartSize() - numberPart.length(); // FractionalPart
+        if (zeroesRequired > 0) return "0".repeat(zeroesRequired);
         return "";
     }
 
     private static AdjustedNumber computeAdjustedNumber(
-            ResolvedNumber resolvedNumber,
-            FormatNumberSubPicture picture
-    ) {
+            ResolvedNumber resolvedNumber, FormatNumberSubPicture picture) {
         if (ResolvedNumber.DOUBLE.equals(resolvedNumber.type)) {
             double value = resolvedNumber.doubleValue;
             if (picture.getHasPercent()) {
@@ -297,9 +304,7 @@ public class NumberPictureFormatter {
     }
 
     private static MantissaExponentPair computeMantissaExponent(
-            BigDecimal adjustedValue,
-            int scalingFactor
-    ) {
+            BigDecimal adjustedValue, int scalingFactor) {
         if (adjustedValue.compareTo(BigDecimal.ZERO) == 0) {
             return new MantissaExponentPair(BigDecimal.ZERO, 0);
         }
@@ -316,10 +321,7 @@ public class NumberPictureFormatter {
     }
 
     private static MantissaExponentPair normalizeMantissaAfterRounding(
-            BigDecimal mantissa,
-            int exponent,
-            int scalingFactor
-    ) {
+            BigDecimal mantissa, int exponent, int scalingFactor) {
         if (mantissa.compareTo(BigDecimal.ZERO) == 0) {
             return new MantissaExponentPair(BigDecimal.ZERO, 0);
         }
@@ -361,7 +363,8 @@ public class NumberPictureFormatter {
                 return false;
             }
             PictureKey other = (PictureKey) o;
-            return this.pictureString.equals(other.pictureString) && this.decimalFormat == other.decimalFormat;
+            return this.pictureString.equals(other.pictureString)
+                    && this.decimalFormat == other.decimalFormat;
         }
 
         @Override

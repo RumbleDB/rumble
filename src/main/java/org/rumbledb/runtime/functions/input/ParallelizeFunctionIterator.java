@@ -20,7 +20,12 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,18 +36,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator sequenceIterator;
     private RuntimeIterator partitionsIterator;
 
-    public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public ParallelizeFunctionIterator(
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.partitionsIterator = null;
@@ -69,12 +70,10 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
             Item partitions = getNumberOfPartitions(context);
-            rdd = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .parallelize(
-                    contents,
-                    partitions.getIntValue()
-                );
+            rdd =
+                    SparkSessionManager.getInstance()
+                            .getJavaSparkContext()
+                            .parallelize(contents, partitions.getIntValue());
         }
         return rdd;
     }
@@ -86,20 +85,17 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but a sequence with more than one item is supplied.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (partitions == null) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but an empty sequence is supplied.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (!partitions.isInteger()) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but a non-integer is supplied.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return partitions;
     }

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections.ListUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -23,17 +24,15 @@ import org.rumbledb.exceptions.OurBadException;
 
 public class ObjectItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
-            Arrays.asList(
-                ConstrainingFacetTypes.ENUMERATION,
-                ConstrainingFacetTypes.CONSTRAINTS,
-                ConstrainingFacetTypes.CONTENT,
-                ConstrainingFacetTypes.CLOSED
-            )
-    );
+    static final Set<ConstrainingFacetTypes> allowedFacets =
+            new HashSet<>(
+                    Arrays.asList(
+                            ConstrainingFacetTypes.ENUMERATION,
+                            ConstrainingFacetTypes.CONSTRAINTS,
+                            ConstrainingFacetTypes.CONTENT,
+                            ConstrainingFacetTypes.CLOSED));
 
     private Name name;
     private List<String> keys;
@@ -52,8 +51,7 @@ public class ObjectItemType extends AbstractItemType {
             List<String> keys,
             List<FieldDescriptor> content,
             List<String> constraints,
-            List<Item> enumeration
-    ) {
+            List<Item> enumeration) {
         this.name = name;
         this.baseType = baseType;
         this.keys = keys == null ? new ArrayList<>() : new ArrayList<>(keys);
@@ -66,7 +64,8 @@ public class ObjectItemType extends AbstractItemType {
         }
         this.isClosed = isClosed;
         if (content == null && this.isClosed) {
-            throw new OurBadException("Inconsistent state in ObjectItemType: closed object with no content facet.");
+            throw new OurBadException(
+                    "Inconsistent state in ObjectItemType: closed object with no content facet.");
         }
         rebuildKeyStringIndex();
         this.constraints = constraints == null ? new ArrayList<>() : new ArrayList<>(constraints);
@@ -89,8 +88,6 @@ public class ObjectItemType extends AbstractItemType {
             this.keyStringToIndex.put(this.keys.get(i), Integer.valueOf(i));
         }
     }
-
-
 
     @Override
     public boolean isObjectItemType() {
@@ -137,7 +134,6 @@ public class ObjectItemType extends AbstractItemType {
         return allowedFacets;
     }
 
-
     @Override
     public boolean isSubtypeOf(ItemType superType) {
         if (superType.isUnionType()) {
@@ -176,22 +172,22 @@ public class ObjectItemType extends AbstractItemType {
 
     private ItemType getObjectAsMapType() {
         return ItemTypeFactory.mapOf(
-            BuiltinTypesCatalogue.stringItem,
-            SequenceType.createSequenceType("item")
-        );
+                BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item"));
     }
 
     @Override
     public List<Item> getEnumerationFacet() {
-        return this.enumeration != null || this.isPrimitive() ? this.enumeration : this.baseType.getEnumerationFacet();
+        return this.enumeration != null || this.isPrimitive()
+                ? this.enumeration
+                : this.baseType.getEnumerationFacet();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public List<String> getConstraintsFacet() {
         return this.isPrimitive()
-            ? this.constraints
-            : ListUtils.union(this.baseType.getConstraintsFacet(), this.constraints);
+                ? this.constraints
+                : ListUtils.union(this.baseType.getConstraintsFacet(), this.constraints);
     }
 
     @Override
@@ -248,29 +244,27 @@ public class ObjectItemType extends AbstractItemType {
                 keyResults,
                 keyContent,
                 Collections.emptyList(),
-                Collections.emptyList()
-        );
+                Collections.emptyList());
     }
 
     /**
-     * Merges the object content of two object item types.
-     * The merged content is a union of the two object contents.
-     * The way descriptors for single fields are merged is defined by the mergeDescriptors method.
-     * 
+     * Merges the object content of two object item types. The merged content is a union of the two
+     * object contents. The way descriptors for single fields are merged is defined by the
+     * mergeDescriptors method.
+     *
      * @param other the other object item type to merge the content from
      * @return the merged object content
      */
     private Map<String, FieldDescriptor> mergeObjectContent(
-            ObjectItemType other,
-            List<String> keyResults,
-            List<FieldDescriptor> contentResults
-    ) {
+            ObjectItemType other, List<String> keyResults, List<FieldDescriptor> contentResults) {
         Map<String, FieldDescriptor> merged = new LinkedHashMap<>();
         List<String> myKeys = this.getObjectKeysFacet();
         keyResults.clear();
         contentResults.clear();
         keyResults.addAll(myKeys);
-        other.getObjectKeysFacet().stream().filter(k -> !myKeys.contains(k)).forEach(keyResults::add);
+        other.getObjectKeysFacet().stream()
+                .filter(k -> !myKeys.contains(k))
+                .forEach(keyResults::add);
         for (String field : keyResults) {
             FieldDescriptor fd1 = this.getObjectContentFacet(field);
             FieldDescriptor fd2 = other.getObjectContentFacet(field);
@@ -291,7 +285,7 @@ public class ObjectItemType extends AbstractItemType {
 
     /**
      * Merges two field descriptors according to the field semantics.
-     * 
+     *
      * @param first the first field descriptor to merge
      * @param second the second field descriptor to merge
      * @return the merged field descriptor
@@ -304,7 +298,8 @@ public class ObjectItemType extends AbstractItemType {
         // the merged field is required only if the field is required in both the subtypes
         merged.setRequired(first.isRequired() && second.isRequired());
         // the merged field is unique if the field is unique in at least one of the subtypes
-        boolean unique = Boolean.TRUE.equals(first.isUnique()) || Boolean.TRUE.equals(second.isUnique());
+        boolean unique =
+                Boolean.TRUE.equals(first.isUnique()) || Boolean.TRUE.equals(second.isUnique());
         merged.setUnique(unique);
         Item defaultValue = mergeDefaultValues(first.getDefaultValue(), second.getDefaultValue());
         if (defaultValue != null) {
@@ -553,8 +548,7 @@ public class ObjectItemType extends AbstractItemType {
         if (!this.baseType.equals(BuiltinTypesCatalogue.JSONItem)) {
             throw new InvalidSchemaException(
                     "This type cannot be the base type of an object type: " + this.baseType,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         if (this.content == null) {
             throw new OurBadException("Content cannot be null in primitive object type.");
@@ -566,8 +560,7 @@ public class ObjectItemType extends AbstractItemType {
             if (this.getTypeTreeDepth() >= 3) {
                 throw new InvalidSchemaException(
                         "Any user-defined object type must have an object type as its base type.",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             return;
         }
@@ -579,8 +572,7 @@ public class ObjectItemType extends AbstractItemType {
                 if (this.baseType.getClosedFacet()) {
                     throw new InvalidSchemaException(
                             "If the base type is closed, it is not possible to add new fields.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            ExceptionMetadata.EMPTY_METADATA);
                 } else {
                     continue;
                 }
@@ -588,29 +580,26 @@ public class ObjectItemType extends AbstractItemType {
             if (!fieldDescriptor.getType().isSubtypeOf(superTypeDescriptor.getType())) {
                 throw new InvalidSchemaException(
                         "The type of an object field descriptor (here: "
-                            + fieldDescriptor.getType()
-                            + ") associated with key "
-                            + key
-                            + " must be a subtype of the type declared for this field in its base type (here: "
-                            + superTypeDescriptor.getType()
-                            + ")",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                                + fieldDescriptor.getType()
+                                + ") associated with key "
+                                + key
+                                + " must be a subtype of the type declared for this field in its base type (here: "
+                                + superTypeDescriptor.getType()
+                                + ")",
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             if (!fieldDescriptor.isRequired() && superTypeDescriptor.isRequired()) {
                 throw new InvalidSchemaException(
                         "Since the field "
-                            + key
-                            + " is required in the base type, it must also be required in the derived type.",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                                + key
+                                + " is required in the base type, it must also be required in the derived type.",
+                        ExceptionMetadata.EMPTY_METADATA);
             }
         }
         if (this.baseType.getClosedFacet() && !this.isClosed) {
             throw new InvalidSchemaException(
                     "If the base type is closed, it is not possible to re-open it.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 

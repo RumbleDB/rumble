@@ -17,6 +17,14 @@
 
 package org.rumbledb.runtime.functions.maps;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -24,38 +32,27 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 /**
- * Dynamic function call when the function item is an XDM map ({@code $map($key)}), equivalent to {@code map:get}.
+ * Dynamic function call when the function item is an XDM map ({@code $map($key)}), equivalent to
+ * {@code map:get}.
  */
 public class MapFunctionCallIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final Item mapItem;
     private final RuntimeIterator keyIterator;
     private final Queue<Item> pendingResults;
 
     public MapFunctionCallIterator(
-            Item mapItem,
-            RuntimeIterator keyIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            Item mapItem, RuntimeIterator keyIterator, RuntimeStaticContext staticContext) {
         super(
-            keyIterator == null ? null : java.util.Collections.singletonList(keyIterator),
-            staticContext
-        );
+                keyIterator == null ? null : java.util.Collections.singletonList(keyIterator),
+                staticContext);
         this.mapItem = mapItem;
         this.keyIterator = keyIterator;
         this.pendingResults = new LinkedList<>();
@@ -65,9 +62,7 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
     protected void openLocal() {
         if (this.keyIterator == null) {
             throw new UnexpectedTypeException(
-                    "Map function calls must have exactly one argument.",
-                    getMetadata()
-            );
+                    "Map function calls must have exactly one argument.", getMetadata());
         }
         initializeResults(this.currentDynamicContextForLocalExecution);
         setNextResult();
@@ -84,8 +79,7 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
             throw new UnexpectedTypeException(
                     "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         Item key = atomized.get(0);
         List<Item> seq = this.mapItem.getSequenceByKey(key);
@@ -123,7 +117,8 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("Map function calls are currently supported only in local execution mode.");
+        throw new OurBadException(
+                "Map function calls are currently supported only in local execution mode.");
     }
 
     @Override
@@ -133,7 +128,8 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("Map function calls are currently supported only in local execution mode.");
+        throw new OurBadException(
+                "Map function calls are currently supported only in local execution mode.");
     }
 
     @Override

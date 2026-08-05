@@ -28,39 +28,39 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.FunctionItemFactory;
 
 /**
- * Resolves a {@link FunctionIdentifier} against user-defined and built-in named functions in the dynamic context.
+ * Resolves a {@link FunctionIdentifier} against user-defined and built-in named functions in the
+ * dynamic context.
  */
 public final class NamedFunctionLookup {
 
-    private NamedFunctionLookup() {
-    }
+    private NamedFunctionLookup() {}
 
     /**
-     * @return a {@link FunctionItem} bound to the current dynamic context, or {@code null} if none exists
+     * @return a {@link FunctionItem} bound to the current dynamic context, or {@code null} if none
+     *     exists
      */
     public static Item lookupOrNull(
             FunctionIdentifier identifier,
             DynamicContext dynamicContext,
             RumbleConfiguration configuration,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (dynamicContext.getNamedFunctions().checkUserDefinedFunctionExists(identifier)) {
-            FunctionItem result = dynamicContext.getNamedFunctions().getUserDefinedFunction(identifier);
+            FunctionItem result =
+                    dynamicContext.getNamedFunctions().getUserDefinedFunction(identifier);
             result.populateClosureFromDynamicContext(dynamicContext, metadata);
             return result;
         }
-        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
-            identifier,
-            configuration.semantics().queryLanguage()
-        );
+        BuiltinFunction builtin =
+                BuiltinFunctionCatalogue.getBuiltinFunction(
+                        identifier, configuration.semantics().queryLanguage());
         if (builtin != null) {
-            FunctionItem result = FunctionItemFactory.createBuiltinNamedReference(
-                builtin.getIdentifier(),
-                dynamicContext.getModuleContext(),
-                configuration,
-                metadata,
-                builtin
-            );
+            FunctionItem result =
+                    FunctionItemFactory.createBuiltinNamedReference(
+                            builtin.getIdentifier(),
+                            dynamicContext.getModuleContext(),
+                            configuration,
+                            metadata,
+                            builtin);
             result.populateClosureFromDynamicContext(dynamicContext, metadata);
             return result;
         }

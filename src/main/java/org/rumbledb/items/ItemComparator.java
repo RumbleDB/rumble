@@ -20,6 +20,10 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Comparator;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
@@ -27,14 +31,9 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.Comparator;
-
 public class ItemComparator implements Comparator<Item>, Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RumbleException exception;
     // For min(), NaN is returned if it appears in the input sequence. It must thus compare to less
@@ -47,51 +46,43 @@ public class ItemComparator implements Comparator<Item>, Serializable {
     }
 
     /**
-     * Comparator used for sequence aggregate functions and their RDD evaluations
-     * It compares 2 atomic items (non-null)
-     * Non-atomics and nulls throw an exception
+     * Comparator used for sequence aggregate functions and their RDD evaluations It compares 2
+     * atomic items (non-null) Non-atomics and nulls throw an exception
      *
      * @return -1 if v1 &lt; v2; 0 if v1 == v2; 1 if v1 &gt; v2;
      */
     @Override
     public int compare(Item v1, Item v2) {
         if (this.compareMin) {
-            if (
-                v2.isNumeric()
-                    &&
-                    ((v1.isDouble() && Double.isNaN(v1.getDoubleValue()))
-                        || (v1.isFloat() && Float.isNaN(v1.getFloatValue())))
-            ) {
+            if (v2.isNumeric()
+                    && ((v1.isDouble() && Double.isNaN(v1.getDoubleValue()))
+                            || (v1.isFloat() && Float.isNaN(v1.getFloatValue())))) {
                 return -1;
             }
-            if (
-                v1.isNumeric()
-                    &&
-                    ((v2.isDouble() && Double.isNaN(v2.getDoubleValue()))
-                        || (v2.isFloat() && Float.isNaN(v2.getFloatValue())))
-            ) {
+            if (v1.isNumeric()
+                    && ((v2.isDouble() && Double.isNaN(v2.getDoubleValue()))
+                            || (v2.isFloat() && Float.isNaN(v2.getFloatValue())))) {
                 return 1;
             }
         }
         try {
-            long comparison = ComparisonIterator.compareItems(
-                v1,
-                v2,
-                ComparisonExpression.ComparisonOperator.VC_LT,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            long comparison =
+                    ComparisonIterator.compareItems(
+                            v1,
+                            v2,
+                            ComparisonExpression.ComparisonOperator.VC_LT,
+                            ExceptionMetadata.EMPTY_METADATA);
             if (comparison == Long.MIN_VALUE) {
 
                 throw new UnexpectedTypeException(
                         " \""
-                            + ComparisonExpression.ComparisonOperator.VC_LT
-                            + "\": operation not possible with parameters of type \""
-                            + v1.getDynamicType().toString()
-                            + "\" and \""
-                            + v2.getDynamicType().toString()
-                            + "\"",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                                + ComparisonExpression.ComparisonOperator.VC_LT
+                                + "\": operation not possible with parameters of type \""
+                                + v1.getDynamicType().toString()
+                                + "\" and \""
+                                + v2.getDynamicType().toString()
+                                + "\"",
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             return (int) comparison;
         } catch (RumbleException e) {

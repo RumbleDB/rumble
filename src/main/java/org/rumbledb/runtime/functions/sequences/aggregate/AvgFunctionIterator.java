@@ -20,6 +20,12 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -31,51 +37,37 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private Item item;
 
     public AvgFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item count = CountFunctionIterator.computeCount(
-            this.getChild(0),
-            context,
-            getMetadata()
-        );
+        Item count = CountFunctionIterator.computeCount(this.getChild(0), context, getMetadata());
         if (count.isInt() && count.getIntValue() == 0) {
             return null;
         }
         if (count.isInteger() && count.getIntegerValue().equals(BigInteger.ZERO)) {
             return null;
         }
-        Item sum = SumFunctionIterator.computeSum(
-            ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
-            this.getChild(0),
-            context,
-            getMetadata()
-        );
-        this.item = MultiplicativeOperationIterator.processItem(
-            sum,
-            count,
-            MultiplicativeExpression.MultiplicativeOperator.DIV,
-            getMetadata()
-        );
+        Item sum =
+                SumFunctionIterator.computeSum(
+                        ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
+                        this.getChild(0),
+                        context,
+                        getMetadata());
+        this.item =
+                MultiplicativeOperationIterator.processItem(
+                        sum,
+                        count,
+                        MultiplicativeExpression.MultiplicativeOperator.DIV,
+                        getMetadata());
         return this.item;
     }
 
@@ -83,7 +75,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.getChild(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
-                new TreeMap<Name, DynamicContext.VariableDependency>();
+                    new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVERAGE);
             return result;
         } else {

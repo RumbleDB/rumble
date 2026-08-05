@@ -20,15 +20,15 @@
 
 package org.rumbledb.expressions.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
-
 
 @Getter
 public class ArrayConstructorExpression extends Expression {
@@ -38,8 +38,8 @@ public class ArrayConstructorExpression extends Expression {
     private final boolean isFixedSlotsArrayConstructor;
 
     /**
-     * Curly array constructor: {@code array { expr }}.
-     * Each item produced by the expression becomes a singleton member.
+     * Curly array constructor: {@code array { expr }}. Each item produced by the expression becomes
+     * a singleton member.
      */
     public ArrayConstructorExpression(Expression expression, ExceptionMetadata metadata) {
         super(metadata);
@@ -48,9 +48,7 @@ public class ArrayConstructorExpression extends Expression {
         this.isFixedSlotsArrayConstructor = false;
     }
 
-    /**
-     * Empty array constructor (curly or square with no members).
-     */
+    /** Empty array constructor (curly or square with no members). */
     public ArrayConstructorExpression(ExceptionMetadata metadata) {
         super(metadata);
         this.expression = null;
@@ -59,14 +57,13 @@ public class ArrayConstructorExpression extends Expression {
     }
 
     /**
-     * Square array constructor: {@code [ E1, E2, ... ]}.
-     * Each expression becomes a separate member whose result (possibly a sequence) is preserved.
+     * Square array constructor: {@code [ E1, E2, ... ]}. Each expression becomes a separate member
+     * whose result (possibly a sequence) is preserved.
      */
     public ArrayConstructorExpression(
             List<Expression> memberExpressions,
             boolean isFixedSlotsArrayConstructor,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.expression = null;
         this.memberExpressions = memberExpressions;
@@ -107,10 +104,8 @@ public class ArrayConstructorExpression extends Expression {
         }
     }
 
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitArrayConstructor(this, argument);
     }
-
 }

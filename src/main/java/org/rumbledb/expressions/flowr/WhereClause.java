@@ -20,15 +20,15 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 public class WhereClause extends Clause {
@@ -63,6 +63,5 @@ public class WhereClause extends Clause {
         sb.append("where (");
         this.whereExpression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
-
     }
 }

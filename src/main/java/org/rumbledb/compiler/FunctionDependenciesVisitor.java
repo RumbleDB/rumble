@@ -1,23 +1,23 @@
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.jgrapht.Graph;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-// import org.rumbledb.expressions.flowr.*;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIdentifier> {
 
@@ -26,12 +26,12 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
      * public FunctionIdentifier visitForClause(ForClause clause, FunctionIdentifier argument) {
      * return this.visit(clause.getExpression(), argument);
      * }
-     * 
+     *
      * @Override
      * public FunctionIdentifier visitLetClause(LetClause clause, FunctionIdentifier argument) {
      * return this.visit(clause.getExpression(), argument);
      * }
-     * 
+     *
      * @Override
      * public FunctionIdentifier visitGroupByClause(GroupByClause clause, FunctionIdentifier argument) {
      * for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
@@ -41,14 +41,14 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
      * }
      * return argument;
      * }
-     * 
+     *
      * public FunctionIdentifier visitOrderByClause(OrderByClause clause, FunctionIdentifier argument) {
      * for (OrderByClauseSortingKey orderClause : clause.getSortingKeys()) {
      * this.visit(orderClause.getExpression(), argument);
      * }
      * return argument;
      * }
-     * 
+     *
      * @Override
      * public FunctionIdentifier visitFlowrExpression(FlworExpression expression, FunctionIdentifier argument) {
      * Clause clause = expression.getReturnClause().getFirstClause();
@@ -77,27 +77,28 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
     }
 
     @Override
-    public FunctionIdentifier visitMainModule(MainModule expression, FunctionIdentifier encompassingFunction) {
+    public FunctionIdentifier visitMainModule(
+            MainModule expression, FunctionIdentifier encompassingFunction) {
         visitDescendants(expression, encompassingFunction);
         Graph<FunctionIdentifier, DefaultEdge> directedGraph =
-            new DefaultDirectedGraph<>(DefaultEdge.class);
+                new DefaultDirectedGraph<>(DefaultEdge.class);
         this.edges.keySet().forEach(directedGraph::addVertex);
-        this.edges.keySet()
-            .forEach(
-                key -> this.edges.get(key)
-                    .stream()
-                    .filter(this.edges::containsKey)
-                    .forEach(value -> directedGraph.addEdge(key, value))
-            );
+        this.edges
+                .keySet()
+                .forEach(
+                        key ->
+                                this.edges.get(key).stream()
+                                        .filter(this.edges::containsKey)
+                                        .forEach(value -> directedGraph.addEdge(key, value)));
         StrongConnectivityAlgorithm<FunctionIdentifier, DefaultEdge> scAlg =
-            new KosarajuStrongConnectivityInspector<>(directedGraph);
+                new KosarajuStrongConnectivityInspector<>(directedGraph);
         // every vertex in a strongly connected component corresponds to a cyclic function call
         List<Graph<FunctionIdentifier, DefaultEdge>> stronglyConnectedComponents =
-            scAlg.getStronglyConnectedComponents();
+                scAlg.getStronglyConnectedComponents();
         stronglyConnectedComponents.stream()
-            .filter(subGraph -> subGraph.edgeSet().size() > 0)
-            .flatMap(subGraph -> subGraph.vertexSet().stream())
-            .forEach(name -> this.functionDeclarations.get(name).setRecursive(true));
+                .filter(subGraph -> subGraph.edgeSet().size() > 0)
+                .flatMap(subGraph -> subGraph.vertexSet().stream())
+                .forEach(name -> this.functionDeclarations.get(name).setRecursive(true));
         return null;
     }
 
@@ -114,9 +115,7 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
 
     @Override
     public FunctionIdentifier visitFunctionDeclaration(
-            FunctionDeclaration expression,
-            FunctionIdentifier encompassingFunction
-    ) {
+            FunctionDeclaration expression, FunctionIdentifier encompassingFunction) {
         FunctionIdentifier name = expression.getFunctionIdentifier();
         this.functionDeclarations.put(name, expression);
         createVertex(name);
@@ -126,9 +125,7 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
 
     @Override
     public FunctionIdentifier visitFunctionCall(
-            FunctionCallExpression expression,
-            FunctionIdentifier encompassingFunction
-    ) {
+            FunctionCallExpression expression, FunctionIdentifier encompassingFunction) {
         if (encompassingFunction == null) {
             return defaultAction(expression, null);
         }

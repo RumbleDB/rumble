@@ -1,13 +1,12 @@
 package org.rumbledb.expressions.xml.node_test;
 
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
+
+import org.rumbledb.context.Name;
 
 // TODO: Add support for name test
 public class NameTest implements NodeTest {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final Name qname;
     private final String wildcardWithNCName;
 
@@ -34,8 +33,9 @@ public class NameTest implements NodeTest {
     }
 
     /**
-     * Expanded name (namespace URI + local name). Prefer {@link Name#equals} over string forms for node matching:
-     * the same expanded name can stringify differently when the prefix is empty vs absent.
+     * Expanded name (namespace URI + local name). Prefer {@link Name#equals} over string forms for
+     * node matching: the same expanded name can stringify differently when the prefix is empty vs
+     * absent.
      */
     public Name getExpandedName() {
         return this.qname;
@@ -48,6 +48,4 @@ public class NameTest implements NodeTest {
     public String getWildcardQName() {
         return this.wildcardWithNCName;
     }
-
-
 }

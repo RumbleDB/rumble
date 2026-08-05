@@ -35,27 +35,26 @@ import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 /**
  * Runtime iterator for attribute nodes in a direct element constructor.
- * 
+ *
  * @see org.rumbledb.expressions.xml.AttributeNodeExpression
  */
 public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final Name attributeName;
     private final List<DataFunctionIterator> atomizedValues;
 
     public AttributeNodeRuntimeIterator(
             Name attributeName,
             List<DataFunctionIterator> atomizedValues,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(createChildList(atomizedValues), staticContext);
         this.attributeName = attributeName;
         this.atomizedValues = atomizedValues;
     }
 
-    private static List<RuntimeIterator> createChildList(List<DataFunctionIterator> atomizedValues) {
+    private static List<RuntimeIterator> createChildList(
+            List<DataFunctionIterator> atomizedValues) {
         return Arrays.asList(atomizedValues.toArray(new RuntimeIterator[0]));
     }
 
@@ -66,18 +65,22 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         // 2. Each enclosed expression is converted to a string as follows:
         for (DataFunctionIterator atomizedValueIterator : this.atomizedValues) {
 
-            // 2.a Atomization is applied to each enclosed expression, converting it to a sequence of atomic values.
+            // 2.a Atomization is applied to each enclosed expression, converting it to a sequence
+            // of
+            // atomic values.
             List<Item> atomizedItems = atomizedValueIterator.materialize(dynamicContext);
 
-
-            // 2.b If the result of atomization is an empty sequence, the result is the zero-length string.
+            // 2.b If the result of atomization is an empty sequence, the result is the zero-length
+            // string.
             if (atomizedItems.isEmpty()) {
                 // Empty atomization result contributes nothing to the final string
                 sb.append("");
             } else {
-                // 2.b (cont.) Otherwise, each atomic value in the atomized sequence is cast into a string.
+                // 2.b (cont.) Otherwise, each atomic value in the atomized sequence is cast into a
+                // string.
                 // 2.c The individual strings resulting from the previous step are merged into
-                // a single string by concatenating them with a single space character between each pair.
+                // a single string by concatenating them with a single space character between each
+                // pair.
                 for (int i = 0; i < atomizedItems.size(); i++) {
                     Item atomicItem = atomizedItems.get(i);
                     sb.append(atomicItem.getStringValue());
@@ -88,17 +91,13 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
             }
         }
 
-        // 3. Adjacent strings resulting from the above steps are concatenated with no intervening blanks.
+        // 3. Adjacent strings resulting from the above steps are concatenated with no intervening
+        // blanks.
         // The resulting string becomes the string-value property of the attribute node.
         // this is performed by using the same StringBuilder for all the attribute components
 
         // Create and return the attribute
         this.hasNext = false;
-        return ItemFactory.getInstance()
-            .createXmlAttributeNode(
-                this.attributeName,
-                sb.toString()
-            );
+        return ItemFactory.getInstance().createXmlAttributeNode(this.attributeName, sb.toString());
     }
 }
-

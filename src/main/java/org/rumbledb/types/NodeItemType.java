@@ -1,23 +1,21 @@
 package org.rumbledb.types;
 
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.util.Set;
 
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
+
 /**
- * Class representing the abstract node() item type.
- * This is the supertype for all 7 concrete XML node types
- * (element, attribute, document-node, comment, text, namespace-node, processing-instruction)
- * as defined by the XPath Data Model 3.1, Section 2.7.4.
+ * Class representing the abstract node() item type. This is the supertype for all 7 concrete XML
+ * node types (element, attribute, document-node, comment, text, namespace-node,
+ * processing-instruction) as defined by the XPath Data Model 3.1, Section 2.7.4.
  *
- * node() sits at depth 1 in the type hierarchy, with item at depth 0.
+ * <p>node() sits at depth 1 in the type hierarchy, with item at depth 0.
  */
 public class NodeItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     static final ItemType nodeItem = new NodeItemType();
     private final Name name;
@@ -25,8 +23,6 @@ public class NodeItemType extends AbstractItemType {
     NodeItemType() {
         this.name = Name.createVariableInDefaultTypeNamespace("node");
     }
-
-
 
     @Override
     public boolean hasName() {

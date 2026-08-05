@@ -5,6 +5,7 @@ import java.io.Serializable;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.StaticContext;
@@ -12,23 +13,14 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.runtime.typing.CastIterator;
 
-
 public class FieldDescriptor implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    @Setter
-    @Getter
-    public String name;
-    @Setter
-    @Getter
-    private ItemType type;
-    @Getter
-    private boolean required = false;
-    @Setter
-    @Getter
-    private Item defaultValue = null;
+    @Setter @Getter public String name;
+    @Setter @Getter private ItemType type;
+    @Getter private boolean required = false;
+    @Setter @Getter private Item defaultValue = null;
     private boolean unique = false;
     private boolean requiredIsSet = false;
     private boolean uniqueIsSet = false;
@@ -83,15 +75,16 @@ public class FieldDescriptor implements Serializable {
             if (!this.type.isAtomicItemType()) {
                 throw new InvalidSchemaException(
                         "Default values can only be literals for atomic types",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
             if (castValue == null) {
                 throw new InvalidSchemaException(
-                        "The literal " + this.defaultValue + " is not a valid literal for type " + this.type.toString(),
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        "The literal "
+                                + this.defaultValue
+                                + " is not a valid literal for type "
+                                + this.type.toString(),
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             this.defaultValue = castValue;
         }
@@ -105,21 +98,21 @@ public class FieldDescriptor implements Serializable {
             if (!this.type.isAtomicItemType()) {
                 throw new InvalidSchemaException(
                         "Default values can only be literals for atomic types",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
-            Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null, context);
+            Item castValue =
+                    CastIterator.castItemToType(this.defaultValue, this.type, null, context);
             if (castValue == null) {
                 throw new InvalidSchemaException(
-                        "The literal " + this.defaultValue + " is not a valid literal for type " + this.type.toString(),
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        "The literal "
+                                + this.defaultValue
+                                + " is not a valid literal for type "
+                                + this.type.toString(),
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             this.defaultValue = castValue;
         }
     }
-
-
 
     public static FieldDescriptor copy(FieldDescriptor descriptor) {
         FieldDescriptor clone = new FieldDescriptor();

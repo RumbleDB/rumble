@@ -20,28 +20,29 @@
 
 package iq;
 
-import iq.base.SparkAnnotationsTestsBase;
+import java.io.File;
 
 import org.apache.spark.SparkConf;
+
+import iq.base.SparkAnnotationsTestsBase;
+
 import org.rumbledb.config.RumbleConfiguration;
-import java.io.File;
 
 public class RuntimeTests extends SparkAnnotationsTestsBase {
 
-    public static final File runtimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/runtime"
-    );
+    public static final File runtimeTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/runtime");
 
     @Override
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(
-                runtime -> runtime.resultsSizeCap(200).materializationCap(100000).shouldApplyUpdates(true)
-            )
-            .configureSemantics(semantics -> semantics.laxJSONNullValidation(false))
-            .build();
+                .configureRuntime(
+                        runtime ->
+                                runtime.resultsSizeCap(200)
+                                        .materializationCap(100000)
+                                        .shouldApplyUpdates(true))
+                .configureSemantics(semantics -> semantics.laxJSONNullValidation(false))
+                .build();
     }
 
     @Override
@@ -52,7 +53,10 @@ public class RuntimeTests extends SparkAnnotationsTestsBase {
     @Override
     protected void configureSpark(SparkConf sparkConfiguration) {
         sparkConfiguration.set("spark.sql.adaptive.enabled", "false");
-        sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
-        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
+        sparkConfiguration.set(
+                "spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
+        sparkConfiguration.set(
+                "spark.sql.catalog.spark_catalog",
+                "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
     }
 }

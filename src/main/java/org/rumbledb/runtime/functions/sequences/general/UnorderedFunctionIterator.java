@@ -20,7 +20,11 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,21 +33,14 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class UnorderedFunctionIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private Item nextResult;
 
     public UnorderedFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.iterator = this.getChild(0);
     }
@@ -55,7 +52,8 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
             setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "unordered function", getMetadata());
+        throw new IteratorFlowException(
+                FLOW_EXCEPTION_MESSAGE + "unordered function", getMetadata());
     }
 
     @Override
@@ -109,5 +107,4 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
         HomogeneousItemDataFrame df = this.iterator.getDataFrame(context);
         return df;
     }
-
 }

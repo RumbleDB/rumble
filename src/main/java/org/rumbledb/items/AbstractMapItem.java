@@ -26,15 +26,16 @@ import org.rumbledb.api.Item;
  * Order-independent structural Java equality for every materialized and lazy map representation.
  */
 public abstract class AbstractMapItem implements Item {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     @Override
     public final boolean equals(Object other) {
         if (this == other) {
             return true;
         }
-        if (!(other instanceof Item otherItem) || !otherItem.isMap() || this.getSize() != otherItem.getSize()) {
+        if (!(other instanceof Item otherItem)
+                || !otherItem.isMap()
+                || this.getSize() != otherItem.getSize()) {
             return false;
         }
         for (Item key : this.getItemKeys()) {

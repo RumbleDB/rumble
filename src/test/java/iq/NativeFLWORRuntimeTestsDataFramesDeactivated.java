@@ -20,26 +20,27 @@
 
 package iq;
 
-import org.rumbledb.config.RumbleConfiguration;
-
 import java.io.File;
+
+import org.rumbledb.config.RumbleConfiguration;
 
 public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
 
     @Override
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(
-                runtime -> runtime.resultsSizeCap(200).materializationCap(10000).useDataFrameExecution(false)
-            )
-            .build();
+                .configureRuntime(
+                        runtime ->
+                                runtime.resultsSizeCap(200)
+                                        .materializationCap(10000)
+                                        .useDataFrameExecution(false))
+                .build();
     }
 
-    public static final File nativeFlworRuntimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/runtime-native-flwor"
-    );
+    public static final File nativeFlworRuntimeTestsDirectory =
+            new File(
+                    System.getProperty("user.dir")
+                            + "/src/test/resources/test_files/runtime-native-flwor");
 
     @Override
     protected File testDirectory() {

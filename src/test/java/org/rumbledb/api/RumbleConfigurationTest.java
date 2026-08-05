@@ -18,22 +18,22 @@
 
 package org.rumbledb.api;
 
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
 import org.rumbledb.config.model.RumbleMode;
 
 public class RumbleConfigurationTest {
 
     @Test
     public void getReturnsPlainJavaValues() {
-        RumbleConfiguration configuration = configuration(
-            org.rumbledb.config.RumbleConfiguration.builder()
-                .mode(RumbleMode.RUN)
-                .configureRuntime(runtime -> runtime.resultsSizeCap(100))
-                .configureDebug(debug -> debug.showErrorInfo(true))
-                .build()
-        );
+        RumbleConfiguration configuration =
+                configuration(
+                        org.rumbledb.config.RumbleConfiguration.builder()
+                                .mode(RumbleMode.RUN)
+                                .configureRuntime(runtime -> runtime.resultsSizeCap(100))
+                                .configureDebug(debug -> debug.showErrorInfo(true))
+                                .build());
 
         Assertions.assertEquals("RUN", configuration.get("mode"));
         Assertions.assertEquals(100, configuration.get("runtime.resultsSizeCap"));
@@ -42,13 +42,13 @@ public class RumbleConfigurationTest {
 
     @Test
     public void typedGettersConvertValues() {
-        RumbleConfiguration configuration = configuration(
-            org.rumbledb.config.RumbleConfiguration.builder()
-                .mode(RumbleMode.REPL)
-                .configureRuntime(runtime -> runtime.resultsSizeCap(100))
-                .configureDebug(debug -> debug.showErrorInfo(true))
-                .build()
-        );
+        RumbleConfiguration configuration =
+                configuration(
+                        org.rumbledb.config.RumbleConfiguration.builder()
+                                .mode(RumbleMode.REPL)
+                                .configureRuntime(runtime -> runtime.resultsSizeCap(100))
+                                .configureDebug(debug -> debug.showErrorInfo(true))
+                                .build());
 
         Assertions.assertEquals("REPL", configuration.getString("mode"));
         Assertions.assertEquals(100, configuration.getInt("runtime.resultsSizeCap"));
@@ -65,22 +65,19 @@ public class RumbleConfigurationTest {
     @Test
     public void getRejectsUnknownPath() {
         Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> new RumbleConfiguration().get("runtime.unknownOption")
-        );
+                IllegalArgumentException.class,
+                () -> new RumbleConfiguration().get("runtime.unknownOption"));
     }
 
     @Test
     public void getRejectsInvalidPath() {
         Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> new RumbleConfiguration().get("runtime..resultsSizeCap")
-        );
+                IllegalArgumentException.class,
+                () -> new RumbleConfiguration().get("runtime..resultsSizeCap"));
     }
 
     private static RumbleConfiguration configuration(
-            org.rumbledb.config.RumbleConfiguration internalConfiguration
-    ) {
+            org.rumbledb.config.RumbleConfiguration internalConfiguration) {
         return new RumbleConfiguration(internalConfiguration);
     }
 }

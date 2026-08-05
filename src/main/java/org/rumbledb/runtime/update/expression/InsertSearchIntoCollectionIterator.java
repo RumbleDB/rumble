@@ -1,28 +1,28 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.io.Serial;
+import java.util.Arrays;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
-import java.io.Serial;
-import java.util.Arrays;
-
 public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
     private final boolean isBefore;
@@ -31,14 +31,13 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator targetIterator,
             RuntimeIterator contentIterator,
             boolean isBefore,
-            RuntimeStaticContext staticContext
-    ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
+            RuntimeStaticContext staticContext) {
+        super(
+                Arrays.asList(targetIterator, contentIterator),
+                staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.isBefore = isBefore;
-
-
     }
 
     @Override
@@ -47,14 +46,10 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
+    protected void openLocal() {}
 
     @Override
-    protected void closeLocal() {
-
-    }
+    protected void closeLocal() {}
 
     @Override
     protected boolean hasNextLocal() {
@@ -83,34 +78,26 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
             target = this.targetIterator.materializeExactlyOneItem(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
-                    "More than one target item cannot be used for insertion.",
-                    this.getMetadata()
-            );
+                    "More than one target item cannot be used for insertion.", this.getMetadata());
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
                     "One target item must be provided for search based insertion. Please check if the target expression provided resolves to a valid target in the collection.",
-                    this.getMetadata()
-            );
+                    this.getMetadata());
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = null;
         if (this.isBefore) {
-            up = factory.createInsertBeforeIntoCollectionPrimitive(
-                target,
-                contentDF,
-                this.getMetadata()
-            );
+            up =
+                    factory.createInsertBeforeIntoCollectionPrimitive(
+                            target, contentDF, this.getMetadata());
         } else {
-            up = factory.createInsertAfterIntoCollectionPrimitive(
-                target,
-                contentDF,
-                this.getMetadata()
-            );
+            up =
+                    factory.createInsertAfterIntoCollectionPrimitive(
+                            target, contentDF, this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);
         return pul;
     }
-
 }

@@ -20,7 +20,11 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -29,36 +33,31 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class NormalizeSpaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public NormalizeSpaceFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (this.getChildren().size() == 0) {
-            List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            List<Item> items =
+                    context.getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return ItemFactory.getInstance()
-                .createStringItem(StringUtils.normalizeSpace(items.get(0).getStringValue()));
+                    .createStringItem(StringUtils.normalizeSpace(items.get(0).getStringValue()));
         }
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
 
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
 
-        return ItemFactory.getInstance().createStringItem(StringUtils.normalizeSpace(stringItem.getStringValue()));
+        return ItemFactory.getInstance()
+                .createStringItem(StringUtils.normalizeSpace(stringItem.getStringValue()));
     }
-
 }

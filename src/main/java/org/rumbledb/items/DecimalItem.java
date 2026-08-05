@@ -32,8 +32,7 @@ import org.rumbledb.types.SequenceType;
 
 public class DecimalItem extends AbstractAtomicItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private BigDecimal value;
 
     // Float/double casts retain their exact decimal value for op:same-key while serializing
@@ -114,7 +113,8 @@ public class DecimalItem extends AbstractAtomicItem {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, this.value.toString(), SequenceType.createSequenceType("decimal"));
+        return new NativeClauseContext(
+                context, this.value.toString(), SequenceType.createSequenceType("decimal"));
     }
 
     @Override

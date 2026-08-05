@@ -1,5 +1,9 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
+import java.io.Serial;
+import java.time.OffsetDateTime;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -9,16 +13,12 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
-import java.io.Serial;
-import java.time.OffsetDateTime;
-import java.util.List;
-
 abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    public DateFormattingFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public DateFormattingFunctionIterator(
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -27,15 +27,18 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
         Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
         Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
 
-        Item languageItem = this.getChildren().size() > 2
-            ? this.getChild(2).materializeFirstItemOrNull(context)
-            : null;
-        Item calendarItem = this.getChildren().size() > 3
-            ? this.getChild(3).materializeFirstItemOrNull(context)
-            : null;
-        Item placeItem = this.getChildren().size() > 4
-            ? this.getChild(4).materializeFirstItemOrNull(context)
-            : null;
+        Item languageItem =
+                this.getChildren().size() > 2
+                        ? this.getChild(2).materializeFirstItemOrNull(context)
+                        : null;
+        Item calendarItem =
+                this.getChildren().size() > 3
+                        ? this.getChild(3).materializeFirstItemOrNull(context)
+                        : null;
+        Item placeItem =
+                this.getChildren().size() > 4
+                        ? this.getChild(4).materializeFirstItemOrNull(context)
+                        : null;
 
         // If $value is the empty sequence, the functions return the empty sequence
         if (valueItem == null) {
@@ -46,7 +49,8 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
         String calendar = getOptionalString(calendarItem);
         String place = getOptionalString(placeItem);
 
-        // Ensures that calls with the 2-arity signature behave the same as calls with the 5-arity signature
+        // Ensures that calls with the 2-arity signature behave the same as calls with the 5-arity
+        // signature
         // when the last three arguments are empty sequences.
         if (language == null) {
             language = getConfiguration().formatting().defaultFormattingLanguage();
@@ -55,59 +59,51 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
             calendar = getConfiguration().formatting().defaultFormattingCalendar();
         }
 
-        FormattingContext formattingContext = FormattingContext.fromArguments(
-            language,
-            calendar,
-            place,
-            getRuntimeStaticContext().getStaticallyKnownNamespaces(),
-            getMetadata()
-        );
+        FormattingContext formattingContext =
+                FormattingContext.fromArguments(
+                        language,
+                        calendar,
+                        place,
+                        getRuntimeStaticContext().getStaticallyKnownNamespaces(),
+                        getMetadata());
 
         // Retrieves the individual temporal value used by a date-format function.
         OffsetDateTime temporalValue = getTemporalValue(valueItem);
         boolean hasExplicitTimezone = valueItem.hasTimeZone();
 
         // Apply the timezone before rendering, if set explicitly.
-        OffsetDateTime renderingValue = applyConfiguredZone(
-            temporalValue,
-            hasExplicitTimezone,
-            formattingContext
-        );
+        OffsetDateTime renderingValue =
+                applyConfiguredZone(temporalValue, hasExplicitTimezone, formattingContext);
 
-        String result = TemporalPictureFormatter.format(
-            renderingValue,
-            pictureItem.getStringValue(),
-            hasExplicitTimezone,
-            formattingContext,
-            this::supportsComponent,
-            getMetadata()
-        );
+        String result =
+                TemporalPictureFormatter.format(
+                        renderingValue,
+                        pictureItem.getStringValue(),
+                        hasExplicitTimezone,
+                        formattingContext,
+                        this::supportsComponent,
+                        getMetadata());
 
         return ItemFactory.getInstance().createStringItem(result);
     }
 
     /**
-     * Returns the String of a String item, or null if the item holds null or the item reference is null.
-     * This function does not check whether the item is a String item.
+     * Returns the String of a String item, or null if the item holds null or the item reference is
+     * null. This function does not check whether the item is a String item.
      */
     private static String getOptionalString(Item item) {
-        return item != null && !item.isNull()
-            ? item.getStringValue()
-            : null;
+        return item != null && !item.isNull() ? item.getStringValue() : null;
     }
 
     static OffsetDateTime applyConfiguredZone(
             OffsetDateTime value,
             boolean hasExplicitTimezone,
-            FormattingContext formattingContext
-    ) {
+            FormattingContext formattingContext) {
         if (!hasExplicitTimezone || !formattingContext.shouldAdjustToPlaceTimezone()) {
             return value;
         }
 
-        return value.toInstant()
-            .atZone(formattingContext.placeZoneId)
-            .toOffsetDateTime();
+        return value.toInstant().atZone(formattingContext.placeZoneId).toOffsetDateTime();
     }
 
     // Turns a non-castable item into a CastException naming the expected type.
@@ -115,10 +111,13 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
         try {
             return extractTemporalValue(valueItem);
         } catch (UnsupportedOperationException e) {
-            CastException ex = new CastException(
-                    "\"" + valueItem.serialize() + "\": not castable to type " + temporalTypeName(),
-                    getMetadata()
-            );
+            CastException ex =
+                    new CastException(
+                            "\""
+                                    + valueItem.serialize()
+                                    + "\": not castable to type "
+                                    + temporalTypeName(),
+                            getMetadata());
             ex.initCause(e);
             throw ex;
         }
@@ -131,5 +130,4 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
     protected abstract String temporalTypeName();
 
     protected abstract boolean supportsComponent(char component);
-
 }

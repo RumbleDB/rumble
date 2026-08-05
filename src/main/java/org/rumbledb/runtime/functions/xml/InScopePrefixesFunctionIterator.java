@@ -19,48 +19,47 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Implementation of fn:in-scope-prefixes according to
- * XPath and XQuery Functions and Operators 3.1, Section 14.1.
+ * Implementation of fn:in-scope-prefixes according to XPath and XQuery Functions and Operators 3.1,
+ * Section 14.1.
  *
- * Spec (Functions and Operators 3.1, Section 14.1):
- * "fn:in-scope-prefixes($element as element()) as xs:string*"
+ * <p>Spec (Functions and Operators 3.1, Section 14.1): "fn:in-scope-prefixes($element as element())
+ * as xs:string*"
  *
- * "Summary: Returns the prefixes of the in-scope namespaces for $element."
+ * <p>"Summary: Returns the prefixes of the in-scope namespaces for $element."
  *
- * "Rules: The function returns a sequence of zero or more xs:string values."
- * "For namespace bindings that have a prefix, the prefix is returned."
- * "For the default namespace, if it exists, the zero-length string is returned."
- * "The order of the result is implementation dependent."
+ * <p>"Rules: The function returns a sequence of zero or more xs:string values." "For namespace
+ * bindings that have a prefix, the prefix is returned." "For the default namespace, if it exists,
+ * the zero-length string is returned." "The order of the result is implementation dependent."
  *
- * This function calls namespaceNodes() on the element item, which returns
- * the in-scope namespace nodes computed via parent chaining of declared
- * namespaces, and extracts the prefixes as xs:string* items.
+ * <p>This function calls namespaceNodes() on the element item, which returns the in-scope namespace
+ * nodes computed via parent chaining of declared namespaces, and extracts the prefixes as
+ * xs:string* items.
  *
- * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-in-scope-prefixes">XPath and XQuery Functions and
- *      Operators 3.1 : fn:in-scope-prefixes</a>
+ * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-in-scope-prefixes">XPath and XQuery
+ *     Functions and Operators 3.1 : fn:in-scope-prefixes</a>
  */
 public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private List<Item> prefixItems;
     private int currentIndex;
 
-    public InScopePrefixesFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public InScopePrefixesFunctionIterator(
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
@@ -72,7 +71,9 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
 
         // fn:in-scope-prefixes($element as element()) as xs:string*
         // The function requires exactly one argument of type element().
-        Item element = this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        Item element =
+                this.getChild(0)
+                        .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
         this.prefixItems = computeInScopePrefixes(element);
         this.hasNext = !this.prefixItems.isEmpty();
@@ -83,8 +84,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
         if (!this.hasNext) {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in-scope-prefixes function",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         Item result = this.prefixItems.get(this.currentIndex);
@@ -100,15 +100,13 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
     /**
      * Computes the in-scope namespace prefixes for the given element.
      *
-     * XPath and XQuery Functions and Operators 3.1, Section 14.1 (fn:in-scope-prefixes):
-     * "Returns the prefixes of the in-scope namespaces for $element."
-     * "For namespace bindings that have a prefix, the prefix is returned."
-     * "For the default namespace, if it exists, the zero-length string is returned."
-     * "The order of the result is implementation dependent."
+     * <p>XPath and XQuery Functions and Operators 3.1, Section 14.1 (fn:in-scope-prefixes):
+     * "Returns the prefixes of the in-scope namespaces for $element." "For namespace bindings that
+     * have a prefix, the prefix is returned." "For the default namespace, if it exists, the
+     * zero-length string is returned." "The order of the result is implementation dependent."
      *
-     * Delegates to element.namespaceNodes() which computes the in-scope
-     * namespace nodes via parent chaining of declared namespaces, then
-     * extracts the prefixes.
+     * <p>Delegates to element.namespaceNodes() which computes the in-scope namespace nodes via
+     * parent chaining of declared namespaces, then extracts the prefixes.
      *
      * @param element the element node for which to compute in-scope prefixes
      * @return a list of StringItem objects representing the prefixes
@@ -127,8 +125,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
                 continue;
             }
             result.add(
-                ItemFactory.getInstance().createStringItem(q == null ? "" : q.getLocalName())
-            );
+                    ItemFactory.getInstance().createStringItem(q == null ? "" : q.getLocalName()));
         }
 
         return result;

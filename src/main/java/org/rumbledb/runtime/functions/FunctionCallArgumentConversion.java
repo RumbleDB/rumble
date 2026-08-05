@@ -16,105 +16,102 @@
  */
 package org.rumbledb.runtime.functions;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
- * Shared argument arity checks and type-promotion wrapping for dynamic calls on
- * {@link org.rumbledb.items.FunctionItem}s.
+ * Shared argument arity checks and type-promotion wrapping for dynamic calls on {@link
+ * org.rumbledb.items.FunctionItem}s.
  */
 public final class FunctionCallArgumentConversion {
 
-    private FunctionCallArgumentConversion() {
-    }
+    private FunctionCallArgumentConversion() {}
 
     public static void validateArity(
             Item functionItem,
             List<RuntimeIterator> functionArguments,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (functionItem.getParameterNames().size() != functionArguments.size()) {
             throw new UnexpectedTypeException(
                     "Dynamic function "
-                        + functionItem.getIdentifier().getName()
-                        + " invoked with incorrect number of arguments. Expected: "
-                        + functionItem.getParameterNames().size()
-                        + ", Found: "
-                        + functionArguments.size(),
-                    metadata
-            );
+                            + functionItem.getIdentifier().getName()
+                            + " invoked with incorrect number of arguments. Expected: "
+                            + functionItem.getParameterNames().size()
+                            + ", Found: "
+                            + functionArguments.size(),
+                    metadata);
         }
     }
 
     public static void wrapAccordingToSignature(
             Item functionItem,
             List<RuntimeIterator> functionArguments,
-            RuntimeStaticContext callerStaticContext
-    ) {
+            RuntimeStaticContext callerStaticContext) {
         if (functionItem.getSignature().getParameterTypes() == null) {
             return;
         }
         for (int i = 0; i < functionArguments.size(); i++) {
-            if (
-                functionArguments.get(i) != null
-                    && !functionItem.getSignature()
-                        .getParameterTypes()
-                        .get(i)
-                        .equals(SequenceType.createSequenceType("item*"))
-            ) {
+            if (functionArguments.get(i) != null
+                    && !functionItem
+                            .getSignature()
+                            .getParameterTypes()
+                            .get(i)
+                            .equals(SequenceType.createSequenceType("item*"))) {
                 SequenceType sequenceType = functionItem.getSignature().getParameterTypes().get(i);
                 ExecutionMode executionMode = functionArguments.get(i).getHighestExecutionMode();
-                if (
-                    sequenceType.isEmptySequence()
+                if (sequenceType.isEmptySequence()
                         || sequenceType.getArity().equals(Arity.One)
-                        || sequenceType.getArity().equals(Arity.OneOrZero)
-                ) {
+                        || sequenceType.getArity().equals(Arity.OneOrZero)) {
                     executionMode = ExecutionMode.LOCAL;
                 }
-                RuntimeStaticContext runtimeStaticContext = callerStaticContext
-                    .toBuilder()
-                    .staticType(sequenceType)
-                    .executionMode(executionMode)
-                    .metadata(functionArguments.get(i).getMetadata())
-                    .build();
-                RuntimeIterator argumentIterator = wrapForFunctionConversion(
-                    functionArguments.get(i),
-                    sequenceType,
-                    "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
-                    runtimeStaticContext
-                );
-                if (
-                    sequenceType.isEmptySequence()
+                RuntimeStaticContext runtimeStaticContext =
+                        callerStaticContext.toBuilder()
+                                .staticType(sequenceType)
+                                .executionMode(executionMode)
+                                .metadata(functionArguments.get(i).getMetadata())
+                                .build();
+                RuntimeIterator argumentIterator =
+                        wrapForFunctionConversion(
+                                functionArguments.get(i),
+                                sequenceType,
+                                "Invalid argument for "
+                                        + functionItem.getIdentifier().getName()
+                                        + " function. ",
+                                runtimeStaticContext);
+                if (sequenceType.isEmptySequence()
                         || sequenceType.getArity().equals(Arity.One)
-                        || sequenceType.getArity().equals(Arity.OneOrZero)
-                ) {
-                    RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
-                            argumentIterator,
-                            sequenceType,
-                            "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
-                            runtimeStaticContext
-                    );
+                        || sequenceType.getArity().equals(Arity.OneOrZero)) {
+                    RuntimeIterator typePromotionIterator =
+                            new AtMostOneItemTypePromotionIterator(
+                                    argumentIterator,
+                                    sequenceType,
+                                    "Invalid argument for "
+                                            + functionItem.getIdentifier().getName()
+                                            + " function. ",
+                                    runtimeStaticContext);
                     functionArguments.set(i, typePromotionIterator);
                 } else {
-                    RuntimeIterator typePromotionIterator = new TypePromotionIterator(
-                            argumentIterator,
-                            sequenceType,
-                            "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
-                            runtimeStaticContext
-                    );
+                    RuntimeIterator typePromotionIterator =
+                            new TypePromotionIterator(
+                                    argumentIterator,
+                                    sequenceType,
+                                    "Invalid argument for "
+                                            + functionItem.getIdentifier().getName()
+                                            + " function. ",
+                                    runtimeStaticContext);
                     functionArguments.set(i, typePromotionIterator);
                 }
             }
@@ -125,25 +122,21 @@ public final class FunctionCallArgumentConversion {
             RuntimeIterator argumentIterator,
             SequenceType sequenceType,
             String exceptionMessage,
-            RuntimeStaticContext runtimeStaticContext
-    ) {
+            RuntimeStaticContext runtimeStaticContext) {
         ItemType targetItemType = sequenceType.getItemType();
-        if (
-            targetItemType.isAtomicItemType()
-                && !argumentIterator.getStaticType().getItemType().isAtomicItemType()
-        ) {
-            argumentIterator = new DataFunctionIterator(
-                    Collections.singletonList(argumentIterator),
-                    runtimeStaticContext
-            );
+        if (targetItemType.isAtomicItemType()
+                && !argumentIterator.getStaticType().getItemType().isAtomicItemType()) {
+            argumentIterator =
+                    new DataFunctionIterator(
+                            Collections.singletonList(argumentIterator), runtimeStaticContext);
         }
         if (targetItemType.isAtomicItemType()) {
-            argumentIterator = new FunctionUntypedAtomicCastIterator(
-                    argumentIterator,
-                    targetItemType,
-                    exceptionMessage,
-                    runtimeStaticContext
-            );
+            argumentIterator =
+                    new FunctionUntypedAtomicCastIterator(
+                            argumentIterator,
+                            targetItemType,
+                            exceptionMessage,
+                            runtimeStaticContext);
         }
         return argumentIterator;
     }

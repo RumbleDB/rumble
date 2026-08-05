@@ -5,7 +5,8 @@ public class DescendentSequentialProperties {
     private final boolean hasNonExitSequentialStatement;
     private final boolean hasExitStatement;
 
-    public DescendentSequentialProperties(boolean hasNonExitSequentialStatement, boolean hasInterruptStatement) {
+    public DescendentSequentialProperties(
+            boolean hasNonExitSequentialStatement, boolean hasInterruptStatement) {
         this.hasInterruptStatement = hasInterruptStatement;
         this.hasNonExitSequentialStatement = hasNonExitSequentialStatement;
         this.hasExitStatement = false;
@@ -14,8 +15,7 @@ public class DescendentSequentialProperties {
     public DescendentSequentialProperties(
             boolean hasNonExitSequentialStatement,
             boolean hasInterruptStatement,
-            boolean hasExitStatement
-    ) {
+            boolean hasExitStatement) {
         this.hasInterruptStatement = hasInterruptStatement;
         this.hasNonExitSequentialStatement = hasNonExitSequentialStatement;
         this.hasExitStatement = hasExitStatement;

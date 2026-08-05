@@ -18,9 +18,7 @@
 
 package org.rumbledb.config.model;
 
-/**
- * Application execution mode selected by the launcher.
- */
+/** Application execution mode selected by the launcher. */
 public enum RumbleMode {
     RUN,
     REPL

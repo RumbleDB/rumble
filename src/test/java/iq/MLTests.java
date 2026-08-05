@@ -26,16 +26,17 @@ import org.rumbledb.config.RumbleConfiguration;
 
 public class MLTests extends RuntimeTests {
 
-    public static final File sparkRuntimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/RumbleML"
-    );
+    public static final File sparkRuntimeTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/RumbleML");
 
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(runtime -> runtime.resultsSizeCap(200).materializationCap(200).useNativeExecution(false))
-            .build();
+                .configureRuntime(
+                        runtime ->
+                                runtime.resultsSizeCap(200)
+                                        .materializationCap(200)
+                                        .useNativeExecution(false))
+                .build();
     }
 
     @Override

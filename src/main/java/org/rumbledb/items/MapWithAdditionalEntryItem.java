@@ -32,24 +32,22 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     static final int MAX_OVERLAY_CHAIN_LENGTH = 32;
 
-    /**
-     * This is an optimization version of maps when there is exactly one key-value pair.
-     */
+    /** This is an optimization version of maps when there is exactly one key-value pair. */
     private final Item original;
+
     private final Item additionalKey;
     private final List<Item> additionalValue;
     private final int size;
     private final int chainLength;
 
-    public MapWithAdditionalEntryItem(Item original, Item additionalKey, List<Item> additionalValue) {
+    public MapWithAdditionalEntryItem(
+            Item original, Item additionalKey, List<Item> additionalValue) {
         this.original = original;
         this.additionalKey = additionalKey;
         this.additionalValue = additionalValue;
@@ -75,12 +73,10 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
         }
         return new MapItem(
                 this.getItemKeys().stream().map(item -> item.copy(mutable)).toList(),
-                this.getSequenceValues()
-                    .stream()
-                    .map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList())
-                    .toList(),
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                this.getSequenceValues().stream()
+                        .map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList())
+                        .toList(),
+                ExceptionMetadata.EMPTY_METADATA);
     }
 
     // region maps
@@ -92,7 +88,9 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Override
     public boolean isObject() {
-        return this.original.isObject() && this.additionalKey.isString() && this.additionalValue.size() == 1;
+        return this.original.isObject()
+                && this.additionalKey.isString()
+                && this.additionalValue.size() == 1;
     }
 
     @Override
@@ -212,43 +210,46 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Override
     public void putItemByKey(String key, Item value) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void putItemByKey(Item key, Item value) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void putSequenceByKey(String key, List<Item> valueSequence) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void putSequenceByKey(Item key, List<Item> valueSequence) {
-        throw new OurBadException("Cannot put an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot put an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void removeItemByKey(String key) {
-        throw new OurBadException("Cannot remove an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot remove an item by key in a MapEntryItem, which is not mutable.");
     }
 
     @Override
     public void removeItemByKey(Item key) {
-        throw new OurBadException("Cannot remove an item by key in a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot remove an item by key in a MapEntryItem, which is not mutable.");
     }
 
     // endregion maps
-
-
 
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.mapItem;
     }
-
 
     @Override
     public boolean getEffectiveBooleanValue() {
@@ -274,7 +275,8 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Override
     public void setTopLevelID(long topLevelID) {
-        throw new OurBadException("Cannot change top level ID of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change top level ID of a MapEntryItem, which is not mutable.");
     }
 
     @Override
@@ -284,7 +286,8 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Override
     public void setTopLevelOrder(double topLevelOrder) {
-        throw new OurBadException("Cannot change top level order of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change top level order of a MapEntryItem, which is not mutable.");
     }
 
     @Override
@@ -304,7 +307,8 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Override
     public void setTableLocation(String location) {
-        throw new OurBadException("Cannot change table location of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change table location of a MapEntryItem, which is not mutable.");
     }
 
     @Override
@@ -330,9 +334,7 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -347,7 +349,7 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Override
     public void setCollection(Collection collection) {
-        throw new OurBadException("Cannot change collection of a MapEntryItem, which is not mutable.");
+        throw new OurBadException(
+                "Cannot change collection of a MapEntryItem, which is not mutable.");
     }
-
 }

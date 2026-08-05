@@ -20,7 +20,15 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.*;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
+import com.google.gson.stream.JsonReader;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,29 +40,18 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import com.google.gson.stream.JsonReader;
-
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.*;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     final RuntimeIterator iterator;
     BufferedReader reader;
     Item path;
     Item nextItem;
 
     public JsonLinesFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
         this.reader = null;
@@ -65,7 +62,9 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri =
+                FileSystemUtil.resolveFileSystemURI(
+                        this.staticContext.getStaticURI(), url, getMetadata());
 
         int partitions = -1;
         if (this.getChildren().size() > 1) {
@@ -74,10 +73,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
         JavaRDD<String> strings;
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                getMetadata()
-            );
+            InputStream is = FileSystemUtil.getDataInputStream(uri, getMetadata());
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             List<String> lines = new ArrayList<>();
             String line = null;
@@ -89,53 +85,44 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                 throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
             }
             if (partitions == -1) {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelize(lines);
+                strings =
+                        SparkSessionManager.getInstance().getJavaSparkContext().parallelize(lines);
             } else {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelize(
-                        lines,
-                        partitions
-                    );
+                strings =
+                        SparkSessionManager.getInstance()
+                                .getJavaSparkContext()
+                                .parallelize(lines, partitions);
             }
         } else {
             if (!FileSystemUtil.exists(uri, getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException(
+                        "File " + uri + " not found.", getMetadata());
             }
 
             String path = FileSystemUtil.convertURIToStringForSpark(uri);
 
             if (partitions == -1) {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .textFile(path);
+                strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(path);
             } else {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .textFile(
-                        path,
-                        partitions
-                    );
+                strings =
+                        SparkSessionManager.getInstance()
+                                .getJavaSparkContext()
+                                .textFile(path, partitions);
             }
         }
         return strings.mapPartitions(
-            new JSONSyntaxToItemMapper(getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting())
-        );
+                new JSONSyntaxToItemMapper(
+                        getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting()));
     }
 
     protected void init() {
         try {
-            URI uri = FileSystemUtil.resolveFileSystemURI(
-                this.staticContext.getStaticURI(),
-                this.path.getStringValue(),
-                getMetadata()
-            );
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                getMetadata()
-            );
+            URI uri =
+                    FileSystemUtil.resolveFileSystemURI(
+                            this.staticContext.getStaticURI(),
+                            this.path.getStringValue(),
+                            getMetadata());
+            InputStream is = FileSystemUtil.getDataInputStream(uri, getMetadata());
             this.reader = new BufferedReader(new InputStreamReader(is));
             fetchNext();
         } catch (IteratorFlowException e) {
@@ -145,7 +132,9 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.path =
+                this.iterator.materializeFirstItemOrNull(
+                        this.currentDynamicContextForLocalExecution);
         init();
     }
 
@@ -178,13 +167,13 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = (line != null);
             if (this.hasNext) {
                 JsonReader object = new JsonReader(new StringReader(line));
-                this.nextItem = ItemParser.getItemFromObject(
-                    object,
-                    true,
-                    JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
-                    getMetadata(),
-                    this.getRuntimeStaticContext().isQuerySideEffecting()
-                );
+                this.nextItem =
+                        ItemParser.getItemFromObject(
+                                object,
+                                true,
+                                JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
+                                getMetadata(),
+                                this.getRuntimeStaticContext().isQuerySideEffecting());
             }
         } catch (IOException e) {
             handleException(e);
@@ -192,13 +181,13 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     }
 
     public void handleException(IOException e) {
-        RumbleException rumbleException = new CannotRetrieveResourceException(
-                "I/O error while accessing file: "
-                    + this.path.getStringValue()
-                    + " Cause: "
-                    + e.getMessage(),
-                getMetadata()
-        );
+        RumbleException rumbleException =
+                new CannotRetrieveResourceException(
+                        "I/O error while accessing file: "
+                                + this.path.getStringValue()
+                                + " Cause: "
+                                + e.getMessage(),
+                        getMetadata());
         rumbleException.initCause(e);
         throw rumbleException;
     }

@@ -20,8 +20,13 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -33,23 +38,15 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private Item nextResult;
     private List<String> removalKeys;
 
     public ObjectRemoveKeysFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
@@ -61,17 +58,18 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     private void startLocal() {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
-        List<Item> removalKeys = this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> removalKeys =
+                this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         this.removalKeys = new ArrayList<>();
         for (Item removalKeyItem : removalKeys) {
             if (!removalKeyItem.isString()) {
-                throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
+                throw new UnexpectedTypeException(
+                        "Remove-keys function has non-string key args.", getMetadata());
             }
             String removalKey = removalKeyItem.getStringValue();
             this.removalKeys.add(removalKey);
@@ -88,9 +86,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " REMOVE-KEYS function",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " REMOVE-KEYS function", getMetadata());
     }
 
     public void setNextResult() {
@@ -123,7 +119,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, getMetadata(), true);
+                .createObjectItem(finalKeylist, finalValueList, getMetadata(), true);
     }
 
     @Override
@@ -143,22 +139,20 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         this.removalKeys = new ArrayList<>();
         for (Item removalKeyItem : removalKeys) {
             if (!removalKeyItem.isString()) {
-                throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
+                throw new UnexpectedTypeException(
+                        "Remove-keys function has non-string key args.", getMetadata());
             }
             String removalKey = removalKeyItem.getStringValue();
             this.removalKeys.add(removalKey);
         }
-        FlatMapFunction<Item, Item> transformation = new ObjectRemoveKeysClosure(
-                this.removalKeys,
-                getMetadata()
-        );
+        FlatMapFunction<Item, Item> transformation =
+                new ObjectRemoveKeysClosure(this.removalKeys, getMetadata());
         return childRDD.flatMap(transformation);
     }
 
@@ -169,18 +163,19 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         String[] columnsToDrop = new String[columnsToDropItems.size()];
         int i = 0;
         for (Item columnItem : columnsToDropItems) {
             if (!columnItem.isString()) {
-                throw new UnexpectedTypeException("drop-columns invoked with non-string columns", getMetadata());
+                throw new UnexpectedTypeException(
+                        "drop-columns invoked with non-string columns", getMetadata());
             }
             columnsToDrop[i] = columnItem.getStringValue();
             ++i;
         }
-        return new HomogeneousItemDataFrame(dataFrame.getDataFrame().drop(columnsToDrop), dataFrame.getItemType());
+        return new HomogeneousItemDataFrame(
+                dataFrame.getDataFrame().drop(columnsToDrop), dataFrame.getItemType());
     }
 }

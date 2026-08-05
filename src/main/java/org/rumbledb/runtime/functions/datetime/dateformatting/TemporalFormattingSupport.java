@@ -10,8 +10,7 @@ import org.rumbledb.runtime.functions.util.formatting.TimezoneNames;
 
 final class TemporalFormattingSupport {
 
-    private TemporalFormattingSupport() {
-    }
+    private TemporalFormattingSupport() {}
 
     static String applyNameCase(String value, VariableMarker parsed, Locale locale) {
         if (parsed.nameForm == null) {
@@ -74,8 +73,7 @@ final class TemporalFormattingSupport {
             OffsetDateTime value,
             ParsedTimezonePicture tz,
             boolean hasExplicitTimezone,
-            FormattingContext formattingContext
-    ) {
+            FormattingContext formattingContext) {
         if (!hasExplicitTimezone) {
             return tz.military ? "J" : "";
         }
@@ -91,26 +89,21 @@ final class TemporalFormattingSupport {
         return formatNumericTimezone(value.getOffset(), tz);
     }
 
-
     private static String formatNamedTimezone(
-            OffsetDateTime value,
-            ParsedTimezonePicture tz,
-            FormattingContext formattingContext
-    ) {
+            OffsetDateTime value, ParsedTimezonePicture tz, FormattingContext formattingContext) {
         // TODO Figure out where we could configure the name size
         String result = TimezoneNames.name(value, formattingContext, false);
 
         if (result != null) {
-            return applyTimezoneNamePresentation(result, tz.namePresentation, formattingContext.locale);
+            return applyTimezoneNamePresentation(
+                    result, tz.namePresentation, formattingContext.locale);
         }
 
-        return formatNumericTimezone(
-            value.getOffset(),
-            ParsedTimezonePicture.defaultNumeric()
-        );
+        return formatNumericTimezone(value.getOffset(), ParsedTimezonePicture.defaultNumeric());
     }
 
-    private static String applyTimezoneNamePresentation(String value, String presentation, Locale locale) {
+    private static String applyTimezoneNamePresentation(
+            String value, String presentation, Locale locale) {
         if ("n".equals(presentation)) {
             return value.toLowerCase(locale);
         }
@@ -122,10 +115,7 @@ final class TemporalFormattingSupport {
         return value;
     }
 
-    private static String formatNumericTimezone(
-            ZoneOffset offset,
-            ParsedTimezonePicture tz
-    ) {
+    private static String formatNumericTimezone(ZoneOffset offset, ParsedTimezonePicture tz) {
         int totalMinutes = offset.getTotalSeconds() / 60;
 
         if (tz.zuluForZeroOffset && totalMinutes == 0 && !tz.gmtPrefix) {

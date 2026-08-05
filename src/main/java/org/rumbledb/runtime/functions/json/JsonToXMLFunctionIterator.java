@@ -1,5 +1,13 @@
 package org.rumbledb.runtime.functions.json;
 
+import java.io.IOException;
+import java.io.Serial;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gson.Strictness;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -19,17 +27,8 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.IOException;
-import java.io.Serial;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private static final Name MAP_NAME = new Name(Name.FN_NS, "", "map");
     private static final Name ARRAY_NAME = new Name(Name.FN_NS, "", "array");
@@ -44,9 +43,7 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     private static final String DUPLICATES_RETAIN = "retain";
 
     public JsonToXMLFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -65,8 +62,7 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             if (optionsItem == null || !optionsItem.isMap()) {
                 throw new UnexpectedTypeException(
                         "The options argument of fn:json-to-xml must be a map item [err:XPTY0004].",
-                        getMetadata()
-                );
+                        getMetadata());
             }
             liberal = readBooleanOption(optionsItem, "liberal", false);
             escape = readBooleanOption(optionsItem, "escape", false);
@@ -76,9 +72,7 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
         if (escape) {
             throw new UnsupportedFeatureException(
-                    "fn:json-to-xml: option 'escape' is not supported yet.",
-                    getMetadata()
-            );
+                    "fn:json-to-xml: option 'escape' is not supported yet.", getMetadata());
         }
 
         JsonReader reader = new JsonReader(new StringReader(jsonText.getStringValue()));
@@ -102,7 +96,8 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
 
         Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(List.of(root));
-        boolean removeParentPointers = context.getRumbleConfiguration().optimization().optimizeParentPointers();
+        boolean removeParentPointers =
+                context.getRumbleConfiguration().optimization().optimizeParentPointers();
         if (!removeParentPointers) {
             documentItem.addParentToDescendants();
         }
@@ -113,7 +108,9 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     private Item parseValue(JsonReader reader, String key, String duplicates) throws IOException {
         List<Item> attributes = new ArrayList<>();
         if (key != null) {
-            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(KEY_NAME, sanitizeForXml(key)));
+            attributes.add(
+                    ItemFactory.getInstance()
+                            .createXmlAttributeNode(KEY_NAME, sanitizeForXml(key)));
         }
 
         JsonToken token = reader.peek();
@@ -121,51 +118,53 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             case NULL:
                 reader.nextNull();
                 return declareNamespace(
-                    ItemFactory.getInstance().createXmlElementNode(NULL_NAME, List.of(), attributes)
-                );
+                        ItemFactory.getInstance()
+                                .createXmlElementNode(NULL_NAME, List.of(), attributes));
             case BOOLEAN:
-                return textElement(BOOLEAN_NAME, reader.nextBoolean() ? "true" : "false", attributes);
+                return textElement(
+                        BOOLEAN_NAME, reader.nextBoolean() ? "true" : "false", attributes);
             case NUMBER:
                 // nextString() on a NUMBER token returns the raw lexical text, preserving the exact
                 // JSON representation as required by the spec.
                 return textElement(NUMBER_NAME, reader.nextString(), attributes);
             case STRING:
                 return textElement(STRING_NAME, sanitizeForXml(reader.nextString()), attributes);
-            case BEGIN_ARRAY: {
-                reader.beginArray();
-                List<Item> children = new ArrayList<>();
-                while (reader.hasNext()) {
-                    children.add(parseValue(reader, null, duplicates));
-                }
-                reader.endArray();
-                return declareNamespace(
-                    ItemFactory.getInstance().createXmlElementNode(ARRAY_NAME, children, attributes)
-                );
-            }
-            case BEGIN_OBJECT: {
-                reader.beginObject();
-                List<Item> children = new ArrayList<>();
-                Set<String> seenKeys = new HashSet<>();
-                while (reader.hasNext()) {
-                    String childKey = reader.nextName();
-                    boolean isDuplicate = !seenKeys.add(childKey);
-                    if (isDuplicate && DUPLICATES_REJECT.equals(duplicates)) {
-                        throw new DuplicateJSONKeyException(
-                                "fn:json-to-xml: duplicate key '" + childKey + "'",
-                                getMetadata()
-                        );
+            case BEGIN_ARRAY:
+                {
+                    reader.beginArray();
+                    List<Item> children = new ArrayList<>();
+                    while (reader.hasNext()) {
+                        children.add(parseValue(reader, null, duplicates));
                     }
-                    if (isDuplicate && DUPLICATES_USE_FIRST.equals(duplicates)) {
-                        reader.skipValue();
-                        continue;
-                    }
-                    children.add(parseValue(reader, childKey, duplicates));
+                    reader.endArray();
+                    return declareNamespace(
+                            ItemFactory.getInstance()
+                                    .createXmlElementNode(ARRAY_NAME, children, attributes));
                 }
-                reader.endObject();
-                return declareNamespace(
-                    ItemFactory.getInstance().createXmlElementNode(MAP_NAME, children, attributes)
-                );
-            }
+            case BEGIN_OBJECT:
+                {
+                    reader.beginObject();
+                    List<Item> children = new ArrayList<>();
+                    Set<String> seenKeys = new HashSet<>();
+                    while (reader.hasNext()) {
+                        String childKey = reader.nextName();
+                        boolean isDuplicate = !seenKeys.add(childKey);
+                        if (isDuplicate && DUPLICATES_REJECT.equals(duplicates)) {
+                            throw new DuplicateJSONKeyException(
+                                    "fn:json-to-xml: duplicate key '" + childKey + "'",
+                                    getMetadata());
+                        }
+                        if (isDuplicate && DUPLICATES_USE_FIRST.equals(duplicates)) {
+                            reader.skipValue();
+                            continue;
+                        }
+                        children.add(parseValue(reader, childKey, duplicates));
+                    }
+                    reader.endObject();
+                    return declareNamespace(
+                            ItemFactory.getInstance()
+                                    .createXmlElementNode(MAP_NAME, children, attributes));
+                }
             default:
                 throw invalidJson("Unexpected JSON token: " + token);
         }
@@ -173,11 +172,13 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private Item textElement(Name name, String text, List<Item> attributes) {
         List<Item> children = List.of(ItemFactory.getInstance().createXmlTextNode(text));
-        return declareNamespace(ItemFactory.getInstance().createXmlElementNode(name, children, attributes));
+        return declareNamespace(
+                ItemFactory.getInstance().createXmlElementNode(name, children, attributes));
     }
 
     private static Item declareNamespace(Item element) {
-        element.addOrReplaceNamespace(ItemFactory.getInstance().createXmlNamespaceNode("", Name.FN_NS));
+        element.addOrReplaceNamespace(
+                ItemFactory.getInstance().createXmlNamespaceNode("", Name.FN_NS));
         return element;
     }
 
@@ -188,9 +189,10 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
         if (sequence.size() != 1 || !sequence.get(0).isBoolean()) {
             throw new UnexpectedTypeException(
-                    "The '" + key + "' option of fn:json-to-xml must be a single xs:boolean [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "The '"
+                            + key
+                            + "' option of fn:json-to-xml must be a single xs:boolean [err:XPTY0004].",
+                    getMetadata());
         }
         return sequence.get(0).getBooleanValue();
     }
@@ -203,19 +205,15 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (sequence.size() != 1 || !sequence.get(0).isString()) {
             throw new UnexpectedTypeException(
                     "The 'duplicates' option of fn:json-to-xml must be a single xs:string [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         String value = sequence.get(0).getStringValue();
-        if (
-            !DUPLICATES_REJECT.equals(value)
+        if (!DUPLICATES_REJECT.equals(value)
                 && !DUPLICATES_USE_FIRST.equals(value)
-                && !DUPLICATES_RETAIN.equals(value)
-        ) {
+                && !DUPLICATES_RETAIN.equals(value)) {
             throw new InvalidOptionException(
                     "fn:json-to-xml: invalid value for option 'duplicates': '" + value + "'",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return value;
     }
@@ -228,14 +226,11 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (sequence.size() != 1 || !sequence.get(0).isBoolean()) {
             throw new UnexpectedTypeException(
                     "The 'validate' option of fn:json-to-xml must be a single xs:boolean [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (sequence.get(0).getBooleanValue()) {
             throw new UnsupportedFeatureException(
-                    "fn:json-to-xml: option 'validate' is not supported yet.",
-                    getMetadata()
-            );
+                    "fn:json-to-xml: option 'validate' is not supported yet.", getMetadata());
         }
     }
 
@@ -247,21 +242,18 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (sequence.size() != 1 || sequence.get(0) == null || !sequence.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "Invalid value for option 'fallback': expected exactly one function item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         List<Name> parameterNames = sequence.get(0).getParameterNames();
         if (parameterNames == null || parameterNames.size() != 1) {
             throw new UnexpectedTypeException(
                     "Invalid value for option 'fallback': expected a function of arity 1 [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (escape) {
             throw new InvalidOptionException(
                     "fn:json-to-xml: option 'fallback' cannot be supplied when option 'escape' is true.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
     }
 
@@ -286,10 +278,10 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private static boolean isValidXmlCodePoint(int c) {
         return c == 0x9
-            || c == 0xA
-            || c == 0xD
-            || (c >= 0x20 && c <= 0xD7FF)
-            || (c >= 0xE000 && c <= 0xFFFD)
-            || (c >= 0x10000 && c <= 0x10FFFF);
+                || c == 0xA
+                || c == 0xD
+                || (c >= 0x20 && c <= 0xD7FF)
+                || (c >= 0xE000 && c <= 0xFFFD)
+                || (c >= 0x10000 && c <= 0x10FFFF);
     }
 }

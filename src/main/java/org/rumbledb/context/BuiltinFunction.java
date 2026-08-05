@@ -1,8 +1,8 @@
 package org.rumbledb.context;
 
 import lombok.EqualsAndHashCode;
-
 import lombok.Getter;
+
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 
@@ -11,8 +11,9 @@ import org.rumbledb.types.FunctionSignature;
 public class BuiltinFunction {
 
     /**
-     * Special enum type to specify diverse range of execution modes for built-in functions
-     * These are only used to generate the corresponding (standard) execution modes while generating iterators
+     * Special enum type to specify diverse range of execution modes for built-in functions These
+     * are only used to generate the corresponding (standard) execution modes while generating
+     * iterators
      */
     public enum BuiltinFunctionExecutionMode {
         UNSET,
@@ -32,12 +33,10 @@ public class BuiltinFunction {
             FunctionIdentifier identifier,
             FunctionSignature signature,
             Class<? extends RuntimeIterator> functionIteratorClass,
-            BuiltinFunctionExecutionMode builtInFunctionExecutionMode
-    ) {
+            BuiltinFunctionExecutionMode builtInFunctionExecutionMode) {
         this.identifier = identifier;
         this.signature = signature;
         this.functionIteratorClass = functionIteratorClass;
         this.builtinFunctionExecutionMode = builtInFunctionExecutionMode;
     }
-
 }

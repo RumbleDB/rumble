@@ -18,8 +18,8 @@
 
 package org.rumbledb.cli.arguments;
 
-import java.util.function.IntConsumer;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 final class OptionConversion {
     @FunctionalInterface

@@ -31,9 +31,7 @@ import lombok.Getter;
 public class FunctionIdentifier implements Serializable {
     private int arity;
     private Name name;
-    @Serial
-    private static final long serialVersionUID = 1L;
-
+    @Serial private static final long serialVersionUID = 1L;
 
     public FunctionIdentifier(Name functionName, int arity) {
         this.name = functionName;

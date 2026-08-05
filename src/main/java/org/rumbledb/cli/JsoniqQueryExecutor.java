@@ -20,6 +20,13 @@
 
 package org.rumbledb.cli;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -31,14 +38,6 @@ import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.serialization.Serializer;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-
 public class JsoniqQueryExecutor {
     private final RumbleConfiguration configuration;
     private final ExternalBindings externalBindings;
@@ -47,7 +46,8 @@ public class JsoniqQueryExecutor {
         this(configuration, ExternalBindings.empty());
     }
 
-    public JsoniqQueryExecutor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
+    public JsoniqQueryExecutor(
+            RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this.configuration = configuration;
         this.externalBindings = externalBindings.snapshot();
     }
@@ -56,8 +56,9 @@ public class JsoniqQueryExecutor {
         if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
             if (!this.configuration.output().allowOverwrite()) {
                 throw new CliException(
-                        "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
-                );
+                        "Output path "
+                                + outputUri
+                                + " already exists. Please use --overwrite yes to overwrite.");
             } else {
                 FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
             }
@@ -68,28 +69,25 @@ public class JsoniqQueryExecutor {
         String queryFile = this.configuration.input().queryPath();
         URI queryUri = null;
         if (queryFile != null) {
-            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                queryFile,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            queryUri =
+                    FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                            queryFile, ExceptionMetadata.EMPTY_METADATA);
         }
         String outputPath = this.configuration.output().outputPath();
         URI outputUri = null;
         if (outputPath != null) {
-            outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                outputPath,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            outputUri =
+                    FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                            outputPath, ExceptionMetadata.EMPTY_METADATA);
             checkOutputFile(outputUri);
         }
 
         String logPath = this.configuration.output().logPath();
         URI logUri = null;
         if (logPath != null) {
-            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                logPath,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            logUri =
+                    FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                            logPath, ExceptionMetadata.EMPTY_METADATA);
             if (FileSystemUtil.exists(logUri, ExceptionMetadata.EMPTY_METADATA)) {
                 FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
             }
@@ -103,8 +101,7 @@ public class JsoniqQueryExecutor {
         if (this.configuration.input().query() != null) {
             if (this.configuration.input().queryPath() != null) {
                 throw new CliException(
-                        "It is not possible to specify both a --query and a --query-path. It is either or."
-                );
+                        "It is not possible to specify both a --query and a --query-path. It is either or.");
             }
             sequence = rumble.runQuery(this.configuration.input().query(), this.externalBindings);
         } else {
@@ -116,22 +113,23 @@ public class JsoniqQueryExecutor {
         } else {
             // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
-            long materializationCount = sequence.populateList(
-                outputList,
-                this.configuration.runtime().resultsSizeCap()
-            );
+            long materializationCount =
+                    sequence.populateList(
+                            outputList, this.configuration.runtime().resultsSizeCap());
 
-            Serializer serializer = sequence.write().mode(org.apache.spark.sql.SaveMode.ErrorIfExists).getSerializer();
+            Serializer serializer =
+                    sequence.write()
+                            .mode(org.apache.spark.sql.SaveMode.ErrorIfExists)
+                            .getSerializer();
 
-            List<String> lines = outputList.stream()
-                .map(serializer::serialize)
-                .collect(Collectors.toList());
+            List<String> lines =
+                    outputList.stream().map(serializer::serialize).collect(Collectors.toList());
             ConsoleOutput.out(String.join("\n", lines));
             if (materializationCount != -1) {
-                issueMaterializationWarning(materializationCount, this.configuration.runtime().resultsSizeCap());
+                issueMaterializationWarning(
+                        materializationCount, this.configuration.runtime().resultsSizeCap());
                 ConsoleOutput.warn(
-                    "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
-                );
+                        "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system.");
             }
         }
 
@@ -145,10 +143,7 @@ public class JsoniqQueryExecutor {
             String time = "[ExecTime] " + totalTime;
             time += "\n[ProfilerCount] " + Profiler.get();
             FileSystemUtil.append(
-                logUri,
-                Collections.singletonList(time),
-                ExceptionMetadata.EMPTY_METADATA
-            );
+                    logUri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
         }
         return outputList;
     }
@@ -156,19 +151,17 @@ public class JsoniqQueryExecutor {
     public static void issueMaterializationWarning(long materializationCount, long resultSizeCap) {
         if (materializationCount == Long.MAX_VALUE) {
             ConsoleOutput.warn(
-                "Warning! The output sequence contains "
-                    + "too many items and its materialization was capped at "
-                    + resultSizeCap
-                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
-            );
+                    "Warning! The output sequence contains "
+                            + "too many items and its materialization was capped at "
+                            + resultSizeCap
+                            + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup");
         } else {
             ConsoleOutput.warn(
-                "Warning! The output sequence contains "
-                    + materializationCount
-                    + " items but its materialization was capped at "
-                    + resultSizeCap
-                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
-            );
+                    "Warning! The output sequence contains "
+                            + materializationCount
+                            + " items but its materialization was capped at "
+                            + resultSizeCap
+                            + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup");
         }
     }
 
@@ -181,5 +174,4 @@ public class JsoniqQueryExecutor {
         }
         return sequence.populateList(resultList, this.configuration.runtime().resultsSizeCap());
     }
-
 }

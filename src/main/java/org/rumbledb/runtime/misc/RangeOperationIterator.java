@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.stream.LongStream;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -41,14 +42,11 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-
 import org.rumbledb.types.SequenceType;
 
 public class RangeOperationIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
     private long left;
@@ -59,8 +57,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     public RangeOperationIterator(
             RuntimeIterator leftIterator,
             RuntimeIterator rightiterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightiterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightiterator;
@@ -84,7 +81,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     /**
      * Initializes the boundaries of the range.
-     * 
+     *
      * @param context the dynamic context.
      * @return true if the two bounds are defined, false if one of them is the empty sequence.
      */
@@ -92,20 +89,22 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         Item left;
         Item right;
         try {
-            left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            left =
+                    this.leftIterator.materializeAtMostOneItemOrNull(
+                            this.currentDynamicContextForLocalExecution);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received more than one item",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         try {
-            right = this.rightIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            right =
+                    this.rightIterator.materializeAtMostOneItemOrNull(
+                            this.currentDynamicContextForLocalExecution);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received more than one item",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (left == null || right == null) {
             return false;
@@ -116,18 +115,13 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         if (right.isUntypedAtomic()) {
             right = ItemFactory.getInstance().createIntegerItem(right.castToIntegerValue());
         }
-        if (
-            !(left.isInteger())
-                || !(right.isInteger())
-        ) {
+        if (!(left.isInteger()) || !(right.isInteger())) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received "
-                        +
-                        left.getDynamicType()
-                        + " and "
-                        + right.getDynamicType(),
-                    getMetadata()
-            );
+                            + left.getDynamicType()
+                            + " and "
+                            + right.getDynamicType(),
+                    getMetadata());
         }
         try {
             this.left = left.castToIntegerValue().longValue();
@@ -168,62 +162,63 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         if (!init(this.currentDynamicContextForLocalExecution)) {
             return new HomogeneousItemDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
-                    BuiltinTypesCatalogue.item
-            );
+                    BuiltinTypesCatalogue.item);
         }
         return createLongInterval(this.left, this.right, this.getRuntimeStaticContext());
     }
 
     /**
      * Creates a dataframe with a sequence of increasing numbers, of type long.
-     * 
+     *
      * @param left the left bound(inclusive).
      * @param right the right bound (inclusive).
      * @return
      */
     public static HomogeneousItemDataFrame createLongInterval(
-            long left,
-            long right,
-            RuntimeStaticContext staticContext
-    ) {
+            long left, long right, RuntimeStaticContext staticContext) {
         List<Long> list = new ArrayList<>();
         for (long i = left; i <= right; i += PARTITION_SIZE) {
             list.add(i);
         }
-        JavaRDD<Long> rdd = SparkSessionManager.getInstance()
-            .getJavaSparkContext()
-            .parallelize(list, list.size());
-        rdd = rdd.flatMap(
-            i -> LongStream.range(i, Math.min(right + 1, i + PARTITION_SIZE)).iterator()
-        );
+        JavaRDD<Long> rdd =
+                SparkSessionManager.getInstance()
+                        .getJavaSparkContext()
+                        .parallelize(list, list.size());
+        rdd =
+                rdd.flatMap(
+                        i ->
+                                LongStream.range(i, Math.min(right + 1, i + PARTITION_SIZE))
+                                        .iterator());
         return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem, staticContext);
     }
 
     @Override
-    protected void closeLocal() {
-    }
+    protected void closeLocal() {}
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftContext = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext leftContext =
+                this.leftIterator.generateNativeQuery(nativeClauseContext);
         if (leftContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightContext = this.rightIterator.generateNativeQuery(
-            new NativeClauseContext(leftContext, null, null)
-        );
+        NativeClauseContext rightContext =
+                this.rightIterator.generateNativeQuery(
+                        new NativeClauseContext(leftContext, null, null));
         if (rightContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         return new NativeClauseContext(
                 rightContext,
-                String.format("sequence(%s, %s)", leftContext.getResultingQuery(), rightContext.getResultingQuery()),
+                String.format(
+                        "sequence(%s, %s)",
+                        leftContext.getResultingQuery(), rightContext.getResultingQuery()),
                 new SequenceType(
-                        leftContext.getResultingType()
-                            .getItemType()
-                            .findLeastCommonSuperTypeWith(rightContext.getResultingType().getItemType()),
-                        SequenceType.Arity.ZeroOrMore
-                )
-        );
+                        leftContext
+                                .getResultingType()
+                                .getItemType()
+                                .findLeastCommonSuperTypeWith(
+                                        rightContext.getResultingType().getItemType()),
+                        SequenceType.Arity.ZeroOrMore));
     }
 }

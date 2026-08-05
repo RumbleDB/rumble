@@ -20,16 +20,15 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-
 public class BooleanItem extends AbstractAtomicItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private boolean value;
 
     public BooleanItem(boolean value) {
@@ -95,5 +94,4 @@ public class BooleanItem extends AbstractAtomicItem {
         // TODO: Make enum?
         return "BOOLEAN";
     }
-
 }

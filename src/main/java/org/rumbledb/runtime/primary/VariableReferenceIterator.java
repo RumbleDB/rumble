@@ -20,9 +20,16 @@
 
 package org.rumbledb.runtime.primary;
 
-import lombok.Getter;
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.types.*;
+
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -38,25 +45,14 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 public class VariableReferenceIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-    @Getter
-    private final Name variableName;
+    @Serial private static final long serialVersionUID = 1L;
+    @Getter private final Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
 
-    public VariableReferenceIterator(
-            Name variableName,
-            RuntimeStaticContext staticContext
-    ) {
+    public VariableReferenceIterator(Name variableName, RuntimeStaticContext staticContext) {
         super(null, staticContext);
         this.variableName = variableName;
     }
@@ -73,7 +69,8 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        return context.getVariableValues().getDataFrameVariableValue(this.variableName, getMetadata());
+        return context.getVariableValues()
+                .getDataFrameVariableValue(this.variableName, getMetadata());
     }
 
     @Override
@@ -90,9 +87,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         }
         // check if name is in the schema
         if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, name)) {
-            List<Item> items = nativeClauseContext.getContext()
-                .getVariableValues()
-                .getLocalVariableValue(this.variableName, getMetadata());
+            List<Item> items =
+                    nativeClauseContext
+                            .getContext()
+                            .getVariableValues()
+                            .getLocalVariableValue(this.variableName, getMetadata());
             if (items.size() != 1) {
                 // only possible to turn into native, sequence of length 1
                 return NativeClauseContext.NoNativeQuery;
@@ -121,11 +120,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             }
             variableType = variableType.getArrayContentFacet();
         }
-        NativeClauseContext newContext = new NativeClauseContext(
-                nativeClauseContext,
-                "`" + escapedName + "`",
-                new SequenceType(variableType, arity)
-        );
+        NativeClauseContext newContext =
+                new NativeClauseContext(
+                        nativeClauseContext,
+                        "`" + escapedName + "`",
+                        new SequenceType(variableType, arity));
         newContext.setSchema(fieldType);
         return newContext;
     }
@@ -134,9 +133,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     public Item nextLocal() {
         if (!this.hasNext) {
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.variableName,
-                    getMetadata()
-            );
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.variableName, getMetadata());
         }
         Item item = this.items.get(this.currentIndex);
         this.currentIndex++;
@@ -151,10 +148,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         this.currentIndex = 0;
         DynamicContext context = this.currentDynamicContextForLocalExecution;
         VariableValues values = context.getVariableValues();
-        this.items = values.getLocalVariableValue(
-            this.variableName,
-            getMetadata()
-        );
+        this.items = values.getLocalVariableValue(this.variableName, getMetadata());
         this.hasNext = this.items.size() != 0;
     }
 
@@ -162,7 +156,6 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         // do nothing
     }
-
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

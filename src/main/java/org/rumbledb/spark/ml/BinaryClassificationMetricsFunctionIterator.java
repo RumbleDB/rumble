@@ -8,6 +8,9 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics;
+
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -19,17 +22,12 @@ import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
-import scala.Tuple2;
-
 public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public BinaryClassificationMetricsFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -42,12 +40,12 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         if (this.getChildren().size() > 3) {
             numBins = this.getChild(3).materializeFirstItemOrNull(context).getIntValue();
         }
-        JavaPairRDD<Object, Object> predictionAndLabels = scoresAndLabels.mapToPair(
-            p -> new Tuple2<>(
-                    p.getItemByKey(scoreCol).castToDoubleValue(),
-                    p.getItemByKey(labelCol).castToDoubleValue()
-            )
-        );
+        JavaPairRDD<Object, Object> predictionAndLabels =
+                scoresAndLabels.mapToPair(
+                        p ->
+                                new Tuple2<>(
+                                        p.getItemByKey(scoreCol).castToDoubleValue(),
+                                        p.getItemByKey(labelCol).castToDoubleValue()));
         BinaryClassificationMetrics bcm = null;
         if (numBins == -1) {
             bcm = new BinaryClassificationMetrics(predictionAndLabels.rdd());
@@ -55,69 +53,55 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
             bcm = new BinaryClassificationMetrics(predictionAndLabels.rdd(), numBins);
         }
         Item objectItem = ItemFactory.getInstance().createLazyObjectItem();
-        objectItem.putItemByKey("areaUnderPR", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderPR()));
-        objectItem.putItemByKey("areaUnderROC", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderROC()));
+        objectItem.putItemByKey(
+                "areaUnderPR", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderPR()));
+        objectItem.putItemByKey(
+                "areaUnderROC", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderROC()));
         JavaRDD<Item> rdd = tupleToArrays(bcm.pr().toJavaRDD(), "recall", "precision");
 
-        RuntimeStaticContext staticContext = this.staticContext
-            .toBuilder()
-            .staticType(SequenceType.createSequenceType("object*"))
-            .executionMode(ExecutionMode.RDD)
-            .metadata(getMetadata())
-            .build();
+        RuntimeStaticContext staticContext =
+                this.staticContext.toBuilder()
+                        .staticType(SequenceType.createSequenceType("object*"))
+                        .executionMode(ExecutionMode.RDD)
+                        .metadata(getMetadata())
+                        .build();
 
-        RuntimeIterator it = new ConstantRDDRuntimeIterator(
-                rdd,
-                staticContext
-        );
+        RuntimeIterator it = new ConstantRDDRuntimeIterator(rdd, staticContext);
         objectItem.putLazyItemByKey("pr", it, context, true);
         rdd = tupleToArrays(bcm.fMeasureByThreshold().toJavaRDD(), "threshold", "F-Measure");
-        it = new ConstantRDDRuntimeIterator(
-                rdd,
-                staticContext
-        );
+        it = new ConstantRDDRuntimeIterator(rdd, staticContext);
         objectItem.putLazyItemByKey("fMeasureByThreshold", it, context, true);
         rdd = tupleToArrays(bcm.precisionByThreshold().toJavaRDD(), "threshold", "precision");
-        it = new ConstantRDDRuntimeIterator(
-                rdd,
-                staticContext
-        );
+        it = new ConstantRDDRuntimeIterator(rdd, staticContext);
         objectItem.putLazyItemByKey("precisionByThreshold", it, context, true);
         rdd = tupleToArrays(bcm.recallByThreshold().toJavaRDD(), "threshold", "recall");
-        it = new ConstantRDDRuntimeIterator(
-                rdd,
-                staticContext
-        );
+        it = new ConstantRDDRuntimeIterator(rdd, staticContext);
         objectItem.putLazyItemByKey("recallByThreshold", it, context, true);
         rdd = tupleToArrays(bcm.roc().toJavaRDD(), "false positive rate", "true positive rate");
-        it = new ConstantRDDRuntimeIterator(
-                rdd,
-                staticContext
-        );
+        it = new ConstantRDDRuntimeIterator(rdd, staticContext);
         objectItem.putLazyItemByKey("roc", it, context, true);
 
         return objectItem;
     }
 
-    private JavaRDD<Item> tupleToArrays(JavaRDD<Tuple2<Object, Object>> pr1, String key1, String key2) {
+    private JavaRDD<Item> tupleToArrays(
+            JavaRDD<Tuple2<Object, Object>> pr1, String key1, String key2) {
         return pr1.map(
-            new Function<Tuple2<Object, Object>, Item>() {
-                @Serial
-                private static final long serialVersionUID = 1L;
+                new Function<Tuple2<Object, Object>, Item>() {
+                    @Serial private static final long serialVersionUID = 1L;
 
-                @Override
-                public Item call(Tuple2<Object, Object> a) {
-                    List<String> keys = new ArrayList<>();
-                    keys.add(key1);
-                    keys.add(key2);
-                    List<Item> values = new ArrayList<>();
-                    values.add(ItemFactory.getInstance().createDoubleItem((double) a._1()));
-                    values.add(ItemFactory.getInstance().createDoubleItem((double) a._2()));
-                    return ItemFactory.getInstance()
-                        .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA, true);
-                }
-            }
-        );
+                    @Override
+                    public Item call(Tuple2<Object, Object> a) {
+                        List<String> keys = new ArrayList<>();
+                        keys.add(key1);
+                        keys.add(key2);
+                        List<Item> values = new ArrayList<>();
+                        values.add(ItemFactory.getInstance().createDoubleItem((double) a._1()));
+                        values.add(ItemFactory.getInstance().createDoubleItem((double) a._2()));
+                        return ItemFactory.getInstance()
+                                .createObjectItem(
+                                        keys, values, ExceptionMetadata.EMPTY_METADATA, true);
+                    }
+                });
     }
-
 }

@@ -20,9 +20,9 @@
 
 package org.rumbledb.expressions.flowr;
 
-
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -38,7 +38,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 /**
  * This is a clause, which is a component of a FLWOR expression.
  *
- * Clauses, unlike expressions, return tuple streams.
+ * <p>Clauses, unlike expressions, return tuple streams.
  */
 @Getter
 public abstract class Clause extends Node {
@@ -47,8 +47,7 @@ public abstract class Clause extends Node {
     protected Clause previousClause;
     protected Clause nextClause;
     protected final FLWOR_CLAUSES clauseType;
-    @Setter
-    protected StaticContext staticContext;
+    @Setter protected StaticContext staticContext;
 
     public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
         super(metadata);
@@ -87,30 +86,26 @@ public abstract class Clause extends Node {
 
     public ReturnClause detachInitialLetClauses() {
         if (this.nextClause != null) {
-            throw new OurBadException("Detaching a let clause can only be done from the last clause");
+            throw new OurBadException(
+                    "Detaching a let clause can only be done from the last clause");
         }
         if (!this.getClauseType().equals(FLWOR_CLAUSES.RETURN)) {
-            throw new OurBadException("Detaching a let clause can only be done from a return clause");
+            throw new OurBadException(
+                    "Detaching a let clause can only be done from a return clause");
         }
         ReturnClause returnClause = (ReturnClause) this;
         Clause lastLetClause = this.getFirstClause();
         if (!lastLetClause.getClauseType().equals(FLWOR_CLAUSES.LET)) {
             return returnClause;
         }
-        if (
-            !(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
-                ||
-                lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
-        ) {
+        if (!(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+                || lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))) {
             return returnClause;
         }
         Clause newFirstClause = lastLetClause.nextClause;
-        while (
-            newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+        while (newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
                 && (newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
-                    ||
-                    newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
-        ) {
+                        || newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))) {
             lastLetClause = lastLetClause.nextClause;
             newFirstClause = lastLetClause.nextClause;
         }
@@ -118,8 +113,7 @@ public abstract class Clause extends Node {
             if (c.getClauseType().equals(FLWOR_CLAUSES.GROUP_BY)) {
                 // No optimization possible if there is a group by.
                 System.err.println(
-                    "[WARNING] It seems you are using a group by clause in a FLWOR expression that starts with a let clause. This is rather unusual and it might lead to surprises. We recommend always inserting a 'return' after a series of initial let clauses."
-                );
+                        "[WARNING] It seems you are using a group by clause in a FLWOR expression that starts with a let clause. This is rather unusual and it might lead to surprises. We recommend always inserting a 'return' after a series of initial let clauses.");
                 System.err.println("For example:");
                 System.err.println();
                 System.err.println("let $x := 1");
@@ -136,14 +130,8 @@ public abstract class Clause extends Node {
         newFirstClause.previousClause = null;
         lastLetClause.nextClause = null;
 
-        Expression returnExpr = new FlworExpression(
-                returnClause,
-                this.getMetadata()
-        );
-        returnClause = new ReturnClause(
-                returnExpr,
-                this.getMetadata()
-        );
+        Expression returnExpr = new FlworExpression(returnClause, this.getMetadata());
+        returnClause = new ReturnClause(returnExpr, this.getMetadata());
         lastLetClause.chainWith(returnClause);
 
         return returnClause;
@@ -151,10 +139,12 @@ public abstract class Clause extends Node {
 
     public ReturnStatementClause detachInitialLetClausesForStatements() {
         if (this.nextClause != null) {
-            throw new OurBadException("Detaching a let clause can only be done from the last clause");
+            throw new OurBadException(
+                    "Detaching a let clause can only be done from the last clause");
         }
         if (!this.getClauseType().equals(FLWOR_CLAUSES.RETURN)) {
-            throw new OurBadException("Detaching a let clause can only be done from a return clause");
+            throw new OurBadException(
+                    "Detaching a let clause can only be done from a return clause");
         }
         ReturnStatementClause returnClause = (ReturnStatementClause) this;
         // TODO: Refactor into method once tests are up.
@@ -162,20 +152,14 @@ public abstract class Clause extends Node {
         if (!lastLetClause.getClauseType().equals(FLWOR_CLAUSES.LET)) {
             return returnClause;
         }
-        if (
-            !(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
-                ||
-                lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
-        ) {
+        if (!(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+                || lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))) {
             return returnClause;
         }
         Clause newFirstClause = lastLetClause.nextClause;
-        while (
-            newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+        while (newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
                 && (newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
-                    ||
-                    newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
-        ) {
+                        || newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))) {
             lastLetClause = lastLetClause.nextClause;
             newFirstClause = lastLetClause.nextClause;
         }
@@ -183,8 +167,7 @@ public abstract class Clause extends Node {
             if (c.getClauseType().equals(FLWOR_CLAUSES.GROUP_BY)) {
                 // No optimization possible if there is a group by.
                 System.err.println(
-                    "[WARNING] It seems you are using a group by clause in a FLWOR expression that starts with a let clause. This is rather unusual and it might lead to surprises. We recommend always inserting a 'return' after a series of initial let clauses."
-                );
+                        "[WARNING] It seems you are using a group by clause in a FLWOR expression that starts with a let clause. This is rather unusual and it might lead to surprises. We recommend always inserting a 'return' after a series of initial let clauses.");
                 System.err.println("For example:");
                 System.err.println();
                 System.err.println("let $x := 1");
@@ -201,19 +184,12 @@ public abstract class Clause extends Node {
         newFirstClause.previousClause = null;
         lastLetClause.nextClause = null;
 
-        Statement returnStatement = new FlowrStatement(
-                returnClause,
-                this.getMetadata()
-        );
-        returnClause = new ReturnStatementClause(
-                returnStatement,
-                this.getMetadata()
-        );
+        Statement returnStatement = new FlowrStatement(returnClause, this.getMetadata());
+        returnClause = new ReturnStatementClause(returnStatement, this.getMetadata());
         lastLetClause.chainWith(returnClause);
 
         return returnClause;
     }
-
 
     @Override
     public void print(StringBuilder buffer, int indent) {
@@ -229,14 +205,12 @@ public abstract class Clause extends Node {
     }
 
     public RuntimeStaticContext getStaticContextForRuntime(
-            RumbleConfiguration conf,
-            VisitorConfig visitorConfig
-    ) {
+            RumbleConfiguration conf, VisitorConfig visitorConfig) {
         return RuntimeStaticContext.fromStaticContext(this.staticContext)
-            .configuration(conf)
-            .staticType(null)
-            .executionMode(getHighestExecutionMode(visitorConfig))
-            .metadata(getMetadata())
-            .build();
+                .configuration(conf)
+                .staticType(null)
+                .executionMode(getHighestExecutionMode(visitorConfig))
+                .metadata(getMetadata())
+                .build();
     }
 }

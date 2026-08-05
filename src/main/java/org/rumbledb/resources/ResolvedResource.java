@@ -7,12 +7,12 @@
 
 package org.rumbledb.resources;
 
-import lombok.Getter;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
+
+import lombok.Getter;
 
 @Getter
 public final class ResolvedResource implements AutoCloseable {

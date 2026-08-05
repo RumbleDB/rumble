@@ -26,32 +26,31 @@ import java.util.function.Predicate;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
 /**
- * This is the top-level class for nodes in the intermediate representation of a
- * JSONiq query. Nodes include expressions, clauses, function declarations, etc.
+ * This is the top-level class for nodes in the intermediate representation of a JSONiq query. Nodes
+ * include expressions, clauses, function declarations, etc.
  */
 @Getter
 public abstract class Node {
 
     /**
-     * Access the metadata of the node, i.e., the line and column number.
-     * This is used for displaying informative error messages.
+     * Access the metadata of the node, i.e., the line and column number. This is used for
+     * displaying informative error messages.
      */
     private ExceptionMetadata metadata;
 
     /**
-     * Gets the highest execution mode of this node, which determines
-     * whether evaluation will be done locally, with RDDs or with DataFrames.
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
+     * Gets the highest execution mode of this node, which determines whether evaluation will be
+     * done locally, with RDDs or with DataFrames. This method is used during the static analysis.
+     * It is meant to be overridden by subclasses that support higher execution modes. By default,
+     * the highest execution mode is assumed to be local.
      */
-    @Setter
-    protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
+    @Setter protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
 
     protected boolean isInSequentialBlock;
 
@@ -60,26 +59,25 @@ public abstract class Node {
     }
 
     /**
-     * Gets the highest execution mode of this node, which determines
-     * whether evaluation will be done locally, with RDDs or with DataFrames.
+     * Gets the highest execution mode of this node, which determines whether evaluation will be
+     * done locally, with RDDs or with DataFrames.
      *
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
+     * <p>This method is used during the static analysis. It is meant to be overridden by subclasses
+     * that support higher execution modes. By default, the highest execution mode is assumed to be
+     * local.
      *
-     * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
+     * <p>When extending this method, make sure to perform a super() call to prevent UNSET accesses.
      *
-     * if Node.suppressUnsetExecutionModeAccessedErrors is false, then an error is thrown if an UNSET mode is found.
-     * if Node.suppressUnsetExecutionModeAccessedErrors is true, it might silently return UNSET.
-     * 
+     * <p>if Node.suppressUnsetExecutionModeAccessedErrors is false, then an error is thrown if an
+     * UNSET mode is found. if Node.suppressUnsetExecutionModeAccessedErrors is true, it might
+     * silently return UNSET.
+     *
      * @param visitorConfig the configuration of the visitor.
      * @return the highest execution mode.
      */
     public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (
-            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.highestExecutionMode == ExecutionMode.UNSET
-        ) {
+        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
         return this.highestExecutionMode;
@@ -107,15 +105,16 @@ public abstract class Node {
     public abstract <T> T accept(AbstractNodeVisitor<T> visitor, T argument);
 
     /**
-     * Returns all children nodes as a list. The list is new and can be modified at will by the caller.
+     * Returns all children nodes as a list. The list is new and can be modified at will by the
+     * caller.
      *
      * @return the children nodes as a list.
      */
     public abstract List<Node> getChildren();
 
     /**
-     * For gathering descendant nodes, as a depth-first search. The list is new and can be modified at will by the
-     * caller.
+     * For gathering descendant nodes, as a depth-first search. The list is new and can be modified
+     * at will by the caller.
      *
      * @return the descendant nodes as a list.
      */
@@ -129,7 +128,8 @@ public abstract class Node {
     }
 
     /**
-     * For gathering descendant nodes that match a predicate. The list is new and can be modified at will by the caller.
+     * For gathering descendant nodes that match a predicate. The list is new and can be modified at
+     * will by the caller.
      *
      * @param predicate a predicate to filter with.
      * @return the descendant nodes as a list.
@@ -181,7 +181,7 @@ public abstract class Node {
 
     /**
      * Tells whether the expression is context dependent.
-     * 
+     *
      * @return true if it is context dependent, false otherwise.
      */
     public boolean isContextDependent() {

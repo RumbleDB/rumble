@@ -1,27 +1,27 @@
 package org.rumbledb.types;
 
-import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+
+import lombok.Getter;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing processing-instruction() and processing-instruction(N) item types.
  *
- * Wildcard processing-instruction() is represented with no target-name restriction.
+ * <p>Wildcard processing-instruction() is represented with no target-name restriction.
  * processing-instruction(N) is represented with a normalized target-name restriction.
  */
 public class PINodeItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
-    @Getter
-    private String normalizedTarget;
+    @Getter private String normalizedTarget;
 
     public PINodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("processing-instruction");
@@ -53,7 +53,8 @@ public class PINodeItemType extends AbstractItemType {
     @Override
     public Name getName() {
         if (this.catalogueName == null) {
-            throw new UnsupportedOperationException("Named processing-instruction item type has no builtin QName");
+            throw new UnsupportedOperationException(
+                    "Named processing-instruction item type has no builtin QName");
         }
         return this.catalogueName;
     }
@@ -72,11 +73,9 @@ public class PINodeItemType extends AbstractItemType {
                 }
             }
         }
-        if (
-            this.equals(superType)
+        if (this.equals(superType)
                 || superType.equals(BuiltinTypesCatalogue.item)
-                || superType.equals(BuiltinTypesCatalogue.nodeItem)
-        ) {
+                || superType.equals(BuiltinTypesCatalogue.nodeItem)) {
             return true;
         }
         if (!(superType instanceof PINodeItemType other)) {
@@ -85,7 +84,8 @@ public class PINodeItemType extends AbstractItemType {
         if (other.isWildcardPI()) {
             return true;
         }
-        return this.normalizedTarget != null && this.normalizedTarget.equals(other.normalizedTarget);
+        return this.normalizedTarget != null
+                && this.normalizedTarget.equals(other.normalizedTarget);
     }
 
     @Override
@@ -123,7 +123,8 @@ public class PINodeItemType extends AbstractItemType {
 
     @Override
     public Set<ConstrainingFacetTypes> getAllowedFacets() {
-        throw new UnsupportedOperationException("processing-instruction item type does not support facets");
+        throw new UnsupportedOperationException(
+                "processing-instruction item type does not support facets");
     }
 
     @Override

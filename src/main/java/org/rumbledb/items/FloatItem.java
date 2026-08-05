@@ -20,23 +20,22 @@
 
 package org.rumbledb.items;
 
-
-import org.apache.commons.lang3.StringUtils;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
-
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import org.apache.commons.lang3.StringUtils;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 public class FloatItem extends AbstractAtomicItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private float value;
 
     public FloatItem(float value) {
@@ -81,7 +80,9 @@ public class FloatItem extends AbstractAtomicItem {
             return "0";
         }
         double abs = Math.abs(this.value);
-        // Convert to decimal between 10E-7 to 10E6 we clean the output (remove .0 or trailing zero at the end of the
+        // Convert to decimal between 10E-7 to 10E6 we clean the output (remove .0 or trailing zero
+        // at
+        // the end of the
         // string)
         if (abs >= 0.00000001 && abs < 1000000) {
             String c = new BigDecimal(Float.toString(this.value)).toString();
@@ -93,13 +94,15 @@ public class FloatItem extends AbstractAtomicItem {
             }
             return c;
         }
-        // Java float uses mantissa only from 10E7, we force it from 10E6 to match standards by multiplying by an order
+        // Java float uses mantissa only from 10E7, we force it from 10E6 to match standards by
+        // multiplying by an order
         // of magnitude
         // and manually decreasing the exponent with a string builder
         if (abs >= 1000000 && abs < 100000000) {
             String str = Float.toString(this.value * 10);
             char reducedChar = (char) ((int) str.charAt(str.length() - 1) - 1);
-            StringBuilder sb = new StringBuilder(str.substring(0, str.length() - 1)).append(reducedChar);
+            StringBuilder sb =
+                    new StringBuilder(str.substring(0, str.length() - 1)).append(reducedChar);
             return sb.toString();
         }
         return Float.toString(this.value);
@@ -169,8 +172,7 @@ public class FloatItem extends AbstractAtomicItem {
         return new NativeClauseContext(
                 context,
                 "CAST (" + this.value + "D AS FLOAT)",
-                SequenceType.createSequenceType("float")
-        );
+                SequenceType.createSequenceType("float"));
     }
 
     @Override

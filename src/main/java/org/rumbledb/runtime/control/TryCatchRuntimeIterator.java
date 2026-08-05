@@ -20,11 +20,6 @@
 
 package org.rumbledb.runtime.control;
 
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,14 +30,15 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.control.CatchPattern;
-
+import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
 
 public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator tryExpression;
     private final Map<CatchPattern, RuntimeIterator> catchExpressions;
     private List<Item> results = null;
@@ -52,12 +48,11 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
     public TryCatchRuntimeIterator(
             RuntimeIterator tryExpression,
             Map<CatchPattern, RuntimeIterator> catchExpressions,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.concat(Stream.of(tryExpression), catchExpressions.values().stream()).toList(),
-            staticContext
-        );
+                Stream.concat(Stream.of(tryExpression), catchExpressions.values().stream())
+                        .toList(),
+                staticContext);
         this.tryExpression = tryExpression;
         this.catchExpressions = catchExpressions;
     }
@@ -76,9 +71,7 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
             return nextItem;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in try-catch statement",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in try-catch statement", getMetadata());
     }
 
     @Override
@@ -103,7 +96,8 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
                 this.results.clear();
                 RuntimeIterator catchingExpression = findMatchingCatch(exception);
                 if (catchingExpression != null) {
-                    DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
+                    DynamicContext context =
+                            new DynamicContext(this.currentDynamicContextForLocalExecution);
                     ErrorVariables.injectDynamicContext(context, exception);
                     catchingExpression.open(context);
                     while (catchingExpression.hasNext()) {

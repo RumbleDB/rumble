@@ -6,13 +6,10 @@ import java.util.Set;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
-/**
- * Class representing the generic 'item' item type
- */
+/** Class representing the generic 'item' item type */
 public class ItemItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     static final ItemType item = new ItemItemType();
     private final Name name;
@@ -29,8 +26,6 @@ public class ItemItemType extends AbstractItemType {
     public boolean isTopmostItemType() {
         return true;
     }
-
-
 
     @Override
     public boolean hasName() {

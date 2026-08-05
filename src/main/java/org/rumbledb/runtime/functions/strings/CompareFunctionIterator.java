@@ -20,6 +20,10 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,42 +32,33 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.CollationSupport;
 
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.List;
-
 public class CompareFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public CompareFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        String collation = this.getChildren().size() == 3
-            ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
-            : getRuntimeStaticContext().getDefaultCollation();
-        Item firstStringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
-        Item secondStringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        String collation =
+                this.getChildren().size() == 3
+                        ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
+                        : getRuntimeStaticContext().getDefaultCollation();
+        Item firstStringItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item secondStringItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (firstStringItem == null || secondStringItem == null) {
             return null;
         }
-        int result = Integer.signum(
-            CollationSupport.compareStrings(
-                firstStringItem.getStringValue(),
-                secondStringItem.getStringValue(),
-                collation,
-                getMetadata()
-            )
-        );
+        int result =
+                Integer.signum(
+                        CollationSupport.compareStrings(
+                                firstStringItem.getStringValue(),
+                                secondStringItem.getStringValue(),
+                                collation,
+                                getMetadata()));
         return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(result));
     }
 }

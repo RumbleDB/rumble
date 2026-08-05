@@ -20,27 +20,30 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Expression representing a computed namespace constructor.
  *
- * @see <a href="https://www.w3.org/TR/xquery-31/#id-computed-namespaces">XQuery 3.1, 3.9.3.7: Computed Namespace
- *      Constructors</a>
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-computed-namespaces">XQuery 3.1, 3.9.3.7:
+ *     Computed Namespace Constructors</a>
  */
 @Getter
 public class ComputedNamespaceConstructorExpression extends Expression {
     /** The static prefix (if specified) */
     private final String prefix;
+
     /** The dynamic prefix expression (if specified) */
     private final Expression prefixExpression;
+
     /** The URI expression */
     private final Expression uriExpression;
 
@@ -52,10 +55,7 @@ public class ComputedNamespaceConstructorExpression extends Expression {
      * @param metadata The exception metadata
      */
     public ComputedNamespaceConstructorExpression(
-            String prefix,
-            Expression uriExpression,
-            ExceptionMetadata metadata
-    ) {
+            String prefix, Expression uriExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.prefix = prefix;
         this.prefixExpression = null;
@@ -70,10 +70,7 @@ public class ComputedNamespaceConstructorExpression extends Expression {
      * @param metadata The exception metadata
      */
     public ComputedNamespaceConstructorExpression(
-            Expression prefixExpression,
-            Expression uriExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression prefixExpression, Expression uriExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.prefix = null;
         this.prefixExpression = prefixExpression;

@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,44 +31,36 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.CollationSupport;
 
-import java.io.Serial;
-import java.util.List;
-
 public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public StartsWithFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        String collation = this.getChildren().size() == 3
-            ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
-            : getRuntimeStaticContext().getDefaultCollation();
+        String collation =
+                this.getChildren().size() == 3
+                        ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
+                        : getRuntimeStaticContext().getDefaultCollation();
 
-        Item substringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        Item substringItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (stringItem == null || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-        boolean result = CollationSupport.startsWith(
-            stringItem.getStringValue(),
-            substringItem.getStringValue(),
-            collation,
-            getMetadata()
-        );
+        boolean result =
+                CollationSupport.startsWith(
+                        stringItem.getStringValue(),
+                        substringItem.getStringValue(),
+                        collation,
+                        getMetadata());
         return ItemFactory.getInstance().createBooleanItem(result);
     }
-
 }

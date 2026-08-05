@@ -1,16 +1,15 @@
 package org.rumbledb.config;
 
-import com.ibm.icu.util.ULocale;
-
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.ibm.icu.util.ULocale;
+
 public final class FormattingLanguageSupport {
-    private FormattingLanguageSupport() {
-    }
+    private FormattingLanguageSupport() {}
 
     public static final String DEFAULT_FORMATTING_LANGUAGE = "en";
 
@@ -56,7 +55,8 @@ public final class FormattingLanguageSupport {
             return false;
         }
 
-        String requestedLanguage = ULocale.forLanguageTag(language.trim()).getLanguage().toLowerCase(Locale.ROOT);
+        String requestedLanguage =
+                ULocale.forLanguageTag(language.trim()).getLanguage().toLowerCase(Locale.ROOT);
         return AVAILABLE_LANGUAGES.contains(requestedLanguage);
     }
 }

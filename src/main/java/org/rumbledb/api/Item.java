@@ -1,10 +1,16 @@
 package org.rumbledb.api;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
-
-import java.time.*;
 
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -13,32 +19,22 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-
 /**
- * An instance of this class is an item in the JSONiq data model.
- * JSONiq manipulates sequences of items.
- * All calls should be made via this interface. Objects of type Item should never be cast to a subclass (in a subsequent
- * version,
- * we will make the classes implementing this interface visible only at the package level).
- * An item can be structured or atomic or a function.
- * Structured items include objects and arrays. Objects are mappings from strings (keys) to items. Arrays are ordered
- * lists of items.
- * Atomic items have a lexical value and a type. Rumble does not support all atomic types yet.
+ * An instance of this class is an item in the JSONiq data model. JSONiq manipulates sequences of
+ * items. All calls should be made via this interface. Objects of type Item should never be cast to
+ * a subclass (in a subsequent version, we will make the classes implementing this interface visible
+ * only at the package level). An item can be structured or atomic or a function. Structured items
+ * include objects and arrays. Objects are mappings from strings (keys) to items. Arrays are ordered
+ * lists of items. Atomic items have a lexical value and a type. Rumble does not support all atomic
+ * types yet.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
@@ -46,7 +42,7 @@ public interface Item extends Serializable {
 
     /**
      * Makes a copy.
-     * 
+     *
      * @param mutable whether the copy should be mutable (if supported by the item).
      * @return a copy
      */
@@ -61,9 +57,7 @@ public interface Item extends Serializable {
         return false;
     }
 
-    /**
-     * Whether this item is a function item representing a builtin function.
-     */
+    /** Whether this item is a function item representing a builtin function. */
     default boolean isBuiltinFunction() {
         return false;
     }
@@ -204,13 +198,14 @@ public interface Item extends Serializable {
     }
 
     /**
-     * Return only month of the item, if it's DateTime or Duration
-     * It will not convert years into months
-     * 
+     * Return only month of the item, if it's DateTime or Duration It will not convert years into
+     * months
+     *
      * @return only month
      */
     default int getMonth() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -219,17 +214,19 @@ public interface Item extends Serializable {
      * @return year
      */
     default int getYear() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Return only day of the item, if it's DateTime or Duration
-     * It will not convert months and years into days.
-     * 
+     * Return only day of the item, if it's DateTime or Duration It will not convert months and
+     * years into days.
+     *
      * @return only day
      */
     default int getDay() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -238,7 +235,8 @@ public interface Item extends Serializable {
      * @return offset in minutes
      */
     default int getOffset() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -247,42 +245,42 @@ public interface Item extends Serializable {
      * @return only hour
      */
     default int getHour() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Return only minutes of the item, if it's DateTime, Time or Duration
-     * It will not convert hours into minutes
-     * 
+     * Return only minutes of the item, if it's DateTime, Time or Duration It will not convert hours
+     * into minutes
+     *
      * @return only minute
      */
     default int getMinute() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Return only seconds of the item, if it's DateTime, Time or Duration
-     * It will not convert hours and minutes into seconds
-     * 
+     * Return only seconds of the item, if it's DateTime, Time or Duration It will not convert hours
+     * and minutes into seconds
+     *
      * @return only seconds
      */
     default double getSecond() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Return the only nanoseconds of the item, if it's DateTime, Time or Duration
-     * It will not convert hours, minutes and seconds into nanoseconds
-     * It exists only if the value in seconds will have decimal values, otherwise it will return 0
-     * 
+     * Return the only nanoseconds of the item, if it's DateTime, Time or Duration It will not
+     * convert hours, minutes and seconds into nanoseconds It exists only if the value in seconds
+     * will have decimal values, otherwise it will return 0
+     *
      * @return only nanoseconds
      */
     default int getNanosecond() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -357,7 +355,6 @@ public interface Item extends Serializable {
         return false;
     }
 
-
     /**
      * Tests whether the item is an atomic item of type anyURI.
      *
@@ -379,15 +376,15 @@ public interface Item extends Serializable {
     }
 
     /**
-     * Returns the expanded name of this item when it is an xs:QName.
-     * Value equality follows {@link Name}: same namespace URI and local name; the prefix is not significant for
-     * equality.
+     * Returns the expanded name of this item when it is an xs:QName. Value equality follows {@link
+     * Name}: same namespace URI and local name; the prefix is not significant for equality.
      *
      * @return the expanded name.
      * @throws UnsupportedOperationException if the item is not an xs:QName.
      */
     default Name getQNameValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     // endregion qnames
@@ -502,11 +499,12 @@ public interface Item extends Serializable {
     }
 
     /**
-     * Tests whether the item is an object.
-     * Object items are legacy JSONiq objects, that allow only for
+     * Tests whether the item is an object. Object items are legacy JSONiq objects, that allow only
+     * for
+     *
      * <ul>
-     * <li>string keys</li>
-     * <li>singleton values</li>
+     *   <li>string keys
+     *   <li>singleton values
      * </ul>
      *
      * @return true if it is an object, false otherwise.
@@ -523,7 +521,8 @@ public interface Item extends Serializable {
      * @throws OurBadException if the map contains non-string keys.
      */
     default List<String> getStringKeys() throws UnsupportedOperationException, OurBadException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -533,7 +532,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not a map.
      */
     default List<Item> getItemKeys() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -544,17 +544,20 @@ public interface Item extends Serializable {
      * @throws OurBadException if the map contains non-singleton values.
      */
     default List<Item> getItemValues() throws UnsupportedOperationException, OurBadException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the value sequences of the item, if it is a map.
      *
-     * @return a list containing, for each key in the map, the sequence of items associated with that key.
+     * @return a list containing, for each key in the map, the sequence of items associated with
+     *     that key.
      * @throws UnsupportedOperationException if the item is not a map.
      */
     default List<List<Item>> getSequenceValues() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -566,7 +569,8 @@ public interface Item extends Serializable {
      * @throws OurBadException if the value item associated with the key is not a singleton.
      */
     default Item getItemByKey(String key) throws UnsupportedOperationException, OurBadException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -578,7 +582,8 @@ public interface Item extends Serializable {
      * @throws OurBadException if the value item associated with the key is not a singleton.
      */
     default Item getItemByKey(Item key) throws UnsupportedOperationException, OurBadException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -589,7 +594,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not a map.
      */
     default List<Item> getSequenceByKey(String key) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -600,7 +606,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not a map.
      */
     default List<Item> getSequenceByKey(Item key) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -611,8 +618,10 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not a map.
      * @throws DuplicateObjectKeyException if the key is already present.
      */
-    default void putItemByKey(String key, Item value) throws UnsupportedOperationException, OurBadException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    default void putItemByKey(String key, Item value)
+            throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -621,15 +630,14 @@ public interface Item extends Serializable {
      * @param key an atomic key.
      * @param value a value.
      * @throws UnsupportedOperationException if the item is not a map.
-     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the item does not
-     *         support non-string keys.
+     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the
+     *     item does not support non-string keys.
      * @throws DuplicateObjectKeyException if the key is already present.
      */
     default void putItemByKey(Item key, Item value)
-            throws UnsupportedOperationException,
-                OurBadException,
-                DuplicateObjectKeyException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+            throws UnsupportedOperationException, OurBadException, DuplicateObjectKeyException {
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -638,15 +646,14 @@ public interface Item extends Serializable {
      * @param key an atomic key.
      * @param valueSequence a value sequence.
      * @throws UnsupportedOperationException if the item is not a map.
-     * @throws OurBadException if the value sequence is not a singleton and the item does not support non-singleton
-     *         values.
+     * @throws OurBadException if the value sequence is not a singleton and the item does not
+     *     support non-singleton values.
      * @throws DuplicateObjectKeyException if the key is already present.
      */
     default void putSequenceByKey(String key, List<Item> valueSequence)
-            throws UnsupportedOperationException,
-                OurBadException,
-                DuplicateObjectKeyException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+            throws UnsupportedOperationException, OurBadException, DuplicateObjectKeyException {
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -655,17 +662,16 @@ public interface Item extends Serializable {
      * @param key an atomic key.
      * @param valueSequence a value sequence.
      * @throws UnsupportedOperationException if the item is not a map.
-     * @throws OurBadException if the value sequence is not a singleton and the item does not support non-singleton
-     *         values.
-     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the item does not
-     *         support non-string keys.
+     * @throws OurBadException if the value sequence is not a singleton and the item does not
+     *     support non-singleton values.
+     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the
+     *     item does not support non-string keys.
      * @throws DuplicateObjectKeyException if the key is already present.
      */
     default void putSequenceByKey(Item key, List<Item> valueSequence)
-            throws UnsupportedOperationException,
-                OurBadException,
-                DuplicateObjectKeyException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+            throws UnsupportedOperationException, OurBadException, DuplicateObjectKeyException {
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -675,7 +681,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not a map.
      */
     default void removeItemByKey(String key) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -685,7 +692,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not a map.
      */
     default void removeItemByKey(Item key) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -698,15 +706,11 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not a lazy object.
      */
     default void putLazyItemByKey(
-            String key,
-            RuntimeIterator iterator,
-            DynamicContext context,
-            boolean isArray
-    )
+            String key, RuntimeIterator iterator, DynamicContext context, boolean isArray)
             throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
-
 
     // endregion maps
 
@@ -722,8 +726,8 @@ public interface Item extends Serializable {
     }
 
     /**
-     * Tests whether the item is an array of items.
-     * Arrays of items are arrays whose members are singletons.
+     * Tests whether the item is an array of items. Arrays of items are arrays whose members are
+     * singletons.
      *
      * @return true if it is an array of items, false otherwise.
      */
@@ -738,7 +742,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an array or a map.
      */
     default int getSize() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -748,7 +753,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an array or a map.
      */
     default boolean hasKey(String key) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -758,7 +764,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an array or a map.
      */
     default boolean hasKey(Item key) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -769,7 +776,8 @@ public interface Item extends Serializable {
      * @throws OurBadException if any member of the array is a non-singleton.
      */
     default List<Item> getItemMembers() throws UnsupportedOperationException, OurBadException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -779,7 +787,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an array.
      */
     default List<List<Item>> getSequenceMembers() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -792,10 +801,9 @@ public interface Item extends Serializable {
      * @throws ArrayIndexOutOfBoundsException if the position is out of bounds.
      */
     default Item getItemAt(int position)
-            throws UnsupportedOperationException,
-                OurBadException,
-                ArrayIndexOutOfBoundsException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+            throws UnsupportedOperationException, OurBadException, ArrayIndexOutOfBoundsException {
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -807,9 +815,9 @@ public interface Item extends Serializable {
      * @throws ArrayIndexOutOfBoundsException if the position is out of bounds.
      */
     default List<Item> getSequenceAt(int position)
-            throws UnsupportedOperationException,
-                ArrayIndexOutOfBoundsException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+            throws UnsupportedOperationException, ArrayIndexOutOfBoundsException {
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -819,7 +827,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an array.
      */
     default void appendItem(Item item) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -827,11 +836,13 @@ public interface Item extends Serializable {
      *
      * @param sequence the sequence to append.
      * @throws UnsupportedOperationException if the item is not an array.
-     * @throws OurBadException if the member is a non-singleton sequence and the array does not support non-singleton
-     *         members.
+     * @throws OurBadException if the member is a non-singleton sequence and the array does not
+     *     support non-singleton members.
      */
-    default void appendSequence(List<Item> sequence) throws UnsupportedOperationException, OurBadException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    default void appendSequence(List<Item> sequence)
+            throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -842,7 +853,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an array.
      */
     default void putItemAt(Item item, int index) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -851,11 +863,13 @@ public interface Item extends Serializable {
      * @param sequence the sequence to put.
      * @param index the index to put the sequence at.
      * @throws UnsupportedOperationException if the item is not an array.
-     * @throws OurBadException if the member is a non-singleton sequence and the array does not support non-singleton
-     *         members.
+     * @throws OurBadException if the member is a non-singleton sequence and the array does not
+     *     support non-singleton members.
      */
-    default void putSequenceAt(List<Item> sequence, int index) throws UnsupportedOperationException, OurBadException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    default void putSequenceAt(List<Item> sequence, int index)
+            throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -866,7 +880,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an array.
      */
     default void putItemsAt(List<Item> items, int i) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -875,13 +890,13 @@ public interface Item extends Serializable {
      * @param sequences the sequences to put.
      * @param index the index to put the sequence at.
      * @throws UnsupportedOperationException if the item is not an array.
-     * @throws OurBadException if any member is a non-singleton sequence and the array does not support non-singleton
-     *         members.
+     * @throws OurBadException if any member is a non-singleton sequence and the array does not
+     *     support non-singleton members.
      */
     default void putSequencesAt(List<List<Item>> sequences, int index)
-            throws UnsupportedOperationException,
-                OurBadException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+            throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -891,7 +906,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an array.
      */
     default void removeItemAt(int index) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -901,7 +917,8 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an array.
      */
     default void removeSequenceAt(int index) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     // endregion arrays
@@ -912,7 +929,8 @@ public interface Item extends Serializable {
      * @return the string value.
      */
     default String getStringValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -921,7 +939,8 @@ public interface Item extends Serializable {
      * @return the boolean value.
      */
     default boolean getBooleanValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -930,7 +949,8 @@ public interface Item extends Serializable {
      * @return the double value.
      */
     default double getDoubleValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -939,7 +959,8 @@ public interface Item extends Serializable {
      * @return the float value.
      */
     default float getFloatValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -948,7 +969,8 @@ public interface Item extends Serializable {
      * @return the integer value as an int.
      */
     default int getIntValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -957,7 +979,8 @@ public interface Item extends Serializable {
      * @return the integer value as a BigInteger.
      */
     default BigInteger getIntegerValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -966,7 +989,8 @@ public interface Item extends Serializable {
      * @return the decimal value as a BigDecimal.
      */
     default BigDecimal getDecimalValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -975,7 +999,8 @@ public interface Item extends Serializable {
      * @return the period value as a Period.
      */
     default Period getPeriodValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -984,38 +1009,43 @@ public interface Item extends Serializable {
      * @return the duration value as a Duration.
      */
     default Duration getDurationValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the day-time (seconds) component of a duration item, i.e., the value of the
-     * duration excluding its months component. Unlike getDurationValue(), this is not
-     * anchored to any reference date, since days, hours, minutes and seconds have a fixed
-     * length and can be converted to a Duration unambiguously.
+     * Returns the day-time (seconds) component of a duration item, i.e., the value of the duration
+     * excluding its months component. Unlike getDurationValue(), this is not anchored to any
+     * reference date, since days, hours, minutes and seconds have a fixed length and can be
+     * converted to a Duration unambiguously.
      *
      * @return the day-time component as a Duration.
      */
     default Duration getDayTimeDurationComponent() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the EpochMillis of the item, if it's DateTime or Duration
-     * It will collect all the parts of the item and compress it into the EpochMillis
-     * 
+     * Returns the EpochMillis of the item, if it's DateTime or Duration It will collect all the
+     * parts of the item and compress it into the EpochMillis
+     *
      * @return the EpochMillis
      */
     default long getEpochMillis() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the dateTime value of the item, if it is an atomic item of type dateTimeItem or dateItem or timeItem.
+     * Returns the dateTime value of the item, if it is an atomic item of type dateTimeItem or
+     * dateItem or timeItem.
      *
      * @return the dateTime value as a OffsetDateTime.
      */
     default OffsetDateTime getDateTimeValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1024,97 +1054,109 @@ public interface Item extends Serializable {
      * @return the time value as a OffsetTime.
      */
     default OffsetTime getTimeValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the byte[] value of the item, if it is an atomic item of type hexBinary or Base64Binary.
+     * Returns the byte[] value of the item, if it is an atomic item of type hexBinary or
+     * Base64Binary.
      *
      * @return the binary value as an array of bytes.
      */
     default byte[] getBinaryValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the dynamic type of the item (only for error message purposes).
-     * 
+     *
      * @return the dynamic type as an item type.
      */
     default ItemType getDynamicType() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the identifier (name and arity) of the function, if it is a function item.
-     * 
+     *
      * @return the function identifier.
      */
     default FunctionIdentifier getIdentifier() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the names of the parameters of the function, if it is a function item.
-     * 
+     *
      * @return the function parameter names.
      */
     default List<Name> getParameterNames() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the signature of the function, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default FunctionSignature getSignature() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the body iterator, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default RuntimeIterator getBodyIterator() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the local variable bindings, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default Map<Name, List<Item>> getLocalVariablesInClosure() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the RDD variable bindings, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the DataFrame variable bindings, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the module dynamic context, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default DynamicContext getModuleDynamicContext() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1139,7 +1181,8 @@ public interface Item extends Serializable {
      * @return the effective boolean value.
      */
     default boolean getEffectiveBooleanValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1148,7 +1191,8 @@ public interface Item extends Serializable {
      * @return the double value.
      */
     default double castToDoubleValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1157,7 +1201,8 @@ public interface Item extends Serializable {
      * @return the float value.
      */
     default float castToFloatValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1166,7 +1211,8 @@ public interface Item extends Serializable {
      * @return the BigDecimal value.
      */
     default BigDecimal castToDecimalValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1175,7 +1221,8 @@ public interface Item extends Serializable {
      * @return the BigInteger value.
      */
     default BigInteger castToIntegerValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1184,7 +1231,8 @@ public interface Item extends Serializable {
      * @return the int value.
      */
     default int castToIntValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1193,7 +1241,8 @@ public interface Item extends Serializable {
      * @return true if NaN, false if not NaN.
      */
     default boolean isNaN() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1210,8 +1259,7 @@ public interface Item extends Serializable {
      *
      * @param mutabilityLevel new mutability level.
      */
-    default void setMutabilityLevel(int mutabilityLevel) {
-    }
+    default void setMutabilityLevel(int mutabilityLevel) {}
 
     /**
      * Returns the top level ID of the item.
@@ -1227,8 +1275,7 @@ public interface Item extends Serializable {
      *
      * @param topLevelID new top level ID.
      */
-    default void setTopLevelID(long topLevelID) {
-    }
+    default void setTopLevelID(long topLevelID) {}
 
     /**
      * Returns the path from the top level object of a DeltaFile for the item.
@@ -1244,8 +1291,7 @@ public interface Item extends Serializable {
      *
      * @param pathIn new path from top level.
      */
-    default void setPathIn(String pathIn) {
-    }
+    default void setPathIn(String pathIn) {}
 
     /**
      * Returns the location of the DeltaFile for the item.
@@ -1256,18 +1302,16 @@ public interface Item extends Serializable {
         return null;
     }
 
-
     /**
      * Sets the location of the DeltaFile for the item to a supplied value.
      *
      * @param location new location of the DeltaFile for the item.
      */
-    default void setTableLocation(String location) {
-    }
+    default void setTableLocation(String location) {}
 
     /**
      * Returns the top level order (sequence number) identifier
-     * 
+     *
      * @return double representing rowOrder of the tuple
      */
     default double getTopLevelOrder() {
@@ -1276,11 +1320,10 @@ public interface Item extends Serializable {
 
     /**
      * Sets the top level order parameter (rowOrder)
-     * 
+     *
      * @param topLevelOrder new rowOrder value
      */
-    default void setTopLevelOrder(double topLevelOrder) {
-    }
+    default void setTopLevelOrder(double topLevelOrder) {}
 
     /**
      * Returns the SparkSQL value of the item for use in a query.
@@ -1288,7 +1331,8 @@ public interface Item extends Serializable {
      * @return String representing the SparkSQL value of the item.
      */
     default String getSparkSQLValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1297,7 +1341,8 @@ public interface Item extends Serializable {
      * @return String representing the SparkSQL value of the item.
      */
     default String getSparkSQLValue(ItemType itemType) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1306,17 +1351,19 @@ public interface Item extends Serializable {
      * @return String representing the SparkSQL type of the item.
      */
     default String getSparkSQLType() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the Object containing the converted value of the item for a DataFrame.
-     * For use to build Variant columns.
+     * Returns the Object containing the converted value of the item for a DataFrame. For use to
+     * build Variant columns.
      *
      * @return Object representing the converted value of the item.
      */
     default Object getVariantValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1332,7 +1379,8 @@ public interface Item extends Serializable {
         if (this.getTopLevelID() == -1 || otherItem.getTopLevelID() == -1) {
             return System.identityHashCode(this) == System.identityHashCode(otherItem);
         }
-        return this.getTopLevelID() == otherItem.getTopLevelID() && this.getPathIn().equals(otherItem.getPathIn());
+        return this.getTopLevelID() == otherItem.getTopLevelID()
+                && this.getPathIn().equals(otherItem.getPathIn());
     }
 
     /**
@@ -1370,9 +1418,10 @@ public interface Item extends Serializable {
 
     /**
      * Get sparkSql string for the item
-     * 
+     *
      * @param context input context
-     * @return String representing the item in a sparksql query or null if it is not supported for the item
+     * @return String representing the item in a sparksql query or null if it is not supported for
+     *     the item
      */
     default NativeClauseContext generateNativeQuery(NativeClauseContext context) {
         return NativeClauseContext.NoNativeQuery;
@@ -1383,7 +1432,8 @@ public interface Item extends Serializable {
     }
 
     default Estimator<?> getEstimator() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     default boolean isTransformer() {
@@ -1391,7 +1441,8 @@ public interface Item extends Serializable {
     }
 
     default Transformer getTransformer() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -1400,170 +1451,181 @@ public interface Item extends Serializable {
      * @return the string value.
      */
     default String getTextValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
-    /**
-     * Method sets the parent item for all descendents of the current item.
-     */
+    /** Method sets the parent item for all descendents of the current item. */
     default void addParentToDescendants() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.1 attributes Accessor.
      *
-     * dm:attributes($n as node()) as attribute()*
+     * <p>dm:attributes($n as node()) as attribute()*
      *
-     * "The dm:attributes accessor returns the dynamic, unordered set of attribute nodes that
-     * have the node as their parent. It is defined only on element and document nodes; for
-     * other node kinds it returns the empty sequence."
+     * <p>"The dm:attributes accessor returns the dynamic, unordered set of attribute nodes that
+     * have the node as their parent. It is defined only on element and document nodes; for other
+     * node kinds it returns the empty sequence."
      */
     default List<Item> attributes() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.3 children Accessor.
      *
-     * dm:children($n as node()) as node()*
+     * <p>dm:children($n as node()) as node()*
      *
-     * "The dm:children accessor returns the dynamic, ordered sequence of child nodes of the
-     * node. It is defined on all node kinds except attribute and namespace nodes; for those
-     * node kinds it returns the empty sequence."
+     * <p>"The dm:children accessor returns the dynamic, ordered sequence of child nodes of the
+     * node. It is defined on all node kinds except attribute and namespace nodes; for those node
+     * kinds it returns the empty sequence."
      */
     default List<Item> children() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.7 namespace-nodes Accessor.
      *
-     * dm:namespace-nodes($n as node()) as namespace-node()*
+     * <p>dm:namespace-nodes($n as node()) as namespace-node()*
      *
-     * "The dm:namespace-nodes accessor returns the dynamic, unordered set of Namespace Nodes. It
+     * <p>"The dm:namespace-nodes accessor returns the dynamic, unordered set of Namespace Nodes. It
      * is defined on all seven node kinds."
      *
-     * This default implementation is only a placeholder on the generic Item interface and must
+     * <p>This default implementation is only a placeholder on the generic Item interface and must
      * be overridden by XML node implementations that support namespaces.
      */
     default List<Item> namespaceNodes() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Helper accessor for XML element nodes: returns namespace nodes for the namespace bindings
      * declared directly on the element. This does not include inherited or statically known
-     * namespaces — only the bindings explicitly declared on the element (for example via
-     * xmlns attributes).
+     * namespaces — only the bindings explicitly declared on the element (for example via xmlns
+     * attributes).
      *
-     * Non-element nodes must override this to return the empty sequence.
+     * <p>Non-element nodes must override this to return the empty sequence.
      */
     default List<Item> declaredNamespaceNodes() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.9 node-kind Accessor.
      *
-     * dm:node-kind($n as node()) as xs:string
+     * <p>dm:node-kind($n as node()) as xs:string
      *
-     * "The dm:node-kind accessor returns the kind of the node. The node kind is one of the
-     * strings \"document\", \"element\", \"attribute\", \"text\", \"namespace\", \"processing-instruction\",
-     * or \"comment\"."
+     * <p>"The dm:node-kind accessor returns the kind of the node. The node kind is one of the
+     * strings \"document\", \"element\", \"attribute\", \"text\", \"namespace\",
+     * \"processing-instruction\", or \"comment\"."
      *
-     * This default implementation is only a placeholder on the generic Item interface and must
+     * <p>This default implementation is only a placeholder on the generic Item interface and must
      * be overridden by XML node implementations.
      */
     default String nodeKind() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.2 base-uri Accessor.
      *
-     * dm:base-uri($n as node()) as xs:anyURI?
+     * <p>dm:base-uri($n as node()) as xs:anyURI?
      *
-     * "The dm:base-uri accessor returns the value of the base-uri property of the node, if it
+     * <p>"The dm:base-uri accessor returns the value of the base-uri property of the node, if it
      * has one; otherwise it returns the empty sequence."
      */
     default List<Item> baseUri() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.4 document-uri Accessor.
      *
-     * dm:document-uri($n as document-node()) as xs:anyURI?
+     * <p>dm:document-uri($n as document-node()) as xs:anyURI?
      *
-     * "The dm:document-uri accessor returns the value of the document-uri property of a
-     * document node, if it has one; otherwise it returns the empty sequence."
+     * <p>"The dm:document-uri accessor returns the value of the document-uri property of a document
+     * node, if it has one; otherwise it returns the empty sequence."
      */
     default List<Item> documentUri() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.5 is-id Accessor.
      *
-     * dm:is-id($n as node()) as xs:boolean
+     * <p>dm:is-id($n as node()) as xs:boolean
      *
-     * "The dm:is-id accessor returns true if the node is an attribute node whose type is
-     * xs:ID or is derived by restriction from xs:ID; otherwise it returns false."
+     * <p>"The dm:is-id accessor returns true if the node is an attribute node whose type is xs:ID
+     * or is derived by restriction from xs:ID; otherwise it returns false."
      */
     default boolean isId() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.6 is-idrefs Accessor.
      *
-     * dm:is-idrefs($n as node()) as xs:boolean
+     * <p>dm:is-idrefs($n as node()) as xs:boolean
      *
-     * "The dm:is-idrefs accessor returns true if the node is an attribute node whose type is
-     * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise
-     * it returns false."
+     * <p>"The dm:is-idrefs accessor returns true if the node is an attribute node whose type is
+     * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise it
+     * returns false."
      */
     default boolean isIdrefs() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.8 nilled Accessor.
      *
-     * dm:nilled($n as node()) as xs:boolean?
+     * <p>dm:nilled($n as node()) as xs:boolean?
      *
-     * "The dm:nilled accessor returns true if the element node is nilled, false if the element
+     * <p>"The dm:nilled accessor returns true if the element node is nilled, false if the element
      * node is not nilled, or the empty sequence if the concept of nilled does not apply."
      *
-     * In this API, the optional xs:boolean result is represented as a sequence of zero or one
+     * <p>In this API, the optional xs:boolean result is represented as a sequence of zero or one
      * Items.
      */
     default List<Item> nilled() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.13 type-name Accessor.
      *
-     * dm:type-name($n as node()) as xs:QName?
+     * <p>dm:type-name($n as node()) as xs:QName?
      *
-     * "The dm:type-name accessor returns the name of the dynamic type of the node, or the
-     * empty sequence if the node is untyped."
+     * <p>"The dm:type-name accessor returns the name of the dynamic type of the node, or the empty
+     * sequence if the node is untyped."
      */
     default List<Item> typeName() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.14 typed-value Accessor.
      *
-     * dm:typed-value($n as node()) as xs:anyAtomicType*
+     * <p>dm:typed-value($n as node()) as xs:anyAtomicType*
      *
-     * "The dm:typed-value accessor returns the typed value of the node as a sequence of zero
-     * or more atomic values."
+     * <p>"The dm:typed-value accessor returns the typed value of the node as a sequence of zero or
+     * more atomic values."
      *
-     * In this API, the typed value is exposed as a sequence of Items, which are expected to be
+     * <p>In this API, the typed value is exposed as a sequence of Items, which are expected to be
      * atomic items in the XDM sense.
      */
     default List<Item> typedValue() {
@@ -1573,119 +1635,125 @@ public interface Item extends Serializable {
     /**
      * XDM 3.1 Section 5.15 unparsed-entity-public-id Accessor.
      *
-     * dm:unparsed-entity-public-id($n as document-node(), $name as xs:string)
-     * as xs:string?
+     * <p>dm:unparsed-entity-public-id($n as document-node(), $name as xs:string) as xs:string?
      *
-     * "The dm:unparsed-entity-public-id accessor returns the public identifier of an
-     * unparsed entity with a given name in the document, or the empty sequence if there is
-     * no such entity or if it has no public identifier."
+     * <p>"The dm:unparsed-entity-public-id accessor returns the public identifier of an unparsed
+     * entity with a given name in the document, or the empty sequence if there is no such entity or
+     * if it has no public identifier."
      */
     default List<Item> unparsedEntityPublicId(String name) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.16 unparsed-entity-system-id Accessor.
      *
-     * dm:unparsed-entity-system-id($n as document-node(), $name as xs:string)
-     * as xs:anyURI?
+     * <p>dm:unparsed-entity-system-id($n as document-node(), $name as xs:string) as xs:anyURI?
      *
-     * "The dm:unparsed-entity-system-id accessor returns the system identifier of an
-     * unparsed entity with a given name in the document, or the empty sequence if there is
-     * no such entity or if it has no system identifier."
+     * <p>"The dm:unparsed-entity-system-id accessor returns the system identifier of an unparsed
+     * entity with a given name in the document, or the empty sequence if there is no such entity or
+     * if it has no system identifier."
      */
     default List<Item> unparsedEntitySystemId(String name) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.10 node-name Accessor.
      *
-     * dm:node-name($n as node()) as xs:QName?
+     * <p>dm:node-name($n as node()) as xs:QName?
      *
-     * "The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
+     * <p>"The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
      * sequence if the node does not have a name."
      *
-     * @return the expanded name ({@link Name}) of the node, or {@code null} when the accessor yields the empty sequence
+     * @return the expanded name ({@link Name}) of the node, or {@code null} when the accessor
+     *     yields the empty sequence
      * @throws UnsupportedOperationException if called on an item that is not a node
      */
     default Name nodeName() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.11 parent Accessor.
      *
-     * dm:parent($n as node()) as node()?
+     * <p>dm:parent($n as node()) as node()?
      *
-     * "The dm:parent accessor returns the parent of the node, or the empty sequence if the
-     * node has no parent."
+     * <p>"The dm:parent accessor returns the parent of the node, or the empty sequence if the node
+     * has no parent."
      */
     default Item parent() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * XDM 3.1 Section 5.12 string-value Accessor.
      *
-     * dm:string-value($n as node()) as xs:string
+     * <p>dm:string-value($n as node()) as xs:string
      *
-     * "The dm:string-value accessor returns the string-value of the node as defined for each
+     * <p>"The dm:string-value accessor returns the string-value of the node as defined for each
      * node kind."
      *
-     * In this API, node string values are exposed via getStringValue() and the default
+     * <p>In this API, node string values are exposed via getStringValue() and the default
      * implementation of dm:typed-value delegates to atomizedValue().
      */
     default List<Item> atomizedValue() {
-        if (isAtomic())
-            return Collections.singletonList(this);
+        if (isAtomic()) return Collections.singletonList(this);
         else
-            throw new UnsupportedOperationException("Operation not defined for class " + this.getClass().getName());
+            throw new UnsupportedOperationException(
+                    "Operation not defined for class " + this.getClass().getName());
     }
 
     default void setParent(Item parent) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     default void addOrReplaceNamespace(Item namespaceItem) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     default void setSchemaType(ItemType typeAnnotation) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     default ItemType getSchemaType() {
         return null;
     }
 
-
     /**
-     * Get the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
-     * uniqueness
-     * 
+     * Get the position of the Node inside the XML document (and path incase of multiple docs) for
+     * sorting / uniqueness
+     *
      * @return the XML document position
      */
     default XMLDocumentPosition getXmlDocumentPosition() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Set the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
-     * uniqueness
-     * 
+     * Set the position of the Node inside the XML document (and path incase of multiple docs) for
+     * sorting / uniqueness
+     *
      * @param path the path of the XML document
      * @param current the current position
      * @return the new position
      */
     default int setXmlDocumentPosition(String path, int current) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        throw new UnsupportedOperationException(
+                "Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the collection to which the item belongs, if any.
-     * Only defined for top-level items.
-     * 
+     * Returns the collection to which the item belongs, if any. Only defined for top-level items.
+     *
      * @return the collection.
      */
     default Collection getCollection() {
@@ -1693,11 +1761,9 @@ public interface Item extends Serializable {
     }
 
     /**
-     * Sets the collection to which the item belongs.
-     * Only defined for top-level items.
-     * 
+     * Sets the collection to which the item belongs. Only defined for top-level items.
+     *
      * @param collection the collection.
      */
-    default void setCollection(Collection collection) {
-    }
+    default void setCollection(Collection collection) {}
 }

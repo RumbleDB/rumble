@@ -17,7 +17,12 @@
 
 package org.rumbledb.runtime.functions.maps;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
@@ -32,18 +37,13 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * FO 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*)
- * as item()*.
+ * FO 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*) as
+ * item()*.
  */
 public class MapForEachFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator mapIterator;
     private final RuntimeIterator actionIterator;
@@ -58,9 +58,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
     private MutableValueSequenceIterator mutableValueSequenceIterator;
 
     public MapForEachFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("map:for-each must have exactly two arguments.");
@@ -85,8 +83,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         if (mapArguments.size() != 1 || !mapArguments.get(0).isMap()) {
             throw new UnexpectedTypeException(
                     "The first argument of map:for-each must be a single map item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         this.mapItem = mapArguments.get(0);
 
@@ -94,44 +91,45 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         if (functionArguments.size() != 1 || !functionArguments.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The second argument of map:for-each must be a single function item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         this.actionFunction = functionArguments.get(0);
         if (this.actionFunction.getIdentifier().getArity() != 2) {
             throw new UnexpectedTypeException(
                     "The function passed to map:for-each must accept exactly two arguments [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
-        this.keyArgumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("anyAtomicType"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
-        this.valueArgumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        this.keyArgumentContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("anyAtomicType"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
+        this.valueArgumentContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
         this.mapKeys = this.mapItem.getItemKeys();
         this.keyIndex = 0;
 
         this.mutableKeyArgumentIterator = new MutableKeyArgumentIterator(this.keyArgumentContext);
-        this.mutableValueSequenceIterator = new MutableValueSequenceIterator(this.valueArgumentContext);
+        this.mutableValueSequenceIterator =
+                new MutableValueSequenceIterator(this.valueArgumentContext);
         List<RuntimeIterator> callbackArguments = new ArrayList<>(2);
         callbackArguments.add(this.mutableKeyArgumentIterator);
         callbackArguments.add(this.mutableValueSequenceIterator);
-        this.currentCallbackIterator = NamedFunctions.buildFunctionItemCallIterator(
-            this.actionFunction,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            callbackArguments,
-            false
-        );
+        this.currentCallbackIterator =
+                NamedFunctions.buildFunctionItemCallIterator(
+                        this.actionFunction,
+                        this.staticContext,
+                        ExecutionMode.LOCAL,
+                        callbackArguments,
+                        false);
     }
 
     private void advanceToNextResult(DynamicContext context) {
@@ -200,21 +198,23 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("map:for-each is currently supported only in local execution mode.");
+        throw new OurBadException(
+                "map:for-each is currently supported only in local execution mode.");
     }
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("map:for-each is currently supported only in local execution mode.");
+        throw new OurBadException(
+                "map:for-each is currently supported only in local execution mode.");
     }
 
     /**
-     * Single map key supplied per callback; binding is updated before each {@code open} on the shared function call.
+     * Single map key supplied per callback; binding is updated before each {@code open} on the
+     * shared function call.
      */
     private static class MutableKeyArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
 
-        @Serial
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         private Item currentKey;
 
         MutableKeyArgumentIterator(RuntimeStaticContext staticContext) {
@@ -232,12 +232,12 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
     }
 
     /**
-     * Value sequence for the current map key; list content is replaced before each callback {@code open}.
+     * Value sequence for the current map key; list content is replaced before each callback {@code
+     * open}.
      */
     private static class MutableValueSequenceIterator extends HybridRuntimeIterator {
 
-        @Serial
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         private final List<Item> items;
         private int position;
@@ -272,7 +272,8 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected Item nextLocal() {
             if (!this.hasNext) {
-                throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+                throw new IteratorFlowException(
+                        RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
             }
             Item result = this.items.get(this.position);
             this.position++;

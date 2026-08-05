@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -42,17 +43,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private Item resultItem;
     private boolean hasProducedResult;
 
     public ArrayTailFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 1) {
             throw new OurBadException("array:tail must have exactly one argument.");
@@ -79,42 +77,42 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
             return;
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:tail expects exactly one array argument.",
-                    getMetadata()
-            );
+                    "array:tail expects exactly one array argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; argument to array:tail must be an array.",
-                    getMetadata()
-            );
+                    "Type error; argument to array:tail must be an array.", getMetadata());
         }
 
         int size = arrayItem.getSize();
         if (size == 0) {
             throw new ArrayIndexOutOfBoundsException(
-                    "array:tail called on an empty array.",
-                    getMetadata()
-            );
+                    "array:tail called on an empty array.", getMetadata());
         }
 
         if (size == 1) {
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(Collections.emptyList(), false);
+            this.resultItem =
+                    ItemFactory.getInstance().createArrayItem(Collections.emptyList(), false);
             return;
         }
 
         if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    tailMembers,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    tailMembers,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
@@ -145,8 +143,7 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:tail is currently supported only in local execution mode."
-        );
+                "array:tail is currently supported only in local execution mode.");
     }
 
     @Override
@@ -157,8 +154,6 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:tail is currently supported only in local execution mode."
-        );
+                "array:tail is currently supported only in local execution mode.");
     }
 }
-

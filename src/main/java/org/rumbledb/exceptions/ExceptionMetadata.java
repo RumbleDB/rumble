@@ -23,8 +23,9 @@ package org.rumbledb.exceptions;
 import java.io.Serial;
 import java.io.Serializable;
 
-import lombok.Getter;
 import org.antlr.v4.runtime.Token;
+
+import lombok.Getter;
 
 /**
  * Metadata for error reporting (line and column number)
@@ -34,19 +35,15 @@ import org.antlr.v4.runtime.Token;
 @Getter
 public class ExceptionMetadata implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final String location;
     private final SourceRange range;
-    /**
-     * The the query code around the error.
-     */
+
+    /** The the query code around the error. */
     private final String code;
-    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata(
-            "none",
-            SourceRange.point(1, 0),
-            ""
-    );
+
+    public static final ExceptionMetadata EMPTY_METADATA =
+            new ExceptionMetadata("none", SourceRange.point(1, 0), "");
 
     /**
      * Builds a new metadata object
@@ -64,16 +61,13 @@ public class ExceptionMetadata implements Serializable {
             int startColumn,
             int endLine,
             int endColumn,
-            String code
-    ) {
+            String code) {
         this(
-            location,
-            new SourceRange(
-                    new SourcePosition(startLine, startColumn),
-                    new SourcePosition(endLine, endColumn)
-            ),
-            code
-        );
+                location,
+                new SourceRange(
+                        new SourcePosition(startLine, startColumn),
+                        new SourcePosition(endLine, endColumn)),
+                code);
     }
 
     public ExceptionMetadata(String location, SourceRange range, String code) {
@@ -90,7 +84,8 @@ public class ExceptionMetadata implements Serializable {
         return new ExceptionMetadata(location, SourceRange.point(line, column), code);
     }
 
-    public static ExceptionMetadata fromTokens(String location, Token start, Token end, String code) {
+    public static ExceptionMetadata fromTokens(
+            String location, Token start, Token end, String code) {
         if (end == null) {
             end = start;
         }
@@ -102,8 +97,7 @@ public class ExceptionMetadata implements Serializable {
                 start.getCharPositionInLine(),
                 end.getLine(),
                 endColumn,
-                code
-        );
+                code);
     }
 
     public SourcePosition getStart() {

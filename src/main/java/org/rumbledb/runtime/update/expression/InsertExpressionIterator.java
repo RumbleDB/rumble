@@ -6,6 +6,7 @@ import java.util.Collections;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -25,8 +26,7 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 public class InsertExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator mainIterator;
     private final RuntimeIterator toInsertIterator;
     private final RuntimeIterator positionIterator;
@@ -35,14 +35,12 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator mainIterator,
             RuntimeIterator toInsertIterator,
             RuntimeIterator positionIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            positionIterator == null
-                ? Arrays.asList(mainIterator, toInsertIterator)
-                : Arrays.asList(mainIterator, toInsertIterator, positionIterator),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+                positionIterator == null
+                        ? Arrays.asList(mainIterator, toInsertIterator)
+                        : Arrays.asList(mainIterator, toInsertIterator, positionIterator),
+                staticContext.toBuilder().isUpdating(true).build());
 
         this.mainIterator = mainIterator;
         this.toInsertIterator = toInsertIterator;
@@ -59,14 +57,10 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
+    protected void openLocal() {}
 
     @Override
-    protected void closeLocal() {
-
-    }
+    protected void closeLocal() {}
 
     @Override
     protected boolean hasNextLocal() {
@@ -87,12 +81,15 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
 
         try {
             main = this.mainIterator.materializeExactlyOneItem(context);
-            content = SerializationUtils.clone(this.toInsertIterator.materializeExactlyOneItem(context));
+            content =
+                    SerializationUtils.clone(
+                            this.toInsertIterator.materializeExactlyOneItem(context));
             if (this.hasPositionIterator()) {
                 locator = this.positionIterator.materializeExactlyOneItem(context);
             }
         } catch (NoItemException e) {
-            throw new UpdateTargetIsEmptySeqException("Target of insert expression is empty", this.getMetadata());
+            throw new UpdateTargetIsEmptySeqException(
+                    "Target of insert expression is empty", this.getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }
@@ -102,50 +99,42 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
         if (main.isObject()) {
             if (!content.isObject()) {
                 throw new ObjectInsertContentIsNotObjectSeqException(
-                        "Insert expression content is not an object",
-                        this.getMetadata()
-                );
+                        "Insert expression content is not an object", this.getMetadata());
             }
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+                throw new ModifiesImmutableValueException(
+                        "Attempt to modify immutable target", this.getMetadata());
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
-                        "Attempt to modify currently immutable target",
-                        this.getMetadata()
-                );
+                        "Attempt to modify currently immutable target", this.getMetadata());
             }
             up = factory.createInsertIntoObjectPrimitive(main, content, this.getMetadata());
         } else if (main.isArray()) {
             if (locator == null) {
-                throw new CannotCastUpdateSelectorException("Insert expression selector is null", this.getMetadata());
+                throw new CannotCastUpdateSelectorException(
+                        "Insert expression selector is null", this.getMetadata());
             }
             if (!locator.isInt()) {
                 throw new CannotCastUpdateSelectorException(
                         "Insert expression selector cannot be cast to Int type",
-                        this.getMetadata()
-                );
+                        this.getMetadata());
             }
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+                throw new ModifiesImmutableValueException(
+                        "Attempt to modify immutable target", this.getMetadata());
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
-                        "Attempt to modify currently immutable target",
-                        this.getMetadata()
-                );
+                        "Attempt to modify currently immutable target", this.getMetadata());
             }
-            up = factory.createInsertIntoArrayPrimitive(
-                main,
-                locator,
-                Collections.singletonList(content),
-                this.getMetadata()
-            );
+            up =
+                    factory.createInsertIntoArrayPrimitive(
+                            main, locator, Collections.singletonList(content), this.getMetadata());
         } else {
             throw new InvalidUpdateTargetException(
                     "Insert expression target must be a single array or object",
-                    this.getMetadata()
-            );
+                    this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

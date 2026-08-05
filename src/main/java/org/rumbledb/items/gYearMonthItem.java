@@ -1,28 +1,24 @@
 package org.rumbledb.items;
 
-
 import java.io.Serial;
 import java.time.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class gYearMonthItem extends AbstractAtomicItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
     private Year year;
     private Month month;
     private ZoneOffset offset;
-    private static final Pattern gYearMonthRegex = Pattern.compile(
-        "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
-    );
-
+    private static final Pattern gYearMonthRegex =
+            Pattern.compile(
+                    "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
 
     gYearMonthItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.year = Year.of(dateTime.getYear());
@@ -48,7 +44,8 @@ public class gYearMonthItem extends AbstractAtomicItem {
     private void getgYearMonthFromString(String gYearMonthString) {
         Matcher matcher = gYearMonthRegex.matcher(gYearMonthString);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid xs:gYearMonth: \"" + gYearMonthString + "\"");
+            throw new IllegalArgumentException(
+                    "Invalid xs:gYearMonth: \"" + gYearMonthString + "\"");
         }
         if (gYearMonthString.startsWith("-")) {
             this.year = Year.of(-Integer.parseInt(matcher.group(1)));
@@ -68,12 +65,11 @@ public class gYearMonthItem extends AbstractAtomicItem {
     @Override
     public String getStringValue() {
         return String.format(
-            "%s%04d-%02d%s",
-            this.year.getValue() < 0 ? "-" : "",
-            Math.abs(this.year.getValue()),
-            this.month.getValue(),
-            this.hasTimeZone ? this.offset.toString() : ""
-        );
+                "%s%04d-%02d%s",
+                this.year.getValue() < 0 ? "-" : "",
+                Math.abs(this.year.getValue()),
+                this.month.getValue(),
+                this.hasTimeZone ? this.offset.toString() : "");
     }
 
     @Override
@@ -91,8 +87,6 @@ public class gYearMonthItem extends AbstractAtomicItem {
         return this.hasTimeZone;
     }
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.gYearMonthItem;
@@ -106,14 +100,13 @@ public class gYearMonthItem extends AbstractAtomicItem {
     @Override
     public OffsetDateTime getDateTimeValue() {
         return OffsetDateTime.of(
-            this.year.getValue(),
-            this.month.getValue(),
-            1,
-            0,
-            0,
-            0,
-            0,
-            this.hasTimeZone ? this.offset : ZoneOffset.UTC
-        );
+                this.year.getValue(),
+                this.month.getValue(),
+                1,
+                0,
+                0,
+                0,
+                0,
+                this.hasTimeZone ? this.offset : ZoneOffset.UTC);
     }
 }

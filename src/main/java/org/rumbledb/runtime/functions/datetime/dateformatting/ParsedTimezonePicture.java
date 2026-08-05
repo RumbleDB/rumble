@@ -12,7 +12,6 @@ final class ParsedTimezonePicture {
     final boolean compactNoSeparator;
     final boolean military;
 
-
     final boolean named;
     final String namePresentation;
 
@@ -28,8 +27,7 @@ final class ParsedTimezonePicture {
             boolean compactNoSeparator,
             boolean military,
             boolean named,
-            String namePresentation
-    ) {
+            String namePresentation) {
         this.gmtPrefix = gmtPrefix;
         this.alwaysShowMinutes = alwaysShowMinutes;
         this.separator = separator;
@@ -45,28 +43,18 @@ final class ParsedTimezonePicture {
     }
 
     static ParsedTimezonePicture military() {
-        return new ParsedTimezonePicture(false, false, ":", 2, 2, '0', false, false, false, true, false, null);
+        return new ParsedTimezonePicture(
+                false, false, ":", 2, 2, '0', false, false, false, true, false, null);
     }
 
     static ParsedTimezonePicture defaultNumeric() {
-        return new ParsedTimezonePicture(false, true, ":", 2, 2, '0', false, false, false, false, false, null);
+        return new ParsedTimezonePicture(
+                false, true, ":", 2, 2, '0', false, false, false, false, false, null);
     }
 
     static ParsedTimezonePicture named(String namePresentation) {
         return new ParsedTimezonePicture(
-                false,
-                true,
-                ":",
-                2,
-                2,
-                '0',
-                false,
-                false,
-                false,
-                false,
-                true,
-                namePresentation
-        );
+                false, true, ":", 2, 2, '0', false, false, false, false, true, namePresentation);
     }
 
     static ParsedTimezonePicture custom(
@@ -78,8 +66,7 @@ final class ParsedTimezonePicture {
             int zeroDigit,
             boolean zuluForZeroOffset,
             boolean minutesOptionalIfZero,
-            boolean compactNoSeparator
-    ) {
+            boolean compactNoSeparator) {
         return new ParsedTimezonePicture(
                 gmtPrefix,
                 alwaysShowMinutes,
@@ -92,7 +79,6 @@ final class ParsedTimezonePicture {
                 compactNoSeparator,
                 false,
                 false,
-                null
-        );
+                null);
     }
 }

@@ -1,8 +1,13 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.io.Serial;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -18,14 +23,9 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.Serial;
-import java.util.Arrays;
-import java.util.List;
-
 public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator numDeleteIterator;
     private final boolean isFirst;
@@ -35,8 +35,7 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator targetIterator,
             boolean isFirst,
             Mode mode,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(targetIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.numDeleteIterator = null;
@@ -49,9 +48,10 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator numDeleteIterator,
             boolean isFirst,
             Mode mode,
-            RuntimeStaticContext staticContext
-    ) {
-        super(Arrays.asList(targetIterator, numDeleteIterator), staticContext.toBuilder().isUpdating(true).build());
+            RuntimeStaticContext staticContext) {
+        super(
+                Arrays.asList(targetIterator, numDeleteIterator),
+                staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.numDeleteIterator = numDeleteIterator;
         this.isFirst = isFirst;
@@ -64,14 +64,10 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
+    protected void openLocal() {}
 
     @Override
-    protected void closeLocal() {
-
-    }
+    protected void closeLocal() {}
 
     @Override
     protected boolean hasNextLocal() {
@@ -93,21 +89,18 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a string, but more than one item was provided.",
-                    this.getMetadata()
-            );
+                    this.getMetadata());
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a string, but no item was provided.",
-                    this.getMetadata()
-            );
+                    this.getMetadata());
         }
 
         if (!targetItem.isString()) {
             throw new InvalidUpdateTargetException(
                     "Expecting collection name as a String, but it was: "
-                        + targetItem.getDynamicType().getIdentifierString(),
-                    this.getMetadata()
-            );
+                            + targetItem.getDynamicType().getIdentifierString(),
+                    this.getMetadata());
         }
 
         int numDeleteInt = 1;
@@ -118,52 +111,45 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             } catch (MoreThanOneItemException e) {
                 throw new InvalidUpdateTargetException(
                         "The number to be deleted must be an integer, but more than one item was provided.",
-                        this.getMetadata()
-                );
+                        this.getMetadata());
             } catch (NoItemException e) {
                 throw new InvalidUpdateTargetException(
                         "The number to be deleted must be an integer, but no item was provided.",
-                        this.getMetadata()
-                );
+                        this.getMetadata());
             }
 
             if (!numDeleteItem.isInt()) {
                 throw new InvalidUpdateTargetException(
                         "Expecting number to be deleted name as an integer, but it was: "
-                            + targetItem.getDynamicType().getIdentifierString(),
-                        this.getMetadata()
-                );
+                                + targetItem.getDynamicType().getIdentifierString(),
+                        this.getMetadata());
             }
 
             numDeleteInt = numDeleteItem.getIntValue();
-
         }
 
         Collection collection = new Collection(this.mode, targetItem.getStringValue());
 
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-        String selectQuery = String.format(
-            "SELECT %s FROM %s ORDER BY %s %s LIMIT %d",
-            SparkSessionManager.rowOrderColumnName,
-            collection.getPhysicalName(),
-            SparkSessionManager.rowOrderColumnName,
-            this.isFirst ? "ASC" : "DESC",
-            numDeleteInt
-        );
+        String selectQuery =
+                String.format(
+                        "SELECT %s FROM %s ORDER BY %s %s LIMIT %d",
+                        SparkSessionManager.rowOrderColumnName,
+                        collection.getPhysicalName(),
+                        SparkSessionManager.rowOrderColumnName,
+                        this.isFirst ? "ASC" : "DESC",
+                        numDeleteInt);
         List<Row> rows = session.sql(selectQuery).collectAsList();
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         for (Row row : rows) {
             double rowOrder = row.getAs(SparkSessionManager.rowOrderColumnName);
-            UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
-                collection,
-                rowOrder,
-                this.getMetadata()
-            );
+            UpdatePrimitive up =
+                    factory.createDeleteTupleFromCollectionPrimitive(
+                            collection, rowOrder, this.getMetadata());
             pul.addUpdatePrimitive(up);
         }
 
         return pul;
     }
-
 }

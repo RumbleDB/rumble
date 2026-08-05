@@ -20,7 +20,12 @@
 
 package org.rumbledb.runtime.control;
 
+import java.io.Serial;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,15 +36,9 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
-import java.io.Serial;
-import java.util.Map;
-import java.util.stream.Stream;
-
-
 public class SwitchRuntimeIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
     private final Map<RuntimeIterator, RuntimeIterator> cases;
     private final RuntimeIterator defaultReturn;
@@ -49,15 +48,13 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator test,
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.concat(
-                Stream.concat(Stream.of(test), cases.keySet().stream()),
-                Stream.concat(cases.values().stream(), Stream.of(defaultReturn))
-            ).toList(),
-            staticContext
-        );
+                Stream.concat(
+                                Stream.concat(Stream.of(test), cases.keySet().stream()),
+                                Stream.concat(cases.values().stream(), Stream.of(defaultReturn)))
+                        .toList(),
+                staticContext);
         this.testField = test;
         this.cases = cases;
         this.defaultReturn = defaultReturn;
@@ -65,7 +62,8 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.matchingIterator =
+                selectApplicableIterator(this.currentDynamicContextForLocalExecution);
         this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.matchingIterator.hasNext();
     }
@@ -78,9 +76,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             return nextItem;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in switch statement",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in switch statement", getMetadata());
     }
 
     @Override
@@ -88,22 +84,16 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
         this.matchingIterator.close();
     }
 
-    private RuntimeIterator selectApplicableIterator(
-            DynamicContext dynamicContext
-    ) {
+    private RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
         Item testValue = this.testField.materializeFirstItemOrNull(dynamicContext);
 
         if (testValue != null) {
             if (testValue.isArray()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an array type",
-                        getMetadata()
-                );
+                        "Invalid args. Switch condition cannot be an array type", getMetadata());
             } else if (testValue.isObject()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an object type",
-                        getMetadata()
-                );
+                        "Invalid args. Switch condition cannot be an object type", getMetadata());
             }
         }
 
@@ -113,14 +103,10 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             if (caseValue != null) {
                 if (caseValue.isArray()) {
                     throw new NonAtomicKeyException(
-                            "Invalid args. Switch case cannot be an array type",
-                            getMetadata()
-                    );
+                            "Invalid args. Switch case cannot be an array type", getMetadata());
                 } else if (caseValue.isObject()) {
                     throw new NonAtomicKeyException(
-                            "Invalid args. Switch case  cannot be an object type",
-                            getMetadata()
-                    );
+                            "Invalid args. Switch case  cannot be an object type", getMetadata());
                 }
             }
 

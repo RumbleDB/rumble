@@ -20,9 +20,9 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.context.DynamicContext;
-
 import java.io.Serializable;
+
+import org.rumbledb.context.DynamicContext;
 
 public interface RuntimeIteratorInterface<T> extends Serializable {
     void open(DynamicContext context);

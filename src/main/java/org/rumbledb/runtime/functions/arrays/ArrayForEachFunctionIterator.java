@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -34,20 +35,19 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
 /**
- * XPath and XQuery Functions and Operators 3.1 {@code array:for-each}:
- * {@code array:for-each($array as array(*), $action as function(item()*) as item()*) as array(*)}.
+ * XPath and XQuery Functions and Operators 3.1 {@code array:for-each}: {@code array:for-each($array
+ * as array(*), $action as function(item()*) as item()*) as array(*)}.
  */
 public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator functionIterator;
@@ -55,9 +55,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
     private boolean hasProducedResult;
 
     public ArrayForEachFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("array:for-each must have exactly two arguments.");
@@ -70,7 +68,8 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        // Do not open child iterators here: materializeExactlyOneItem / materialize open and close them.
+        // Do not open child iterators here: materializeExactlyOneItem / materialize open and close
+        // them.
         initializeResult(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.resultItem != null;
         this.hasProducedResult = false;
@@ -85,16 +84,12 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
             return;
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:for-each expects exactly one array argument.",
-                    getMetadata()
-            );
+                    "array:for-each expects exactly one array argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; argument to array:for-each must be an array.",
-                    getMetadata()
-            );
+                    "Type error; argument to array:for-each must be an array.", getMetadata());
         }
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
@@ -103,14 +98,12 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         if (actionItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to array:for-each must be a function item.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (actionItems.size() != 1) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to array:for-each must be exactly one function item.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         Item action = actionItems.get(0);
@@ -130,77 +123,77 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : resultMemberSequences) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createArrayItem(
+                                    items, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
+            this.resultItem =
+                    ItemFactory.getInstance()
+                            .createSequenceArrayItem(
+                                    resultMemberSequences,
+                                    this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
-            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(org.rumbledb.types.SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+            RuntimeStaticContext staticContext =
+                    RuntimeStaticContext.builder()
+                            .configuration(getConfiguration())
+                            .staticType(org.rumbledb.types.SequenceType.createSequenceType("item*"))
+                            .executionMode(ExecutionMode.LOCAL)
+                            .metadata(getMetadata())
+                            .build();
             return new org.rumbledb.runtime.CommaExpressionIterator(
-                    Collections.emptyList(),
-                    staticContext
-            );
+                    Collections.emptyList(), staticContext);
         }
 
         List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
-            RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(org.rumbledb.types.SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+            RuntimeStaticContext childStaticContext =
+                    RuntimeStaticContext.builder()
+                            .configuration(getConfiguration())
+                            .staticType(org.rumbledb.types.SequenceType.createSequenceType("item*"))
+                            .executionMode(ExecutionMode.LOCAL)
+                            .metadata(getMetadata())
+                            .build();
             childIterators.add(
-                new org.rumbledb.runtime.ConstantRuntimeIterator(
-                        item,
-                        childStaticContext
-                )
-            );
+                    new org.rumbledb.runtime.ConstantRuntimeIterator(item, childStaticContext));
         }
 
-        RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(org.rumbledb.types.SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        RuntimeStaticContext staticContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(org.rumbledb.types.SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
         return new org.rumbledb.runtime.CommaExpressionIterator(childIterators, staticContext);
     }
 
     /**
-     * Invokes {@code $action} with the array member as {@code item()*} (one argument, sequence type).
+     * Invokes {@code $action} with the array member as {@code item()*} (one argument, sequence
+     * type).
      */
-    private List<Item> applyAction(
-            Item action,
-            List<Item> memberSequence,
-            DynamicContext context
-    ) {
+    private List<Item> applyAction(Item action, List<Item> memberSequence, DynamicContext context) {
         RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
 
         List<RuntimeIterator> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
 
-        RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
-        RuntimeIterator functionCall = new DynamicFunctionCallIterator(
-                new ConstantRuntimeIterator(action, functionItemContext),
-                arguments,
-                functionItemContext
-        );
+        RuntimeStaticContext functionItemContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
+        RuntimeIterator functionCall =
+                new DynamicFunctionCallIterator(
+                        new ConstantRuntimeIterator(action, functionItemContext),
+                        arguments,
+                        functionItemContext);
         return functionCall.materialize(context);
     }
 
@@ -234,8 +227,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:for-each is currently supported only in local execution mode."
-        );
+                "array:for-each is currently supported only in local execution mode.");
     }
 
     @Override
@@ -246,7 +238,6 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:for-each is currently supported only in local execution mode."
-        );
+                "array:for-each is currently supported only in local execution mode.");
     }
 }

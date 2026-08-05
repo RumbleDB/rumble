@@ -1,22 +1,16 @@
 package org.rumbledb.expressions.xml.node_test;
 
-
 import java.io.Serial;
 
 /**
- * XQuery 3.1 Section 2.5.5 - SequenceType Matching
- * NamespaceNodeTest ::= "namespace-node" "(" ")"
- * A NamespaceNodeTest matches any namespace node.
+ * XQuery 3.1 Section 2.5.5 - SequenceType Matching NamespaceNodeTest ::= "namespace-node" "(" ")" A
+ * NamespaceNodeTest matches any namespace node.
  */
 public class NamespaceNodeTest implements NodeTest {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     @Override
     public String toString() {
         return "namespace-node()";
     }
-
-
 }
-

@@ -20,7 +20,6 @@
 
 package org.rumbledb.types;
 
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
@@ -35,11 +34,9 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
-
 public interface ItemType extends Serializable {
 
-    @Serial
-    long serialVersionUID = 1L;
+    @Serial long serialVersionUID = 1L;
 
     /**
      * Tests for itemType equality.
@@ -48,7 +45,6 @@ public interface ItemType extends Serializable {
      * @return true it is equal to other, false otherwise.
      */
     boolean equals(Object other);
-
 
     /**
      * Tests for itemType equality.
@@ -59,6 +55,7 @@ public interface ItemType extends Serializable {
     default boolean isEqualTo(ItemType otherType) {
         return this.equals(otherType);
     }
+
     // region kind
 
     /**
@@ -107,7 +104,9 @@ public interface ItemType extends Serializable {
      * @return test if [this] is a subptype of a json item type
      */
     default boolean isJsonItemType() {
-        return this.equals(BuiltinTypesCatalogue.JSONItem) || isObjectItemType() || isArrayItemType();
+        return this.equals(BuiltinTypesCatalogue.JSONItem)
+                || isObjectItemType()
+                || isArrayItemType();
     }
 
     /**
@@ -129,7 +128,6 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     *
      * @return [true] if this is a numeric item type, false otherwise
      */
     default boolean isNumeric() {
@@ -137,7 +135,6 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     *
      * @return [true] if the null value is in the value space.
      */
     default boolean canBeNull() {
@@ -145,7 +142,6 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     *
      * @return [true] if this is just one type unioned with null, returns that type.
      */
     default ItemType getSingleNullableType() {
@@ -165,21 +161,20 @@ public interface ItemType extends Serializable {
         return false;
     }
 
-
     /**
-     *
      * @return the itemtype QName if available
      */
     default Name getName() {
-        throw new UnsupportedOperationException("getName operation is not supported for this itemType");
+        throw new UnsupportedOperationException(
+                "getName operation is not supported for this itemType");
     }
 
     /**
-     *
      * @return the signature of the function item type if available
      */
     default FunctionSignature getSignature() {
-        throw new UnsupportedOperationException("getSignature operation is not supported for non-function item types");
+        throw new UnsupportedOperationException(
+                "getSignature operation is not supported for non-function item types");
     }
 
     // endregion
@@ -187,15 +182,15 @@ public interface ItemType extends Serializable {
     // region hierarchy
 
     /**
-     *
      * @param superType another item type
-     * @return true if [this] is a subtype of [superType], any type is considered a subtype of itself.
-     *         If [this] has a name, then this is determined strictly based on the hierarchy.
-     *         If [this] does not have a name, then this is determined based on facets.
+     * @return true if [this] is a subtype of [superType], any type is considered a subtype of
+     *     itself. If [this] has a name, then this is determined strictly based on the hierarchy. If
+     *     [this] does not have a name, then this is determined based on facets.
      */
     default boolean isSubtypeOf(ItemType superType) {
         // the default methods works fine for all non-function types
-        // we exploit the fact that the type system is a tree (except for union types, that needs special checks)
+        // we exploit the fact that the type system is a tree (except for union types, that needs
+        // special checks)
 
         // special check for unions
         if (superType.isUnionType()) {
@@ -216,16 +211,17 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     *
      * @param other another item type
-     * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this]
-     *         and [other] (does not take into account union types as common ancestor, but only the type tree)
+     * @return the common supertype between [this] and [other], that would be the LCA in the item
+     *     type tree of [this] and [other] (does not take into account union types as common
+     *     ancestor, but only the type tree)
      */
     default ItemType findLeastCommonSuperTypeWith(ItemType other) {
         if (other.isUnionType()) {
             return other.findLeastCommonSuperTypeWith(this);
         }
-        if (this.equals(BuiltinTypesCatalogue.nullItem) && other.equals(BuiltinTypesCatalogue.nullItem)) {
+        if (this.equals(BuiltinTypesCatalogue.nullItem)
+                && other.equals(BuiltinTypesCatalogue.nullItem)) {
             return BuiltinTypesCatalogue.nullItem;
         }
         if (this.isAtomicItemType() && other.equals(BuiltinTypesCatalogue.nullItem)) {
@@ -235,8 +231,7 @@ public interface ItemType extends Serializable {
             return new UnionItemType(
                     null,
                     BuiltinTypesCatalogue.atomicItem,
-                    Arrays.asList(this, BuiltinTypesCatalogue.nullItem)
-            );
+                    Arrays.asList(this, BuiltinTypesCatalogue.nullItem));
         }
         if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
             if (other.equals(BuiltinTypesCatalogue.atomicItem)) {
@@ -245,8 +240,7 @@ public interface ItemType extends Serializable {
             return new UnionItemType(
                     null,
                     BuiltinTypesCatalogue.atomicItem,
-                    Arrays.asList(other, BuiltinTypesCatalogue.nullItem)
-            );
+                    Arrays.asList(other, BuiltinTypesCatalogue.nullItem));
         }
         ItemType current = this;
         while (other.getTypeTreeDepth() > current.getTypeTreeDepth()) {
@@ -263,8 +257,8 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     * Finds a lax (non-strict) common supertype that can incorporate anonymous facets when possible.
-     * The default implementation falls back to the strict least-common-supertype logic.
+     * Finds a lax (non-strict) common supertype that can incorporate anonymous facets when
+     * possible. The default implementation falls back to the strict least-common-supertype logic.
      *
      * @param other another item type
      * @return a lax common supertype between [this] and [other]
@@ -274,31 +268,29 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     *
-     * @return an int representing the depth of the item type in the type tree ('item' is the root with depth 0)
+     * @return an int representing the depth of the item type in the type tree ('item' is the root
+     *     with depth 0)
      */
     int getTypeTreeDepth();
 
     /**
-     *
      * @return the base type for a type, return null for the topmost item type
      */
     ItemType getBaseType();
 
     /**
-     * Check at static time if [this] could be casted to [other] item type, requires [this] to be an atomic type
+     * Check at static time if [this] could be casted to [other] item type, requires [this] to be an
+     * atomic type
      *
      * @param other a strict subtype of atomic item type to which we are trying to cast
      * @return true if it is possible at static time to cast [this] to [other], false otherwise
      */
     default boolean isStaticallyCastableAs(ItemType other) {
         throw new UnsupportedOperationException(
-                "isStaticallyCastableAs operation is not supported for non-atomic item types"
-        );
+                "isStaticallyCastableAs operation is not supported for non-atomic item types");
     }
 
     /**
-     *
      * @param itemType another item type
      * @return true if [this] can be promoted to [itemType]
      */
@@ -311,7 +303,6 @@ public interface ItemType extends Serializable {
     // region user-defined
 
     /**
-     *
      * @return [true] if it is a user-defined type, false otherwise
      */
     default boolean isUserDefined() {
@@ -319,7 +310,6 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     *
      * @return [true] if it is a primitive type
      */
     default boolean isPrimitive() {
@@ -327,25 +317,25 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     * Casting-specific primitive notion from XPath/XQuery Functions and Operators 3.1 §19:
-     * in addition to XML Schema primitive types, xs:integer, xs:yearMonthDuration,
-     * and xs:dayTimeDuration are treated as primitive for casting.
+     * Casting-specific primitive notion from XPath/XQuery Functions and Operators 3.1 §19: in
+     * addition to XML Schema primitive types, xs:integer, xs:yearMonthDuration, and
+     * xs:dayTimeDuration are treated as primitive for casting.
      *
      * @return [true] if this type is considered primitive for casting semantics.
      */
     default boolean isCastingPrimitive() {
         return this.isPrimitive()
-            || this.equals(BuiltinTypesCatalogue.integerItem)
-            || this.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
-            || this.equals(BuiltinTypesCatalogue.dayTimeDurationItem);
+                || this.equals(BuiltinTypesCatalogue.integerItem)
+                || this.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
+                || this.equals(BuiltinTypesCatalogue.dayTimeDurationItem);
     }
 
     /**
-     *
      * @return the primitive type for a derived type, throw an error for primitive types
      */
     default ItemType getPrimitiveType() {
-        throw new UnsupportedOperationException("getPrimitiveType operation is supported only for non-primitive types");
+        throw new UnsupportedOperationException(
+                "getPrimitiveType operation is supported only for non-primitive types");
     }
 
     /**
@@ -358,174 +348,150 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     *
      * @return a set containing the allowed facets for restricting the type
      */
     public Set<ConstrainingFacetTypes> getAllowedFacets();
 
     /**
-     *
-     * @return the list of possible values for [this] item type or null if the enumeration facet is not set
+     * @return the list of possible values for [this] item type or null if the enumeration facet is
+     *     not set
      */
     default List<Item> getEnumerationFacet() {
         throw new UnsupportedOperationException(
-                "enumeration facet is allowed only for atomic, object and array item types"
-        );
+                "enumeration facet is allowed only for atomic, object and array item types");
     }
 
     /**
-     *
-     * @return the list of constraints in the implementation-defined language for [this] item type (note that this facet
-     *         is cumulative) or an empty list if the constraints facet is not set
+     * @return the list of constraints in the implementation-defined language for [this] item type
+     *     (note that this facet is cumulative) or an empty list if the constraints facet is not set
      */
     default List<String> getConstraintsFacet() {
         throw new UnsupportedOperationException(
-                "constraints facet is allowed only for atomic, object and array item types"
-        );
+                "constraints facet is allowed only for atomic, object and array item types");
     }
 
     /**
-     *
-     * @return the minimum length facet value for [this] item type or null if the restriction is not set
+     * @return the minimum length facet value for [this] item type or null if the restriction is not
+     *     set
      */
     default Integer getMinLengthFacet() {
         throw new UnsupportedOperationException(
-                "minimum length facet is not allowed for " + this.toString() + " item type"
-        );
+                "minimum length facet is not allowed for " + this.toString() + " item type");
     }
 
     /**
-     *
      * @return the length facet value for [this] item type or null if the restriction is not set
      */
     default Integer getLengthFacet() {
-        throw new UnsupportedOperationException("length facet is not allowed for " + this.toString() + " item type");
+        throw new UnsupportedOperationException(
+                "length facet is not allowed for " + this.toString() + " item type");
     }
 
     /**
-     *
-     * @return the maximum length facet value for [this] item type or null if the restriction is not set
+     * @return the maximum length facet value for [this] item type or null if the restriction is not
+     *     set
      */
     default Integer getMaxLengthFacet() {
         throw new UnsupportedOperationException(
-                "maximum length facet is not allowed for " + this.toString() + " item type"
-        );
+                "maximum length facet is not allowed for " + this.toString() + " item type");
     }
 
     /**
-     *
-     * @return an item representing the minimum possible value (excluded) for [this] item type or null if the
-     *         restriction is not set
+     * @return an item representing the minimum possible value (excluded) for [this] item type or
+     *     null if the restriction is not set
      */
     default Item getMinExclusiveFacet() {
         throw new UnsupportedOperationException(
-                "minimum exclusive facet is not allowed for " + this.toString() + " item types"
-        );
+                "minimum exclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
-     *
-     * @return an item representing the minimum possible value (included) for [this] item type or null if the
-     *         restriction is not set
+     * @return an item representing the minimum possible value (included) for [this] item type or
+     *     null if the restriction is not set
      */
     default Item getMinInclusiveFacet() {
         throw new UnsupportedOperationException(
-                "minimum inclusive facet is not allowed for " + this.toString() + " item types"
-        );
+                "minimum inclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
-     *
-     * @return an item representing the maximum possible value (excluded) for [this] item type or null if the
-     *         restriction is not set
+     * @return an item representing the maximum possible value (excluded) for [this] item type or
+     *     null if the restriction is not set
      */
     default Item getMaxExclusiveFacet() {
         throw new UnsupportedOperationException(
-                "maximum exclusive facet is not allowed for " + this.toString() + " item types"
-        );
+                "maximum exclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
-     *
-     * @return an item representing the maximum possible value (included) for [this] item type or null if the
-     *         restriction is not set
+     * @return an item representing the maximum possible value (included) for [this] item type or
+     *     null if the restriction is not set
      */
     default Item getMaxInclusiveFacet() {
         throw new UnsupportedOperationException(
-                "maximum inclusive facet is not allowed for " + this.toString() + " item types"
-        );
+                "maximum inclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
-     *
-     * @return the total digits facet value for [this] item type or null if the restriction is not set
+     * @return the total digits facet value for [this] item type or null if the restriction is not
+     *     set
      */
     default Integer getTotalDigitsFacet() {
         throw new UnsupportedOperationException(
-                "total digits facet is not allowed for " + this.toString() + " item types"
-        );
+                "total digits facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
-     *
-     * @return the fraction digits facet value for [this] item type or null if the restriction is not set
+     * @return the fraction digits facet value for [this] item type or null if the restriction is
+     *     not set
      */
     default Integer getFractionDigitsFacet() {
         throw new UnsupportedOperationException(
-                "fraction digits facet is not allowed for " + this.toString() + " item types"
-        );
+                "fraction digits facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
-     *
-     * @return the explicit timezone facet value for [this] item type or null if the restriction is not set
+     * @return the explicit timezone facet value for [this] item type or null if the restriction is
+     *     not set
      */
     default TimezoneFacet getExplicitTimezoneFacet() {
         throw new UnsupportedOperationException(
-                "explicit timezone facet is not allowed for " + this.toString() + " item types"
-        );
+                "explicit timezone facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
-     *
      * @return the whiteSpace facet value for [this] item type or null if the restriction is not set
      */
     default WhitespaceFacet getWhitespaceFacet() {
         throw new UnsupportedOperationException(
-                "whiteSpace facet is not allowed for " + this.toString() + " item types"
-        );
+                "whiteSpace facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
      * Returns the pattern facet for this item type.
      *
-     * This reflects pattern facets applied via derivation (for example on
-     * {@link DerivedAtomicItemType}), not the full lexical space of a
-     * primitive atomic type.
+     * <p>This reflects pattern facets applied via derivation (for example on {@link
+     * DerivedAtomicItemType}), not the full lexical space of a primitive atomic type.
      *
-     * @return the list of pattern regex strings for this derivation step,
-     *         or null if no pattern restriction is set
+     * @return the list of pattern regex strings for this derivation step, or null if no pattern
+     *     restriction is set
      */
     default List<String> getPatternFacet() {
         throw new UnsupportedOperationException(
-                "pattern facet is not allowed for " + this.toString() + " item types"
-        );
+                "pattern facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
      * Returns the lexical-space patterns for this item type.
      *
-     * For primitive atomic types, this describes the lexical space defined
-     * by the specification (for example, the allowed literals for xs:boolean
-     * or the lexical grammar for xs:decimal). For derived atomic types, this
-     * typically delegates to the primitive type.
+     * <p>For primitive atomic types, this describes the lexical space defined by the specification
+     * (for example, the allowed literals for xs:boolean or the lexical grammar for xs:decimal). For
+     * derived atomic types, this typically delegates to the primitive type.
      *
-     * Implementations that do not provide additional constraints should
-     * return an empty list.
+     * <p>Implementations that do not provide additional constraints should return an empty list.
      *
-     * @return a list of regular expressions describing the lexical space
-     *         of this type, or an empty list if no regex-based restriction
-     *         is modeled.
+     * @return a list of regular expressions describing the lexical space of this type, or an empty
+     *     list if no regex-based restriction is modeled.
      */
     default List<String> getLexicalSpacePatterns() {
         return java.util.Collections.emptyList();
@@ -538,8 +504,7 @@ public interface ItemType extends Serializable {
      */
     default OrderedFacetValue getOrderedFacet() {
         throw new UnsupportedOperationException(
-                "ordered facet is not applicable to " + this.toString() + " item types"
-        );
+                "ordered facet is not applicable to " + this.toString() + " item types");
     }
 
     /**
@@ -547,8 +512,7 @@ public interface ItemType extends Serializable {
      */
     default Boolean getBoundedFacet() {
         throw new UnsupportedOperationException(
-                "bounded facet is not applicable to " + this.toString() + " item types"
-        );
+                "bounded facet is not applicable to " + this.toString() + " item types");
     }
 
     /**
@@ -556,8 +520,7 @@ public interface ItemType extends Serializable {
      */
     default CardinalityFacetValue getCardinalityFacet() {
         throw new UnsupportedOperationException(
-                "cardinality facet is not applicable to " + this.toString() + " item types"
-        );
+                "cardinality facet is not applicable to " + this.toString() + " item types");
     }
 
     /**
@@ -565,8 +528,7 @@ public interface ItemType extends Serializable {
      */
     default Boolean getNumericFacet() {
         throw new UnsupportedOperationException(
-                "numeric facet is not applicable to " + this.toString() + " item types"
-        );
+                "numeric facet is not applicable to " + this.toString() + " item types");
     }
 
     // endregion fundamental facets
@@ -574,63 +536,57 @@ public interface ItemType extends Serializable {
     default List<String> getObjectKeysFacet() {
         throw new UnsupportedOperationException(
                 "keys content facet is allowed only for object item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+                        + getIdentifierString()
+                        + " is not one (class "
+                        + this.getClass().getCanonicalName()
+                        + ")");
     }
 
     default FieldDescriptor getObjectContentFacet(String key) {
         throw new UnsupportedOperationException(
                 "object content facet is allowed only for object item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+                        + getIdentifierString()
+                        + " is not one (class "
+                        + this.getClass().getCanonicalName()
+                        + ")");
     }
 
     default List<FieldDescriptor> getObjectContentFacet() {
         throw new UnsupportedOperationException(
                 "object content facet is allowed only for object item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+                        + getIdentifierString()
+                        + " is not one (class "
+                        + this.getClass().getCanonicalName()
+                        + ")");
     }
 
     default Map<String, FieldDescriptor> getObjectContentFacetAsUnorderedMap() {
         throw new UnsupportedOperationException(
                 "object content facet is allowed only for object item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+                        + getIdentifierString()
+                        + " is not one (class "
+                        + this.getClass().getCanonicalName()
+                        + ")");
     }
 
     /**
-     *
      * @return closed facet value for object item types
      */
     default boolean getClosedFacet() {
-        throw new UnsupportedOperationException("closed facet is not allowed only for object item types");
+        throw new UnsupportedOperationException(
+                "closed facet is not allowed only for object item types");
     }
 
     /**
-     *
      * @return content facet value for array item types
      */
     default ItemType getArrayContentFacet() {
         throw new UnsupportedOperationException(
                 "array content facet is allowed only for array item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+                        + getIdentifierString()
+                        + " is not one (class "
+                        + this.getClass().getCanonicalName()
+                        + ")");
     }
 
     /**
@@ -639,11 +595,10 @@ public interface ItemType extends Serializable {
     default ItemType getMapKeyItemType() {
         throw new UnsupportedOperationException(
                 "map key facet is allowed only for map item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+                        + getIdentifierString()
+                        + " is not one (class "
+                        + this.getClass().getCanonicalName()
+                        + ")");
     }
 
     /**
@@ -652,11 +607,10 @@ public interface ItemType extends Serializable {
     default SequenceType getMapValueSequenceType() {
         throw new UnsupportedOperationException(
                 "map value sequence type is allowed only for map item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+                        + getIdentifierString()
+                        + " is not one (class "
+                        + this.getClass().getCanonicalName()
+                        + ")");
     }
 
     /**
@@ -666,25 +620,23 @@ public interface ItemType extends Serializable {
     default SequenceType getMemberSequenceType() {
         throw new UnsupportedOperationException(
                 "member sequence type is allowed only for array item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+                        + getIdentifierString()
+                        + " is not one (class "
+                        + this.getClass().getCanonicalName()
+                        + ")");
     }
 
     /**
-     *
      * @return content facet value for union item types
      */
     default List<ItemType> getTypes() {
-        throw new UnsupportedOperationException("union content facet is allowed only for union item types");
+        throw new UnsupportedOperationException(
+                "union content facet is allowed only for union item types");
     }
 
     // endregion
 
     /**
-     *
      * @return a String that uniquely identify an item type
      */
     default String getIdentifierString() {
@@ -696,7 +648,7 @@ public interface ItemType extends Serializable {
 
     /**
      * Checks compatibility with DataFrames.
-     * 
+     *
      * @return true if compatible with DataFrames and false otherwise.
      */
     default boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {

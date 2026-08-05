@@ -20,7 +20,11 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,20 +34,13 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class OneOrMoreIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private Item nextResult;
 
-    public OneOrMoreIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public OneOrMoreIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
     }
@@ -56,8 +53,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
         }
         throw new SequenceExceptionOneOrMore(
                 "fn:one-or-more() called with a sequence containing less than 1 item",
-                getMetadata()
-        );
+                getMetadata());
     }
 
     @Override
@@ -71,8 +67,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
         if (childDataFrame.isEmptySequence()) {
             throw new SequenceExceptionOneOrMore(
                     "fn:one-or-more() called with a sequence containing less than 1 item",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return childDataFrame;
     }
@@ -83,8 +78,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
         if (!this.iterator.hasNext()) {
             throw new SequenceExceptionOneOrMore(
                     "fn:one-or-more() called with a sequence containing less than 1 item",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         setNextResult();
     }
@@ -107,9 +101,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function", getMetadata());
     }
 
     public void setNextResult() {

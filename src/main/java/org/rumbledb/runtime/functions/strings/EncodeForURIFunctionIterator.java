@@ -20,6 +20,13 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -28,30 +35,16 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
-
 public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-    @SuppressWarnings("unused")
-    private static final HashSet<Integer> exclusionCharacters = new HashSet<Integer>(
-            Arrays.asList(
+    @Serial private static final long serialVersionUID = 1L;
 
-            )
-    );
+    @SuppressWarnings("unused")
+    private static final HashSet<Integer> exclusionCharacters =
+            new HashSet<Integer>(Arrays.asList());
 
     public EncodeForURIFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -59,8 +52,10 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            Item inputItem = this.getChild(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item inputItem =
+                    this.getChild(0)
+                            .materializeFirstItemOrNull(
+                                    this.currentDynamicContextForLocalExecution);
 
             if (inputItem == null) {
                 return ItemFactory.getInstance().createStringItem("");
@@ -68,20 +63,21 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
 
             String encodedURI;
             try {
-                encodedURI = URLEncoder.encode(inputItem.getStringValue(), "UTF-8")
-                    .replace("+", "%20")
-                    .replace("*", "%2A")
-                    .replace("%7E", "~");
+                encodedURI =
+                        URLEncoder.encode(inputItem.getStringValue(), "UTF-8")
+                                .replace("+", "%20")
+                                .replace("*", "%2A")
+                                .replace("%7E", "~");
             } catch (UnsupportedEncodingException e) {
-                throw new OurBadException(e.getMessage(), getMetadata()); // Will only get here if "UTF-8" is changed or
-                                                                          // method deprecates
+                throw new OurBadException(
+                        e.getMessage(),
+                        getMetadata()); // Will only get here if "UTF-8" is changed or
+                // method deprecates
             }
 
             return ItemFactory.getInstance().createStringItem(encodedURI);
         } else
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " translate function",
-                    getMetadata()
-            );
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " translate function", getMetadata());
     }
 }

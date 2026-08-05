@@ -34,23 +34,18 @@ import org.rumbledb.types.SequenceType;
 
 public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public AtMostOneItemIfRuntimeIterator(
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(condition, branch, elseBranch), staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
-            DynamicContext dynamicContext
-    ) {
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         RuntimeIterator condition = this.getChild(0);
         boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
 
@@ -63,50 +58,65 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext conditionResult = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext conditionResult =
+                this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (conditionResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext thenResult = this.getChild(1)
-            .generateNativeQuery(new NativeClauseContext(conditionResult, null, null));
+        NativeClauseContext thenResult =
+                this.getChild(1)
+                        .generateNativeQuery(new NativeClauseContext(conditionResult, null, null));
         if (thenResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext elseResult = this.getChild(2)
-            .generateNativeQuery(new NativeClauseContext(thenResult, null, null));
+        NativeClauseContext elseResult =
+                this.getChild(2)
+                        .generateNativeQuery(new NativeClauseContext(thenResult, null, null));
         if (elseResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!conditionResult.getResultingType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
+        if (!conditionResult
+                .getResultingType()
+                .getItemType()
+                .equals(BuiltinTypesCatalogue.booleanItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!thenResult.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
+        if (!thenResult
+                .getResultingType()
+                .getItemType()
+                .isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!elseResult.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
+        if (!elseResult
+                .getResultingType()
+                .getItemType()
+                .isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "( "
-            + "IF( "
-            + conditionResult.getResultingQuery()
-            + ", "
-            + thenResult.getResultingQuery()
-            + ", "
-            + elseResult.getResultingQuery()
-            + " ) )";
-        SequenceType.Arity resultingArity = (thenResult.getResultingType().getArity() == SequenceType.Arity.One
-            && elseResult.getResultingType().getArity() == SequenceType.Arity.One)
-                ? SequenceType.Arity.One
-                : SequenceType.Arity.OneOrZero;
+        String resultingQuery =
+                "( "
+                        + "IF( "
+                        + conditionResult.getResultingQuery()
+                        + ", "
+                        + thenResult.getResultingQuery()
+                        + ", "
+                        + elseResult.getResultingQuery()
+                        + " ) )";
+        SequenceType.Arity resultingArity =
+                (thenResult.getResultingType().getArity() == SequenceType.Arity.One
+                                && elseResult.getResultingType().getArity()
+                                        == SequenceType.Arity.One)
+                        ? SequenceType.Arity.One
+                        : SequenceType.Arity.OneOrZero;
         return new NativeClauseContext(
                 elseResult,
                 resultingQuery,
                 new SequenceType(
-                        thenResult.getResultingType()
-                            .getItemType()
-                            .findLeastCommonSuperTypeWith(elseResult.getResultingType().getItemType()),
-                        resultingArity
-                )
-        );
+                        thenResult
+                                .getResultingType()
+                                .getItemType()
+                                .findLeastCommonSuperTypeWith(
+                                        elseResult.getResultingType().getItemType()),
+                        resultingArity));
     }
 }

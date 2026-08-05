@@ -20,10 +20,15 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
+
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,22 +36,14 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
 
 public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public RootFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -62,15 +59,15 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri =
+                FileSystemUtil.resolveFileSystemURI(
+                        this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         try {
-            DataFrameReader reader = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .format("root");
+            DataFrameReader reader =
+                    SparkSessionManager.getInstance().getOrCreateSession().read().format("root");
             if (path != null) {
                 reader.option("tree", path);
             }
@@ -78,7 +75,8 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException(
+                        "File " + uri + " not found.", getMetadata());
             }
             throw e;
         }

@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -40,28 +41,21 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
-
 public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
     private final SequenceType sequenceType;
 
     public InstanceOfIterator(
-            RuntimeIterator child,
-            SequenceType sequenceType,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeIterator child, SequenceType sequenceType, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.sequenceType = sequenceType;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
-            DynamicContext dynamicContext
-    ) {
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
@@ -101,7 +95,8 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             ItemType itemType = childDF.getItemType();
-            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(this.sequenceType.getItemType()));
+            return ItemFactory.getInstance()
+                    .createBooleanItem(itemType.isSubtypeOf(this.sequenceType.getItemType()));
         }
         JavaRDD<Item> childRDD = this.child.getRDD(dynamicContext);
 
@@ -109,29 +104,26 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
 
-        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
+        JavaRDD<Item> result =
+                childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
         return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
     }
 
     private boolean isInvalidArity(long numOfItems) {
         return (numOfItems != 0 && this.sequenceType.isEmptySequence())
-            ||
-            (numOfItems == 0
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore))
-            ||
-            (numOfItems > 1
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero));
+                || (numOfItems == 0
+                        && (this.sequenceType.getArity() == SequenceType.Arity.One
+                                || this.sequenceType.getArity() == SequenceType.Arity.OneOrMore))
+                || (numOfItems > 1
+                        && (this.sequenceType.getArity() == SequenceType.Arity.One
+                                || this.sequenceType.getArity() == SequenceType.Arity.OneOrZero));
     }
 
     /**
-     * Item type tests. This supersedes the method isTypeOf() formerly located in the Item interface,
-     * as part of the efforts to cleanly separate item storage from item manipulation (which is
-     * the domain of responsibility of runtime iterators).
-     * 
+     * Item type tests. This supersedes the method isTypeOf() formerly located in the Item
+     * interface, as part of the efforts to cleanly separate item storage from item manipulation
+     * (which is the domain of responsibility of runtime iterators).
+     *
      * @param itemType the item type to match against the item.
      * @param itemToMatch the item to match against the type.
      * @return true if itemToMatch matches itemType.
@@ -142,32 +134,34 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 // empty map: matches
                 // - all map types
                 // - object types (js:object) WITHOUT a JSound schema attached
-                if (
-                    itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
-                        && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem))
-                ) {
+                if (itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
+                        && (!itemType.isObjectItemType()
+                                || itemType.equals(BuiltinTypesCatalogue.objectItem))) {
                     return true;
                 }
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
             }
             if (itemToMatch.getDynamicType().isSubtypeOf(itemType)) {
-                // if the item already has a dynamic type that is a subtype of the required type, we can skip the more
+                // if the item already has a dynamic type that is a subtype of the required type, we
+                // can
+                // skip the more
                 // expensive structural check
                 return true;
             }
             List<Item> keys = itemToMatch.getItemKeys();
-            ItemType keyType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                keys,
-                ExceptionMetadata.EMPTY_METADATA,
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
-            SequenceType valueSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
-                itemToMatch.getSequenceValues(),
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
+            ItemType keyType =
+                    TypeInferrenceUtils.inferItemTypeOfLocalItems(
+                            keys,
+                            ExceptionMetadata.EMPTY_METADATA,
+                            TypeInferrenceUtils.TypeMergeMode.STRICT);
+            SequenceType valueSequenceType =
+                    TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
+                            itemToMatch.getSequenceValues(),
+                            TypeInferrenceUtils.TypeMergeMode.STRICT);
             ItemType runtimeMapType = ItemTypeFactory.mapOf(keyType, valueSequenceType);
 
-            // Structural map type vs. UDT: map(xs:string, xs:int) is not a subtype of a named object
+            // Structural map type vs. UDT: map(xs:string, xs:int) is not a subtype of a named
+            // object
             // schema type, but the validated item's dynamic type is (e.g. local:x).
             return runtimeMapType.isSubtypeOf(itemType);
         } else if (itemToMatch.isArray()) {
@@ -176,29 +170,33 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 // empty array: matches
                 // - all array types
                 // - js:array()
-                if (
-                    itemType.isSubtypeOf(BuiltinTypesCatalogue.xqueryArrayItem)
-                        && (!itemType.isArrayItemType() || itemType.equals(BuiltinTypesCatalogue.arrayItem))
-                )
-                    return true;
+                if (itemType.isSubtypeOf(BuiltinTypesCatalogue.xqueryArrayItem)
+                        && (!itemType.isArrayItemType()
+                                || itemType.equals(BuiltinTypesCatalogue.arrayItem))) return true;
                 // default behavior for array types (js:array()) WITH restrictions
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
             }
             if (itemType.isXQueryArrayItemType()) {
-                // If the expected type is an array, we can check the members against the expected member type.
+                // If the expected type is an array, we can check the members against the expected
+                // member
+                // type.
                 SequenceType expectedMemberType = itemType.getMemberSequenceType();
                 SequenceType.Arity expectedArity = expectedMemberType.getArity();
                 for (List<Item> memberSequence : members) {
-                    if (expectedArity.equals(SequenceType.Arity.One) && memberSequence.size() != 1) {
+                    if (expectedArity.equals(SequenceType.Arity.One)
+                            && memberSequence.size() != 1) {
                         return false;
                     }
-                    if (expectedArity.equals(SequenceType.Arity.Zero) && !memberSequence.isEmpty()) {
+                    if (expectedArity.equals(SequenceType.Arity.Zero)
+                            && !memberSequence.isEmpty()) {
                         return false;
                     }
-                    if (expectedArity.equals(SequenceType.Arity.OneOrZero) && memberSequence.size() > 1) {
+                    if (expectedArity.equals(SequenceType.Arity.OneOrZero)
+                            && memberSequence.size() > 1) {
                         return false;
                     }
-                    if (expectedArity.equals(SequenceType.Arity.OneOrMore) && memberSequence.isEmpty()) {
+                    if (expectedArity.equals(SequenceType.Arity.OneOrMore)
+                            && memberSequence.isEmpty()) {
                         return false;
                     }
                     for (Item member : memberSequence) {
@@ -209,17 +207,15 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
                 return true;
             }
-            SequenceType memberSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
-                members,
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
+            SequenceType memberSequenceType =
+                    TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
+                            members, TypeInferrenceUtils.TypeMergeMode.STRICT);
             ItemType runtimeArrayType = ItemTypeFactory.xqueryArrayOf(memberSequenceType);
             // Structural array type vs. UDT: array(xs:string) is not a subtype of a named object
             // schema type, but the validated item's dynamic type is (e.g. local:x).
             return runtimeArrayType.isSubtypeOf(itemType)
-                || itemToMatch.getDynamicType().isSubtypeOf(itemType);
+                    || itemToMatch.getDynamicType().isSubtypeOf(itemType);
         }
         return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
-
 }

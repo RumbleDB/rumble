@@ -1,36 +1,33 @@
 package org.rumbledb.runtime.scripting.control;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.errorcodes.ErrorVariables;
-import org.rumbledb.expressions.control.CatchPattern;
-import org.rumbledb.exceptions.BreakStatementException;
-import org.rumbledb.exceptions.ContinueStatementException;
-import org.rumbledb.exceptions.ExitStatementException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.ContinueStatementException;
+import org.rumbledb.exceptions.ExitStatementException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.control.CatchPattern;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
+
 public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator tryStatementIterator;
     private final Map<CatchPattern, RuntimeIterator> catchStatements;
 
     public TryCatchStatementIterator(
             RuntimeIterator tryStatement,
             Map<CatchPattern, RuntimeIterator> catchStatements,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.concat(Stream.of(tryStatement), catchStatements.values().stream()).toList(),
-            staticContext
-        );
+                Stream.concat(Stream.of(tryStatement), catchStatements.values().stream()).toList(),
+                staticContext);
         this.tryStatementIterator = tryStatement;
         this.catchStatements = catchStatements;
     }
@@ -41,12 +38,11 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
             DynamicContext childContext = new DynamicContext(context);
             this.tryStatementIterator.materialize(childContext);
         } catch (Throwable throwable) {
-            // If we catch a break or continue exception, our catch should not be allowed to act on it
-            if (
-                throwable instanceof BreakStatementException
+            // If we catch a break or continue exception, our catch should not be allowed to act on
+            // it
+            if (throwable instanceof BreakStatementException
                     || throwable instanceof ContinueStatementException
-                    || throwable instanceof ExitStatementException
-            ) {
+                    || throwable instanceof ExitStatementException) {
                 throw throwable;
             }
             RumbleException unnestedException = RumbleException.unnestException(throwable);

@@ -20,6 +20,10 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,32 +32,26 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Runtime iterator for text node constructors.
- * 
+ *
  * @see org.rumbledb.expressions.xml.TextNodeConstructorExpression
  */
 public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
+
     /** The content iterator */
     private final DataFunctionIterator contentIterator;
 
     /**
      * Constructor for text node constructor runtime iterator
-     * 
+     *
      * @param contentIterator Iterator for the content expression
      * @param staticContext The static context
      */
     public TextNodeConstructorRuntimeIterator(
-            DataFunctionIterator contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            DataFunctionIterator contentIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
     }
@@ -74,7 +72,8 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
         }
         // 2. (cont.) Otherwise, each atomic value in the atomized sequence is cast into a string.
         for (Item item : materialized) {
-            // 3.The individual strings resulting from the previous step are merged into a single string
+            // 3.The individual strings resulting from the previous step are merged into a single
+            // string
             // by concatenating them with a single space character between each pair.
             // The resulting string becomes the content property of the constructed text node.
             textContent.append(item.getStringValue());
@@ -85,10 +84,7 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
 
         // Create and return the text node item
         this.hasNext = false;
-        Item textItem = ItemFactory.getInstance()
-            .createXmlTextNode(
-                textContent.toString()
-            );
+        Item textItem = ItemFactory.getInstance().createXmlTextNode(textContent.toString());
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             textItem.setXmlDocumentPosition(documentPath, 0);

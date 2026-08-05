@@ -1,5 +1,10 @@
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -13,15 +18,8 @@ import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-
 public class ProjectionPushdownDetectionVisitor
-        extends
-            AbstractNodeVisitor<ProjectionPushdownDetectionVisitor.ReferenceMap> {
+        extends AbstractNodeVisitor<ProjectionPushdownDetectionVisitor.ReferenceMap> {
 
     /*******************************
      * High-level explanations
@@ -50,7 +48,8 @@ public class ProjectionPushdownDetectionVisitor
     @Override
     public ReferenceMap visitForClause(ForClause clause, ReferenceMap argument) {
         ReferenceMap result = new ReferenceMap(argument);
-        // we fetch the references (nested keys) made by subsequent clauses to the current for variable
+        // we fetch the references (nested keys) made by subsequent clauses to the current for
+        // variable
         ReferenceMap forReferenceMap = argument.getReferenceMap(clause.getVariableName());
         // we recursively visit the for expression, passing the references made to it
         ReferenceMap resultMap = this.visit(clause.getExpression(), forReferenceMap);
@@ -76,7 +75,8 @@ public class ProjectionPushdownDetectionVisitor
             // and add any new references
             result.add(map);
         }
-        // We return all references made by the outside world augmented by those made by this expression
+        // We return all references made by the outside world augmented by those made by this
+        // expression
         return result;
     }
 
@@ -88,7 +88,8 @@ public class ProjectionPushdownDetectionVisitor
             return argument;
         }
         ReferenceMap result = new ReferenceMap(argument);
-        // we fetch the references (nested keys) made by subsequent clauses to the current let variable
+        // we fetch the references (nested keys) made by subsequent clauses to the current let
+        // variable
         ReferenceMap letReferenceMap = argument.getReferenceMap(clause.getVariableName());
         // we recursively visit the let expression, passing the references made to it
         ReferenceMap resultMap = this.visit(clause.getExpression(), letReferenceMap);
@@ -102,23 +103,20 @@ public class ProjectionPushdownDetectionVisitor
     @Override
     public ReferenceMap visitGroupByClause(GroupByClause clause, ReferenceMap argument) {
         ReferenceMap result = new ReferenceMap(argument);
-        clause.getGroupVariables()
-            .stream()
-            .filter(expr -> expr.getExpression() != null)
-            .map(expr -> visit(expr.getExpression(), new ReferenceMap()))
-            .forEach(result::add);
+        clause.getGroupVariables().stream()
+                .filter(expr -> expr.getExpression() != null)
+                .map(expr -> visit(expr.getExpression(), new ReferenceMap()))
+                .forEach(result::add);
         // drop variables that are introduced in the group by clause
-        clause.getGroupVariables()
-            .stream()
-            .filter(expr -> expr.getExpression() != null)
-            .map(GroupByVariableDeclaration::getVariableName)
-            .forEach(result::drop);
+        clause.getGroupVariables().stream()
+                .filter(expr -> expr.getExpression() != null)
+                .map(GroupByVariableDeclaration::getVariableName)
+                .forEach(result::drop);
         // add variables that are referenced in the group by clause
-        clause.getGroupVariables()
-            .stream()
-            .filter(expr -> expr.getExpression() == null)
-            .map(GroupByVariableDeclaration::getVariableName)
-            .forEach(variable -> result.add(variable, new ReferenceMap()));
+        clause.getGroupVariables().stream()
+                .filter(expr -> expr.getExpression() == null)
+                .map(GroupByVariableDeclaration::getVariableName)
+                .forEach(variable -> result.add(variable, new ReferenceMap()));
         return result;
     }
 
@@ -151,11 +149,10 @@ public class ProjectionPushdownDetectionVisitor
         ReferenceMap result = new ReferenceMap(argument);
         // since the count clause only looks up variable values, we add them
         // to the references made
-        clause.getSortingKeys()
-            .stream()
-            .map(OrderByClauseSortingKey::getExpression)
-            .map(expr -> visit(expr, new ReferenceMap()))
-            .forEach(result::add);
+        clause.getSortingKeys().stream()
+                .map(OrderByClauseSortingKey::getExpression)
+                .map(expr -> visit(expr, new ReferenceMap()))
+                .forEach(result::add);
         // returns the references made by the order by clause and the outside world
         // (will be passed to previous clauses and their subexpressions)
         return result;
@@ -163,14 +160,16 @@ public class ProjectionPushdownDetectionVisitor
 
     @Override
     public ReferenceMap visitReturnClause(ReturnClause expression, ReferenceMap argument) {
-        // We forward the needed projection to the retun expression and returns its referenced variables.
+        // We forward the needed projection to the retun expression and returns its referenced
+        // variables.
         return visit(expression.getReturnExpr(), argument);
     }
 
     @Override
     public ReferenceMap visitFlowrExpression(FlworExpression expression, ReferenceMap argument) {
         Clause clause = expression.getReturnClause();
-        // we go through the clauses from the last one to the first one, passing and updating the references
+        // we go through the clauses from the last one to the first one, passing and updating the
+        // references
         // starting with the references made by the outside world
         while (clause != null) {
             argument = this.visit(clause, argument);
@@ -199,24 +198,22 @@ public class ProjectionPushdownDetectionVisitor
     }
 
     @Override
-    public ReferenceMap visitVariableReference(VariableReferenceExpression expression, ReferenceMap argument) {
+    public ReferenceMap visitVariableReference(
+            VariableReferenceExpression expression, ReferenceMap argument) {
         // argument contains all the references to keys of objects returned by this expression.
-        // we return a reference map that indicates that this expression fetches these keys for this very variable.
+        // we return a reference map that indicates that this expression fetches these keys for this
+        // very variable.
         ReferenceMap map = new ReferenceMap();
         map.add(expression.getVariableName(), argument);
         return map;
     }
 
     @Override
-    public ReferenceMap visitObjectLookupExpression(ObjectLookupExpression expression, ReferenceMap argument) {
+    public ReferenceMap visitObjectLookupExpression(
+            ObjectLookupExpression expression, ReferenceMap argument) {
         if (expression.getLookupExpression() instanceof StringLiteralExpression stringLiteralExpr) {
             ReferenceMap map = new ReferenceMap();
-            map.add(
-                Name.createVariableInNoNamespace(
-                    stringLiteralExpr.getValue()
-                ),
-                argument
-            );
+            map.add(Name.createVariableInNoNamespace(stringLiteralExpr.getValue()), argument);
             return visit(expression.getMainExpression(), map);
         }
         // In the general case, we return all references made by the current expression.
@@ -227,7 +224,8 @@ public class ProjectionPushdownDetectionVisitor
     }
 
     @Override
-    public ReferenceMap visitObjectConstructor(ObjectConstructorExpression expression, ReferenceMap argument) {
+    public ReferenceMap visitObjectConstructor(
+            ObjectConstructorExpression expression, ReferenceMap argument) {
         if (expression.isMergedConstructor()) {
             return this.defaultAction(expression, argument);
         }
@@ -254,7 +252,8 @@ public class ProjectionPushdownDetectionVisitor
     }
 
     @Override
-    public ReferenceMap visitMapConstructor(MapConstructorExpression expression, ReferenceMap argument) {
+    public ReferenceMap visitMapConstructor(
+            MapConstructorExpression expression, ReferenceMap argument) {
         return defaultAction(expression, argument);
     }
 
@@ -262,15 +261,20 @@ public class ProjectionPushdownDetectionVisitor
     public ReferenceMap visitFilterExpression(FilterExpression expression, ReferenceMap argument) {
         ReferenceMap result = new ReferenceMap();
         if (expression.getPredicateExpression() instanceof IntegerLiteralExpression) {
-            expression.getChildren().stream().map(child -> visit(child, argument)).forEach(result::add);
+            expression.getChildren().stream()
+                    .map(child -> visit(child, argument))
+                    .forEach(result::add);
         } else {
-            expression.getChildren().stream().map(child -> visit(child, new ReferenceMap())).forEach(result::add);
+            expression.getChildren().stream()
+                    .map(child -> visit(child, new ReferenceMap()))
+                    .forEach(result::add);
         }
         return result;
     }
 
     @Override
-    public ReferenceMap visitFunctionCall(FunctionCallExpression expression, ReferenceMap argument) {
+    public ReferenceMap visitFunctionCall(
+            FunctionCallExpression expression, ReferenceMap argument) {
         return defaultAction(expression, new ReferenceMap());
     }
 

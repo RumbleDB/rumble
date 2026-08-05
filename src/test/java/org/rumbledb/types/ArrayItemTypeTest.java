@@ -1,31 +1,33 @@
 package org.rumbledb.types;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.rumbledb.api.Item;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import org.rumbledb.api.Item;
+
 public class ArrayItemTypeTest {
 
     /**
-     * Ensures that lax array merging reuses the object-type lax logic for element content,
-     * so arrays of objects retain the union of their nested fields with proper required/unique semantics.
+     * Ensures that lax array merging reuses the object-type lax logic for element content, so
+     * arrays of objects retain the union of their nested fields with proper required/unique
+     * semantics.
      */
     @Test
     public void laxMergeCombinesNestedObjectContent() {
-        ObjectItemType leftObject = createObjectType(
-            true,
-            field("a", BuiltinTypesCatalogue.intItem, true, false),
-            field("common", BuiltinTypesCatalogue.intItem, true, false)
-        );
-        ObjectItemType rightObject = createObjectType(
-            true,
-            field("b", BuiltinTypesCatalogue.stringItem, false, true),
-            field("common", BuiltinTypesCatalogue.stringItem, false, true)
-        );
+        ObjectItemType leftObject =
+                createObjectType(
+                        true,
+                        field("a", BuiltinTypesCatalogue.intItem, true, false),
+                        field("common", BuiltinTypesCatalogue.intItem, true, false));
+        ObjectItemType rightObject =
+                createObjectType(
+                        true,
+                        field("b", BuiltinTypesCatalogue.stringItem, false, true),
+                        field("common", BuiltinTypesCatalogue.stringItem, false, true));
         ArrayItemType left = createArrayType(leftObject, null, null);
         ArrayItemType right = createArrayType(rightObject, null, null);
 
@@ -39,12 +41,16 @@ public class ArrayItemTypeTest {
         Assertions.assertTrue(mergedContent.getObjectKeysFacet().contains("b"));
         FieldDescriptor common = mergedContent.getObjectContentFacet("common");
         Assertions.assertNotNull(common);
-        Assertions.assertFalse(common.isRequired(), "Common field should become optional if an operand is optional.");
-        Assertions.assertTrue(common.isUnique(), "Common field should be unique if any operand is unique.");
+        Assertions.assertFalse(
+                common.isRequired(),
+                "Common field should become optional if an operand is optional.");
+        Assertions.assertTrue(
+                common.isUnique(), "Common field should be unique if any operand is unique.");
     }
 
     /**
-     * Verifies that lax merging propagates min/max length facets conservatively and drops them when incompatible.
+     * Verifies that lax merging propagates min/max length facets conservatively and drops them when
+     * incompatible.
      */
     @Test
     public void laxMergeRespectsLengthFacets() {
@@ -56,13 +62,15 @@ public class ArrayItemTypeTest {
 
         ArrayItemType conflictingLeft = createArrayType(BuiltinTypesCatalogue.intItem, 5, 6);
         ArrayItemType conflictingRight = createArrayType(BuiltinTypesCatalogue.intItem, 1, 2);
-        ArrayItemType conflictingMerged = (ArrayItemType) conflictingLeft.findLeastCommonSuperTypeLax(conflictingRight);
+        ArrayItemType conflictingMerged =
+                (ArrayItemType) conflictingLeft.findLeastCommonSuperTypeLax(conflictingRight);
         Assertions.assertEquals(Integer.valueOf(1), conflictingMerged.getMinLengthFacet());
         Assertions.assertEquals(Integer.valueOf(6), conflictingMerged.getMaxLengthFacet());
     }
 
     /**
-     * Ensures that lax merging falls back to the strict common supertype when the other operand is not an array.
+     * Ensures that lax merging falls back to the strict common supertype when the other operand is
+     * not an array.
      */
     @Test
     public void laxMergeFallsBackForNonArrayTypes() {
@@ -74,13 +82,7 @@ public class ArrayItemTypeTest {
 
     private ArrayItemType createArrayType(ItemType content, Integer minLength, Integer maxLength) {
         return new ArrayItemType(
-                null,
-                BuiltinTypesCatalogue.arrayItem,
-                content,
-                minLength,
-                maxLength,
-                null
-        );
+                null, BuiltinTypesCatalogue.arrayItem, content, minLength, maxLength, null);
     }
 
     private ObjectItemType createObjectType(boolean closed, FieldDescriptor... descriptors) {
@@ -97,8 +99,7 @@ public class ArrayItemTypeTest {
                 keys,
                 content,
                 Collections.<String>emptyList(),
-                Collections.<Item>emptyList()
-        );
+                Collections.<Item>emptyList());
     }
 
     private FieldDescriptor field(String name, ItemType type, boolean required, boolean unique) {

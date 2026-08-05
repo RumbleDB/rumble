@@ -16,8 +16,7 @@ import org.rumbledb.types.SequenceType;
 
 public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator argumentIterator;
     private final SequenceType targetSequenceType;
@@ -25,8 +24,7 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
     public ConstructorFunctionIterator(
             FunctionIdentifier identifier,
             List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
         this.argumentIterator = arguments.get(0);
@@ -35,11 +33,11 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        RuntimeIterator castIterator = new CastIterator(
-                this.argumentIterator,
-                this.targetSequenceType,
-                this.staticContext.toBuilder().staticType(this.targetSequenceType).build()
-        );
+        RuntimeIterator castIterator =
+                new CastIterator(
+                        this.argumentIterator,
+                        this.targetSequenceType,
+                        this.staticContext.toBuilder().staticType(this.targetSequenceType).build());
         return castIterator.materializeFirstItemOrNull(dynamicContext);
     }
 }

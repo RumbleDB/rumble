@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.scripting.control;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.statement.Statement;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 public class SwitchStatement extends Statement {
@@ -20,8 +21,7 @@ public class SwitchStatement extends Statement {
             Expression testCondition,
             List<SwitchCaseStatement> cases,
             Statement defaultStatement,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.testCondition = testCondition;
         this.cases = cases;
@@ -74,5 +74,4 @@ public class SwitchStatement extends Statement {
             sb.append(")\n");
         }
     }
-
 }

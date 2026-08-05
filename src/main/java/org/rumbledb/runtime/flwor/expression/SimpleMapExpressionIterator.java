@@ -20,6 +20,15 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.TreeMap;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -28,6 +37,9 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.StructType;
+
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -43,21 +55,9 @@ import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.spark.SparkSessionManager;
 
-import scala.Tuple2;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.TreeMap;
-
 public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
     private Item nextResult;
@@ -65,12 +65,10 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     private Queue<Item> mapValues;
     private long position;
 
-
     public SimpleMapExpressionIterator(
             RuntimeIterator sequence,
             RuntimeIterator mapExpression,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(sequence, mapExpression), staticContext);
         this.leftIterator = sequence;
         this.rightIterator = mapExpression;
@@ -82,11 +80,8 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
         long count = childRDD.count();
-        FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SimpleMapExpressionClosureZipped(
-                this.rightIterator,
-                dynamicContext,
-                count
-        );
+        FlatMapFunction<Tuple2<Item, Long>, Item> transformation =
+                new SimpleMapExpressionClosureZipped(this.rightIterator, dynamicContext, count);
         return zippedChildRDD.flatMap(transformation);
     }
 
@@ -128,7 +123,8 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
             setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException("Invalid next() call in simple map expression", getMetadata());
+        throw new IteratorFlowException(
+                "Invalid next() call in simple map expression", getMetadata());
     }
 
     private void setNextResult() {
@@ -139,7 +135,8 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
             this.hasNext = true;
         } else if (this.leftIterator.hasNext()) {
             List<Item> mapValuesRaw = getRightIteratorValues();
-            while (mapValuesRaw.size() == 0 && this.leftIterator.hasNext()) { // Discard all empty sequences
+            while (mapValuesRaw.size() == 0
+                    && this.leftIterator.hasNext()) { // Discard all empty sequences
                 mapValuesRaw = getRightIteratorValues();
             }
 
@@ -160,7 +157,9 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     private List<Item> getRightIteratorValues() {
         Item item = this.leftIterator.next();
         List<Item> currentItems = new ArrayList<>();
-        this.mapDynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
+        this.mapDynamicContext
+                .getVariableValues()
+                .addVariableValue(Name.CONTEXT_ITEM, currentItems);
         this.mapDynamicContext.getVariableValues().setPosition(++this.position);
         currentItems.add(item);
         List<Item> mapValuesRaw = this.rightIterator.materialize(this.mapDynamicContext);
@@ -171,7 +170,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<Name, DynamicContext.VariableDependency>();
+                new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.rightIterator.getVariableDependencies());
         result.remove(Name.CONTEXT_ITEM);
         result.putAll(this.leftIterator.getVariableDependencies());
@@ -189,41 +188,35 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         if (df.isEmptySequence()) {
             return df;
         }
-        NativeClauseContext forContext = new NativeClauseContext(
-                FLWOR_CLAUSES.FOR,
-                df.getDataFrame().schema(),
-                context
-        );
+        NativeClauseContext forContext =
+                new NativeClauseContext(FLWOR_CLAUSES.FOR, df.getDataFrame().schema(), context);
         NativeClauseContext nativeQuery = this.rightIterator.generateNativeQuery(forContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             JavaRDD<Item> rdd = getRDDAux(context);
             JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));
-            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(
-                getStaticType().getItemType(),
-                this.staticContext
-            );
+            StructType schema =
+                    ValidateTypeIterator.convertToDataFrameSchema(
+                            getStaticType().getItemType(), this.staticContext);
             schema.printTreeString();
-            Dataset<Row> result = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .createDataFrame(rowRDD, schema);
+            Dataset<Row> result =
+                    SparkSessionManager.getInstance()
+                            .getOrCreateSession()
+                            .createDataFrame(rowRDD, schema);
             return new HomogeneousItemDataFrame(result, getStaticType().getItemType());
         }
         LogManager.getLogger("SimpleMapExpressionIterator")
-            .info("Rumble was able to optimize a simple map expression to a native SQL query.");
+                .info("Rumble was able to optimize a simple map expression to a native SQL query.");
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-        Dataset<Row> result = df.getDataFrame()
-            .sparkSession()
-            .sql(
-                String.format(
-                    "select %s as `%s` from %s",
-                    nativeQuery.getResultingQuery(),
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    input
-                )
-            );
+        Dataset<Row> result =
+                df.getDataFrame()
+                        .sparkSession()
+                        .sql(
+                                String.format(
+                                        "select %s as `%s` from %s",
+                                        nativeQuery.getResultingQuery(),
+                                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                        input));
         // execute query
         return new HomogeneousItemDataFrame(result, getStaticType().getItemType());
     }
-
-
 }

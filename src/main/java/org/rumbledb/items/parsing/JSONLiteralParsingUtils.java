@@ -1,16 +1,16 @@
 package org.rumbledb.items.parsing;
 
+import java.math.BigDecimal;
+
 import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 
-import java.math.BigDecimal;
-
 public final class JSONLiteralParsingUtils {
 
-    private JSONLiteralParsingUtils() {
-    }
+    private JSONLiteralParsingUtils() {}
 
     public static Item getItemFromJSONNumber(String number, String numberFormat) {
         if (JSONParsingOptions.NUMBER_FORMAT_DOUBLE.equals(numberFormat)) {
@@ -35,12 +35,10 @@ public final class JSONLiteralParsingUtils {
     }
 
     public static DecodedEscape decodeEscapeSequence(String input, int escapeStart) {
-        if (
-            input == null
+        if (input == null
                 || escapeStart < 0
                 || escapeStart >= input.length()
-                || input.charAt(escapeStart) != '\\'
-        ) {
+                || input.charAt(escapeStart) != '\\') {
             throw new IllegalArgumentException("Escape sequence must start with a backslash.");
         }
         if (escapeStart + 1 >= input.length()) {
@@ -58,7 +56,9 @@ public final class JSONLiteralParsingUtils {
             case 'r' -> new DecodedEscape("\r", "\\r", escapeStart + 2);
             case 't' -> new DecodedEscape("\t", "\\t", escapeStart + 2);
             case 'u' -> decodeUnicodeEscape(input, escapeStart);
-            default -> throw new IllegalArgumentException("Invalid escape sequence in escaped JSON string.");
+            default ->
+                    throw new IllegalArgumentException(
+                            "Invalid escape sequence in escaped JSON string.");
         };
     }
 
@@ -67,15 +67,15 @@ public final class JSONLiteralParsingUtils {
         String firstEscape = "\\u" + hex4(first);
         int nextIndex = escapeStart + 6;
 
-        if (Character.isHighSurrogate((char) first) && canReadLowSurrogateEscape(input, nextIndex)) {
+        if (Character.isHighSurrogate((char) first)
+                && canReadLowSurrogateEscape(input, nextIndex)) {
             int second = parseHexQuad(input, nextIndex + 2);
             if (Character.isLowSurrogate((char) second)) {
                 int codePoint = Character.toCodePoint((char) first, (char) second);
                 return new DecodedEscape(
                         new String(Character.toChars(codePoint)),
                         firstEscape + "\\u" + hex4(second),
-                        nextIndex + 6
-                );
+                        nextIndex + 6);
             }
         }
 
@@ -92,7 +92,8 @@ public final class JSONLiteralParsingUtils {
             char c = input.charAt(start + i);
             int digit = Character.digit(c, 16);
             if (digit < 0) {
-                throw new IllegalArgumentException("Invalid unicode escape in escaped JSON string.");
+                throw new IllegalArgumentException(
+                        "Invalid unicode escape in escaped JSON string.");
             }
             value = (value << 4) | digit;
         }
@@ -100,7 +101,9 @@ public final class JSONLiteralParsingUtils {
     }
 
     private static boolean canReadLowSurrogateEscape(String input, int index) {
-        return index + 5 < input.length() && input.charAt(index) == '\\' && input.charAt(index + 1) == 'u';
+        return index + 5 < input.length()
+                && input.charAt(index) == '\\'
+                && input.charAt(index + 1) == 'u';
     }
 
     private static String hex4(int value) {
@@ -118,6 +121,5 @@ public final class JSONLiteralParsingUtils {
             this.rawEscape = rawEscape;
             this.nextIndex = nextIndex;
         }
-
     }
 }

@@ -20,16 +20,16 @@
 
 package org.rumbledb.expressions.postfix;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import java.util.ArrayList;
-import java.util.List;
-
 
 @Getter
 public class FilterExpression extends Expression {
@@ -37,7 +37,8 @@ public class FilterExpression extends Expression {
     private Expression mainExpression;
     private Expression predicateExpression;
 
-    public FilterExpression(Expression mainExpression, Expression predicateExpression, ExceptionMetadata metadata) {
+    public FilterExpression(
+            Expression mainExpression, Expression predicateExpression, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Main expression cannot be null in a postfix expression.");

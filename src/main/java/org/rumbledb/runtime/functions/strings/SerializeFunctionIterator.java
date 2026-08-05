@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
@@ -27,31 +30,26 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.SerializationParameterUtils;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.Serializers;
 import org.rumbledb.serialization.SerializerUtils;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.serialization.Serializers;
 
 public class SerializeFunctionIterator extends LocalFunctionCallIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public SerializeFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
-            List<Item> items = this.getChild(0).materialize(this.currentDynamicContextForLocalExecution);
+            List<Item> items =
+                    this.getChild(0).materialize(this.currentDynamicContextForLocalExecution);
             SerializationParameters params = resolveSerializationParameters();
             SerializationParameters itemParams = SerializationParameters.copy(params);
             if ("xml".equalsIgnoreCase(params.getMethod())) {
@@ -72,15 +70,12 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
                 } else {
                     throw new InvalidArgumentTypeException(
                             "JSON serialization requires the top-level sequence to contain at most one item.",
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
             } else {
-                if (
-                    "xml".equalsIgnoreCase(params.getMethod())
+                if ("xml".equalsIgnoreCase(params.getMethod())
                         && !params.getOmitXmlDeclaration()
-                        && !items.isEmpty()
-                ) {
+                        && !items.isEmpty()) {
                     SerializerUtils.appendXmlDeclaration(stringBuilder, params);
                 }
                 for (int i = 0; i < items.size(); i++) {
@@ -94,21 +89,20 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
         } else {
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " serialize function",
-                    getMetadata()
-            );
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " serialize function", getMetadata());
         }
     }
 
     private SerializationParameters resolveSerializationParameters() {
-        SerializationParameters params = SerializationParameterUtils.defaultsForSerializeFunction(
-            this.staticContext.getQueryLanguage()
-        );
+        SerializationParameters params =
+                SerializationParameterUtils.defaultsForSerializeFunction(
+                        this.staticContext.getQueryLanguage());
         if (this.getChildren().size() < 2) {
             return params;
         }
 
-        List<Item> optionsItems = this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> optionsItems =
+                this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
         SerializationParameterUtils.applyParameterItems(params, optionsItems, getMetadata());
         return params;
     }

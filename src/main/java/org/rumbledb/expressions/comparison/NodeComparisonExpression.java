@@ -20,22 +20,24 @@
 
 package org.rumbledb.expressions.comparison;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * An expression that represents a node comparison.
- * 
- * Node comparisons are used to compare two nodes, by their identity or by their document order.
- * 
- * @see <a href="https://www.w3.org/TR/xquery-31/#id-node-comparisons">XQuery 3.1, 3.7.3: Node Comparisons</a>
+ *
+ * <p>Node comparisons are used to compare two nodes, by their identity or by their document order.
+ *
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-node-comparisons">XQuery 3.1, 3.7.3: Node
+ *     Comparisons</a>
  */
 @Getter
 public class NodeComparisonExpression extends Expression {
@@ -78,8 +80,7 @@ public class NodeComparisonExpression extends Expression {
             Expression leftExpression,
             Expression rightExpression,
             NodeComparisonOperator operator,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;

@@ -24,13 +24,13 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
-
 
 @Getter
 public class InstanceOfExpression extends Expression {
@@ -39,10 +39,7 @@ public class InstanceOfExpression extends Expression {
     private SequenceType sequenceType;
 
     public InstanceOfExpression(
-            Expression mainExpression,
-            SequenceType sequenceType,
-            ExceptionMetadata metadata
-    ) {
+            Expression mainExpression, SequenceType sequenceType, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
@@ -68,14 +65,14 @@ public class InstanceOfExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(
-            " ("
-                + (this.sequenceType.toString())
-                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
-                + ") "
-        );
+                " ("
+                        + (this.sequenceType.toString())
+                        + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
+                        + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+                " | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -105,5 +102,4 @@ public class InstanceOfExpression extends Expression {
         indentIt(sb, indent);
         sb.append(")\n");
     }
-
 }

@@ -20,10 +20,15 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
+
 import org.apache.spark.SparkException;
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
@@ -31,22 +36,14 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
 
 public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public StructuredJsonLinesFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -56,28 +53,31 @@ public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterato
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri =
+                FileSystemUtil.resolveFileSystemURI(
+                        this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         try {
-            Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .option("mode", "FAILFAST")
-                .json(FileSystemUtil.convertURIToStringForSpark(uri));
+            Dataset<Row> dataFrame =
+                    SparkSessionManager.getInstance()
+                            .getOrCreateSession()
+                            .read()
+                            .option("mode", "FAILFAST")
+                            .json(FileSystemUtil.convertURIToStringForSpark(uri));
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException(
+                        "File " + uri + " not found.", getMetadata());
             }
             if (e instanceof SparkException) {
                 throw new RumbleException(
                         "File "
-                            + uri
-                            + " contains a malformed JSON document that does not fit into the JSON lines format.",
-                        getMetadata()
-                );
+                                + uri
+                                + " contains a malformed JSON document that does not fit into the JSON lines format.",
+                        getMetadata());
             }
             throw e;
         }

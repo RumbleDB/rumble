@@ -17,18 +17,17 @@
 
 package org.rumbledb.expressions.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * XQuery 3.1 map constructor: {@code map { key : value, ... }}.
- */
+/** XQuery 3.1 map constructor: {@code map { key : value, ... }}. */
 @Getter
 public class MapConstructorExpression extends Expression {
 
@@ -36,10 +35,7 @@ public class MapConstructorExpression extends Expression {
     private final List<Expression> values;
 
     public MapConstructorExpression(
-            List<Expression> keys,
-            List<Expression> values,
-            ExceptionMetadata metadata
-    ) {
+            List<Expression> keys, List<Expression> values, ExceptionMetadata metadata) {
         super(metadata);
         this.keys = keys;
         this.values = values;

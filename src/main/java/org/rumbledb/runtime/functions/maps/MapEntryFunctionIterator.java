@@ -13,24 +13,22 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 /**
  * W3C XPath/XQuery {@code map:entry}:
+ *
  * <ul>
- * <li>atomizes a single key into exactly one atomic value</li>
- * <li>materializes the value into a general sequence (possibly empty)</li>
- * <li>returns a map containing a single key/value binding</li>
+ *   <li>atomizes a single key into exactly one atomic value
+ *   <li>materializes the value into a general sequence (possibly empty)
+ *   <li>returns a map containing a single key/value binding
  * </ul>
  */
 public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator keyIterator;
     private final RuntimeIterator valueIterator;
 
     public MapEntryFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.keyIterator = arguments.get(0);
         this.valueIterator = arguments.get(1);
@@ -44,11 +42,7 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         this.valueIterator.materialize(dynamicContext, valueSequence);
 
         return ItemFactory.getInstance()
-            .createMapItem(
-                key,
-                valueSequence,
-                this.getRuntimeStaticContext().isQuerySideEffecting()
-            );
+                .createMapItem(
+                        key, valueSequence, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 }
-

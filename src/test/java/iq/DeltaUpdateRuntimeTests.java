@@ -20,18 +20,18 @@
 
 package iq;
 
-import iq.base.UpdateRuntimeTestsBase;
+import java.io.File;
+
 import org.apache.spark.SparkConf;
 
-import java.io.File;
+import iq.base.UpdateRuntimeTestsBase;
 
 public class DeltaUpdateRuntimeTests extends UpdateRuntimeTestsBase {
 
-    public static final File runtimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/runtime-delta-updates"
-    );
+    public static final File runtimeTestsDirectory =
+            new File(
+                    System.getProperty("user.dir")
+                            + "/src/test/resources/test_files/runtime-delta-updates");
 
     @Override
     protected File testDirectory() {
@@ -40,7 +40,10 @@ public class DeltaUpdateRuntimeTests extends UpdateRuntimeTestsBase {
 
     @Override
     protected void configureUpdateStore(SparkConf sparkConfiguration) {
-        sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
-        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
+        sparkConfiguration.set(
+                "spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
+        sparkConfiguration.set(
+                "spark.sql.catalog.spark_catalog",
+                "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
     }
 }

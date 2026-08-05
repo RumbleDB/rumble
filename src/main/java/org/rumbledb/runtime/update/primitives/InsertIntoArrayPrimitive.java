@@ -1,16 +1,17 @@
 package org.rumbledb.runtime.update.primitives;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
@@ -23,13 +24,11 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
             Item targetArray,
             Item positionInt,
             List<Item> sourceSequence,
-            ExceptionMetadata metadata
-    ) {
-        if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize() + 1) {
+            ExceptionMetadata metadata) {
+        if (positionInt.getIntValue() <= 0
+                || positionInt.getIntValue() > targetArray.getSize() + 1) {
             throw new CannotResolveUpdateSelectorException(
-                    "Cannot insert item at index out of range of target array",
-                    metadata
-            );
+                    "Cannot insert item at index out of range of target array", metadata);
         }
 
         this.target = targetArray;
@@ -63,28 +62,35 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
         String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
-        // DeltaTable dt = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(), location);
+        // DeltaTable dt =
+        // DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(),
+        // location);
 
         if (startOfArrayIndexing == -1) {
-            String selectArrayQuery = "SELECT "
-                + pathIn
-                + " AS `"
-                + SparkSessionManager.nonObjectJSONiqItemColumnName
-                + "` FROM "
-                + location
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
+            String selectArrayQuery =
+                    "SELECT "
+                            + pathIn
+                            + " AS `"
+                            + SparkSessionManager.nonObjectJSONiqItemColumnName
+                            + "` FROM "
+                            + location
+                            + " WHERE `"
+                            + SparkSessionManager.rowIdColumnName
+                            + "` == "
+                            + rowID;
 
-            Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
+            Dataset<Row> arrayDF =
+                    SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
-                .getType();
+            ItemType arrayType =
+                    ItemTypeFactory.createItemType(arrayDF.schema())
+                            .getObjectContentFacet(
+                                    SparkSessionManager.nonObjectJSONiqItemColumnName)
+                            .getType();
 
             this.applyItem();
-            this.applySetFieldInCollection(location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
+            this.applySetFieldInCollection(
+                    location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
         } else {
             this.arrayIndexingApplyDelta();
         }

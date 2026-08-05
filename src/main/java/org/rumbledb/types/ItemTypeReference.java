@@ -1,5 +1,8 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
+import java.util.*;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -9,13 +12,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndefinedTypeException;
 
-import java.io.Serial;
-import java.util.*;
-
 public class ItemTypeReference extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private ItemType resolvedItemType;
     private Name name;
@@ -43,8 +42,6 @@ public class ItemTypeReference extends AbstractItemType {
         }
     }
 
-
-
     @Override
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
 
@@ -63,12 +60,13 @@ public class ItemTypeReference extends AbstractItemType {
     private static final Name newAtomicName = new Name(Name.XS_NS, "xs", "anyAtomicType");
 
     /**
-     * in jsoniq 1.0 anyAtomicType was called atomic. This function gives backwards compatibility by replacing atomic
-     * with anyAtomicType depending on the jsoniq version.
+     * in jsoniq 1.0 anyAtomicType was called atomic. This function gives backwards compatibility by
+     * replacing atomic with anyAtomicType depending on the jsoniq version.
      */
     public static Name renameAtomic(StaticContext context, Name oldName) {
         if (context.getQueryLanguage().equals("jsoniq10")) {
-            if (oldName.getNamespace() != null && oldName.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
+            if (oldName.getNamespace() != null
+                    && oldName.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
                 if (oldAtomicName.getLocalName().equals(oldName.getLocalName())) {
                     return newAtomicName;
                 }
@@ -173,7 +171,6 @@ public class ItemTypeReference extends AbstractItemType {
     public boolean hasName() {
         return true;
     }
-
 
     @Override
     public Name getName() {

@@ -25,6 +25,7 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -38,19 +39,16 @@ import org.rumbledb.types.SequenceType;
 
 public class ForClause extends Clause {
 
-    @Getter
-    private final Name variableName;
+    @Getter private final Name variableName;
     private final boolean allowingEmpty;
-    @Getter
-    private final Name positionalVariableName;
+    @Getter private final Name positionalVariableName;
     protected SequenceType sequenceType;
-    @Getter
-    protected Expression expression;
+    @Getter protected Expression expression;
 
-    // Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
-    @Setter
-    protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
-
+    // Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or
+    // DF)
+    // format in a tuple
+    @Setter protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
     public ForClause(
             Name variableName,
@@ -58,8 +56,7 @@ public class ForClause extends Clause {
             SequenceType sequenceType,
             Name positionalVariableName,
             Expression expression,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.FOR, metadata);
         if (variableName == null) {
             throw new SemanticException("For clause must have a variable", metadata);
@@ -69,7 +66,6 @@ public class ForClause extends Clause {
         this.positionalVariableName = positionalVariableName;
         this.sequenceType = sequenceType;
         this.expression = expression;
-
     }
 
     public boolean isAllowEmpty() {
@@ -77,7 +73,9 @@ public class ForClause extends Clause {
     }
 
     public SequenceType getSequenceType() {
-        return this.sequenceType == null ? SequenceType.createSequenceType("item") : this.sequenceType;
+        return this.sequenceType == null
+                ? SequenceType.createSequenceType("item")
+                : this.sequenceType;
     }
 
     public SequenceType getActualSequenceType() {
@@ -85,10 +83,8 @@ public class ForClause extends Clause {
     }
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
-        if (
-            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.variableHighestStorageMode == ExecutionMode.UNSET
-        ) {
+        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.variableHighestStorageMode == ExecutionMode.UNSET) {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
@@ -118,16 +114,15 @@ public class ForClause extends Clause {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(
-            " ("
-                + ("$" + this.variableName)
-                + ", "
-                + this.getSequenceType().toString()
-                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
-                + ", "
-                + (this.allowingEmpty ? "allowing empty, " : "")
-                + this.positionalVariableName
-                + ") "
-        );
+                " ("
+                        + ("$" + this.variableName)
+                        + ", "
+                        + this.getSequenceType().toString()
+                        + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
+                        + ", "
+                        + (this.allowingEmpty ? "allowing empty, " : "")
+                        + this.positionalVariableName
+                        + ") ");
         buffer.append(" | mode: " + this.highestExecutionMode);
         buffer.append(" | variable mode: " + this.variableHighestStorageMode);
         buffer.append("\n");
@@ -143,10 +138,8 @@ public class ForClause extends Clause {
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("for $" + this.variableName.toString());
-        if (this.sequenceType != null)
-            sb.append(" as " + this.sequenceType.toString());
-        if (this.allowingEmpty)
-            sb.append(" allowing empty ");
+        if (this.sequenceType != null) sb.append(" as " + this.sequenceType.toString());
+        if (this.allowingEmpty) sb.append(" allowing empty ");
         if (this.positionalVariableName != null)
             sb.append(" at $" + this.positionalVariableName.toString());
         sb.append(" in (");

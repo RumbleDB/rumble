@@ -24,27 +24,21 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.spark.SparkException;
+
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.errorcodes.ErrorCode;
 
-
-import org.apache.spark.SparkException;
-
 public class RumbleException extends RuntimeException {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-    @Getter
-    private final ErrorCode errorCode;
+    @Serial private static final long serialVersionUID = 1L;
+    @Getter private final ErrorCode errorCode;
     private final String errorMessage;
-    @Getter
-    private final List<Item> errorValue;
-    @Setter
-    @Getter
-    private ExceptionMetadata metadata;
+    @Getter private final List<Item> errorValue;
+    @Setter @Getter private ExceptionMetadata metadata;
 
     public RumbleException(String message, ErrorCode errorCode) {
         super(formatMessage(errorCode, ExceptionMetadata.EMPTY_METADATA, message));
@@ -62,7 +56,11 @@ public class RumbleException extends RuntimeException {
         this.errorValue = Collections.emptyList();
     }
 
-    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata, List<Item> errorValue) {
+    public RumbleException(
+            String message,
+            ErrorCode errorCode,
+            ExceptionMetadata metadata,
+            List<Item> errorValue) {
         super(formatMessage(errorCode, metadata, message));
         this.errorCode = errorCode == null ? ErrorCode.RuntimeExceptionErrorCode : errorCode;
         this.metadata = metadata;
@@ -78,9 +76,27 @@ public class RumbleException extends RuntimeException {
         this.errorValue = Collections.emptyList();
     }
 
-    private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message) {
+    private static String formatMessage(
+            ErrorCode errorCode, ExceptionMetadata metadata, String message) {
         if (metadata.getStart().line() == 0) {
             return "There was an error."
+                    + "\nCode: ["
+                    + errorCode
+                    + "]\n"
+                    + "Message: "
+                    + message
+                    + "\n"
+                    + "Metadata: "
+                    + metadata
+                    + "\n"
+                    + "This code can also be looked up in the documentation and specifications for more information.\n";
+        }
+        return "There was an error on line "
+                + metadata.getStart().line()
+                + " in "
+                + metadata.getLocation()
+                + ":\n\n"
+                + metadata.getLineInContext()
                 + "\nCode: ["
                 + errorCode
                 + "]\n"
@@ -91,23 +107,6 @@ public class RumbleException extends RuntimeException {
                 + metadata
                 + "\n"
                 + "This code can also be looked up in the documentation and specifications for more information.\n";
-        }
-        return "There was an error on line "
-            + metadata.getStart().line()
-            + " in "
-            + metadata.getLocation()
-            + ":\n\n"
-            + metadata.getLineInContext()
-            + "\nCode: ["
-            + errorCode
-            + "]\n"
-            + "Message: "
-            + message
-            + "\n"
-            + "Metadata: "
-            + metadata
-            + "\n"
-            + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
 
     public String getJSONiqErrorMessage() {

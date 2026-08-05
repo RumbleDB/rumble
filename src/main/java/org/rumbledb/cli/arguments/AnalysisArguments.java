@@ -18,44 +18,42 @@
 
 package org.rumbledb.cli.arguments;
 
-import org.rumbledb.config.model.AnalysisConfig;
-
 import picocli.CommandLine.Option;
+
+import org.rumbledb.config.model.AnalysisConfig;
 
 public final class AnalysisArguments {
     @Option(
-        names = { "-t", "--static-typing" },
-        negatable = true,
-        description = {
-            "Activates static type analysis, which annotates the expression tree with inferred types at compile time.",
-            "Enables more optimizations (experimental). Deactivated by default."
-        }
-    )
+            names = {"-t", "--static-typing"},
+            negatable = true,
+            description = {
+                "Activates static type analysis, which annotates the expression tree with inferred types at compile time.",
+                "Enables more optimizations (experimental). Deactivated by default."
+            })
     private Boolean enableStaticTyping;
 
     @Option(
-        names = "--print-inferred-types",
-        negatable = true,
-        description = "Prints inferred types."
-    )
+            names = "--print-inferred-types",
+            negatable = true,
+            description = "Prints inferred types.")
     private Boolean printInferredTypes;
 
     @Option(
-        names = "--check-return-types-of-builtin-functions",
-        negatable = true,
-        description = "Checks return types of built-in functions."
-    )
+            names = "--check-return-types-of-builtin-functions",
+            negatable = true,
+            description = "Checks return types of built-in functions.")
     private Boolean checkReturnTypesOfBuiltinFunctions;
 
     public AnalysisConfig toConfig() {
         AnalysisConfig.AnalysisConfigBuilder builder = AnalysisConfig.builder();
 
-        OptionConversion.applyBooleanIfPresent(this.enableStaticTyping, builder::enableStaticTyping);
-        OptionConversion.applyBooleanIfPresent(this.printInferredTypes, builder::printInferredTypes);
         OptionConversion.applyBooleanIfPresent(
-            this.checkReturnTypesOfBuiltinFunctions,
-            builder::checkReturnTypeOfBuiltinFunctions
-        );
+                this.enableStaticTyping, builder::enableStaticTyping);
+        OptionConversion.applyBooleanIfPresent(
+                this.printInferredTypes, builder::printInferredTypes);
+        OptionConversion.applyBooleanIfPresent(
+                this.checkReturnTypesOfBuiltinFunctions,
+                builder::checkReturnTypeOfBuiltinFunctions);
 
         return builder.build();
     }

@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.arithmetics;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collections;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,24 +37,15 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Collections;
-
 public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private final boolean negated;
     private final RuntimeIterator child;
     private Item item;
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public UnaryOperationIterator(
-            RuntimeIterator child,
-            boolean negated,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeIterator child, boolean negated, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.negated = negated;
@@ -63,8 +59,7 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Unary expression requires at most one item in its input sequence.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (this.item == null) {
             return null;
@@ -76,11 +71,8 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!this.negated) {
             if (!this.item.isNumeric()) {
                 throw new UnexpectedTypeException(
-                        "Unary expression has non numeric args "
-                            +
-                            this.item.serialize(),
-                        getMetadata()
-                );
+                        "Unary expression has non numeric args " + this.item.serialize(),
+                        getMetadata());
             }
             return this.item;
         }
@@ -89,7 +81,8 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.item.isInteger()) {
             return ItemFactory.getInstance()
-                .createIntegerItem(BigInteger.valueOf(-1).multiply(this.item.getIntegerValue()));
+                    .createIntegerItem(
+                            BigInteger.valueOf(-1).multiply(this.item.getIntegerValue()));
         }
         if (this.item.isFloat()) {
             return ItemFactory.getInstance().createFloatItem(-1 * this.item.getFloatValue());
@@ -99,14 +92,10 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.item.isDecimal()) {
             return ItemFactory.getInstance()
-                .createDecimalItem(this.item.getDecimalValue().multiply(new BigDecimal(-1)));
+                    .createDecimalItem(this.item.getDecimalValue().multiply(new BigDecimal(-1)));
         }
         throw new UnexpectedTypeException(
-                "Unary expression has non numeric args "
-                    +
-                    this.item.serialize(),
-                getMetadata()
-        );
+                "Unary expression has non numeric args " + this.item.serialize(), getMetadata());
     }
 
     @Override
@@ -121,15 +110,10 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         String leftQuery = leftResult.getResultingQuery();
         SequenceType resultType = leftResult.getResultingType();
         if (this.negated) {
-            String resultingQuery = "( "
-                + " - "
-                + leftQuery
-                + " )";
+            String resultingQuery = "( " + " - " + leftQuery + " )";
             return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
         } else {
-            String resultingQuery = "( "
-                + leftQuery
-                + " )";
+            String resultingQuery = "( " + leftQuery + " )";
             return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
         }
     }

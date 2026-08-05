@@ -4,14 +4,14 @@ import java.io.Serial;
 import java.util.List;
 
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.items.xml.NamespaceItem;
 
 public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final org.rumbledb.serialization.SerializationParameters params;
 
@@ -102,7 +102,10 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
                     firstTime = false;
                 }
                 Item value = item.getItemByKey(key);
-                sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
+                sb.append("\"")
+                        .append(StringEscapeUtils.escapeJson(key))
+                        .append("\"")
+                        .append(" : ");
                 if (this.params.getIndent()) {
                     serialize(value, sb, indent + "  ", false);
                 } else {
@@ -125,7 +128,8 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
             for (Item child : item.children()) {
                 StringBuilder childBuffer = new StringBuilder();
                 serialize(child, childBuffer, indent, isTopLevel);
-                if (childBuffer.length() > 0 && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
+                if (childBuffer.length() > 0
+                        && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
                     childBuffer.setLength(childBuffer.length() - 1);
                 }
                 sb.append(childBuffer);
@@ -209,7 +213,8 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
     }
 
     private void appendJSONAtomicItem(Item item, StringBuilder sb) {
-        boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
+        boolean isStringValue =
+                item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
         if (item.isDouble()) {
             if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
                 isStringValue = true;

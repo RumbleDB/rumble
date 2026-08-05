@@ -10,8 +10,7 @@ import org.rumbledb.types.ItemType;
 
 public class DateTimeStampItem extends AbstractAtomicItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private DateTimeItem value;
 
     DateTimeStampItem(OffsetDateTime value, boolean checkTimezone) {

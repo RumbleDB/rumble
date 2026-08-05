@@ -18,72 +18,63 @@
  *
  */
 
-
 package org.rumbledb.runtime.functions.json;
-
-import com.google.gson.stream.JsonReader;
-import org.rumbledb.api.Item;
-import org.rumbledb.cli.ConsoleOutput;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.items.parsing.JSONParsingOptions;
 
 import java.io.Serial;
 import java.io.StringReader;
 import java.util.List;
 
+import com.google.gson.stream.JsonReader;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.cli.ConsoleOutput;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.JSONParsingOptions;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
+
 public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public ParseJsonFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item optionsItem = this.getChildren().size() > 1
-            ? this.getChild(1).materializeFirstItemOrNull(context)
-            : null;
+        Item optionsItem =
+                this.getChildren().size() > 1
+                        ? this.getChild(1).materializeFirstItemOrNull(context)
+                        : null;
         if (stringItem == null) {
             return null;
         }
         boolean isJSONiq10 = this.staticContext.getQueryLanguage().equals("jsoniq10");
-        JSONParsingOptions options = JSONParsingOptions.resolveOptions(
-            optionsItem,
-            isJSONiq10,
-            context,
-            this.staticContext,
-            getMetadata()
-        );
+        JSONParsingOptions options =
+                JSONParsingOptions.resolveOptions(
+                        optionsItem, isJSONiq10, context, this.staticContext, getMetadata());
         if (options.isLegacy()) {
             ConsoleOutput.warn(
-                "Warning: fn:parse-json option 'legacy' skips spec-conformant JSON parsing in favor of "
-                    + "RumbleDB's previous Gson-based parser and may produce unexpected results; "
-                    + "retry without it if the output looks wrong."
-            );
+                    "Warning: fn:parse-json option 'legacy' skips spec-conformant JSON parsing in favor of "
+                            + "RumbleDB's previous Gson-based parser and may produce unexpected results; "
+                            + "retry without it if the output looks wrong.");
             return ItemParser.getItemFromObject(
-                new JsonReader(new StringReader(stringItem.getStringValue())),
-                isJSONiq10,
-                options.getNumberFormat(),
-                getMetadata(),
-                false
-            );
+                    new JsonReader(new StringReader(stringItem.getStringValue())),
+                    isJSONiq10,
+                    options.getNumberFormat(),
+                    getMetadata(),
+                    false);
         }
         return ItemParser.getItemFromJSONString(
-            stringItem.getStringValue(),
-            options,
-            this.staticContext.getConfiguration().semantics().xmlVersion(),
-            isJSONiq10,
-            getMetadata()
-        );
+                stringItem.getStringValue(),
+                options,
+                this.staticContext.getConfiguration().semantics().xmlVersion(),
+                isJSONiq10,
+                getMetadata());
     }
 }

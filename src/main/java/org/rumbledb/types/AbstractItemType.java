@@ -27,12 +27,11 @@ import org.rumbledb.context.Name;
 /**
  * Centralizes Java equality for item types.
  *
- * Named types compare by expanded name, anonymous nominal types compare by identity, and structural
- * types override {@link #equalityKey()} with a canonical structural key.
+ * <p>Named types compare by expanded name, anonymous nominal types compare by identity, and
+ * structural types override {@link #equalityKey()} with a canonical structural key.
  */
 public abstract class AbstractItemType implements ItemType {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     @Override
     public final boolean equals(Object other) {
@@ -68,15 +67,15 @@ public abstract class AbstractItemType implements ItemType {
         return new NamedTypeKey(Objects.requireNonNull(name));
     }
 
-    protected static Object structuralTypeKey(Class<? extends ItemType> typeClass, Object... components) {
+    protected static Object structuralTypeKey(
+            Class<? extends ItemType> typeClass, Object... components) {
         return new StructuralTypeKey(typeClass, Arrays.asList(components));
     }
 
-    private record NamedTypeKey(Name name) {
-    }
+    private record NamedTypeKey(Name name) {}
 
-    private record StructuralTypeKey(Class<? extends ItemType> typeClass, List<Object> components) {
-    }
+    private record StructuralTypeKey(
+            Class<? extends ItemType> typeClass, List<Object> components) {}
 
     private static final class IdentityTypeKey {
         private final ItemType itemType;

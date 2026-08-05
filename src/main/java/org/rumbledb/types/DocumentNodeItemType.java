@@ -1,23 +1,23 @@
 package org.rumbledb.types;
 
-import lombok.Getter;
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.util.Set;
+
+import lombok.Getter;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing document-node() and document-node(element(...)) item types.
  *
- * Wildcard document-node() is represented with no element-test restriction.
+ * <p>Wildcard document-node() is represented with no element-test restriction.
  * document-node(element(...)) is represented with a concrete inner element node item type.
  */
 @Getter
 public class DocumentNodeItemType extends AbstractItemType {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
     private ItemType elementTestType;
@@ -41,7 +41,8 @@ public class DocumentNodeItemType extends AbstractItemType {
 
     @Override
     protected Object equalityKey() {
-        return structuralTypeKey(DocumentNodeItemType.class, this.catalogueName, this.elementTestType);
+        return structuralTypeKey(
+                DocumentNodeItemType.class, this.catalogueName, this.elementTestType);
     }
 
     @Override
@@ -52,7 +53,8 @@ public class DocumentNodeItemType extends AbstractItemType {
     @Override
     public Name getName() {
         if (this.catalogueName == null) {
-            throw new UnsupportedOperationException("Named document node item type has no builtin QName");
+            throw new UnsupportedOperationException(
+                    "Named document node item type has no builtin QName");
         }
         return this.catalogueName;
     }
@@ -71,11 +73,9 @@ public class DocumentNodeItemType extends AbstractItemType {
                 }
             }
         }
-        if (
-            this.equals(superType)
+        if (this.equals(superType)
                 || superType.equals(BuiltinTypesCatalogue.item)
-                || superType.equals(BuiltinTypesCatalogue.nodeItem)
-        ) {
+                || superType.equals(BuiltinTypesCatalogue.nodeItem)) {
             return true;
         }
         if (!(superType instanceof DocumentNodeItemType other)) {
@@ -84,7 +84,8 @@ public class DocumentNodeItemType extends AbstractItemType {
         if (other.isWildcardDocument()) {
             return true;
         }
-        return this.elementTestType != null && this.elementTestType.isSubtypeOf(other.elementTestType);
+        return this.elementTestType != null
+                && this.elementTestType.isSubtypeOf(other.elementTestType);
     }
 
     @Override
@@ -96,9 +97,9 @@ public class DocumentNodeItemType extends AbstractItemType {
             if (this.isWildcardDocument() || otherDocument.isWildcardDocument()) {
                 return BuiltinTypesCatalogue.documentNode;
             }
-            ItemType innerLeastCommonSuperType = this.elementTestType.findLeastCommonSuperTypeWith(
-                otherDocument.elementTestType
-            );
+            ItemType innerLeastCommonSuperType =
+                    this.elementTestType.findLeastCommonSuperTypeWith(
+                            otherDocument.elementTestType);
             return new DocumentNodeItemType((ElementNodeItemType) innerLeastCommonSuperType);
         }
         ItemType current = this;

@@ -20,7 +20,14 @@
 
 package org.rumbledb.spark.ml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.spark.ml.Estimator;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -34,48 +41,33 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-    public static final List<Name> estimatorFunctionParameterNames = new ArrayList<>(
-            Arrays.asList(
-                Name.createVariableInDefaultFunctionNamespace(
-                    "estimator-input-f6c87df3-fcba-47c7-a5ff-a1a7553b1cab"
-                ),
-                Name.createVariableInDefaultFunctionNamespace(
-                    "estimator-paramobject-ded8adb9-df6f-42b2-b493-863a421a2754"
-                )
-            )
-    );
+    @Serial private static final long serialVersionUID = 1L;
+    public static final List<Name> estimatorFunctionParameterNames =
+            new ArrayList<>(
+                    Arrays.asList(
+                            Name.createVariableInDefaultFunctionNamespace(
+                                    "estimator-input-f6c87df3-fcba-47c7-a5ff-a1a7553b1cab"),
+                            Name.createVariableInDefaultFunctionNamespace(
+                                    "estimator-paramobject-ded8adb9-df6f-42b2-b493-863a421a2754")));
 
     public GetEstimatorFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
-            DynamicContext dynamicContext
-    ) {
-        String estimatorShortName = this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        String estimatorShortName =
+                this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
         Item paramMapItem = null;
         if (this.getChildren().size() >= 2) {
             paramMapItem = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
         }
 
-        String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(
-            estimatorShortName,
-            getMetadata()
-        );
+        String estimatorFullClassName =
+                RumbleMLCatalog.getEstimatorFullClassName(estimatorShortName, getMetadata());
 
         Class<?> estimatorSparkMLClass = null;
         try {
@@ -83,76 +75,68 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
                     estimatorShortName
-                        + ": we could not find any estimator with that name. Please check the documentation."
-            );
+                            + ": we could not find any estimator with that name. Please check the documentation.");
         }
 
         try {
-            Estimator<?> estimator = (Estimator<?>) estimatorSparkMLClass.getDeclaredConstructor().newInstance();
+            Estimator<?> estimator =
+                    (Estimator<?>) estimatorSparkMLClass.getDeclaredConstructor().newInstance();
 
             if (paramMapItem != null) {
-                for (int paramIndex = 0; paramIndex < paramMapItem.getStringKeys().size(); paramIndex++) {
+                for (int paramIndex = 0;
+                        paramIndex < paramMapItem.getStringKeys().size();
+                        paramIndex++) {
                     String paramName = paramMapItem.getStringKeys().get(paramIndex);
                     Item paramValue = paramMapItem.getItemValues().get(paramIndex);
 
-                    RumbleMLCatalog.validateEstimatorParameterByName(estimatorShortName, paramName, getMetadata());
+                    RumbleMLCatalog.validateEstimatorParameterByName(
+                            estimatorShortName, paramName, getMetadata());
 
-                    String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, getMetadata());
-                    Object paramValueInJava = RumbleMLUtils.convertParamItemToJava(
-                        paramName,
-                        paramValue,
-                        paramJavaTypeName,
-                        getMetadata()
-                    );
+                    String paramJavaTypeName =
+                            RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, getMetadata());
+                    Object paramValueInJava =
+                            RumbleMLUtils.convertParamItemToJava(
+                                    paramName, paramValue, paramJavaTypeName, getMetadata());
 
                     estimator.set(paramName, paramValueInJava);
                 }
             }
 
-            RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
-                    estimatorShortName,
-                    estimator,
-                    this.staticContext
-                        .toBuilder()
-                        .staticType(SequenceType.createSequenceType("function(*)"))
-                        .executionMode(ExecutionMode.LOCAL)
-                        .metadata(getMetadata())
-                        .build()
-            );
-            List<SequenceType> paramTypes = Collections.unmodifiableList(
-                Arrays.asList(
-                    SequenceType.createSequenceType("object*"),
-                    SequenceType.createSequenceType("object")
-                )
-            );
-            SequenceType returnType = SequenceType.createSequenceType("function(object*, object) as object*");
+            RuntimeIterator bodyIterator =
+                    new ApplyEstimatorRuntimeIterator(
+                            estimatorShortName,
+                            estimator,
+                            this.staticContext.toBuilder()
+                                    .staticType(SequenceType.createSequenceType("function(*)"))
+                                    .executionMode(ExecutionMode.LOCAL)
+                                    .metadata(getMetadata())
+                                    .build());
+            List<SequenceType> paramTypes =
+                    Collections.unmodifiableList(
+                            Arrays.asList(
+                                    SequenceType.createSequenceType("object*"),
+                                    SequenceType.createSequenceType("object")));
+            SequenceType returnType =
+                    SequenceType.createSequenceType("function(object*, object) as object*");
 
             return new FunctionItem(
                     new FunctionIdentifier(
                             Name.createVariableInDefaultFunctionNamespace(
-                                estimatorSparkMLClass.getName()
-                            ),
-                            2
-                    ),
+                                    estimatorSparkMLClass.getName()),
+                            2),
                     estimatorFunctionParameterNames,
-                    new FunctionSignature(
-                            paramTypes,
-                            returnType
-                    ),
+                    new FunctionSignature(paramTypes, returnType),
                     new DynamicContext(dynamicContext.getRumbleConfiguration()),
-                    bodyIterator
-            );
+                    bodyIterator);
 
-        } catch (
-                InstantiationException
+        } catch (InstantiationException
                 | IllegalAccessException
                 | java.lang.reflect.InvocationTargetException
-                | NoSuchMethodException e
-        ) {
+                | NoSuchMethodException e) {
             throw new OurBadException(
-                    "Error while generating an instance from the estimator class " + estimatorFullClassName,
-                    getMetadata()
-            );
+                    "Error while generating an instance from the estimator class "
+                            + estimatorFullClassName,
+                    getMetadata());
         }
     }
 }

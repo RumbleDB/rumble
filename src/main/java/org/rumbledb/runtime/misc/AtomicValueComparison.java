@@ -26,41 +26,32 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 /**
  * Atomic equivalence semantics for operations such as {@code distinct-values} and grouping.
  *
- * This uses atomic deep equality, including NaN equality. It is intentionally separate from Java
+ * <p>This uses atomic deep equality, including NaN equality. It is intentionally separate from Java
  * equality and map {@code op:same-key}: numeric comparison applies type promotion and is not
  * transitive across mixed numeric types.
  */
 public final class AtomicValueComparison {
 
-    private AtomicValueComparison() {
-    }
+    private AtomicValueComparison() {}
 
-    /**
-     * Returns whether two atomic values belong to the same distinct/grouping equivalence class.
-     */
+    /** Returns whether two atomic values belong to the same distinct/grouping equivalence class. */
     public static boolean equal(Item left, Item right) {
         return equal(left, right, Name.DEFAULT_COLLATION_NS, ExceptionMetadata.EMPTY_METADATA);
     }
 
     public static boolean equal(
-            Item left,
-            Item right,
-            String collationUri,
-            ExceptionMetadata metadata
-    ) {
+            Item left, Item right, String collationUri, ExceptionMetadata metadata) {
         if (left == right) {
             return true;
         }
         if (left == null || right == null) {
             return false;
         }
-        if (CollationSupport.isStringCollationType(left) && CollationSupport.isStringCollationType(right)) {
+        if (CollationSupport.isStringCollationType(left)
+                && CollationSupport.isStringCollationType(right)) {
             return CollationSupport.compareStrings(
-                left.getStringValue(),
-                right.getStringValue(),
-                collationUri,
-                metadata
-            ) == 0;
+                            left.getStringValue(), right.getStringValue(), collationUri, metadata)
+                    == 0;
         }
         return AtomicDeepEqual.deepEqual(left, right);
     }
@@ -68,10 +59,10 @@ public final class AtomicValueComparison {
     /**
      * A hash compatible with atomic value comparison.
      *
-     * Numeric values are reduced to float because float is the lowest-precision promotion target:
-     * any pair equal after decimal/float/double promotion necessarily has the same float value.
-     * Gregorian and duration hashes are deliberately coarse because their comparison depends on
-     * timezone normalization or subtype promotion.
+     * <p>Numeric values are reduced to float because float is the lowest-precision promotion
+     * target: any pair equal after decimal/float/double promotion necessarily has the same float
+     * value. Gregorian and duration hashes are deliberately coarse because their comparison depends
+     * on timezone normalization or subtype promotion.
      */
     public static int hash(Item item) {
         return hash(item, Name.DEFAULT_COLLATION_NS, ExceptionMetadata.EMPTY_METADATA);
@@ -95,16 +86,14 @@ public final class AtomicValueComparison {
         if (item.isHexBinary() || item.isBase64Binary()) {
             return Arrays.hashCode(item.getBinaryValue());
         }
-        if (
-            item.isDate()
+        if (item.isDate()
                 || item.isTime()
                 || item.isDateTime()
                 || item.isGYear()
                 || item.isGYearMonth()
                 || item.isGMonth()
                 || item.isGMonthDay()
-                || item.isGDay()
-        ) {
+                || item.isGDay()) {
             return 0x47;
         }
         if (item.isDuration() || item.isYearMonthDuration() || item.isDayTimeDuration()) {

@@ -21,23 +21,27 @@ import org.rumbledb.runtime.RuntimeIterator;
 /**
  * Serializable factory for independent executions of one function body.
  *
- * Ordinary bodies are serialized once when the factory is created. Creating an execution only deserializes that
- * immutable snapshot; it never serializes a live or previously executed iterator tree. Bodies that own Spark runtime
- * state are retained instead.
+ * <p>Ordinary bodies are serialized once when the factory is created. Creating an execution only
+ * deserializes that immutable snapshot; it never serializes a live or previously executed iterator
+ * tree. Bodies that own Spark runtime state are retained instead.
  *
- * Note: this is just a temporary solution to reduce the expense of deep copy operations on function body iterators.
- * We will switch to a cheaper and generic cursor-based solution in the future.
+ * <p>Note: this is just a temporary solution to reduce the expense of deep copy operations on
+ * function body iterators. We will switch to a cheaper and generic cursor-based solution in the
+ * future.
  */
 public final class FunctionBodyIteratorFactory implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private final byte[] serializedBody;
+
     /**
-     * Spark ML bodies own runtime state such as broadcasts and datasets. They must not be cloned from a Java
-     * serialization snapshot; retaining the body preserves that state for the lifetime of the function item.
+     * Spark ML bodies own runtime state such as broadcasts and datasets. They must not be cloned
+     * from a Java serialization snapshot; retaining the body preserves that state for the lifetime
+     * of the function item.
      */
     private final RuntimeIterator retainedBody;
+
     private transient RuntimeIterator prototype;
 
     FunctionBodyIteratorFactory(RuntimeIterator bodyIterator, boolean retainBody) {
@@ -47,7 +51,8 @@ public final class FunctionBodyIteratorFactory implements Serializable {
     }
 
     /**
-     * Returns the inspection-only prototype, reconstructing it after factory deserialization when necessary.
+     * Returns the inspection-only prototype, reconstructing it after factory deserialization when
+     * necessary.
      */
     RuntimeIterator getPrototype() {
         if (this.retainedBody != null) {
@@ -60,8 +65,8 @@ public final class FunctionBodyIteratorFactory implements Serializable {
     }
 
     /**
-     * Creates mutable state for one independent function invocation from the pristine body snapshot, unless the body
-     * owns Spark runtime state and must therefore be retained.
+     * Creates mutable state for one independent function invocation from the pristine body
+     * snapshot, unless the body owns Spark runtime state and must therefore be retained.
      */
     RuntimeIterator createExecutionInstance() {
         if (this.retainedBody != null) {
@@ -78,7 +83,8 @@ public final class FunctionBodyIteratorFactory implements Serializable {
             output.flush();
             return outputBytes.toByteArray();
         } catch (IOException exception) {
-            RumbleException rumbleException = new OurBadException("Error while snapshotting a function body iterator");
+            RumbleException rumbleException =
+                    new OurBadException("Error while snapshotting a function body iterator");
             rumbleException.initCause(exception);
             throw rumbleException;
         }
@@ -90,7 +96,8 @@ public final class FunctionBodyIteratorFactory implements Serializable {
             ObjectInputStream input = new ObjectInputStream(inputBytes);
             return (RuntimeIterator) input.readObject();
         } catch (IOException | ClassNotFoundException exception) {
-            RumbleException rumbleException = new OurBadException("Error while creating a function body iterator");
+            RumbleException rumbleException =
+                    new OurBadException("Error while creating a function body iterator");
             rumbleException.initCause(exception);
             throw rumbleException;
         }

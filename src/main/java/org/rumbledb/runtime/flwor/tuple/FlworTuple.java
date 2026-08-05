@@ -20,7 +20,15 @@
 
 package org.rumbledb.runtime.flwor.tuple;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
@@ -29,17 +37,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
-
 public class FlworTuple implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final LinkedHashMap<Name, List<Item>> localVariables;
     private final LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
     private final LinkedHashMap<Name, HomogeneousItemDataFrame> dataFrameVariables;
@@ -65,9 +65,7 @@ public class FlworTuple implements Serializable {
         this.configuration = configuration;
     }
 
-    /**
-     * Deep copy constructor
-     */
+    /** Deep copy constructor */
     public FlworTuple(FlworTuple toCopy) {
         this.localVariables = new LinkedHashMap<>(toCopy.localVariables.size(), 1);
         this.rddVariables = new LinkedHashMap<>(toCopy.rddVariables.size(), 1);
@@ -98,16 +96,15 @@ public class FlworTuple implements Serializable {
 
     public boolean contains(Name key) {
         return this.localVariables.containsKey(key)
-            || this.rddVariables.containsKey(key)
-            || this.dataFrameVariables.containsKey(key);
+                || this.rddVariables.containsKey(key)
+                || this.dataFrameVariables.containsKey(key);
     }
 
     public boolean isRDD(Name key, ExceptionMetadata metadata) {
         if (!contains(key)) {
             throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
-        return this.rddVariables.containsKey(key)
-            || this.dataFrameVariables.containsKey(key);
+        return this.rddVariables.containsKey(key) || this.dataFrameVariables.containsKey(key);
     }
 
     public boolean isDataFrame(Name key, ExceptionMetadata metadata) {

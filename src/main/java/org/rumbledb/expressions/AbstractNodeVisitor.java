@@ -42,8 +42,8 @@ import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
-import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -61,9 +61,9 @@ import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
-import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -93,28 +93,28 @@ import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.AppendExpression;
-import org.rumbledb.expressions.update.DeleteExpression;
-import org.rumbledb.expressions.update.InsertExpression;
-import org.rumbledb.expressions.update.RenameExpression;
-import org.rumbledb.expressions.update.ReplaceExpression;
-import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteExpression;
 import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
 import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
 import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
 import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
-import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
-import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
@@ -201,6 +201,7 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitReturnClause(ReturnClause expression, T argument) {
         return defaultAction(expression, argument);
     }
+
     // endregion
 
     // region postfix
@@ -228,9 +229,11 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, T argument) {
+    public T visitDynamicFunctionCallExpression(
+            DynamicFunctionCallExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+
     // endregion
 
     // region primary
@@ -261,6 +264,7 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitNamedFunctionRef(NamedFunctionReferenceExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+
     // endregion
 
     // region xml
@@ -273,7 +277,8 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitComputedElementConstructor(ComputedElementConstructorExpression expression, T argument) {
+    public T visitComputedElementConstructor(
+            ComputedElementConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -281,15 +286,18 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitComputedNamespaceConstructor(ComputedNamespaceConstructorExpression expression, T argument) {
+    public T visitComputedNamespaceConstructor(
+            ComputedNamespaceConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitComputedAttributeConstructor(ComputedAttributeConstructorExpression expression, T argument) {
+    public T visitComputedAttributeConstructor(
+            ComputedAttributeConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitDocumentNodeConstructor(DocumentNodeConstructorExpression expression, T argument) {
+    public T visitDocumentNodeConstructor(
+            DocumentNodeConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -297,7 +305,8 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitDirectCommentConstructor(DirectCommentConstructorExpression expression, T argument) {
+    public T visitDirectCommentConstructor(
+            DirectCommentConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -347,6 +356,7 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitBoolean(BooleanLiteralExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+
     // endregion
 
     // region operational
@@ -417,6 +427,7 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitCastExpression(CastExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+
     // endregion
 
     // region update
@@ -449,19 +460,23 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitInsertIndexIntoCollectionExpression(InsertIndexIntoCollectionExpression expression, T argument) {
+    public T visitInsertIndexIntoCollectionExpression(
+            InsertIndexIntoCollectionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitInsertSearchIntoCollectionExpression(InsertSearchIntoCollectionExpression expression, T argument) {
+    public T visitInsertSearchIntoCollectionExpression(
+            InsertSearchIntoCollectionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitDeleteIndexFromCollectionExpression(DeleteIndexFromCollectionExpression expression, T argument) {
+    public T visitDeleteIndexFromCollectionExpression(
+            DeleteIndexFromCollectionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitDeleteSearchFromCollectionExpression(DeleteSearchFromCollectionExpression expression, T argument) {
+    public T visitDeleteSearchFromCollectionExpression(
+            DeleteSearchFromCollectionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -469,7 +484,8 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitTruncateCollectionExpression(TruncateCollectionExpression expression, T argument) {
+    public T visitTruncateCollectionExpression(
+            TruncateCollectionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -491,6 +507,7 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitTryCatchExpression(TryCatchExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+
     // endregion
 
     // region prolog
@@ -550,10 +567,7 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitReturnStatementClause(
-            ReturnStatementClause expression,
-            T argument
-    ) {
+    public T visitReturnStatementClause(ReturnStatementClause expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -561,10 +575,7 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitConditionalStatement(
-            ConditionalStatement expression,
-            T argument
-    ) {
+    public T visitConditionalStatement(ConditionalStatement expression, T argument) {
         return defaultAction(expression, argument);
     }
 

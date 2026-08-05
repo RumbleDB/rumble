@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,55 +31,45 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public SubstringFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         String result;
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        Item indexItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        Item indexItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (indexItem == null) {
             throw new UnexpectedTypeException(
-                    "Type error; Start index parameter can't be empty sequence ",
-                    getMetadata()
-            );
+                    "Type error; Start index parameter can't be empty sequence ", getMetadata());
         }
         int index = (int) Math.round(indexItem.getDoubleValue() - 1);
         if (index >= stringItem.getStringValue().length()) {
             return ItemFactory.getInstance().createStringItem("");
         }
         if (this.getChildren().size() > 2) {
-            Item endIndexItem = this.getChild(2)
-                .materializeFirstItemOrNull(context);
+            Item endIndexItem = this.getChild(2).materializeFirstItemOrNull(context);
             if (endIndexItem == null) {
                 throw new UnexpectedTypeException(
-                        "Type error; End index parameter can't be empty sequence ",
-                        getMetadata()
-                );
+                        "Type error; End index parameter can't be empty sequence ", getMetadata());
             }
             double endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
             if (endIndex < index || endIndex <= 0) {
                 return ItemFactory.getInstance().createStringItem("");
             }
-            result = stringItem.getStringValue().substring(Math.max(index, 0), (int) Math.round(endIndex));
+            result =
+                    stringItem
+                            .getStringValue()
+                            .substring(Math.max(index, 0), (int) Math.round(endIndex));
         } else {
             if (index <= 0) {
                 result = stringItem.getStringValue();
@@ -90,6 +83,7 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private double sanitizeEndIndex(Item stringItem, Item endIndexItem, int startIndex) {
         // char indexing starts from 1 in JSONiq
-        return Math.min(stringItem.getStringValue().length(), startIndex + endIndexItem.getDoubleValue());
+        return Math.min(
+                stringItem.getStringValue().length(), startIndex + endIndexItem.getDoubleValue());
     }
 }

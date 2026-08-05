@@ -20,39 +20,35 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.exceptions.OurBadException;
-
-import java.io.Serial;
-import java.util.List;
 
 public class DataFunctionIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
     private List<Item> nextResults;
     private int nextIndex;
     private boolean usedContext = false;
 
     public DataFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
-        if (!this.getChildren().isEmpty())
-            this.sequenceIterator = this.getChild(0);
+        if (!this.getChildren().isEmpty()) this.sequenceIterator = this.getChild(0);
     }
 
     @Override
@@ -77,14 +73,16 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
             return childDF;
         }
         if (childDF.getItemType().isObjectItemType()) {
-            throw new CannotAtomizeException("Cannot atomize objects. Type: " + childDF.getItemType(), getMetadata());
+            throw new CannotAtomizeException(
+                    "Cannot atomize objects. Type: " + childDF.getItemType(), getMetadata());
         }
         if (childDF.getItemType().isArrayItemType()) {
-            throw new CannotAtomizeException("Cannot atomize arrays. Type: " + childDF.getItemType(), getMetadata());
+            throw new CannotAtomizeException(
+                    "Cannot atomize arrays. Type: " + childDF.getItemType(), getMetadata());
         }
-        throw new CannotAtomizeException("Cannot atomize. Type: " + childDF.getItemType(), getMetadata());
+        throw new CannotAtomizeException(
+                "Cannot atomize. Type: " + childDF.getItemType(), getMetadata());
     }
-
 
     @Override
     public Item nextLocal() {
@@ -97,9 +95,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atomization iterator",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atomization iterator", getMetadata());
     }
 
     @Override
@@ -132,8 +128,10 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
         }
         if (!this.usedContext) {
             this.usedContext = true;
-            List<Item> items = this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            List<Item> items =
+                    this.currentDynamicContextForLocalExecution
+                            .getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             if (items.size() != 1) {
                 throw new OurBadException("The context item is not a singleton.", getMetadata());
             }

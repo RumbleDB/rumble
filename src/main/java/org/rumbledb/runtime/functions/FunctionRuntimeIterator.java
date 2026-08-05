@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
+import java.util.Map;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -29,13 +32,9 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.Map;
-
 public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final Name functionName;
     private final Map<Name, SequenceType> paramNameToSequenceTypes;
     final SequenceType returnType;
@@ -46,8 +45,7 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             RuntimeIterator bodyIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(null, staticContext);
         this.functionName = functionName;
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
@@ -57,14 +55,14 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        FunctionItem function = new FunctionItem(
-                this.functionName,
-                this.paramNameToSequenceTypes,
-                this.returnType,
-                dynamicContext.getModuleContext(),
-                this.bodyIterator,
-                this.staticContext.isUpdating()
-        );
+        FunctionItem function =
+                new FunctionItem(
+                        this.functionName,
+                        this.paramNameToSequenceTypes,
+                        this.returnType,
+                        dynamicContext.getModuleContext(),
+                        this.bodyIterator,
+                        this.staticContext.isUpdating());
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
         return function;
     }

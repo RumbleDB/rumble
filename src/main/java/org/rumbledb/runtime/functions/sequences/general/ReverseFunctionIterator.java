@@ -20,9 +20,16 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -33,25 +40,15 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.spark.SparkSessionManager;
 
-import scala.Tuple2;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator sequenceIterator;
     private List<Item> results;
     private int currentIndex = 0;
 
     public ReverseFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
     }
@@ -74,28 +71,17 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
         LogManager.getLogger("ReverseFunctioniterator")
-            .info(
-                String.format(
-                    "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
-                    selectSQL,
-                    selectSQL,
-                    "foo",
-                    viewName,
-                    "foo"
-                )
-            );
+                .info(
+                        String.format(
+                                "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
+                                selectSQL, selectSQL, "foo", viewName, "foo"));
         String tempName = SparkSessionManager.temporaryColumnName;
-        HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
-            String.format(
-                "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
-                selectSQL,
-                selectSQL,
-                tempName,
-                viewName,
-                tempName
-            ),
-            childDataFrame.getItemType()
-        );
+        HomogeneousItemDataFrame result =
+                childDataFrame.evaluateSQL(
+                        String.format(
+                                "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
+                                selectSQL, selectSQL, tempName, viewName, tempName),
+                        childDataFrame.getItemType());
         return result;
     }
 
@@ -104,7 +90,8 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
         this.results = new ArrayList<>();
         this.currentIndex = 0;
 
-        List<Item> items = this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> items =
+                this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
 
         for (int i = items.size() - 1; i >= 0; i--) {
             this.results.add(items.get(i));
@@ -114,8 +101,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void closeLocal() {
-    }
+    protected void closeLocal() {}
 
     @Override
     protected boolean hasNextLocal() {
@@ -132,7 +118,8 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     public Item getResult() {
         if (this.results == null || this.results.size() == 0) {
-            throw new IteratorFlowException("getResult called on an empty list of results", getMetadata());
+            throw new IteratorFlowException(
+                    "getResult called on an empty list of results", getMetadata());
         }
         if (this.currentIndex == this.results.size() - 1) {
             this.hasNext = false;

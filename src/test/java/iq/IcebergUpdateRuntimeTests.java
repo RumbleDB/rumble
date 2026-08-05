@@ -20,18 +20,18 @@
 
 package iq;
 
-import iq.base.UpdateRuntimeTestsBase;
+import java.io.File;
+
 import org.apache.spark.SparkConf;
 
-import java.io.File;
+import iq.base.UpdateRuntimeTestsBase;
 
 public class IcebergUpdateRuntimeTests extends UpdateRuntimeTestsBase {
 
-    public static final File runtimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/runtime-iceberg-updates"
-    );
+    public static final File runtimeTestsDirectory =
+            new File(
+                    System.getProperty("user.dir")
+                            + "/src/test/resources/test_files/runtime-iceberg-updates");
 
     @Override
     protected File testDirectory() {
@@ -41,12 +41,14 @@ public class IcebergUpdateRuntimeTests extends UpdateRuntimeTestsBase {
     @Override
     protected void configureUpdateStore(SparkConf sparkConfiguration) {
         sparkConfiguration.set(
-            "spark.sql.extensions",
-            "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"
-        ); // enables iceberg
-        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
+                "spark.sql.extensions",
+                "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"); // enables
+        // iceberg
+        sparkConfiguration.set(
+                "spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
         sparkConfiguration.set("spark.sql.catalog.spark_catalog.type", "hadoop");
-        sparkConfiguration.set("spark.sql.catalog.spark_catalog.warehouse", "./iceberg-warehouse/spark_catalog");
+        sparkConfiguration.set(
+                "spark.sql.catalog.spark_catalog.warehouse", "./iceberg-warehouse/spark_catalog");
         sparkConfiguration.set("spark.sql.iceberg.check-ordering", "false");
     }
 }

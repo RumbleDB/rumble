@@ -36,11 +36,9 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-
 public class MapItem extends AbstractMapItem {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private List<List<Item>> values;
     private List<Item> keys;
@@ -107,9 +105,10 @@ public class MapItem extends AbstractMapItem {
         }
         return new MapItem(
                 this.keys.stream().map(item -> item.copy(mutable)).toList(),
-                this.values.stream().map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList()).toList(),
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                this.values.stream()
+                        .map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList())
+                        .toList(),
+                ExceptionMetadata.EMPTY_METADATA);
     }
 
     private void rebuildKeyStringIndex() {
@@ -135,7 +134,8 @@ public class MapItem extends AbstractMapItem {
         }
     }
 
-    private void internalPutSequenceByKey(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
+    private void internalPutSequenceByKey(
+            Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
         if (this.keyToIndex == null) {
             rebuildKeyStringIndex();
         }
@@ -278,7 +278,9 @@ public class MapItem extends AbstractMapItem {
 
     @Override
     public void putItemByKey(String key, Item value) {
-        putSequenceByKey(ItemFactory.getInstance().createStringItem(key), java.util.Collections.singletonList(value));
+        putSequenceByKey(
+                ItemFactory.getInstance().createStringItem(key),
+                java.util.Collections.singletonList(value));
     }
 
     @Override
@@ -320,13 +322,10 @@ public class MapItem extends AbstractMapItem {
 
     // endregion maps
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.mapItem;
     }
-
 
     @Override
     public boolean getEffectiveBooleanValue() {
@@ -485,9 +484,7 @@ public class MapItem extends AbstractMapItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -515,5 +512,4 @@ public class MapItem extends AbstractMapItem {
             }
         }
     }
-
 }

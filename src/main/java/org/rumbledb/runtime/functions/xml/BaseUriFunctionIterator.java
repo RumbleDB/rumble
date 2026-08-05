@@ -19,6 +19,9 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -28,46 +31,45 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
-import java.util.List;
-
 /**
- * Implementation of the fn:base-uri function according to XPath and XQuery Functions and Operators 3.1
- * ({@code https://www.w3.org/TR/xpath-functions-31/#func-base-uri}) and the XDM 3.1 base-uri accessor.
+ * Implementation of the fn:base-uri function according to XPath and XQuery Functions and Operators
+ * 3.1 ({@code https://www.w3.org/TR/xpath-functions-31/#func-base-uri}) and the XDM 3.1 base-uri
+ * accessor.
  *
- * XDM 3.1 Section 5.2 base-uri Accessor.
+ * <p>XDM 3.1 Section 5.2 base-uri Accessor.
  *
- * dm:base-uri($n as node()) as xs:anyURI?
+ * <p>dm:base-uri($n as node()) as xs:anyURI?
  *
- * "The dm:base-uri accessor returns the value of the base-uri property of the node, if it
- * has one; otherwise it returns the empty sequence."
+ * <p>"The dm:base-uri accessor returns the value of the base-uri property of the node, if it has
+ * one; otherwise it returns the empty sequence."
  *
- * Function signatures (Functions and Operators 3.1, {@code fn:base-uri}):
- * 
+ * <p>Function signatures (Functions and Operators 3.1, {@code fn:base-uri}):
+ *
  * <ul>
- * <li>fn:base-uri() as xs:anyURI?</li>
- * <li>fn:base-uri($arg as node()?) as xs:anyURI?</li>
+ *   <li>fn:base-uri() as xs:anyURI?
+ *   <li>fn:base-uri($arg as node()?) as xs:anyURI?
  * </ul>
  *
  * Rules:
- * 
+ *
  * <ul>
- * <li>If the argument is omitted, it defaults to the context item (.).</li>
- * <li>If the argument is supplied and is the empty sequence, the function returns the empty sequence.</li>
- * <li>Otherwise, the function returns dm:base-uri($arg).</li>
+ *   <li>If the argument is omitted, it defaults to the context item (.).
+ *   <li>If the argument is supplied and is the empty sequence, the function returns the empty
+ *       sequence.
+ *   <li>Otherwise, the function returns dm:base-uri($arg).
  * </ul>
  *
- * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-base-uri">XPath and XQuery Functions and
- *      Operators 3.1: fn:base-uri</a>
+ * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-base-uri">XPath and XQuery Functions
+ *     and Operators 3.1: fn:base-uri</a>
  */
 public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private List<Item> resultItems;
     private int currentIndex;
 
-    public BaseUriFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public BaseUriFunctionIterator(
+            List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
@@ -88,9 +90,7 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
         // Check if the item is an XML node; otherwise, raise a type error.
         if (!node.isNode()) {
             throw new UnexpectedTypeException(
-                    "The argument must be a reference to an XML node",
-                    getMetadata()
-            );
+                    "The argument must be a reference to an XML node", getMetadata());
         }
 
         // Delegate to the XDM 3.1 dm:base-uri accessor implemented by XML node item classes.
@@ -103,9 +103,7 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (!this.hasNext) {
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " base-uri function",
-                    getMetadata()
-            );
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " base-uri function", getMetadata());
         }
 
         Item result = this.resultItems.get(this.currentIndex);
@@ -117,20 +115,19 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
     }
 
     /**
-     * Helper method to get the context node.
-     * If no parameters are provided, uses the context item.
+     * Helper method to get the context node. If no parameters are provided, uses the context item.
      * If a parameter is provided, uses the first parameter.
      */
     private Item getContextNode() {
         if (this.getChildren().isEmpty()) {
             // No argument provided, use context item
-            return this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0);
+            return this.currentDynamicContextForLocalExecution
+                    .getVariableValues()
+                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                    .get(0);
         }
         // Argument provided, use first parameter
-        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.getChild(0)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
-
-

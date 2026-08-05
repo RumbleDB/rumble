@@ -20,14 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class InvalidRegexPatternException extends RumbleException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public InvalidRegexPatternException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.InvalidRegexPatternErrorCode, metadata);

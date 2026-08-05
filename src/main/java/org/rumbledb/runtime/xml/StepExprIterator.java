@@ -1,6 +1,11 @@
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -21,13 +26,8 @@ import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class StepExprIterator extends LocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator axisIterator;
     private NodeTest nodeTest;
     private List<Item> results;
@@ -35,10 +35,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
     private int resultCounter = 0;
 
     public StepExprIterator(
-            RuntimeIterator axisIterator,
-            NodeTest nodeTest,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeIterator axisIterator, NodeTest nodeTest, RuntimeStaticContext staticContext) {
         super(List.of(axisIterator), staticContext);
         this.axisIterator = axisIterator;
         this.nodeTest = nodeTest;
@@ -116,9 +113,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return documentKindTest(node, documentTest);
         } else {
             throw new UnsupportedFeatureException(
-                    "Unsupported node test: " + this.nodeTest,
-                    getMetadata()
-            );
+                    "Unsupported node test: " + this.nodeTest, getMetadata());
         }
     }
 
@@ -174,8 +169,12 @@ public class StepExprIterator extends LocalRuntimeIterator {
             if (qItem == null) {
                 return null;
             }
-            // Compare expanded names, not lexical strings: e.g. default element NS uses prefix "" in the name test
-            // while DOM nodes often have prefix null, so Name.toString() differs for the same expanded QName.
+            // Compare expanded names, not lexical strings: e.g. default element NS uses prefix ""
+            // in the
+            // name test
+            // while DOM nodes often have prefix null, so Name.toString() differs for the same
+            // expanded
+            // QName.
             if (nameTest.getExpandedName().equals(qItem)) {
                 return node;
             }
@@ -224,10 +223,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return null;
         }
         if (elementTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isElementNode()
-                    && elementTest.getElementName().equals(node.nodeName())
-            ) {
+            if (node.isElementNode() && elementTest.getElementName().equals(node.nodeName())) {
                 return node;
             }
             return null;
@@ -250,10 +246,8 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return null;
         }
         if (attributeTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isAttributeNode()
-                    && attributeTest.getAttributeName().equals(node.nodeName())
-            ) {
+            if (node.isAttributeNode()
+                    && attributeTest.getAttributeName().equals(node.nodeName())) {
                 return node;
             }
             return null;
@@ -316,9 +310,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in step expr",
-                getMetadata()
-        );
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in step expr", getMetadata());
     }
 
     @Override

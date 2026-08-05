@@ -1,5 +1,10 @@
 package org.rumbledb.runtime.scripting.control;
 
+import java.io.Serial;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -8,14 +13,8 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
-import java.io.Serial;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
 public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
     private final Map<RuntimeIterator, RuntimeIterator> cases;
     private final RuntimeIterator defaultReturn;
@@ -24,36 +23,32 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeIterator testField,
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.of(Stream.of(testField), cases.keySet().stream(), cases.values().stream(), Stream.of(defaultReturn))
-                .flatMap(Function.identity())
-                .toList(),
-            staticContext
-        );
+                Stream.of(
+                                Stream.of(testField),
+                                cases.keySet().stream(),
+                                cases.values().stream(),
+                                Stream.of(defaultReturn))
+                        .flatMap(Function.identity())
+                        .toList(),
+                staticContext);
 
         this.testField = testField;
         this.cases = cases;
         this.defaultReturn = defaultReturn;
     }
 
-    private RuntimeIterator selectApplicableIterator(
-            DynamicContext dynamicContext
-    ) {
+    private RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
         Item testValue = this.testField.materializeFirstItemOrNull(dynamicContext);
 
         if (testValue != null) {
             if (testValue.isArray()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an array type",
-                        getMetadata()
-                );
+                        "Invalid args. Switch condition cannot be an array type", getMetadata());
             } else if (testValue.isObject()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an object type",
-                        getMetadata()
-                );
+                        "Invalid args. Switch condition cannot be an object type", getMetadata());
             }
         }
 
@@ -63,14 +58,10 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
             if (caseValue != null) {
                 if (caseValue.isArray()) {
                     throw new NonAtomicKeyException(
-                            "Invalid args. Switch case cannot be an array type",
-                            getMetadata()
-                    );
+                            "Invalid args. Switch case cannot be an array type", getMetadata());
                 } else if (caseValue.isObject()) {
                     throw new NonAtomicKeyException(
-                            "Invalid args. Switch case  cannot be an object type",
-                            getMetadata()
-                    );
+                            "Invalid args. Switch case  cannot be an object type", getMetadata());
                 }
             }
 

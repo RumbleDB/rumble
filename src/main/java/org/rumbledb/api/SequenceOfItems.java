@@ -5,12 +5,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.rumbledb.context.Name;
+
+import lombok.Getter;
+
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotMaterializeException;
@@ -18,30 +21,29 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.SerializerUtils;
 import org.rumbledb.serialization.Serializers;
-import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.spark.SparkSessionManager;
-import org.rumbledb.config.RumbleConfiguration;
 
 /**
- * A sequence of items is the value returned by any expression in JSONiq, which is a set-based language.
+ * A sequence of items is the value returned by any expression in JSONiq, which is a set-based
+ * language.
  *
- * In particular, it is what RumbleDB returns after evaluating a query.
+ * <p>In particular, it is what RumbleDB returns after evaluating a query.
  *
- * Sequences of items are flat and do not nest. A sequence may be empty. A sequence may consist of only one item: it is
- * then canonically identified
- * with that item. Or a sequence may contain more than one item.
+ * <p>Sequences of items are flat and do not nest. A sequence may be empty. A sequence may consist
+ * of only one item: it is then canonically identified with that item. Or a sequence may contain
+ * more than one item.
  *
- * With an instance of this class, it is possible to iterate on a sequence of items, getting each item in turn.
- * It is also possible to collect the items in a list.
+ * <p>With an instance of this class, it is possible to iterate on a sequence of items, getting each
+ * item in turn. It is also possible to collect the items in a list.
  *
- * The number of items returned by the iterator API is capped by the collect-item-limit parameter of Spark to avoid an
- * overflow.
- * For big sequences, it is preferable to obtain it as an RDD, also via this class, if the sequence is too big to be
- * collected locally.
+ * <p>The number of items returned by the iterator API is capped by the collect-item-limit parameter
+ * of Spark to avoid an overflow. For big sequences, it is preferable to obtain it as an RDD, also
+ * via this class, if the sequence is too big to be collected locally.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
@@ -51,17 +53,15 @@ public class SequenceOfItems {
     private final DynamicContext dynamicContext;
     private final RumbleConfiguration configuration;
 
-    /**
-     * Checks whether the iterator is open.
-     */
-    @Getter
-    private boolean isOpen;
+    /** Checks whether the iterator is open. */
+    @Getter private boolean isOpen;
+
     private List<Item> cachedItems;
 
     /**
-     * The constructor is not meant to be used directly. Sequences of items are obtained through a Rumble object and a
-     * query.
-     * 
+     * The constructor is not meant to be used directly. Sequences of items are obtained through a
+     * Rumble object and a query.
+     *
      * @param iterator The top-level iterator of the query.
      * @param dynamicContext An initialized dynamic context.
      * @param configuration A RumbleDB configuration.
@@ -69,8 +69,7 @@ public class SequenceOfItems {
     public SequenceOfItems(
             RuntimeIterator iterator,
             DynamicContext dynamicContext,
-            RumbleConfiguration configuration
-    ) {
+            RumbleConfiguration configuration) {
         this.iterator = iterator;
         this.isOpen = false;
         this.dynamicContext = dynamicContext;
@@ -78,9 +77,7 @@ public class SequenceOfItems {
         this.cachedItems = null;
     }
 
-    /**
-     * Opens the iterator.
-     */
+    /** Opens the iterator. */
     public void open() {
         if (this.availableAsPUL()) {
             return;
@@ -89,9 +86,7 @@ public class SequenceOfItems {
         this.isOpen = true;
     }
 
-    /**
-     * Closes the iterator.
-     */
+    /** Closes the iterator. */
     public void close() {
         if (this.availableAsPUL()) {
             return;
@@ -115,8 +110,8 @@ public class SequenceOfItems {
     }
 
     /**
-     * Returns the current item and moves on to the next one. The number of items the iterator can returned is capped by
-     * Spark's settings (collect-item-limit).
+     * Returns the current item and moves on to the next one. The number of items the iterator can
+     * returned is capped by Spark's settings (collect-item-limit).
      *
      * @return the next item.
      */
@@ -128,7 +123,8 @@ public class SequenceOfItems {
     }
 
     /**
-     * Checks whether the iterator is available as an RDD of Items for further processing without having to collect.
+     * Checks whether the iterator is available as an RDD of Items for further processing without
+     * having to collect.
      *
      * @return true if it is available as an RDD of Items.
      */
@@ -137,7 +133,8 @@ public class SequenceOfItems {
     }
 
     /**
-     * Checks whether the iterator is available as a data frame for further processing without having to collect.
+     * Checks whether the iterator is available as a data frame for further processing without
+     * having to collect.
      *
      * @return true if it is available as a data frame.
      */
@@ -156,12 +153,11 @@ public class SequenceOfItems {
 
     /**
      * Returns available output modes, order by decreasing efficiency.
-     * 
-     * "DataFrame" means getAsDataFrame() can be called.
-     * "RDD" means getAsRDD() can be called.
-     * "PUL" means applyPUL() can be called.
-     * "Local" means getAsList() (if the count does not exceed the materialization cap) or getFirstItemsAsList() can be
-     * called, or the streaming methods (open/hasNext/next/close).
+     *
+     * <p>"DataFrame" means getAsDataFrame() can be called. "RDD" means getAsRDD() can be called.
+     * "PUL" means applyPUL() can be called. "Local" means getAsList() (if the count does not exceed
+     * the materialization cap) or getFirstItemsAsList() can be called, or the streaming methods
+     * (open/hasNext/next/close).
      *
      * @return a list of output modes, among "DataFrame", "RDD", "PUL", and "Local".
      */
@@ -180,8 +176,8 @@ public class SequenceOfItems {
     }
 
     /**
-     * Returns the sequence of items as an RDD of Items rather than iterating over them locally.
-     * It is not possible to do so if the iterator is open.
+     * Returns the sequence of items as an RDD of Items rather than iterating over them locally. It
+     * is not possible to do so if the iterator is open.
      *
      * @return an RDD of Items.
      */
@@ -195,9 +191,7 @@ public class SequenceOfItems {
         return this.iterator.getRDD(this.dynamicContext);
     }
 
-    /**
-     * Returns the number of items in the sequence.
-     */
+    /** Returns the number of items in the sequence. */
     public long count() {
         return getAsRDD().count();
     }
@@ -215,15 +209,19 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this.iterator.getRDD(this.dynamicContext)
-            .map(
-                item -> ("\u0080\u0005\u0095"
-                    + longToLittleEndianString(item.serializeAsJSON().length() + 7)
-                    + "]\u0094\u008c"
-                    + Character.toString((char) item.serializeAsJSON().length())
-                    + item.serializeAsJSON()
-                    + "\u0094a.").getBytes("ISO-8859-1")
-            );
+        return this.iterator
+                .getRDD(this.dynamicContext)
+                .map(
+                        item ->
+                                ("\u0080\u0005\u0095"
+                                                + longToLittleEndianString(
+                                                        item.serializeAsJSON().length() + 7)
+                                                + "]\u0094\u008c"
+                                                + Character.toString(
+                                                        (char) item.serializeAsJSON().length())
+                                                + item.serializeAsJSON()
+                                                + "\u0094a.")
+                                        .getBytes("ISO-8859-1"));
     }
 
     public static String longToLittleEndianString(long value) {
@@ -240,8 +238,8 @@ public class SequenceOfItems {
     }
 
     /**
-     * Returns the sequence of items as a data frame rather than iterating over them locally.
-     * It is not possible to do so if the iterator is open.
+     * Returns the sequence of items as a data frame rather than iterating over them locally. It is
+     * not possible to do so if the iterator is open.
      *
      * @return a data frame.
      */
@@ -253,8 +251,11 @@ public class SequenceOfItems {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
         Dataset<Row> res = this.iterator.getOrCreateDataFrame(this.dynamicContext).getDataFrame();
-        if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
-            res = res.withColumnRenamed(SparkSessionManager.nonObjectJSONiqItemColumnName, "__value");
+        if (res.columns().length == 1
+                && res.columns()[0].equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
+            res =
+                    res.withColumnRenamed(
+                            SparkSessionManager.nonObjectJSONiqItemColumnName, "__value");
         }
         return res;
     }
@@ -262,25 +263,24 @@ public class SequenceOfItems {
     /**
      * Returns the runtime static context associated with this sequence.
      *
-     * This context provides access to the default serialization parameters
-     * that should be used when serializing the results of this sequence.
+     * <p>This context provides access to the default serialization parameters that should be used
+     * when serializing the results of this sequence.
      */
     public RuntimeStaticContext getRuntimeStaticContext() {
         return this.iterator.getRuntimeStaticContext();
     }
 
-    /**
-     * Applies the PUL available when the iterator is updating.
-     */
+    /** Applies the PUL available when the iterator is updating. */
     public void applyPUL() {
         PendingUpdateList pul = this.iterator.getPendingUpdateList(this.dynamicContext);
         pul.applyUpdates(this.iterator.getMetadata());
     }
 
     /**
-     * Outputs the results as a list. Throws an exception if there are more items than the allowed materialization
-     * limit. This method is governed only by the materialization cap; the result-size cap is not considered here.
-     * 
+     * Outputs the results as a list. Throws an exception if there are more items than the allowed
+     * materialization limit. This method is governed only by the materialization cap; the
+     * result-size cap is not considered here.
+     *
      * @return The list of all items in the sequence.
      */
     public List<Item> getAsList() {
@@ -293,12 +293,11 @@ public class SequenceOfItems {
         if (num != -1) {
             throw new CannotMaterializeException(
                     "Cannot materialize a sequence of "
-                        + num
-                        + " items because the limit is set to "
-                        + materializationCap
-                        + ". This value can be configured with the --materialization-cap parameter at startup",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                            + num
+                            + " items because the limit is set to "
+                            + materializationCap
+                            + ". This value can be configured with the --materialization-cap parameter at startup",
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         this.cachedItems = new ArrayList<Item>(result);
         return new ArrayList<Item>(this.cachedItems);
@@ -308,8 +307,8 @@ public class SequenceOfItems {
      * Serializes the query result to a string using the serialization parameters carried by the
      * runtime static context.
      *
-     * This is intended for API and test harness use when the result must be observed exactly as a
-     * serialized sequence rather than as raw {@link Item} objects.
+     * <p>This is intended for API and test harness use when the result must be observed exactly as
+     * a serialized sequence rather than as raw {@link Item} objects.
      *
      * @return the serialized result.
      */
@@ -321,9 +320,9 @@ public class SequenceOfItems {
             throw new RuntimeException("Cannot serialize a sequence if the iterator is open.");
         }
 
-        SerializationParameters params = SerializationParameters.copy(
-            this.getRuntimeStaticContext().getSerializationParameters()
-        );
+        SerializationParameters params =
+                SerializationParameters.copy(
+                        this.getRuntimeStaticContext().getSerializationParameters());
         SerializationParameters itemParams = SerializationParameters.copy(params);
         if ("xml".equalsIgnoreCase(params.getMethod())) {
             itemParams.setOmitXmlDeclaration(true);
@@ -336,11 +335,9 @@ public class SequenceOfItems {
 
         StringBuilder sb = new StringBuilder();
         List<Item> items = this.getAsList();
-        if (
-            "xml".equalsIgnoreCase(params.getMethod())
+        if ("xml".equalsIgnoreCase(params.getMethod())
                 && !params.getOmitXmlDeclaration()
-                && !items.isEmpty()
-        ) {
+                && !items.isEmpty()) {
             SerializerUtils.appendXmlDeclaration(sb, params);
         }
         if ("json".equalsIgnoreCase(params.getMethod())) {
@@ -351,8 +348,7 @@ public class SequenceOfItems {
                 throw new RumbleException(
                         "JSON serialization requires the top-level sequence to contain at most one item.",
                         new ErrorCode(new Name(Name.ERROR_NS, "err", "SERE0023")),
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
         }
         for (int i = 0; i < items.size(); i++) {
@@ -365,9 +361,9 @@ public class SequenceOfItems {
     }
 
     /**
-     * Outputs the results as a list. If there are more items than the allowed materialization limit,
-     * then the list is incomplete and no error is thrown.
-     * 
+     * Outputs the results as a list. If there are more items than the allowed materialization
+     * limit, then the list is incomplete and no error is thrown.
+     *
      * @return The list of items in the sequence, possibly capped.
      */
     public List<Item> getFirstItemsAsList(int maxNumberOfItems) {
@@ -398,13 +394,9 @@ public class SequenceOfItems {
         } else {
             int itemCount = 1;
             resultList.add(result);
-            while (
-                this.iterator.hasNext()
-                    &&
-                    ((itemCount < maxNumberOfItems && maxNumberOfItems > 0)
-                        ||
-                        maxNumberOfItems == 0)
-            ) {
+            while (this.iterator.hasNext()
+                    && ((itemCount < maxNumberOfItems && maxNumberOfItems > 0)
+                            || maxNumberOfItems == 0)) {
                 resultList.add(this.iterator.next());
                 itemCount++;
             }
@@ -432,8 +424,8 @@ public class SequenceOfItems {
                 count = rdd.count();
             }
             result.stream()
-                .limit(maxNumberOfItems)
-                .collect(Collectors.toCollection(() -> resultList));
+                    .limit(maxNumberOfItems)
+                    .collect(Collectors.toCollection(() -> resultList));
             return count;
         }
         this.iterator.open(this.dynamicContext);
@@ -453,13 +445,9 @@ public class SequenceOfItems {
         } else {
             int itemCount = 1;
             resultList.add(result);
-            while (
-                this.iterator.hasNext()
-                    &&
-                    ((itemCount < maxNumberOfItems && maxNumberOfItems > 0)
-                        ||
-                        maxNumberOfItems == 0)
-            ) {
+            while (this.iterator.hasNext()
+                    && ((itemCount < maxNumberOfItems && maxNumberOfItems > 0)
+                            || maxNumberOfItems == 0)) {
                 resultList.add(this.iterator.next());
                 itemCount++;
             }
@@ -472,9 +460,7 @@ public class SequenceOfItems {
         }
     }
 
-    /**
-     * Returns a SequenceWriter to save the sequence in various formats.
-     */
+    /** Returns a SequenceWriter to save the sequence in various formats. */
     public SequenceWriter write() {
         return new SequenceWriter(this);
     }

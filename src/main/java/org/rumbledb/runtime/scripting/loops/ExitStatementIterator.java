@@ -1,6 +1,10 @@
 package org.rumbledb.runtime.scripting.loops;
 
+import java.io.Serial;
+import java.util.Collections;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -10,19 +14,13 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-import java.io.Serial;
-import java.util.Collections;
-
 public class ExitStatementIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator childIterator;
     private PendingUpdateList pendingUpdateList;
 
     public ExitStatementIterator(
-            RuntimeIterator childIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeIterator childIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(childIterator), staticContext);
         this.childIterator = childIterator;
     }
@@ -35,12 +33,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
             this.pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);
         }
         throw new ExitStatementException(
-                this.pendingUpdateList,
-                null,
-                childRDD,
-                null,
-                this.getMetadata()
-        );
+                this.pendingUpdateList, null, childRDD, null, this.getMetadata());
     }
 
     /*
@@ -49,13 +42,10 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
      * to the program or function containing the exit statement.
      */
     @Override
-    protected void openLocal() {
-
-    }
+    protected void openLocal() {}
 
     @Override
-    protected void closeLocal() {
-    }
+    protected void closeLocal() {}
 
     @Override
     protected boolean hasNextLocal() {
@@ -67,17 +57,12 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
         this.result = this.childIterator.materialize(this.currentDynamicContextForLocalExecution);
         this.pendingUpdateList = new PendingUpdateList();
         if (this.childIterator.isUpdating()) {
-            this.pendingUpdateList = this.childIterator.getPendingUpdateList(
-                this.currentDynamicContextForLocalExecution
-            );
+            this.pendingUpdateList =
+                    this.childIterator.getPendingUpdateList(
+                            this.currentDynamicContextForLocalExecution);
         }
         throw new ExitStatementException(
-                this.pendingUpdateList,
-                this.result,
-                null,
-                null,
-                this.getMetadata()
-        );
+                this.pendingUpdateList, this.result, null, null, this.getMetadata());
     }
 
     @Override
@@ -93,11 +78,6 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
             this.pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);
         }
         throw new ExitStatementException(
-                this.pendingUpdateList,
-                null,
-                null,
-                childDataFrame,
-                this.getMetadata()
-        );
+                this.pendingUpdateList, null, null, childDataFrame, this.getMetadata());
     }
 }

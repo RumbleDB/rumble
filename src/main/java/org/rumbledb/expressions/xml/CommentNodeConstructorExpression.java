@@ -20,22 +20,23 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * An expression representing a computed comment constructor.
  *
- * Syntax: comment { Expr }
+ * <p>Syntax: comment { Expr }
  *
- * @see <a href="https://www.w3.org/TR/xquery-31/#doc-xquery31-CompCommentConstructor">XQuery 3.1, 3.9.3.5: Computed
- *      Comment Constructors</a>
+ * @see <a href="https://www.w3.org/TR/xquery-31/#doc-xquery31-CompCommentConstructor">XQuery 3.1,
+ *     3.9.3.5: Computed Comment Constructors</a>
  */
 @Getter
 public class CommentNodeConstructorExpression extends Expression {
@@ -48,7 +49,8 @@ public class CommentNodeConstructorExpression extends Expression {
      * @param contentExpression The content expression
      * @param metadata The exception metadata
      */
-    public CommentNodeConstructorExpression(Expression contentExpression, ExceptionMetadata metadata) {
+    public CommentNodeConstructorExpression(
+            Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.contentExpression = contentExpression;
     }
@@ -77,4 +79,3 @@ public class CommentNodeConstructorExpression extends Expression {
         sb.append(" }\n");
     }
 }
-

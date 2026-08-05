@@ -20,24 +20,22 @@
 
 package org.rumbledb.runtime;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 
-import java.io.Serial;
-import java.util.List;
-
 public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     protected RDDRuntimeIterator(
-            List<RuntimeIterator> children,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
@@ -58,21 +56,25 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
+        throw new OurBadException(
+                "Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
     protected void closeLocal() {
-        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
+        throw new OurBadException(
+                "Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
     protected boolean hasNextLocal() {
-        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
+        throw new OurBadException(
+                "Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
     protected Item nextLocal() {
-        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
+        throw new OurBadException(
+                "Local evaluation are not implemented for the iterator", getMetadata());
     }
 }

@@ -20,29 +20,6 @@
 
 package org.rumbledb.shell;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.spark.SparkException;
-import org.jline.reader.EndOfFileException;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.reader.UserInterruptException;
-import org.jline.reader.impl.DefaultHighlighter;
-import org.jline.reader.impl.DefaultParser;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
-import org.rumbledb.api.Item;
-import org.rumbledb.bindings.ExternalBindings;
-import org.rumbledb.cli.ConsoleOutput;
-import org.rumbledb.cli.JsoniqQueryExecutor;
-import org.rumbledb.cli.Main;
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.Serializers;
-
-import static org.jline.reader.LineReader.HISTORY_FILE;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -53,6 +30,30 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.spark.SparkException;
+import org.jline.reader.EndOfFileException;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
+import org.jline.reader.impl.DefaultHighlighter;
+import org.jline.reader.impl.DefaultParser;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+
+import static org.jline.reader.LineReader.HISTORY_FILE;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.cli.ConsoleOutput;
+import org.rumbledb.cli.JsoniqQueryExecutor;
+import org.rumbledb.cli.Main;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.Serializers;
 
 public class RumbleJLineShell {
     private static final String EXIT_COMMAND = "exit";
@@ -72,7 +73,8 @@ public class RumbleJLineShell {
         this(configuration, ExternalBindings.empty());
     }
 
-    public RumbleJLineShell(RumbleConfiguration configuration, ExternalBindings externalBindings) throws IOException {
+    public RumbleJLineShell(RumbleConfiguration configuration, ExternalBindings externalBindings)
+            throws IOException {
         this.configuration = configuration;
         this.externalBindings = externalBindings.snapshot();
         initialize();
@@ -107,17 +109,19 @@ public class RumbleJLineShell {
         List<Item> results = new ArrayList<>();
         try {
             long count = this.jsoniqQueryExecutor.runInteractive(query, results);
-            Serializer serializer = Serializers.from(this.configuration.output().serializationParameters());
-            String result = String.join(
-                "\n",
-                results.stream()
-                    .map(x -> serializer.serialize(x))
-                    .collect(Collectors.toList())
-            );
+            Serializer serializer =
+                    Serializers.from(this.configuration.output().serializationParameters());
+            String result =
+                    String.join(
+                            "\n",
+                            results.stream()
+                                    .map(x -> serializer.serialize(x))
+                                    .collect(Collectors.toList()));
             String shell = this.configuration.output().shellFilter();
             if (shell != null) {
                 Process process = new ProcessBuilder(shell.split("\\s+")).start();
-                BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                BufferedReader stdout =
+                        new BufferedReader(new InputStreamReader(process.getInputStream()));
                 Writer stdin = new OutputStreamWriter(process.getOutputStream());
                 stdin.write(result);
                 stdin.flush();
@@ -135,7 +139,8 @@ public class RumbleJLineShell {
             }
             output(result);
             if (count != -1) {
-                JsoniqQueryExecutor.issueMaterializationWarning(count, this.configuration.runtime().resultsSizeCap());
+                JsoniqQueryExecutor.issueMaterializationWarning(
+                        count, this.configuration.runtime().resultsSizeCap());
             }
             long time = System.currentTimeMillis() - startTime;
             if (this.printTime) {
@@ -149,26 +154,26 @@ public class RumbleJLineShell {
     }
 
     private void initialize() throws IOException {
-        this.welcomeMessage = IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
+        this.welcomeMessage =
+                IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
         this.welcomeMessage += "\n";
-        this.welcomeMessage += IOUtils.toString(
-            Main.class.getResourceAsStream("/assets/shell-instructions.txt"),
-            "UTF-8"
-        );
-        Terminal terminal = TerminalBuilder.builder()
-            .system(true)
-            .build();
+        this.welcomeMessage +=
+                IOUtils.toString(
+                        Main.class.getResourceAsStream("/assets/shell-instructions.txt"), "UTF-8");
+        Terminal terminal = TerminalBuilder.builder().system(true).build();
         DefaultParser parser = new DefaultParser();
         parser.setEscapeChars(null);
-        this.lineReader = LineReaderBuilder.builder()
-            .parser(parser)
-            .terminal(terminal)
-            .variable(HISTORY_FILE, Paths.get(".rumble_shell_history"))
-            // .completer(new MyCompleter())
-            .highlighter(new DefaultHighlighter())
-            // .parser(new JiqsJlineParser())
-            .build();
-        this.jsoniqQueryExecutor = new JsoniqQueryExecutor(this.configuration, this.externalBindings);
+        this.lineReader =
+                LineReaderBuilder.builder()
+                        .parser(parser)
+                        .terminal(terminal)
+                        .variable(HISTORY_FILE, Paths.get(".rumble_shell_history"))
+                        // .completer(new MyCompleter())
+                        .highlighter(new DefaultHighlighter())
+                        // .parser(new JiqsJlineParser())
+                        .build();
+        this.jsoniqQueryExecutor =
+                new JsoniqQueryExecutor(this.configuration, this.externalBindings);
     }
 
     private void handleException(Throwable ex, boolean showErrorInfo) {
@@ -184,12 +189,10 @@ public class RumbleJLineShell {
                         ConsoleOutput.stackTrace(ex);
                     }
                     handleException(
-                        new OurBadException(
-                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
-                                    + ex.getMessage()
-                        ),
-                        showErrorInfo
-                    );
+                            new OurBadException(
+                                    "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
+                                            + ex.getMessage()),
+                            showErrorInfo);
                 }
             } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                 ConsoleOutput.error("⚠️ " + ex.getMessage());
@@ -198,63 +201,57 @@ public class RumbleJLineShell {
                 }
             } else if (ex instanceof OutOfMemoryError) {
                 ConsoleOutput.error(
-                    """
+                        """
                             ⚠️  Java went out of memory.
                             If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go.\
-                            """
-                );
+                            """);
                 if (showErrorInfo) {
                     ConsoleOutput.stackTrace(ex);
                 }
             } else if (ex instanceof IllegalArgumentException) {
                 ConsoleOutput.error(
-                    """
+                        """
                             ⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8.
                             If you have several versions of java installed, you need to set your JAVA_HOME accordingly.
                             If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.
                             For more debug info, please try again using --show-error-info yes in your command line.\
-                            """
-                );
+                            """);
                 if (showErrorInfo) {
                     ConsoleOutput.stackTrace(ex);
                 }
             } else if (ex instanceof ConnectException) {
                 ConsoleOutput.error(
-                    """
+                        """
                             ⚠️  There was a problem with the connection to the cluster.
                             For more debug info including the exact exception and a stacktrace, please try again using --show-error-info yes in your command line.\
-                            """
-                );
+                            """);
                 if (showErrorInfo) {
                     ConsoleOutput.stackTrace(ex);
                 }
             } else if (ex instanceof NullPointerException) {
                 ConsoleOutput.error(
-                    """
+                        """
                             Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈
                             We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query.
                             Link: https://github.com/RumbleDB/rumble/issues
                             For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.\
-                            """
-                );
+                            """);
                 if (showErrorInfo) {
                     ConsoleOutput.stackTrace(ex);
                 }
             } else if (ex instanceof UserInterruptException) {
                 ConsoleOutput.error(
-                    "On behalf of the RumbleDB team, I would like to thank you for querying with us and we are looking forward to having you with us again in the near future. Good bye!"
-                );
+                        "On behalf of the RumbleDB team, I would like to thank you for querying with us and we are looking forward to having you with us again in the near future. Good bye!");
                 System.exit(0);
             } else {
                 ConsoleOutput.error(
-                    """
+                        """
                             We are very embarrassed, because an error has occured that we did not anticipate 🙈: %s
                             We would like to investigate this and make sure to fix it. We would be very grateful if you could contact us or file an issue on GitHub with your query.
                             Link: https://github.com/RumbleDB/rumble/issues
                             For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.\
                             """
-                        .formatted(ex.getMessage())
-                );
+                                .formatted(ex.getMessage()));
                 if (showErrorInfo) {
                     ConsoleOutput.stackTrace(ex);
                 }
@@ -279,8 +276,8 @@ public class RumbleJLineShell {
 
     private boolean isQueryEnd() {
         return this.currentLine != null
-            && this.currentLine.equals("")
-            && !this.currentQueryContent.isEmpty();
+                && this.currentLine.equals("")
+                && !this.currentQueryContent.isEmpty();
     }
 
     private boolean isConfig() {
@@ -288,12 +285,11 @@ public class RumbleJLineShell {
     }
 
     private boolean exitCalled() {
-        return this.currentLine != null && this.currentLine.trim().toLowerCase().equals(RumbleJLineShell.EXIT_COMMAND);
+        return this.currentLine != null
+                && this.currentLine.trim().toLowerCase().equals(RumbleJLineShell.EXIT_COMMAND);
     }
 
     private String getInitializationMessage() {
         return this.welcomeMessage + "\n" + this.configuration.toString();
     }
-
-
 }

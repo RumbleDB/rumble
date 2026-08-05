@@ -20,14 +20,13 @@
 
 package org.rumbledb.expressions.control;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ConditionalExpression extends Expression {
 
@@ -39,13 +38,11 @@ public class ConditionalExpression extends Expression {
             Expression condition,
             Expression branch,
             Expression elseBranch,
-            ExceptionMetadata metadataFromContext
-    ) {
+            ExceptionMetadata metadataFromContext) {
         super(metadataFromContext);
         this.conditionExpression = condition;
         this.thenExpression = branch;
         this.elseExpression = elseBranch;
-
     }
 
     public Expression getElseBranch() {
@@ -93,5 +90,4 @@ public class ConditionalExpression extends Expression {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitConditionalExpression(this, argument);
     }
-
 }

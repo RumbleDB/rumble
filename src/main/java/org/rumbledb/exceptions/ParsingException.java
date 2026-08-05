@@ -20,15 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class ParsingException extends RumbleException {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public ParsingException(String message, ExceptionMetadata metadata) {
         super(String.format("Parser failed. %s", message), ErrorCode.ParsingErrorCode, metadata);
@@ -37,5 +35,4 @@ public class ParsingException extends RumbleException {
     public ParsingException(String message, ErrorCode code, ExceptionMetadata metadata) {
         super(String.format("Parser failed. %s", message), code, metadata);
     }
-
 }

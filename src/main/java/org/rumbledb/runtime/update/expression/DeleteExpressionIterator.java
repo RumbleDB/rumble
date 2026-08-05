@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -22,17 +23,17 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 public class DeleteExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator mainIterator;
     private final RuntimeIterator lookupIterator;
 
     public DeleteExpressionIterator(
             RuntimeIterator mainIterator,
             RuntimeIterator lookupIterator,
-            RuntimeStaticContext staticContext
-    ) {
-        super(Arrays.asList(mainIterator, lookupIterator), staticContext.toBuilder().isUpdating(true).build());
+            RuntimeStaticContext staticContext) {
+        super(
+                Arrays.asList(mainIterator, lookupIterator),
+                staticContext.toBuilder().isUpdating(true).build());
         this.mainIterator = mainIterator;
         this.lookupIterator = lookupIterator;
     }
@@ -43,14 +44,10 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
+    protected void openLocal() {}
 
     @Override
-    protected void closeLocal() {
-
-    }
+    protected void closeLocal() {}
 
     @Override
     protected boolean hasNextLocal() {
@@ -81,53 +78,46 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
             if (!lookup.isString()) {
                 throw new CannotCastUpdateSelectorException(
                         "Delete expression selection cannot be cast to String type",
-                        this.getMetadata()
-                );
+                        this.getMetadata());
             }
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target. Target mutability level: "
-                            + main.getMutabilityLevel()
-                            + ". Context mutability level: "
-                            + context.getCurrentMutabilityLevel(),
-                        this.getMetadata()
-                );
+                                + main.getMutabilityLevel()
+                                + ". Context mutability level: "
+                                + context.getCurrentMutabilityLevel(),
+                        this.getMetadata());
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
-                        "Attempt to modify currently immutable target",
-                        this.getMetadata()
-                );
+                        "Attempt to modify currently immutable target", this.getMetadata());
             }
-            up = factory.createDeleteFromObjectPrimitive(main, Collections.singletonList(lookup), this.getMetadata());
+            up =
+                    factory.createDeleteFromObjectPrimitive(
+                            main, Collections.singletonList(lookup), this.getMetadata());
         } else if (main.isArray()) {
             if (!lookup.isInt()) {
                 throw new CannotCastUpdateSelectorException(
                         "Delete expression selection cannot be cast to Int type",
-                        this.getMetadata()
-                );
+                        this.getMetadata());
             }
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target. Target mutability level: "
-                            + main.getMutabilityLevel()
-                            + ". Context mutability level: "
-                            + context.getCurrentMutabilityLevel(),
-                        this.getMetadata()
-                );
+                                + main.getMutabilityLevel()
+                                + ". Context mutability level: "
+                                + context.getCurrentMutabilityLevel(),
+                        this.getMetadata());
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
-                        "Attempt to modify currently immutable target",
-                        this.getMetadata()
-                );
+                        "Attempt to modify currently immutable target", this.getMetadata());
             }
             up = factory.createDeleteFromArrayPrimitive(main, lookup, this.getMetadata());
         } else {
             throw new InvalidUpdateTargetException(
                     "Delete expression target must be a single array or object",
-                    this.getMetadata()
-            );
+                    this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

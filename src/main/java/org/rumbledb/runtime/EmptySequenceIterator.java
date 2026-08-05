@@ -20,17 +20,15 @@
 
 package org.rumbledb.runtime;
 
+import java.io.Serial;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 
-import java.io.Serial;
-
 public class EmptySequenceIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public EmptySequenceIterator(RuntimeStaticContext staticContext) {
         super(null, staticContext);

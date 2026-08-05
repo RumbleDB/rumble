@@ -20,8 +20,13 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Properties;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
@@ -31,26 +36,20 @@ import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.Serial;
-import java.util.List;
-import java.util.Properties;
-
 public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public PostgreSQLTableFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
 
-        String connectionString = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
+        String connectionString =
+                this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
         String table = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
         int partitions = -1;
         if (this.getChildren().size() > 2) {
@@ -60,19 +59,19 @@ public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
         try {
             Properties properties = new java.util.Properties();
             properties.setProperty("Driver", "org.postgresql.Driver");
-            Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .jdbc(connectionString, table, properties);
+            Dataset<Row> dataFrame =
+                    SparkSessionManager.getInstance()
+                            .getOrCreateSession()
+                            .read()
+                            .jdbc(connectionString, table, properties);
             if (partitions != -1) {
                 dataFrame = dataFrame.repartition(partitions);
             }
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
-            RumbleException ex = new CannotRetrieveResourceException(
-                    "Error retrieving PostgreSQL table: " + e.getMessage(),
-                    getMetadata()
-            );
+            RumbleException ex =
+                    new CannotRetrieveResourceException(
+                            "Error retrieving PostgreSQL table: " + e.getMessage(), getMetadata());
             ex.initCause(e);
             throw ex;
         }

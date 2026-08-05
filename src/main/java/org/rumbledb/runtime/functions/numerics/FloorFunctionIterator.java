@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,21 +36,12 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
-
 public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public FloorFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -55,16 +51,12 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == null) {
             return null;
         }
-        if (
-            (value.isDouble() && Double.isNaN(value.getDoubleValue()))
-                || (value.isFloat() && Float.isNaN(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
             return value;
         }
-        if (
-            (value.isDouble() && Double.isInfinite(value.getDoubleValue()))
-                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
             return value;
         }
 
@@ -80,24 +72,14 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (value.isFloat()) {
             return ItemFactory.getInstance()
-                .createFloatItem(
-                    (float) Math.floor(
-                        value.getFloatValue()
-                    )
-                );
+                    .createFloatItem((float) Math.floor(value.getFloatValue()));
         }
         if (value.isDouble()) {
             return ItemFactory.getInstance()
-                .createDoubleItem(
-                    Math.floor(
-                        value.castToDoubleValue()
-                    )
-                );
+                    .createDoubleItem(Math.floor(value.castToDoubleValue()));
         }
         throw new UnexpectedTypeException(
-                "Unexpected value in floor(): " + value.getDynamicType(),
-                getMetadata()
-        );
+                "Unexpected value in floor(): " + value.getDynamicType(), getMetadata());
     }
 
     @Override
@@ -112,17 +94,12 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!value.getResultingType().getItemType().isNumeric()) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "( CAST ("
-            + "FLOOR( "
-            + value.getResultingQuery()
-            + " ) AS FLOAT)"
-            + " )";
+        String resultingQuery =
+                "( CAST (" + "FLOOR( " + value.getResultingQuery() + " ) AS FLOAT)" + " )";
         return new NativeClauseContext(
                 value,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity()));
     }
-
-
 }

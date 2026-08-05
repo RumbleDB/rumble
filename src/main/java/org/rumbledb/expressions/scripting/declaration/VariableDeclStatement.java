@@ -1,6 +1,10 @@
 package org.rumbledb.expressions.scripting.declaration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidVariableDeclarationException;
@@ -11,9 +15,6 @@ import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
 
 // TODO: Update specification document to reflect this definition:
@@ -21,31 +22,28 @@ import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAss
 public class VariableDeclStatement extends Statement {
     // Default is True for statement variable declaration.
     private final boolean DEFAULT_ASSIGNABLE = true;
-    @Getter
-    private final List<Annotation> annotations;
-    @Getter
-    private final Name variableName;
+    @Getter private final List<Annotation> annotations;
+    @Getter private final Name variableName;
     private final SequenceType variableSequenceType;
-    @Getter
-    private final Expression variableExpression;
-    @Getter
-    private final boolean isAssignable;
+    @Getter private final Expression variableExpression;
+    @Getter private final boolean isAssignable;
 
     public VariableDeclStatement(
             List<Annotation> annotations,
             Name variableName,
             SequenceType variableSequenceType,
             Expression variableExpression,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.annotations = annotations;
         this.variableName = variableName;
         this.variableSequenceType = variableSequenceType;
         this.variableExpression = variableExpression;
         if (this.annotations != null) {
-            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE, metadata); // default is true
-                                                                                                      // for
+            this.isAssignable =
+                    checkAssignable(
+                            this.annotations, this.DEFAULT_ASSIGNABLE, metadata); // default is true
+            // for
             // variable statements
         } else {
             this.isAssignable = this.DEFAULT_ASSIGNABLE;
@@ -53,8 +51,7 @@ public class VariableDeclStatement extends Statement {
         if (!this.isAssignable && this.variableExpression == null) {
             throw new InvalidVariableDeclarationException(
                     "Variable declaration is redundant: marked as '%an:unassignable' without initializing expression! This makes the variable unusable as it cannot be changed by Assign statements!",
-                    metadata
-            );
+                    metadata);
         }
     }
 
@@ -89,7 +86,8 @@ public class VariableDeclStatement extends Statement {
         if (this.variableSequenceType != null) {
             return this.variableSequenceType;
         }
-        if (this.variableExpression != null && this.variableExpression.getStaticSequenceType() != null) {
+        if (this.variableExpression != null
+                && this.variableExpression.getStaticSequenceType() != null) {
             return this.variableExpression.getStaticSequenceType();
         }
         return SequenceType.createSequenceType("item*");
@@ -98,5 +96,4 @@ public class VariableDeclStatement extends Statement {
     public SequenceType getActualSequenceType() {
         return this.variableSequenceType;
     }
-
 }

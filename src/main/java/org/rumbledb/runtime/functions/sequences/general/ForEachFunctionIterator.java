@@ -20,7 +20,12 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,20 +34,15 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class ForEachFunctionIterator extends HybridRuntimeIterator {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator sequenceIterator;
     private final RuntimeIterator actionIterator;
@@ -54,9 +54,7 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
     private MutableArgumentIterator mutableArgumentIterator;
 
     public ForEachFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("fn:for-each must have exactly two arguments.");
@@ -78,38 +76,38 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
         if (functionItems.size() != 1) {
             throw new UnexpectedTypeException(
                     "The second argument of fn:for-each must be a single function item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         this.actionFunction = functionItems.get(0);
         if (!acceptsSingleArgument(this.actionFunction)) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:for-each must accept exactly one argument [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
-        this.argumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        this.argumentContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
         this.itemIndex = 0;
         this.mutableArgumentIterator = new MutableArgumentIterator(this.argumentContext);
         List<RuntimeIterator> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(this.mutableArgumentIterator);
-        RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
-        this.currentCallbackIterator = new DynamicFunctionCallIterator(
-                new ConstantRuntimeIterator(this.actionFunction, functionItemContext),
-                callbackArguments,
-                functionItemContext
-        );
+        RuntimeStaticContext functionItemContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
+        this.currentCallbackIterator =
+                new DynamicFunctionCallIterator(
+                        new ConstantRuntimeIterator(this.actionFunction, functionItemContext),
+                        callbackArguments,
+                        functionItemContext);
     }
 
     private static boolean acceptsSingleArgument(Item item) {
@@ -180,17 +178,18 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("fn:for-each is currently supported only in local execution mode.");
+        throw new OurBadException(
+                "fn:for-each is currently supported only in local execution mode.");
     }
 
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("fn:for-each is currently supported only in local execution mode.");
+        throw new OurBadException(
+                "fn:for-each is currently supported only in local execution mode.");
     }
 
     private static class MutableArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
-        @Serial
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         private Item currentItem;
 
         MutableArgumentIterator(RuntimeStaticContext staticContext) {

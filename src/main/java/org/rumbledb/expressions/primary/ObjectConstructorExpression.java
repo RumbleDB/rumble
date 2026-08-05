@@ -20,32 +20,26 @@
 
 package org.rumbledb.expressions.primary;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ObjectConstructorExpression extends Expression {
 
-    @Getter
-    private boolean isMergedConstructor = false;
-    @Getter
-    private List<Expression> values;
-    @Getter
-    private List<Expression> keys;
+    @Getter private boolean isMergedConstructor = false;
+    @Getter private List<Expression> values;
+    @Getter private List<Expression> keys;
     private List<Boolean> isReferenced;
     private Expression childExpression;
 
     public ObjectConstructorExpression(
-            List<Expression> keys,
-            List<Expression> values,
-            ExceptionMetadata metadata
-    ) {
+            List<Expression> keys, List<Expression> values, ExceptionMetadata metadata) {
         super(metadata);
         this.keys = keys;
         this.values = values;
@@ -111,5 +105,4 @@ public class ObjectConstructorExpression extends Expression {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitObjectConstructor(this, argument);
     }
-
 }

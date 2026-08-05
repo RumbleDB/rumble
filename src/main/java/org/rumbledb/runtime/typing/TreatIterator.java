@@ -1,5 +1,9 @@
 package org.rumbledb.runtime.typing;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
@@ -9,6 +13,7 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -26,23 +31,16 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.TypeMappings;
 import org.rumbledb.types.SequenceType.Arity;
-
-import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
-
+import org.rumbledb.types.TypeMappings;
 
 public class TreatIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private final SequenceType sequenceType;
     private final ErrorCode errorCode;
@@ -57,8 +55,7 @@ public class TreatIterator extends HybridRuntimeIterator {
             RuntimeIterator iterator,
             SequenceType sequenceType,
             ErrorCode errorCode,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Collections.singletonList(iterator), staticContext);
         this.iterator = iterator;
         this.sequenceType = sequenceType;
@@ -66,15 +63,12 @@ public class TreatIterator extends HybridRuntimeIterator {
         if (!this.sequenceType.isEmptySequence()) {
             this.itemType = this.sequenceType.getItemType();
         }
-        if (
-            !getHighestExecutionMode().equals(ExecutionMode.LOCAL)
+        if (!getHighestExecutionMode().equals(ExecutionMode.LOCAL)
                 && (sequenceType.isEmptySequence()
-                    || sequenceType.getArity().equals(Arity.One)
-                    || sequenceType.getArity().equals(Arity.OneOrZero))
-        ) {
+                        || sequenceType.getArity().equals(Arity.One)
+                        || sequenceType.getArity().equals(Arity.OneOrZero))) {
             throw new OurBadException(
-                    "A treat as iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
-            );
+                    "A treat as iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?.");
         }
     }
 
@@ -114,7 +108,8 @@ public class TreatIterator extends HybridRuntimeIterator {
         if (this.iterator.hasNext()) {
             if (this.iterator.isRDDOrDataFrame()) {
                 if (this.currentResult == null) {
-                    JavaRDD<Item> childRDD = this.iterator.getRDD(this.currentDynamicContextForLocalExecution);
+                    JavaRDD<Item> childRDD =
+                            this.iterator.getRDD(this.currentDynamicContextForLocalExecution);
                     int size = childRDD.take(2).size();
                     checkMoreThanOneItemSequence(size);
                     this.nextResult = childRDD.first();
@@ -125,7 +120,9 @@ public class TreatIterator extends HybridRuntimeIterator {
                 this.nextResult = this.iterator.next();
             }
             if (this.nextResult != null && !this.nextResult.getDynamicType().isResolved()) {
-                this.nextResult.getDynamicType().resolve(this.currentDynamicContextForLocalExecution, getMetadata());
+                this.nextResult
+                        .getDynamicType()
+                        .resolve(this.currentDynamicContextForLocalExecution, getMetadata());
             }
             if (this.nextResult != null) {
                 this.resultCount++;
@@ -149,36 +146,26 @@ public class TreatIterator extends HybridRuntimeIterator {
     private RuntimeException errorToThrow(String type) {
         if (this.errorCode.equals(ErrorCode.DynamicTypeTreatErrorCode)) {
             return new TreatException(
-                    type
-                        + " cannot be treated as type "
-                        + this.sequenceType,
-                    this.getMetadata()
-            );
+                    type + " cannot be treated as type " + this.sequenceType, this.getMetadata());
         }
         if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
             return new UnexpectedTypeException(
-                    type
-                        + " is not expected here. The expected type is "
-                        + this.sequenceType,
-                    this.getMetadata()
-            );
+                    type + " is not expected here. The expected type is " + this.sequenceType,
+                    this.getMetadata());
         }
         if (this.errorCode.equals(ErrorCode.InvalidInstance)) {
             return new InvalidInstanceException(
                     "Invalid instance because of arity mismatch. The expected arity is "
-                        + this.sequenceType.getArity(),
-                    this.getMetadata()
-            );
+                            + this.sequenceType.getArity(),
+                    this.getMetadata());
         }
         if (this.errorCode.equals(ErrorCode.UnexpectedNode)) {
             return new UnexpectedNodeException(
-                    type
-                        + " is not expected here. The expected type is "
-                        + this.sequenceType,
-                    this.getMetadata()
-            );
+                    type + " is not expected here. The expected type is " + this.sequenceType,
+                    this.getMetadata());
         }
-        return new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
+        return new OurBadException(
+                "Unexpected error code in treat as iterator.", this.getMetadata());
     }
 
     @Override
@@ -192,11 +179,8 @@ public class TreatIterator extends HybridRuntimeIterator {
             checkEmptySequence(childRDD.take(2).size());
         }
 
-        Function<Item, Boolean> transformation = new TreatAsClosure(
-                this.sequenceType,
-                this.errorCode,
-                getMetadata()
-        );
+        Function<Item, Boolean> transformation =
+                new TreatAsClosure(this.sequenceType, this.errorCode, getMetadata());
         return childRDD.filter(transformation);
     }
 
@@ -209,7 +193,8 @@ public class TreatIterator extends HybridRuntimeIterator {
         StructType type = df.schema();
         DataType dataType = type;
         StructField[] fields = type.fields();
-        if (fields.length == 1 && fields[0].name().equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
+        if (fields.length == 1
+                && fields[0].name().equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
             dataType = fields[0].dataType();
         }
         return ItemTypeFactory.createItemType(dataType);
@@ -239,40 +224,37 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     /**
      * Converts a homogeneous RDD of atomic values to a DataFrame
-     * 
+     *
      * @param rdd the RDD containing the atomic values.
      * @param itemType the dynamic type of these values.
      * @return
      */
     public static HomogeneousItemDataFrame convertToDataFrame(
-            JavaRDD<?> rdd,
-            ItemType itemType,
-            RuntimeStaticContext staticContext
-    ) {
-        List<StructField> fields = Collections.singletonList(
-            DataTypes.createStructField(
-                SparkSessionManager.nonObjectJSONiqItemColumnName,
-                TypeMappings.getDataFrameDataTypeFromItemType(itemType, staticContext),
-                true
-            )
-        );
+            JavaRDD<?> rdd, ItemType itemType, RuntimeStaticContext staticContext) {
+        List<StructField> fields =
+                Collections.singletonList(
+                        DataTypes.createStructField(
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                TypeMappings.getDataFrameDataTypeFromItemType(
+                                        itemType, staticContext),
+                                true));
         StructType schema = DataTypes.createStructType(fields);
 
         JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i));
 
         // apply the schema to row RDD
-        Dataset<Row> df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+        Dataset<Row> df =
+                SparkSessionManager.getInstance()
+                        .getOrCreateSession()
+                        .createDataFrame(rowRDD, schema);
         return new HomogeneousItemDataFrame(df, itemType);
     }
 
     private void checkEmptySequence(int size) {
-        if (
-            size == 0
+        if (size == 0
                 && !this.sequenceType.isEmptySequence()
                 && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)
-        ) {
+                        || this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
             throw errorToThrow("Empty sequence");
         }
     }
@@ -284,12 +266,9 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     private void checkMoreThanOneItemSequence(int size) {
-        if (
-            size > 1
+        if (size > 1
                 && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero)
-        ) {
+                        || this.sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
             throw errorToThrow("A sequence of more than one item");
         }
     }

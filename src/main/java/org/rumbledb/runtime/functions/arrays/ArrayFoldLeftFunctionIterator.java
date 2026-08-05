@@ -17,34 +17,34 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.NamedFunctions;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator zeroIterator;
@@ -54,9 +54,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
     private int resultIndex;
 
     public ArrayFoldLeftFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("array:fold-left must have exactly three arguments.");
@@ -84,16 +82,12 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
             return;
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:fold-left expects exactly one array argument.",
-                    getMetadata()
-            );
+                    "array:fold-left expects exactly one array argument.", getMetadata());
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; argument to array:fold-left must be an array.",
-                    getMetadata()
-            );
+                    "Type error; argument to array:fold-left must be an array.", getMetadata());
         }
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
@@ -104,14 +98,12 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
         if (functionItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:fold-left must be a function item.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:fold-left must be a single function item.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         FunctionItem functionItem = (FunctionItem) functionItems.get(0);
@@ -125,32 +117,35 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
-            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+            RuntimeStaticContext staticContext =
+                    RuntimeStaticContext.builder()
+                            .configuration(getConfiguration())
+                            .staticType(SequenceType.createSequenceType("item*"))
+                            .executionMode(ExecutionMode.LOCAL)
+                            .metadata(getMetadata())
+                            .build();
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
         List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
-            RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+            RuntimeStaticContext childStaticContext =
+                    RuntimeStaticContext.builder()
+                            .configuration(getConfiguration())
+                            .staticType(SequenceType.createSequenceType("item*"))
+                            .executionMode(ExecutionMode.LOCAL)
+                            .metadata(getMetadata())
+                            .build();
             childIterators.add(new ConstantRuntimeIterator(item, childStaticContext));
         }
 
-        RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        RuntimeStaticContext staticContext =
+                RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
         return new CommaExpressionIterator(childIterators, staticContext);
     }
 
@@ -158,8 +153,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
             FunctionItem functionItem,
             List<Item> accumulator,
             List<Item> memberSequence,
-            DynamicContext context
-    ) {
+            DynamicContext context) {
         RuntimeIterator accIterator = createSequenceIterator(accumulator);
         RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
 
@@ -167,13 +161,9 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
         arguments.add(accIterator);
         arguments.add(memberIterator);
 
-        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
-        );
+        RuntimeIterator functionCall =
+                NamedFunctions.buildFunctionItemCallIterator(
+                        functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
         return functionCall.materialize(context);
     }
 
@@ -203,8 +193,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:fold-left is currently supported only in local execution mode."
-        );
+                "array:fold-left is currently supported only in local execution mode.");
     }
 
     @Override
@@ -215,8 +204,6 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
-                "array:fold-left is currently supported only in local execution mode."
-        );
+                "array:fold-left is currently supported only in local execution mode.");
     }
 }
-

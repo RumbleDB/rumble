@@ -24,8 +24,7 @@ import java.io.Serial;
 
 public class IteratorFlowException extends OurBadException {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public IteratorFlowException(String message, ExceptionMetadata metadata) {
         super(message, metadata);

@@ -1,13 +1,5 @@
 package org.rumbledb.serialization;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.FunctionsNonSerializableException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.xml.NamespaceItem;
-
 import java.io.Serial;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
@@ -17,10 +9,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FunctionsNonSerializableException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.xml.NamespaceItem;
+
 public class XmlSerializer implements Serializer, java.io.Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     protected final SerializationParameters params;
 
@@ -44,7 +43,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             throw new FunctionsNonSerializableException();
         }
         if (item.isArray()) {
-            String separator = this.params.getItemSeparator() == null ? "" : this.params.getItemSeparator();
+            String separator =
+                    this.params.getItemSeparator() == null ? "" : this.params.getItemSeparator();
             boolean first = true;
             for (List<Item> member : item.getSequenceMembers()) {
                 for (Item memberItem : member) {
@@ -62,7 +62,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isMap() || item.isObject()) {
-            throw serializationError("Serialization method does not support arrays or maps.", "SENR0001");
+            throw serializationError(
+                    "Serialization method does not support arrays or maps.", "SENR0001");
         }
         if (item.isDocumentNode()) {
             serializeDocumentNode(item, sb, indent, isTopLevel);
@@ -74,7 +75,9 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         }
         if (item.isAttributeNode() || item.isNamespaceNode()) {
             if (isTopLevel) {
-                throw serializationError("Top-level attribute and namespace nodes cannot be serialized.", "SENR0001");
+                throw serializationError(
+                        "Top-level attribute and namespace nodes cannot be serialized.",
+                        "SENR0001");
             }
             appendAttributeOrNamespaceNode(item, sb);
             return;
@@ -101,7 +104,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         }
     }
 
-    protected void serializeDocumentNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+    protected void serializeDocumentNode(
+            Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         boolean doctypeEmitted = false;
         for (Item child : item.children()) {
             if (!doctypeEmitted && child.isElementNode()) {
@@ -112,7 +116,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         }
     }
 
-    protected void serializeElementNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+    protected void serializeElementNode(
+            Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         if (isTopLevel) {
             appendDocTypeIfNeeded(item, sb);
         }
@@ -136,18 +141,19 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         boolean preserveWhitespace = mustPreserveWhitespace(item);
         boolean hasSignificantTextChild = hasSignificantTextChild(children);
         for (Item child : children) {
-            if (
-                indenting
+            if (indenting
                     && containsElementLikeChild
                     && !preserveWhitespace
                     && !hasSignificantTextChild
-                    && shouldIndentBeforeChild(child)
-            ) {
+                    && shouldIndentBeforeChild(child)) {
                 sb.append("\n").append(childIndent);
             }
             serialize(child, sb, childIndent, false);
         }
-        if (indenting && containsElementLikeChild && !preserveWhitespace && !hasSignificantTextChild) {
+        if (indenting
+                && containsElementLikeChild
+                && !preserveWhitespace
+                && !hasSignificantTextChild) {
             sb.append("\n").append(indent);
         }
         sb.append("</");
@@ -193,12 +199,10 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected boolean matchesElementNamespace(Item element, Item namespace) {
-        if (
-            element == null
+        if (element == null
                 || element.nodeName() == null
                 || namespace == null
-                || !namespace.isNamespaceNode()
-        ) {
+                || !namespace.isNamespaceNode()) {
             return false;
         }
         NamespaceItem namespaceItem = (NamespaceItem) namespace;
@@ -241,7 +245,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         return result;
     }
 
-    protected boolean shouldEmitNamespaceUndeclaration(String prefix, String previousUri, Item element) {
+    protected boolean shouldEmitNamespaceUndeclaration(
+            String prefix, String previousUri, Item element) {
         if (previousUri == null || previousUri.isEmpty() || "xml".equals(prefix)) {
             return false;
         }
@@ -253,9 +258,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         }
         if (!isXml11()) {
             throw serializationError(
-                "Prefix undeclaration requires XML 1.1 or later when using the XML or XHTML output method.",
-                "SEPM0010"
-            );
+                    "Prefix undeclaration requires XML 1.1 or later when using the XML or XHTML output method.",
+                    "SEPM0010");
         }
         return true;
     }
@@ -316,7 +320,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected boolean shouldEmitXmlDeclaration(Item item) {
-        return !this.params.getOmitXmlDeclaration() && (item.isDocumentNode() || item.isElementNode());
+        return !this.params.getOmitXmlDeclaration()
+                && (item.isDocumentNode() || item.isElementNode());
     }
 
     protected void appendXmlDeclaration(StringBuilder sb) {
@@ -342,7 +347,9 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
 
     protected String getEffectiveVersion(String defaultValue) {
         String effectiveVersion = SerializerUtils.getEffectiveXmlVersion(this.params);
-        return effectiveVersion == null || effectiveVersion.isEmpty() ? defaultValue : effectiveVersion;
+        return effectiveVersion == null || effectiveVersion.isEmpty()
+                ? defaultValue
+                : effectiveVersion;
     }
 
     protected boolean isXml11() {
@@ -362,17 +369,15 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
 
     protected boolean mustPreserveWhitespace(Item element) {
         return matchesExpandedQNameEntry(this.params.getSuppressIndentation(), element)
-            || hasXmlSpacePreserve(element)
-            || hasPreserveWhitespaceAncestor(element);
+                || hasXmlSpacePreserve(element)
+                || hasPreserveWhitespaceAncestor(element);
     }
 
     private boolean hasPreserveWhitespaceAncestor(Item element) {
         Item current = element == null ? null : element.parent();
         while (current != null && current.isElementNode()) {
-            if (
-                matchesExpandedQNameEntry(this.params.getSuppressIndentation(), current)
-                    || hasXmlSpacePreserve(current)
-            ) {
+            if (matchesExpandedQNameEntry(this.params.getSuppressIndentation(), current)
+                    || hasXmlSpacePreserve(current)) {
                 return true;
             }
             current = current.parent();
@@ -382,12 +387,10 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
 
     private boolean hasXmlSpacePreserve(Item element) {
         for (Item attribute : element.attributes()) {
-            if (
-                attribute.nodeName() != null
+            if (attribute.nodeName() != null
                     && "space".equals(attribute.nodeName().getLocalName())
                     && Name.XML_NS.equals(attribute.nodeName().getNamespace())
-                    && "preserve".equals(attribute.getStringValue())
-            ) {
+                    && "preserve".equals(attribute.getStringValue())) {
                 return true;
             }
         }
@@ -401,9 +404,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         String namespace = element.nodeName().getNamespace();
         String localName = element.nodeName().getLocalName();
         boolean hasNoNamespace = namespace == null || namespace.isEmpty();
-        String expandedName = hasNoNamespace
-            ? localName
-            : "Q{" + namespace + "}" + localName;
+        String expandedName = hasNoNamespace ? localName : "Q{" + namespace + "}" + localName;
         if (entries.contains(expandedName)) {
             return true;
         }
@@ -419,7 +420,9 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
 
     protected boolean containsElementLikeChild(List<Item> children) {
         for (Item child : children) {
-            if (child.isElementNode() || child.isCommentNode() || child.isProcessingInstructionNode()) {
+            if (child.isElementNode()
+                    || child.isCommentNode()
+                    || child.isProcessingInstructionNode()) {
                 return true;
             }
         }
@@ -428,7 +431,9 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
 
     protected boolean hasSignificantTextChild(List<Item> children) {
         for (Item child : children) {
-            if (child.isTextNode() && child.getStringValue() != null && !child.getStringValue().trim().isEmpty()) {
+            if (child.isTextNode()
+                    && child.getStringValue() != null
+                    && !child.getStringValue().trim().isEmpty()) {
                 return true;
             }
         }
@@ -436,7 +441,9 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected boolean shouldIndentBeforeChild(Item child) {
-        return child.isElementNode() || child.isCommentNode() || child.isProcessingInstructionNode();
+        return child.isElementNode()
+                || child.isCommentNode()
+                || child.isProcessingInstructionNode();
     }
 
     protected String nextIndent(String indent) {
@@ -447,24 +454,26 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     protected void appendCDataText(String value, StringBuilder sb) {
         Map<String, String> characterMaps = this.params.getCharacterMaps();
         StringBuilder cdataSegment = new StringBuilder();
-        for (int index = 0; index < value.length();) {
+        for (int index = 0; index < value.length(); ) {
             int codePoint = value.codePointAt(index);
             String current = new String(Character.toChars(codePoint));
             String replacement = characterMaps == null ? null : characterMaps.get(current);
             if (replacement != null) {
                 flushCDataSegment(cdataSegment, sb);
                 sb.append(replacement);
-            } else if (
-                mustSerializeAsCharacterReference(codePoint, false) || !isEncodableInSelectedEncoding(codePoint)
-            ) {
+            } else if (mustSerializeAsCharacterReference(codePoint, false)
+                    || !isEncodableInSelectedEncoding(codePoint)) {
                 flushCDataSegment(cdataSegment, sb);
                 appendEscapedXmlCodePoint(sb, codePoint, false);
             } else if (!isRepresentableInSelectedXmlVersion(codePoint)) {
                 throw new RumbleException(
-                        "Character #" + codePoint + " is not representable in XML " + getEffectiveVersion("1.0") + ".",
+                        "Character #"
+                                + codePoint
+                                + " is not representable in XML "
+                                + getEffectiveVersion("1.0")
+                                + ".",
                         ErrorCode.CodepointNotValidErrorCode,
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             } else {
                 cdataSegment.appendCodePoint(codePoint);
             }
@@ -477,8 +486,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         return new RumbleException(
                 message,
                 new ErrorCode(new Name(Name.ERROR_NS, "err", errorCode)),
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                ExceptionMetadata.EMPTY_METADATA);
     }
 
     private String escapeXml(String value, boolean inAttribute) {
@@ -487,19 +495,23 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         }
         StringBuilder result = new StringBuilder(value.length());
         Map<String, String> characterMaps = this.params.getCharacterMaps();
-        value.codePoints().forEach(codePoint -> {
-            String current = new String(Character.toChars(codePoint));
-            String replacement = characterMaps == null ? null : characterMaps.get(current);
-            if (replacement != null) {
-                result.append(replacement);
-            } else {
-                appendEscapedXmlCodePoint(result, codePoint, inAttribute);
-            }
-        });
+        value.codePoints()
+                .forEach(
+                        codePoint -> {
+                            String current = new String(Character.toChars(codePoint));
+                            String replacement =
+                                    characterMaps == null ? null : characterMaps.get(current);
+                            if (replacement != null) {
+                                result.append(replacement);
+                            } else {
+                                appendEscapedXmlCodePoint(result, codePoint, inAttribute);
+                            }
+                        });
         return result.toString();
     }
 
-    private void appendEscapedXmlCodePoint(StringBuilder result, int codePoint, boolean inAttribute) {
+    private void appendEscapedXmlCodePoint(
+            StringBuilder result, int codePoint, boolean inAttribute) {
         switch (codePoint) {
             case '&':
                 result.append("&amp;");
@@ -527,10 +539,13 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
 
         if (!isRepresentableInSelectedXmlVersion(codePoint)) {
             throw new RumbleException(
-                    "Character #" + codePoint + " is not representable in XML " + getEffectiveVersion("1.0") + ".",
+                    "Character #"
+                            + codePoint
+                            + " is not representable in XML "
+                            + getEffectiveVersion("1.0")
+                            + ".",
                     ErrorCode.CodepointNotValidErrorCode,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
 
         if (!isEncodableInSelectedEncoding(codePoint)) {
@@ -563,15 +578,15 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         }
         if (isXml11()) {
             return codePoint <= 0xD7FF
-                || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
-                || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
+                    || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+                    || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
         }
         if (codePoint == 0x9 || codePoint == 0xA || codePoint == 0xD) {
             return true;
         }
         return (codePoint >= 0x20 && codePoint <= 0xD7FF)
-            || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
-            || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
+                || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+                || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
     }
 
     private boolean isEncodableInSelectedEncoding(int codePoint) {
@@ -594,9 +609,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         int start = 0;
         while (start <= value.length()) {
             int split = value.indexOf("]]>", start);
-            String segment = split < 0
-                ? value.substring(start)
-                : value.substring(start, split + 2);
+            String segment = split < 0 ? value.substring(start) : value.substring(start, split + 2);
             sb.append("<![CDATA[").append(segment).append("]]>");
             if (split < 0) {
                 break;
