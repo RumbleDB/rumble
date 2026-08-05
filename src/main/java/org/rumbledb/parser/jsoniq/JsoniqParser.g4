@@ -166,14 +166,14 @@ varDecl
    ;
 
 contextItemDecl
-   : KW_DECLARE KW_CONTEXT KW_ITEM SEMICOLON
+   : KW_DECLARE KW_CONTEXT KW_ITEM
 /*
  * (KW_AS itemType)?
  * TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
  */
    
    (KW_AS sequenceType)? // TODO: change to itemType, update expressions to use itemType, update back JSONiq grammar
-   ((COLON_EQ value = exprSingle) | (external = KW_EXTERNAL (COLON_EQ defaultValue = exprSingle)?))
+   ((COLON_EQ value = exprSingle) | (external = KW_EXTERNAL (COLON_EQ defaultValue = exprSingle)?)) SEMICOLON
    ;
 
 /**
