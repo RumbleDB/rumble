@@ -34,8 +34,6 @@ public class FunctionIdentifier implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FunctionIdentifier() {
-    }
 
     public FunctionIdentifier(Name functionName, int arity) {
         this.name = functionName;

@@ -28,17 +28,16 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -172,12 +171,12 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        JSoundDataFrame df = iterator.getDataFrame(context);
+        HomogeneousItemDataFrame df = iterator.getDataFrame(context);
         if (df.isEmptySequence()) {
             return zeroElement;
         }
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-        JSoundDataFrame summedDF = df.evaluateSQL(
+        HomogeneousItemDataFrame summedDF = df.evaluateSQL(
             String.format(
                 "SELECT SUM(`%s`) as `%s` FROM %s",
                 SparkSessionManager.nonObjectJSONiqItemColumnName,

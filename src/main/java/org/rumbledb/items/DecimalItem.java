@@ -24,14 +24,12 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-@NoArgsConstructor // For Kryo serialization
 public class DecimalItem extends AbstractAtomicItem {
 
     @Serial

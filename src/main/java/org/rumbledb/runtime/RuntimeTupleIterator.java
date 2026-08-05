@@ -22,7 +22,7 @@ package org.rumbledb.runtime;
 
 
 import lombok.Getter;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -35,8 +35,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
-
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import java.io.Serial;
 import java.util.HashSet;
@@ -118,7 +117,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         return this.staticContext.getExecutionMode();
     }
 
-    public RumbleRuntimeConfiguration getConfiguration() {
+    public RumbleConfiguration getConfiguration() {
         return this.staticContext.getConfiguration();
     }
 

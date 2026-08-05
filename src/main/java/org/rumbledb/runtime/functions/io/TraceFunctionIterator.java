@@ -22,7 +22,7 @@
 package org.rumbledb.runtime.functions.io;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -77,20 +77,18 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             Item result = this.valueIterator.next();
-            RumbleRuntimeConfiguration conf = this.currentDynamicContextForLocalExecution
-                .getRumbleRuntimeConfiguration();
+            RumbleConfiguration conf = this.currentDynamicContextForLocalExecution
+                .getRumbleConfiguration();
             if (conf != null) {
-                String path = conf.getLogPath();
+                String path = conf.output().logPath();
                 if (path != null) {
                     URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                         path,
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
                         getMetadata()
                     );
                     FileSystemUtil.append(
                         uri,
                         Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
                         getMetadata()
                     );
                 }

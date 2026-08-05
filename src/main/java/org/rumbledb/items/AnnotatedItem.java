@@ -1,6 +1,5 @@
 package org.rumbledb.items;
 
-import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -20,7 +19,7 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -28,7 +27,6 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-@NoArgsConstructor(force = true)
 public class AnnotatedItem implements Item {
 
     @Serial
@@ -589,7 +587,7 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
+    public Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
         return this.itemToAnnotate.getDFVariablesInClosure();
     }
 

@@ -21,9 +21,8 @@
 package org.rumbledb.runtime;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotMaterializeException;
@@ -32,10 +31,8 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.parsing.RowToItemMapper;
-import org.rumbledb.items.structured.JSoundDataFrame;
-
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.List;
@@ -100,10 +97,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
             this.currentResultIndex = 0;
             JavaRDD<Item> rdd = null;
             if (!isRDD() && implementsDataFrames()) {
-                rdd = dataFrameToRDDOfItems(
-                    this.getDataFrame(this.currentDynamicContextForLocalExecution),
-                    this.getMetadata()
-                );
+                rdd = this.getDataFrame(this.currentDynamicContextForLocalExecution).toRDD(this.getMetadata());
             } else {
                 rdd = this.getRDDAux(this.currentDynamicContextForLocalExecution);
             }
@@ -141,8 +135,8 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
         if ((isDataFrame() && implementsDataFrames()) || (isRDD() && implementsDataFrames() && !implementsRDD())) {
-            JSoundDataFrame df = this.getDataFrame(context);
-            return dataFrameToRDDOfItems(df, getMetadata());
+            RuntimeDataFrame<Item> df = this.getDataFrame(context);
+            return df.toRDD(getMetadata());
         }
         if (isRDDOrDataFrame()) {
             return getRDDAux(context);
@@ -151,25 +145,21 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
     }
 
-    public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {
-        JavaRDD<Row> rowRDD = df.javaRDD();
-        return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
-    }
-
     public static List<Item> collectRDDwithLimit(
             JavaRDD<Item> rdd,
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
             ExceptionMetadata metadata
     ) {
-        if (configuration.getMaterializationCap() > 0) {
-            List<Item> result = rdd.take(configuration.getMaterializationCap() + 1);
-            if (result.size() == configuration.getMaterializationCap() + 1) {
+        int materializationCap = configuration.runtime().materializationCap();
+        if (materializationCap > 0) {
+            List<Item> result = rdd.take(materializationCap + 1);
+            if (result.size() == materializationCap + 1) {
                 long count = rdd.count();
                 throw new CannotMaterializeException(
                         "Cannot materialize a sequence of "
                             + count
                             + " items because the limit is set to "
-                            + configuration.getMaterializationCap()
+                            + materializationCap
                             + ". This value can be configured with the --materialization-cap parameter at startup",
                         metadata
                 );

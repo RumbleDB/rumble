@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -699,7 +699,7 @@ public interface ItemType extends Serializable {
      * 
      * @return true if compatible with DataFrames and false otherwise.
      */
-    default boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    default boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 

@@ -38,6 +38,7 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.ItemType;
+import org.objenesis.strategy.StdInstantiatorStrategy;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -90,11 +91,7 @@ public class DataFrameContext implements Serializable {
      * The only allowed methods are getKryo, getInput and getOutput.
      */
     public DataFrameContext() {
-        this.kryo = new Kryo();
-        this.kryo.setReferences(true);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
+        initializeKryo();
     }
 
     /**
@@ -111,11 +108,7 @@ public class DataFrameContext implements Serializable {
 
         this.context = new DynamicContext(context);
 
-        this.kryo = new Kryo();
-        this.kryo.setReferences(true);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
+        initializeKryo();
     }
 
     /**
@@ -174,7 +167,14 @@ public class DataFrameContext implements Serializable {
                 ClassNotFoundException {
         in.defaultReadObject();
 
+        initializeKryo();
+    }
+
+    private void initializeKryo() {
         this.kryo = new Kryo();
+        this.kryo.setInstantiatorStrategy(
+            new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy())
+        );
         this.kryo.setReferences(true);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
