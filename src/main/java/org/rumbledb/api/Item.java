@@ -1,6 +1,5 @@
 package org.rumbledb.api;
 
-import com.esotericsoftware.kryo.KryoSerializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -12,7 +11,7 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -43,7 +42,7 @@ import java.util.Map;
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
-public interface Item extends Serializable, KryoSerializable {
+public interface Item extends Serializable {
 
     /**
      * Makes a copy.
@@ -1105,7 +1104,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
+    default Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

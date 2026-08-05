@@ -3,6 +3,7 @@ package org.rumbledb.types;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.util.Set;
 
 /**
@@ -13,8 +14,9 @@ import java.util.Set;
  *
  * All concrete node types share node() as their base type at depth 1.
  */
-public class XmlNodeItemType implements ItemType {
+public class XmlNodeItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Name name;
@@ -23,21 +25,7 @@ public class XmlNodeItemType implements ItemType {
         this.name = name;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
 
     @Override
     public boolean hasName() {
@@ -84,4 +72,3 @@ public class XmlNodeItemType implements ItemType {
         return false;
     }
 }
-

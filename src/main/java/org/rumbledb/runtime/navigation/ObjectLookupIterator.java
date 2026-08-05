@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.navigation;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -47,26 +48,27 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
-import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
+import org.rumbledb.spark.SparkSessionManager;
 
 
 @Log4j2
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private Item lookupKey;
     private boolean contextLookup;
     private Item nextResult;
@@ -81,8 +83,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     private void initLookupKey(DynamicContext context) {
-
-        RuntimeIterator lookupIterator = this.children.get(1);
+        RuntimeIterator lookupIterator = this.getChild(1);
 
         this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
@@ -151,12 +152,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
@@ -204,7 +199,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         initLookupKey(dynamicContext);
         String key;
         if (this.contextLookup) {
@@ -233,7 +228,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
-        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
+        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
             .getVariableDependencies();
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
@@ -298,7 +293,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType structSchema)) {
-            if (this.children.get(1) instanceof StringRuntimeIterator) {
+            if (this.getChild(1) instanceof StringRuntimeIterator) {
                 if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "You are trying to look up the value associated with the field "
@@ -385,8 +380,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+    @Override
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         initLookupKey(context);
         String key;
         if (this.contextLookup) {
@@ -424,14 +420,14 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 } else {
                     sql = String.format("SELECT `%s`.* FROM %s", key, object);
                 }
-                JSoundDataFrame result = childDataFrame.evaluateSQL(
+                HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
                     sql,
                     type
                 );
                 return result;
             } else {
                 String sql;
-                JSoundDataFrame result;
+                HomogeneousItemDataFrame result;
                 if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
                     sql = String.format(
                         "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
@@ -446,7 +442,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         object
                     );
                     Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                    result = new JSoundDataFrame(df, type);
+                    result = new HomogeneousItemDataFrame(df, type);
                 } else {
                     sql = String.format(
                         "SELECT `%s` AS `%s` FROM %s",
@@ -465,7 +461,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         log.warn(
             "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
         );
-        JSoundDataFrame result = JSoundDataFrame.emptyDataFrame();
+        HomogeneousItemDataFrame result = HomogeneousItemDataFrame.emptyDataFrame();
         return result;
     }
 }

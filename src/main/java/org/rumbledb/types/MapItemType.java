@@ -8,16 +8,17 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Set;
 
 /**
  * XQuery/XPath map item type: map(*) and map(K, V) per XDM 3.1 / XPath 3.1.
  * map(*) is a subtype of function(*) (see base type chain).
  */
-public class MapItemType implements ItemType {
+public class MapItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name name;
@@ -25,13 +26,6 @@ public class MapItemType implements ItemType {
     private ItemType keyType;
     private SequenceType valueSequenceType;
     private int typeTreeDepth;
-
-    MapItemType() {
-        this.name = null;
-        this.baseType = null;
-        this.keyType = null;
-        this.valueSequenceType = null;
-    }
 
     /**
      * @param name null for anonymous typed maps
@@ -73,34 +67,22 @@ public class MapItemType implements ItemType {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
+    protected Object equalityKey() {
+        if (
+            this.name == null
+                && BuiltinTypesCatalogue.mapItem.equals(this.baseType)
+                && BuiltinTypesCatalogue.stringItem.equals(this.keyType)
+                && SequenceType.createSequenceType("item").equals(this.valueSequenceType)
+        ) {
+            return namedTypeKey(new Name(Name.JS_NS, "js", "object"));
         }
-        if (itemType instanceof MapItemType mapItemType) {
-            return this.structurallyEqual(mapItemType);
-        }
-        if (itemType.isObjectItemType() && other.equals(BuiltinTypesCatalogue.objectItem)) {
-            // a js:object = map(xs:string, item)
-            ItemType objectAsMap = ItemTypeFactory.mapOf(
-                BuiltinTypesCatalogue.stringItem,
-                SequenceType.createSequenceType("item")
-            );
-            return this.equals(objectAsMap);
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.name, this.keyType, this.valueSequenceType, this.baseType);
-    }
-
-    boolean structurallyEqual(MapItemType o) {
-        return Objects.equals(this.name, o.name)
-            && this.keyType.equals(o.keyType)
-            && this.valueSequenceType.equals(o.valueSequenceType)
-            && this.baseType.equals(o.baseType);
+        return structuralTypeKey(
+            MapItemType.class,
+            this.name,
+            this.baseType,
+            this.keyType,
+            this.valueSequenceType
+        );
     }
 
     @Override
@@ -208,23 +190,7 @@ public class MapItemType implements ItemType {
         return current;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.baseType);
-        kryo.writeClassAndObject(output, this.keyType);
-        kryo.writeClassAndObject(output, this.valueSequenceType);
-        output.writeInt(this.typeTreeDepth);
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.keyType = (ItemType) kryo.readClassAndObject(input);
-        this.valueSequenceType = (SequenceType) kryo.readClassAndObject(input);
-        this.typeTreeDepth = input.readInt();
-    }
 
     @Override
     public boolean hasName() {

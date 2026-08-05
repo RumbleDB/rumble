@@ -25,17 +25,19 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class UnorderedFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private Item nextResult;
 
     public UnorderedFunctionIterator(
@@ -43,7 +45,7 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
     }
 
     @Override
@@ -70,17 +72,6 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.iterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-
-        if (!this.iterator.hasNext()) {
-            this.hasNext = false;
-        } else {
-            setNextResult();
-        }
     }
 
     @Override
@@ -114,8 +105,8 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame df = this.iterator.getDataFrame(context);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame df = this.iterator.getDataFrame(context);
         return df;
     }
 

@@ -7,10 +7,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public EscapeHTMLURIFunctionIterator(
@@ -22,7 +24,7 @@ public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item item = this.children.get(0).materializeFirstItemOrNull(context);
+        Item item = this.getChild(0).materializeFirstItemOrNull(context);
         if (item == null) {
             return ItemFactory.getInstance().createStringItem("");
         }

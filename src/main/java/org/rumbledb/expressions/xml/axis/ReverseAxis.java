@@ -1,5 +1,8 @@
 package org.rumbledb.expressions.xml.axis;
 
+import lombok.Getter;
+
+@Getter
 public enum ReverseAxis {
     PARENT("parent::"),
     ANCESTOR("ancestor::"),
@@ -11,10 +14,6 @@ public enum ReverseAxis {
 
     ReverseAxis(String axisValue) {
         this.axisValue = axisValue;
-    }
-
-    public String getAxisValue() {
-        return this.axisValue;
     }
 
     public static ReverseAxis fromString(String text) {

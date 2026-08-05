@@ -21,6 +21,8 @@
 package org.rumbledb.expressions;
 
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -42,12 +44,25 @@ import org.rumbledb.types.SequenceType.Arity;
  *
  * An expression has a classification, largely denoting it as UPDATING or SIMPLE.
  */
+@Getter
 public abstract class Expression extends Node {
 
+    /**
+     * Static context attached to this expression
+     */
+    @Setter
     protected StaticContext staticContext;
 
+    /**
+     * Statically inferred sequence type.
+     */
+    @Setter
     protected SequenceType staticSequenceType;
 
+    /**
+     * Expression Classification of the expression.
+     */
+    @Setter
     protected ExpressionClassification expressionClassification = ExpressionClassification.UNSET;
 
     protected boolean isSequential;
@@ -56,45 +71,18 @@ public abstract class Expression extends Node {
         super(metadata);
     }
 
-    /**
-     * Retrieves the static context attached to this expression.
-     * 
-     * @return the static context.
-     */
-    public StaticContext getStaticContext() {
-        return this.staticContext;
-    }
-
-    /**
-     * Sets the static context of the expression.
-     * 
-     * @param staticContext the static context to set.
-     */
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
-    }
-
     public RuntimeStaticContext getStaticContextForRuntime(
             RumbleConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return new RuntimeStaticContext(
-                conf,
-                getStaticSequenceType(),
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                this.staticContext
-        );
-    }
-
-    /**
-     * Provides the inferred static type, only if static analysis
-     * is activated.
-     * 
-     * @return the statically inferred sequence type.
-     */
-    public SequenceType getStaticSequenceType() {
-        return this.staticSequenceType;
+        return RuntimeStaticContext.fromStaticContext(this.staticContext)
+            .configuration(conf)
+            .staticType(getStaticSequenceType())
+            .executionMode(getHighestExecutionMode(visitorConfig))
+            .metadata(getMetadata())
+            .isUpdating(isUpdating())
+            .isSequential(isSequential())
+            .build();
     }
 
     /**
@@ -109,34 +97,6 @@ public abstract class Expression extends Node {
             this.staticSequenceType.getArity().equals(Arity.OneOrZero)
             ||
             this.staticSequenceType.getArity().equals(Arity.Zero);
-    }
-
-    /**
-     * Sets the inferred static type, for used by the static
-     * analysis visitor.
-     * 
-     * @param staticSequenceType the statically inferred sequence type to set.
-     */
-    public void setStaticSequenceType(SequenceType staticSequenceType) {
-        this.staticSequenceType = staticSequenceType;
-    }
-
-    /**
-     * Gets the inferred expression classification of this node, for use ...
-     *
-     * @return Expression Classification of the expression.
-     */
-    public ExpressionClassification getExpressionClassification() {
-        return this.expressionClassification;
-    }
-
-    /**
-     * Sets the inferred expression classification of this node, for use ...
-     *
-     * @param expressionClassification the statically inferred expression classification.
-     */
-    public void setExpressionClassification(ExpressionClassification expressionClassification) {
-        this.expressionClassification = expressionClassification;
     }
 
     /**
@@ -177,10 +137,6 @@ public abstract class Expression extends Node {
         if (isSequential) {
             setIsInSequentialBlock(true);
         }
-    }
-
-    public boolean isSequential() {
-        return this.isSequential;
     }
 
     @Override

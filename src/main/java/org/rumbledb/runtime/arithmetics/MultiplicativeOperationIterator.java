@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.arithmetics;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -47,10 +48,11 @@ import org.rumbledb.types.SequenceType.Arity;
 public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     Item left;
     Item right;
-    MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
+    final MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
 

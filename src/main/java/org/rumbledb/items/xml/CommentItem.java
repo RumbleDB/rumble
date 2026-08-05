@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -10,18 +7,16 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class CommentItem implements Item {
+public class CommentItem extends AbstractNodeItem {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String content;
     private Item parent;
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public CommentItem() {
-    }
 
     public CommentItem(String content) {
         this.content = content;
@@ -50,6 +45,11 @@ public class CommentItem implements Item {
     @Override
     public void setParent(Item parent) {
         this.parent = parent;
+    }
+
+    @Override
+    public void addParentToDescendants() {
+        // Comment nodes are leaves and therefore have no descendants to update.
     }
 
     @Override
@@ -100,25 +100,6 @@ public class CommentItem implements Item {
     @Override
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof CommentItem otherComment)) {
-            return false;
-        }
-        return this.getXmlDocumentPosition() != null
-            && this.getXmlDocumentPosition().equals(otherComment.getXmlDocumentPosition());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.content);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.content = input.readString();
     }
 
     @Override

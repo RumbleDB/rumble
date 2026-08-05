@@ -63,10 +63,6 @@ public final class IntegerPictureFormatter {
             LanguageSupport.effectiveLanguageOf(LanguageSupport.normalizeLanguage(language))
         );
 
-        // A get()-then-putIfAbsent() (rather than computeIfAbsent() with a metadata-capturing lambda) avoids
-        // allocating a new capturing-lambda instance on every call just to pass it in -- computeIfAbsent only
-        // ever *invokes* the lambda on a cache miss, but a capturing lambda expression still allocates its
-        // instance at evaluation time regardless, on every single call.
         FormatIntegerPicture picture = PICTURE_CACHE.get(pictureString);
         if (picture == null) {
             picture = FormatIntegerPictureParser.parse(pictureString, metadata);

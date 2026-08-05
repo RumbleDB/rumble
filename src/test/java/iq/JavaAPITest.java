@@ -34,18 +34,26 @@ import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.resources.ResourceResolver;
+import org.rumbledb.serialization.JsonSerializer;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemTypeFactory;
 
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class JavaAPITest {
+
+    private static final String XQUERY_SERIALIZATION_NAMESPACE =
+        "http://www.w3.org/2010/xslt-xquery-serialization";
 
     public JavaAPITest() {
     }
@@ -190,6 +198,143 @@ public class JavaAPITest {
 
         Assertions.assertEquals("1", items.get(0).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
         Assertions.assertEquals("s", items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
+    }
+
+    private static RumbleConfiguration xqueryConfiguration() {
+        return RumbleConfiguration.builder()
+            .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+            .build();
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testGetAsDataFrameFromRDD() throws Throwable {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        SequenceOfItems iterator = rumble.runQuery("parallelize(({ \"x\" : 1 }, { \"x\" : 2 }))");
+
+        List<Row> rows = iterator.getAsDataFrame().collectAsList();
+
+        Assertions.assertEquals(2, rows.size());
+        Assertions.assertEquals(1, ((Number) rows.get(0).get(0)).intValue());
+        Assertions.assertEquals(2, ((Number) rows.get(1).get(0)).intValue());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testHtmlSerializationRejectsEmptyMap() {
+        Rumble rumble = new Rumble(xqueryConfiguration());
+        RumbleException exception = Assertions.assertThrows(
+            RumbleException.class,
+            () -> rumble.runQueryToString(
+                """
+                        declare namespace output = "http://www.w3.org/2010/xslt-xquery-serialization";
+                        declare option output:method "html";
+                        map { }
+                        """
+            )
+        );
+        Assertions.assertEquals("SENR0001", exception.getErrorCode().getLocalName());
+        Assertions.assertEquals("SENR0001", exception.getErrorCode().toString());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonSerializationEscapesUnencodableSupplementaryCharacterForAscii() {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        String supplementaryCharacter = new String(Character.toChars(0x10330));
+        String query = String.join(
+            "\n",
+            "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
+            "declare option output:method \"json\";",
+            "declare option output:encoding \"US-ASCII\";",
+            "\"" + supplementaryCharacter + "\""
+        );
+
+        Assertions.assertEquals("\"\\uD800\\uDF30\"", rumble.runQuery(query).serialize());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testTextSerializationRejectsMapWithErrNamespaceCode() {
+        Rumble rumble = new Rumble(xqueryConfiguration());
+        RumbleException exception = Assertions.assertThrows(
+            RumbleException.class,
+            () -> rumble.runQueryToString(
+                """
+                        declare namespace output = "%s";
+                        declare option output:method "text";
+                        map { "a" : 1 }
+                        """.formatted(XQUERY_SERIALIZATION_NAMESPACE)
+            )
+        );
+        Assertions.assertEquals("SENR0001", exception.getErrorCode().toString());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonSerializationEscapesSolidusInStrings() {
+        Rumble rumble = new Rumble(xqueryConfiguration());
+        String result = rumble.runQueryToString(
+            """
+                    declare namespace output = "%s";
+                    declare option output:method "json";
+                    <e/>
+                    """.formatted(XQUERY_SERIALIZATION_NAMESPACE)
+        );
+        Assertions.assertEquals("\"<e\\/>\"", result);
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonCharacterMapReplacementIsNotEscaped() {
+        SerializationParameters params = SerializationParameters.defaults("xquery31");
+        params.setMethod("json");
+        Map<String, String> characterMaps = new HashMap<>();
+        characterMaps.put("y", "\"");
+        params.setCharacterMaps(characterMaps);
+        JsonSerializer serializer = new JsonSerializer(params);
+        String result = serializer.serialize(ItemFactory.getInstance().createStringItem("y"));
+        Assertions.assertEquals("\"\"\"", result);
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonCharacterMapsDoNotTriggerDuplicateNameError() {
+        SerializationParameters params = SerializationParameters.defaults("xquery31");
+        params.setMethod("json");
+        Map<String, String> characterMaps = new HashMap<>();
+        characterMaps.put("w", "k");
+        characterMaps.put("x", "k");
+        params.setCharacterMaps(characterMaps);
+        JsonSerializer serializer = new JsonSerializer(params);
+
+        Item map = ItemFactory.getInstance()
+            .createObjectItem(
+                List.of("w", "x"),
+                List.of(
+                    ItemFactory.getInstance().createIntItem(1),
+                    ItemFactory.getInstance().createIntItem(1)
+                ),
+                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA,
+                false
+            );
+
+        Assertions.assertEquals("{\"k\":1,\"k\":1}", serializer.serialize(map));
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonSerializationEscapesEuroCharacterForAscii() {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        String query = String.join(
+            "\n",
+            "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
+            "declare option output:method \"json\";",
+            "declare option output:encoding \"US-ASCII\";",
+            "\"€\""
+        );
+
+        Assertions.assertEquals("\"\\u20AC\"", rumble.runQuery(query).serialize());
     }
 
 }

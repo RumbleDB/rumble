@@ -20,10 +20,6 @@
 
 package org.rumbledb.runtime.flwor.tuple;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -31,14 +27,15 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FlworKey implements KryoSerializable {
+public class FlworKey {
 
-    private List<Item> keyItems;
+    private final List<Item> keyItems;
 
     public FlworKey(List<Item> contents) {
         this.keyItems = new ArrayList<>();
@@ -46,17 +43,13 @@ public class FlworKey implements KryoSerializable {
 
     }
 
-    List<Item> getKeyItems() {
-        return this.keyItems;
-    }
-
     @Override
     public int hashCode() {
-        StringBuilder result = new StringBuilder();
+        int result = 1;
         for (Item key : this.keyItems) {
-            result.append(key.hashCode());
+            result = 31 * result + AtomicValueComparison.hash(key);
         }
-        return result.toString().hashCode();
+        return result;
     }
 
     @Override
@@ -95,13 +88,7 @@ public class FlworKey implements KryoSerializable {
                 throw new OurBadException("Non atomic key not allowed");
             }
 
-            long comparison = ComparisonIterator.compareItems(
-                item1,
-                item2,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            if (comparison != 0) {
+            if (!AtomicValueComparison.equal(item1, item2)) {
                 return false;
             }
 
@@ -269,16 +256,6 @@ public class FlworKey implements KryoSerializable {
         return result;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.keyItems);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.keyItems = kryo.readObject(input, ArrayList.class);
-    }
 
 
 }

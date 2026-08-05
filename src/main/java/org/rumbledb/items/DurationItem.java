@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -13,17 +14,13 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-public class DurationItem implements Item {
+public class DurationItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Duration durationValue = Duration.ZERO;
     private Period periodValue = Period.ZERO;
@@ -31,17 +28,11 @@ public class DurationItem implements Item {
         "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
     );
 
-    public DurationItem() {
-        super();
-    }
-
     public DurationItem(Duration value) {
-        super();
         this.durationValue = value;
     }
 
     public DurationItem(Period value) {
-        super();
         this.periodValue = value;
     }
 
@@ -64,19 +55,6 @@ public class DurationItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
     public Duration getDurationValue() {
         if (Objects.isNull(this.durationValue) && Objects.isNull(this.periodValue)) {
             return Duration.ZERO;
@@ -89,6 +67,7 @@ public class DurationItem implements Item {
             .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue);
     }
 
+    @Override
     public Period getPeriodValue() {
         return this.periodValue;
     }
@@ -119,21 +98,6 @@ public class DurationItem implements Item {
         return false;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.durationValue, this.periodValue);
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        getDurationFromString(input.readString());
-    }
-
     private void getDurationFromString(String durationPeriodString) {
         try {
             if (!durationPeriodString.contains("PT")) {
@@ -162,7 +126,7 @@ public class DurationItem implements Item {
         return BuiltinTypesCatalogue.durationItem;
     }
 
-    public static Comparator<Period> periodComparator = (p1, p2) -> {
+    public static final Comparator<Period> periodComparator = (p1, p2) -> {
         LocalDate base = LocalDate.of(2000, 1, 1);
         return base.plus(p1).compareTo(base.plus(p2));
     };

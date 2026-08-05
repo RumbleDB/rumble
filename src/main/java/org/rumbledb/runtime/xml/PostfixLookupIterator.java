@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -43,12 +44,13 @@ import java.util.stream.Stream;
  */
 public class PostfixLookupIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private final RuntimeIterator lookupIterator;
     private List<Item> lookupKeys;
-    private Queue<Item> nextResult;
-    private boolean wildcard;
+    private final Queue<Item> nextResult;
+    private final boolean wildcard;
 
     public PostfixLookupIterator(
             RuntimeIterator object,
@@ -81,12 +83,6 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override
@@ -189,7 +185,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         initLookupKey(dynamicContext);
         List<Item> keys = this.lookupKeys;
         FlatMapFunction<Item, Item> transformation = new PostfixLookupClosure(

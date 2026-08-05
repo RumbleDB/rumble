@@ -34,17 +34,19 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 
+import java.io.Serial;
 import java.util.*;
 
 public class SlashExprIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
         Item::getXmlDocumentPosition,
         Comparator.nullsLast(Comparator.naturalOrder())
     );
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private List<Item> results = null;
     private int nextResultCounter = 0;
     private Item nextResult;
@@ -146,13 +148,6 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         this.nextResultCounter = 0;
         this.leftIterator.close();
         this.rightIterator.close();
-    }
-
-    @Override
-    public void resetLocal() {
-        this.results = null;
-        this.nextResultCounter = 0;
-        setNextResult();
     }
 
     @Override

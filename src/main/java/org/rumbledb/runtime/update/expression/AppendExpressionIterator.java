@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -23,20 +24,20 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 public class AppendExpressionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator arrayIterator;
-    private RuntimeIterator toAppendIterator;
+    private final RuntimeIterator arrayIterator;
+    private final RuntimeIterator toAppendIterator;
 
     public AppendExpressionIterator(
             RuntimeIterator arrayIterator,
             RuntimeIterator toAppendIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext);
+        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext.toBuilder().isUpdating(true).build());
 
         this.arrayIterator = arrayIterator;
         this.toAppendIterator = toAppendIterator;
-        this.isUpdating = true;
     }
 
     @Override
@@ -54,10 +55,6 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
 
     }
 
-    @Override
-    protected void resetLocal() {
-
-    }
 
     @Override
     protected boolean hasNextLocal() {

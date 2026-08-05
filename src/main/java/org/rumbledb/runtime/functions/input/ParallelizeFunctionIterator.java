@@ -26,26 +26,28 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
+    private final RuntimeIterator sequenceIterator;
     private RuntimeIterator partitionsIterator;
 
     public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
+        this.sequenceIterator = this.getChild(0);
         this.partitionsIterator = null;
-        if (this.children.size() > 1) {
-            this.partitionsIterator = this.children.get(1);
+        if (this.getChildren().size() > 1) {
+            this.partitionsIterator = this.getChild(1);
         }
     }
 
@@ -54,16 +56,16 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> rdd = null;
         List<Item> contents = new ArrayList<>();
         if (this.sequenceIterator.isDataFrame()) {
-            JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
-            rdd = dataFrameToRDDOfItems(dataFrame, this.getMetadata());
-            if (this.children.size() == 1) {
+            RuntimeDataFrame<Item> dataFrame = this.sequenceIterator.getDataFrame(context);
+            rdd = dataFrame.toRDD(this.getMetadata());
+            if (this.getChildren().size() == 1) {
                 return rdd;
             } else {
                 return rdd.repartition(getNumberOfPartitions(context).getIntValue());
             }
         }
         this.sequenceIterator.materialize(context, contents);
-        if (this.children.size() == 1) {
+        if (this.getChildren().size() == 1) {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
             Item partitions = getNumberOfPartitions(context);
@@ -104,29 +106,24 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
-        if (this.children.size() > 1) {
+        this.getChild(0).open(this.currentDynamicContextForLocalExecution);
+        if (this.getChildren().size() > 1) {
             getNumberOfPartitions(this.currentDynamicContextForLocalExecution);
         }
     }
 
     @Override
     protected void closeLocal() {
-        this.children.get(0).close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
+        this.getChild(0).close();
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return this.children.get(0).hasNext();
+        return this.getChild(0).hasNext();
     }
 
     @Override
     protected Item nextLocal() {
-        return this.children.get(0).next();
+        return this.getChild(0).next();
     }
 }

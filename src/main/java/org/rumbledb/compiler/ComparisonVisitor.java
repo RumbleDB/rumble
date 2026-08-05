@@ -138,7 +138,10 @@ public class ComparisonVisitor extends CloneVisitor {
             WhereClause whereClause = new WhereClause(valueComparison, expression.getMetadata());
             whereClause.setStaticContext(rightContext);
             secondClause.chainWith(whereClause);
-            Expression stringLiteralExpression = new StringLiteralExpression("", null);
+            // This literal is part of the generated FLWOR expression. It must retain
+            // the source comparison's location so runtime-context construction (and
+            // any resulting error) has valid metadata.
+            Expression stringLiteralExpression = new StringLiteralExpression("", expression.getMetadata());
             stringLiteralExpression.setStaticContext(rightContext);
             stringLiteralExpression.setStaticSequenceType(
                 new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.One)

@@ -19,10 +19,11 @@
  */
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.rumbledb.api.Item;
@@ -34,28 +35,23 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-public class MapWithRemovedEntryItem implements Item {
+public class MapWithRemovedEntryItem extends AbstractMapItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
-    private Item original;
-    private Set<Item> removedKeys;
-
-    public MapWithRemovedEntryItem() {
-        this.original = null;
-        this.removedKeys = null;
-    }
+    private final Item original;
+    private final Set<Item> removedKeys;
+    private final int chainLength;
 
     public MapWithRemovedEntryItem(Item original, List<Item> removedKeys) {
         this.original = original;
-        this.removedKeys = new TreeSet<>(new ItemSameKeyComparator());
+        this.chainLength = ItemFactory.getMapOverlayChainLength(original) + 1;
+        this.removedKeys = new HashSet<>();
         for (Item key : removedKeys) {
             if (this.original.isObject()) {
                 if (!key.isString() && !key.isUntypedAtomic() && !key.isAnyURI()) {
@@ -70,6 +66,10 @@ public class MapWithRemovedEntryItem implements Item {
                 }
             }
         }
+    }
+
+    int getOverlayChainLength() {
+        return this.chainLength;
     }
 
     @Override
@@ -239,23 +239,9 @@ public class MapWithRemovedEntryItem implements Item {
     // endregion maps
 
     @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.original);
-        kryo.writeObject(output, this.removedKeys);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(Kryo kryo, Input input) {
-        this.original = (Item) kryo.readClassAndObject(input);
-        this.removedKeys = (Set<Item>) kryo.readObject(input, TreeSet.class);
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.mapItem;
     }
-
 
     @Override
     public boolean getEffectiveBooleanValue() {
@@ -357,49 +343,4 @@ public class MapWithRemovedEntryItem implements Item {
         throw new OurBadException("Cannot change collection of a MapEntryItem, which is not mutable.");
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isObject()) {
-            return false;
-        }
-        for (Item key : this.original.getItemKeys()) {
-            if (this.removedKeys.contains(key)) {
-                continue;
-            }
-            List<Item> thisSequence = this.original.getSequenceByKey(key);
-            List<Item> otherSequence = otherItem.getSequenceByKey(key);
-            if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
-                return false;
-            }
-            for (int i = 0; i < thisSequence.size(); i++) {
-                if (!thisSequence.get(i).equals(otherSequence.get(i))) {
-                    return false;
-                }
-            }
-        }
-        for (Item key : otherItem.getItemKeys()) {
-            if (this.removedKeys.contains(key)) {
-                return false;
-            }
-            if (getSequenceByKey(key) == null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = this.getItemKeys().size();
-        for (Item key : this.getItemKeys()) {
-            result += key.hashCode();
-            for (Item value : this.getSequenceByKey(key)) {
-                result += value.hashCode();
-            }
-        }
-        return result;
-    }
 }

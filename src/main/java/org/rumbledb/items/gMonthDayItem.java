@@ -1,26 +1,22 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class gMonthDayItem implements Item {
+public class gMonthDayItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
     private static final Pattern gMonthDayRegex = Pattern.compile(
@@ -29,10 +25,6 @@ public class gMonthDayItem implements Item {
     private Month month;
     private int day;
     private ZoneOffset offset;
-
-    public gMonthDayItem() {
-        super();
-    }
 
     gMonthDayItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.month = Month.of(dateTime.getMonthValue());
@@ -78,20 +70,6 @@ public class gMonthDayItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public String getStringValue() {
         if (this.hasTimeZone) {
             return String.format("--%02d-%02d", this.month.getValue(), this.day) + this.offset;
@@ -110,18 +88,7 @@ public class gMonthDayItem implements Item {
         return this.hasTimeZone;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-        output.writeBoolean(this.hasTimeZone);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        String dateTimeString = input.readString();
-        this.hasTimeZone = input.readBoolean();
-        getgMonthDayFromString(dateTimeString);
-    }
 
     @Override
     public ItemType getDynamicType() {

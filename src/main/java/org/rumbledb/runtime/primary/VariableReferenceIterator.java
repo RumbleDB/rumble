@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.primary;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.types.*;
 import org.rumbledb.api.Item;
@@ -28,7 +29,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -37,6 +38,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -44,8 +46,10 @@ import java.util.TreeMap;
 public class VariableReferenceIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Name variableName;
+    @Getter
+    private final Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
 
@@ -68,7 +72,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         return context.getVariableValues().getDataFrameVariableValue(this.variableName, getMetadata());
     }
 
@@ -159,16 +163,8 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         // do nothing
     }
 
+
     @Override
-    public void resetLocal() {
-        this.currentIndex = 0;
-        this.items = null;
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(this.variableName, DynamicContext.VariableDependency.FULL);

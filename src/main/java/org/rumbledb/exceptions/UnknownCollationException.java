@@ -14,19 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
  */
 
 package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class SparkRuntimeException extends RumbleException {
+import java.io.Serial;
 
+public class UnknownCollationException extends RumbleException {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public SparkRuntimeException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.RuntimeExceptionErrorCode, metadata);
+    public UnknownCollationException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.UnknownCollationInQueryPrologOrClause, metadata);
     }
 }

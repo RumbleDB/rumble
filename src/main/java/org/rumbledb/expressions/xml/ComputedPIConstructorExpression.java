@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.xml;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -56,6 +57,7 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-computed-pis">XQuery 3.1, 3.9.3.5: Computed Processing Instruction
  *      Constructors</a>
  */
+@Getter
 public class ComputedPIConstructorExpression extends Expression {
     /** The static processing instruction target (if specified). */
     private final String target;
@@ -102,18 +104,6 @@ public class ComputedPIConstructorExpression extends Expression {
 
     public boolean hasStaticTarget() {
         return this.target != null;
-    }
-
-    public String getTarget() {
-        return this.target;
-    }
-
-    public Expression getNameExpression() {
-        return this.nameExpression;
-    }
-
-    public Expression getContentExpression() {
-        return this.contentExpression;
     }
 
     @Override

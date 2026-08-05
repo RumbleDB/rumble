@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.primary;
 
+import lombok.Getter;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@Getter
 public class NamedFunctionReferenceExpression extends Expression {
 
     private final FunctionIdentifier identifier;
@@ -37,10 +39,6 @@ public class NamedFunctionReferenceExpression extends Expression {
     public NamedFunctionReferenceExpression(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(metadata);
         this.identifier = identifier;
-    }
-
-    public FunctionIdentifier getIdentifier() {
-        return this.identifier;
     }
 
     @Override
@@ -54,6 +52,7 @@ public class NamedFunctionReferenceExpression extends Expression {
         return visitor.visitNamedFunctionRef(this, argument);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

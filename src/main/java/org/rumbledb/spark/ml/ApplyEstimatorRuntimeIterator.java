@@ -1,6 +1,7 @@
 package org.rumbledb.spark.ml;
 
 import lombok.extern.log4j.Log4j2;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -18,9 +19,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
@@ -28,6 +29,7 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import static org.rumbledb.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
+import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,11 +42,13 @@ import java.util.regex.Pattern;
 @Log4j2
 public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private String estimatorShortName;
-    private Estimator<?> estimator;
+    private final String estimatorShortName;
+    @Getter
+    private final Estimator<?> estimator;
 
-    private JSoundDataFrame inputDataset;
+    private RuntimeDataFrame<Item> inputDataset;
     private Item paramMapItem;
 
     public ApplyEstimatorRuntimeIterator(
@@ -55,10 +59,6 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         super(null, staticContext);
         this.estimatorShortName = estimatorShortName;
         this.estimator = estimator;
-    }
-
-    public Estimator<?> getEstimator() {
-        return this.estimator;
     }
 
     @Override
@@ -219,7 +219,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         return generateTransformerFunctionItem(fittedModel, dynamicContext);
     }
 
-    private JSoundDataFrame getInputDataset(DynamicContext context) {
+    private RuntimeDataFrame<Item> getInputDataset(DynamicContext context) {
         Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
         return RumbleMLUtils.getDataFrameOrInferFromVariable(
@@ -356,9 +356,11 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
-                this.staticContext.withStaticType(new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One))
-                    .withExecutionMode(ExecutionMode.DATAFRAME)
-                    .withMetadata(getMetadata())
+                this.staticContext.toBuilder()
+                    .staticType(new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One))
+                    .executionMode(ExecutionMode.DATAFRAME)
+                    .metadata(getMetadata())
+                    .build()
         );
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(

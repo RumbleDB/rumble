@@ -5,25 +5,25 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExitStatementException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
 import java.util.Collections;
 
 public class ExitStatementIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator childIterator;
     private PendingUpdateList pendingUpdateList;
 
     public ExitStatementIterator(
             RuntimeIterator childIterator,
-            boolean isSequential,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(childIterator), staticContext);
-        this.isSequential = isSequential;
         this.childIterator = childIterator;
     }
 
@@ -58,11 +58,6 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.childIterator.reset(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return true;
     }
@@ -91,8 +86,8 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        JSoundDataFrame childDataFrame = this.childIterator.getDataFrame(dynamicContext);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame childDataFrame = this.childIterator.getDataFrame(dynamicContext);
         this.pendingUpdateList = new PendingUpdateList();
         if (this.childIterator.isUpdating()) {
             this.pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);

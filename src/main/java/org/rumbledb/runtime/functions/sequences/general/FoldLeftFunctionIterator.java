@@ -8,7 +8,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -63,12 +63,12 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
         for (Item inputItem : inputItems) {
             if (accumulator.size() == 1) {
                 if (reusableCall == null) {
-                    RuntimeStaticContext localItemStarContext = new RuntimeStaticContext(
-                            getConfiguration(),
-                            SequenceType.createSequenceType("item*"),
-                            ExecutionMode.LOCAL,
-                            getMetadata()
-                    );
+                    RuntimeStaticContext localItemStarContext = RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
                     ConstantRuntimeIterator accumulatorArgument = new ConstantRuntimeIterator(
                             accumulator.get(0),
                             localItemStarContext
@@ -115,12 +115,12 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
-        RuntimeStaticContext localItemStarContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        RuntimeStaticContext localItemStarContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         if (items.isEmpty()) {
             return new CommaExpressionIterator(Collections.emptyList(), localItemStarContext);
         }
@@ -170,13 +170,6 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.resultIndex = 0;
-        this.hasNext = this.resultSequence != null && !this.resultSequence.isEmpty();
-    }
-
-    @Override
     protected void closeLocal() {
         this.resultSequence = null;
         this.resultIndex = 0;
@@ -193,7 +186,7 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("fn:fold-left is currently supported only in local execution mode.");
     }
 }

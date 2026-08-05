@@ -20,33 +20,29 @@
 
 package org.rumbledb.runtime.flwor.tuple;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.parsing.RowToItemMapper;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-public class FlworTuple implements Serializable, KryoSerializable {
+public class FlworTuple implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private LinkedHashMap<Name, List<Item>> localVariables;
-    private LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
-    private LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
+    private final LinkedHashMap<Name, List<Item>> localVariables;
+    private final LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
+    private final LinkedHashMap<Name, HomogeneousItemDataFrame> dataFrameVariables;
     private RumbleConfiguration configuration;
 
     public FlworTuple() {
@@ -138,14 +134,13 @@ public class FlworTuple implements Serializable, KryoSerializable {
             return this.rddVariables.get(key);
         }
         if (this.dataFrameVariables.containsKey(key)) {
-            JSoundDataFrame df = this.dataFrameVariables.get(key);
-            JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
+            HomogeneousItemDataFrame df = this.dataFrameVariables.get(key);
+            return df.toRDD(metadata);
         }
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public JSoundDataFrame getDataFrameValue(Name key, ExceptionMetadata metadata) {
+    public HomogeneousItemDataFrame getDataFrameValue(Name key, ExceptionMetadata metadata) {
         if (this.dataFrameVariables.containsKey(key)) {
             return this.dataFrameVariables.get(key);
         }
@@ -172,28 +167,11 @@ public class FlworTuple implements Serializable, KryoSerializable {
         return this;
     }
 
-    public FlworTuple putValue(Name key, JSoundDataFrame value) {
+    public FlworTuple putValue(Name key, HomogeneousItemDataFrame value) {
         this.localVariables.remove(key);
         this.rddVariables.remove(key);
         this.dataFrameVariables.put(key, value);
         return this;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.localVariables);
-        kryo.writeObject(output, this.rddVariables);
-        kryo.writeObject(output, this.dataFrameVariables);
-        kryo.writeObject(output, this.configuration);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.localVariables = kryo.readObject(input, LinkedHashMap.class);
-        this.rddVariables = kryo.readObject(input, LinkedHashMap.class);
-        this.dataFrameVariables = kryo.readObject(input, LinkedHashMap.class);
-        this.configuration = kryo.readObject(input, RumbleConfiguration.class);
     }
 
     @Override

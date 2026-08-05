@@ -9,10 +9,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
 
 public class FunctionArityFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public FunctionArityFunctionIterator(
@@ -24,7 +26,7 @@ public class FunctionArityFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item function = this.children.get(0).materializeFirstItemOrNull(context);
+        Item function = this.getChild(0).materializeFirstItemOrNull(context);
         if (function == null || !function.isFunction()) {
             throw new UnexpectedTypeException(
                     "The argument of fn:function-arity must be a single function item [err:XPTY0004].",

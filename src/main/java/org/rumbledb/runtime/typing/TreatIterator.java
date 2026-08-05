@@ -20,29 +20,32 @@ import org.rumbledb.exceptions.TreatException;
 import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.runtime.update.PendingUpdateList;
-import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 import org.rumbledb.types.SequenceType.Arity;
 
+import org.rumbledb.spark.SparkSessionManager;
+
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 
 public class TreatIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private final SequenceType sequenceType;
-    private ErrorCode errorCode;
+    private final ErrorCode errorCode;
 
     private ItemType itemType;
 
@@ -53,14 +56,12 @@ public class TreatIterator extends HybridRuntimeIterator {
     public TreatIterator(
             RuntimeIterator iterator,
             SequenceType sequenceType,
-            boolean isUpdating,
             ErrorCode errorCode,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(iterator), staticContext);
         this.iterator = iterator;
         this.sequenceType = sequenceType;
-        this.isUpdating = isUpdating;
         this.errorCode = errorCode;
         if (!this.sequenceType.isEmptySequence()) {
             this.itemType = this.sequenceType.getItemType();
@@ -77,25 +78,9 @@ public class TreatIterator extends HybridRuntimeIterator {
         }
     }
 
-    public TreatIterator(
-            RuntimeIterator iterator,
-            SequenceType sequenceType,
-            ErrorCode errorCode,
-            RuntimeStaticContext staticContext
-    ) {
-        this(iterator, sequenceType, false, errorCode, staticContext);
-    }
-
     @Override
     public boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    public void resetLocal() {
-        this.resultCount = 0;
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override
@@ -231,11 +216,11 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
-        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
         checkEmptySequence(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;
@@ -259,7 +244,7 @@ public class TreatIterator extends HybridRuntimeIterator {
      * @param itemType the dynamic type of these values.
      * @return
      */
-    public static JSoundDataFrame convertToDataFrame(
+    public static HomogeneousItemDataFrame convertToDataFrame(
             JavaRDD<?> rdd,
             ItemType itemType,
             RuntimeStaticContext staticContext
@@ -277,7 +262,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
         // apply the schema to row RDD
         Dataset<Row> df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
-        return new JSoundDataFrame(df, itemType);
+        return new HomogeneousItemDataFrame(df, itemType);
     }
 
     private void checkEmptySequence(int size) {

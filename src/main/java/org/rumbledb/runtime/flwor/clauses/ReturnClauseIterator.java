@@ -35,7 +35,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -54,6 +54,7 @@ import org.rumbledb.spark.SparkSessionManager;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,36 +68,27 @@ import java.util.stream.Collectors;
 @Log4j2
 public class ReturnClauseIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeTupleIterator child;
+    private final RuntimeTupleIterator child;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
-    private RuntimeIterator expression;
+    private final RuntimeIterator expression;
     private Item nextResult;
 
     public ReturnClauseIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(expression), staticContext);
         this.child = child;
         this.expression = expression;
-        this.isUpdating = isUpdating;
         setInputAndOutputTupleVariableDependencies();
-    }
-
-    public ReturnClauseIterator(
-            RuntimeTupleIterator child,
-            RuntimeIterator expression,
-            RuntimeStaticContext staticContext
-    ) {
-        this(child, expression, false, staticContext);
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator expression = this.children.get(0);
+        RuntimeIterator expression = this.getChild(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
@@ -156,8 +148,8 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator expression = this.children.get(0);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        RuntimeIterator expression = this.getChild(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
@@ -166,7 +158,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
                 );
             // context
             this.child.open(context);
-            JSoundDataFrame result = null;
+            HomogeneousItemDataFrame result = null;
             while (this.child.hasNext()) {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
@@ -174,7 +166,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
                 dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                                                                                                // from new tuple
 
-                JSoundDataFrame intermediateResult = this.expression.getDataFrame(dynamicContext);
+                HomogeneousItemDataFrame intermediateResult = this.expression.getDataFrame(dynamicContext);
                 if (result == null) {
                     result = intermediateResult;
                 } else {
@@ -183,7 +175,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             }
             this.child.close();
             if (result == null) {
-                return JSoundDataFrame.emptyDataFrame();
+                return HomogeneousItemDataFrame.emptyDataFrame();
             }
             return result;
         }
@@ -218,7 +210,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
                             )
                         );
             }
-            JSoundDataFrame result = new JSoundDataFrame(
+            HomogeneousItemDataFrame result = new HomogeneousItemDataFrame(
                     nativeQueryResult,
                     this.expression.getStaticType().getItemType()
             );
@@ -308,15 +300,6 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.child.reset(this.currentDynamicContextForLocalExecution);
-        if (this.expression.isOpen()) {
-            this.expression.close();
-        }
-        this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
-        setNextResult();
-    }
-
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.expression.getVariableDependencies());
@@ -327,6 +310,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         return result;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
@@ -347,11 +331,13 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         this.expression.print(buffer, indent + 1);
     }
 
+    @Serial
     private void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
         i.defaultReadObject();
         setInputAndOutputTupleVariableDependencies();
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream i) throws IOException {
         i.defaultWriteObject();
     }
@@ -585,6 +571,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         return new NativeClauseContext(nativeClauseContext, resultColumnName, resultType);
     }
 
+    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!isUpdating()) {
             return new PendingUpdateList();
@@ -610,7 +597,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             // execution reaches here when there are no more results
         }
 
-        RuntimeIterator expression = this.children.get(0);
+        RuntimeIterator expression = this.getChild(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(

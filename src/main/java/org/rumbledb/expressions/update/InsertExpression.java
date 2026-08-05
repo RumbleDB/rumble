@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.update;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -11,9 +12,11 @@ import java.util.List;
 
 public class InsertExpression extends Expression {
 
-    private Expression mainExpression;
-    private Expression toInsertExpression;
-    private Expression positionExpression;
+    @Getter
+    private final Expression mainExpression;
+    @Getter
+    private final Expression toInsertExpression;
+    private final Expression positionExpression;
 
     public InsertExpression(
             Expression mainExpression,
@@ -29,14 +32,6 @@ public class InsertExpression extends Expression {
 
     public boolean hasPositionExpression() {
         return this.positionExpression != null;
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
-
-    public Expression getToInsertExpression() {
-        return this.toInsertExpression;
     }
 
     public Expression getPositionExpression() {

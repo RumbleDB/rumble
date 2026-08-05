@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.misc;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +34,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -46,9 +47,10 @@ import org.rumbledb.types.SequenceType;
 public class RangeOperationIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private long left;
     private long right;
     private long index;
@@ -108,6 +110,12 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         if (left == null || right == null) {
             return false;
         }
+        if (left.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createIntegerItem(left.castToIntegerValue());
+        }
+        if (right.isUntypedAtomic()) {
+            right = ItemFactory.getInstance().createIntegerItem(right.castToIntegerValue());
+        }
         if (
             !(left.isInteger())
                 || !(right.isInteger())
@@ -150,14 +158,15 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         return null;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         if (!init(this.currentDynamicContextForLocalExecution)) {
-            return new JSoundDataFrame(
+            return new HomogeneousItemDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                     BuiltinTypesCatalogue.item
             );
@@ -172,7 +181,11 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
      * @param right the right bound (inclusive).
      * @return
      */
-    public static JSoundDataFrame createLongInterval(long left, long right, RuntimeStaticContext staticContext) {
+    public static HomogeneousItemDataFrame createLongInterval(
+            long left,
+            long right,
+            RuntimeStaticContext staticContext
+    ) {
         List<Long> list = new ArrayList<>();
         for (long i = left; i <= right; i += PARTITION_SIZE) {
             list.add(i);
@@ -188,10 +201,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-    }
-
-    @Override
-    protected void resetLocal() {
     }
 
     @Override

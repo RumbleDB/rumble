@@ -12,18 +12,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
 @Getter
-public final class JSONParsingOptions implements Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+public final class JSONParsingOptions {
 
     public static final String DUPLICATES_REJECT = "reject";
     public static final String DUPLICATES_USE_FIRST = "use-first";
@@ -117,12 +112,12 @@ public final class JSONParsingOptions implements Serializable {
                 );
             }
 
-            RuntimeStaticContext callContext = new RuntimeStaticContext(
-                    staticContext.getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    metadata
-            );
+            RuntimeStaticContext callContext = RuntimeStaticContext.builder()
+                .configuration(staticContext.getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(metadata)
+                .build();
 
             List<RuntimeIterator> arguments = new ArrayList<>(1);
             arguments.add(new StringRuntimeIterator(escapedSequence, callContext));

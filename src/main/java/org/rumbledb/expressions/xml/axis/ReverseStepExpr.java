@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.xml.axis;
 
+import lombok.Getter;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
@@ -12,8 +13,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class ReverseStepExpr extends StepExpr {
-    private ReverseAxis reverseAxis;
-    private NodeTest nodeTest;
+    @Getter
+    private final ReverseAxis reverseAxis;
+    private final NodeTest nodeTest;
 
     public ReverseStepExpr(ReverseAxis reverseAxis, NodeTest nodeTest, ExceptionMetadata exceptionMetadata) {
         super(exceptionMetadata);
@@ -31,10 +33,6 @@ public class ReverseStepExpr extends StepExpr {
         indentIt(sb, indent);
         sb.append(this.reverseAxis.getAxisValue());
         sb.append(this.nodeTest.toString());
-    }
-
-    public ReverseAxis getReverseAxis() {
-        return this.reverseAxis;
     }
 
     @Override

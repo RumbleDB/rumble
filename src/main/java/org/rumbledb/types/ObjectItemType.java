@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,8 +21,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
-public class ObjectItemType implements ItemType {
+public class ObjectItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
@@ -42,9 +44,6 @@ public class ObjectItemType implements ItemType {
     private List<Item> enumeration;
     private ItemType baseType;
     private int typeTreeDepth;
-
-    ObjectItemType() {
-    }
 
     ObjectItemType(
             Name name,
@@ -91,116 +90,7 @@ public class ObjectItemType implements ItemType {
         }
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        // Write the name
-        output.writeBoolean(this.name != null);
-        if (this.name != null) {
-            kryo.writeObject(output, this.name);
-        }
 
-        // Write baseType
-        kryo.writeClassAndObject(output, this.baseType);
-
-        // Write isClosed
-        output.writeBoolean(this.isClosed);
-
-        kryo.writeObjectOrNull(output, this.keys, ArrayList.class);
-        kryo.writeObjectOrNull(output, this.content, ArrayList.class);
-
-        // Write constraints list
-        if (this.constraints != null) {
-            output.writeInt(this.constraints.size());
-            for (String constraint : this.constraints) {
-                output.writeString(constraint);
-            }
-        } else {
-            output.writeInt(-1);
-        }
-
-        // Write enumeration list
-        if (this.enumeration != null) {
-            output.writeInt(this.enumeration.size());
-            for (Item item : this.enumeration) {
-                kryo.writeObject(output, item);
-            }
-        } else {
-            output.writeInt(-1);
-        }
-
-        // Write typeTreeDepth
-        output.writeInt(this.typeTreeDepth);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        // Read the name
-        boolean hasName = input.readBoolean();
-        if (hasName) {
-            this.name = kryo.readObject(input, Name.class);
-        } else {
-            this.name = null;
-        }
-
-        // Read baseType
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-
-        // Read isClosed
-        this.isClosed = input.readBoolean();
-
-        // Read keys list
-        this.keys = (List<String>) kryo.readObjectOrNull(input, ArrayList.class);
-        if (this.keys == null) {
-            this.keys = new ArrayList<>();
-        }
-
-        // Read content list
-        this.content = (List<FieldDescriptor>) kryo.readObjectOrNull(input, ArrayList.class);
-        if (this.content == null) {
-            this.content = new ArrayList<>();
-        }
-
-        rebuildKeyStringIndex();
-
-        // Read constraints list
-        int constraintsSize = input.readInt();
-        if (constraintsSize >= 0) {
-            this.constraints = new ArrayList<>();
-            for (int i = 0; i < constraintsSize; i++) {
-                this.constraints.add(input.readString());
-            }
-        } else {
-            this.constraints = new ArrayList<>();
-        }
-
-        // Read enumeration list
-        int enumSize = input.readInt();
-        if (enumSize >= 0) {
-            this.enumeration = new ArrayList<>();
-            for (int i = 0; i < enumSize; i++) {
-                Item item = kryo.readObject(input, Item.class);
-                this.enumeration.add(item);
-            }
-        } else {
-            this.enumeration = null;
-        }
-
-        // Read typeTreeDepth
-        this.typeTreeDepth = input.readInt();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        if (itemType.isMapItemType()) {
-            // delegate to the map item type equality check
-            return other.equals(this);
-        }
-        return isEqualTo(itemType);
-    }
 
     @Override
     public boolean isObjectItemType() {
@@ -265,7 +155,7 @@ public class ObjectItemType implements ItemType {
             // js:object = map(xs:string, item)
             return this.getObjectAsMapType().isSubtypeOf(superType);
         }
-        return ItemType.super.isSubtypeOf(superType);
+        return super.isSubtypeOf(superType);
     }
 
     @Override
@@ -281,7 +171,7 @@ public class ObjectItemType implements ItemType {
             // js:object = map(xs:string, item)
             return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
         }
-        return ItemType.super.findLeastCommonSuperTypeWith(other);
+        return super.findLeastCommonSuperTypeWith(other);
     }
 
     private ItemType getObjectAsMapType() {

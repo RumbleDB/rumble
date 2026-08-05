@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.arithmetic;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 
+@Getter
 public class UnaryExpression extends Expression {
 
     private boolean negated;
@@ -50,19 +52,12 @@ public class UnaryExpression extends Expression {
         return visitor.visitUnaryExpr(this, argument);
     }
 
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
-
-    public boolean isNegated() {
-        return this.negated;
-    }
-
     @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.mainExpression);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

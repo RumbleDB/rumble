@@ -20,58 +20,32 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import lombok.Getter;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class StringItem implements Item {
+@Getter
+public class StringItem extends AbstractAtomicItem {
 
-
+    @Serial
     private static final long serialVersionUID = 1L;
     private String value;
 
-    public StringItem() {
-        super();
-    }
-
     public StringItem(String value) {
-        super();
         this.value = value;
     }
 
     @Override
     public Item copy(boolean mutable) {
         return new StringItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    public String getValue() {
-        return this.value;
     }
 
     @Override
@@ -84,6 +58,7 @@ public class StringItem implements Item {
         return getStringValue();
     }
 
+    @Override
     public double castToDoubleValue() {
         String trimmedValue = this.value.trim();
         if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
@@ -98,6 +73,7 @@ public class StringItem implements Item {
         return Double.parseDouble(this.getValue());
     }
 
+    @Override
     public float castToFloatValue() {
         String trimmedValue = this.value.trim();
         if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
@@ -115,14 +91,17 @@ public class StringItem implements Item {
         return Float.parseFloat(this.getValue());
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         return new BigDecimal(this.value.trim());
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return new BigInteger(this.value.trim());
     }
 
+    @Override
     public int castToIntValue() {
         return Integer.parseInt(this.value.trim());
     }
@@ -132,23 +111,12 @@ public class StringItem implements Item {
         return true;
     }
 
+    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readString();
-    }
-
-    public int hashCode() {
-        return getStringValue().hashCode();
-    }
 
     @Override
     public ItemType getDynamicType() {

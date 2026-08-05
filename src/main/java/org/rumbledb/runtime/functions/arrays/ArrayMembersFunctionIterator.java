@@ -30,6 +30,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.navigation.ArrayMembersClosure;
 
+import java.io.Serial;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -37,16 +38,17 @@ import java.util.Queue;
 public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private final RuntimeIterator iterator;
+    private final Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
     public ArrayMembersFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
         this.nextResults = new LinkedList<>();
     }
 
@@ -61,13 +63,6 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.iterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        this.nextResults.clear();
-        setNextResult();
     }
 
     @Override

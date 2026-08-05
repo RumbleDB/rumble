@@ -37,8 +37,8 @@ import org.rumbledb.expressions.module.Prolog;
 public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
 
     @SuppressWarnings("unused")
-    private RumbleConfiguration configuration;
-    private List<String> visitedModules;
+    private final RumbleConfiguration configuration;
+    private final List<String> visitedModules;
 
     /**
      * Builds a new visitor.

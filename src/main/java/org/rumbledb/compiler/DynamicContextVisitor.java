@@ -50,7 +50,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.typing.CastIterator;
@@ -77,7 +77,7 @@ import java.util.Map;
  */
 public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
-    private RumbleConfiguration configuration;
+    private final RumbleConfiguration configuration;
     private ExternalBindings externalBindings;
     private Map<String, DynamicContext> importedModuleContexts;
 
@@ -291,7 +291,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is external. Do we have supplied DataFrame items?
         Dataset<Row> df = this.getDataFrameBinding(name);
         if (df != null) {
-            JSoundDataFrame jdf = new JSoundDataFrame(df);
+            HomogeneousItemDataFrame jdf = new HomogeneousItemDataFrame(df);
             argument.getVariableValues()
                 .addVariableValue(name, jdf);
             return argument;

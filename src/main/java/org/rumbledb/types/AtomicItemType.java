@@ -1,7 +1,7 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,8 +37,9 @@ import static org.rumbledb.types.BuiltinTypesCatalogue.yearMonthDurationItem;
 /**
  * This class describes all the primitive built-in atomic types in the JSONiq data model.
  */
-public class AtomicItemType implements ItemType {
+public class AtomicItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name name;
@@ -55,19 +56,8 @@ public class AtomicItemType implements ItemType {
      */
     private List<String> lexicalSpacePatterns;
 
-    public AtomicItemType() {
-    }
-
     AtomicItemType(Name name, Set<ConstrainingFacetTypes> allowedFacets) {
         this(name, allowedFacets, WhitespaceFacet.COLLAPSE, null);
-    }
-
-    AtomicItemType(
-            Name name,
-            Set<ConstrainingFacetTypes> allowedFacets,
-            WhitespaceFacet whiteSpace
-    ) {
-        this(name, allowedFacets, whiteSpace, null);
     }
 
     AtomicItemType(
@@ -100,44 +90,6 @@ public class AtomicItemType implements ItemType {
         this.cardinality = cardinality;
         this.numeric = numeric;
         this.lexicalSpacePatterns = lexicalSpacePatterns == null ? Collections.emptyList() : lexicalSpacePatterns;
-    }
-
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeObjectOrNull(output, this.allowedFacets, HashSet.class);
-        kryo.writeObjectOrNull(output, this.whiteSpace, WhitespaceFacet.class);
-        kryo.writeObjectOrNull(output, this.ordered, OrderedFacetValue.class);
-        kryo.writeObjectOrNull(output, this.bounded, Boolean.class);
-        kryo.writeObjectOrNull(output, this.cardinality, CardinalityFacetValue.class);
-        kryo.writeObjectOrNull(output, this.numeric, Boolean.class);
-        kryo.writeObjectOrNull(output, this.lexicalSpacePatterns, java.util.ArrayList.class);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.allowedFacets = kryo.readObjectOrNull(input, HashSet.class);
-        this.whiteSpace = kryo.readObjectOrNull(input, WhitespaceFacet.class);
-        this.ordered = kryo.readObjectOrNull(input, OrderedFacetValue.class);
-        this.bounded = kryo.readObjectOrNull(input, Boolean.class);
-        this.cardinality = kryo.readObjectOrNull(input, CardinalityFacetValue.class);
-        this.numeric = kryo.readObjectOrNull(input, Boolean.class);
-        this.lexicalSpacePatterns = kryo.readObjectOrNull(input, java.util.ArrayList.class);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name != null ? this.name.hashCode() : super.hashCode();
     }
 
     @Override

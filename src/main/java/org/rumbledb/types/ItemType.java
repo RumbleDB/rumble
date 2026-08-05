@@ -21,6 +21,7 @@
 package org.rumbledb.types;
 
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
@@ -34,10 +35,10 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
-import com.esotericsoftware.kryo.KryoSerializable;
 
-public interface ItemType extends Serializable, KryoSerializable {
+public interface ItemType extends Serializable {
 
+    @Serial
     long serialVersionUID = 1L;
 
     /**
@@ -56,16 +57,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean isEqualTo(ItemType otherType) {
-        if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
-            if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
-                return false;
-            }
-            return this.toString().equals(otherType.toString());
-        }
-        if (!this.hasName() || !otherType.hasName()) {
-            return this == otherType;
-        }
-        return this.getName().equals(otherType.getName());
+        return this.equals(otherType);
     }
     // region kind
 

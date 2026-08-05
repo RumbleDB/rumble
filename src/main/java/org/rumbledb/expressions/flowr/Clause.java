@@ -22,6 +22,8 @@ package org.rumbledb.expressions.flowr;
 
 import lombok.extern.log4j.Log4j2;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -40,12 +42,14 @@ import org.rumbledb.expressions.scripting.statement.Statement;
  * Clauses, unlike expressions, return tuple streams.
  */
 @Log4j2
+@Getter
 public abstract class Clause extends Node {
 
     /* Clauses are organized in doubly-linked lists */
     protected Clause previousClause;
     protected Clause nextClause;
-    protected FLWOR_CLAUSES clauseType;
+    protected final FLWOR_CLAUSES clauseType;
+    @Setter
     protected StaticContext staticContext;
 
     public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
@@ -54,18 +58,6 @@ public abstract class Clause extends Node {
         this.staticContext = null;
         this.previousClause = null;
         this.nextClause = null;
-    }
-
-    public FLWOR_CLAUSES getClauseType() {
-        return this.clauseType;
-    }
-
-    public Clause getPreviousClause() {
-        return this.previousClause;
-    }
-
-    public Clause getNextClause() {
-        return this.nextClause;
     }
 
     public Clause getFirstClause() {
@@ -220,6 +212,7 @@ public abstract class Clause extends Node {
     }
 
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
@@ -232,24 +225,15 @@ public abstract class Clause extends Node {
         }
     }
 
-    public StaticContext getStaticContext() {
-        return this.staticContext;
-    }
-
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
-    }
-
     public RuntimeStaticContext getStaticContextForRuntime(
             RumbleConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return new RuntimeStaticContext(
-                conf,
-                null,
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                this.staticContext
-        );
+        return RuntimeStaticContext.fromStaticContext(this.staticContext)
+            .configuration(conf)
+            .staticType(null)
+            .executionMode(getHighestExecutionMode(visitorConfig))
+            .metadata(getMetadata())
+            .build();
     }
 }

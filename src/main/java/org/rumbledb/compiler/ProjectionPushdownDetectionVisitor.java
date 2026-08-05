@@ -145,6 +145,7 @@ public class ProjectionPushdownDetectionVisitor
         return result;
     }
 
+    @Override
     public ReferenceMap visitOrderByClause(OrderByClause clause, ReferenceMap argument) {
         // we create a copy of the references made by the outside world
         ReferenceMap result = new ReferenceMap(argument);
@@ -275,7 +276,7 @@ public class ProjectionPushdownDetectionVisitor
 
     public static class ReferenceMap {
 
-        private Map<Name, ReferenceMap> map;
+        private final Map<Name, ReferenceMap> map;
 
         public ReferenceMap() {
             this.map = new HashMap<>();

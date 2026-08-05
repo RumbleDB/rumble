@@ -20,19 +20,17 @@
 
 package org.rumbledb.context;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
-import lombok.extern.log4j.Log4j2;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.spark.api.java.JavaRDD;
+
+import java.io.Serial;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serializable;
@@ -41,40 +39,29 @@ import java.util.List;
 import java.util.Map;
 
 
-@Log4j2
-public class DynamicContext implements Serializable, KryoSerializable {
+public class DynamicContext implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private DynamicContext parent;
     private RumbleConfiguration conf;
     private ExternalBindings externalBindings;
+    @Getter
     private VariableValues variableValues;
     private NamedFunctions namedFunctions;
     private InScopeSchemaTypes inScopeSchemaTypes;
     private OffsetDateTime currentDateTime;
+    @Setter
+    @Getter
     private int currentMutabilityLevel;
     private final GlobalVariables globalVariables;
     /**
      * The top-level runtime iterator for constructing the XML Node Tree.
      * This is used in the context of direct constructors.
      */
+    @Setter
+    @Getter
     private RuntimeIterator topLevelRuntimeIterator;
-
-    /**
-     * The default constructor is for Kryo deserialization purposes.
-     */
-    public DynamicContext() {
-        this.parent = null;
-        this.variableValues = null;
-        this.conf = null;
-        this.externalBindings = null;
-        this.namedFunctions = null;
-        this.inScopeSchemaTypes = null;
-        this.currentDateTime = OffsetDateTime.now();
-        this.currentMutabilityLevel = 0;
-        this.globalVariables = new GlobalVariables();
-        this.topLevelRuntimeIterator = null;
-    }
 
     /**
      * Creates a new, empty module context (without parent).
@@ -117,7 +104,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             DynamicContext parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, JSoundDataFrame> dataFrameVariableValues
+            Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues
     ) {
         if (parent == null) {
             throw new OurBadException("Dynamic context defined with null parent");
@@ -156,36 +143,6 @@ public class DynamicContext implements Serializable, KryoSerializable {
         return null;
     }
 
-    public VariableValues getVariableValues() {
-        return this.variableValues;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObjectOrNull(output, this.parent, DynamicContext.class);
-        kryo.writeObject(output, this.variableValues);
-        output.writeBoolean(this.currentDateTime != null);
-        if (this.currentDateTime != null) {
-            output.writeString(this.currentDateTime.toString());
-        }
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.parent = kryo.readObjectOrNull(input, DynamicContext.class);
-        this.variableValues = kryo.readObject(input, VariableValues.class);
-        if (input.readBoolean()) {
-            this.currentDateTime = OffsetDateTime.parse(input.readString());
-        }
-    }
-
-    public int getCurrentMutabilityLevel() {
-        return this.currentMutabilityLevel;
-    }
-
-    public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
-        this.currentMutabilityLevel = currentMutabilityLevel;
-    }
 
     public enum VariableDependency {
         FULL,
@@ -285,33 +242,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         return this.currentDateTime;
     }
 
-    public static void printDependencies(Map<Name, VariableDependency> exprDependency) {
-        log.debug("System.err Variable dependencies:");
-        for (Map.Entry<Name, VariableDependency> e : exprDependency.entrySet()) {
-            log.debug(e.getKey() + " : " + e.getValue());
-        }
-    }
-
-
     public void addGlobalVariable(Name globalVariable) {
         this.globalVariables.addGlobalVariable(globalVariable);
     }
 
-    /**
-     * Gets the top-level runtime iterator for XML tree building.
-     * 
-     * @return the top-level runtime iterator, or null if not set
-     */
-    public RuntimeIterator getTopLevelRuntimeIterator() {
-        return this.topLevelRuntimeIterator;
-    }
-
-    /**
-     * Sets the top-level runtime iterator for XML tree building.
-     * 
-     * @param topLevelRuntimeIterator the top-level runtime iterator to set
-     */
-    public void setTopLevelRuntimeIterator(RuntimeIterator topLevelRuntimeIterator) {
-        this.topLevelRuntimeIterator = topLevelRuntimeIterator;
-    }
 }

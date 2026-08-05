@@ -2,26 +2,36 @@ package org.rumbledb.runtime.flwor;
 
 import lombok.extern.log4j.Log4j2;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.spark.api.java.JavaRDD;
+import lombok.Getter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.UDFRegistration;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.types.SequenceType;
 
 @Log4j2
-public class FlworDataFrame implements Serializable {
+public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
+    @Getter
     private Dataset<Row> dataFrame;
+
+    @Getter
     private List<FlworDataFrameColumn> columns;
     private Map<Name, SequenceType> columnTypes;
 
@@ -38,12 +48,12 @@ public class FlworDataFrame implements Serializable {
         }
     }
 
-    public Dataset<Row> getDataFrame() {
-        return this.dataFrame;
-    }
-
-    public List<FlworDataFrameColumn> getColumns() {
-        return this.columns;
+    @Override
+    public JavaRDD<FlworTuple> toRDD(ExceptionMetadata metadata) {
+        throw new OurBadException(
+                "Converting a FLWOR DataFrame to an RDD of tuples is not implemented.",
+                metadata
+        );
     }
 
     public List<Name> getVariableNames() {

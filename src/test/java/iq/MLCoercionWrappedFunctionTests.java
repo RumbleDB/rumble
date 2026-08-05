@@ -13,21 +13,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
  */
 
-package org.rumbledb.exceptions;
+package iq;
 
-import org.rumbledb.errorcodes.ErrorCode;
+import java.io.File;
+import java.util.List;
 
-public class UnidentifiedErrorException extends RumbleException {
+public class MLCoercionWrappedFunctionTests extends MLTests {
 
-    private static final long serialVersionUID = 1L;
+    private static final File coercionWrappedFunctionTest = new File(
+            System.getProperty("user.dir")
+                +
+                "/src/test/resources/test_files/RumbleML/RumbleML/EstimatorTests/MLEstimator-CoercionWrappedTransformer1.jq"
+    );
 
-    public UnidentifiedErrorException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.UnidentifiedErrorExceptionCode, metadata);
+    @Override
+    protected List<File> testFiles() {
+        return List.of(coercionWrappedFunctionTest);
     }
 }
-

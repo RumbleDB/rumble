@@ -57,7 +57,7 @@ public class ItemFactory {
     }
 
     public Item createStringItem(String s) {
-        if (s.equals("")) {
+        if (s == null || s.isEmpty()) {
             return this.emptyStringItem;
         }
         return new StringItem(s);
@@ -84,6 +84,10 @@ public class ItemFactory {
 
     public Item createDecimalItem(BigDecimal d) {
         return new DecimalItem(d);
+    }
+
+    public Item createDecimalItem(BigDecimal d, String displayValue) {
+        return new DecimalItem(d, displayValue);
     }
 
     public Item createIntegerItem(BigInteger i) {
@@ -353,6 +357,7 @@ public class ItemFactory {
             Item original,
             List<Item> keysToRemove
     ) {
+        original = rebaseDeepMapOverlay(original);
         return new MapWithRemovedEntryItem(original, keysToRemove);
     }
 
@@ -361,7 +366,30 @@ public class ItemFactory {
             Item keyToAdd,
             List<Item> valueToAdd
     ) {
+        original = rebaseDeepMapOverlay(original);
         return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
+    }
+
+    static int getMapOverlayChainLength(Item item) {
+        if (item instanceof MapWithAdditionalEntryItem additionalEntry) {
+            return additionalEntry.getOverlayChainLength();
+        }
+        if (item instanceof MapWithRemovedEntryItem removedEntry) {
+            return removedEntry.getOverlayChainLength();
+        }
+        return 0;
+    }
+
+    private Item rebaseDeepMapOverlay(Item original) {
+        if (getMapOverlayChainLength(original) < MapWithAdditionalEntryItem.MAX_OVERLAY_CHAIN_LENGTH) {
+            return original;
+        }
+        return createMapItem(
+            original.getItemKeys(),
+            original.getSequenceValues(),
+            ExceptionMetadata.EMPTY_METADATA,
+            false
+        );
     }
 
     public Item createMapItem(
@@ -414,6 +442,10 @@ public class ItemFactory {
 
     public Item createXmlCommentNode(String content) {
         return new CommentItem(content);
+    }
+
+    public Item createXmlCommentNode(Node currentNode) {
+        return new CommentItem(currentNode);
     }
 
     public Item createXmlAttributeNode(Node attribute) {
@@ -471,5 +503,9 @@ public class ItemFactory {
      */
     public Item createXmlProcessingInstructionNode(String target, String content) {
         return new ProcessingInstructionItem(target, content);
+    }
+
+    public Item createXmlProcessingInstructionNode(Node currentNode) {
+        return new ProcessingInstructionItem(currentNode);
     }
 }

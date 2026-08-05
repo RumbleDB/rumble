@@ -3,13 +3,15 @@ package org.rumbledb.types;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.util.Set;
 
 /**
  * Class representing the generic 'item' item type
  */
-public class JsonItemType implements ItemType {
+public class JsonItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     static final ItemType jsonItem = new JsonItemType();
@@ -19,21 +21,7 @@ public class JsonItemType implements ItemType {
         this.name = new Name(Name.JS_NS, "js", "json-item");
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
 
     @Override
     public boolean hasName() {

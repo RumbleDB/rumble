@@ -21,6 +21,8 @@
 package org.rumbledb.expressions.module;
 
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -41,13 +43,19 @@ import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAss
 public class VariableDeclaration extends Node {
     // Default is false for variable declaration.
     private final boolean DEFAULT_ASSIGNABLE = false;
+    @Getter
     private final Name variableName;
+    @Getter
+    private final ExceptionMetadata variableMetadata;
     private final boolean external;
-    protected SequenceType sequenceType;
-    protected Expression expression;
+    protected final SequenceType sequenceType;
+    @Getter
+    protected final Expression expression;
     private final List<Annotation> annotations;
+    @Getter
     private final boolean isAssignable;
 
+    @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
     public VariableDeclaration(
@@ -58,8 +66,21 @@ public class VariableDeclaration extends Node {
             List<Annotation> annotations,
             ExceptionMetadata metadata
     ) {
+        this(variableName, external, sequenceType, expression, annotations, metadata, metadata);
+    }
+
+    public VariableDeclaration(
+            Name variableName,
+            boolean external,
+            SequenceType sequenceType,
+            Expression expression,
+            List<Annotation> annotations,
+            ExceptionMetadata metadata,
+            ExceptionMetadata variableMetadata
+    ) {
         super(metadata);
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.external = external;
         this.sequenceType = sequenceType;
         this.expression = expression;
@@ -72,10 +93,6 @@ public class VariableDeclaration extends Node {
         } else {
             this.isAssignable = this.DEFAULT_ASSIGNABLE;
         }
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
     }
 
     public boolean external() {
@@ -96,10 +113,6 @@ public class VariableDeclaration extends Node {
     // as above but does NOT default to item*
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
     }
 
     @Override
@@ -125,10 +138,7 @@ public class VariableDeclaration extends Node {
         return this.variableHighestStorageMode;
     }
 
-    public void setVariableHighestStorageMode(ExecutionMode mode) {
-        this.variableHighestStorageMode = mode;
-    }
-
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
@@ -170,8 +180,4 @@ public class VariableDeclaration extends Node {
     }
 
 
-    public boolean isAssignable() {
-        return this.isAssignable;
-    }
 }
-

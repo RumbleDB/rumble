@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.xml;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -38,6 +39,7 @@ import java.util.List;
  * 
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-textConstructors">XQuery 3.1, 3.9.3.4: Text Node Constructors</a>
  */
+@Getter
 public class TextNodeConstructorExpression extends Expression {
     /** The content expression */
     private final Expression contentExpression;
@@ -54,15 +56,6 @@ public class TextNodeConstructorExpression extends Expression {
     ) {
         super(metadata);
         this.contentExpression = contentExpression;
-    }
-
-    /**
-     * Get the content expression
-     * 
-     * @return The content expression
-     */
-    public Expression getContentExpression() {
-        return this.contentExpression;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -11,17 +12,13 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-public class DateItem implements Item {
+public class DateItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private OffsetDateTime value;
     private boolean hasTimeZone = false;
@@ -29,12 +26,7 @@ public class DateItem implements Item {
         "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    public DateItem() {
-        super();
-    }
-
     DateItem(OffsetDateTime value, boolean hasTimeZone) {
-        super();
         this.value = value.toLocalDate().atStartOfDay(value.getOffset()).toOffsetDateTime();
         this.hasTimeZone = hasTimeZone;
     }
@@ -92,20 +84,6 @@ public class DateItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public String getStringValue() {
         String stringValue = this.value.format(
             this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE : DateTimeFormatter.ISO_LOCAL_DATE
@@ -127,32 +105,8 @@ public class DateItem implements Item {
     }
 
     @Override
-    public int hashCode() {
-        return this.value.hashCode();
-    }
-
-    @Override
     public boolean hasDateTime() {
         return true;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        String formatted = this.value.format(
-            !this.hasTimeZone ? DateTimeFormatter.ISO_LOCAL_DATE : DateTimeFormatter.ISO_OFFSET_DATE
-        );
-        if (formatted.startsWith("+")) {
-            formatted = formatted.substring(1);
-        }
-        output.writeString(formatted);
-        output.writeBoolean(this.hasTimeZone);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        String dateString = input.readString();
-        this.hasTimeZone = input.readBoolean();
-        getDateFromString(dateString);
     }
 
     @Override

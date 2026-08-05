@@ -21,6 +21,9 @@
 package org.rumbledb.types;
 
 import lombok.extern.log4j.Log4j2;
+import lombok.Getter;
+import lombok.EqualsAndHashCode;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -28,16 +31,19 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-
 @Log4j2
+@Getter
+@EqualsAndHashCode
 public class SequenceType implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private ItemType itemType;
     private Arity arity;
@@ -104,14 +110,6 @@ public class SequenceType implements Serializable {
 
     public boolean isEmptySequence() {
         return this.arity == Arity.Zero;
-    }
-
-    public ItemType getItemType() {
-        return this.itemType;
-    }
-
-    public Arity getArity() {
-        return this.arity;
     }
 
     public boolean isSubtypeOf(SequenceType superType) {
@@ -255,20 +253,6 @@ public class SequenceType implements Serializable {
             }
         }
         return this;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof SequenceType sequenceType)) {
-            return false;
-        }
-        if (isEmptySequence()) {
-            return sequenceType.isEmptySequence();
-        }
-        if (sequenceType.isEmptySequence()) {
-            return false;
-        }
-        return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
     }
 
     public enum Arity {

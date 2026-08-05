@@ -29,14 +29,16 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator positionIterator;
     private Item nextResult;
     private int removePosition; // position to remove the item
     private int currentPosition; // current position
@@ -47,8 +49,8 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
-        this.positionIterator = this.children.get(1);
+        this.sequenceIterator = this.getChild(0);
+        this.positionIterator = this.getChild(1);
     }
 
     @Override
@@ -73,14 +75,6 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.sequenceIterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.currentPosition = 1;
-
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

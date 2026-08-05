@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -10,21 +7,19 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class DocumentItem implements Item {
+public class DocumentItem extends AbstractNodeItem {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String stringValue;
     private List<Item> children;
     private XMLDocumentPosition documentPos;
     private Item documentElement;
     // TODO: add base-uri, document-uri, typed-value
-
-    // needed for kryo
-    public DocumentItem() {
-    }
 
     public DocumentItem(Node documentNode, List<Item> children) {
         this.stringValue = documentNode.getTextContent();
@@ -99,23 +94,12 @@ public class DocumentItem implements Item {
 
     @Override
     public void addParentToDescendants() {
-        this.children.forEach(child -> child.setParent(this));
+        this.children.forEach(child -> {
+            child.setParent(this);
+            child.addParentToDescendants();
+        });
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.stringValue);
-        kryo.writeObject(output, this.children);
-        kryo.writeObject(output, this.documentPos);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.stringValue = input.readString();
-        this.children = kryo.readObject(input, ArrayList.class);
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-    }
 
 
     @Override
@@ -139,17 +123,6 @@ public class DocumentItem implements Item {
             return ItemTypeFactory.documentNodeItemType();
         }
         return ItemTypeFactory.documentNodeItemType(this.documentElement.getDynamicType());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof DocumentItem otherDocumentItem)) {
-            return false;
-        }
-        if (this.documentPos == null || otherDocumentItem.documentPos == null) {
-            return this == otherDocumentItem;
-        }
-        return this.getXmlDocumentPosition().equals(otherDocumentItem.getXmlDocumentPosition());
     }
 
     @Override
@@ -301,14 +274,6 @@ public class DocumentItem implements Item {
     @Override
     public List<Item> unparsedEntitySystemId(String name) {
         return Collections.emptyList();
-    }
-
-    @Override
-    public int hashCode() {
-        if (this.documentPos == null) {
-            return System.identityHashCode(this);
-        }
-        return this.documentPos.hashCode();
     }
 
     @Override

@@ -9,12 +9,14 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber.NumberPictureFormatter;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 
 
 public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public FormatNumberFunctionIterator(
@@ -26,10 +28,10 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item valueItem = this.children.get(0).materializeFirstItemOrNull(context);
-        Item pictureItem = this.children.get(1).materializeFirstItemOrNull(context);
-        Item decimalFormatNameItem = this.children.size() > 2
-            ? this.children.get(2).materializeFirstItemOrNull(context)
+        Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item decimalFormatNameItem = this.getChildren().size() > 2
+            ? this.getChild(2).materializeFirstItemOrNull(context)
             : null;
 
         if (valueItem == null) {

@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.arithmetic;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -29,10 +30,11 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class AdditiveExpression extends Expression {
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private boolean isMinus;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+    private final boolean isMinus;
 
     public AdditiveExpression(
             Expression leftExpression,
@@ -56,18 +58,7 @@ public class AdditiveExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
-    public Expression getLeftExpression() {
-        return this.leftExpression;
-    }
-
-    public Expression getRightExpression() {
-        return this.rightExpression;
-    }
-
-    public boolean isMinus() {
-        return this.isMinus;
-    }
-
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

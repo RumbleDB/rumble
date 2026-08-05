@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,9 +38,10 @@ import org.rumbledb.types.SequenceType;
 
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private boolean isFixedSlotsArrayConstructor;
-    private boolean mutable;
+    private final boolean isFixedSlotsArrayConstructor;
+    private final boolean mutable;
 
     /**
      * Curly array constructor: single child whose items become singleton members.
@@ -49,12 +51,9 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
-        super(null, staticContext);
+        super(arrayItems == null ? List.of() : List.of(arrayItems), staticContext);
         this.isFixedSlotsArrayConstructor = false;
         this.mutable = mutable;
-        if (arrayItems != null) {
-            this.children.add(arrayItems);
-        }
     }
 
     /**
@@ -66,21 +65,19 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
-        super(null, staticContext);
+        super(memberIterators == null ? List.of() : memberIterators, staticContext);
         this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
         this.mutable = mutable;
-        if (memberIterators != null) {
-            this.children.addAll(memberIterators);
-        }
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
         if (isEffectiveFixedSlotsArrayConstructor()) {
             boolean allSingleton = true;
             List<List<Item>> memberSequences = new ArrayList<>();
-            for (RuntimeIterator child : this.children) {
+            for (RuntimeIterator child : this.getChildren()) {
                 List<Item> member = child.materialize(dynamicContext);
                 if (allSingleton && member.size() != 1) {
                     allSingleton = false;
@@ -100,7 +97,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         List<Item> result = new ArrayList<>();
-        for (RuntimeIterator child : this.children) {
+        for (RuntimeIterator child : this.getChildren()) {
             result.addAll(child.materialize(dynamicContext));
         }
         return ItemFactory.getInstance().createArrayItem(result, this.mutable);
@@ -111,13 +108,13 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         if (isEffectiveFixedSlotsArrayConstructor()) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (this.children.size() == 1) {
-            NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (this.getChildren().size() == 1) {
+            NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
             String resultingQuery;
-            if (this.children.get(0) instanceof CommaExpressionIterator) {
+            if (this.getChild(0) instanceof CommaExpressionIterator) {
                 resultingQuery = childQuery.getResultingQuery();
             } else {
                 resultingQuery = "array( "

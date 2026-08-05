@@ -33,16 +33,18 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import org.rumbledb.spark.SparkSessionManager;
+
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,8 +54,9 @@ import java.util.Queue;
 @Log4j2
 public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
     public ArrayUnboxingIterator(
@@ -90,12 +93,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
@@ -126,7 +123,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
@@ -190,8 +187,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         return this.iterator.generateNativeQuery(nativeClauseContext);
     }
 
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+    @Override
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
@@ -261,7 +259,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                return new JSoundDataFrame(df, elementType);
+                return new HomogeneousItemDataFrame(df, elementType);
             }
             return childDataFrame.evaluateSQL(
                 String.format(
@@ -287,7 +285,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 .getType()
                 .getArrayContentFacet();
             String sql;
-            JSoundDataFrame res;
+            HomogeneousItemDataFrame res;
             // TODO: SORT OUT INDEXING DURING UNBOXING
             if (elementType.isObjectItemType()) {
                 sql = String.format(
@@ -321,7 +319,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                res = new JSoundDataFrame(df, elementType);
+                res = new HomogeneousItemDataFrame(df, elementType);
             }
             return res;
         }
@@ -337,6 +335,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         log.warn(
             "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
         );
-        return JSoundDataFrame.emptyDataFrame();
+        return HomogeneousItemDataFrame.emptyDataFrame();
     }
 }

@@ -33,6 +33,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,10 +45,11 @@ import java.util.List;
  */
 public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Name staticAttributeName;
-    private DataFunctionIterator nameIterator;
-    private DataFunctionIterator contentExpression;
+    private final Name staticAttributeName;
+    private final DataFunctionIterator nameIterator;
+    private final DataFunctionIterator contentExpression;
 
     /**
      * Constructor for static attribute name: attribute attributeName { value }
@@ -99,7 +101,8 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item attributeName;
         if (this.staticAttributeName != null) {
-            attributeName = ItemFactory.getInstance().createQNameItem(this.staticAttributeName);
+            attributeName = ItemFactory.getInstance()
+                .createQNameItem(NamespaceBindingUtils.normalizeComputedAttributeName(this.staticAttributeName));
         } else {
             // Dynamic attribute name - evaluate the name expression
             // processing of the name expression according to
@@ -129,8 +132,10 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
                 // but has no prefix, it is given an implementation-dependent prefix.
                 // b. The resulting expanded QName (including its prefix) is used as the node-name
                 // property of the constructed attribute node.
-                // TODO: add support for implementation-dependent prefix
-                attributeName = atomizedNameItem;
+                attributeName = ItemFactory.getInstance()
+                    .createQNameItem(
+                        NamespaceBindingUtils.normalizeComputedAttributeName(atomizedNameItem.getQNameValue())
+                    );
             } else if (atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic()) {
                 // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic,
                 // that value is converted to an expanded QName. If the string value contains a namespace
@@ -143,10 +148,12 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
                 try {
                     attributeName = ItemFactory.getInstance()
                         .createQNameItem(
-                            NamespaceBindingUtils.parseLexicalQNameForComputedAttribute(
-                                collapsed,
-                                NamespaceBindingUtils.namespaceResolver(this.staticContext),
-                                getMetadata()
+                            NamespaceBindingUtils.normalizeComputedAttributeName(
+                                NamespaceBindingUtils.parseLexicalQNameForComputedAttribute(
+                                    collapsed,
+                                    NamespaceBindingUtils.namespaceResolver(this.staticContext),
+                                    getMetadata()
+                                )
                             )
                         );
                 } catch (InvalidLexicalValueException e) {
@@ -193,7 +200,9 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
         String attributeValue = contentExpressionBuilder.toString();
 
         // 5: If the attribute name is xml:id, then xml:id processing is performed
-        // Note: we currently do not support xml:id processing
+        if (isXmlIdAttribute(attributeName.getQNameValue())) {
+            attributeValue = attributeValue.replaceAll("\\s+", " ").trim();
+        }
 
         // 6: If the attribute name is xml:id, the is-id property of the resulting attribute node is set to true;
         // otherwise the is-id property is set to false. The is-idrefs property of the attribute node is unconditionally
@@ -217,5 +226,11 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             attributeItem.setXmlDocumentPosition(documentPath, 0);
         }
         return attributeItem;
+    }
+
+    private static boolean isXmlIdAttribute(Name attributeName) {
+        return attributeName != null
+            && "id".equals(attributeName.getLocalName())
+            && Name.XML_NS.equals(attributeName.getNamespace());
     }
 }

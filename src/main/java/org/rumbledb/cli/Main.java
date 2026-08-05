@@ -21,6 +21,7 @@ package org.rumbledb.cli;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.Objects;
 
 
 import org.apache.commons.io.IOUtils;
@@ -52,20 +53,24 @@ public class Main {
             System.exit(43);
         }
 
-        CLIInvocation invocation = null;
-        RumbleConfiguration configuration = null;
+        final CLIInvocation invocation;
+        final RumbleConfiguration configuration;
+
         try {
             invocation = CLIArgumentParser.parse(args);
-
             if (invocation == null) {
                 System.exit(0);
-            } else {
-                configuration = invocation.configuration();
-                LoggingConfiguration.configure(configuration.debug());
+                return;
             }
+
+            configuration = Objects.requireNonNull(
+                invocation.configuration(),
+                "CLI invocation must provide a configuration"
+            );
         } catch (Exception e) {
             ConsoleOutput.error("⚠️ CLI Error: " + e.getMessage());
             System.exit(42);
+            return;
         }
 
         try {

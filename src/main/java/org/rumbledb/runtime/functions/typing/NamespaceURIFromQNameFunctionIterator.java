@@ -9,9 +9,11 @@ import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class NamespaceURIFromQNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public NamespaceURIFromQNameFunctionIterator(
@@ -23,7 +25,7 @@ public class NamespaceURIFromQNameFunctionIterator extends AtMostOneItemLocalRun
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        QNameItem qnameItem = (QNameItem) this.children.get(0).materializeFirstItemOrNull(context);
+        QNameItem qnameItem = (QNameItem) this.getChild(0).materializeFirstItemOrNull(context);
         if (qnameItem == null) {
             return null;
         }

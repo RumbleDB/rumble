@@ -27,12 +27,14 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public TranslateFunctionIterator(
@@ -44,11 +46,11 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.children.get(0)
+        Item inputItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
-        Item mapStringItem = this.children.get(1)
+        Item mapStringItem = this.getChild(1)
             .materializeFirstItemOrNull(context);
-        Item transStringItem = this.children.get(2)
+        Item transStringItem = this.getChild(2)
             .materializeFirstItemOrNull(context);
 
         if (inputItem == null) {

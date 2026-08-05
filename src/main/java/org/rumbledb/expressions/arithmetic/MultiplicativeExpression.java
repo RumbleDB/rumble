@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.arithmetic;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -30,6 +31,7 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class MultiplicativeExpression extends Expression {
 
     public static enum MultiplicativeOperator {
@@ -38,7 +40,7 @@ public class MultiplicativeExpression extends Expression {
         MOD("mod"),
         IDIV("idiv");
 
-        private String name;
+        private final String name;
 
         MultiplicativeOperator(String name) {
             this.name = name;
@@ -66,9 +68,9 @@ public class MultiplicativeExpression extends Expression {
         }
     };
 
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private MultiplicativeOperator multiplicativeOperator;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+    private final MultiplicativeOperator multiplicativeOperator;
 
     public MultiplicativeExpression(
             Expression leftExpression,
@@ -92,18 +94,7 @@ public class MultiplicativeExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
-    public Expression getLeftExpression() {
-        return this.leftExpression;
-    }
-
-    public Expression getRightExpression() {
-        return this.rightExpression;
-    }
-
-    public MultiplicativeOperator getMultiplicativeOperator() {
-        return this.multiplicativeOperator;
-    }
-
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

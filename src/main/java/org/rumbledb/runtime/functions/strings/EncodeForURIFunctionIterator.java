@@ -28,6 +28,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
@@ -38,6 +39,7 @@ import java.util.List;
 
 public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     @SuppressWarnings("unused")
     private static final HashSet<Integer> exclusionCharacters = new HashSet<Integer>(
@@ -57,7 +59,7 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            Item inputItem = this.children.get(0)
+            Item inputItem = this.getChild(0)
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             if (inputItem == null) {

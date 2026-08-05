@@ -29,6 +29,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.List;
  * @see org.rumbledb.expressions.xml.DirPIConstructorExpression
  */
 public class DirPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final String target;
     private final DataFunctionIterator contentIterator;

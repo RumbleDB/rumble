@@ -8,8 +8,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -18,20 +18,15 @@ import java.util.Set;
  * The primitive array(*) type is modeled as a subtype of function(*)
  * by using {@link BuiltinTypesCatalogue#anyFunctionItem} as its base type.
  */
-public class XQueryArrayItemType implements ItemType {
+public class XQueryArrayItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name name;
     private ItemType baseType;
     private SequenceType memberSequenceType;
     private int typeTreeDepth;
-
-    XQueryArrayItemType() {
-        this.name = null;
-        this.baseType = null;
-        this.memberSequenceType = null;
-    }
 
     /**
      * @param name null for anonymous typed arrays
@@ -71,33 +66,20 @@ public class XQueryArrayItemType implements ItemType {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
+    protected Object equalityKey() {
+        if (
+            this.name == null
+                && BuiltinTypesCatalogue.xqueryArrayItem.equals(this.baseType)
+                && SequenceType.createSequenceType("item").equals(this.memberSequenceType)
+        ) {
+            return namedTypeKey(new Name(Name.JS_NS, "js", "array"));
         }
-        if (itemType instanceof XQueryArrayItemType arrayItemType) {
-            // structural equality check
-            return this.structurallyEqual(arrayItemType);
-        }
-        if (itemType.isArrayItemType() && other.equals(BuiltinTypesCatalogue.arrayItem)) {
-            // js:array() = array(item)
-            ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(
-                SequenceType.createSequenceType("item")
-            );
-            return this.equals(arrayItemType);
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.name, this.baseType, this.memberSequenceType);
-    }
-
-    boolean structurallyEqual(XQueryArrayItemType o) {
-        return Objects.equals(this.name, o.name)
-            && this.baseType.equals(o.baseType)
-            && this.memberSequenceType.equals(o.memberSequenceType);
+        return structuralTypeKey(
+            XQueryArrayItemType.class,
+            this.name,
+            this.baseType,
+            this.memberSequenceType
+        );
     }
 
     @Override
@@ -207,21 +189,7 @@ public class XQueryArrayItemType implements ItemType {
         return current;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.baseType);
-        kryo.writeClassAndObject(output, this.memberSequenceType);
-        output.writeInt(this.typeTreeDepth);
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.memberSequenceType = (SequenceType) kryo.readClassAndObject(input);
-        this.typeTreeDepth = input.readInt();
-    }
 
     @Override
     public boolean hasName() {

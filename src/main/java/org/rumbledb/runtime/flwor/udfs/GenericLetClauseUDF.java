@@ -9,15 +9,17 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GenericLetClauseUDF<T> implements UDF1<Row, T> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private DataFrameContext dataFrameContext;
-    private RuntimeIterator expression;
+    private final DataFrameContext dataFrameContext;
+    private final RuntimeIterator expression;
     private String classSimpleName;
 
     private List<Item> nextResult;

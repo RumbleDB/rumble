@@ -184,6 +184,27 @@ public class FrontendTests {
         Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
     }
 
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationDisablesParentPointerOptimizationForNestedFunctionCall() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+            .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+            .build();
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            "jsoniq version \"1.0\"; (1, serialize(1))",
+            initialConfiguration,
+            ExternalBindings.empty()
+        );
+
+        RumbleConfiguration effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
+            mainModule,
+            initialConfiguration.toBuilder()
+        );
+
+        Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
+        Assertions.assertTrue(initialConfiguration.optimization().optimizeParentPointers());
+    }
+
     /*
      * private void testAstGeneration(File testFile, JsoniqExpressionTreeVisitor visitor,
      * JsoniqParser.MainModuleContext context) {

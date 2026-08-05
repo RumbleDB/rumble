@@ -23,8 +23,11 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 public class NonAtomicKeyException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public NonAtomicKeyException(String message, ExceptionMetadata expressionMetadata) {

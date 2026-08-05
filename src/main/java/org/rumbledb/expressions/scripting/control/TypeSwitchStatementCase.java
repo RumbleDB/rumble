@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.control;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.types.SequenceType;
@@ -11,6 +12,7 @@ import java.util.List;
  * From a tree perspective, all statements in there are considered
  * to be direct children of the TypeSwitchStatement.
  */
+@Getter
 public class TypeSwitchStatementCase {
     private final Name variableName;
     private final List<SequenceType> union;
@@ -28,15 +30,4 @@ public class TypeSwitchStatementCase {
         this.returnStatement = returnStatement;
     }
 
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public List<SequenceType> getUnion() {
-        return this.union;
-    }
-
-    public Statement getReturnStatement() {
-        return this.returnStatement;
-    }
 }

@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.typing;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -10,6 +11,7 @@ import org.rumbledb.types.SequenceType;
 import java.util.Collections;
 import java.util.List;
 
+@Getter
 public class IsStaticallyExpression extends Expression {
     private Expression mainExpression;
     private SequenceType sequenceType;
@@ -32,19 +34,12 @@ public class IsStaticallyExpression extends Expression {
         return visitor.visitIsStaticallyExpr(this, argument);
     }
 
-    public SequenceType getSequenceType() {
-        return this.sequenceType;
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
-
     @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.mainExpression);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

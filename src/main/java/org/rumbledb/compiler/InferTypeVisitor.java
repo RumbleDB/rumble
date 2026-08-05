@@ -152,7 +152,6 @@ import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
@@ -161,7 +160,10 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.spark.SparkSessionManager;
 import org.apache.spark.sql.SparkSession;
+
+
 
 /**
  * This visitor infers a static SequenceType for each expression in the query
@@ -169,19 +171,19 @@ import org.apache.spark.sql.SparkSession;
 @Log4j2
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    private RumbleConfiguration configuration;
+    private final RumbleConfiguration rumbleRuntimeConfiguration;
 
     /**
      * Builds a new visitor.
      *
-     * @param configuration the configuration.
+     * @param rumbleRuntimeConfiguration the configuration.
      */
-    InferTypeVisitor(RumbleConfiguration configuration) {
-        this.configuration = configuration;
+    InferTypeVisitor(RumbleConfiguration rumbleRuntimeConfiguration) {
+        this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
     }
 
     private void throwStaticTypeException(String message, ErrorCode code) {
-        if (this.configuration.analysis().enableStaticTyping()) {
+        if (this.rumbleRuntimeConfiguration.analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     message,
                     code
@@ -190,7 +192,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private void throwStaticTypeException(String message, ExceptionMetadata metadata) {
-        if (this.configuration.analysis().enableStaticTyping()) {
+        if (this.rumbleRuntimeConfiguration.analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     message,
                     metadata
@@ -199,7 +201,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private void throwStaticTypeException(String message, ErrorCode code, ExceptionMetadata metadata) {
-        if (this.configuration.analysis().enableStaticTyping()) {
+        if (this.rumbleRuntimeConfiguration.analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     message,
                     code,
@@ -2224,6 +2226,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    @Override
     public StaticContext visitPostfixLookupExpression(PostfixLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
@@ -2262,6 +2265,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    @Override
     public StaticContext visitUnaryLookupExpression(UnaryLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
@@ -2644,7 +2648,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     inferredType = groupByVarExpr.getStaticSequenceType();
                     expectedType = inferredType;
                 } else {
-                    inferredType = ((TreatExpression) groupByVarExpr).getMainExpression().getStaticSequenceType();
+                    inferredType = groupByVarExpr.getStaticSequenceType();
                     expectedType = declaredType;
                 }
                 checkAndUpdateVariableStaticType(

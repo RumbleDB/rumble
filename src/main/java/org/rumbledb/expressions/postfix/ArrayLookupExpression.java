@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.postfix;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@Getter
 public class ArrayLookupExpression extends Expression {
 
     private Expression mainExpression;
@@ -59,14 +61,6 @@ public class ArrayLookupExpression extends Expression {
         sb.append("[[");
         this.lookupExpression.serializeToJSONiq(sb, 0);
         sb.append("]]\n");
-    }
-
-    public Expression getLookupExpression() {
-        return this.lookupExpression;
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
     }
 
     @Override

@@ -9,7 +9,6 @@ public class GeneratedRandomDoublesIterator extends GeneratedRandomsIterator {
     private final PrimitiveIterator.OfDouble iterator;
 
     public GeneratedRandomDoublesIterator(int size, double low, double high) {
-        super();
         this.iterator = this.random.doubles(size, low, high).iterator();
     }
 
@@ -19,7 +18,6 @@ public class GeneratedRandomDoublesIterator extends GeneratedRandomsIterator {
     }
 
     public GeneratedRandomDoublesIterator(int size) {
-        super();
         this.iterator = this.random.doubles(size).iterator();
     }
 

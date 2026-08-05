@@ -24,23 +24,21 @@ package org.rumbledb.expressions.primary;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
 
+@Getter
 public class StringLiteralExpression extends Expression {
 
-    private String value;
+    private final String value;
 
     public StringLiteralExpression(String value, ExceptionMetadata metadata) {
         super(metadata);
         this.value = value;
-    }
-
-    public String getValue() {
-        return this.value;
     }
 
     @Override
@@ -53,6 +51,7 @@ public class StringLiteralExpression extends Expression {
         return new ArrayList<>();
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

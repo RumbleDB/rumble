@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -9,7 +10,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -18,13 +19,16 @@ import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
+    @Getter
     private final Item callableItem;
     private final List<Name> parameterNames;
     private final SequenceType expectedReturnType;
@@ -44,10 +48,6 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
         this.parameterNames = parameterNames;
         this.expectedReturnType = expectedReturnType;
         this.exceptionMessage = exceptionMessage;
-    }
-
-    public Item getCallableItem() {
-        return this.callableItem;
     }
 
     public ExecutionMode getWrappedCallableExecutionMode() {
@@ -80,17 +80,6 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.delegate != null) {
-            this.delegate.reset(this.currentDynamicContextForLocalExecution);
-        } else {
-            this.delegate = buildDelegate(this.currentDynamicContextForLocalExecution);
-            this.delegate.open(this.currentDynamicContextForLocalExecution);
-        }
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.delegate != null && this.delegate.isOpen()) {
             this.delegate.close();
@@ -113,8 +102,10 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
         ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode();
         RuntimeStaticContext callStaticContext = getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(wrappedCallableExecutionMode);
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(wrappedCallableExecutionMode)
+            .build();
 
         if (this.callableItem.isArray()) {
             return new ArrayFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
@@ -139,7 +130,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
             callIterator,
             this.expectedReturnType,
             this.exceptionMessage,
-            callStaticContext.withStaticType(this.expectedReturnType)
+            callStaticContext.toBuilder().staticType(this.expectedReturnType).build()
         );
     }
 
@@ -153,8 +144,10 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
             }
         }
         RuntimeStaticContext parameterStaticContext = getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(parameterExecutionMode);
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(parameterExecutionMode)
+            .build();
         return new VariableReferenceIterator(parameterName, parameterStaticContext);
     }
 
@@ -170,7 +163,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         RuntimeIterator call = buildDelegate(dynamicContext);
         return call.getDataFrame(dynamicContext);
     }

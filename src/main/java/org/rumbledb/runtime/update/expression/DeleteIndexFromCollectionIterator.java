@@ -18,11 +18,13 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import org.rumbledb.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
 public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator numDeleteIterator;
@@ -35,12 +37,11 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator), staticContext);
+        super(Arrays.asList(targetIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.numDeleteIterator = null;
         this.isFirst = isFirst;
         this.mode = mode;
-        this.isUpdating = true;
     }
 
     public DeleteIndexFromCollectionIterator(
@@ -50,16 +51,11 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, numDeleteIterator), staticContext);
+        super(Arrays.asList(targetIterator, numDeleteIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.numDeleteIterator = numDeleteIterator;
         this.isFirst = isFirst;
         this.mode = mode;
-        this.isUpdating = true;
-    }
-
-    public boolean hasPositionIterator() {
-        return false;
     }
 
     @Override
@@ -74,11 +70,6 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-
-    }
-
-    @Override
-    protected void resetLocal() {
 
     }
 

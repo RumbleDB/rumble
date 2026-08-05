@@ -1,7 +1,10 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.io.Serializable;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.StaticContext;
@@ -9,38 +12,30 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.runtime.typing.CastIterator;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-public class FieldDescriptor implements Serializable, KryoSerializable {
+public class FieldDescriptor implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
+    @Setter
+    @Getter
     public String name;
+    @Setter
+    @Getter
     private ItemType type;
+    @Getter
     private boolean required = false;
+    @Setter
+    @Getter
     private Item defaultValue = null;
     private boolean unique = false;
     private boolean requiredIsSet = false;
     private boolean uniqueIsSet = false;
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setType(ItemType type) {
-        this.type = type;
-    }
-
     public void setRequired(Boolean required) {
         this.requiredIsSet = true;
         this.required = required;
-    }
-
-    public void setDefaultValue(Item defaultValue) {
-        this.defaultValue = defaultValue;
     }
 
     public void setUnique(Boolean unique) {
@@ -48,24 +43,8 @@ public class FieldDescriptor implements Serializable, KryoSerializable {
         this.unique = unique;
     }
 
-    public String getName() {
-        return this.name;
-    }
-
-    public ItemType getType() {
-        return this.type;
-    }
-
-    public boolean isRequired() {
-        return this.required;
-    }
-
     public Boolean isUnique() {
         return this.unique;
-    }
-
-    public Item getDefaultValue() {
-        return this.defaultValue;
     }
 
     public boolean requiredIsSet() {
@@ -140,27 +119,7 @@ public class FieldDescriptor implements Serializable, KryoSerializable {
         }
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.name);
-        kryo.writeClassAndObject(output, this.type);
-        output.writeBoolean(this.required);
-        kryo.writeClassAndObject(output, this.defaultValue);
-        output.writeBoolean(this.unique);
-        output.writeBoolean(this.requiredIsSet);
-        output.writeBoolean(this.uniqueIsSet);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.name = input.readString();
-        this.type = (ItemType) kryo.readClassAndObject(input);
-        this.required = input.readBoolean();
-        this.defaultValue = (Item) kryo.readClassAndObject(input);
-        this.unique = input.readBoolean();
-        this.requiredIsSet = input.readBoolean();
-        this.uniqueIsSet = input.readBoolean();
-    }
 
     public static FieldDescriptor copy(FieldDescriptor descriptor) {
         FieldDescriptor clone = new FieldDescriptor();

@@ -9,29 +9,32 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
-import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
+import org.rumbledb.spark.SparkSessionManager;
+
+import java.io.Serial;
 import java.util.Collections;
 
 public class TypePromotionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private RuntimeIterator iterator;
-    private SequenceType sequenceType;
+    private final RuntimeIterator iterator;
+    private final SequenceType sequenceType;
 
-    private ItemType itemType;
+    private final ItemType itemType;
 
     private Item nextResult;
     private int childIndex;
@@ -61,13 +64,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    public void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        this.childIndex = 0;
-        setNextResult();
     }
 
     @Override
@@ -163,8 +159,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
         checkEmptySequence(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;

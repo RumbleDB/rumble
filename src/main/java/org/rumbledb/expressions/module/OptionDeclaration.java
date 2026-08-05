@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.module;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -28,6 +29,7 @@ import org.rumbledb.expressions.Node;
 import java.util.Collections;
 import java.util.List;
 
+@Getter
 public class OptionDeclaration extends Node {
 
     private final Name name;
@@ -37,14 +39,6 @@ public class OptionDeclaration extends Node {
         super(metadata);
         this.name = name;
         this.value = value;
-    }
-
-    public Name getName() {
-        return this.name;
-    }
-
-    public String getValue() {
-        return this.value;
     }
 
     @Override

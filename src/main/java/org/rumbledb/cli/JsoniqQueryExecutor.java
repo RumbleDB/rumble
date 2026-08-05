@@ -40,8 +40,8 @@ import java.util.stream.Collectors;
 
 
 public class JsoniqQueryExecutor {
-    private RumbleConfiguration configuration;
-    private ExternalBindings externalBindings;
+    private final RumbleConfiguration configuration;
+    private final ExternalBindings externalBindings;
 
     public JsoniqQueryExecutor(RumbleConfiguration configuration) {
         this(configuration, ExternalBindings.empty());

@@ -14,19 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
  */
 
 package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class ModuleDeclarationException extends ParsingException {
+public class MoreThanOneCopyNamespacesDeclarationException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public ModuleDeclarationException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.ModuleDeclarationErrorCode, metadata);
+    public MoreThanOneCopyNamespacesDeclarationException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.MoreThanOneCopyNamespacesDeclarationErrorCode, metadata);
     }
 }

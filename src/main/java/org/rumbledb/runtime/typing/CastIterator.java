@@ -21,6 +21,7 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.WhitespaceFacet;
 import org.rumbledb.types.SequenceType.Arity;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.regex.Pattern;
 
 
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
     private final SequenceType sequenceType;
@@ -43,6 +45,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         this.sequenceType = sequenceType;
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
@@ -501,6 +504,22 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             } else if (item.isBoolean()) {
                 convertedValue = ItemFactory.getInstance()
                     .createDecimalItem(item.getBooleanValue() ? BigDecimal.ONE : BigDecimal.ZERO);
+            } else if (item.isFloat()) {
+                float value = item.getFloatValue();
+                item.castToDecimalValue(); // validates that the value is finite
+                convertedValue = ItemFactory.getInstance()
+                    .createDecimalItem(
+                        new BigDecimal(value),
+                        new BigDecimal(Float.toString(value)).stripTrailingZeros().toPlainString()
+                    );
+            } else if (item.isDouble()) {
+                double value = item.getDoubleValue();
+                item.castToDecimalValue(); // validates that the value is finite
+                convertedValue = ItemFactory.getInstance()
+                    .createDecimalItem(
+                        new BigDecimal(value),
+                        BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+                    );
             } else if (item.isNumeric()) {
                 convertedValue = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
             }

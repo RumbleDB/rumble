@@ -8,7 +8,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -16,10 +16,12 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FilterFunctionIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator sequenceIterator;
@@ -68,22 +70,22 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.argumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        this.argumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.itemIndex = 0;
         this.mutableArgumentIterator = new MutableArgumentIterator(this.argumentContext);
         List<RuntimeIterator> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(this.mutableArgumentIterator);
-        RuntimeStaticContext functionItemContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.currentCallbackIterator = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(this.predicate, functionItemContext),
                 callbackArguments,
@@ -131,17 +133,6 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.predicateIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeState(this.currentDynamicContextForLocalExecution);
-        setNextResult(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.sequenceIterator.isOpen()) {
             this.sequenceIterator.close();
@@ -172,11 +163,12 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("fn:filter is currently supported only in local execution mode.");
     }
 
     private static class MutableArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
+        @Serial
         private static final long serialVersionUID = 1L;
         private Item currentItem;
 

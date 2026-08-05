@@ -12,11 +12,14 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 /**
  * FOTY0014: no string value for maps, arrays, or function items (e.g. {@code fn:string}).
  */
 public class FunctionItemStringValueException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /** Message used when {@code getStringValue()} is invoked on a map, array, or function item. */
