@@ -49,6 +49,8 @@ public class InlineFunctionExpression extends Expression {
     @Getter
     private final Name name;
     @Getter
+    private final ExceptionMetadata nameMetadata;
+    @Getter
     private final FunctionIdentifier functionIdentifier;
     @Getter
     private final Map<Name, SequenceType> params;
@@ -71,8 +73,22 @@ public class InlineFunctionExpression extends Expression {
             boolean isExternal,
             ExceptionMetadata metadata
     ) {
+        this(annotations, name, params, returnType, body, isExternal, metadata, metadata);
+    }
+
+    public InlineFunctionExpression(
+            List<Annotation> annotations,
+            Name name,
+            Map<Name, SequenceType> params,
+            SequenceType returnType,
+            StatementsAndOptionalExpr body,
+            boolean isExternal,
+            ExceptionMetadata metadata,
+            ExceptionMetadata nameMetadata
+    ) {
         super(metadata);
         this.name = name;
+        this.nameMetadata = nameMetadata;
         this.params = params;
         this.returnType = returnType;
         this.body = body;

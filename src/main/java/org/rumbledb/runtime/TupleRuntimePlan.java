@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime;
 
-
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -35,7 +34,7 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import java.io.Serial;
 import java.util.HashSet;

@@ -54,11 +54,10 @@ import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
-
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.TypeMappings;
 import scala.Tuple2;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -293,7 +292,7 @@ public class PredicateIterator extends ItemRuntimePlan
                 context
         );
         NativeClauseContext nativeQuery = NativeClauseContext.NoNativeQuery;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQuery = NativeQueryRuntimePlan.generate(filter, nativeClauseContext);
         }
         if (nativeQuery == NativeClauseContext.NoNativeQuery || !this.isBooleanOnlyFilter) {

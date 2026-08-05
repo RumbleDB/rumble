@@ -50,7 +50,7 @@ public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRun
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        String xmlVersion = getConfiguration().getXmlVersion();
+        String xmlVersion = getConfiguration().semantics().xmlVersion();
         ItemRuntimePlan argumentIterator = this.getChild(0);
 
         try (Cursor<Item> cursor = argumentIterator.getCursor(context)) {

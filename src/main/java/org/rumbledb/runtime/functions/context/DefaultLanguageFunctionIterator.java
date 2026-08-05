@@ -24,7 +24,7 @@ public class DefaultLanguageFunctionIterator extends AbstractAtMostOneItemRuntim
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        String defaultLanguage = getConfiguration().getDefaultFormattingLanguage();
+        String defaultLanguage = getConfiguration().formatting().defaultFormattingLanguage();
         return ItemFactory.getInstance().createLanguageItem(defaultLanguage);
     }
 }

@@ -58,7 +58,6 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             try (
                 InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
                     uri,
-                    context.getRumbleRuntimeConfiguration(),
                     getMetadata()
                 )
             ) {
@@ -66,7 +65,8 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 return ItemParser.getItemFromXML(
                     xmlDocument,
                     uri.toString(),
-                    context.getRumbleRuntimeConfiguration()
+                    context.getRumbleConfiguration()
+                        .optimization()
                         .optimizeParentPointers()
                 );
             }

@@ -69,7 +69,6 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
             );
             InputStream input = FileSystemUtil.getDataInputStream(
                 uri,
-                context.getRumbleRuntimeConfiguration(),
                 getMetadata()
             );
             YAMLParser yamlParser = new YAMLFactory().createParser(new InputStreamReader(input));

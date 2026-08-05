@@ -832,7 +832,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getParams(),
                 expression.getActualReturnType(),
                 (StatementsAndOptionalExpr) visit(expression.getBody(), argument),
-                expression.getMetadata()
+                expression.isExternal(),
+                expression.getMetadata(),
+                expression.getNameMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
@@ -1241,7 +1243,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getActualSequenceType(),
                 expression.getExpression() == null ? null : (Expression) visit(expression.getExpression(), argument),
                 expression.getAnnotations(),
-                expression.getMetadata()
+                expression.getMetadata(),
+                expression.getVariableMetadata()
         );
     }
 

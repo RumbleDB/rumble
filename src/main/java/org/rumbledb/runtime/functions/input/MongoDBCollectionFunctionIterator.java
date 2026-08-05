@@ -29,10 +29,12 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
-import sparksoniq.spark.SparkSessionManager;
+
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.List;

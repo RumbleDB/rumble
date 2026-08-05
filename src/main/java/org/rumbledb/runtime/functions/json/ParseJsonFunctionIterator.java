@@ -84,7 +84,7 @@ public class ParseJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return ItemParser.getItemFromJSONString(
             stringItem.getStringValue(),
             options,
-            this.staticContext.getConfiguration().getXmlVersion(),
+            this.staticContext.getConfiguration().semantics().xmlVersion(),
             isJSONiq10,
             getMetadata()
         );

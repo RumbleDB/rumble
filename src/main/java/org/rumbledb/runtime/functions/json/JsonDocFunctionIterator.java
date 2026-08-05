@@ -14,7 +14,6 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.ConsoleOutput;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -63,7 +62,7 @@ public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
         URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticContext.getStaticURI(), getMetadata());
 
-        String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
+        String jsonText = readJsonResource(uri, getMetadata());
 
         if (options.isLegacy()) {
             ConsoleOutput.warn(
@@ -83,7 +82,7 @@ public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         return ItemParser.getItemFromJSONString(
             jsonText,
             options,
-            getConfiguration().getXmlVersion(),
+            getConfiguration().semantics().xmlVersion(),
             isJSONiq10,
             getMetadata()
         );
@@ -121,9 +120,9 @@ public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
     }
 
-    private static String readJsonResource(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
+    private static String readJsonResource(URI uri, ExceptionMetadata metadata) {
         try {
-            byte[] bytes = TextResourceUtil.fetchBytes(uri, conf, metadata);
+            byte[] bytes = TextResourceUtil.fetchBytes(uri, metadata);
             return decode(bytes, TextResourceUtil.detectEncoding(bytes), metadata);
         } catch (CannotInferEncodingException e) {
             throw e;

@@ -27,9 +27,11 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.bindings.DataFrameBinding;
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -191,7 +193,8 @@ import java.util.stream.Collectors;
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private final StaticContext moduleContext;
-    private final RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
+    private final ExternalBindings externalBindings;
     private final CompilationConfiguration compilationConfiguration;
     private final boolean isMainModule;
     private String libraryModuleNamespace;
@@ -203,6 +206,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             StaticContext moduleContext,
             boolean isMainModule,
             CompilationConfiguration compilationConfiguration,
+            ExternalBindings externalBindings,
             String code,
             CommonTokenStream xQueryTokenStream
     ) {
@@ -210,18 +214,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         this.moduleContext.bindDefaultNamespaces();
         this.compilationConfiguration = compilationConfiguration;
         this.configuration = compilationConfiguration.runtimeConfiguration();
+        this.externalBindings = externalBindings;
         this.isMainModule = isMainModule;
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.xQueryTokenStream = xQueryTokenStream;
 
-        if (this.configuration.getQueryLanguage().equals("xquery10")) {
+        String queryLanguage = this.configuration.semantics().queryLanguage();
+        if (queryLanguage.equals("xquery10")) {
             this.moduleContext.setQueryLanguage("xquery10");
-        } else if (this.configuration.getQueryLanguage().equals("xquery30")) {
+        } else if (queryLanguage.equals("xquery30")) {
             this.moduleContext.setQueryLanguage("xquery30");
-        } else if (this.configuration.getQueryLanguage().equals("xquery31")) {
+        } else if (queryLanguage.equals("xquery31")) {
             this.moduleContext.setQueryLanguage("xquery31");
-        } else if (this.configuration.getQueryLanguage().equals("xquery40")) {
+        } else if (queryLanguage.equals("xquery40")) {
             this.moduleContext.setQueryLanguage("xquery40");
         }
     }
@@ -269,67 +275,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         // We override with a context item declaration if not present already.
         Program program = (Program) this.visitProgram(ctx.program());
-        if (!prolog.hasContextItemDeclaration()) {
-            if (
-                this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)
-                    || this.configuration.getUnparsedExternalVariableValue(Name.CONTEXT_ITEM) != null
-            ) {
-                System.err.println("[WARNING] Adding context item declaration.");
-                prolog.addDeclaration(
-                    new VariableDeclaration(
-                            Name.CONTEXT_ITEM,
-                            true,
-                            SequenceType.createSequenceType("item"),
-                            null,
-                            null,
-                            createMetadataFromContext(ctx)
-                    )
-                );
-            }
-        }
-        for (Name externalVariable : this.configuration.getExternalVariablesReadFromDataFrames()) {
-            boolean isAlreadyDeclared = false;
-            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-                if (declaration.getVariableName().equals(externalVariable)) {
-                    isAlreadyDeclared = true;
-                    continue;
-                }
-            }
-            if (isAlreadyDeclared) {
-                continue;
-            }
-            Dataset<Row> dataFrame = this.configuration.getExternalVariableValueReadFromDataFrame(externalVariable);
-            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+        if (!prolog.hasContextItemDeclaration() && getExternalVariableType(Name.CONTEXT_ITEM) != null) {
+            System.err.println("[WARNING] Adding context item declaration.");
             prolog.addDeclaration(
                 new VariableDeclaration(
-                        externalVariable,
+                        Name.CONTEXT_ITEM,
                         true,
-                        new SequenceType(
-                                itemType,
-                                SequenceType.Arity.ZeroOrMore
-                        ),
-                        null,
-                        null,
-                        createMetadataFromContext(ctx)
-                )
-            );
-        }
-        for (Name externalVariable : this.configuration.getExternalVariablesReadFromListsOfItems()) {
-            boolean isAlreadyDeclared = false;
-            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-                if (declaration.getVariableName().equals(externalVariable)) {
-                    isAlreadyDeclared = true;
-                    continue;
-                }
-            }
-            if (isAlreadyDeclared) {
-                continue;
-            }
-            prolog.addDeclaration(
-                new VariableDeclaration(
-                        externalVariable,
-                        true,
-                        SequenceType.createSequenceType("item*"),
+                        SequenceType.createSequenceType("item"),
                         null,
                         null,
                         createMetadataFromContext(ctx)
@@ -337,9 +289,53 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             );
         }
 
+        for (Name externalVariable : this.externalBindings.names()) {
+            if (externalVariable.equals(Name.CONTEXT_ITEM) || hasDeclaration(prolog, externalVariable)) {
+                continue;
+            }
+
+            SequenceType sequenceType = getExternalVariableType(externalVariable);
+            if (sequenceType != null) {
+                prolog.addDeclaration(
+                    new VariableDeclaration(
+                            externalVariable,
+                            true,
+                            sequenceType,
+                            null,
+                            null,
+                            createMetadataFromContext(ctx)
+                    )
+                );
+            }
+        }
+
         MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
+    }
+
+    private boolean hasDeclaration(Prolog prolog, Name variableName) {
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            if (declaration.getVariableName().equals(variableName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private SequenceType getExternalVariableType(Name variableName) {
+        DataFrameBinding dataFrameBinding = this.externalBindings.get(variableName, DataFrameBinding.class)
+            .orElse(null);
+        if (dataFrameBinding != null) {
+            Dataset<Row> dataFrame = dataFrameBinding.getDataFrame();
+            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+            return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
+        }
+
+        if (this.externalBindings.get(variableName).isPresent()) {
+            return SequenceType.createSequenceType("item*");
+        }
+        return null;
     }
 
     // region program
@@ -787,7 +783,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false, false);
+                paramName = parseVariableBinding(param.name);
                 paramType = createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -821,7 +817,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 fnReturnType,
                 funcBody,
                 isExternal,
-                createMetadataFromContext(ctx)
+                createMetadataFromContext(ctx),
+                createMetadataFromContext(ctx.functionName())
         );
     }
 
@@ -987,14 +984,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitForVar(XQueryParser.ForVarContext ctx) {
         SequenceType seq = null;
         boolean emptyFlag;
-        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Name var = parseVariableBinding(ctx.var_ref);
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         }
         emptyFlag = (ctx.flag != null);
         Name atVar = null;
         if (ctx.at != null) {
-            atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
+            atVar = parseVariableBinding(ctx.at);
             if (atVar.equals(var)) {
                 throw new PositionalVariableNameSameAsForVariableException(
                         "Positional variable " + var + " cannot have the same name as the main for variable.",
@@ -1035,7 +1032,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitLetVar(XQueryParser.LetVarContext ctx) {
         SequenceType seq = null;
-        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Name var = parseVariableBinding(ctx.var_ref);
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         }
@@ -1058,7 +1055,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitTumblingWindowClause(XQueryParser.TumblingWindowClauseContext ctx) {
-        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        Name windowVariable = parseVariableBinding(ctx.name);
         SequenceType sequenceType = ctx.type == null ? null : this.processSequenceType(ctx.type.sequenceType());
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         WindowClause.WindowCondition start = this.buildWindowStartCondition(ctx.windowStartCondition());
@@ -1079,7 +1076,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitSlidingWindowClause(XQueryParser.SlidingWindowClauseContext ctx) {
-        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        Name windowVariable = parseVariableBinding(ctx.name);
         SequenceType sequenceType = ctx.type == null ? null : this.processSequenceType(ctx.type.sequenceType());
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         WindowClause.WindowCondition start = this.buildWindowStartCondition(ctx.windowStartCondition());
@@ -1113,12 +1110,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private WindowClause.WindowVars buildWindowVars(XQueryParser.WindowVarsContext ctx) {
-        Name current = ctx.currentItem == null ? null : parseEqName(ctx.currentItem, false, false, false, false);
+        Name current = ctx.currentItem == null ? null : parseVariableBinding(ctx.currentItem);
         Name position = ctx.positionalVar() == null
             ? null
-            : parseEqName(ctx.positionalVar().pvar.eqName(), false, false, false, false);
-        Name previous = ctx.previousItem == null ? null : parseEqName(ctx.previousItem, false, false, false, false);
-        Name next = ctx.nextItem == null ? null : parseEqName(ctx.nextItem, false, false, false, false);
+            : parseVariableBinding(ctx.positionalVar().pvar);
+        Name previous = ctx.previousItem == null ? null : parseVariableBinding(ctx.previousItem);
+        Name next = ctx.nextItem == null ? null : parseVariableBinding(ctx.nextItem);
         return new WindowClause.WindowVars(current, position, previous, next);
     }
 
@@ -1215,7 +1212,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         SequenceType seq = null;
         Expression expr = null;
-        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Name var = parseVariableBinding(ctx.var_ref);
 
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
@@ -1237,8 +1234,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitCountClause(XQueryParser.CountClauseContext ctx) {
-        VariableReferenceExpression child = (VariableReferenceExpression) this.visitVarRef(ctx.varRef());
-        return new CountClause(child.getVariableName(), createMetadataFromContext(ctx));
+        return new CountClause(parseVariableBinding(ctx.varBinding()), createMetadataFromContext(ctx));
     }
     // endregion
 
@@ -1304,7 +1300,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(
             operatorSymbol
         );
-        if (kind.isValueComparison() || this.configuration.optimizeGeneralComparisonToValueComparison()) {
+        if (
+            kind.isValueComparison()
+                || this.configuration.optimization().optimizeGeneralComparisonToValueComparison()
+        ) {
             return new ComparisonExpression(
                     mainExpression,
                     childExpression,
@@ -1757,7 +1756,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // List<CopyDeclaration> copyDecls = ctx.copyDecl()
     // .stream()
     // .map(copyDeclCtx -> {
-    // Name var = ((VariableReferenceExpression) this.visitVarRef(copyDeclCtx.var_ref)).getVariableName();
+    // Name var = parseVariableBinding(copyDeclCtx.var_ref);
     // Expression expr = (Expression) this.visitExprSingle(copyDeclCtx.src_expr);
     // return new CopyDeclaration(var, expr);
     // })
@@ -2362,8 +2361,22 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitVarRef(XQueryParser.VarRefContext ctx) {
-        Name name = parseEqName(ctx.eqName(), false, false, false, false);
-        return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
+        return new VariableReferenceExpression(
+                parseVariableReference(ctx),
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    private Name parseVariableReference(XQueryParser.VarRefContext ctx) {
+        return parseVariableName(ctx.eqName());
+    }
+
+    private Name parseVariableBinding(XQueryParser.VarBindingContext ctx) {
+        return parseVariableName(ctx.eqName());
+    }
+
+    private Name parseVariableName(XQueryParser.EqNameContext ctx) {
+        return parseEqName(ctx, false, false, false, false);
     }
 
     @Override
@@ -2659,7 +2672,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false, false);
+                paramName = parseVariableBinding(param.name);
                 paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -2735,9 +2748,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             List<SequenceType> union = new ArrayList<>();
             Name variableName = null;
             if (expr.var_ref != null) {
-                variableName = ((VariableReferenceExpression) this.visitVarRef(
-                    expr.var_ref
-                )).getVariableName();
+                variableName = parseVariableBinding(expr.var_ref);
             }
             if (expr.union != null && !expr.union.isEmpty()) {
                 for (XQueryParser.SequenceTypeContext sequenceType : expr.union) {
@@ -2755,9 +2766,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         Name defaultVariableName = null;
         if (ctx.var_ref != null) {
-            defaultVariableName = ((VariableReferenceExpression) this.visitVarRef(
-                ctx.var_ref
-            )).getVariableName();
+            defaultVariableName = parseVariableBinding(ctx.var_ref);
         }
         Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
         return new TypeSwitchExpression(
@@ -2781,9 +2790,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (XQueryParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
             Expression varExpression;
             SequenceType sequenceType = null;
-            Name variableName = ((VariableReferenceExpression) this.visitVarRef(
-                currentVariable.varRef()
-            )).getVariableName();
+            Name variableName = parseVariableBinding(currentVariable.varBinding());
             if (currentVariable.sequenceType() != null) {
                 sequenceType = this.processSequenceType(currentVariable.sequenceType());
             }
@@ -2911,7 +2918,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         SequenceType seq = null;
         boolean external;
-        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
+        Name var = parseVariableBinding(ctx.varBinding());
         if (ctx.sequenceType() != null) {
             seq = this.processSequenceType(ctx.sequenceType());
         }
@@ -2923,7 +2930,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
         }
-        return new VariableDeclaration(var, external, seq, expr, annotations, createMetadataFromContext(ctx));
+        return new VariableDeclaration(
+                var,
+                external,
+                seq,
+                expr,
+                annotations,
+                createMetadataFromContext(ctx),
+                createMetadataFromContext(ctx.varBinding())
+        );
     }
 
     @Override
@@ -3035,7 +3050,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitAssignStatement(XQueryParser.AssignStatementContext ctx) {
-        Name paramName = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        Name paramName = parseVariableReference(ctx.var_ref);
         Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
     }
@@ -3231,7 +3246,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             List<SequenceType> union = new ArrayList<>();
             Name variableName = null;
             if (stmt.var_ref != null) {
-                variableName = ((VariableReferenceExpression) this.visitVarRef(stmt.var_ref)).getVariableName();
+                variableName = parseVariableBinding(stmt.var_ref);
             }
             if (stmt.union != null && !stmt.union.isEmpty()) {
                 stmt.union.forEach(sequenceTypeContext -> {
@@ -3243,7 +3258,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         Name defaultVariableName = null;
         if (ctx.var_ref != null) {
-            defaultVariableName = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+            defaultVariableName = parseVariableBinding(ctx.var_ref);
         }
         Statement defaultStatement = (Statement) this.visitStatement(ctx.def);
         return new TypeSwitchStatement(
@@ -3274,7 +3289,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         List<VariableDeclStatement> variables = new ArrayList<>();
         for (XQueryParser.VarDeclForStatementContext varDecl : ctx.varDeclForStatement()) {
             SequenceType seq = null;
-            Name var = ((VariableReferenceExpression) this.visitVarRef(varDecl.var_ref)).getVariableName();
+            Name var = parseVariableBinding(varDecl.var_ref);
             Expression exprSingle = null;
 
             if (varDecl.sequenceType() != null) {
@@ -3325,7 +3340,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitSingleSlashNoStepExpr(XQueryParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
-        this.configuration.setOptimizeParentPointers(false);
         return new PathRootExpression(createMetadataFromContext(ctx));
     }
 
@@ -3341,7 +3355,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.PathExprContext pathContext,
             XQueryParser.RelativePathExprContext doubleSlashContext
     ) {
-        this.configuration.setOptimizeParentPointers(false);
         Token leadingDoubleSlash = pathContext.getStart();
         PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
@@ -3363,7 +3376,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.PathExprContext pathContext,
             XQueryParser.RelativePathExprContext singleSlashContext
     ) {
-        this.configuration.setOptimizeParentPointers(false);
         Token leadingSlash = pathContext.getStart();
         PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingSlash, leadingSlash)

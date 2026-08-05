@@ -58,9 +58,9 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
-import sparksoniq.jsoniq.tuple.FlworKey;
-import sparksoniq.jsoniq.tuple.FlworKeyComparator;
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.tuple.FlworKey;
+import org.rumbledb.runtime.flwor.tuple.FlworKeyComparator;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import java.io.Serial;
 import java.util.*;
@@ -208,7 +208,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         );
 
         FlworDataFrame nativeQueryResult = null;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                 df,
                 this.expressionsWithIterator,

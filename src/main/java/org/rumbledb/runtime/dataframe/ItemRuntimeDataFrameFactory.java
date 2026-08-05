@@ -48,7 +48,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
                 staticContext.getMetadata(),
                 TypeInferrenceUtils.TypeMergeMode.LAX
             );
-            if (staticContext.getConfiguration().printInferredTypes()) {
+            if (staticContext.getConfiguration().analysis().printInferredTypes()) {
                 System.err.println("Inferred DataFrame type:\n" + itemType);
             }
         }

@@ -41,7 +41,7 @@ public class FormatIntegerFunctionIterator extends AbstractAtMostOneItemRuntimeP
             return ItemFactory.getInstance().createStringItem("");
 
         if (language == null) {
-            language = getConfiguration().getDefaultFormattingLanguage();
+            language = getConfiguration().formatting().defaultFormattingLanguage();
         }
 
         String result = IntegerPictureFormatter.format(

@@ -95,10 +95,10 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
         }
 
         if (allNodes) {
-            if (this.getRuntimeStaticContext().getConfiguration().optimizeSteps()) {
+            if (this.getRuntimeStaticContext().getConfiguration().optimization().optimizeSteps()) {
                 if (
-                    this.getRuntimeStaticContext().getConfiguration().optimizeStepExperimental()
-                        && this.getRuntimeStaticContext().getConfiguration().optimizeParentPointers()
+                    this.getRuntimeStaticContext().getConfiguration().optimization().optimizeStepsExperimental()
+                        && this.getRuntimeStaticContext().getConfiguration().optimization().optimizeParentPointers()
                 ) {
                     // skip sorting and uniqueness if not needed
                     // use optimizeParent as approximation for now, this is not verified

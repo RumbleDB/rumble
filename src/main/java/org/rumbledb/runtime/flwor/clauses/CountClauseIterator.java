@@ -44,7 +44,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import java.io.Serial;
 import java.util.Collections;

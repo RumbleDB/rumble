@@ -42,13 +42,12 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.MappingLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.TypeMappings;
-
-import sparksoniq.spark.SparkSessionManager;
 
 public class ValidateTypeIterator extends ItemRuntimePlan
         implements
@@ -93,7 +92,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
         }
-        if (!this.itemType.isCompatibleWithDataFrames(context.getRumbleRuntimeConfiguration())) {
+        if (!this.itemType.isCompatibleWithDataFrames(context.getRumbleConfiguration())) {
             throw new OurBadException(
                     "Cannot build a dataframe for a type not compatible with DataFrames: "
                         + this.itemType.getIdentifierString()
@@ -220,7 +219,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             StructField field = createStructField(
                 columnName,
                 itemType,
-                staticContext.getConfiguration().getLaxJSONNullValidation() && nullable,
+                staticContext.getConfiguration().semantics().laxJSONNullValidation() && nullable,
                 staticContext
             );
             fields.add(field);
@@ -233,7 +232,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             StructField field = createStructField(
                 columnName,
                 itemType,
-                staticContext.getConfiguration().getLaxJSONNullValidation() && nullable,
+                staticContext.getConfiguration().semantics().laxJSONNullValidation() && nullable,
                 staticContext
             );
             fields.add(field);
@@ -256,9 +255,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                 StructField field = createStructField(
                     columnName,
                     columnType,
-                    !required
-                        || (staticContext.getConfiguration().getLaxJSONNullValidation()
-                            && nullable),
+                    !required || (staticContext.getConfiguration().semantics().laxJSONNullValidation() && nullable),
                     staticContext
                 );
                 fields.add(field);
@@ -310,7 +307,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             );
         }
         StructType schema = convertToDataFrameSchema(itemType, staticContext);
-        if (staticContext.getConfiguration().printInferredTypes()) {
+        if (staticContext.getConfiguration().analysis().printInferredTypes()) {
             System.err.println("Inferred DataFrame type:\n");
             schema.printTreeString();
         }
@@ -406,7 +403,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
         }
         // Handling of null
         if (item.isNull()) {
-            if (context.getRumbleRuntimeConfiguration().getLaxJSONNullValidation()) {
+            if (context.getRumbleConfiguration().semantics().laxJSONNullValidation()) {
                 return null;
             } else if (dataType.equals(DataTypes.NullType)) {
                 return null;
@@ -473,7 +470,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                 return null;
             }
             if (dataType.equals(DataTypes.DateType)) {
-                if (!context.getRumbleRuntimeConfiguration().dateWithTimezone()) {
+                if (!context.getRumbleConfiguration().semantics().datesWithTimeZone()) {
                     if (item.hasTimeZone()) {
                         throw new DatesWithTimezonesNotSupported(ExceptionMetadata.EMPTY_METADATA);
                     }
@@ -652,7 +649,8 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                             } else if (
                                 !this.staticContext
                                     .getConfiguration()
-                                    .getLaxJSONNullValidation()
+                                    .semantics()
+                                    .laxJSONNullValidation()
                             ) {
                                 keys.add(key);
                                 values.add(validate(value, expectedType));

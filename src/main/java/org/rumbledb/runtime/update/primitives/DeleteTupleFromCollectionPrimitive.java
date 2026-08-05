@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 import org.apache.spark.sql.SparkSession;
 
 

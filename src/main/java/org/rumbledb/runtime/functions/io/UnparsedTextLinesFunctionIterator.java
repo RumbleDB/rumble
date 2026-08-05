@@ -8,7 +8,7 @@ import org.rumbledb.items.parsing.StringToStringItemMapper;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -47,8 +47,7 @@ public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implement
             this.staticContext.getStaticURI(),
             hrefItem.getStringValue(),
             encoding,
-            context.getRumbleRuntimeConfiguration(),
-            getConfiguration().getXmlVersion(),
+            getConfiguration().semantics().xmlVersion(),
             getMetadata()
         );
 

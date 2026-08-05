@@ -47,7 +47,7 @@ public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             return ItemParser.getItemFromXML(
                 xmlDocument,
                 XMLDocumentPosition.generateConstructedTreePath(),
-                context.getRumbleRuntimeConfiguration().optimizeParentPointers()
+                context.getRumbleConfiguration().optimization().optimizeParentPointers()
             );
         } catch (ParserConfigurationException e) {
             throw new OurBadException("Document builder creation failed with: " + e);

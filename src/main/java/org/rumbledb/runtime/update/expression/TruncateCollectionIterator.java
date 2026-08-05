@@ -69,7 +69,7 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
                 logicalPath,
                 getMetadata()
             );
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
@@ -79,8 +79,7 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = factory.createTruncateCollectionPrimitive(
             collection,
-            this.getRuntimeStaticContext().getMetadata(),
-            context.getRumbleRuntimeConfiguration()
+            this.getMetadata()
         );
 
         PendingUpdateList pul = new PendingUpdateList();

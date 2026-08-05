@@ -38,7 +38,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 
 import com.google.gson.stream.JsonReader;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.*;
 import java.net.URI;
@@ -72,7 +72,6 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
         );
         InputStream input = FileSystemUtil.getDataInputStream(
             uri,
-            context.getRumbleRuntimeConfiguration(),
             getMetadata()
         );
         return new JsonLinesCursor(
@@ -97,7 +96,6 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                context.getRumbleRuntimeConfiguration(),
                 getMetadata()
             );
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -123,7 +121,7 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
                     );
             }
         } else {
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 

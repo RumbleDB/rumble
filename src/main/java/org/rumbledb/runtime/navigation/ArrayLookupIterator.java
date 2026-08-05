@@ -50,7 +50,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -190,7 +190,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
 
             ItemType resultType = newContext.getResultingType().getItemType();
             if (!(resultType.isArrayItemType())) {
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
                                 + " so that the lookup will always result in the empty sequence no matter what. "
@@ -208,7 +208,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
 
             schema = newContext.getSchema();
             if (!(schema instanceof ArrayType arraySchema)) {
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
                                 + " so that the lookup will always result in the empty sequence no matter what. "
@@ -373,7 +373,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
             }
             return res;
         }
-        if (getConfiguration().doStaticAnalysis()) {
+        if (getConfiguration().analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     "This is not a sequence of arrays,"
                         + " so that the lookup will always result in the empty sequence no matter what. "

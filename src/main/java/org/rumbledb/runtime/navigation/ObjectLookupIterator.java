@@ -68,7 +68,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 public class ObjectLookupIterator extends ItemRuntimePlan
         implements
@@ -310,7 +310,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType structSchema)) {
             if (this.lookupIterator instanceof StringRuntimeIterator) {
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "You are trying to look up the value associated with the field "
                                 + key
@@ -382,7 +382,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                     .warn(
                         "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
                     );
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "There is no field with the name "
                                 + key

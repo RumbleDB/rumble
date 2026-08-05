@@ -28,7 +28,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -65,8 +65,8 @@ import org.rumbledb.types.TypeMappings;
 
 // import org.rumbledb.exceptions.ExceptionMetadata;
 
-import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -113,7 +113,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         private final Name variableName;
         private final ItemRuntimePlan assignmentPlan;
         private final int evaluationDepthLimit;
-        private final RumbleRuntimeConfiguration configuration;
+        private final RumbleConfiguration configuration;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<FlworTuple> childCursor;
@@ -126,7 +126,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 Name variableName,
                 ItemRuntimePlan assignmentPlan,
                 int evaluationDepthLimit,
-                RumbleRuntimeConfiguration configuration,
+                RumbleConfiguration configuration,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -683,7 +683,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             List<Name> variablesInInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             boolean hash,
-            RumbleRuntimeConfiguration conf
+            RumbleConfiguration conf
     ) {
         StructType inputSchema = dataFrame.schema();
         // inputSchema.printTreeString();
@@ -702,7 +702,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         if (!hash) {
             Dataset<Row> nativeQueryResult = null;
-            if (conf.nativeExecution()) {
+            if (conf.runtime().useNativeExecution()) {
                 nativeQueryResult = tryNativeQuery(
                     dataFrame,
                     newVariableName,

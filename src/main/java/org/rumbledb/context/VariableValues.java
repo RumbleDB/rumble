@@ -22,14 +22,14 @@ package org.rumbledb.context;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.RuntimePlanConversions;
 
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -51,9 +51,9 @@ public class VariableValues implements Serializable {
     private final Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues;
     private transient boolean nestedQuery;
     private final VariableValues parent;
-    private final RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
 
-    public VariableValues(RumbleRuntimeConfiguration configuration) {
+    public VariableValues(RumbleConfiguration configuration) {
         this.parent = null;
         this.localVariableCounts = new HashMap<>();
         this.localVariableValues = new HashMap<>();
@@ -197,7 +197,7 @@ public class VariableValues implements Serializable {
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
             return RuntimePlanConversions.collectRDDWithLimit(
                 rdd,
-                this.configuration.getMaterializationCap(),
+                this.configuration.runtime().materializationCap(),
                 metadata
             );
         }
@@ -209,7 +209,7 @@ public class VariableValues implements Serializable {
             HomogeneousItemDataFrame df = this.getDataFrameVariableValue(varName, metadata);
             return RuntimePlanConversions.collectRDDWithLimit(
                 df.toRDD(metadata),
-                this.configuration.getMaterializationCap(),
+                this.configuration.runtime().materializationCap(),
                 metadata
             );
         }

@@ -29,18 +29,23 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.rumbledb.api.Item;
+import org.rumbledb.api.ExternalBindings;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.serialization.JsonSerializer;
 import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemTypeFactory;
 
-import sparksoniq.spark.SparkSessionManager;
-
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +78,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testLocal() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in 1 to 5 return { \"foo\" : $i }");
         Assertions.assertTrue(!iterator.isOpen());
         Assertions.assertTrue(!iterator.availableAsRDD());
@@ -98,8 +103,33 @@ public class JavaAPITest {
 
     @Test
     @Timeout(1000)
+    public void testResourceResolverWithExternalBindings() throws Throwable {
+        Path queryFile = Files.createTempFile("rumble-resolved-query-", ".jq");
+        try {
+            Files.writeString(queryFile, "$answer");
+            URI logicalLocation = URI.create("urn:rumble:test:resolved-query");
+            ResourceResolver resolver = new ResourceResolver(Map.of(logicalLocation, queryFile.toUri()));
+            Rumble rumble = new Rumble(
+                    new CompilationConfiguration(RumbleConfiguration.defaultConfiguration(), resolver)
+            );
+            ExternalBindings bindings = ExternalBindings.empty();
+            bindings.bindLiteral("answer", "42");
+
+            SequenceOfItems result = rumble.runQuery(logicalLocation, bindings);
+
+            result.open();
+            Assertions.assertEquals("42", result.next().getStringValue());
+            Assertions.assertFalse(result.hasNext());
+            result.close();
+        } finally {
+            Files.deleteIfExists(queryFile);
+        }
+    }
+
+    @Test
+    @Timeout(1000)
     public void testCollect() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assertions.assertTrue(!iterator.isOpen());
         Assertions.assertTrue(iterator.availableAsRDD());
@@ -125,7 +155,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testRDD() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assertions.assertTrue(!iterator.isOpen());
         Assertions.assertTrue(iterator.availableAsRDD());
@@ -147,7 +177,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testGetAsDataFramePreservesArrayMembers() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("({ \"arr\" : [ { \"x\" : 1 }]},{\"arr\":[{\"x\":\"s\"}]})");
 
         Dataset<Row> dataFrame = iterator.getAsDataFrame();
@@ -170,10 +200,16 @@ public class JavaAPITest {
         Assertions.assertEquals("s", items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
     }
 
+    private static RumbleConfiguration xqueryConfiguration() {
+        return RumbleConfiguration.builder()
+            .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+            .build();
+    }
+
     @Test
     @Timeout(1000)
     public void testGetAsDataFrameFromRDD() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("parallelize(({ \"x\" : 1 }, { \"x\" : 2 }))");
 
         List<Row> rows = iterator.getAsDataFrame().collectAsList();
@@ -186,11 +222,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testHtmlSerializationRejectsEmptyMap() {
-        Rumble rumble = new Rumble(
-                new RumbleRuntimeConfiguration(
-                        new String[] { "--default-language", "xquery31" }
-                )
-        );
+        Rumble rumble = new Rumble(xqueryConfiguration());
         RumbleException exception = Assertions.assertThrows(
             RumbleException.class,
             () -> rumble.runQueryToString(
@@ -208,7 +240,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testJsonSerializationEscapesUnencodableSupplementaryCharacterForAscii() {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         String supplementaryCharacter = new String(Character.toChars(0x10330));
         String query = String.join(
             "\n",
@@ -224,11 +256,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testTextSerializationRejectsMapWithErrNamespaceCode() {
-        Rumble rumble = new Rumble(
-                new RumbleRuntimeConfiguration(
-                        new String[] { "--default-language", "xquery31" }
-                )
-        );
+        Rumble rumble = new Rumble(xqueryConfiguration());
         RumbleException exception = Assertions.assertThrows(
             RumbleException.class,
             () -> rumble.runQueryToString(
@@ -245,11 +273,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testJsonSerializationEscapesSolidusInStrings() {
-        Rumble rumble = new Rumble(
-                new RumbleRuntimeConfiguration(
-                        new String[] { "--default-language", "xquery31" }
-                )
-        );
+        Rumble rumble = new Rumble(xqueryConfiguration());
         String result = rumble.runQueryToString(
             """
                     declare namespace output = "%s";
@@ -301,7 +325,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testJsonSerializationEscapesEuroCharacterForAscii() {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         String query = String.join(
             "\n",
             "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",

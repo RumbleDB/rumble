@@ -11,7 +11,7 @@ import java.util.Set;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -38,7 +38,7 @@ public class RuntimeStaticContext implements Serializable {
      * determine limits such as the materialization cap; the returned configuration is never {@code null}
      */
     @NonNull
-    private final RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
 
     private final SequenceType staticType;
 

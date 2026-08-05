@@ -38,9 +38,9 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.spark.SparkSessionManager;
 
 import scala.Tuple2;
-import sparksoniq.spark.SparkSessionManager;
 
 import lombok.NonNull;
 import java.io.Serial;

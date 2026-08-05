@@ -24,7 +24,7 @@ package org.rumbledb.runtime.functions.io;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -67,19 +67,17 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        RumbleRuntimeConfiguration configuration = context.getRumbleRuntimeConfiguration();
-        if (configuration == null || configuration.getLogPath() == null) {
+        RumbleConfiguration configuration = context.getRumbleConfiguration();
+        if (configuration == null || configuration.output().logPath() == null) {
             return;
         }
         URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            configuration.getLogPath(),
-            configuration,
+            configuration.output().logPath(),
             metadata
         );
         FileSystemUtil.append(
             uri,
             Collections.singletonList(label + " [" + position + "]: " + result.serialize()),
-            configuration,
             metadata
         );
     }

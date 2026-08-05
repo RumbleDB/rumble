@@ -43,8 +43,7 @@ public class UnparsedTextAvailableFunctionIterator extends AbstractAtMostOneItem
                 this.staticContext.getStaticURI(),
                 hrefItem.getStringValue(),
                 encoding,
-                context.getRumbleRuntimeConfiguration(),
-                getConfiguration().getXmlVersion(),
+                getConfiguration().semantics().xmlVersion(),
                 getMetadata()
             );
             return ItemFactory.getInstance().createBooleanItem(true);

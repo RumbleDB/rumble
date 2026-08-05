@@ -68,7 +68,6 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         );
         InputStream input = FileSystemUtil.getDataInputStream(
             uri,
-            context.getRumbleRuntimeConfiguration(),
             getMetadata()
         );
         return new TextLineCursor(input, getMetadata());

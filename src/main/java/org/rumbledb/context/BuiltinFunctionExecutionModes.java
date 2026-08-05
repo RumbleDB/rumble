@@ -16,7 +16,7 @@
  */
 package org.rumbledb.context;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 
@@ -31,7 +31,7 @@ public final class BuiltinFunctionExecutionModes {
     public static ExecutionMode resolve(
             BuiltinFunction builtinFunction,
             ExecutionMode firstArgumentMode,
-            RumbleRuntimeConfiguration configuration
+            RumbleConfiguration configuration
     ) {
         ExecutionMode firstMode =
             firstArgumentMode != null ? firstArgumentMode : ExecutionMode.LOCAL;
@@ -44,11 +44,11 @@ public final class BuiltinFunctionExecutionModes {
             return ExecutionMode.RDD;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME) {
-            return configuration.dataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD;
+            return configuration.runtime().useDataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
             return firstMode.isDataFrame()
-                ? configuration.dataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD
+                ? configuration.runtime().useDataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD
                 : firstMode.isRDDOrDataFrame() ? ExecutionMode.RDD : ExecutionMode.LOCAL;
         }
         if (

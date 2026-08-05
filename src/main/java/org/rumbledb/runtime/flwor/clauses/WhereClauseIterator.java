@@ -45,13 +45,13 @@ import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
 import java.util.*;
@@ -179,7 +179,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
         // StructType inputSchema = df.schema();
 
         FlworDataFrame nativeQueryResult = null;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                 df,
                 this.expression,
