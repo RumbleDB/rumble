@@ -183,15 +183,16 @@ public class VariableValues implements Serializable {
     }
 
     public List<Item> getLocalVariableValue(Name varName, ExceptionMetadata metadata) {
-        if (this.localVariableValues.containsKey(varName) && this.localVariableValues.get(varName) == null) {
+        List<Item> localValue = this.localVariableValues.get(varName);
+        if (localValue != null) {
+            return localValue;
+        }
+        if (this.localVariableValues.containsKey(varName)) {
             // Referencing an uninitialized local variable is illegal
             throw new RumbleException(
                     "Runtime error retrieving variable " + varName + " value",
                     metadata
             );
-        }
-        if (this.localVariableValues.containsKey(varName)) {
-            return this.localVariableValues.get(varName);
         }
 
         if (this.rddVariableValues.containsKey(varName)) {

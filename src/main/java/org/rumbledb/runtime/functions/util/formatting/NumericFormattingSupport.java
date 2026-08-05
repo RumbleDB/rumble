@@ -38,20 +38,35 @@ public final class NumericFormattingSupport {
             return digits;
         }
 
-        String working = groupFromRight ? new StringBuilder(digits).reverse().toString() : digits;
+        int length = digits.length();
 
         if (repeatingInterval != null) {
-            // Repeating grouping uses a single separator across all positions.
-            String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP()));
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < working.length(); i++) {
-                if (i > 0 && i % repeatingInterval == 0) {
-                    sb.append(separator);
-                }
-                sb.append(working.charAt(i));
+            int interval = repeatingInterval;
+            if (length <= interval) {
+                return digits;
             }
-            return groupFromRight ? sb.reverse().toString() : sb.toString();
+            int separatorCP = groupingPositions.get(0).separatorCP();
+            int separatorLength = Character.charCount(separatorCP);
+            int separatorCount = (length - 1) / interval;
+            StringBuilder sb = new StringBuilder(length + separatorCount * separatorLength);
+            if (groupFromRight) {
+                int firstGroup = ((length - 1) % interval) + 1;
+                sb.append(digits, 0, firstGroup);
+                for (int i = firstGroup; i < length; i += interval) {
+                    sb.appendCodePoint(separatorCP);
+                    sb.append(digits, i, i + interval);
+                }
+            } else {
+                sb.append(digits, 0, interval);
+                for (int i = interval; i < length; i += interval) {
+                    sb.appendCodePoint(separatorCP);
+                    sb.append(digits, i, Math.min(i + interval, length));
+                }
+            }
+            return sb.toString();
         }
+
+        String working = groupFromRight ? new StringBuilder(digits).reverse().toString() : digits;
 
         List<GroupingPos> gps = new ArrayList<>(groupingPositions);
         gps.sort(Comparator.comparingInt(GroupingPos::distanceFromAnchor));
