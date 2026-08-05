@@ -18,10 +18,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /** Shared module import semantics for the JSONiq and XQuery frontends. */
 final class ModuleImportLoader {
@@ -29,7 +26,7 @@ final class ModuleImportLoader {
     private ModuleImportLoader() {
     }
 
-    public static List<LibraryModule> load(
+    public static LibraryModule load(
             String namespace,
             List<String> locationHints,
             StaticContext importingModuleContext,
@@ -40,7 +37,6 @@ final class ModuleImportLoader {
         String normalizedNamespace = URILiteralUtils.normalizeAsAnyURI(namespace);
         List<String> candidates = locationHints.isEmpty() ? List.of(normalizedNamespace) : locationHints;
         Exception lastFailure = null;
-        Map<String, LibraryModule> loadedModules = new LinkedHashMap<>();
 
         for (String candidate : candidates) {
             URI location;
@@ -68,14 +64,10 @@ final class ModuleImportLoader {
                     );
                 }
 
-                loadedModules.putIfAbsent(location.toString(), module);
+                return module;
             } catch (IOException | CannotRetrieveResourceException e) {
                 lastFailure = e;
             }
-        }
-
-        if (!loadedModules.isEmpty()) {
-            return new ArrayList<>(loadedModules.values());
         }
 
         RumbleException exception = new ModuleNotFoundException(

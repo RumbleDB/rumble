@@ -491,7 +491,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 );
             }
             namespaces.add(importedNamespace);
-            libraryModules.addAll(this.processModuleImport(namespace));
+            libraryModules.add(this.processModuleImport(namespace));
         }
 
         // parse variables and function
@@ -4068,7 +4068,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return uri.toString();
     }
 
-    public List<LibraryModule> processModuleImport(JsoniqParser.ModuleImportContext ctx) {
+    public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {
         ExceptionMetadata metadata = createMetadataFromContext(ctx);
         String namespace = processURILiteral(ctx.targetNamespace);
         if (namespace.isEmpty()) {
@@ -4088,7 +4088,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             .map(this::processURILiteral)
             .map(URILiteralUtils::normalizeAsAnyURI)
             .collect(Collectors.toList());
-        List<LibraryModule> libraryModules = ModuleImportLoader.load(
+        LibraryModule libraryModule = ModuleImportLoader.load(
             namespace,
             locationHints,
             this.moduleContext,
@@ -4102,7 +4102,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 metadata
             );
         }
-        return libraryModules;
+        return libraryModule;
     }
 
     public ExceptionMetadata generateMetadata(Token start, Token end) {
