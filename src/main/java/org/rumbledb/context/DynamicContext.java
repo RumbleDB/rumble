@@ -64,22 +64,6 @@ public class DynamicContext implements Serializable {
     private RuntimeIterator topLevelRuntimeIterator;
 
     /**
-     * The default constructor is for Kryo deserialization purposes.
-     */
-    public DynamicContext() {
-        this.parent = null;
-        this.variableValues = null;
-        this.conf = null;
-        this.externalBindings = null;
-        this.namedFunctions = null;
-        this.inScopeSchemaTypes = null;
-        this.currentDateTime = OffsetDateTime.now();
-        this.currentMutabilityLevel = 0;
-        this.globalVariables = new GlobalVariables();
-        this.topLevelRuntimeIterator = null;
-    }
-
-    /**
      * Creates a new, empty module context (without parent).
      * 
      * @param conf the Rumble configuration.

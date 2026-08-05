@@ -229,5 +229,3 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
         }
     }
 }
-
-
