@@ -73,7 +73,9 @@ public abstract class RuntimePlan<T> implements Serializable {
         this.localCapability = this instanceof LocalRuntimePlan<?> ? (LocalRuntimePlan<T>) this : null;
         this.rddCapability = this instanceof RDDRuntimePlan<?> ? (RDDRuntimePlan<T>) this : null;
         this.dataFrameCapability = this instanceof DataFrameRuntimePlan<?> ? (DataFrameRuntimePlan<T>) this : null;
-        this.atMostOneCapability = this instanceof AtMostOneLocalRuntimePlan<?> ? (AtMostOneLocalRuntimePlan<T>) this : null;
+        this.atMostOneCapability = this instanceof AtMostOneLocalRuntimePlan<?>
+            ? (AtMostOneLocalRuntimePlan<T>) this
+            : null;
 
         // Compiler configuration may prefer a representation this plan cannot produce natively, so select the
         // closest supported capability and make it authoritative for all runtime consumers.
@@ -332,8 +334,7 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     private boolean canEvaluateAtMostOneDirectly() {
-        return this.staticContext.getExecutionMode() == ExecutionMode.LOCAL
-            && this.atMostOneCapability != null;
+        return this.atMostOneCapability != null;
     }
 
     private List<T> materializeDirectAtMostOne(DynamicContext context) {
