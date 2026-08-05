@@ -1,13 +1,11 @@
 package org.rumbledb.types;
 
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
-import java.util.Objects;
-
-import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -16,13 +14,13 @@ import java.util.Set;
  * Wildcard processing-instruction() is represented with no target-name restriction.
  * processing-instruction(N) is represented with a normalized target-name restriction.
  */
-@EqualsAndHashCode
-public class PINodeItemType implements ItemType {
+public class PINodeItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
+    @Getter
     private String normalizedTarget;
 
     public PINodeItemType() {
@@ -42,19 +40,9 @@ public class PINodeItemType implements ItemType {
         return this.normalizedTarget == null;
     }
 
-    public String getNormalizedTarget() {
-        return this.normalizedTarget;
-    }
-
-
-
     @Override
-    public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof PINodeItemType other)) {
-            return false;
-        }
-        return Objects.equals(this.catalogueName, other.catalogueName)
-            && Objects.equals(this.normalizedTarget, other.normalizedTarget);
+    protected Object equalityKey() {
+        return structuralTypeKey(PINodeItemType.class, this.catalogueName, this.normalizedTarget);
     }
 
     @Override
@@ -152,7 +140,7 @@ public class PINodeItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 }

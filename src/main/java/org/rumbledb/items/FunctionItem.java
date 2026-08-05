@@ -37,17 +37,15 @@ import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
+import org.rumbledb.spark.ml.ApplyEstimatorRuntimeIterator;
+import org.rumbledb.spark.ml.ApplyTransformerRuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-
-
-import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
-import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
-import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
 
 public class FunctionItem implements Item {
 
@@ -70,16 +68,12 @@ public class FunctionItem implements Item {
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
-    private Map<Name, JSoundDataFrame> dataFrameVariablesInClosure;
+    private Map<Name, HomogeneousItemDataFrame> dataFrameVariablesInClosure;
 
     /**
      * When true, this item was created for a builtin named function reference ({@code name#arity}).
      */
     private boolean isBuiltin;
-
-    protected FunctionItem() {
-        super();
-    }
 
     /**
      * Creates a new function value for a named-function lookup. The function body factory is immutable: ordinary
@@ -136,7 +130,7 @@ public class FunctionItem implements Item {
             RuntimeIterator bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<Name, JSoundDataFrame> DFVariablesInClosure
+            Map<Name, HomogeneousItemDataFrame> DFVariablesInClosure
     ) {
         this(
             identifier,
@@ -159,7 +153,7 @@ public class FunctionItem implements Item {
             RuntimeIterator bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<Name, JSoundDataFrame> DFVariablesInClosure,
+            Map<Name, HomogeneousItemDataFrame> DFVariablesInClosure,
             boolean isBuiltin
     ) {
         this.identifier = identifier;
@@ -272,14 +266,14 @@ public class FunctionItem implements Item {
     }
 
     @Override
-    public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
+    public Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
         return this.dataFrameVariablesInClosure;
     }
 
     @Override
     public boolean equals(Object other) {
-        // functions can not be compared
-        return false;
+        // XDM functions have no value equality, so Java collections use object identity.
+        return this == other;
     }
 
     @Override
@@ -334,9 +328,7 @@ public class FunctionItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.identifier.hashCode()
-            + String.join("", this.parameterNames.toString()).hashCode()
-            + this.signature.hashCode();
+        return System.identityHashCode(this);
     }
 
     @Override
@@ -415,11 +407,6 @@ public class FunctionItem implements Item {
             return coercionRuntimeIterator.getCallableItem().getTransformer();
         }
         throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
-    }
-
-
-    public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
-        this.dynamicModuleContext = dynamicModuleContext;
     }
 
     @Override

@@ -22,11 +22,8 @@ package org.rumbledb.items;
 
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -34,39 +31,19 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class IntItem implements Item {
-
+public class IntItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private int value;
 
-    public IntItem() {
-        super();
-    }
-
     public IntItem(int value) {
-        super();
         this.value = value;
     }
 
     @Override
     public Item copy(boolean mutable) {
         return new IntItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
@@ -145,10 +122,6 @@ public class IntItem implements Item {
     }
 
 
-
-    public int hashCode() {
-        return getIntValue();
-    }
 
     @Override
     public ItemType getDynamicType() {

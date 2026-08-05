@@ -1,6 +1,6 @@
 package org.rumbledb.types;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
@@ -14,7 +14,7 @@ import java.util.Set;
  *
  * All concrete node types share node() as their base type at depth 1.
  */
-public class XmlNodeItemType implements ItemType {
+public class XmlNodeItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -26,14 +26,6 @@ public class XmlNodeItemType implements ItemType {
     }
 
 
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
 
     @Override
     public boolean hasName() {
@@ -76,8 +68,7 @@ public class XmlNodeItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 }
-

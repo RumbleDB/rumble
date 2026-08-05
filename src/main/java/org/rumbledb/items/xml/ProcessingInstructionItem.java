@@ -12,17 +12,13 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ProcessingInstructionItem implements Item {
+public class ProcessingInstructionItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
     private String target;
     private String content;
     private Item parent;
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public ProcessingInstructionItem() {
-    }
 
     public ProcessingInstructionItem(Node processingInstructionNode) {
         this.target = processingInstructionNode.getNodeName();
@@ -100,21 +96,6 @@ public class ProcessingInstructionItem implements Item {
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
     }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ProcessingInstructionItem otherItem)) {
-            return false;
-        }
-        return this.getXmlDocumentPosition().equals(otherItem.getXmlDocumentPosition());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.documentPos.hashCode();
-    }
-
-
 
     @Override
     public List<Item> namespaceNodes() {

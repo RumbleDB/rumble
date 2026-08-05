@@ -21,8 +21,10 @@
 package org.rumbledb.expressions.flowr;
 
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -38,12 +40,14 @@ import org.rumbledb.expressions.scripting.statement.Statement;
  *
  * Clauses, unlike expressions, return tuple streams.
  */
+@Getter
 public abstract class Clause extends Node {
 
     /* Clauses are organized in doubly-linked lists */
     protected Clause previousClause;
     protected Clause nextClause;
     protected final FLWOR_CLAUSES clauseType;
+    @Setter
     protected StaticContext staticContext;
 
     public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
@@ -52,18 +56,6 @@ public abstract class Clause extends Node {
         this.staticContext = null;
         this.previousClause = null;
         this.nextClause = null;
-    }
-
-    public FLWOR_CLAUSES getClauseType() {
-        return this.clauseType;
-    }
-
-    public Clause getPreviousClause() {
-        return this.previousClause;
-    }
-
-    public Clause getNextClause() {
-        return this.nextClause;
     }
 
     public Clause getFirstClause() {
@@ -236,16 +228,8 @@ public abstract class Clause extends Node {
         }
     }
 
-    public StaticContext getStaticContext() {
-        return this.staticContext;
-    }
-
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
-    }
-
     public RuntimeStaticContext getStaticContextForRuntime(
-            RumbleRuntimeConfiguration conf,
+            RumbleConfiguration conf,
             VisitorConfig visitorConfig
     ) {
         return RuntimeStaticContext.fromStaticContext(this.staticContext)

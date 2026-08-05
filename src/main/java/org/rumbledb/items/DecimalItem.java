@@ -25,53 +25,33 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-
-
-public class DecimalItem implements Item {
-
+public class DecimalItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private BigDecimal value;
 
-    public DecimalItem() {
-        super();
-    }
+    // Float/double casts retain their exact decimal value for op:same-key while serializing
+    // with the concise lexical representation users expect from the source numeric value.
+    private String displayValue;
 
     public DecimalItem(BigDecimal decimal) {
-        super();
         this.value = decimal;
+    }
+
+    public DecimalItem(BigDecimal decimal, String displayValue) {
+        this.value = decimal;
+        this.displayValue = displayValue;
     }
 
     @Override
     public Item copy(boolean mutable) {
-        return new DecimalItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    public BigDecimal getValue() {
-        return this.value;
+        return new DecimalItem(this.value, this.displayValue);
     }
 
     @Override
@@ -86,6 +66,9 @@ public class DecimalItem implements Item {
 
     @Override
     public String getStringValue() {
+        if (this.displayValue != null) {
+            return this.displayValue;
+        }
         return String.valueOf(this.value.stripTrailingZeros().toPlainString());
     }
 
@@ -122,15 +105,6 @@ public class DecimalItem implements Item {
     @Override
     public boolean isDecimal() {
         return true;
-    }
-
-
-
-    public int hashCode() {
-        if (getDecimalValue().stripTrailingZeros().scale() == 0) {
-            return getDecimalValue().intValue();
-        }
-        return getDecimalValue().hashCode();
     }
 
     @Override

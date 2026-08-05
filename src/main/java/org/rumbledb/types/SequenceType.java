@@ -20,6 +20,7 @@
 
 package org.rumbledb.types;
 
+import lombok.Getter;
 import org.apache.log4j.LogManager;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -37,6 +38,7 @@ import java.util.Map;
 
 import lombok.EqualsAndHashCode;
 
+@Getter
 @EqualsAndHashCode
 public class SequenceType implements Serializable {
 
@@ -109,14 +111,6 @@ public class SequenceType implements Serializable {
 
     public boolean isEmptySequence() {
         return this.arity == Arity.Zero;
-    }
-
-    public ItemType getItemType() {
-        return this.itemType;
-    }
-
-    public Arity getArity() {
-        return this.arity;
     }
 
     public boolean isSubtypeOf(SequenceType superType) {

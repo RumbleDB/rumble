@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import lombok.Getter;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
@@ -37,6 +38,7 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.ItemType;
+import org.objenesis.strategy.StdInstantiatorStrategy;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -58,10 +60,30 @@ public class DataFrameContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private List<FlworDataFrameColumn> columns;
+
+    /**
+     * Currently populated dynamic context. It is a child of the context passed to the constructor,
+     * populated with the current input tuple with one of the two set* functions.
+     */
+    @Getter
     private DynamicContext context;
 
+    /**
+     * Kryo object that the caller can use for serialization and deserialization purposes.
+     */
+    @Getter
     private transient Kryo kryo;
+
+    /**
+     * Kryo output that the caller can use for serialization purposes.
+     */
+    @Getter
     private transient Output output;
+
+    /**
+     * Kryo input that the caller can use for deserialization purposes.
+     */
+    @Getter
     private transient Input input;
 
     /**
@@ -69,11 +91,7 @@ public class DataFrameContext implements Serializable {
      * The only allowed methods are getKryo, getInput and getOutput.
      */
     public DataFrameContext() {
-        this.kryo = new Kryo();
-        this.kryo.setReferences(true);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
+        initializeKryo();
     }
 
     /**
@@ -90,11 +108,7 @@ public class DataFrameContext implements Serializable {
 
         this.context = new DynamicContext(context);
 
-        this.kryo = new Kryo();
-        this.kryo.setReferences(true);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
+        initializeKryo();
     }
 
     /**
@@ -147,50 +161,20 @@ public class DataFrameContext implements Serializable {
         }
     }
 
-    /**
-     * Gets the currently populated dynamic context. It is a child of the context passed to the constructor,
-     * populated with the current input tuple with one of the two set* functions.
-     * 
-     * @return the dynamic context, for evaluating and expression.
-     */
-    public DynamicContext getContext() {
-        return this.context;
-    }
-
-    /**
-     * Gets a Kryo output that the caller can use for serialization purposes.
-     * 
-     * @return a Kryo output.
-     */
-    public Output getOutput() {
-        return this.output;
-    }
-
-    /**
-     * Gets a Kryo object that the caller can use for serialization and deserialization purposes.
-     * 
-     * @return a Kryo.
-     */
-    public Kryo getKryo() {
-        return this.kryo;
-    }
-
-    /**
-     * Gets a Kryo input that the caller can use for deserialization purposes.
-     * 
-     * @return a Kryo input.
-     */
-    public Input getInput() {
-        return this.input;
-    }
-
     @Serial
     private void readObject(java.io.ObjectInputStream in)
             throws IOException,
                 ClassNotFoundException {
         in.defaultReadObject();
 
+        initializeKryo();
+    }
+
+    private void initializeKryo() {
         this.kryo = new Kryo();
+        this.kryo.setInstantiatorStrategy(
+            new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy())
+        );
         this.kryo.setReferences(true);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);

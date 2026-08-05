@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.arithmetic;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -30,6 +31,7 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class MultiplicativeExpression extends Expression {
 
     public static enum MultiplicativeOperator {
@@ -90,18 +92,6 @@ public class MultiplicativeExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
-    }
-
-    public Expression getLeftExpression() {
-        return this.leftExpression;
-    }
-
-    public Expression getRightExpression() {
-        return this.rightExpression;
-    }
-
-    public MultiplicativeOperator getMultiplicativeOperator() {
-        return this.multiplicativeOperator;
     }
 
     @Override

@@ -7,16 +7,13 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class gMonthItem implements Item {
+public class gMonthItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -26,10 +23,6 @@ public class gMonthItem implements Item {
     private static final Pattern gMonthRegex = Pattern.compile(
         "--(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
-
-    public gMonthItem() {
-        super();
-    }
 
     gMonthItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.month = Month.of(dateTime.getMonthValue());
@@ -65,20 +58,6 @@ public class gMonthItem implements Item {
             this.hasTimeZone = true;
             this.offset = ZoneOffset.of(tz);
         }
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override

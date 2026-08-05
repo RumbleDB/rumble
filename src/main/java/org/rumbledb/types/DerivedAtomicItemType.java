@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -15,31 +15,28 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
-public class DerivedAtomicItemType implements ItemType {
+public class DerivedAtomicItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemType baseType;
+    private final ItemType baseType;
     private ItemType primitiveType;
     private int typeTreeDepth;
-    private boolean isUserDefined;
-    private Name name;
+    private final boolean isUserDefined;
+    private final Name name;
     private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;
-    private List<String> constraints;
+    private final List<String> constraints;
     private List<Item> enumeration;
-    private TimezoneFacet explicitTimezone;
+    private final TimezoneFacet explicitTimezone;
     private WhitespaceFacet whiteSpace;
     private List<String> pattern;
 
-    private OrderedFacetValue ordered;
-    private Boolean bounded;
-    private CardinalityFacetValue cardinality;
-    private Boolean numeric;
-
-    DerivedAtomicItemType() {
-    }
+    private final OrderedFacetValue ordered;
+    private final Boolean bounded;
+    private final CardinalityFacetValue cardinality;
+    private final Boolean numeric;
 
     DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets) {
         this(name, baseType, primitiveType, facets, true);
@@ -99,22 +96,6 @@ public class DerivedAtomicItemType implements ItemType {
         // to baseType
         this(name, baseType, null, facets, isUserDefined);
     }
-
-
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name != null ? this.name.hashCode() : super.hashCode();
-    }
-
 
     @Override
     public boolean isAtomicItemType() {
@@ -442,7 +423,7 @@ public class DerivedAtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return this.baseType.isCompatibleWithDataFrames(configuration);
     }
 

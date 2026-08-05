@@ -3,7 +3,7 @@ package org.rumbledb.runtime.update.primitives;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.col;
 

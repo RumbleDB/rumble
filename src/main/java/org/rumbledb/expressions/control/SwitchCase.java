@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.control;
 
 
+import lombok.Getter;
 import org.rumbledb.expressions.Expression;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.List;
  * From a tree perspective, all expressions in this class are considered
  * to be direct children of the SwitchExpression.
  */
+@Getter
 public class SwitchCase {
 
     private final List<Expression> conditionExpressions;
@@ -49,14 +51,6 @@ public class SwitchCase {
         result.addAll(this.conditionExpressions);
         result.add(this.returnExpression);
         return result;
-    }
-
-    public Expression getReturnExpression() {
-        return this.returnExpression;
-    }
-
-    public List<Expression> getConditionExpressions() {
-        return this.conditionExpressions;
     }
 
 }

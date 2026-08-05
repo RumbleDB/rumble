@@ -4,10 +4,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import java.io.Serial;
 import java.util.Map;
@@ -80,16 +79,13 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (caseValue == null) {
                     return this.cases.get(caseKey);
                 } else {
-                    break;
+                    continue;
                 }
             }
-            long comparison = ComparisonIterator.compareItems(
-                testValue,
-                caseValue,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
-                getMetadata()
-            );
-            if (comparison == 0) {
+            if (caseValue == null) {
+                continue;
+            }
+            if (AtomicDeepEqual.deepEqual(testValue, caseValue)) {
                 return this.cases.get(caseKey);
             }
         }

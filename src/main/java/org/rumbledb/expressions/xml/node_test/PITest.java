@@ -1,5 +1,7 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import lombok.NoArgsConstructor;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serial;
@@ -12,6 +14,8 @@ import java.util.Objects;
  * A PITest with an NCName or StringLiteral argument matches any processing-instruction node
  * whose PITarget equals fn:normalize-space of the given name.
  */
+@Getter
+@NoArgsConstructor(force = true)
 public class PITest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -20,10 +24,6 @@ public class PITest implements NodeTest {
     /**
      * Creates a PITest that matches any processing-instruction node.
      */
-    public PITest() {
-        this.targetName = null;
-    }
-
     /**
      * Creates a PITest that matches processing-instruction nodes with the given target name.
      *
@@ -35,10 +35,6 @@ public class PITest implements NodeTest {
 
     public boolean hasTargetName() {
         return this.targetName != null;
-    }
-
-    public String getTargetName() {
-        return this.targetName;
     }
 
     @Override
@@ -53,4 +49,3 @@ public class PITest implements NodeTest {
 
 
 }
-

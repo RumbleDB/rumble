@@ -1,12 +1,20 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import lombok.NoArgsConstructor;
+import lombok.Getter;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
 
+@NoArgsConstructor(force = true)
 public class ElementTest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
+    /**
+     * Expanded name from the kind test (namespace URI + local name).
+     * Only valid when isNameWithoutTypeCheck is true.
+     */
+    @Getter
     private final Name elementName;
     private final boolean hasWildcard;
     private final Name typeName;
@@ -31,12 +39,6 @@ public class ElementTest implements NodeTest {
         this.hasWildcard = true;
     }
 
-    public ElementTest() {
-        this.elementName = null;
-        this.typeName = null;
-        this.hasWildcard = false;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("element(");
@@ -58,14 +60,6 @@ public class ElementTest implements NodeTest {
 
     public boolean isNameWithoutTypeCheck() {
         return this.elementName != null && this.typeName == null;
-    }
-
-    /**
-     * Expanded name from the kind test (namespace URI + local name). Only valid when
-     * {@link #isNameWithoutTypeCheck()} is true.
-     */
-    public Name getElementName() {
-        return this.elementName;
     }
 
     public boolean isWildcardOnly() {

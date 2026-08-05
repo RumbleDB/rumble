@@ -23,7 +23,7 @@ package org.rumbledb.compiler;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -37,16 +37,16 @@ import org.rumbledb.expressions.module.Prolog;
 public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
 
     @SuppressWarnings("unused")
-    private final RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private final RumbleConfiguration configuration;
     private final Set<String> visitedModules;
 
     /**
      * Builds a new visitor.
      * 
-     * @param rumbleRuntimeConfiguration the configuration. This is used for trigerring or not debug output.
+     * @param configuration the configuration. This is used for trigerring or not debug output.
      */
-    ModulePruningVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
-        this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
+    ModulePruningVisitor(RumbleConfiguration configuration) {
+        this.configuration = configuration;
         this.visitedModules = new HashSet<>();
     }
 

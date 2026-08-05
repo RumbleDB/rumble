@@ -86,6 +86,10 @@ public class ItemFactory {
         return new DecimalItem(d);
     }
 
+    public Item createDecimalItem(BigDecimal d, String displayValue) {
+        return new DecimalItem(d, displayValue);
+    }
+
     public Item createIntegerItem(BigInteger i) {
         return new IntegerItem(i);
     }
@@ -316,19 +320,6 @@ public class ItemFactory {
         return result;
     }
 
-    /**
-     * Create an object item from a map of string keys and list of items.
-     * 
-     * @deprecated Use {@link #createObjectItemOptimized(Map<String, Item>, boolean)} instead.
-     * @param keyValuePairs The map of string keys and list of items.
-     * @param mutable The mutability level of the object item.
-     * @return The object item.
-     */
-    @Deprecated
-    public Item createObjectItem(Map<String, List<Item>> keyValuePairs, boolean mutable) {
-        return createObjectItemFromValueLists(keyValuePairs, mutable);
-    }
-
     public Item createObjectItemFromValueLists(Map<String, List<Item>> keyValuePairs, boolean mutable) {
         Item result = new ObjectItem(keyValuePairs);
         if (mutable) {
@@ -366,6 +357,7 @@ public class ItemFactory {
             Item original,
             List<Item> keysToRemove
     ) {
+        original = rebaseDeepMapOverlay(original);
         return new MapWithRemovedEntryItem(original, keysToRemove);
     }
 
@@ -374,7 +366,30 @@ public class ItemFactory {
             Item keyToAdd,
             List<Item> valueToAdd
     ) {
+        original = rebaseDeepMapOverlay(original);
         return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
+    }
+
+    static int getMapOverlayChainLength(Item item) {
+        if (item instanceof MapWithAdditionalEntryItem additionalEntry) {
+            return additionalEntry.getOverlayChainLength();
+        }
+        if (item instanceof MapWithRemovedEntryItem removedEntry) {
+            return removedEntry.getOverlayChainLength();
+        }
+        return 0;
+    }
+
+    private Item rebaseDeepMapOverlay(Item original) {
+        if (getMapOverlayChainLength(original) < MapWithAdditionalEntryItem.MAX_OVERLAY_CHAIN_LENGTH) {
+            return original;
+        }
+        return createMapItem(
+            original.getItemKeys(),
+            original.getSequenceValues(),
+            ExceptionMetadata.EMPTY_METADATA,
+            false
+        );
     }
 
     public Item createMapItem(

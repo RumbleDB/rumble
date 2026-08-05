@@ -1,5 +1,6 @@
 package org.rumbledb.items.xml;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -11,17 +12,23 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class NamespaceItem implements Item {
+public class NamespaceItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
+    /**
+     * Nnamespace prefix (possibly empty).
+     */
+    @Getter
     private String prefix;
+
+    /**
+     * Namespaces URI.
+     */
+    @Getter
     private String uri;
     private Item parent;
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public NamespaceItem() {
-    }
 
     /**
      * Constructor for a namespace item.
@@ -86,20 +93,6 @@ public class NamespaceItem implements Item {
         return NamespaceBindingUtils.nameLocalOnly(this.prefix);
     }
 
-    /**
-     * Returns the namespace prefix (possibly empty).
-     */
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    /**
-     * Returns the namespace URI.
-     */
-    public String getUri() {
-        return this.uri;
-    }
-
     @Override
     public Item parent() {
         return this.parent;
@@ -129,19 +122,6 @@ public class NamespaceItem implements Item {
     @Override
     public String nodeKind() {
         return "namespace";
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof NamespaceItem otherNamespaceItem)) {
-            return false;
-        }
-        return this.getXmlDocumentPosition().equals(otherNamespaceItem.getXmlDocumentPosition());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.documentPos.hashCode();
     }
 
     @Override

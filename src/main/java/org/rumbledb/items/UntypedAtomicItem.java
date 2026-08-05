@@ -1,10 +1,9 @@
 package org.rumbledb.items;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -12,28 +11,20 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class UntypedAtomicItem implements Item {
+@Getter
+public class UntypedAtomicItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private String value;
 
-    public UntypedAtomicItem() {
-        super();
-    }
-
     public UntypedAtomicItem(String value) {
-        super();
         this.value = value;
     }
 
     @Override
     public Item copy(boolean mutable) {
         return new UntypedAtomicItem(this.value);
-    }
-
-    public String getValue() {
-        return this.value;
     }
 
     @Override
@@ -141,29 +132,11 @@ public class UntypedAtomicItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }
 
 
-
-    public int hashCode() {
-        return getStringValue().hashCode();
-    }
 
     @Override
     public ItemType getDynamicType() {
@@ -185,4 +158,3 @@ public class UntypedAtomicItem implements Item {
         return "STRING";
     }
 }
-

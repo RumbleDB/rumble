@@ -38,10 +38,6 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
         this.mode = mode;
     }
 
-    public boolean hasPositionIterator() {
-        return false;
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         return null;
@@ -56,8 +52,6 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
 
     }
-
-
 
     @Override
     protected boolean hasNextLocal() {
@@ -101,7 +95,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
                 logicalPath,
                 getMetadata()
             );
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
@@ -111,8 +105,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = factory.createTruncateCollectionPrimitive(
             collection,
-            this.getMetadata(),
-            context.getRumbleRuntimeConfiguration()
+            this.getMetadata()
         );
 
         PendingUpdateList pul = new PendingUpdateList();

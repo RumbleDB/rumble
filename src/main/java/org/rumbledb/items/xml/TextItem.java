@@ -11,16 +11,12 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class TextItem implements Item {
+public class TextItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
     private String content; // is also typed-value
     private Item parent;
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public TextItem() {
-    }
 
     public TextItem(Node textNode) {
         this.content = textNode.getTextContent();
@@ -62,17 +58,6 @@ public class TextItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof TextItem otherTextItem)) {
-            return false;
-        }
-        if (this.documentPos == null || otherTextItem.documentPos == null) {
-            return false;
-        }
-        return this.documentPos.equals(otherTextItem.documentPos);
-    }
-
-    @Override
     public String getTextValue() {
         return this.content;
     }
@@ -83,13 +68,6 @@ public class TextItem implements Item {
     }
 
 
-
-    public int hashCode() {
-        if (this.documentPos == null) {
-            return System.identityHashCode(this);
-        }
-        return this.documentPos.hashCode();
-    }
 
     @Override
     public String getStringValue() {

@@ -47,7 +47,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
     @Override
 
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        String xmlVersion = getConfiguration().getXmlVersion();
+        String xmlVersion = getConfiguration().semantics().xmlVersion();
         RuntimeIterator argumentIterator = this.getChild(0);
 
         argumentIterator.open(context);

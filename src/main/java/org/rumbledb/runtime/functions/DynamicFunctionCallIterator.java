@@ -39,7 +39,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
@@ -67,7 +67,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     // private PendingUpdateList pendingUpdateList;
     private List<Item> exitStatementLocalResult;
     // private JavaRDD<Item> rddResult;
-    // private JSoundDataFrame dataFrameResult;
+    // private HomogeneousItemDataFrame dataFrameResult;
     private int nextExitStatementResult;
 
     public DynamicFunctionCallIterator(
@@ -302,7 +302,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         setFunctionItemAndIteratorWithCurrentContext(dynamicContext);
         try {
             return this.functionCallIterator.getDataFrame(dynamicContext);

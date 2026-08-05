@@ -55,7 +55,7 @@ import scala.collection.Iterator;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -76,7 +76,7 @@ public class ItemParser {
 
     /**
      * Parses a JSON string to an item.
-     * 
+     *
      * @param string the JSON string.
      * @param metadata exception metadata is an error is thrown.
      * @return the parsed item.

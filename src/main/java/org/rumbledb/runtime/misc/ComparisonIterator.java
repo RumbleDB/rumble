@@ -23,6 +23,7 @@ package org.rumbledb.runtime.misc;
 import java.io.Serial;
 import java.time.*;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
@@ -59,8 +60,11 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private Item left;
     private Item right;
+    @Getter
     private final ComparisonExpression.ComparisonOperator comparisonOperator;
+    @Getter
     private final RuntimeIterator leftIterator;
+    @Getter
     private final RuntimeIterator rightIterator;
 
 
@@ -76,21 +80,9 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         this.comparisonOperator = comparisonOperator;
     }
 
-    public ComparisonExpression.ComparisonOperator getComparisonOperator() {
-        return this.comparisonOperator;
-    }
-
     public boolean isValueEquality() {
         return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ)
             || this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.GC_EQ);
-    }
-
-    public RuntimeIterator getLeftIterator() {
-        return this.leftIterator;
-    }
-
-    public RuntimeIterator getRightIterator() {
-        return this.rightIterator;
     }
 
     @Override
@@ -260,12 +252,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             double r = right.getDoubleValue();
             return processDouble(l, r);
         }
-        if (left.isNumeric() && right.isDouble()) {
-            double l = left.castToDoubleValue();
-            double r = right.getDoubleValue();
-            return processDouble(l, r);
-        }
-
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
             float r;

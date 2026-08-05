@@ -9,7 +9,6 @@ import java.time.OffsetTime;
 import java.time.Period;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
@@ -19,30 +18,22 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-
 
 public class AnnotatedItem implements Item {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Item itemToAnnotate;
-    private ItemType type;
-
-    public AnnotatedItem() {
-        super();
-    }
+    private final Item itemToAnnotate;
+    private final ItemType type;
 
     public AnnotatedItem(Item itemToAnnotate, ItemType type) {
         this.itemToAnnotate = itemToAnnotate;
@@ -59,15 +50,12 @@ public class AnnotatedItem implements Item {
 
     @Override
     public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
         if (other instanceof Item otherItem) {
             if (otherItem.isAtomic()) {
-                long c = ComparisonIterator.compareItems(
-                    this,
-                    otherItem,
-                    ComparisonOperator.VC_EQ,
-                    ExceptionMetadata.EMPTY_METADATA
-                );
-                return c == 0;
+                return AtomicItemEquivalence.equivalent(this, otherItem);
             }
             return this.itemToAnnotate.equals(otherItem);
         }
@@ -76,7 +64,9 @@ public class AnnotatedItem implements Item {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.itemToAnnotate, this.type);
+        return this.isAtomic()
+            ? AtomicItemEquivalence.hash(this)
+            : this.itemToAnnotate.hashCode();
     }
 
 
@@ -597,7 +587,7 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
+    public Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
         return this.itemToAnnotate.getDFVariablesInClosure();
     }
 

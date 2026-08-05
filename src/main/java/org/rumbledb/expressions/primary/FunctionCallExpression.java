@@ -20,6 +20,8 @@
 
 package org.rumbledb.expressions.primary;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -33,8 +35,12 @@ import java.util.stream.Collectors;
 public class FunctionCallExpression extends Expression {
 
     private final FunctionIdentifier identifier;
+    @Getter
     private final List<Expression> arguments; // null for placeholder
+    @Getter
     private final boolean isPartialApplication;
+    @Setter
+    @Getter
     private boolean isTailCallOptimization;
 
     public FunctionCallExpression(
@@ -52,19 +58,6 @@ public class FunctionCallExpression extends Expression {
         this.isTailCallOptimization = false;
     }
 
-    public void setTailCallOptimization(boolean isTailCallOptimization) {
-        this.isTailCallOptimization = isTailCallOptimization;
-    }
-
-    public boolean isTailCallOptimization() {
-        return this.isTailCallOptimization;
-    }
-
-    // some may be null for partial application
-    public List<Expression> getArguments() {
-        return this.arguments;
-    }
-
     public FunctionIdentifier getFunctionIdentifier() {
         return this.identifier;
     }
@@ -77,10 +70,6 @@ public class FunctionCallExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList());
         return result;
-    }
-
-    public boolean isPartialApplication() {
-        return this.isPartialApplication;
     }
 
     @Override

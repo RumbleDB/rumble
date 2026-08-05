@@ -29,11 +29,11 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.net.URI;
@@ -52,12 +52,12 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
-        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         Item optionsObjectItem;
@@ -78,7 +78,6 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                             );
                             String jsonFormatSchema = FileSystemUtil.readContent(
                                 schemaURI,
-                                context.getRumbleRuntimeConfiguration(),
                                 getMetadata()
                             );
                             dfr.option(keys.get(i), jsonFormatSchema);
@@ -96,7 +95,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                 }
             }
             Dataset<Row> dataFrame = dfr.format("avro").load(FileSystemUtil.convertURIToStringForSpark(uri));
-            return new JSoundDataFrame(dataFrame);
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof UnexpectedTypeException) {
                 RuntimeException f = new UnexpectedTypeException(e.getMessage(), this.getMetadata());

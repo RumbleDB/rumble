@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import lombok.Getter;
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -40,7 +41,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -48,19 +49,19 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ItemsToBinaryColumn;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.GenericForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
 import org.rumbledb.types.TypeMappings;
-import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -81,9 +82,12 @@ public class ForClauseIterator extends RuntimeTupleIterator {
     private static final long serialVersionUID = 1L;
 
     // Properties
+    @Getter
     private final Name variableName; // for efficient use in local iteration
+    @Getter
     private final Name positionalVariableName; // for efficient use in local iteration
     private final RuntimeIterator assignmentIterator;
+    @Getter
     private final boolean allowingEmpty;
     private final DataFrameContext dataFrameContext;
 
@@ -109,22 +113,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         this.allowingEmpty = allowingEmpty;
         this.assignmentIterator.getVariableDependencies();
         this.dataFrameContext = new DataFrameContext();
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public Name getPositionalVariableName() {
-        return this.positionalVariableName;
-    }
-
-    public RuntimeIterator getAssignmentIterator() {
-        return this.assignmentIterator;
-    }
-
-    public boolean isAllowingEmpty() {
-        return this.allowingEmpty;
     }
 
     @Override
@@ -598,7 +586,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         );
 
         FlworDataFrame nativeQueryResult = null;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                 df,
                 this.variableName,
@@ -765,7 +753,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         Dataset<Row> df = null;
         SequenceType sequenceType = null;
         if (iterator.isDataFrame()) {
-            JSoundDataFrame rows = iterator.getDataFrame(context);
+            HomogeneousItemDataFrame rows = iterator.getDataFrame(context);
             if (allowingEmpty) {
                 sequenceType = new SequenceType(rows.getItemType(), Arity.OneOrZero);
             } else {

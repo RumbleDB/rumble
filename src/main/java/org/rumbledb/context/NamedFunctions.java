@@ -21,7 +21,7 @@
 package org.rumbledb.context;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -60,10 +60,6 @@ public class NamedFunctions implements Serializable {
 
     public NamedFunctions() {
         this.userDefinedFunctions = new HashMap<>();
-    }
-
-    public void clearUserDefinedFunctions() {
-        this.userDefinedFunctions.clear();
     }
 
     /**
@@ -196,8 +192,9 @@ public class NamedFunctions implements Serializable {
         }
         FunctionIdentifier functionIdentifier = function.getIdentifier();
         String queryLanguage = function.getModuleDynamicContext()
-            .getRumbleRuntimeConfiguration()
-            .getQueryLanguage();
+            .getRumbleConfiguration()
+            .semantics()
+            .queryLanguage();
         if (
             BuiltinFunctionCatalogue.exists(functionIdentifier, queryLanguage)
                 || this.userDefinedFunctions.containsKey(functionIdentifier)
@@ -222,9 +219,9 @@ public class NamedFunctions implements Serializable {
             RuntimeStaticContext callerStaticContext,
             boolean argumentsAlreadyCoerced
     ) {
-        RumbleRuntimeConfiguration conf = callerStaticContext.getConfiguration();
+        RumbleConfiguration conf = callerStaticContext.getConfiguration();
         ExceptionMetadata metadata = callerStaticContext.getMetadata();
-        boolean checkReturnTypesOfBuiltinFunctions = conf.isCheckReturnTypeOfBuiltinFunctions();
+        boolean checkReturnTypesOfBuiltinFunctions = conf.analysis().checkReturnTypeOfBuiltinFunctions();
         BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
             identifier,
             callerStaticContext.getQueryLanguage()

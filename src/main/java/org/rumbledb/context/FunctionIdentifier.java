@@ -24,7 +24,9 @@ import java.io.Serial;
 import java.io.Serializable;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
+@Getter
 @EqualsAndHashCode
 public class FunctionIdentifier implements Serializable {
     private int arity;
@@ -32,20 +34,10 @@ public class FunctionIdentifier implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FunctionIdentifier() {
-    }
 
     public FunctionIdentifier(Name functionName, int arity) {
         this.name = functionName;
         this.arity = arity;
-    }
-
-    public int getArity() {
-        return this.arity;
-    }
-
-    public Name getName() {
-        return this.name;
     }
 
     public Name getNameWithArity() {

@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -268,9 +268,9 @@ import org.rumbledb.types.SequenceType;
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
     private final VisitorConfig visitorConfig;
-    private final RumbleRuntimeConfiguration config;
+    private final RumbleConfiguration config;
 
-    public RuntimeIteratorVisitor(RumbleRuntimeConfiguration config) {
+    public RuntimeIteratorVisitor(RumbleConfiguration config) {
         this.visitorConfig = VisitorConfig.runtimeIteratorVisitorConfig;
         this.config = config;
     }
@@ -397,7 +397,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpressionIterator,
                             variableName,
-                            clause.getMetadata(),
                             var.getCollationURI(),
                             var.getActualSequenceType()
                     )
@@ -2168,7 +2167,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             org.rumbledb.expressions.xml.PathRootExpression expression,
             RuntimeIterator argument
     ) {
-        this.config.setOptimizeParentPointers(false);
         RuntimeIterator runtimeIterator = new PathRootRuntimeIterator(
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );

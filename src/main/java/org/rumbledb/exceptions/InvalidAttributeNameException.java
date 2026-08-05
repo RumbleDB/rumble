@@ -32,8 +32,4 @@ public class InvalidAttributeNameException extends RumbleException {
     public InvalidAttributeNameException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.InvalidAttributeNameErrorCode, metadata);
     }
-
-    public InvalidAttributeNameException(String message) {
-        super(message, ErrorCode.InvalidAttributeNameErrorCode);
-    }
 }

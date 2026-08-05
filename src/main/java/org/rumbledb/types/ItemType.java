@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -57,16 +57,7 @@ public interface ItemType extends Serializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean isEqualTo(ItemType otherType) {
-        if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
-            if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
-                return false;
-            }
-            return this.toString().equals(otherType.toString());
-        }
-        if (!this.hasName() || !otherType.hasName()) {
-            return this == otherType;
-        }
-        return this.getName().equals(otherType.getName());
+        return this.equals(otherType);
     }
     // region kind
 
@@ -708,7 +699,7 @@ public interface ItemType extends Serializable {
      * 
      * @return true if compatible with DataFrames and false otherwise.
      */
-    default boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    default boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 

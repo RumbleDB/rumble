@@ -1,12 +1,20 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import lombok.NoArgsConstructor;
+import lombok.Getter;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
 
+@NoArgsConstructor(force = true)
 public class AttributeTest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
+    /**
+     * Expanded name from the kind test (namespace URI + local name).
+     * Only valid when isNameWithoutTypeCheck is true.
+     */
+    @Getter
     private final Name attributeName;
     private final boolean hasWildcard;
     private final Name typeName;
@@ -27,12 +35,6 @@ public class AttributeTest implements NodeTest {
         this.attributeName = null;
         this.typeName = null;
         this.hasWildcard = hasWildcard;
-    }
-
-    public AttributeTest() {
-        this.attributeName = null;
-        this.typeName = null;
-        this.hasWildcard = false;
     }
 
     @Override
@@ -57,14 +59,6 @@ public class AttributeTest implements NodeTest {
 
     public boolean isNameWithoutTypeCheck() {
         return this.attributeName != null && this.typeName == null;
-    }
-
-    /**
-     * Expanded name from the kind test (namespace URI + local name). Only valid when
-     * {@link #isNameWithoutTypeCheck()} is true.
-     */
-    public Name getAttributeName() {
-        return this.attributeName;
     }
 
     public boolean isWildcardOnly() {

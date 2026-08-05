@@ -34,8 +34,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     private String queryLanguage;
 
-    public FunctionInliningVisitor() {
-    }
 
     private static FunctionDeclaration getDirectFunctionDeclaration(
             Prolog prolog,
