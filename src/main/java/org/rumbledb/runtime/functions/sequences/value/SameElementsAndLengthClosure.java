@@ -34,8 +34,6 @@ public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<I
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public SameElementsAndLengthClosure() {
-    }
 
     @Override
     public Iterator<Boolean> call(Iterator<Item> iterator1, Iterator<Item> iterator2) throws Exception {

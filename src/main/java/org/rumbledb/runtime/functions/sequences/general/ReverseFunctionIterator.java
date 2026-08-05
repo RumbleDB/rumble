@@ -31,9 +31,9 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.spark.SparkSessionManager;
 
 import scala.Tuple2;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.ArrayList;

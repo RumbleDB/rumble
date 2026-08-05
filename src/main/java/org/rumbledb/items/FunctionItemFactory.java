@@ -20,7 +20,7 @@ package org.rumbledb.items;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -47,7 +47,7 @@ public final class FunctionItemFactory {
     public static FunctionItem createBuiltinNamedReference(
             FunctionIdentifier identifier,
             DynamicContext moduleContext,
-            RumbleRuntimeConfiguration conf,
+            RumbleConfiguration conf,
             ExceptionMetadata metadata,
             BuiltinFunction builtinFunction
     ) {

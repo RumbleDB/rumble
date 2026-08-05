@@ -52,7 +52,10 @@ public class ParseXMLFragmentFunctionIterator extends AtMostOneItemLocalRuntimeI
             Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(wrapped)));
             Node wrapperElement = xmlDocument.getDocumentElement();
 
-            boolean removeParentPointers = context.getRumbleRuntimeConfiguration().optimizeParentPointers();
+            boolean removeParentPointers = context
+                .getRumbleConfiguration()
+                .optimization()
+                .optimizeParentPointers();
             String path = XMLDocumentPosition.generateConstructedTreePath();
             List<Item> children = new ArrayList<>();
             NodeList nodeList = wrapperElement.getChildNodes();

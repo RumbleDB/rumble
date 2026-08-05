@@ -45,6 +45,8 @@ public class VariableDeclaration extends Node {
     private final boolean DEFAULT_ASSIGNABLE = false;
     @Getter
     private final Name variableName;
+    @Getter
+    private final ExceptionMetadata variableMetadata;
     private final boolean external;
     protected final SequenceType sequenceType;
     @Getter
@@ -64,8 +66,21 @@ public class VariableDeclaration extends Node {
             List<Annotation> annotations,
             ExceptionMetadata metadata
     ) {
+        this(variableName, external, sequenceType, expression, annotations, metadata, metadata);
+    }
+
+    public VariableDeclaration(
+            Name variableName,
+            boolean external,
+            SequenceType sequenceType,
+            Expression expression,
+            List<Annotation> annotations,
+            ExceptionMetadata metadata,
+            ExceptionMetadata variableMetadata
+    ) {
         super(metadata);
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.external = external;
         this.sequenceType = sequenceType;
         this.expression = expression;
@@ -166,4 +181,3 @@ public class VariableDeclaration extends Node {
 
 
 }
-

@@ -24,7 +24,7 @@ package org.rumbledb.expressions.flowr;
 import lombok.Getter;
 import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -229,7 +229,7 @@ public abstract class Clause extends Node {
     }
 
     public RuntimeStaticContext getStaticContextForRuntime(
-            RumbleRuntimeConfiguration conf,
+            RumbleConfiguration conf,
             VisitorConfig visitorConfig
     ) {
         return RuntimeStaticContext.fromStaticContext(this.staticContext)

@@ -14,7 +14,7 @@ import java.util.List;
 
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -69,7 +69,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             ? staticContext
             : staticContext.toBuilder().executionMode(nativeExecutionMode).build();
         this.metadata = this.staticContext.getMetadata();
-        this.materializationCap = this.staticContext.getConfiguration().getMaterializationCap();
+        this.materializationCap = this.staticContext.getConfiguration().runtime().materializationCap();
         this.dataFrameFactory = dataFrameFactory;
     }
 
@@ -77,7 +77,7 @@ public abstract class RuntimePlan<T> implements Serializable {
         return this.metadata;
     }
 
-    protected final RumbleRuntimeConfiguration getConfiguration() {
+    protected final RumbleConfiguration getConfiguration() {
         return this.staticContext.getConfiguration();
     }
 
