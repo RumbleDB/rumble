@@ -336,6 +336,7 @@ public class StaticContext {
     public void show() {
         System.err.println(this);
     }
+
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();

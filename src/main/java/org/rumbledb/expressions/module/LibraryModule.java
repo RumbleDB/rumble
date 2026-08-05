@@ -53,6 +53,7 @@ public class LibraryModule extends Module {
     public StaticContext getStaticContext() {
         return this.staticContext;
     }
+
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
