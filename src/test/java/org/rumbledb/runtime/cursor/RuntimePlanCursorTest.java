@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -43,7 +43,7 @@ public class RuntimePlanCursorTest {
 
     @Test
     public void cursorsCreatedFromOnePrototypeExecuteIndependently() {
-        RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
+        RumbleConfiguration configuration = new RumbleConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
                 ItemFactory.getInstance().createIntItem(42),
@@ -65,7 +65,7 @@ public class RuntimePlanCursorTest {
 
     @Test
     public void cursorOpensOnFirstReadAndCloseIsIdempotent() {
-        RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
+        RumbleConfiguration configuration = new RumbleConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
                 ItemFactory.getInstance().createIntItem(1),
@@ -81,7 +81,7 @@ public class RuntimePlanCursorTest {
 
     @Test
     public void localExecutionRequiresTheLocalCapability() {
-        RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
+        RumbleConfiguration configuration = new RumbleConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimeStaticContext staticContext = createStaticContext(configuration);
         RuntimePlan<Item> planWithoutLocalCapability = new RuntimePlan<>(staticContext) {};
@@ -95,7 +95,7 @@ public class RuntimePlanCursorTest {
 
     @Test
     public void atMostOneMaterializationDoesNotCreateACursor() throws Exception {
-        RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
+        RumbleConfiguration configuration = new RumbleConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         DirectAtMostOnePlan plan = new DirectAtMostOnePlan(
                 createStaticContext(configuration),
@@ -182,7 +182,7 @@ public class RuntimePlanCursorTest {
         }
     }
 
-    private static RuntimeStaticContext createStaticContext(RumbleRuntimeConfiguration configuration) {
+    private static RuntimeStaticContext createStaticContext(RumbleConfiguration configuration) {
         return RuntimeStaticContext.builder()
             .configuration(configuration)
             .staticType(new SequenceType(BuiltinTypesCatalogue.intItem))
