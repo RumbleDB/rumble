@@ -77,10 +77,30 @@ public abstract class RuntimePlan<T> implements Serializable {
             ? (AtMostOneLocalRuntimePlan<T>) this
             : null;
 
+        boolean supportsLocal = this.localCapability != null;
+        boolean supportsRDD = this.rddCapability != null;
+        boolean supportsDataFrame = this.dataFrameCapability != null;
+
         // Compiler configuration may prefer a representation this plan cannot produce natively, so select the
         // closest supported capability and make it authoritative for all runtime consumers.
         ExecutionMode requestedExecutionMode = staticContext.getExecutionMode();
-        ExecutionMode nativeExecutionMode = this.selectNativeExecutionMode(requestedExecutionMode);
+        ExecutionMode nativeExecutionMode = switch (requestedExecutionMode) {
+            case LOCAL -> supportsLocal
+                ? ExecutionMode.LOCAL
+                : supportsRDD
+                    ? ExecutionMode.RDD
+                    : supportsDataFrame ? ExecutionMode.DATAFRAME : requestedExecutionMode;
+            case RDD -> supportsRDD
+                ? ExecutionMode.RDD
+                : supportsDataFrame
+                    ? ExecutionMode.DATAFRAME
+                    : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
+            case DATAFRAME -> supportsDataFrame
+                ? ExecutionMode.DATAFRAME
+                : supportsRDD ? ExecutionMode.RDD : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
+            case UNSET -> requestedExecutionMode;
+        };
+
         this.staticContext = nativeExecutionMode == requestedExecutionMode
             ? staticContext
             : staticContext.toBuilder().executionMode(nativeExecutionMode).build();
@@ -172,29 +192,6 @@ public abstract class RuntimePlan<T> implements Serializable {
                 throw this.missingCapability(ExecutionMode.DATAFRAME);
             }
             case UNSET -> throw new OurBadException("Cannot execute a runtime plan whose execution mode is unset.");
-        };
-    }
-
-    private ExecutionMode selectNativeExecutionMode(ExecutionMode requestedExecutionMode) {
-        boolean supportsLocal = this instanceof LocalRuntimePlan<?>;
-        boolean supportsRDD = this instanceof RDDRuntimePlan<?>;
-        boolean supportsDataFrame = this instanceof DataFrameRuntimePlan<?>;
-
-        return switch (requestedExecutionMode) {
-            case LOCAL -> supportsLocal
-                ? ExecutionMode.LOCAL
-                : supportsRDD
-                    ? ExecutionMode.RDD
-                    : supportsDataFrame ? ExecutionMode.DATAFRAME : requestedExecutionMode;
-            case RDD -> supportsRDD
-                ? ExecutionMode.RDD
-                : supportsDataFrame
-                    ? ExecutionMode.DATAFRAME
-                    : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
-            case DATAFRAME -> supportsDataFrame
-                ? ExecutionMode.DATAFRAME
-                : supportsRDD ? ExecutionMode.RDD : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
-            case UNSET -> requestedExecutionMode;
         };
     }
 
