@@ -801,7 +801,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false, false);
+                paramName = parseVariableBinding(param.name);
                 paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -1077,14 +1077,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitForVar(JsoniqParser.ForVarContext ctx) {
         SequenceType seq = null;
         boolean emptyFlag;
-        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Name var = parseVariableBinding(ctx.var_ref);
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         }
         emptyFlag = (ctx.flag != null);
         Name atVar = null;
         if (ctx.at != null) {
-            atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
+            atVar = parseVariableBinding(ctx.at);
             if (atVar.equals(var)) {
                 throw new PositionalVariableNameSameAsForVariableException(
                         "Positional variable " + var + " cannot have the same name as the main for variable.",
@@ -1125,7 +1125,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitLetVar(JsoniqParser.LetVarContext ctx) {
         SequenceType seq = null;
-        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Name var = parseVariableBinding(ctx.var_ref);
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         }
@@ -1147,7 +1147,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitTumblingWindowClause(JsoniqParser.TumblingWindowClauseContext ctx) {
-        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        Name windowVariable = parseVariableBinding(ctx.name);
         SequenceType type = ctx.type == null ? null : processSequenceType(ctx.type.sequenceType());
         Expression expression = (Expression) visitExprSingle(ctx.exprSingle());
         WindowClause.WindowCondition start = buildWindowStartCondition(ctx.windowStartCondition());
@@ -1168,7 +1168,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitSlidingWindowClause(JsoniqParser.SlidingWindowClauseContext ctx) {
-        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        Name windowVariable = parseVariableBinding(ctx.name);
         SequenceType type = ctx.type == null ? null : processSequenceType(ctx.type.sequenceType());
         Expression expression = (Expression) visitExprSingle(ctx.exprSingle());
         WindowClause.WindowCondition start = buildWindowStartCondition(ctx.windowStartCondition());
@@ -1202,12 +1202,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private WindowClause.WindowVars buildWindowVars(JsoniqParser.WindowVarsContext ctx) {
-        Name current = ctx.currentItem == null ? null : parseEqName(ctx.currentItem, false, false, false, false);
+        Name current = ctx.currentItem == null ? null : parseVariableBinding(ctx.currentItem);
         Name position = ctx.positionalVar() == null
             ? null
-            : parseEqName(ctx.positionalVar().pvar.eqName(), false, false, false, false);
-        Name previous = ctx.previousItem == null ? null : parseEqName(ctx.previousItem, false, false, false, false);
-        Name next = ctx.nextItem == null ? null : parseEqName(ctx.nextItem, false, false, false, false);
+            : parseVariableBinding(ctx.positionalVar().pvar);
+        Name previous = ctx.previousItem == null ? null : parseVariableBinding(ctx.previousItem);
+        Name next = ctx.nextItem == null ? null : parseVariableBinding(ctx.nextItem);
         return new WindowClause.WindowVars(current, position, previous, next);
     }
 
@@ -1302,7 +1302,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         SequenceType seq = null;
         Expression expr = null;
-        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Name var = parseVariableBinding(ctx.var_ref);
 
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
@@ -1324,8 +1324,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitCountClause(JsoniqParser.CountClauseContext ctx) {
-        VariableReferenceExpression child = (VariableReferenceExpression) this.visitVarRef(ctx.varRef());
-        return new CountClause(child.getVariableName(), createMetadataFromContext(ctx));
+        return new CountClause(parseVariableBinding(ctx.varBinding()), createMetadataFromContext(ctx));
     }
     // endregion
 
@@ -1846,7 +1845,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         List<CopyDeclaration> copyDecls = ctx.copyDecl()
             .stream()
             .map(copyDeclCtx -> {
-                Name var = ((VariableReferenceExpression) this.visitVarRef(copyDeclCtx.var_ref)).getVariableName();
+                Name var = parseVariableBinding(copyDeclCtx.var_ref);
                 Expression expr = (Expression) this.visitExprSingle(copyDeclCtx.src_expr);
                 return new CopyDeclaration(var, expr);
             })
@@ -2658,8 +2657,22 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
-        Name name = parseEqName(ctx.eqName(), false, false, false, false);
-        return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
+        return new VariableReferenceExpression(
+                parseVariableReference(ctx),
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    private Name parseVariableReference(JsoniqParser.VarRefContext ctx) {
+        return parseVariableName(ctx.eqName());
+    }
+
+    private Name parseVariableBinding(JsoniqParser.VarBindingContext ctx) {
+        return parseVariableName(ctx.eqName());
+    }
+
+    private Name parseVariableName(JsoniqParser.EqNameContext ctx) {
+        return parseEqName(ctx, false, false, false, false);
     }
 
     @Override
@@ -2959,7 +2972,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false, false);
+                paramName = parseVariableBinding(param.name);
                 paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -3035,9 +3048,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             List<SequenceType> union = new ArrayList<>();
             Name variableName = null;
             if (expr.var_ref != null) {
-                variableName = ((VariableReferenceExpression) this.visitVarRef(
-                    expr.var_ref
-                )).getVariableName();
+                variableName = parseVariableBinding(expr.var_ref);
             }
             if (expr.union != null && !expr.union.isEmpty()) {
                 for (JsoniqParser.SequenceTypeContext sequenceType : expr.union) {
@@ -3055,9 +3066,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         Name defaultVariableName = null;
         if (ctx.var_ref != null) {
-            defaultVariableName = ((VariableReferenceExpression) this.visitVarRef(
-                ctx.var_ref
-            )).getVariableName();
+            defaultVariableName = parseVariableBinding(ctx.var_ref);
         }
         Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
         return new TypeSwitchExpression(
@@ -3081,9 +3090,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
             Expression varExpression;
             SequenceType sequenceType = null;
-            Name variableName = ((VariableReferenceExpression) this.visitVarRef(
-                currentVariable.varRef()
-            )).getVariableName();
+            Name variableName = parseVariableBinding(currentVariable.varBinding());
             if (currentVariable.sequenceType() != null) {
                 sequenceType = this.processSequenceType(currentVariable.sequenceType());
             }
@@ -3211,7 +3218,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         SequenceType seq = null;
         boolean external;
-        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
+        Name var = parseVariableBinding(ctx.varBinding());
         if (ctx.sequenceType() != null) {
             seq = this.processSequenceType(ctx.sequenceType());
         }
@@ -3335,7 +3342,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitAssignStatement(JsoniqParser.AssignStatementContext ctx) {
-        Name paramName = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        Name paramName = parseVariableReference(ctx.var_ref);
         Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
     }
@@ -3539,7 +3546,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             List<SequenceType> union = new ArrayList<>();
             Name variableName = null;
             if (stmt.var_ref != null) {
-                variableName = ((VariableReferenceExpression) this.visitVarRef(stmt.var_ref)).getVariableName();
+                variableName = parseVariableBinding(stmt.var_ref);
             }
             if (stmt.union != null && !stmt.union.isEmpty()) {
                 stmt.union.forEach(sequenceTypeContext -> {
@@ -3551,7 +3558,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         Name defaultVariableName = null;
         if (ctx.var_ref != null) {
-            defaultVariableName = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+            defaultVariableName = parseVariableBinding(ctx.var_ref);
         }
         Statement defaultStatement = (Statement) this.visitStatement(ctx.def);
         return new TypeSwitchStatement(
@@ -3582,7 +3589,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         List<VariableDeclStatement> variables = new ArrayList<>();
         for (JsoniqParser.VarDeclForStatementContext varDecl : ctx.varDeclForStatement()) {
             SequenceType seq = null;
-            Name var = ((VariableReferenceExpression) this.visitVarRef(varDecl.var_ref)).getVariableName();
+            Name var = parseVariableBinding(varDecl.var_ref);
             Expression exprSingle = null;
 
             if (varDecl.sequenceType() != null) {
