@@ -1,7 +1,7 @@
 package org.rumbledb.types;
 
 import lombok.Getter;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
@@ -145,7 +145,7 @@ public class DocumentNodeItemType extends AbstractItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 }

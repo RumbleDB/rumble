@@ -1,7 +1,6 @@
 package org.rumbledb.types;
 
-import lombok.NoArgsConstructor;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -17,7 +16,6 @@ import java.util.Set;
  * XQuery/XPath map item type: map(*) and map(K, V) per XDM 3.1 / XPath 3.1.
  * map(*) is a subtype of function(*) (see base type chain).
  */
-@NoArgsConstructor
 public class MapItemType extends AbstractItemType {
 
     @Serial
@@ -334,7 +332,7 @@ public class MapItemType extends AbstractItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 

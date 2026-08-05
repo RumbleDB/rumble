@@ -13,7 +13,7 @@ import java.util.Objects;
 
 /** Configuration and resource resolution services used during compilation. */
 public record CompilationConfiguration(
-        RumbleRuntimeConfiguration runtimeConfiguration,
+        RumbleConfiguration runtimeConfiguration,
         ResourceResolver resourceResolver) {
 
     public CompilationConfiguration {
@@ -21,7 +21,7 @@ public record CompilationConfiguration(
         Objects.requireNonNull(resourceResolver, "resourceResolver must not be null");
     }
 
-    public CompilationConfiguration(RumbleRuntimeConfiguration runtimeConfiguration) {
+    public CompilationConfiguration(RumbleConfiguration runtimeConfiguration) {
         this(runtimeConfiguration, new ResourceResolver());
     }
 }

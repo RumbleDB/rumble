@@ -1,10 +1,12 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
 
+@NoArgsConstructor(force = true)
 public class ElementTest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -35,12 +37,6 @@ public class ElementTest implements NodeTest {
         this.elementName = null;
         this.typeName = null;
         this.hasWildcard = true;
-    }
-
-    public ElementTest() {
-        this.elementName = null;
-        this.typeName = null;
-        this.hasWildcard = false;
     }
 
     @Override

@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidEncodingException;
 import org.rumbledb.exceptions.RumbleException;
@@ -31,7 +30,6 @@ public final class UnparsedTextReader {
             URI staticBaseUri,
             String href,
             String encoding,
-            RumbleRuntimeConfiguration conf,
             String xmlVersion,
             ExceptionMetadata metadata
     ) {
@@ -62,7 +60,7 @@ public final class UnparsedTextReader {
 
         byte[] bytes;
         try {
-            bytes = TextResourceUtil.fetchBytes(uri, conf, metadata);
+            bytes = TextResourceUtil.fetchBytes(uri, metadata);
         } catch (UnavailableResourceException e) {
             throw e;
         } catch (RumbleException e) {

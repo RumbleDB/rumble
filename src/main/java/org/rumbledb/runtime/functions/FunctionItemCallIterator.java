@@ -37,7 +37,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -102,7 +102,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getRDDVariablesInClosure()
         );
-        Map<Name, JSoundDataFrame> DFArgumentValues = new LinkedHashMap<>(
+        Map<Name, HomogeneousItemDataFrame> DFArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getDFVariablesInClosure()
         );
 
@@ -228,7 +228,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getRDDVariablesInClosure()
         );
-        Map<Name, JSoundDataFrame> DFArgumentValues = new LinkedHashMap<>(
+        Map<Name, HomogeneousItemDataFrame> DFArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getDFVariablesInClosure()
         );
 
@@ -410,7 +410,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         if (this.isPartialApplication) {
             throw new OurBadException(
                     "Unexpected program state reached. Partially applied function calls must be evaluated locally."

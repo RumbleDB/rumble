@@ -32,8 +32,6 @@ public class StringToStringItemMapper implements FlatMapFunction<Iterator<String
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringToStringItemMapper() {
-    }
 
     @Override
     public Iterator<Item> call(Iterator<String> stringIterator) throws Exception {
