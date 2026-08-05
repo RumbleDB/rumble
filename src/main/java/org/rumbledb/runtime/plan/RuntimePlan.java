@@ -53,14 +53,28 @@ public abstract class RuntimePlan<T> implements Serializable {
     private final int materializationCap;
     private final RuntimeDataFrameFactory<T> dataFrameFactory;
 
+    // Casted versions of this plan's capabilities, for convenience and to avoid repeated casts.
+    // If a plan does not implement a capability, the corresponding field is null.
+    private final LocalRuntimePlan<T> localCapability;
+    private final RDDRuntimePlan<T> rddCapability;
+    private final DataFrameRuntimePlan<T> dataFrameCapability;
+    private final AtMostOneLocalRuntimePlan<T> atMostOneCapability;
+
     protected RuntimePlan(@NonNull RuntimeStaticContext staticContext) {
         this(staticContext, null);
     }
 
+    @SuppressWarnings("unchecked")
     RuntimePlan(
             @NonNull RuntimeStaticContext staticContext,
             RuntimeDataFrameFactory<T> dataFrameFactory
     ) {
+        // Cache the casted capabilities for convenience and to avoid repeated casts
+        this.localCapability = this instanceof LocalRuntimePlan<?> ? (LocalRuntimePlan<T>) this : null;
+        this.rddCapability = this instanceof RDDRuntimePlan<?> ? (RDDRuntimePlan<T>) this : null;
+        this.dataFrameCapability = this instanceof DataFrameRuntimePlan<?> ? (DataFrameRuntimePlan<T>) this : null;
+        this.atMostOneCapability = this instanceof AtMostOneLocalRuntimePlan<?> ? (AtMostOneLocalRuntimePlan<T>) this : null;
+
         // Compiler configuration may prefer a representation this plan cannot produce natively, so select the
         // closest supported capability and make it authoritative for all runtime consumers.
         ExecutionMode requestedExecutionMode = staticContext.getExecutionMode();
@@ -138,20 +152,20 @@ public abstract class RuntimePlan<T> implements Serializable {
             throws E {
         return switch (this.staticContext.getExecutionMode()) {
             case LOCAL -> {
-                if (this instanceof LocalRuntimePlan<?>) {
-                    yield fromCursor.apply(this.localCapability().createNativeCursor(context));
+                if (this.localCapability != null) {
+                    yield fromCursor.apply(this.localCapability.createNativeCursor(context));
                 }
                 throw this.missingCapability(ExecutionMode.LOCAL);
             }
             case RDD -> {
-                if (this instanceof RDDRuntimePlan<?>) {
-                    yield fromRDD.apply(this.rddCapability().createNativeRDD(context));
+                if (this.rddCapability != null) {
+                    yield fromRDD.apply(this.rddCapability.createNativeRDD(context));
                 }
                 throw this.missingCapability(ExecutionMode.RDD);
             }
             case DATAFRAME -> {
-                if (this instanceof DataFrameRuntimePlan<?>) {
-                    yield fromDataFrame.apply(this.dataFrameCapability().createNativeDataFrame(context));
+                if (this.dataFrameCapability != null) {
+                    yield fromDataFrame.apply(this.dataFrameCapability.createNativeDataFrame(context));
                 }
                 throw this.missingCapability(ExecutionMode.DATAFRAME);
             }
@@ -234,7 +248,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final T materializeFirstOrNull(@NonNull DynamicContext context) {
         if (this.canEvaluateAtMostOneDirectly()) {
-            return this.atMostOneCapability().evaluateAtMostOne(context);
+            return this.atMostOneCapability.evaluateAtMostOne(context);
         }
         return this.executeSelectedRepresentation(
             context,
@@ -280,7 +294,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final T materializeAtMostOne(@NonNull DynamicContext context) throws MoreThanOneItemException {
         if (this.canEvaluateAtMostOneDirectly()) {
-            return this.atMostOneCapability().evaluateAtMostOne(context);
+            return this.atMostOneCapability.evaluateAtMostOne(context);
         }
         return this.executeSelectedRepresentation(
             context,
@@ -319,12 +333,12 @@ public abstract class RuntimePlan<T> implements Serializable {
 
     private boolean canEvaluateAtMostOneDirectly() {
         return this.staticContext.getExecutionMode() == ExecutionMode.LOCAL
-            && this instanceof AtMostOneLocalRuntimePlan<?>;
+            && this.atMostOneCapability != null;
     }
 
     private List<T> materializeDirectAtMostOne(DynamicContext context) {
         List<T> result = new ArrayList<>(1);
-        T item = this.atMostOneCapability().evaluateAtMostOne(context);
+        T item = this.atMostOneCapability.evaluateAtMostOne(context);
         if (item != null) {
             result.add(item);
         }
@@ -373,26 +387,6 @@ public abstract class RuntimePlan<T> implements Serializable {
             throw new MoreThanOneItemException();
         }
         return result.isEmpty() ? null : result.get(0);
-    }
-
-    @SuppressWarnings("unchecked")
-    private LocalRuntimePlan<T> localCapability() {
-        return (LocalRuntimePlan<T>) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    private AtMostOneLocalRuntimePlan<T> atMostOneCapability() {
-        return (AtMostOneLocalRuntimePlan<T>) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    private RDDRuntimePlan<T> rddCapability() {
-        return (RDDRuntimePlan<T>) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    private DataFrameRuntimePlan<T> dataFrameCapability() {
-        return (DataFrameRuntimePlan<T>) this;
     }
 
     @FunctionalInterface
