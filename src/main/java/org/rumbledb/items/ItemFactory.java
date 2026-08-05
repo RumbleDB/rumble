@@ -370,6 +370,7 @@ public class ItemFactory {
             Item original,
             List<Item> keysToRemove
     ) {
+        original = rebaseDeepMapOverlay(original);
         return new MapWithRemovedEntryItem(original, keysToRemove);
     }
 
@@ -378,7 +379,30 @@ public class ItemFactory {
             Item keyToAdd,
             List<Item> valueToAdd
     ) {
+        original = rebaseDeepMapOverlay(original);
         return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
+    }
+
+    static int getMapOverlayChainLength(Item item) {
+        if (item instanceof MapWithAdditionalEntryItem additionalEntry) {
+            return additionalEntry.getOverlayChainLength();
+        }
+        if (item instanceof MapWithRemovedEntryItem removedEntry) {
+            return removedEntry.getOverlayChainLength();
+        }
+        return 0;
+    }
+
+    private Item rebaseDeepMapOverlay(Item original) {
+        if (getMapOverlayChainLength(original) < MapWithAdditionalEntryItem.MAX_OVERLAY_CHAIN_LENGTH) {
+            return original;
+        }
+        return createMapItem(
+            original.getItemKeys(),
+            original.getSequenceValues(),
+            ExceptionMetadata.EMPTY_METADATA,
+            false
+        );
     }
 
     public Item createMapItem(
