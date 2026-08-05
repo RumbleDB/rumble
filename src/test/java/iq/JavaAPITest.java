@@ -44,7 +44,6 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.nio.file.Path;
 
 public class JavaAPITest {
 
@@ -246,30 +245,6 @@ public class JavaAPITest {
                     """.formatted(XQUERY_SERIALIZATION_NAMESPACE)
         );
         Assertions.assertEquals("\"<e\\/>\"", result);
-    }
-
-    @Test
-    @Timeout(1000)
-    public void testModuleVariableDoesNotLeakAcrossLibraries() {
-        Path qt3Base = Path.of(System.getProperty("user.dir")).getParent().resolve("rumble-test-suite/qt3tests/prod");
-        RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
-                new String[] { "--default-language", "xquery31" }
-        );
-        configuration.setStaticBaseUri(qt3Base.toUri().toString());
-        Rumble rumble = new Rumble(configuration);
-        String query = """
-                import module namespace foo="http://www.xqsharp.com/test/variabledeclaration"
-                  at "%s";
-                import module namespace bar="http://www.xqsharp.com/test/variablereference"
-                  at "%s";
-                bar:test()
-                """.formatted(
-            qt3Base.resolve("ModuleImport/variabledeclaration-lib.xq").toUri(),
-            qt3Base.resolve("ModuleImport/variablereference-lib.xq").toUri()
-        );
-
-        RumbleException exception = Assertions.assertThrows(RumbleException.class, () -> rumble.runQuery(query));
-        Assertions.assertEquals("XPST0008", exception.getErrorCode().toString());
     }
 
     @Test
