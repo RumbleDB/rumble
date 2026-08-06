@@ -16,6 +16,14 @@ public final class LanguageSupport {
     private LanguageSupport() {
     }
 
+    /** Normalizes, applies the ICU-support fallback, and resolves to a ULocale, cached by language string. */
+    public static ULocale resolveEffectiveULocale(String language) {
+        return ULOCALE_CACHE.computeIfAbsent(
+            language == null ? DEFAULT_LANGUAGE : language,
+            l -> ULocale.forLanguageTag(effectiveLanguageOf(normalizeLanguage(l)))
+        );
+    }
+
     public static String normalizeLanguage(String language) {
         if (language == null || language.trim().isEmpty()) {
             return DEFAULT_LANGUAGE;
@@ -34,10 +42,5 @@ public final class LanguageSupport {
 
     public static Locale resolveLocale(String language) {
         return Locale.forLanguageTag(normalizeLanguage(language));
-    }
-
-    /** Returns the cached ULocale for an already-effective (normalized, ICU-supported) language string. */
-    public static ULocale resolveULocale(String effectiveLanguage) {
-        return ULOCALE_CACHE.computeIfAbsent(effectiveLanguage, ULocale::forLanguageTag);
     }
 }

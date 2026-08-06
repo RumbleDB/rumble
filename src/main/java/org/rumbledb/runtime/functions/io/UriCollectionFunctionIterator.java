@@ -23,6 +23,6 @@ public class UriCollectionFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        throw new UnimplementedFunctionException("fn:uri-collection", getMetadata());
+        throw new UnimplementedFunctionException("uri-collection", getMetadata());
     }
 }
