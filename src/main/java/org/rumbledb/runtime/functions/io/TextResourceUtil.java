@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -20,9 +19,9 @@ public final class TextResourceUtil {
     private TextResourceUtil() {
     }
 
-    public static byte[] fetchBytes(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata)
+    public static byte[] fetchBytes(URI uri, ExceptionMetadata metadata)
             throws IOException {
-        try (InputStream is = FileSystemUtil.getDataInputStream(uri, conf, metadata)) {
+        try (InputStream is = FileSystemUtil.getDataInputStream(uri, metadata)) {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             byte[] data = new byte[8192];
             int nRead;

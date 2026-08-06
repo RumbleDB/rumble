@@ -20,19 +20,16 @@
 
 package org.rumbledb.context;
 
-import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.parsing.RowToItemMapper;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -44,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@NoArgsConstructor(force = true)
 public class VariableValues implements Serializable {
 
     @Serial
@@ -52,12 +48,12 @@ public class VariableValues implements Serializable {
     private final Map<Name, List<Item>> localVariableValues;
     private final Map<Name, Item> localVariableCounts;
     private final Map<Name, JavaRDD<Item>> rddVariableValues;
-    private final Map<Name, JSoundDataFrame> dataFrameVariableValues;
+    private final Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues;
     private transient boolean nestedQuery;
     private final VariableValues parent;
-    private final RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
 
-    public VariableValues(RumbleRuntimeConfiguration configuration) {
+    public VariableValues(RumbleConfiguration configuration) {
         this.parent = null;
         this.localVariableCounts = new HashMap<>();
         this.localVariableValues = new HashMap<>();
@@ -84,7 +80,7 @@ public class VariableValues implements Serializable {
             VariableValues parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, JSoundDataFrame> dataFrameVariableValues,
+            Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues,
             GlobalVariables globalVariables
     ) {
         if (parent == null) {
@@ -174,7 +170,7 @@ public class VariableValues implements Serializable {
         this.rddVariableValues.put(varName, value);
     }
 
-    public void addVariableValue(Name varName, JSoundDataFrame value) {
+    public void addVariableValue(Name varName, HomogeneousItemDataFrame value) {
         this.dataFrameVariableValues.put(varName, value);
     }
 
@@ -206,9 +202,9 @@ public class VariableValues implements Serializable {
             if (this.nestedQuery) {
                 throw new JobWithinAJobException(metadata);
             }
-            JSoundDataFrame df = this.getDataFrameVariableValue(varName, metadata);
+            HomogeneousItemDataFrame df = this.getDataFrameVariableValue(varName, metadata);
             return HybridRuntimeIterator.collectRDDwithLimit(
-                HybridRuntimeIterator.dataFrameToRDDOfItems(df, metadata),
+                df.toRDD(metadata),
                 this.configuration,
                 metadata
             );
@@ -255,9 +251,8 @@ public class VariableValues implements Serializable {
             if (this.nestedQuery) {
                 throw new JobWithinAJobException(metadata);
             }
-            JSoundDataFrame df = this.dataFrameVariableValues.get(varName);
-            JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
+            HomogeneousItemDataFrame df = this.dataFrameVariableValues.get(varName);
+            return df.toRDD(metadata);
         }
 
         if (this.parent != null) {
@@ -270,7 +265,7 @@ public class VariableValues implements Serializable {
         );
     }
 
-    public JSoundDataFrame getDataFrameVariableValue(Name varName, ExceptionMetadata metadata) {
+    public HomogeneousItemDataFrame getDataFrameVariableValue(Name varName, ExceptionMetadata metadata) {
         if (this.dataFrameVariableValues.containsKey(varName)) {
             if (this.nestedQuery) {
                 throw new JobWithinAJobException(metadata);
@@ -413,7 +408,7 @@ public class VariableValues implements Serializable {
             this.rddVariableValues.put(name, items);
         }
         for (Name name : moduleValues.dataFrameVariableValues.keySet()) {
-            JSoundDataFrame items = moduleValues.dataFrameVariableValues.get(name);
+            HomogeneousItemDataFrame items = moduleValues.dataFrameVariableValues.get(name);
             this.dataFrameVariableValues.put(name, items);
         }
     }
@@ -446,9 +441,8 @@ public class VariableValues implements Serializable {
         nodeWithVariableDecl.rddVariableValues.put(varName, value);
     }
 
-    public void changeVariableValue(Name varName, JSoundDataFrame value) {
+    public void changeVariableValue(Name varName, HomogeneousItemDataFrame value) {
         VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
         nodeWithVariableDecl.dataFrameVariableValues.put(varName, value);
     }
 }
-

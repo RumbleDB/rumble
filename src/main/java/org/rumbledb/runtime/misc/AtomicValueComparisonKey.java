@@ -20,14 +20,12 @@ package org.rumbledb.runtime.misc;
 import java.io.Serializable;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * Serializable adapter for using atomic value comparison in distributed hash operations.
  */
-@NoArgsConstructor(force = true)
 public final class AtomicValueComparisonKey implements Serializable {
 
     private static final long serialVersionUID = 1L;

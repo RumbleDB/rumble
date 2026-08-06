@@ -13,8 +13,6 @@ public class ArrayMembersClosure implements FlatMapFunction<Item, Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ArrayMembersClosure() {
-    }
 
     @Override
     public Iterator<Item> call(Item arg0) throws Exception {

@@ -194,5 +194,3 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
         }
     }
 }
-
-

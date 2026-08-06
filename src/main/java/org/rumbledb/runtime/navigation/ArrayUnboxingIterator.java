@@ -33,7 +33,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -42,7 +42,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -145,7 +145,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         ItemType newContextType = newContext.getResultingType().getItemType();
         if (!newContextType.isArrayItemType()) {
             // let control to UDF when what we are unboxing is not an array
-            if (getConfiguration().doStaticAnalysis()) {
+            if (getConfiguration().analysis().enableStaticTyping()) {
                 throw new UnexpectedStaticTypeException(
                         "This is not a sequence of arrays,"
                             + " so that the lookup will always result in the empty sequence no matter what. "
@@ -187,8 +187,8 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
@@ -258,7 +258,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                return new JSoundDataFrame(df, elementType);
+                return new HomogeneousItemDataFrame(df, elementType);
             }
             return childDataFrame.evaluateSQL(
                 String.format(
@@ -284,7 +284,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 .getType()
                 .getArrayContentFacet();
             String sql;
-            JSoundDataFrame res;
+            HomogeneousItemDataFrame res;
             // TODO: SORT OUT INDEXING DURING UNBOXING
             if (elementType.isObjectItemType()) {
                 sql = String.format(
@@ -318,11 +318,11 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                res = new JSoundDataFrame(df, elementType);
+                res = new HomogeneousItemDataFrame(df, elementType);
             }
             return res;
         }
-        if (getConfiguration().doStaticAnalysis()) {
+        if (getConfiguration().analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     "This is not a sequence of arrays,"
                         + " so that the lookup will always result in the empty sequence no matter what. "
@@ -335,6 +335,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             .warn(
                 "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
             );
-        return JSoundDataFrame.emptyDataFrame();
+        return HomogeneousItemDataFrame.emptyDataFrame();
     }
 }

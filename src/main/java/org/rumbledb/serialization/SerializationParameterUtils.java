@@ -87,7 +87,6 @@ public final class SerializationParameterUtils {
             try (
                 InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
                     uri,
-                    staticContext.getRumbleConfiguration(),
                     metadata
                 )
             ) {
@@ -95,7 +94,7 @@ public final class SerializationParameterUtils {
                 Item item = ItemParser.getItemFromXML(
                     xmlDocument,
                     uri.toString(),
-                    staticContext.getRumbleConfiguration().optimizeParentPointers()
+                    staticContext.getRumbleConfiguration().optimization().optimizeParentPointers()
                 );
                 applyParameterItem(params, item, explicitParameterNames, metadata);
             }

@@ -61,7 +61,6 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
                 try (
                     InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
                         uri,
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
                         getMetadata()
                     )
                 ) {
@@ -69,7 +68,8 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
                     return ItemParser.getItemFromXML(
                         xmlDocument,
                         uri.toString(),
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()
+                        this.currentDynamicContextForLocalExecution.getRumbleConfiguration()
+                            .optimization()
                             .optimizeParentPointers()
                     );
                 }

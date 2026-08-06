@@ -20,28 +20,19 @@
 
 package iq;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 
 import java.io.File;
 
 public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
 
     @Override
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--escape-backticks",
-                    "yes",
-                    "--data-frame-execution",
-                    "no",
-                    "--materialization-cap",
-                    "100000",
-                    "--result-size",
-                    "200"
-                }
-        );
+    public RumbleConfiguration getConfiguration() {
+        return RumbleConfiguration.builder()
+            .configureRuntime(
+                runtime -> runtime.resultsSizeCap(200).materializationCap(10000).useDataFrameExecution(false)
+            )
+            .build();
     }
 
     public static final File nativeFlworRuntimeTestsDirectory = new File(

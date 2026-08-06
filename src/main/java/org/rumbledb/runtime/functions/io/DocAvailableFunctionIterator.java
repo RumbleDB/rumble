@@ -37,7 +37,7 @@ public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeItera
                 uriItem.getStringValue(),
                 getMetadata()
             );
-            InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getConfiguration(), getMetadata());
+            InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getMetadata());
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
             documentBuilderFactory.newDocumentBuilder().parse(xmlFileStream);

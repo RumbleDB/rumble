@@ -239,10 +239,6 @@ public class SerializationParameters implements Serializable {
     @Getter
     private Map<String, String> sparkOptions;
 
-    public SerializationParameters() {
-        // empty for Kryo/Java serialization
-    }
-
     public static SerializationParameters defaults() {
         return defaults(null);
     }

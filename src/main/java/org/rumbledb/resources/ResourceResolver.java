@@ -7,7 +7,7 @@
 
 package org.rumbledb.resources;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -29,13 +29,13 @@ public final class ResourceResolver {
 
     public ResolvedResource resolve(
             URI requestedURI,
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
             ExceptionMetadata metadata
     ) {
         URI physicalURI = this.mappings.getOrDefault(requestedURI, requestedURI);
         return new ResolvedResource(
                 physicalURI,
-                FileSystemUtil.getDataInputStream(physicalURI, configuration, metadata)
+                FileSystemUtil.getDataInputStream(physicalURI, metadata)
         );
     }
 }

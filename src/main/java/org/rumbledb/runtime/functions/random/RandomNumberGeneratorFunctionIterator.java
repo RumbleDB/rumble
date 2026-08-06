@@ -32,14 +32,14 @@ public class RandomNumberGeneratorFunctionIterator extends AtMostOneItemLocalRun
             // execution scope must produce the same result, so the default seed is derived from the
             // RumbleRuntimeConfiguration instance, which is shared by every call within one query
             // execution and freshly created per execution.
-            seed = System.identityHashCode(context.getRumbleRuntimeConfiguration());
+            seed = System.identityHashCode(context.getRumbleConfiguration());
         } else {
             seed = seedItem.getStringValue().hashCode();
         }
         return RandomNumberGeneratorMapBuilder.build(
             seed,
             this.staticContext,
-            new DynamicContext(context.getRumbleRuntimeConfiguration()),
+            new DynamicContext(context.getRumbleConfiguration()),
             getMetadata()
         );
     }

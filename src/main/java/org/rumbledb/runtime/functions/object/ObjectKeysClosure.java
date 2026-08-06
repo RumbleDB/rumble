@@ -35,8 +35,6 @@ public class ObjectKeysClosure implements FlatMapFunction<Item, Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ObjectKeysClosure() {
-    }
 
     @Override
     public Iterator<Item> call(Item arg0) throws Exception {
