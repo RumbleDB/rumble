@@ -1,0 +1,403 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+package org.rumbledb.runtime.plan;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.NonNull;
+import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrameFactory;
+
+/**
+ * Immutable, reusable description of a runtime computation.
+ *
+ * <p>
+ * A plan may be shared by multiple evaluations. Mutable state belonging to one local evaluation must be kept in the
+ * {@link Cursor} returned by a {@link LocalRuntimePlan}, never in the plan.
+ * </p>
+ *
+ * <p>
+ * A plan implements {@link LocalRuntimePlan}, {@link RDDRuntimePlan}, or {@link DataFrameRuntimePlan} for every
+ * representation it supports natively. The compiled execution mode expresses the preferred representation. The plan
+ * selects the closest supported native representation, and conversion to a representation requested by a caller
+ * happens only after that selection.
+ * </p>
+ *
+ * @param <T> the logical value produced by this plan
+ */
+public abstract class RuntimePlan<T> implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    protected final RuntimeStaticContext staticContext;
+    private final ExceptionMetadata metadata;
+    private final int materializationCap;
+    private final RuntimeDataFrameFactory<T> dataFrameFactory;
+
+    // Casted versions of this plan's capabilities, for convenience and to avoid repeated casts.
+    // If a plan does not implement a capability, the corresponding field is null.
+    private final LocalRuntimePlan<T> localCapability;
+    private final RDDRuntimePlan<T> rddCapability;
+    private final DataFrameRuntimePlan<T> dataFrameCapability;
+    private final AtMostOneLocalRuntimePlan<T> atMostOneCapability;
+
+    protected RuntimePlan(@NonNull RuntimeStaticContext staticContext) {
+        this(staticContext, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    RuntimePlan(
+            @NonNull RuntimeStaticContext staticContext,
+            RuntimeDataFrameFactory<T> dataFrameFactory
+    ) {
+        // Cache the casted capabilities for convenience and to avoid repeated casts
+        this.localCapability = this instanceof LocalRuntimePlan<?> ? (LocalRuntimePlan<T>) this : null;
+        this.rddCapability = this instanceof RDDRuntimePlan<?> ? (RDDRuntimePlan<T>) this : null;
+        this.dataFrameCapability = this instanceof DataFrameRuntimePlan<?> ? (DataFrameRuntimePlan<T>) this : null;
+        this.atMostOneCapability = this instanceof AtMostOneLocalRuntimePlan<?>
+            ? (AtMostOneLocalRuntimePlan<T>) this
+            : null;
+
+        boolean supportsLocal = this.localCapability != null;
+        boolean supportsRDD = this.rddCapability != null;
+        boolean supportsDataFrame = this.dataFrameCapability != null;
+
+        // Compiler configuration may prefer a representation this plan cannot produce natively, so select the
+        // closest supported capability and make it authoritative for all runtime consumers.
+        ExecutionMode requestedExecutionMode = staticContext.getExecutionMode();
+        ExecutionMode nativeExecutionMode = switch (requestedExecutionMode) {
+            case LOCAL -> supportsLocal
+                ? ExecutionMode.LOCAL
+                : supportsRDD
+                    ? ExecutionMode.RDD
+                    : supportsDataFrame ? ExecutionMode.DATAFRAME : requestedExecutionMode;
+            case RDD -> supportsRDD
+                ? ExecutionMode.RDD
+                : supportsDataFrame
+                    ? ExecutionMode.DATAFRAME
+                    : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
+            case DATAFRAME -> supportsDataFrame
+                ? ExecutionMode.DATAFRAME
+                : supportsRDD ? ExecutionMode.RDD : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
+            case UNSET -> requestedExecutionMode;
+        };
+
+        this.staticContext = nativeExecutionMode == requestedExecutionMode
+            ? staticContext
+            : staticContext.toBuilder().executionMode(nativeExecutionMode).build();
+        this.metadata = this.staticContext.getMetadata();
+        this.materializationCap = this.staticContext.getConfiguration().runtime().materializationCap();
+        this.dataFrameFactory = dataFrameFactory;
+    }
+
+    protected final ExceptionMetadata getMetadata() {
+        return this.metadata;
+    }
+
+    protected final RumbleConfiguration getConfiguration() {
+        return this.staticContext.getConfiguration();
+    }
+
+    /**
+     * Executes this plan in its selected native representation and exposes the result as a cursor.
+     */
+    public final Cursor<T> getCursor(@NonNull DynamicContext context) {
+        return this.executeSelectedRepresentation(
+            context,
+            cursor -> cursor,
+            rdd -> RuntimePlanConversions.rddToCursor(rdd, this.materializationCap, this.metadata),
+            dataFrame -> RuntimePlanConversions.rddToCursor(
+                dataFrame.toRDD(this.metadata),
+                this.materializationCap,
+                this.metadata
+            )
+        );
+    }
+
+    /**
+     * Returns this plan as an RDD, executing its selected native representation first and converting only at this
+     * boundary.
+     */
+    public final JavaRDD<T> getRDD(@NonNull DynamicContext context) {
+        return this.executeSelectedRepresentation(
+            context,
+            cursor -> RuntimePlanConversions.cursorToRDD(cursor, this.materializationCap, this.metadata),
+            rdd -> rdd,
+            dataFrame -> dataFrame.toRDD(this.metadata)
+        );
+    }
+
+    /**
+     * Executes this plan in its selected native representation and exposes the result as a typed runtime DataFrame.
+     */
+    public final RuntimeDataFrame<T> getDataFrame(@NonNull DynamicContext context) {
+        if (!this.staticContext.getExecutionMode().isDataFrame() && this.dataFrameFactory == null) {
+            throw this.unsupportedDataFrameConversion();
+        }
+        return this.executeSelectedRepresentation(
+            context,
+            cursor -> this.dataFrameFactory.fromList(
+                RuntimePlanConversions.materializeCursor(cursor),
+                context,
+                this.staticContext
+            ),
+            rdd -> this.dataFrameFactory.fromRDD(rdd, context, this.staticContext),
+            dataFrame -> dataFrame
+        );
+    }
+
+    private <R, E extends Exception> R executeSelectedRepresentation(
+            DynamicContext context,
+            ExecutionAdapter<Cursor<T>, R, E> fromCursor,
+            ExecutionAdapter<JavaRDD<T>, R, E> fromRDD,
+            ExecutionAdapter<RuntimeDataFrame<T>, R, E> fromDataFrame
+    )
+            throws E {
+        return switch (this.staticContext.getExecutionMode()) {
+            case LOCAL -> {
+                if (this.localCapability != null) {
+                    yield fromCursor.apply(this.localCapability.createNativeCursor(context));
+                }
+                throw this.missingCapability(ExecutionMode.LOCAL);
+            }
+            case RDD -> {
+                if (this.rddCapability != null) {
+                    yield fromRDD.apply(this.rddCapability.createNativeRDD(context));
+                }
+                throw this.missingCapability(ExecutionMode.RDD);
+            }
+            case DATAFRAME -> {
+                if (this.dataFrameCapability != null) {
+                    yield fromDataFrame.apply(this.dataFrameCapability.createNativeDataFrame(context));
+                }
+                throw this.missingCapability(ExecutionMode.DATAFRAME);
+            }
+            case UNSET -> throw new OurBadException("Cannot execute a runtime plan whose execution mode is unset.");
+        };
+    }
+
+    private OurBadException missingCapability(ExecutionMode mode) {
+        return new OurBadException(
+                "The runtime plan "
+                    + this.getClass().getCanonicalName()
+                    + " prefers "
+                    + mode
+                    + " execution but does not implement any local, RDD, or DataFrame execution capability."
+        );
+    }
+
+    private OurBadException unsupportedDataFrameConversion() {
+        return new OurBadException(
+                "The runtime plan "
+                    + this.getClass().getCanonicalName()
+                    + " cannot convert its selected native representation to a DataFrame."
+        );
+    }
+
+    /**
+     * Evaluates this plan locally and materializes every result.
+     *
+     * @param context the dynamic context for the evaluation
+     * @return the materialized result sequence
+     */
+    public final List<T> materialize(@NonNull DynamicContext context) {
+        if (this.canEvaluateAtMostOneDirectly()) {
+            return this.materializeDirectAtMostOne(context);
+        }
+        return this.executeSelectedRepresentation(
+            context,
+            RuntimePlanConversions::materializeCursor,
+            rdd -> RuntimePlanConversions.collectRDDWithLimit(
+                rdd,
+                this.materializationCap,
+                this.metadata
+            ),
+            dataFrame -> RuntimePlanConversions.collectRDDWithLimit(
+                dataFrame.toRDD(this.metadata),
+                this.materializationCap,
+                this.metadata
+            )
+        );
+    }
+
+    /**
+     * Evaluates this plan locally and returns its first result, or {@code null} for an empty sequence.
+     *
+     * @param context the dynamic context for the evaluation
+     * @return the first result, or {@code null}
+     */
+    public final T materializeFirstOrNull(@NonNull DynamicContext context) {
+        if (this.canEvaluateAtMostOneDirectly()) {
+            return this.atMostOneCapability.evaluateAtMostOne(context);
+        }
+        return this.executeSelectedRepresentation(
+            context,
+            RuntimePlan::materializeFirstFromCursor,
+            RuntimePlan::firstOrNull,
+            dataFrame -> firstOrNull(
+                dataFrame.toRDD(this.metadata)
+            )
+        );
+    }
+
+    /**
+     * Evaluates this plan locally and materializes no more than {@code limit} results.
+     *
+     * @param context the dynamic context for the evaluation
+     * @param limit the maximum number of results to materialize
+     */
+    public final List<T> materializeAtMost(@NonNull DynamicContext context, int limit) {
+        if (limit < 0) {
+            throw new IllegalArgumentException("limit cannot be negative");
+        }
+        if (limit == 0) {
+            return List.of();
+        }
+        if (this.canEvaluateAtMostOneDirectly()) {
+            return this.materializeDirectAtMostOne(context);
+        }
+        return this.executeSelectedRepresentation(
+            context,
+            cursor -> materializeAtMostFromCursor(cursor, limit),
+            rdd -> rdd.take(limit),
+            dataFrame -> dataFrame.toRDD(this.metadata)
+                .take(limit)
+        );
+    }
+
+    /**
+     * Evaluates this plan locally and returns its only result, or {@code null} for an empty sequence.
+     *
+     * @param context the dynamic context for the evaluation
+     * @return the only result, or {@code null}
+     * @throws MoreThanOneItemException if more than one result is produced
+     */
+    public final T materializeAtMostOne(@NonNull DynamicContext context) throws MoreThanOneItemException {
+        if (this.canEvaluateAtMostOneDirectly()) {
+            return this.atMostOneCapability.evaluateAtMostOne(context);
+        }
+        return this.executeSelectedRepresentation(
+            context,
+            (cursor) -> RuntimePlan.materializeAtMostOneFromCursor(
+                cursor,
+                this.metadata
+            ),
+            rdd -> RuntimePlan.materializeAtMostOneFromRDD(
+                rdd,
+                this.metadata
+            ),
+            dataFrame -> RuntimePlan.materializeAtMostOneFromRDD(
+                dataFrame.toRDD(this.metadata),
+                this.metadata
+            )
+        );
+    }
+
+    /**
+     * Evaluates this plan and returns its only result.
+     *
+     * @param context the dynamic context for the evaluation
+     * @return the only result
+     * @throws NoItemException if the plan produces no result
+     * @throws MoreThanOneItemException if the plan produces more than one result
+     */
+    public final T materializeExactlyOne(@NonNull DynamicContext context)
+            throws NoItemException,
+                MoreThanOneItemException {
+        T result = this.materializeAtMostOne(context);
+        if (result == null) {
+            throw new NoItemException();
+        }
+        return result;
+    }
+
+    private boolean canEvaluateAtMostOneDirectly() {
+        return this.atMostOneCapability != null;
+    }
+
+    private List<T> materializeDirectAtMostOne(DynamicContext context) {
+        List<T> result = new ArrayList<>(1);
+        T item = this.atMostOneCapability.evaluateAtMostOne(context);
+        if (item != null) {
+            result.add(item);
+        }
+        return result;
+    }
+
+    private static <T> T materializeFirstFromCursor(Cursor<T> cursor) {
+        try (cursor) {
+            return cursor.hasNext() ? cursor.next() : null;
+        }
+    }
+
+    private static <T> List<T> materializeAtMostFromCursor(Cursor<T> cursor, int limit) {
+        List<T> result = new ArrayList<>(limit);
+        try (cursor) {
+            while (result.size() < limit && cursor.hasNext()) {
+                result.add(cursor.next());
+            }
+        }
+        return result;
+    }
+
+    private static <T> T materializeAtMostOneFromCursor(Cursor<T> cursor, ExceptionMetadata metadata)
+            throws MoreThanOneItemException {
+        try (cursor) {
+            if (!cursor.hasNext()) {
+                return null;
+            }
+            T result = cursor.next();
+            if (cursor.hasNext()) {
+                throw new MoreThanOneItemException();
+            }
+            return result;
+        }
+    }
+
+    private static <T> T firstOrNull(JavaRDD<T> rdd) {
+        List<T> result = rdd.take(1);
+        return result.isEmpty() ? null : result.get(0);
+    }
+
+    private static <T> T materializeAtMostOneFromRDD(JavaRDD<T> rdd, ExceptionMetadata metadata)
+            throws MoreThanOneItemException {
+        List<T> result = rdd.take(2);
+        if (result.size() > 1) {
+            throw new MoreThanOneItemException();
+        }
+        return result.isEmpty() ? null : result.get(0);
+    }
+
+    @FunctionalInterface
+    private interface ExecutionAdapter<I, O, E extends Exception> {
+        O apply(I input) throws E;
+    }
+
+    /**
+     * Returns the immutable static context determined while compiling this plan.
+     *
+     * @return the non-null runtime static context
+     */
+    public final RuntimeStaticContext getRuntimeStaticContext() {
+        return this.staticContext;
+    }
+}
