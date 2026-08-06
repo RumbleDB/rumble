@@ -50,7 +50,7 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            return ItemFactory.getInstance().createIntItem(items.get(0).getStringValue().length());
+            return ItemFactory.getInstance().createIntItem(codePointLength(items.get(0).getStringValue()));
         }
         Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
@@ -59,7 +59,11 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
             return ItemFactory.getInstance().createIntItem(0);
         }
 
-        return ItemFactory.getInstance().createIntItem(stringItem.getStringValue().length());
+        return ItemFactory.getInstance().createIntItem(codePointLength(stringItem.getStringValue()));
+    }
+
+    private static int codePointLength(String value) {
+        return value.codePointCount(0, value.length());
     }
 
     @Override
