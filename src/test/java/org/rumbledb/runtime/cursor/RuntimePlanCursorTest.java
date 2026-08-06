@@ -43,7 +43,7 @@ public class RuntimePlanCursorTest {
 
     @Test
     public void cursorsCreatedFromOnePrototypeExecuteIndependently() {
-        RumbleConfiguration configuration = new RumbleConfiguration();
+        RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
                 ItemFactory.getInstance().createIntItem(42),
@@ -65,7 +65,7 @@ public class RuntimePlanCursorTest {
 
     @Test
     public void cursorOpensOnFirstReadAndCloseIsIdempotent() {
-        RumbleConfiguration configuration = new RumbleConfiguration();
+        RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
                 ItemFactory.getInstance().createIntItem(1),
@@ -81,7 +81,7 @@ public class RuntimePlanCursorTest {
 
     @Test
     public void localExecutionRequiresTheLocalCapability() {
-        RumbleConfiguration configuration = new RumbleConfiguration();
+        RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimeStaticContext staticContext = createStaticContext(configuration);
         RuntimePlan<Item> planWithoutLocalCapability = new RuntimePlan<>(staticContext) {};
@@ -90,12 +90,14 @@ public class RuntimePlanCursorTest {
             OurBadException.class,
             () -> planWithoutLocalCapability.getCursor(dynamicContext)
         );
-        assertTrue(exception.getMessage().contains("does not implement the corresponding capability"));
+        assertTrue(
+            exception.getMessage().contains("does not implement any local, RDD, or DataFrame execution capability")
+        );
     }
 
     @Test
     public void atMostOneMaterializationDoesNotCreateACursor() throws Exception {
-        RumbleConfiguration configuration = new RumbleConfiguration();
+        RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         DirectAtMostOnePlan plan = new DirectAtMostOnePlan(
                 createStaticContext(configuration),
@@ -118,6 +120,8 @@ public class RuntimePlanCursorTest {
         assertEquals(1, cursor.closeCount);
         assertThrows(IteratorFlowException.class, cursor::hasNext);
         assertEquals(1, cursor.closeCount);
+
+        cursor.close();
     }
 
     @Test
@@ -126,6 +130,8 @@ public class RuntimePlanCursorTest {
 
         assertThrows(NullPointerException.class, cursor::hasNext);
         assertThrows(IteratorFlowException.class, cursor::hasNext);
+
+        cursor.close();
     }
 
     private static final class FailingCursor extends AbstractLocalCursor<Item> {
@@ -160,6 +166,8 @@ public class RuntimePlanCursorTest {
             implements
                 AtMostOneLocalRuntimePlan<Item> {
 
+        private static final long serialVersionUID = 1L;
+
         private final Item result;
         private int evaluationCount;
         private int cursorCreationCount;
@@ -170,15 +178,15 @@ public class RuntimePlanCursorTest {
         }
 
         @Override
-        public Item evaluateAtMostOne(DynamicContext context) {
-            this.evaluationCount++;
-            return this.result;
+        public Cursor<Item> createNativeCursor(DynamicContext context) {
+            this.cursorCreationCount++;
+            return new AtMostOneLocalCursor<>(this.evaluateAtMostOne(context), this.getMetadata());
         }
 
         @Override
-        public Cursor<Item> createNativeCursor(DynamicContext context) {
-            this.cursorCreationCount++;
-            return new AtMostOneLocalCursor<>(this.result, getRuntimeStaticContext().getMetadata());
+        public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+            this.evaluationCount++;
+            return this.result;
         }
     }
 
