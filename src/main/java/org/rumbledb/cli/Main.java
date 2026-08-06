@@ -67,6 +67,7 @@ public class Main {
                 invocation.configuration(),
                 "CLI invocation must provide a configuration"
             );
+            LoggingConfiguration.configure(configuration.debug());
         } catch (Exception e) {
             ConsoleOutput.error("⚠️ CLI Error: " + e.getMessage());
             System.exit(42);
