@@ -20,7 +20,7 @@
 
 package org.rumbledb.compiler;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
@@ -96,6 +96,8 @@ import java.util.Map.Entry;
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
  */
+
+@Log4j2
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
@@ -162,18 +164,15 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getStaticSequenceType().getArity().equals(Arity.ZeroOrMore)
             ) {
                 if (expression.getStaticSequenceType().getItemType().isObjectItemType()) {
-                    System.err.println(
-                        "[WARNING] Forcing execution mode of variable "
-                            + expression.getVariableName()
-                            + " to DataFrame based on static object* type."
+                    log.warn(
+                        "Forcing execution mode of variable {} to DataFrame based on static object* type.",
+                        expression.getVariableName()
                     );
                     expression.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
                     return argument;
                 }
             }
-            System.err.println(
-                "[WARNING] Forcing execution mode of variable " + expression.getVariableName() + " to local."
-            );
+            log.warn("Forcing execution mode of variable {} to local.", expression.getVariableName());
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
             return argument;
         }
@@ -699,12 +698,11 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     targetType.getItemType().isObjectItemType()
                         && targetType.getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
-                    LogManager.getLogger("ExecutionModeVisitor")
-                        .info(
-                            "Validation against "
-                                + expression.getSequenceType().getItemType().getName()
-                                + " compatible with data frames."
-                        );
+                    log.info(
+                        "Validation against "
+                            + expression.getSequenceType().getItemType().getName()
+                            + " compatible with data frames."
+                    );
                     expression.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
                 } else {
                     if (
@@ -723,12 +721,11 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     targetType.getItemType().isObjectItemType()
                         && targetType.getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
-                    LogManager.getLogger("ExecutionModeVisitor")
-                        .info(
-                            "Validation against "
-                                + expression.getSequenceType().getItemType().getName()
-                                + " compatible with data frames."
-                        );
+                    log.info(
+                        "Validation against "
+                            + expression.getSequenceType().getItemType().getName()
+                            + " compatible with data frames."
+                    );
                     expression.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
                 } else {
                     if (

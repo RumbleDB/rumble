@@ -22,7 +22,7 @@ package org.rumbledb.runtime.flwor.clauses;
 
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -78,6 +78,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+@Log4j2
 public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
@@ -704,8 +705,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             selectString.append(") as ");
             selectString.append(dfColumnSequence);
         }
-        LogManager.getLogger("GroupByClauseSparkIterator")
-            .info("Rumble was able to optimize a group by clause to a native SQL query.");
+        log.info("Rumble was able to optimize a group by clause to a native SQL query.");
         return dataFrame.sparkSession()
             .sql(
                 String.format(

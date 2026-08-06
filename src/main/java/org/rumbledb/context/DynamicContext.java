@@ -22,7 +22,6 @@ package org.rumbledb.context;
 
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.spark.api.java.JavaRDD;
@@ -39,6 +38,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 public class DynamicContext implements Serializable {
 
@@ -242,7 +242,6 @@ public class DynamicContext implements Serializable {
         }
         return this.currentDateTime;
     }
-
 
     public void addGlobalVariable(Name globalVariable) {
         this.globalVariables.addGlobalVariable(globalVariable);

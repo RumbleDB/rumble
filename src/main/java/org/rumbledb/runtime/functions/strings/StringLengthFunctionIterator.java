@@ -61,7 +61,12 @@ public class StringLengthFunctionIterator extends AbstractAtMostOneItemRuntimePl
         if (stringItem == null) {
             return ItemFactory.getInstance().createIntItem(0);
         }
-        return ItemFactory.getInstance().createIntItem(stringItem.getStringValue().length());
+
+        return ItemFactory.getInstance().createIntItem(codePointLength(stringItem.getStringValue()));
+    }
+
+    private static int codePointLength(String value) {
+        return value.codePointCount(0, value.length());
     }
 
     @Override

@@ -2,6 +2,7 @@ package iq;
 
 import iq.base.TestConfigurations;
 import iq.base.TestFileDiscovery;
+import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -36,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
+@Log4j2
 public class SequentialClassificationTests {
 
     private static final RumbleConfiguration configuration = TestConfigurations.defaultConfiguration();
@@ -309,7 +311,7 @@ public class SequentialClassificationTests {
         );
         int testIndex = 0;
         for (File testFile : TestFileDiscovery.jsoniqFiles(nonsequentialTestsDirectory)) {
-            System.err.println(testIndex++ + " : " + testFile);
+            log.debug("{} : {}", testIndex++, testFile);
             MainModule mainModule = parseAndCompile(testFile.getAbsolutePath());
             for (Node descendant : mainModule.getDescendants()) {
                 if (descendant instanceof Expression) {

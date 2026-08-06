@@ -82,6 +82,9 @@ public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRun
     }
 
     private int extractCodePoint(Item item) {
+        if (item.isInt()) {
+            return item.getIntValue();
+        }
         try {
             return item.getIntegerValue().intValueExact();
         } catch (ArithmeticException e) {

@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
@@ -62,7 +62,7 @@ import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.SequenceType;
 
-
+@Log4j2
 public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
@@ -189,10 +189,9 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         // }
 
         if (optimizableJoin) {
-            LogManager.getLogger("JoinClauseSparkIterator")
-                .info(
-                    "Rumble detected that it can optimize your query and make it faster with an equi-join."
-                );
+            log.info(
+                "Rumble detected that it can optimize your query and make it faster with an equi-join."
+            );
         }
 
         // Now we prepare the iterators for the two sides of the equality criterion.
@@ -472,10 +471,9 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        LogManager.getLogger("JoinClauseSparkIterator")
-            .info(
-                "Rumble was able to optimize a join to a native SQL query."
-            );
+        log.info(
+            "Rumble was able to optimize a join to a native SQL query."
+        );
         String left = FlworDataFrameUtils.createTempView(leftInputTuple);
         String right = FlworDataFrameUtils.createTempView(rightInputTuple);
         List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(

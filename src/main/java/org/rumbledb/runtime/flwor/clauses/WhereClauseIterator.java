@@ -23,7 +23,7 @@ package org.rumbledb.runtime.flwor.clauses;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -56,8 +56,8 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.io.Serial;
 import java.util.*;
 
+@Log4j2
 public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -254,10 +254,9 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
         if (!item.isInteger()) {
             return null;
         }
-        LogManager.getLogger("WhereClauseSparkIterator")
-            .info(
-                "Rumble detected a LIMIT in a count and where clause."
-            );
+        log.info(
+            "Rumble detected a LIMIT in a count and where clause."
+        );
         FlworDataFrame df = (FlworDataFrame) this.child.getChildIterator().getDataFrame(context);
         String input = df.createTempView();
         return df.sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
@@ -324,9 +323,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
         if (limit == -1) {
             return null;
         }
-
-        LogManager.getLogger("WhereClauseSparkIterator")
-            .info("Rumble detected a join predicate in the where clause (limit=" + limit + " of " + height + ").");
+        log.info("Rumble detected a join predicate in the where clause (limit=" + limit + " of " + height + ").");
 
         try {
             FlworDataFrame leftTuples = (FlworDataFrame) getSubtreeBeyondLimit(limit).getDataFrame(context);
@@ -358,10 +355,9 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
             );
             return result;
         } catch (Exception e) {
-            LogManager.getLogger("WhereClauseSparkIterator")
-                .warn(
-                    "Join failed. Falling back to regular execution (nevertheless, please let us know!)."
-                );
+            log.warn(
+                "Join failed. Falling back to regular execution (nevertheless, please let us know!)."
+            );
 
             this.setEvaluationDepthLimit(-1);
             this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
@@ -459,16 +455,15 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
                     iterator.getRuntimeStaticContext().getMetadata()
             );
         }
-        LogManager.getLogger("WhereClauseSparkIterator")
-            .info(
-                "Rumble was able to optimize a where clause to a native SQL query: "
-                    + String.format(
-                        "select %s from (%s) where %s",
-                        FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
-                        nativeQuery.getView(),
-                        nativeQuery.getResultingQuery()
-                    )
-            );
+        log.info(
+            "Rumble was able to optimize a where clause to a native SQL query: "
+                + String.format(
+                    "select %s from (%s) where %s",
+                    FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
+                    nativeQuery.getView(),
+                    nativeQuery.getResultingQuery()
+                )
+        );
         return new FlworDataFrame(
                 dataFrame.getDataFrame()
                     .sparkSession()

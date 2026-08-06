@@ -25,7 +25,7 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -47,12 +47,12 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
+@Log4j2
 public class ReverseFunctionIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
             RDDRuntimePlan<Item>,
             DataFrameRuntimePlan<Item> {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -84,17 +84,16 @@ public class ReverseFunctionIterator extends ItemRuntimePlan
             .fromPlan(this.getChild(0), context);
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
-        LogManager.getLogger("ReverseFunctioniterator")
-            .info(
-                String.format(
-                    "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
-                    selectSQL,
-                    selectSQL,
-                    "foo",
-                    viewName,
-                    "foo"
-                )
-            );
+        log.info(
+            String.format(
+                "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
+                selectSQL,
+                selectSQL,
+                "foo",
+                viewName,
+                "foo"
+            )
+        );
         String tempName = SparkSessionManager.temporaryColumnName;
         HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
             String.format(

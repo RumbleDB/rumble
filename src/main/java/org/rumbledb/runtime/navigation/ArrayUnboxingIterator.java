@@ -26,7 +26,7 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Dataset;
@@ -54,6 +54,7 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
+@Log4j2
 public class ArrayUnboxingIterator extends ItemRuntimePlan
         implements
             LocalRuntimePlan<Item>,
@@ -124,10 +125,9 @@ public class ArrayUnboxingIterator extends ItemRuntimePlan
                         getMetadata()
                 );
             }
-            LogManager.getLogger("ArrayUnboxingIterator")
-                .warn(
-                    "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
-                );
+            log.warn(
+                "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
+            );
             return NativeClauseContext.NoNativeQuery;
         }
         newContext.setResultingType(
@@ -302,10 +302,9 @@ public class ArrayUnboxingIterator extends ItemRuntimePlan
                     getMetadata()
             );
         }
-        LogManager.getLogger("ArrayUnboxingIterator")
-            .warn(
-                "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
-            );
+        log.warn(
+            "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
+        );
         return HomogeneousItemDataFrame.emptyDataFrame();
     }
 }

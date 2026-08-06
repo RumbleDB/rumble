@@ -2,6 +2,7 @@ package org.rumbledb.spark.ml;
 
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
+import lombok.extern.log4j.Log4j2;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Estimator;
@@ -38,7 +39,7 @@ import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
+@Log4j2
 public class ApplyEstimatorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
@@ -81,8 +82,7 @@ public class ApplyEstimatorRuntimeIterator extends AbstractAtMostOneItemRuntimeP
         } catch (IllegalArgumentException | NoSuchElementException e) {
             String message = e.getMessage();
             if (message == null) {
-                System.err.println("Exception stack trace:");
-                e.printStackTrace();
+                log.error("Estimator fit failed with no exception message.", e);
                 RumbleException ex = new InvalidRumbleMLParamException(
                         "Parameters provided to "
                             + this.estimatorShortName

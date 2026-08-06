@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.typing;
 
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -16,6 +17,7 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.List;
 
+@Log4j2
 public class FunctionNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;

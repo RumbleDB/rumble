@@ -36,7 +36,9 @@ import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -238,10 +240,15 @@ public class NamedFunctions implements Serializable {
                         .equals(SequenceType.createSequenceType("item*"))
                 ) {
                     SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
+                    if (conversionIsIdentity(arguments.get(i).getStaticType(), sequenceType)) {
+                        continue;
+                    }
+
                     ExecutionMode executionMode = arguments.get(i).getRuntimeStaticContext().getExecutionMode();
                     if (FunctionCallArgumentConversion.isAtMostOne(sequenceType)) {
                         executionMode = ExecutionMode.LOCAL;
                     }
+
                     RuntimeStaticContext argStaticContext = callerStaticContext
                         .toBuilder()
                         .staticType(sequenceType)
@@ -354,7 +361,22 @@ public class NamedFunctions implements Serializable {
         );
     }
 
-
+    private static boolean conversionIsIdentity(SequenceType argumentType, SequenceType expectedType) {
+        if (argumentType == null || !argumentType.isResolved() || !expectedType.isResolved()) {
+            return false;
+        }
+        if (argumentType.isEmptySequence()) {
+            return false;
+        }
+        ItemType argumentItemType = argumentType.getItemType();
+        if (!argumentItemType.isAtomicItemType()) {
+            return false;
+        }
+        if (BuiltinTypesCatalogue.untypedAtomicItem.isSubtypeOf(argumentItemType)) {
+            return false;
+        }
+        return argumentType.isSubtypeOf(expectedType);
+    }
 
     @Override
     public String toString() {
