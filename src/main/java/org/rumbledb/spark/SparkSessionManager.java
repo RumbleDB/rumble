@@ -195,7 +195,7 @@ public class SparkSessionManager {
             initializeKryoSerialization();
 
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
-            org.rumbledb.cli.LoggingConfiguration.apply();
+            LoggingConfiguration.apply();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
