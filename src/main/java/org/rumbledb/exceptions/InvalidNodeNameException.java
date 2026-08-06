@@ -22,15 +22,15 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 public class InvalidNodeNameException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public InvalidNodeNameException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.InvalidNodeNameErrorCode, metadata);
     }
 
-    public InvalidNodeNameException(String message) {
-        super(message, ErrorCode.InvalidNodeNameErrorCode);
-    }
 }

@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.typing;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +31,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
@@ -42,6 +43,7 @@ import org.rumbledb.types.SequenceType;
 
 public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
     private final SequenceType sequenceType;
@@ -56,6 +58,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         this.sequenceType = sequenceType;
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
@@ -92,7 +95,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
         if (this.child.isDataFrame()) {
-            JSoundDataFrame childDF = this.child.getDataFrame(dynamicContext);
+            HomogeneousItemDataFrame childDF = this.child.getDataFrame(dynamicContext);
             if (isInvalidArity(childDF.take(2).size())) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }

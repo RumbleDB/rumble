@@ -24,23 +24,31 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.AtomicValueComparison;
+import org.rumbledb.runtime.misc.AtomicValueComparisonKey;
+import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.typing.TypeInferrenceUtils;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.types.ItemType;
 
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
+    private final RuntimeIterator sequenceIterator;
     private Item nextResult;
     private List<Item> prevResults;
+    private String activeCollation;
 
     public DistinctValuesFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -50,17 +58,19 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         this.sequenceIterator = arguments.get(0);
     }
 
-    private void checkCollation(DynamicContext context) {
-        if (this.children.size() == 2) {
-            String collation = this.children.get(1)
+    private String resolveCollation(DynamicContext context) {
+        String explicitCollation = null;
+        if (this.getChildren().size() == 2) {
+            explicitCollation = this.getChild(1)
                 .materializeFirstItemOrNull(context)
                 .getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
-            }
         }
+        String collation = CollationSupport.resolveCollation(explicitCollation, getRuntimeStaticContext());
+        CollationSupport.checkCollationSupported(collation, getMetadata());
+        return collation;
     }
 
+    @Override
     public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned
@@ -76,13 +86,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        checkCollation(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.sequenceIterator.close();
     }
@@ -91,7 +94,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.prevResults = new ArrayList<>();
-        checkCollation(this.currentDynamicContextForLocalExecution);
+        this.activeCollation = resolveCollation(this.currentDynamicContextForLocalExecution);
         this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -101,7 +104,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
         while (this.sequenceIterator.hasNext()) {
             Item item = this.sequenceIterator.next();
-            if (!this.prevResults.contains(item)) {
+            if (!containsEquivalentValue(item)) {
                 this.prevResults.add(item);
                 this.nextResult = item;
                 break;
@@ -116,11 +119,22 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
+    private boolean containsEquivalentValue(Item candidate) {
+        for (Item previous : this.prevResults) {
+            if (AtomicValueComparison.equal(previous, candidate, this.activeCollation, getMetadata())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        checkCollation(dynamicContext);
+        String collation = resolveCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        return childRDD.distinct();
+        return childRDD.map(item -> new AtomicValueComparisonKey(item, collation, this.getMetadata()))
+            .distinct()
+            .map(AtomicValueComparisonKey::getItem);
     }
 
     @Override
@@ -129,10 +143,29 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        checkCollation(dynamicContext);
-        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
-        return df.distinct();
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
+        // Spark SQL DISTINCT cannot be used here because its equality semantics differ from XDM for values such as
+        // promoted numerics and NaN.
+        // Compute distinctness with AtomicValueComparisonKey through the RDD path, then
+        // convert the result back to a DataFrame.
+        // Since distinct-values commonly has the static type xs:anyAtomicType,
+        // infer the concrete runtime type when the static type cannot be represented by a Spark schema.
+        JavaRDD<Item> rdd = getRDDAux(dynamicContext);
+        ItemType itemType = getStaticType().getItemType();
+        if (!itemType.isCompatibleWithDataFrames(getConfiguration())) {
+            itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
+                rdd,
+                getMetadata(),
+                TypeInferrenceUtils.TypeMergeMode.LAX
+            );
+        }
+        return ValidateTypeIterator.convertRDDToValidDataFrame(
+            rdd,
+            itemType,
+            dynamicContext,
+            true,
+            getRuntimeStaticContext()
+        );
     }
 
     @Override

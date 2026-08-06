@@ -29,15 +29,17 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private DataFrameContext dataFrameContext;
-    private RuntimeIterator expression;
+    private final DataFrameContext dataFrameContext;
+    private final RuntimeIterator expression;
 
     List<Item> results;
 

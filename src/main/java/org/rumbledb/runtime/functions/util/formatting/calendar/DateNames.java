@@ -2,19 +2,26 @@ package org.rumbledb.runtime.functions.util.formatting.calendar;
 
 import com.ibm.icu.text.DateFormatSymbols;
 import com.ibm.icu.util.Calendar;
+import com.ibm.icu.util.ULocale;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.EqualsAndHashCode;
 
 public final class DateNames {
+
+    private static final Map<SymbolsKey, DateFormatSymbols> SYMBOLS_CACHE = new ConcurrentHashMap<>();
 
     private DateNames() {
     }
 
     public static String monthName(OffsetDateTime value, FormattingContext context, int min, int max) {
         Calendar cal = CalendarFields.calendar(value, context);
-        DateFormatSymbols symbols = new DateFormatSymbols(cal, context.uLocale);
+        DateFormatSymbols symbols = symbolsFor(cal, context.uLocale);
         int month = CalendarFields.usesJavaTimeFields(context)
             ? value.getMonthValue() - 1
             : cal.get(Calendar.MONTH);
@@ -24,7 +31,7 @@ public final class DateNames {
 
     public static String dayName(OffsetDateTime value, FormattingContext context, int min, int max) {
         Calendar cal = CalendarFields.calendar(value, context);
-        DateFormatSymbols symbols = new DateFormatSymbols(cal, context.uLocale);
+        DateFormatSymbols symbols = symbolsFor(cal, context.uLocale);
         int day = CalendarFields.usesJavaTimeFields(context)
             ? javaDayOfWeekToIcu(value)
             : cal.get(Calendar.DAY_OF_WEEK);
@@ -33,9 +40,31 @@ public final class DateNames {
     }
 
     public static String amPmName(Calendar cal, FormattingContext context) {
-        DateFormatSymbols symbols = new DateFormatSymbols(cal, context.uLocale);
+        DateFormatSymbols symbols = symbolsFor(cal, context.uLocale);
         String[] values = symbols.getAmPmStrings();
         return values[cal.get(Calendar.AM_PM)];
+    }
+
+    private static DateFormatSymbols symbolsFor(Calendar cal, ULocale locale) {
+        SymbolsKey key = new SymbolsKey(cal.getType(), locale);
+        DateFormatSymbols symbols = SYMBOLS_CACHE.get(key);
+        if (symbols == null) {
+            symbols = new DateFormatSymbols(cal, locale);
+            SYMBOLS_CACHE.putIfAbsent(key, symbols);
+        }
+        return symbols;
+    }
+
+    @EqualsAndHashCode
+    private static final class SymbolsKey {
+        private final String calendarType;
+        private final ULocale locale;
+
+        private SymbolsKey(String calendarType, ULocale locale) {
+            this.calendarType = calendarType;
+            this.locale = locale;
+        }
+
     }
 
     private static String monthName(DateFormatSymbols symbols, int month, int min, int max) {

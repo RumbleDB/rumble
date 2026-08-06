@@ -1,11 +1,12 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -14,30 +15,28 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
-public class DerivedAtomicItemType implements ItemType {
+public class DerivedAtomicItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemType baseType;
+    private final ItemType baseType;
     private ItemType primitiveType;
     private int typeTreeDepth;
-    private boolean isUserDefined;
-    private Name name;
+    private final boolean isUserDefined;
+    private final Name name;
     private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;
-    private List<String> constraints;
+    private final List<String> constraints;
     private List<Item> enumeration;
-    private TimezoneFacet explicitTimezone;
+    private final TimezoneFacet explicitTimezone;
     private WhitespaceFacet whiteSpace;
     private List<String> pattern;
 
-    private OrderedFacetValue ordered;
-    private Boolean bounded;
-    private CardinalityFacetValue cardinality;
-    private Boolean numeric;
-
-    DerivedAtomicItemType() {
-    }
+    private final OrderedFacetValue ordered;
+    private final Boolean bounded;
+    private final CardinalityFacetValue cardinality;
+    private final Boolean numeric;
 
     DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets) {
         this(name, baseType, primitiveType, facets, true);
@@ -97,119 +96,6 @@ public class DerivedAtomicItemType implements ItemType {
         // to baseType
         this(name, baseType, null, facets, isUserDefined);
     }
-
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeClassAndObject(output, this.baseType);
-        kryo.writeClassAndObject(output, this.primitiveType);
-        output.writeInt(this.typeTreeDepth);
-        output.writeBoolean(this.isUserDefined);
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.minInclusive);
-        kryo.writeClassAndObject(output, this.maxInclusive);
-        kryo.writeClassAndObject(output, this.minExclusive);
-        kryo.writeClassAndObject(output, this.maxExclusive);
-        kryo.writeObjectOrNull(output, this.minLength, Integer.class);
-        kryo.writeObjectOrNull(output, this.length, Integer.class);
-        kryo.writeObjectOrNull(output, this.maxLength, Integer.class);
-        kryo.writeObjectOrNull(output, this.totalDigits, Integer.class);
-        kryo.writeObjectOrNull(output, this.fractionDigits, Integer.class);
-        if (this.constraints != null) {
-            output.writeInt(this.constraints.size());
-            for (String constraint : this.constraints) {
-                output.writeString(constraint);
-            }
-        } else {
-            output.writeInt(-1);
-        }
-        if (this.enumeration != null) {
-            output.writeInt(this.enumeration.size());
-            for (Item item : this.enumeration) {
-                kryo.writeClassAndObject(output, item);
-            }
-        } else {
-            output.writeInt(-1);
-        }
-        kryo.writeObjectOrNull(output, this.explicitTimezone, TimezoneFacet.class);
-        kryo.writeObjectOrNull(output, this.whiteSpace, WhitespaceFacet.class);
-        if (this.pattern != null) {
-            output.writeInt(this.pattern.size());
-            for (String p : this.pattern) {
-                output.writeString(p);
-            }
-        } else {
-            output.writeInt(-1);
-        }
-        kryo.writeObjectOrNull(output, this.ordered, OrderedFacetValue.class);
-        kryo.writeObjectOrNull(output, this.bounded, Boolean.class);
-        kryo.writeObjectOrNull(output, this.cardinality, CardinalityFacetValue.class);
-        kryo.writeObjectOrNull(output, this.numeric, Boolean.class);
-    }
-
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.primitiveType = (ItemType) kryo.readClassAndObject(input);
-        this.typeTreeDepth = input.readInt();
-        this.isUserDefined = input.readBoolean();
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.minInclusive = (Item) kryo.readClassAndObject(input);
-        this.maxInclusive = (Item) kryo.readClassAndObject(input);
-        this.minExclusive = (Item) kryo.readClassAndObject(input);
-        this.maxExclusive = (Item) kryo.readClassAndObject(input);
-        this.minLength = kryo.readObjectOrNull(input, Integer.class);
-        this.length = kryo.readObjectOrNull(input, Integer.class);
-        this.maxLength = kryo.readObjectOrNull(input, Integer.class);
-        this.totalDigits = kryo.readObjectOrNull(input, Integer.class);
-        this.fractionDigits = kryo.readObjectOrNull(input, Integer.class);
-        int constraintsSize = input.readInt();
-        if (constraintsSize >= 0) {
-            this.constraints = new java.util.ArrayList<>(constraintsSize);
-            for (int i = 0; i < constraintsSize; i++) {
-                this.constraints.add(input.readString());
-            }
-        } else {
-            this.constraints = null;
-        }
-        int enumerationSize = input.readInt();
-        if (enumerationSize >= 0) {
-            this.enumeration = new java.util.ArrayList<>(enumerationSize);
-            for (int i = 0; i < enumerationSize; i++) {
-                this.enumeration.add((Item) kryo.readClassAndObject(input));
-            }
-        } else {
-            this.enumeration = null;
-        }
-        this.explicitTimezone = kryo.readObjectOrNull(input, TimezoneFacet.class);
-        this.whiteSpace = kryo.readObjectOrNull(input, WhitespaceFacet.class);
-        int patternSize = input.readInt();
-        if (patternSize >= 0) {
-            this.pattern = new java.util.ArrayList<>(patternSize);
-            for (int i = 0; i < patternSize; i++) {
-                this.pattern.add(input.readString());
-            }
-        } else {
-            this.pattern = null;
-        }
-        this.ordered = kryo.readObjectOrNull(input, OrderedFacetValue.class);
-        this.bounded = kryo.readObjectOrNull(input, Boolean.class);
-        this.cardinality = kryo.readObjectOrNull(input, CardinalityFacetValue.class);
-        this.numeric = kryo.readObjectOrNull(input, Boolean.class);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name != null ? this.name.hashCode() : super.hashCode();
-    }
-
 
     @Override
     public boolean isAtomicItemType() {
@@ -537,7 +423,7 @@ public class DerivedAtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return this.baseType.isCompatibleWithDataFrames(configuration);
     }
 

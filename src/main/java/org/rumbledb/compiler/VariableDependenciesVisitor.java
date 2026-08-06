@@ -22,7 +22,7 @@ package org.rumbledb.compiler;
 
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
 import org.rumbledb.exceptions.OurBadException;
@@ -105,7 +105,7 @@ import java.util.TreeSet;
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @SuppressWarnings("unused")
-    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private final RumbleConfiguration configuration;
 
     /**
      * Input variable dependencies are lists of variables and functions that an expression depends on.
@@ -119,12 +119,12 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     /**
      * Builds a new visitor.
      * 
-     * @param rumbleRuntimeConfiguration the configuration. This is used for trigerring or not debug output.
+     * @param coniguration the configuration. This is used for trigerring or not debug output.
      */
-    VariableDependenciesVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
+    VariableDependenciesVisitor(RumbleConfiguration coniguration) {
         this.outputVariableDependenciesForClauses = new HashMap<>();
         this.inputVariableDependencies = new HashMap<>();
-        this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
+        this.configuration = coniguration;
     }
 
     private void addInputVariableDependencies(Node node, Set<Name> variables) {
@@ -300,6 +300,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitGroupByClause(GroupByClause expression, Void argument) {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
@@ -321,6 +322,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitOrderByClause(OrderByClause expression, Void argument) {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
@@ -338,6 +340,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitWhereClause(WhereClause expression, Void argument) {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
@@ -352,6 +355,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitCountClause(CountClause expression, Void argument) {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
@@ -363,6 +367,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitReturnClause(ReturnClause expression, Void argument) {
         visit(expression.getReturnExpr(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getReturnExpr()));
@@ -374,6 +379,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitFilterExpression(FilterExpression expression, Void argument) {
         visit(expression.getMainExpression(), null);
         visit(expression.getPredicateExpression(), null);

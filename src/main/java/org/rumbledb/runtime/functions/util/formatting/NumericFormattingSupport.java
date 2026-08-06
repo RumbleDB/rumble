@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -9,6 +10,10 @@ import java.util.*;
 public final class NumericFormattingSupport {
 
     private NumericFormattingSupport() {
+    }
+
+    public static String toDecimalString(BigInteger value) {
+        return value.bitLength() < 63 ? Long.toString(value.longValueExact()) : value.toString();
     }
 
     public static String applyGrouping(String digits, NumericPicture picture) {

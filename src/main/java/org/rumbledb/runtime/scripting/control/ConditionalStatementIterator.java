@@ -6,10 +6,12 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 
 public class ConditionalStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ConditionalStatementIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
@@ -17,12 +19,12 @@ public class ConditionalStatementIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     private RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
-        RuntimeIterator condition = this.children.get(0);
+        RuntimeIterator condition = this.getChild(0);
         boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
         if (effectiveBooleanValue) {
-            return this.children.get(1);
+            return this.getChild(1);
         } else {
-            return this.children.get(2);
+            return this.getChild(2);
         }
     }
 

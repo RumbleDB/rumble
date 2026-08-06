@@ -8,9 +8,11 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.ItemType;
 
+import java.io.Serial;
 import java.util.List;
 
 public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<Item> materializedArgument;
     private ItemType itemType;
@@ -27,7 +29,7 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private void materializeArgument(DynamicContext context) {
-        this.materializedArgument = this.children.get(0).materialize(context);
+        this.materializedArgument = this.getChild(0).materialize(context);
     }
 
     private void setArgumentType() {

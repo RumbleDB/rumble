@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -15,6 +16,7 @@ import org.rumbledb.types.SequenceType;
 
 public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator argumentIterator;
@@ -36,7 +38,7 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
         RuntimeIterator castIterator = new CastIterator(
                 this.argumentIterator,
                 this.targetSequenceType,
-                this.staticContext.withStaticType(this.targetSequenceType)
+                this.staticContext.toBuilder().staticType(this.targetSequenceType).build()
         );
         return castIterator.materializeFirstItemOrNull(dynamicContext);
     }

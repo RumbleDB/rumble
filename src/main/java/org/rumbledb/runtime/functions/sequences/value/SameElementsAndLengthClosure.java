@@ -23,6 +23,7 @@ package org.rumbledb.runtime.functions.sequences.value;
 import org.apache.spark.api.java.function.FlatMapFunction2;
 import org.rumbledb.api.Item;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -30,11 +31,11 @@ import java.util.List;
 public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public SameElementsAndLengthClosure() {
-    }
 
+    @Override
     public Iterator<Boolean> call(Iterator<Item> iterator1, Iterator<Item> iterator2) throws Exception {
         List<Boolean> list = new ArrayList<>();
         while (iterator1.hasNext() && iterator2.hasNext()) {

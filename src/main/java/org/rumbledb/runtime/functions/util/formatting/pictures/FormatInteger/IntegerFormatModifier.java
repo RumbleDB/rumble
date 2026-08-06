@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
+import lombok.Getter;
+
 public class IntegerFormatModifier {
 
     public static final String CARDINAL = "CARDINAL";
@@ -8,8 +10,12 @@ public class IntegerFormatModifier {
     public static final String ALPHABETIC = "ALPHABETIC";
     public static final String TRADITIONAL = "TRADITIONAL";
 
+    @Getter
     private final String numberType;
+    @Getter
     private final String formatSpecifier;
+
+    @SuppressWarnings("unused")
     private final String numberingVariant; // not supported yet
 
     public IntegerFormatModifier(
@@ -22,15 +28,4 @@ public class IntegerFormatModifier {
         this.numberingVariant = numberingVariant;
     }
 
-    public String getNumberType() {
-        return this.numberType;
-    }
-
-    public String getFormatSpecifier() {
-        return this.formatSpecifier;
-    }
-
-    public String getNumberingVariant() {
-        return this.numberingVariant;
-    }
 }

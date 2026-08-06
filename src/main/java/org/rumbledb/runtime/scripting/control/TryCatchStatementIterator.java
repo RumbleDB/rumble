@@ -12,9 +12,12 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator tryStatementIterator;
     private final Map<CatchPattern, RuntimeIterator> catchStatements;
@@ -24,9 +27,10 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
             Map<CatchPattern, RuntimeIterator> catchStatements,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(tryStatement);
-        this.children.addAll(catchStatements.values());
+        super(
+            Stream.concat(Stream.of(tryStatement), catchStatements.values().stream()).toList(),
+            staticContext
+        );
         this.tryStatementIterator = tryStatement;
         this.catchStatements = catchStatements;
     }

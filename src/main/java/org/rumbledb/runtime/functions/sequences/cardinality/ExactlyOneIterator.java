@@ -29,11 +29,13 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
+import java.io.Serial;
 import java.util.List;
 
 public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ExactlyOneIterator(
@@ -46,7 +48,7 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         try {
-            Item value = this.children.get(0).materializeAtMostOneItemOrNull(dynamicContext);
+            Item value = this.getChild(0).materializeAtMostOneItemOrNull(dynamicContext);
             if (value == null) {
                 throw new SequenceExceptionExactlyOne(
                         "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
@@ -65,7 +67,7 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return this.children.get(0).generateNativeQuery(nativeClauseContext);
+        return this.getChild(0).generateNativeQuery(nativeClauseContext);
     }
 
 }

@@ -18,6 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
@@ -26,6 +27,7 @@ import java.util.List;
  * It retrieves and parses an XML document from a given URI.
  */
 public class DocFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator pathIterator;
 
@@ -36,7 +38,7 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.pathIterator = this.children.get(0);
+        this.pathIterator = this.getChild(0);
         this.pathIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.pathIterator.hasNext();
         this.pathIterator.close();
@@ -48,14 +50,17 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = false;
             Item path = this.pathIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             try {
-                URI uri = FileSystemUtil.resolveURI(this.staticURI, path.getStringValue(), getMetadata());
+                URI uri = FileSystemUtil.resolveURI(
+                    this.staticContext.getStaticURI(),
+                    path.getStringValue(),
+                    getMetadata()
+                );
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 documentBuilderFactory.setNamespaceAware(true);
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                 try (
                     InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
                         uri,
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
                         getMetadata()
                     )
                 ) {
@@ -63,7 +68,8 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
                     return ItemParser.getItemFromXML(
                         xmlDocument,
                         uri.toString(),
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()
+                        this.currentDynamicContextForLocalExecution.getRumbleConfiguration()
+                            .optimization()
                             .optimizeParentPointers()
                     );
                 }

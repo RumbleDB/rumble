@@ -7,10 +7,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public EscapeHTMLURIFunctionIterator(
@@ -22,7 +24,7 @@ public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item item = this.children.get(0).materializeFirstItemOrNull(context);
+        Item item = this.getChild(0).materializeFirstItemOrNull(context);
         if (item == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
@@ -41,9 +43,14 @@ public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
         return ItemFactory.getInstance().createStringItem(result.toString());
     }
 
+    private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
+
     private static void appendPercentEncoded(StringBuilder result, int codePoint) {
         for (byte b : new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8)) {
-            result.append(String.format("%%%02X", b & 0xFF));
+            int unsigned = b & 0xFF;
+            result.append('%');
+            result.append(HEX_DIGITS[(unsigned >>> 4) & 0xF]);
+            result.append(HEX_DIGITS[unsigned & 0xF]);
         }
     }
 }

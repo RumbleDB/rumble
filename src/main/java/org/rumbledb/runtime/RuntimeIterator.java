@@ -20,28 +20,19 @@
 
 package org.rumbledb.runtime;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
+import lombok.Getter;
+import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.BreakStatementException;
-import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -51,36 +42,28 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.runtime.typing.TypeInferrenceUtils;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
-public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
+public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+    @Serial
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
+    @Getter
     protected transient boolean isOpen;
-    protected boolean isUpdating;
-    protected transient boolean isSequential;
-    protected List<RuntimeIterator> children;
+    private List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
-    protected URI staticURI;
-    // private StaticContext staticContext;
 
-    protected RuntimeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    protected RuntimeIterator(List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
         if (this.staticContext.getStaticType() == null) {
             throw new OurBadException(
@@ -88,22 +71,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             );
         }
         this.isOpen = false;
-        this.isUpdating = false;
-        this.isSequential = false;
 
-        this.children = new ArrayList<>();
-        if (children != null && !children.isEmpty()) {
-            this.children.addAll(children);
-        }
-    }
-
-    // For performance reasons, and as only the static URI is really needed at the moment, we only store it.
-    // This avoids the deserialization of many static context copies at runtime.
-    public void setStaticContext(StaticContext staticContext) {
-        if (this.staticURI != null) {
-            throw new OurBadException("Static context already consumed.");
-        }
-        this.staticURI = staticContext.getStaticBaseURI();
+        this.children = List.copyOf(Objects.requireNonNullElse(children, Collections.emptyList()));
     }
 
     /**
@@ -121,85 +90,84 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * @return the effective boolean value.
      */
     public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
-        open(dynamicContext);
-        if (hasNext()) {
-            Item item = this.next();
-            boolean result;
-            if (item.isBoolean()) {
-                result = item.getBooleanValue();
-            } else if (item.isNumeric()) {
-                if (position == null) {
-                    if (item.isInt()) {
-                        result = item.getIntValue() != 0;
-                    } else if (item.isInteger()) {
-                        result = !item.getIntegerValue().equals(BigInteger.ZERO);
-                    } else if (item.isDouble()) {
-                        result = !item.isNaN() && item.getDoubleValue() != 0;
-                    } else if (item.isFloat()) {
-                        result = !item.isNaN() && item.getFloatValue() != 0;
-                    } else if (item.isDecimal()) {
-                        result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
-                    } else {
-                        throw new OurBadException(
-                                "Unexpected numeric type found while calculating effective boolean value."
-                        );
-                    }
-                } else {
-                    result = ComparisonIterator.compareItems(
-                        item,
-                        position,
-                        ComparisonOperator.VC_EQ,
-                        getMetadata()
-                    ) == 0;
-                }
-            } else if (item.isNull()) {
-                result = false;
-            } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
-                result = !item.getStringValue().isEmpty();
-            } else if (item.isNode()) {
-                // returns true even if sequence has more items according to spec
-                this.close();
-                return true;
-            } else {
-                if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
-                    if (item.isObject() || item.isArray()) {
-                        this.close();
-                        return true;
-                    }
-                } else {
-                    if (item.isObject() || item.isArray()) {
-                        System.err.println(
-                            "Note: effective boolean value of "
-                                + (item.isObject() ? "Object " : "Array ")
-                                + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
-                        );
-                    }
-                }
-                throw new InvalidArgumentTypeException(
-                        "Effective boolean value not defined for items of type "
-                            +
-                            item.getDynamicType().toString(),
-                        getMetadata()
-                );
-            }
-
+        try {
+            open(dynamicContext);
             if (hasNext()) {
-                throw new InvalidArgumentTypeException(
-                        "Effective boolean value not defined for sequences of more than one atomic item. "
-                            + "Sequence containing: "
-                            + item.serialize()
-                            + " must be a singleton.",
-                        getMetadata()
-                );
+                Item item = this.next();
+                boolean result;
+                if (item.isBoolean()) {
+                    result = item.getBooleanValue();
+                } else if (item.isNumeric()) {
+                    if (position == null) {
+                        if (item.isInt()) {
+                            result = item.getIntValue() != 0;
+                        } else if (item.isInteger()) {
+                            result = !item.getIntegerValue().equals(BigInteger.ZERO);
+                        } else if (item.isDouble()) {
+                            result = !item.isNaN() && item.getDoubleValue() != 0;
+                        } else if (item.isFloat()) {
+                            result = !item.isNaN() && item.getFloatValue() != 0;
+                        } else if (item.isDecimal()) {
+                            result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
+                        } else {
+                            throw new OurBadException(
+                                    "Unexpected numeric type found while calculating effective boolean value."
+                            );
+                        }
+                    } else {
+                        result = ComparisonIterator.compareItems(
+                            item,
+                            position,
+                            ComparisonOperator.VC_EQ,
+                            getMetadata()
+                        ) == 0;
+                    }
+                } else if (item.isNull()) {
+                    result = false;
+                } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
+                    result = !item.getStringValue().isEmpty();
+                } else if (item.isNode()) {
+                    // returns true even if sequence has more items according to spec
+                    return true;
+                } else {
+                    if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
+                        if (item.isObject() || item.isArray()) {
+                            return true;
+                        }
+                    } else {
+                        if (item.isObject() || item.isArray()) {
+                            System.err.println(
+                                "Note: effective boolean value of "
+                                    + (item.isObject() ? "Object " : "Array ")
+                                    + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
+                            );
+                        }
+                    }
+                    throw new InvalidArgumentTypeException(
+                            "Effective boolean value not defined for items of type "
+                                +
+                                item.getDynamicType().toString(),
+                            getMetadata()
+                    );
+                }
+
+                if (hasNext()) {
+                    throw new InvalidArgumentTypeException(
+                            "Effective boolean value not defined for sequences of more than one atomic item. "
+                                + "Sequence containing: "
+                                + item.serialize()
+                                + " must be a singleton.",
+                            getMetadata()
+                    );
+                }
+
+                return result;
+            } else {
+                return false;
             }
-
+        } finally {
             this.close();
-            return result;
-        } else {
-            this.close();
-            return false;
         }
-
     }
 
     /**
@@ -216,6 +184,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.getEffectiveBooleanValueOrCheckPosition(dynamicContext, null);
     }
 
+    @Override
     public void open(DynamicContext context) {
         if (context == null) {
             throw new IteratorFlowException(
@@ -231,38 +200,24 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.currentDynamicContextForLocalExecution = context;
     }
 
+    @Override
     public void close() {
         this.isOpen = false;
     }
 
-    public void reset(DynamicContext context) {
-        this.hasNext = true;
-        this.currentDynamicContextForLocalExecution = context;
-        this.children.forEach(c -> c.reset(context));
-    }
+
 
     @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.children);
-        // TODO serializer other fields
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.hasNext = false;
-        this.isOpen = false;
-        this.currentDynamicContextForLocalExecution = null;
-        this.children = kryo.readObject(input, ArrayList.class);
-        // TODO serializer other fields
-    }
-
     public boolean hasNext() {
         return this.hasNext;
     }
 
-    public boolean isOpen() {
-        return this.isOpen;
+    protected final RuntimeIterator getChild(int index) {
+        return this.children.get(index);
+    }
+
+    protected final List<RuntimeIterator> getChildren() {
+        return this.children;
     }
 
     public ExceptionMetadata getMetadata() {
@@ -277,7 +232,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.staticContext.getStaticType();
     }
 
-    public RumbleRuntimeConfiguration getConfiguration() {
+    public RumbleConfiguration getConfiguration() {
         return this.staticContext.getConfiguration();
     }
 
@@ -335,7 +290,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         throw new OurBadException(
                 "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
@@ -347,66 +302,18 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * 
      * @return the DataFrame.
      */
-    public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
+    public final RuntimeDataFrame<Item> getOrCreateDataFrame(DynamicContext context) {
         if (isDataFrame()) {
             return this.getDataFrame(context);
         }
         if (isRDD()) {
-            if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
-                return ValidateTypeIterator.convertRDDToValidDataFrame(
-                    this.getRDD(context),
-                    this.getStaticType().getItemType(),
-                    context,
-                    true,
-                    this.staticContext
-                );
-            } else {
-                JavaRDD<Item> rdd = this.getRDD(context);
-                ItemType type = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                    rdd,
-                    getMetadata(),
-                    TypeInferrenceUtils.TypeMergeMode.LAX
-                );
-                return ValidateTypeIterator.convertRDDToValidDataFrame(
-                    rdd,
-                    type,
-                    context,
-                    true,
-                    this.staticContext
-                );
-            }
+            return ItemRuntimeDataFrameFactory.INSTANCE.fromRDD(this.getRDD(context), context, this.staticContext);
         }
-        List<Item> items = new ArrayList<>();
-        materialize(context, items);
-        if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
-            return ValidateTypeIterator.convertLocalItemsToDataFrame(
-                items,
-                this.getStaticType().getItemType(),
-                context,
-                true,
-                this.staticContext
-            );
-        } else {
-            ItemType type = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items,
-                getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
-            if (this.getConfiguration().printInferredTypes()) {
-                System.err.println("Inferred DataFrame type:\n" + this.getStaticType().getItemType());
-            }
-            return ValidateTypeIterator.convertLocalItemsToDataFrame(
-                items,
-                type,
-                context,
-                true,
-                this.staticContext
-            );
-        }
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromList(this.materialize(context), context, this.staticContext);
     }
 
     public boolean isUpdating() {
-        return this.isUpdating;
+        return this.staticContext.isUpdating();
     }
 
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
@@ -417,9 +324,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public boolean isSequential() {
-        return this.isSequential;
+        return this.staticContext.isSequential();
     }
 
+    @Override
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {
@@ -429,11 +337,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             while (this.hasNext()) {
                 result.add(this.next());
             }
-            this.close();
             return result;
-        } catch (BreakStatementException | ContinueStatementException controlException) {
+        } finally {
             this.close();
-            throw controlException;
         }
     }
 
@@ -445,31 +351,39 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      */
     public void materialize(DynamicContext context, List<Item> result) {
         result.clear();
-        this.open(context);
-        while (this.hasNext()) {
-            result.add(this.next());
+        try {
+            this.open(context);
+            while (this.hasNext()) {
+                result.add(this.next());
+            }
+        } finally {
+            this.close();
         }
-        this.close();
     }
 
     public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
         result.clear();
-        this.open(context);
-        int i = 0;
-        while (this.hasNext() && i < n) {
-            result.add(this.next());
-            ++i;
+        try {
+            this.open(context);
+            int i = 0;
+            while (this.hasNext() && i < n) {
+                result.add(this.next());
+                ++i;
+            }
+        } finally {
+            this.close();
         }
-        this.close();
     }
 
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
-        this.open(context);
-        Item result = this.hasNext() ? this.next() : null;
-        this.close();
-        return result;
+        try {
+            this.open(context);
+            return this.hasNext() ? this.next() : null;
+        } finally {
+            this.close();
+        }
     }
 
     public Item materializeExactlyOneItem(
@@ -477,33 +391,38 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     )
             throws NoItemException,
                 MoreThanOneItemException {
-        this.open(context);
-        if (!this.hasNext()) {
-            throw new NoItemException();
+        try {
+            this.open(context);
+            if (!this.hasNext()) {
+                throw new NoItemException();
+            }
+            Item result = this.next();
+            if (this.hasNext()) {
+                throw new MoreThanOneItemException();
+            }
+            return result;
+        } finally {
+            this.close();
         }
-        Item result = this.next();
-        if (this.hasNext()) {
-            throw new MoreThanOneItemException();
-        }
-        this.close();
-        return result;
     }
 
     public Item materializeAtMostOneItemOrNull(
             DynamicContext context
     )
             throws MoreThanOneItemException {
-        this.open(context);
-        if (!this.hasNext()) {
+        try {
+            this.open(context);
+            if (!this.hasNext()) {
+                return null;
+            }
+            Item result = this.next();
+            if (this.hasNext()) {
+                throw new MoreThanOneItemException();
+            }
+            return result;
+        } finally {
             this.close();
-            return null;
         }
-        Item result = this.next();
-        if (this.hasNext()) {
-            throw new MoreThanOneItemException();
-        }
-        this.close();
-        return result;
     }
 
     public Item materializeAtMostOneItemOrDefault(
@@ -528,12 +447,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
-    public void printToStandardError() {
-        StringBuilder sb = new StringBuilder();
-        this.print(sb, 0);
-        System.err.println(sb);
-    }
-
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
@@ -546,7 +459,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(" | ");
         buffer.append(this.isUpdating() ? "updating" : "simple");
         buffer.append(" | ");
-        buffer.append(this.isSequential ? "sequential" : "non-sequential");
+        buffer.append(this.isSequential() ? "sequential" : "non-sequential");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");

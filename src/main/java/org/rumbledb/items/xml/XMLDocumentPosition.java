@@ -20,28 +20,26 @@
 
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.io.Serializable;
-import java.util.Objects;
 import java.util.UUID;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 /**
  * The `XMLDocumentPosition` class represents the position of an item within an XML document.
  * It provides information about the document's path and the item's position within the document.
  * This class is used to ensure the uniqueness and ordering of items across XML documents.
  */
-public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable, KryoSerializable {
+@Getter
+@EqualsAndHashCode
+public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String path;
     private int docPosition;
-
-    // needed for kryo
-    public XMLDocumentPosition() {
-    }
 
     public XMLDocumentPosition(String path, int docPosition) {
         this.path = path;
@@ -53,26 +51,6 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
     }
 
     @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.path);
-        output.writeInt(this.docPosition);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.path = input.readString();
-        this.docPosition = input.readInt();
-    }
-
-    public String getPath() {
-        return this.path;
-    }
-
-    public int getDocPosition() {
-        return this.docPosition;
-    }
-
-    @Override
     public int compareTo(XMLDocumentPosition o) {
         int pathResult = this.path.compareTo(o.getPath());
         if (pathResult == 0) {
@@ -81,18 +59,4 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
         return pathResult;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        XMLDocumentPosition that = (XMLDocumentPosition) o;
-        return getDocPosition() == that.getDocPosition() && Objects.equals(getPath(), that.getPath());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getPath(), getDocPosition());
-    }
 }

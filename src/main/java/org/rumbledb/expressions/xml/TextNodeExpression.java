@@ -23,6 +23,7 @@ package org.rumbledb.expressions.xml;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -34,11 +35,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-element-constructor">XQuery 3.1, 3.9.1: Direct Element
  *      Constructors</a>
  */
+@Getter
 public class TextNodeExpression extends Expression {
 
     /** The content of the text node */
-    private String content;
-    private boolean boundaryWhitespace;
+    private final String content;
+    private final boolean boundaryWhitespace;
 
     /**
      * Constructor for a text node.
@@ -54,19 +56,6 @@ public class TextNodeExpression extends Expression {
         super(metadata);
         this.content = content;
         this.boundaryWhitespace = boundaryWhitespace;
-    }
-
-    /**
-     * Get the content of the text node
-     * 
-     * @return The content of the text node
-     */
-    public String getContent() {
-        return this.content;
-    }
-
-    public boolean isBoundaryWhitespace() {
-        return this.boundaryWhitespace;
     }
 
     @Override

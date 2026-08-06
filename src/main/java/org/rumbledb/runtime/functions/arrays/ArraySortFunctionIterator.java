@@ -18,6 +18,7 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,7 +38,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -52,6 +53,7 @@ import org.rumbledb.types.SequenceType;
  */
 public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
@@ -167,7 +169,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
     private KeyComputer buildKeyComputer(DynamicContext context) {
         if (this.keyIterator == null) {
-            return (member, ctx) -> fnDataKeySequence(member, ctx);
+            return (member, ctx) -> fnDataKeySequence(member);
         }
         List<Item> keySpec = this.keyIterator.materialize(context);
         if (keySpec.isEmpty()) {
@@ -193,7 +195,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         }
         if (spec.isObject()) {
             Item map = spec;
-            return (member, ctx) -> keyFromMapLookup(map, member, ctx);
+            return (member, ctx) -> keyFromMapLookup(map, member);
         }
         throw new UnexpectedTypeException(
                 "Type error; third argument to array:sort must be a function item, map, or array.",
@@ -205,7 +207,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
      * F&amp;O {@code fn:data} on a member sequence: arrays are flattened by member (recursive); maps and functions
      * error; nodes and atomics are atomized.
      */
-    private List<Item> fnDataKeySequence(List<Item> member, DynamicContext context) {
+    private List<Item> fnDataKeySequence(List<Item> member) {
         List<Item> out = new ArrayList<>();
         for (Item item : member) {
             fnDataAppend(item, out);
@@ -280,8 +282,8 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         return materializeKeyIterator(lookup, context);
     }
 
-    private List<Item> keyFromMapLookup(Item mapItem, List<Item> memberSequence, DynamicContext context) {
-        List<Item> atomized = fnDataKeySequence(memberSequence, context);
+    private List<Item> keyFromMapLookup(Item mapItem, List<Item> memberSequence) {
+        List<Item> atomized = fnDataKeySequence(memberSequence);
         if (atomized.size() != 1) {
             throw new UnexpectedTypeException(
                     "Type error; map key function expects each member to atomize to a single atomic value.",
@@ -293,7 +295,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         if (value == null) {
             return Collections.emptyList();
         }
-        return fnDataKeySequence(Collections.singletonList(value), context);
+        return fnDataKeySequence(Collections.singletonList(value));
     }
 
     private List<Item> materializeIterator(RuntimeIterator iterator, DynamicContext context) {
@@ -310,14 +312,16 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> materializeKeyIterator(RuntimeIterator iterator, DynamicContext context) {
-        return fnDataKeySequence(materializeIterator(iterator, context), context);
+        return fnDataKeySequence(materializeIterator(iterator, context));
     }
 
     private RuntimeStaticContext localStaticContext() {
         return getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(ExecutionMode.LOCAL)
-            .withMetadata(getMetadata());
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
@@ -350,20 +354,6 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.arrayIterator.reset(this.currentDynamicContextForLocalExecution);
-        if (this.collationIterator != null) {
-            this.collationIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        if (this.keyIterator != null) {
-            this.keyIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.arrayIterator.isOpen()) {
             this.arrayIterator.close();
@@ -389,7 +379,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("array:sort is currently supported only in local execution mode.");
     }
 

@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -29,6 +30,7 @@ import org.rumbledb.expressions.Node;
 import java.util.Collections;
 import java.util.List;
 
+@Getter
 public class FlworExpression extends Expression {
 
     private ReturnClause returnClause;
@@ -48,10 +50,7 @@ public class FlworExpression extends Expression {
         this.returnClause = returnClause;
     }
 
-    public ReturnClause getReturnClause() {
-        return this.returnClause;
-    }
-
+    @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.returnClause);
     }

@@ -17,6 +17,7 @@
 
 package org.rumbledb.expressions.miscellaneous;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -26,8 +27,10 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class NodeSetExpression extends Expression {
 
+    @Getter
     public enum NodeSetOperator {
         UNION("union"),
         INTERSECT("intersect"),
@@ -37,10 +40,6 @@ public class NodeSetExpression extends Expression {
 
         NodeSetOperator(String symbol) {
             this.symbol = symbol;
-        }
-
-        public String getSymbol() {
-            return this.symbol;
         }
 
         public static NodeSetOperator fromSymbol(String symbol) {
@@ -58,9 +57,9 @@ public class NodeSetExpression extends Expression {
         }
     }
 
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private NodeSetOperator operator;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+    private final NodeSetOperator operator;
 
     public NodeSetExpression(
             Expression leftExpression,
@@ -82,18 +81,6 @@ public class NodeSetExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
-    }
-
-    public Expression getLeftExpression() {
-        return this.leftExpression;
-    }
-
-    public Expression getRightExpression() {
-        return this.rightExpression;
-    }
-
-    public NodeSetOperator getOperator() {
-        return this.operator;
     }
 
     @Override

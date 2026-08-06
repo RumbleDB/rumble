@@ -20,15 +20,22 @@
 
 package org.rumbledb.errorcodes;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import lombok.EqualsAndHashCode;
+
+@Getter
+@EqualsAndHashCode
 public final class ErrorCode implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static final Map<String, ErrorCode> BUILTIN_BY_IDENTIFIER = new HashMap<>();
@@ -45,30 +52,17 @@ public final class ErrorCode implements Serializable {
         return errorCode;
     }
 
-    public Name getName() {
-        return this.name;
-    }
-
     public String getLocalName() {
         return this.name.getLocalName();
     }
 
     @Override
     public String toString() {
-        return this.name.getLocalName();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ErrorCode errorCode)) {
-            return false;
+        String namespace = this.name.getNamespace();
+        if (Name.ERROR_NS.equals(namespace)) {
+            return this.name.getLocalName();
         }
-        return this.name.equals(errorCode.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name.hashCode();
+        return "Q{" + (namespace == null ? "" : namespace) + "}" + this.name.getLocalName();
     }
 
     public static final ErrorCode DivisionByZero = registerBuiltIn("FOAR0001");
@@ -85,7 +79,9 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode CodepointNotValidErrorCode = registerBuiltIn("FOCH0001");
     public static final ErrorCode UnsupportedCollationExceptionCode = registerBuiltIn("FOCH0002");
     public static final ErrorCode InvalidNormalizationForm = registerBuiltIn("FOCH0003");
+    public static final ErrorCode NodeNotInDocumentErrorCode = registerBuiltIn("FODC0001");
     public static final ErrorCode CannotRetrieveResourceErrorCode = registerBuiltIn("FODC0002");
+    public static final ErrorCode InvalidXmlDocumentErrorCode = registerBuiltIn("FODC0006");
 
     public static final ErrorCode UnidentifiedErrorExceptionCode = registerBuiltIn("FOER0000");
 
@@ -186,14 +182,17 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DefaultCollationExceptionCode = registerBuiltIn("XQST0038");
     public static final ErrorCode DuplicateParamName = registerBuiltIn("XQST0039");
     public static final ErrorCode AnnotationInReservedNamespaceErrorCode = registerBuiltIn("XQST0045");
+    public static final ErrorCode InvalidURILiteralErrorCode = registerBuiltIn("XQST0046");
     public static final ErrorCode DuplicateModuleTargetNamespace = registerBuiltIn("XQST0047");
     public static final ErrorCode NamespaceDoesNotMatchModule = registerBuiltIn("XQST0048");
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
     public static final ErrorCode UnknownCastTypeErrorCode = registerBuiltIn("XQST0052");
+    public static final ErrorCode MoreThanOneCopyNamespacesDeclarationErrorCode = registerBuiltIn("XQST0055");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
     public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
+    public static final ErrorCode UnknownCollationInQueryPrologOrClause = registerBuiltIn("XQST0076");
     public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
     public static final ErrorCode EmptyModuleURIErrorCode = registerBuiltIn("XQST0088");
     public static final ErrorCode PositionalVariableNameSameAsForVariable = registerBuiltIn("XQST0089");
@@ -219,6 +218,7 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode UpdatingFunctionHasReturnTypeErrorCode = registerBuiltIn("XUST0028");
 
+    public static final ErrorCode InvalidAttributeNameErrorCode = registerBuiltIn("XQDY0044");
     public static final ErrorCode InvalidElementNameExpressionErrorCode = registerBuiltIn("XQDY0074");
     public static final ErrorCode InvalidCommentContentErrorCode = registerBuiltIn("XQDY0072");
     public static final ErrorCode InvalidNodeNameErrorCode = registerBuiltIn("XQDY0096");

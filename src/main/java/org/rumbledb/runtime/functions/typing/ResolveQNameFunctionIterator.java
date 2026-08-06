@@ -2,14 +2,19 @@ package org.rumbledb.runtime.functions.typing;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnimplementedFunctionException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
+import java.io.Serial;
 import java.util.List;
 
 public class ResolveQNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ResolveQNameFunctionIterator(
@@ -21,6 +26,37 @@ public class ResolveQNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        throw new UnimplementedFunctionException("fn:resolve-QName", getMetadata());
+        Item qnameItem = this.getChild(0).materializeFirstItemOrNull(context);
+        if (qnameItem == null) {
+            return null;
+        }
+
+        Item element = this.getChild(1).materializeFirstItemOrNull(context);
+        if (element == null || !element.isElementNode()) {
+            throw new UnexpectedTypeException(
+                    "The second argument to fn:resolve-QName must be an element node",
+                    getMetadata()
+            );
+        }
+
+        NamespaceBindingUtils.NamespaceResolver resolver = prefix -> resolvePrefix(element, prefix);
+        Name resolved = NamespaceBindingUtils.parseLexicalQNameForResolveQName(
+            qnameItem.getStringValue(),
+            resolver,
+            getMetadata()
+        );
+        return ItemFactory.getInstance().createQNameItem(resolved);
+    }
+
+    private static String resolvePrefix(Item element, String prefix) {
+        for (Item nsNode : element.namespaceNodes()) {
+            Name nsName = nsNode.nodeName();
+            String nodePrefix = nsName == null ? "" : nsName.getLocalName();
+            if (nodePrefix.equals(prefix)) {
+                String uri = nsNode.getStringValue();
+                return uri.isEmpty() && prefix.isEmpty() ? null : uri;
+            }
+        }
+        return null;
     }
 }

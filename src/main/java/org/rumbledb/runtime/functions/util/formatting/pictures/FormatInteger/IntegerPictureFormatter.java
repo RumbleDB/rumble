@@ -10,8 +10,12 @@ import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
 import java.math.BigInteger;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class IntegerPictureFormatter {
+
+    private static final Map<String, FormatIntegerPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
 
     private IntegerPictureFormatter() {
     }
@@ -55,11 +59,15 @@ public final class IntegerPictureFormatter {
         BigInteger absValue = value.abs();
 
         // Resolve the locale once and pass it to the handlers.
-        ULocale locale = ULocale.forLanguageTag(
+        ULocale locale = LanguageSupport.resolveULocale(
             LanguageSupport.effectiveLanguageOf(LanguageSupport.normalizeLanguage(language))
         );
 
-        FormatIntegerPicture picture = FormatIntegerPictureParser.parse(pictureString, metadata);
+        FormatIntegerPicture picture = PICTURE_CACHE.get(pictureString);
+        if (picture == null) {
+            picture = FormatIntegerPictureParser.parse(pictureString, metadata);
+            PICTURE_CACHE.putIfAbsent(pictureString, picture);
+        }
         PrimaryFormatToken primary = picture.getPrimaryFormatToken();
         IntegerFormatModifier modifier = picture.getFormatModifier();
 
@@ -99,7 +107,7 @@ public final class IntegerPictureFormatter {
     ) {
         NumericPicture picture = primary.getNumericPicture();
 
-        String digits = value.toString();
+        String digits = NumericFormattingSupport.toDecimalString(value);
 
         int zeroesRemaining = picture.getMandatoryDigitCount() - digits.length();
         if (zeroesRemaining > 0) {
@@ -184,7 +192,7 @@ public final class IntegerPictureFormatter {
             IntegerFormatModifier modifier,
             ULocale locale
     ) {
-        String result = value.toString();
+        String result = NumericFormattingSupport.toDecimalString(value);
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {
             result = result + NumberWords.ordinalSuffix(value, locale);

@@ -27,11 +27,13 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PredicateClosure implements Function<Item, Boolean> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator expression;
     private final DynamicContext dynamicContext;

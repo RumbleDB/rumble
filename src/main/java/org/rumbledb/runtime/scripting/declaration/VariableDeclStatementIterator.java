@@ -9,9 +9,11 @@ import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final Name variableName;
 
@@ -30,8 +32,8 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
         if (variableValues.containsLocally(variableValues, this.variableName)) {
             throw new VariableAlreadyExistsException(this.variableName, this.getMetadata());
         }
-        if (this.children != null && !this.children.isEmpty()) {
-            RuntimeIterator exprIterator = this.children.get(0);
+        if (!this.getChildren().isEmpty()) {
+            RuntimeIterator exprIterator = this.getChild(0);
             exprIterator.bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext);
         } else {
             // Casting needed to distinguish between local and RDD variables.

@@ -12,9 +12,11 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.List;
 
 public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public FunctionNameFunctionIterator(
@@ -26,7 +28,7 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator functionIterator = this.children.get(0);
+        RuntimeIterator functionIterator = this.getChild(0);
         /*
          * TODO remove...
          * Currently used for debugging, this guard fails when given an if statement

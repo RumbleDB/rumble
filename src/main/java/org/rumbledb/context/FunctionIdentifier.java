@@ -20,43 +20,28 @@
 
 package org.rumbledb.context;
 
+import java.io.Serial;
 import java.io.Serializable;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+
+@Getter
+@EqualsAndHashCode
 public class FunctionIdentifier implements Serializable {
     private int arity;
     private Name name;
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public FunctionIdentifier() {
-    }
 
     public FunctionIdentifier(Name functionName, int arity) {
         this.name = functionName;
         this.arity = arity;
     }
 
-    public int getArity() {
-        return this.arity;
-    }
-
-    public Name getName() {
-        return this.name;
-    }
-
     public Name getNameWithArity() {
         return this.name.addArityToFunctionName(this.getArity());
-    }
-
-    @Override
-    public boolean equals(Object instance) {
-        return instance instanceof FunctionIdentifier functionIdentifier
-            && this.name.equals(functionIdentifier.getName())
-            && this.arity == functionIdentifier.getArity();
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name.hashCode() + this.arity;
     }
 
     @Override

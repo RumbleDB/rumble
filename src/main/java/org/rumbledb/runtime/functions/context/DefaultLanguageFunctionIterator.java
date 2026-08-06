@@ -7,9 +7,11 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class DefaultLanguageFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public DefaultLanguageFunctionIterator(
@@ -21,7 +23,7 @@ public class DefaultLanguageFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        String defaultLanguage = getConfiguration().getDefaultFormattingLanguage();
+        String defaultLanguage = getConfiguration().formatting().defaultFormattingLanguage();
         return ItemFactory.getInstance().createLanguageItem(defaultLanguage);
     }
 }

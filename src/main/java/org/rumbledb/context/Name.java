@@ -20,15 +20,13 @@
 
 package org.rumbledb.context;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
+
+import lombok.Getter;
 import org.rumbledb.exceptions.OurBadException;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+
+import lombok.EqualsAndHashCode;
 
 /**
  * This class represents expanded names, corresponding to QNames in the W3C XQuery standard.
@@ -43,12 +41,20 @@ import com.esotericsoftware.kryo.io.Output;
  * @author Ghislain Fourny
  *
  */
-public class Name implements Comparable<Name>, Serializable, KryoSerializable {
+@Getter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class Name implements Comparable<Name>, Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private String namespace;
-    private String prefix;
-    private String localName;
-    private transient int hashCode;
+
+    @EqualsAndHashCode.Include
+    private final String namespace;
+
+    private final String prefix;
+
+    @EqualsAndHashCode.Include
+    private final String localName;
+
     public static final String JSONIQ_DEFAULT_TYPE_NS = "http://jsoniq.org/default-type-namespace";
     public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
     public static final String FN_NS = "http://www.w3.org/2005/xpath-functions";
@@ -75,13 +81,6 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         "$186e9958-978d-421c-96dd-9306ff5644b8"
     );
 
-    public Name() {
-        this.namespace = null;
-        this.prefix = null;
-        this.localName = null;
-        this.hashCode = 0;
-    }
-
     public Name(String namespace, String prefix, String localName) {
         this.namespace = namespace;
         this.prefix = prefix;
@@ -89,7 +88,6 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         if (this.prefix != null && this.namespace == null) {
             throw new OurBadException("Namespace is null, but prefix is present");
         }
-        precomputeHashCode();
     }
 
     /**
@@ -214,18 +212,6 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         return new Name(this.namespace, this.prefix, this.localName + "#" + arity);
     }
 
-    public String getNamespace() {
-        return this.namespace;
-    }
-
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    public String getLocalName() {
-        return this.localName;
-    }
-
     /**
      * Converts to a string. If there is a prefix, it is used. Otherwise, if there is a namespace, the Clark notation of
      * the expanded name is returned.
@@ -263,64 +249,4 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         return this.localName.compareTo(other.localName);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof Name other)) {
-            return false;
-        }
-        if (this.namespace == null && other.namespace != null) {
-            return false;
-        }
-        if (this.namespace != null && other.namespace == null) {
-            return false;
-        }
-        if (this.namespace == null && other.namespace == null) {
-            return this.localName.equals(other.localName);
-        }
-        if (!this.namespace.equals(other.namespace)) {
-            return false;
-        }
-        return this.localName.equals(other.localName);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.hashCode;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.namespace);
-        output.writeString(this.prefix);
-        output.writeString(this.localName);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.namespace = input.readString();
-        this.prefix = input.readString();
-        this.localName = input.readString();
-        precomputeHashCode();
-    }
-
-    public void precomputeHashCode() {
-        if (this.localName == null) {
-            this.hashCode = 0;
-            return;
-        }
-        if (this.namespace == null) {
-            this.hashCode = this.localName.hashCode();
-            return;
-        }
-        this.hashCode = this.localName.hashCode() + this.namespace.hashCode();
-    }
-
-    private void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
-        i.defaultReadObject();
-        precomputeHashCode();
-    }
-
-    private void writeObject(ObjectOutputStream i) throws IOException {
-        i.defaultWriteObject();
-    }
 }

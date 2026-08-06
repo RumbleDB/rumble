@@ -35,21 +35,18 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import com.google.gson.stream.JsonReader;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    RuntimeIterator iterator;
+    final RuntimeIterator iterator;
     BufferedReader reader;
     Item path;
     Item nextItem;
@@ -59,7 +56,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
         this.reader = null;
         this.nextItem = null;
         this.path = null;
@@ -67,19 +64,18 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+        String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 
         int partitions = -1;
-        if (this.children.size() > 1) {
-            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 1) {
+            partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
         }
 
         JavaRDD<String> strings;
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                context.getRumbleRuntimeConfiguration(),
                 getMetadata()
             );
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -105,7 +101,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                     );
             }
         } else {
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 
@@ -131,14 +127,13 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
     protected void init() {
         try {
-            URI uri = FileSystemUtil.resolveURI(
-                this.staticURI,
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                this.staticContext.getStaticURI(),
                 this.path.getStringValue(),
                 getMetadata()
             );
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
                 getMetadata()
             );
             this.reader = new BufferedReader(new InputStreamReader(is));
@@ -163,17 +158,6 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
         }
         this.reader = null;
         this.nextItem = null;
-    }
-
-    @Override
-    protected void resetLocal() {
-        try {
-            this.reader.close();
-        } catch (IOException e) {
-            handleException(e);
-        }
-        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        init();
     }
 
     @Override

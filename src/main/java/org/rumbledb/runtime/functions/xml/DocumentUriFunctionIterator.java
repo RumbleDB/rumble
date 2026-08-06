@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -58,6 +59,7 @@ import java.util.List;
  *      Operators 3.1: fn:document-uri</a>
  */
 public class DocumentUriFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private List<Item> resultItems;
@@ -118,14 +120,14 @@ public class DocumentUriFunctionIterator extends LocalFunctionCallIterator {
      * If a parameter is provided, uses the first parameter.
      */
     private Item getContextNode() {
-        if (this.children.isEmpty()) {
+        if (this.getChildren().isEmpty()) {
             // No argument provided, use context item
             return this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
         }
         // Argument provided, use first parameter
-        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
 

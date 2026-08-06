@@ -24,22 +24,20 @@ package org.rumbledb.expressions.primary;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
+@Getter
 public class IntegerLiteralExpression extends Expression {
 
-    private String lexicalValue;
+    private final String lexicalValue;
 
     public IntegerLiteralExpression(String lexicalValue, ExceptionMetadata metadata) {
         super(metadata);
         this.lexicalValue = lexicalValue;
-    }
-
-    public String getLexicalValue() {
-        return this.lexicalValue;
     }
 
     @Override
@@ -52,6 +50,7 @@ public class IntegerLiteralExpression extends Expression {
         return new ArrayList<>();
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

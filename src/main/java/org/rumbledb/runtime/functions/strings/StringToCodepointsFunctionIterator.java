@@ -28,10 +28,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Item nextResult;
     private String input;
@@ -65,7 +67,7 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
     public void setNextResult() {
         if (this.input == null) {
             // Getting first parameter
-            Item stringItem = this.children.get(0)
+            Item stringItem = this.getChild(0)
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             if (stringItem == null) {

@@ -21,6 +21,7 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.WhitespaceFacet;
 import org.rumbledb.types.SequenceType.Arity;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.regex.Pattern;
 
 
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
     private final SequenceType sequenceType;
@@ -43,6 +45,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         this.sequenceType = sequenceType;
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
@@ -501,6 +504,22 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             } else if (item.isBoolean()) {
                 convertedValue = ItemFactory.getInstance()
                     .createDecimalItem(item.getBooleanValue() ? BigDecimal.ONE : BigDecimal.ZERO);
+            } else if (item.isFloat()) {
+                float value = item.getFloatValue();
+                item.castToDecimalValue(); // validates that the value is finite
+                convertedValue = ItemFactory.getInstance()
+                    .createDecimalItem(
+                        new BigDecimal(value),
+                        new BigDecimal(Float.toString(value)).stripTrailingZeros().toPlainString()
+                    );
+            } else if (item.isDouble()) {
+                double value = item.getDoubleValue();
+                item.castToDecimalValue(); // validates that the value is finite
+                convertedValue = ItemFactory.getInstance()
+                    .createDecimalItem(
+                        new BigDecimal(value),
+                        BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+                    );
             } else if (item.isNumeric()) {
                 convertedValue = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
             }
@@ -821,13 +840,13 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
         ItemType primitive = targetType.getCastingPrimitiveType();
         java.util.List<String> patterns = primitive.getLexicalSpacePatterns();
-        if (patterns == null || patterns.isEmpty()) {
-            return true;
-        }
         String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null) {
             return xmlNameValidation;
+        }
+        if (patterns == null || patterns.isEmpty()) {
+            return true;
         }
         for (String regex : patterns) {
             if (Pattern.matches(regex, lexical)) {
@@ -875,16 +894,44 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsString(Item item, ItemType targetType) {
+        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         if (
-            (targetType.getLengthFacet() != null && item.getStringValue().length() != targetType.getLengthFacet())
+            (targetType.getLengthFacet() != null && lexical.length() != targetType.getLengthFacet())
                 ||
                 (targetType.getMinLengthFacet() != null
-                    && item.getStringValue().length() < targetType.getMinLengthFacet())
+                    && lexical.length() < targetType.getMinLengthFacet())
                 ||
                 (targetType.getMaxLengthFacet() != null
-                    && item.getStringValue().length() > targetType.getMaxLengthFacet())
+                    && lexical.length() > targetType.getMaxLengthFacet())
         ) {
             return false;
+        }
+
+        Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
+        if (xmlNameValidation != null && !xmlNameValidation) {
+            return false;
+        }
+        if (xmlNameValidation != null) {
+            return true;
+        }
+
+        List<String> patterns;
+        try {
+            patterns = targetType.getPatternFacet();
+        } catch (UnsupportedOperationException e) {
+            patterns = null;
+        }
+        if (patterns != null && !patterns.isEmpty()) {
+            boolean patternMatched = false;
+            for (String regex : patterns) {
+                if (Pattern.matches(regex, lexical)) {
+                    patternMatched = true;
+                    break;
+                }
+            }
+            if (!patternMatched) {
+                return false;
+            }
         }
 
         // If no enumeration facet, can directly return true

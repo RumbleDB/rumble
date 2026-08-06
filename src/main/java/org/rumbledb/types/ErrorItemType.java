@@ -1,8 +1,10 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.Set;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
 /**
@@ -13,25 +15,11 @@ import org.rumbledb.context.Name;
  * computations. That makes it useful both as the spec-facing {@code xs:error} type and as the merge
  * identity when inferring a type across many runtime items.
  */
-public class ErrorItemType implements ItemType {
+public class ErrorItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Name name = new Name(Name.XS_NS, "xs", "error");
-
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        // No fields to serialize
-    }
-
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        // No fields to deserialize
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return other instanceof ErrorItemType;
-    }
 
     @Override
     public boolean hasName() {
@@ -75,7 +63,7 @@ public class ErrorItemType implements ItemType {
 
     @Override
     public String toString() {
-        return this.name.toString();
+        return name.toString();
     }
 
     @Override
@@ -84,7 +72,7 @@ public class ErrorItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 

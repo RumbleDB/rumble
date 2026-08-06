@@ -54,6 +54,10 @@ public final class SerializationParameterBuilder {
         return build(parameters, SerializationParameters.defaults());
     }
 
+    public static SerializationParameters build(Map<String, String> parameters, String queryLanguage) {
+        return build(parameters, SerializationParameters.defaults(queryLanguage));
+    }
+
     /**
      * Builds a {@link SerializationParameters} instance by copying an existing template and applying overrides.
      * A defensive copy of {@code defaults} is created so that the original instance is never mutated.
@@ -312,14 +316,27 @@ public final class SerializationParameterBuilder {
                     "'UNSPECIFIED', 'JSON', 'XML', 'HTML', or 'TEXT'"
             );
         }
-        String upper = value.toUpperCase().trim();
+        String normalized = value.trim();
+        if (normalized.startsWith("Q{") && normalized.endsWith("}xml")) {
+            return SerializationParameters.JsonNodeOutputMethod.XML;
+        }
+        if (normalized.startsWith("Q{") && normalized.endsWith("}xhtml")) {
+            return SerializationParameters.JsonNodeOutputMethod.XHTML;
+        }
+        if (normalized.startsWith("Q{") && normalized.endsWith("}html")) {
+            return SerializationParameters.JsonNodeOutputMethod.HTML;
+        }
+        if (normalized.startsWith("Q{") && normalized.endsWith("}text")) {
+            return SerializationParameters.JsonNodeOutputMethod.TEXT;
+        }
+        String upper = normalized.toUpperCase();
         try {
             return SerializationParameters.JsonNodeOutputMethod.valueOf(upper);
         } catch (IllegalArgumentException e) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
-                    "'UNSPECIFIED', 'JSON', 'XML', 'HTML', or 'TEXT'"
+                    "'XML', 'XHTML', 'HTML', 'TEXT', or the equivalent no-namespace EQName form"
             );
         }
     }

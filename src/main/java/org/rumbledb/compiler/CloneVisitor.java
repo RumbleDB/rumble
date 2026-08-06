@@ -103,6 +103,7 @@ import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
@@ -311,7 +312,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                         variable.getActualSequenceType(),
                         (variable.getExpression() == null)
                             ? variable.getExpression()
-                            : (Expression) visit(variable.getExpression(), argument)
+                            : (Expression) visit(variable.getExpression(), argument),
+                        variable.getCollationURI()
                 )
             );
         }
@@ -701,6 +703,15 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
+    public Node visitPathRootExpr(PathRootExpression expression, Node argument) {
+        PathRootExpression result = new PathRootExpression(expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
     public Node visitCommentNodeConstructor(CommentNodeConstructorExpression expression, Node argument) {
         Expression contentExpression = expression.getContentExpression();
         Expression clonedContentExpression = contentExpression != null
@@ -821,7 +832,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getParams(),
                 expression.getActualReturnType(),
                 (StatementsAndOptionalExpr) visit(expression.getBody(), argument),
-                expression.getMetadata()
+                expression.isExternal(),
+                expression.getMetadata(),
+                expression.getNameMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
@@ -1230,7 +1243,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getActualSequenceType(),
                 expression.getExpression() == null ? null : (Expression) visit(expression.getExpression(), argument),
                 expression.getAnnotations(),
-                expression.getMetadata()
+                expression.getMetadata(),
+                expression.getVariableMetadata()
         );
     }
 

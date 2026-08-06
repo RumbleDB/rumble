@@ -5,10 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -20,10 +20,11 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.SerializerUtils;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.update.PendingUpdateList;
-
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.config.RumbleConfiguration;
 
 /**
  * A sequence of items is the value returned by any expression in JSONiq, which is a set-based language.
@@ -46,9 +47,14 @@ import sparksoniq.spark.SparkSessionManager;
  */
 public class SequenceOfItems {
 
-    private RuntimeIterator iterator;
-    private DynamicContext dynamicContext;
-    private RumbleRuntimeConfiguration configuration;
+    private final RuntimeIterator iterator;
+    private final DynamicContext dynamicContext;
+    private final RumbleConfiguration configuration;
+
+    /**
+     * Checks whether the iterator is open.
+     */
+    @Getter
     private boolean isOpen;
     private List<Item> cachedItems;
 
@@ -63,7 +69,7 @@ public class SequenceOfItems {
     public SequenceOfItems(
             RuntimeIterator iterator,
             DynamicContext dynamicContext,
-            RumbleRuntimeConfiguration configuration
+            RumbleConfiguration configuration
     ) {
         this.iterator = iterator;
         this.isOpen = false;
@@ -81,15 +87,6 @@ public class SequenceOfItems {
         }
         this.iterator.open(this.dynamicContext);
         this.isOpen = true;
-    }
-
-    /**
-     * Checks whether the iterator is open.
-     *
-     * @return true if it is open, false if it is closed.
-     */
-    public boolean isOpen() {
-        return this.isOpen;
     }
 
     /**
@@ -291,13 +288,14 @@ public class SequenceOfItems {
             return new ArrayList<Item>(this.cachedItems);
         }
         List<Item> result = new ArrayList<Item>();
-        long num = populateList(result, this.configuration.getMaterializationCap());
+        int materializationCap = this.configuration.runtime().materializationCap();
+        long num = populateList(result, materializationCap);
         if (num != -1) {
             throw new CannotMaterializeException(
                     "Cannot materialize a sequence of "
                         + num
                         + " items because the limit is set to "
-                        + this.configuration.getMaterializationCap()
+                        + materializationCap
                         + ". This value can be configured with the --materialization-cap parameter at startup",
                     ExceptionMetadata.EMPTY_METADATA
             );
@@ -326,7 +324,11 @@ public class SequenceOfItems {
         SerializationParameters params = SerializationParameters.copy(
             this.getRuntimeStaticContext().getSerializationParameters()
         );
-        Serializer serializer = Serializers.from(params);
+        SerializationParameters itemParams = SerializationParameters.copy(params);
+        if ("xml".equalsIgnoreCase(params.getMethod())) {
+            itemParams.setOmitXmlDeclaration(true);
+        }
+        Serializer serializer = Serializers.from(itemParams);
         String itemSeparator = params.getItemSeparator();
         if (itemSeparator == null) {
             itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
@@ -334,6 +336,13 @@ public class SequenceOfItems {
 
         StringBuilder sb = new StringBuilder();
         List<Item> items = this.getAsList();
+        if (
+            "xml".equalsIgnoreCase(params.getMethod())
+                && !params.getOmitXmlDeclaration()
+                && !items.isEmpty()
+        ) {
+            SerializerUtils.appendXmlDeclaration(sb, params);
+        }
         if ("json".equalsIgnoreCase(params.getMethod())) {
             if (items.isEmpty()) {
                 return "null";
@@ -469,5 +478,4 @@ public class SequenceOfItems {
     public SequenceWriter write() {
         return new SequenceWriter(this);
     }
-
 }

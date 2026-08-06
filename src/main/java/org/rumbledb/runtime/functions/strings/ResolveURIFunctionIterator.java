@@ -8,11 +8,13 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ResolveURIFunctionIterator(
@@ -25,15 +27,15 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item relative = this.children.get(0).materializeFirstItemOrNull(context);
+        Item relative = this.getChild(0).materializeFirstItemOrNull(context);
         if (relative == null) {
             return null;
         }
         Item base;
-        if (this.children.size() == 2) {
-            base = this.children.get(1).materializeFirstItemOrNull(context);
+        if (this.getChildren().size() == 2) {
+            base = this.getChild(1).materializeFirstItemOrNull(context);
         } else {
-            base = ItemFactory.getInstance().createAnyURIItem(this.staticURI.toString());
+            base = ItemFactory.getInstance().createAnyURIItem(this.staticContext.getStaticURI().toString());
         }
         if (base == null) {
             return null;

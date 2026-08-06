@@ -1,6 +1,5 @@
 package org.rumbledb.serialization;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -9,10 +8,18 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.xml.NamespaceItem;
 
+import java.io.Serial;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class XmlSerializer implements Serializer, java.io.Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     protected final SerializationParameters params;
@@ -37,15 +44,21 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             throw new FunctionsNonSerializableException();
         }
         if (item.isArray()) {
+            String separator = this.params.getItemSeparator() == null ? "" : this.params.getItemSeparator();
+            boolean first = true;
             for (List<Item> member : item.getSequenceMembers()) {
                 for (Item memberItem : member) {
+                    if (!first) {
+                        sb.append(separator);
+                    }
                     serialize(memberItem, sb, indent, isTopLevel);
+                    first = false;
                 }
             }
             return;
         }
         if (item.isAtomic()) {
-            sb.append(item.getStringValue());
+            sb.append(escapeText(item.getStringValue()));
             return;
         }
         if (item.isMap() || item.isObject()) {
@@ -107,7 +120,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         String childIndent = nextIndent(indent);
         sb.append("<");
         SerializerUtils.appendDmNodeNameLexical(sb, item);
-        for (Item namespace : item.declaredNamespaceNodes()) {
+        for (Item namespace : getNamespaceNodesToSerialize(item)) {
             appendAttributeOrNamespaceNode(namespace, sb);
         }
         for (Item attribute : item.attributes()) {
@@ -179,19 +192,120 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         sb.append("\"");
     }
 
+    protected boolean matchesElementNamespace(Item element, Item namespace) {
+        if (
+            element == null
+                || element.nodeName() == null
+                || namespace == null
+                || !namespace.isNamespaceNode()
+        ) {
+            return false;
+        }
+        NamespaceItem namespaceItem = (NamespaceItem) namespace;
+        String elementPrefix = element.nodeName().getPrefix();
+        String namespacePrefix = namespaceItem.getPrefix();
+        String elementNamespace = element.nodeName().getNamespace();
+        String namespaceUri = namespaceItem.getUri();
+        if (elementNamespace == null || namespaceUri == null) {
+            return false;
+        }
+        if (elementPrefix == null || elementPrefix.isEmpty()) {
+            return namespacePrefix.isEmpty() && elementNamespace.equals(namespaceUri);
+        }
+        return elementPrefix.equals(namespacePrefix) && elementNamespace.equals(namespaceUri);
+    }
+
+    protected List<Item> getNamespaceNodesToSerialize(Item element) {
+        Map<String, String> currentScope = getEffectiveNamespaceScope(element);
+        Map<String, String> parentScope = getEffectiveNamespaceScope(getParentElement(element));
+        List<Item> result = new ArrayList<>();
+
+        for (Map.Entry<String, String> entry : currentScope.entrySet()) {
+            String prefix = entry.getKey();
+            String uri = entry.getValue();
+            if (!Objects.equals(parentScope.get(prefix), uri)) {
+                result.add(createNamespaceNode(element, prefix, uri));
+            }
+        }
+
+        for (Map.Entry<String, String> entry : parentScope.entrySet()) {
+            String prefix = entry.getKey();
+            if (currentScope.containsKey(prefix)) {
+                continue;
+            }
+            if (shouldEmitNamespaceUndeclaration(prefix, entry.getValue(), element)) {
+                result.add(createNamespaceNode(element, prefix, ""));
+            }
+        }
+
+        return result;
+    }
+
+    protected boolean shouldEmitNamespaceUndeclaration(String prefix, String previousUri, Item element) {
+        if (previousUri == null || previousUri.isEmpty() || "xml".equals(prefix)) {
+            return false;
+        }
+        if (prefix == null || prefix.isEmpty()) {
+            return true;
+        }
+        if (!supportsPrefixUndeclaration(element) || !this.params.getUndeclarePrefixes()) {
+            return false;
+        }
+        if (!isXml11()) {
+            throw serializationError(
+                "Prefix undeclaration requires XML 1.1 or later when using the XML or XHTML output method.",
+                "SEPM0010"
+            );
+        }
+        return true;
+    }
+
+    protected boolean supportsPrefixUndeclaration(Item element) {
+        return true;
+    }
+
+    protected Map<String, String> getEffectiveNamespaceScope(Item element) {
+        LinkedHashMap<String, String> scope = new LinkedHashMap<>();
+        if (element == null || !element.isElementNode()) {
+            return scope;
+        }
+        for (Item namespaceNode : element.namespaceNodes()) {
+            NamespaceItem namespaceItem = (NamespaceItem) namespaceNode;
+            scope.put(namespaceItem.getPrefix(), namespaceItem.getUri());
+        }
+        return scope;
+    }
+
+    protected Item getParentElement(Item item) {
+        if (item == null) {
+            return null;
+        }
+        Item parent = item.parent();
+        return parent != null && parent.isElementNode() ? parent : null;
+    }
+
+    protected Item createNamespaceNode(Item parent, String prefix, String uri) {
+        Item namespaceItem = new NamespaceItem(prefix, uri);
+        namespaceItem.setParent(parent);
+        return namespaceItem;
+    }
+
     protected String prepareAttributeValue(Item attribute) {
         return attribute.getStringValue();
     }
 
     protected String escapeAttribute(String value) {
-        return isXml11() ? StringEscapeUtils.escapeXml11(value) : StringEscapeUtils.escapeXml10(value);
+        return escapeXml(value, true);
     }
 
     protected String escapeText(String value) {
-        return isXml11() ? StringEscapeUtils.escapeXml11(value) : StringEscapeUtils.escapeXml10(value);
+        return escapeXml(value, false);
     }
 
     protected boolean shouldSerializeNamespace(String prefix, String uri) {
+        if ("xml".equals(prefix) && Name.XML_NS.equals(uri)) {
+            return false;
+        }
         if (!uri.isEmpty()) {
             return true;
         }
@@ -206,17 +320,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected void appendXmlDeclaration(StringBuilder sb) {
-        sb.append("<?xml version=\"");
-        sb.append(getEffectiveVersion("1.0"));
-        sb.append("\" encoding=\"");
-        sb.append(this.params.getEncoding() == null ? "UTF-8" : this.params.getEncoding());
-        sb.append("\"");
-        if (this.params.getStandalone() == SerializationParameters.Standalone.YES) {
-            sb.append(" standalone=\"yes\"");
-        } else if (this.params.getStandalone() == SerializationParameters.Standalone.NO) {
-            sb.append(" standalone=\"no\"");
-        }
-        sb.append("?>");
+        SerializerUtils.appendXmlDeclaration(sb, this.params);
     }
 
     protected void appendDocTypeIfNeeded(Item element, StringBuilder sb) {
@@ -237,9 +341,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected String getEffectiveVersion(String defaultValue) {
-        return this.params.getVersion() == null || this.params.getVersion().isEmpty()
-            ? defaultValue
-            : this.params.getVersion();
+        String effectiveVersion = SerializerUtils.getEffectiveXmlVersion(this.params);
+        return effectiveVersion == null || effectiveVersion.isEmpty() ? defaultValue : effectiveVersion;
     }
 
     protected boolean isXml11() {
@@ -297,13 +400,14 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         }
         String namespace = element.nodeName().getNamespace();
         String localName = element.nodeName().getLocalName();
-        String expandedName = namespace == null
+        boolean hasNoNamespace = namespace == null || namespace.isEmpty();
+        String expandedName = hasNoNamespace
             ? localName
             : "Q{" + namespace + "}" + localName;
         if (entries.contains(expandedName)) {
             return true;
         }
-        if (namespace == null) {
+        if (hasNoNamespace) {
             for (String entry : entries) {
                 if (!entry.startsWith("Q{") && entry.equals(localName)) {
                     return true;
@@ -341,6 +445,152 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected void appendCDataText(String value, StringBuilder sb) {
+        Map<String, String> characterMaps = this.params.getCharacterMaps();
+        StringBuilder cdataSegment = new StringBuilder();
+        for (int index = 0; index < value.length();) {
+            int codePoint = value.codePointAt(index);
+            String current = new String(Character.toChars(codePoint));
+            String replacement = characterMaps == null ? null : characterMaps.get(current);
+            if (replacement != null) {
+                flushCDataSegment(cdataSegment, sb);
+                sb.append(replacement);
+            } else if (
+                mustSerializeAsCharacterReference(codePoint, false) || !isEncodableInSelectedEncoding(codePoint)
+            ) {
+                flushCDataSegment(cdataSegment, sb);
+                appendEscapedXmlCodePoint(sb, codePoint, false);
+            } else if (!isRepresentableInSelectedXmlVersion(codePoint)) {
+                throw new RumbleException(
+                        "Character #" + codePoint + " is not representable in XML " + getEffectiveVersion("1.0") + ".",
+                        ErrorCode.CodepointNotValidErrorCode,
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            } else {
+                cdataSegment.appendCodePoint(codePoint);
+            }
+            index += Character.charCount(codePoint);
+        }
+        flushCDataSegment(cdataSegment, sb);
+    }
+
+    protected RumbleException serializationError(String message, String errorCode) {
+        return new RumbleException(
+                message,
+                new ErrorCode(new Name(Name.ERROR_NS, "err", errorCode)),
+                ExceptionMetadata.EMPTY_METADATA
+        );
+    }
+
+    private String escapeXml(String value, boolean inAttribute) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        StringBuilder result = new StringBuilder(value.length());
+        Map<String, String> characterMaps = this.params.getCharacterMaps();
+        value.codePoints().forEach(codePoint -> {
+            String current = new String(Character.toChars(codePoint));
+            String replacement = characterMaps == null ? null : characterMaps.get(current);
+            if (replacement != null) {
+                result.append(replacement);
+            } else {
+                appendEscapedXmlCodePoint(result, codePoint, inAttribute);
+            }
+        });
+        return result.toString();
+    }
+
+    private void appendEscapedXmlCodePoint(StringBuilder result, int codePoint, boolean inAttribute) {
+        switch (codePoint) {
+            case '&':
+                result.append("&amp;");
+                return;
+            case '<':
+                result.append("&lt;");
+                return;
+            case '>':
+                result.append("&gt;");
+                return;
+            case '"':
+                if (inAttribute) {
+                    result.append("&quot;");
+                    return;
+                }
+                break;
+            default:
+                break;
+        }
+
+        if (mustSerializeAsCharacterReference(codePoint, inAttribute)) {
+            appendDecimalCharacterReference(result, codePoint);
+            return;
+        }
+
+        if (!isRepresentableInSelectedXmlVersion(codePoint)) {
+            throw new RumbleException(
+                    "Character #" + codePoint + " is not representable in XML " + getEffectiveVersion("1.0") + ".",
+                    ErrorCode.CodepointNotValidErrorCode,
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+
+        if (!isEncodableInSelectedEncoding(codePoint)) {
+            appendDecimalCharacterReference(result, codePoint);
+            return;
+        }
+
+        result.appendCodePoint(codePoint);
+    }
+
+    private boolean mustSerializeAsCharacterReference(int codePoint, boolean inAttribute) {
+        if (codePoint == 0x85 || codePoint == 0x2028) {
+            return true;
+        }
+        if (inAttribute && (codePoint == 0x9 || codePoint == 0xA || codePoint == 0xD)) {
+            return true;
+        }
+        if (!inAttribute && codePoint == 0xD) {
+            return true;
+        }
+        if (codePoint < 0x20) {
+            return codePoint != 0x9 && codePoint != 0xA && codePoint != 0xD;
+        }
+        return codePoint >= 0x7F && codePoint <= 0x9F;
+    }
+
+    private boolean isRepresentableInSelectedXmlVersion(int codePoint) {
+        if (codePoint == 0) {
+            return false;
+        }
+        if (isXml11()) {
+            return codePoint <= 0xD7FF
+                || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+                || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
+        }
+        if (codePoint == 0x9 || codePoint == 0xA || codePoint == 0xD) {
+            return true;
+        }
+        return (codePoint >= 0x20 && codePoint <= 0xD7FF)
+            || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+            || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
+    }
+
+    private boolean isEncodableInSelectedEncoding(int codePoint) {
+        String encoding = this.params.getEncoding() == null ? "UTF-8" : this.params.getEncoding();
+        CharsetEncoder encoder = Charset.forName(encoding).newEncoder();
+        return encoder.canEncode(new String(Character.toChars(codePoint)));
+    }
+
+    private void appendDecimalCharacterReference(StringBuilder result, int codePoint) {
+        result.append("&#");
+        result.append(codePoint);
+        result.append(";");
+    }
+
+    private void flushCDataSegment(StringBuilder cdataSegment, StringBuilder sb) {
+        if (cdataSegment.isEmpty()) {
+            return;
+        }
+        String value = cdataSegment.toString();
         int start = 0;
         while (start <= value.length()) {
             int split = value.indexOf("]]>", start);
@@ -353,13 +603,6 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             }
             start = split + 2;
         }
-    }
-
-    protected RumbleException serializationError(String message, String errorCode) {
-        return new RumbleException(
-                message,
-                new ErrorCode(org.rumbledb.context.Name.createVariableInNoNamespace(errorCode)),
-                ExceptionMetadata.EMPTY_METADATA
-        );
+        cdataSegment.setLength(0);
     }
 }

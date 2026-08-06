@@ -20,7 +20,7 @@ package org.rumbledb.items;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -47,7 +47,7 @@ public final class FunctionItemFactory {
     public static FunctionItem createBuiltinNamedReference(
             FunctionIdentifier identifier,
             DynamicContext moduleContext,
-            RumbleRuntimeConfiguration conf,
+            RumbleConfiguration conf,
             ExceptionMetadata metadata,
             BuiltinFunction builtinFunction
     ) {
@@ -57,12 +57,12 @@ public final class FunctionItemFactory {
             paramNames.add(Name.createVariableInNoNamespace("$p" + i));
         }
         SequenceType returnType = builtinFunction.getSignature().getReturnType();
-        RuntimeStaticContext markerContext = new RuntimeStaticContext(
-                conf,
-                returnType,
-                ExecutionMode.LOCAL,
-                metadata
-        );
+        RuntimeStaticContext markerContext = RuntimeStaticContext.builder()
+            .configuration(conf)
+            .staticType(returnType)
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(metadata)
+            .build();
         RuntimeIterator markerBody = new BuiltinNamedFunctionReferenceMarkerIterator(markerContext);
         return new FunctionItem(
                 identifier,

@@ -29,10 +29,13 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
+
 public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public BooleanRuntimeIterator(boolean value, RuntimeStaticContext staticContext) {
         super(null, staticContext);

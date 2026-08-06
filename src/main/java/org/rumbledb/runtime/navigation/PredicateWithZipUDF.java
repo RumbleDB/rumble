@@ -29,15 +29,17 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 
 import scala.Option;
-import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator expression;
@@ -45,7 +47,7 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
     private final long contextSize;
-    List<Item> currentItems = new ArrayList<>();
+    final List<Item> currentItems = new ArrayList<>();
 
     public PredicateWithZipUDF(
             RuntimeIterator expression,

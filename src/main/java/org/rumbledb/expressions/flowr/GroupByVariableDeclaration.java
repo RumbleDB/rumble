@@ -20,20 +20,26 @@
 
 package org.rumbledb.expressions.flowr;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 
 public class GroupByVariableDeclaration {
 
+    @Getter
     protected Name variableName;
+    @Getter
     protected Expression expression;
     protected SequenceType sequenceType;
+    @Getter
+    protected String collationURI;
 
     public GroupByVariableDeclaration(
             Name variableName,
             SequenceType sequenceType,
-            Expression expression
+            Expression expression,
+            String collationURI
     ) {
         if (variableName == null) {
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
@@ -41,21 +47,11 @@ public class GroupByVariableDeclaration {
         this.variableName = variableName;
         this.sequenceType = sequenceType;
         this.expression = expression;
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
-    }
-
-    public SequenceType getSequenceType() {
-        return this.sequenceType == null ? SequenceType.createSequenceType("item*") : this.sequenceType;
+        this.collationURI = collationURI;
     }
 
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
+
 }

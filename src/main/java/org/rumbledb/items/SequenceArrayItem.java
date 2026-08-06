@@ -1,8 +1,5 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -11,14 +8,16 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SequenceArrayItem implements Item {
+public class SequenceArrayItem extends AbstractArrayItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private List<List<Item>> memberSequences;
+    private final List<List<Item>> memberSequences;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -26,17 +25,6 @@ public class SequenceArrayItem implements Item {
     private Collection collection;
     private boolean allSingletons;
     private boolean allSingletonsCached;
-
-    public SequenceArrayItem() {
-        this.memberSequences = new ArrayList<>();
-        this.mutabilityLevel = -1;
-        this.topLevelID = -1;
-        this.pathIn = "null";
-        this.location = "null";
-        this.collection = null;
-        this.allSingletons = true;
-        this.allSingletonsCached = true;
-    }
 
     public SequenceArrayItem(List<List<Item>> memberSequences) {
         this.memberSequences = memberSequences;
@@ -68,32 +56,6 @@ public class SequenceArrayItem implements Item {
             copiedMemberSequences.add(copiedMember);
         }
         return new SequenceArrayItem(copiedMemberSequences);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isArray()) {
-            return false;
-        }
-        if (getSize() != otherItem.getSize()) {
-            return false;
-        }
-        for (int i = 0; i < getSize(); ++i) {
-            List<Item> thisMember = this.getSequenceAt(i);
-            List<Item> otherMember = otherItem.getSequenceAt(i);
-            if (thisMember.size() != otherMember.size()) {
-                return false;
-            }
-            for (int j = 0; j < thisMember.size(); j++) {
-                if (!thisMember.get(j).equals(otherMember.get(j))) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     // region arrays
@@ -238,39 +200,7 @@ public class SequenceArrayItem implements Item {
 
     // endregion arrays
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.memberSequences);
-        output.writeInt(this.mutabilityLevel);
-        output.writeLong(this.topLevelID);
-        kryo.writeObject(output, this.pathIn);
-        kryo.writeObject(output, this.location);
-        kryo.writeObjectOrNull(output, this.collection, Collection.class);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.memberSequences = kryo.readObject(input, ArrayList.class);
-        this.mutabilityLevel = input.readInt();
-        this.topLevelID = input.readLong();
-        this.pathIn = kryo.readObject(input, String.class);
-        this.location = kryo.readObject(input, String.class);
-        this.collection = kryo.readObjectOrNull(input, Collection.class);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = 1;
-        for (int i = 0; i < getSize(); ++i) {
-            List<Item> member = this.memberSequences.get(i);
-            result = 31 * result + member.size();
-            for (Item item : member) {
-                result = 31 * result + item.hashCode();
-            }
-        }
-        return result;
-    }
 
     @Override
     public ItemType getDynamicType() {

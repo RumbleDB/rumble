@@ -23,6 +23,7 @@ package org.rumbledb.expressions.xml;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -31,6 +32,7 @@ import org.rumbledb.expressions.Node;
 /**
  * An expression representing a direct comment constructor.
  */
+@Getter
 public class DirectCommentConstructorExpression extends Expression {
 
     /** The literal content of the comment. */
@@ -45,15 +47,6 @@ public class DirectCommentConstructorExpression extends Expression {
     public DirectCommentConstructorExpression(String content, ExceptionMetadata metadata) {
         super(metadata);
         this.content = content;
-    }
-
-    /**
-     * Get the literal content of the comment.
-     *
-     * @return The comment content
-     */
-    public String getContent() {
-        return this.content;
     }
 
     @Override

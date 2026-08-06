@@ -96,7 +96,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
-    private Map<String, StaticContext> importedModuleContexts;
+    private final Map<String, StaticContext> importedModuleContexts;
 
     StaticContextVisitor() {
         this.importedModuleContexts = new HashMap<>();
@@ -510,7 +510,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         declaration.getMetadata()
                 );
             }
-            argument.overrideSerializationParameter(localName, declaration.getValue());
+            argument.overrideSerializationParameter(localName, declaration.getValue(), declaration.getMetadata());
         }
         // XQuery 3.1 §4.19: if the namespace part of an option declaration's name is not recognized,
         // the option declaration is ignored. For recognized namespaces with unrecognized option names,

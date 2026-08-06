@@ -1,16 +1,24 @@
 package org.rumbledb.serialization;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 
+import java.io.Serial;
+
 public class TextSerializer implements Serializer, java.io.Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
+    @SuppressWarnings("unused")
+    private final SerializationParameters params;
+
     public TextSerializer(SerializationParameters params) {
+        this.params = params != null ? params : SerializationParameters.defaults();
     }
 
     @Override
@@ -47,7 +55,7 @@ public class TextSerializer implements Serializer, java.io.Serializable {
         if (item.isMap() || item.isObject()) {
             throw new RumbleException(
                     "Serialization method text does not support arrays or maps.",
-                    new ErrorCode(org.rumbledb.context.Name.createVariableInNoNamespace("SENR0001")),
+                    new ErrorCode(new Name(Name.ERROR_NS, "err", "SENR0001")),
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
