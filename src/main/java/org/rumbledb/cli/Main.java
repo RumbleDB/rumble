@@ -92,18 +92,8 @@ public class Main {
                 );
             }
             System.exit(0);
-        } catch (Exception ex) {
-            boolean showErrorInfo = false;
-            if (configuration != null) {
-                showErrorInfo = configuration.debug().showErrorInfo();
-            }
-            handleException(ex, showErrorInfo);
-        } catch (OutOfMemoryError ex) {
-            boolean showErrorInfo = false;
-            if (configuration != null) {
-                showErrorInfo = configuration.debug().showErrorInfo();
-            }
-            handleException(ex, showErrorInfo);
+        } catch (Exception | OutOfMemoryError ex) {
+            handleException(ex, configuration.debug().showErrorInfo());
         }
     }
 
