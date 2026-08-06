@@ -26,7 +26,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.types.ArrayType;
@@ -60,9 +60,10 @@ import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
-
 import org.rumbledb.spark.SparkSessionManager;
 
+
+@Log4j2
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Serial
@@ -304,10 +305,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                             getMetadata()
                     );
                 }
-                LogManager.getLogger("ObjectLookupIterator")
-                    .warn(
-                        "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-                    );
+                log.warn(
+                    "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
+                );
             }
             return NativeClauseContext.NoNativeQuery;
         }
@@ -361,10 +361,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             newContext.setSchema(field.dataType());
         } else {
             if (this.getChild(1) instanceof StringRuntimeIterator) {
-                LogManager.getLogger("ObjectLookupIterator")
-                    .warn(
-                        "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-                    );
+                log.warn(
+                    "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
+                );
                 if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "There is no field with the name "
@@ -459,10 +458,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 return result;
             }
         }
-        LogManager.getLogger("ObjectLookupIterator")
-            .warn(
-                "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-            );
+        log.warn(
+            "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
+        );
         HomogeneousItemDataFrame result = HomogeneousItemDataFrame.emptyDataFrame();
         return result;
     }

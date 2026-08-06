@@ -27,6 +27,7 @@ import java.util.*;
 
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
@@ -51,6 +52,7 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
+@Log4j2
 public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
@@ -136,10 +138,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
                         }
                     } else {
                         if (item.isObject() || item.isArray()) {
-                            System.err.println(
-                                "Note: effective boolean value of "
-                                    + (item.isObject() ? "Object " : "Array ")
-                                    + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
+                            log.warn(
+                                """
+                                        Note: effective boolean value of {} accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.
+                                        If you want to revert to the old functionality use the --default-language jsoniq10 command line option\
+                                        """,
+                                item.isObject() ? "Object" : "Array"
                             );
                         }
                     }

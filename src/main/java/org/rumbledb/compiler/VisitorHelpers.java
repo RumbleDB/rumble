@@ -1,5 +1,6 @@
 package org.rumbledb.compiler;
 
+import lombok.extern.log4j.Log4j2;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -38,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+@Log4j2
 public class VisitorHelpers {
 
     public static RuntimeIterator generateRuntimeIterator(Node node, RumbleConfiguration conf) {
@@ -45,7 +47,7 @@ public class VisitorHelpers {
         if (conf.debug().printIteratorTree() || conf.debug().logging()) {
             StringBuilder sb = new StringBuilder();
             result.print(sb, 0);
-            System.err.println(sb);
+            log.debug(sb);
         }
         return result;
     }
@@ -118,21 +120,35 @@ public class VisitorHelpers {
      */
     private static void debugPrintTree(Module node, RumbleConfiguration conf) {
         if (conf.debug().printIteratorTree() || conf.debug().logging()) {
-            System.err.println("***************");
-            System.err.println("Expression tree");
-            System.err.println("***************");
-            System.err.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
-            System.err.println(node);
-            System.err.println();
-            System.err.println(node.getStaticContext());
+            log.debug(
+                """
+                        ***************
+                        Expression tree
+                        ***************
+                        Unset execution modes: {}
+                        {}
+
+                        {}\
+                        """,
+                node.numberOfUnsetExecutionModes(),
+                node,
+                node.getStaticContext()
+            );
         }
     }
 
     private static void debugPrintHeader(RumbleConfiguration conf, String header) {
         if (conf.debug().printIteratorTree() || conf.debug().logging()) {
-            System.err.println("*".repeat(header.length()));
-            System.err.println(header);
-            System.err.println("*".repeat(header.length()));
+            log.debug(
+                """
+                        {}
+                        {}
+                        {}\
+                        """,
+                "*".repeat(header.length()),
+                header,
+                "*".repeat(header.length())
+            );
         }
     }
 
@@ -570,7 +586,7 @@ public class VisitorHelpers {
                 debugPrintTree(module, conf);
             }
             if (module.numberOfUnsetExecutionModes() > 0) {
-                System.err.println(
+                log.warn(
                     "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
                 );
             }
@@ -619,7 +635,7 @@ public class VisitorHelpers {
             debugPrintTree(module, conf);
         }
         if (module.numberOfUnsetExecutionModes() > 0) {
-            System.err.println(
+            log.warn(
                 "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
             );
         }

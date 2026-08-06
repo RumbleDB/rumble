@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.typing;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -42,6 +44,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.TypeMappings;
 
+@Log4j2
 public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Serial
@@ -274,8 +277,13 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
         StructType schema = convertToDataFrameSchema(itemType, staticContext);
         if (staticContext.getConfiguration().analysis().printInferredTypes()) {
-            System.err.println("Inferred DataFrame type:\n");
-            schema.printTreeString();
+            log.debug(
+                """
+                        Inferred DataFrame type:
+                        {}\
+                        """,
+                schema.treeString()
+            );
         }
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
