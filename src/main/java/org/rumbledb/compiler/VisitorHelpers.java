@@ -29,7 +29,7 @@ import org.rumbledb.parser.jsoniq.JsoniqLexer;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryLexer;
 import org.rumbledb.parser.xquery.XQueryParser;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.resources.ResolvedResource;
 
@@ -42,8 +42,8 @@ import java.util.List;
 @Log4j2
 public class VisitorHelpers {
 
-    public static RuntimeIterator generateRuntimeIterator(Node node, RumbleConfiguration conf) {
-        RuntimeIterator result = new RuntimeIteratorVisitor(conf).visit(node, null);
+    public static ItemRuntimePlan generateRuntimeIterator(Node node, RumbleConfiguration conf) {
+        ItemRuntimePlan result = new RuntimeIteratorVisitor(conf).visit(node, null);
         if (conf.debug().printIteratorTree() || conf.debug().logging()) {
             StringBuilder sb = new StringBuilder();
             result.print(sb, 0);

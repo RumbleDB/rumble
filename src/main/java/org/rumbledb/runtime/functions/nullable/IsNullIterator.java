@@ -1,32 +1,39 @@
 package org.rumbledb.runtime.functions.nullable;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class IsNullIterator extends AtMostOneItemLocalRuntimeIterator {
+public class IsNullIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public IsNullIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public IsNullIterator(
+            List<ItemRuntimePlan> children,
+            RuntimeStaticContext staticContext
+    ) {
         super(children, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        List<Item> materializedItems = this.getChild(0).materialize(context);
-        if (materializedItems == null || materializedItems.isEmpty()) {
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(this.getChild(0).materialize(context));
+    }
+
+    private Item evaluate(List<Item> items) {
+        if (items.isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
-        if (materializedItems.size() > 1) {
+        if (items.size() > 1) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-        return ItemFactory.getInstance().createBooleanItem(materializedItems.get(0).isNull());
+        return ItemFactory.getInstance().createBooleanItem(items.get(0).isNull());
     }
 }

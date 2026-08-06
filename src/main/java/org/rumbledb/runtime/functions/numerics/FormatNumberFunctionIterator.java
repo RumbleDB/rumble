@@ -1,39 +1,42 @@
 package org.rumbledb.runtime.functions.numerics;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.*;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidDecimalFormatName;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber.NumberPictureFormatter;
 
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 
-
-public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class FormatNumberFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public FormatNumberFunctionIterator(
-            List<RuntimeIterator> children,
+            List<ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item valueItem = this.getChild(0).materializeFirstOrNull(context);
+        Item pictureItem = this.getChild(1).materializeFirstOrNull(context);
         Item decimalFormatNameItem = this.getChildren().size() > 2
-            ? this.getChild(2).materializeFirstItemOrNull(context)
+            ? this.getChild(2).materializeFirstOrNull(context)
             : null;
+        return evaluate(valueItem, pictureItem, decimalFormatNameItem);
+    }
 
+    private Item evaluate(Item valueItem, Item pictureItem, Item decimalFormatNameItem) {
         if (valueItem == null) {
             return ItemFactory.getInstance()
                 .createStringItem(

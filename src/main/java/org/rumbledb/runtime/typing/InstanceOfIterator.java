@@ -20,8 +20,9 @@
 
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,24 +33,23 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
-
-public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
+public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
+    private final ItemRuntimePlan child;
     private final SequenceType sequenceType;
 
     public InstanceOfIterator(
-            RuntimeIterator child,
+            ItemRuntimePlan child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -59,72 +59,83 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
+    public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(dynamicContext, getMetadata());
+        return evaluate(this.child, this.sequenceType, getMetadata(), dynamicContext);
+    }
+
+    private static Item evaluate(
+            ItemRuntimePlan child,
+            SequenceType sequenceType,
+            ExceptionMetadata metadata,
+            DynamicContext dynamicContext
+    ) {
+        if (!sequenceType.isResolved()) {
+            sequenceType.resolve(dynamicContext, metadata);
         }
-        if (!this.child.isRDDOrDataFrame()) {
-            List<Item> items = new ArrayList<>();
-            this.child.open(dynamicContext);
-
-            while (this.child.hasNext()) {
-                items.add(this.child.next());
-            }
-            this.child.close();
-
-            if (this.sequenceType.isEmptySequence()) {
-                return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
-            }
-
-            if (isInvalidArity(items.size())) {
-                return ItemFactory.getInstance().createBooleanItem(false);
-            }
-
-            ItemType itemType = this.sequenceType.getItemType();
-            for (Item item : items) {
-                if (item != null && !item.getDynamicType().isResolved()) {
-                    item.getDynamicType().resolve(dynamicContext, getMetadata());
-                }
-                if (!doesItemTypeMatchItem(itemType, item)) {
-                    return ItemFactory.getInstance().createBooleanItem(false);
-                }
-            }
-
-            return ItemFactory.getInstance().createBooleanItem(true);
+        if (!child.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            return evaluateLocal(child, sequenceType, metadata, dynamicContext);
         }
-        if (this.child.isDataFrame()) {
-            HomogeneousItemDataFrame childDF = this.child.getDataFrame(dynamicContext);
-            if (isInvalidArity(childDF.take(2).size())) {
+        if (child.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            HomogeneousItemDataFrame childDF = ItemRuntimeDataFrameFactory.INSTANCE
+                .fromPlan(child, dynamicContext);
+            if (isInvalidArity(childDF.take(2).size(), sequenceType)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
 
             ItemType itemType = childDF.getItemType();
-            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(this.sequenceType.getItemType()));
+            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(sequenceType.getItemType()));
         }
-        JavaRDD<Item> childRDD = this.child.getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = child.getRDD(dynamicContext);
 
-        if (isInvalidArity(childRDD.take(2).size())) {
+        if (isInvalidArity(childRDD.take(2).size(), sequenceType)) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
 
-        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
+        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(sequenceType.getItemType()));
         return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
     }
 
-    private boolean isInvalidArity(long numOfItems) {
-        return (numOfItems != 0 && this.sequenceType.isEmptySequence())
+    private static Item evaluateLocal(
+            ItemRuntimePlan child,
+            SequenceType sequenceType,
+            ExceptionMetadata metadata,
+            DynamicContext dynamicContext
+    ) {
+        List<Item> items = child.materialize(dynamicContext);
+
+        if (sequenceType.isEmptySequence()) {
+            return ItemFactory.getInstance().createBooleanItem(items.isEmpty());
+        }
+        if (isInvalidArity(items.size(), sequenceType)) {
+            return ItemFactory.getInstance().createBooleanItem(false);
+        }
+
+        ItemType itemType = sequenceType.getItemType();
+        for (Item item : items) {
+            if (item != null && !item.getDynamicType().isResolved()) {
+                item.getDynamicType().resolve(dynamicContext, metadata);
+            }
+            if (!doesItemTypeMatchItem(itemType, item)) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+        }
+        return ItemFactory.getInstance().createBooleanItem(true);
+    }
+
+    private static boolean isInvalidArity(long numOfItems, SequenceType sequenceType) {
+        return (numOfItems != 0 && sequenceType.isEmptySequence())
             ||
             (numOfItems == 0
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
+                && (sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore))
+                    sequenceType.getArity() == SequenceType.Arity.OneOrMore))
             ||
             (numOfItems > 1
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
+                && (sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero));
+                    sequenceType.getArity() == SequenceType.Arity.OneOrZero));
     }
 
     /**

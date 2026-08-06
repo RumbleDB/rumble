@@ -1,23 +1,20 @@
 package org.rumbledb.runtime.functions.maps;
 
-import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 /**
  * W3C XPath/XQuery {@code map:get}:
@@ -29,18 +26,18 @@ import java.util.Queue;
  *
  * This built-in is local execution only (consistent with map/array accessors).
  */
-public class MapGetFunctionIterator extends HybridRuntimeIterator {
+public class MapGetFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator mapIterator;
-    private final RuntimeIterator keyIterator;
-
-    private Queue<Item> pendingResults;
+    private final ItemRuntimePlan mapIterator;
+    private final ItemRuntimePlan keyIterator;
 
     public MapGetFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -49,28 +46,27 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
         }
         this.mapIterator = arguments.get(0);
         this.keyIterator = arguments.get(1);
-        this.pendingResults = new LinkedList<>();
     }
 
     @Override
-    protected void openLocal() {
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> lookup(
+                    this.mapIterator.materialize(context),
+                    this.keyIterator.materialize(context)
+                ).iterator(),
+                getMetadata()
+        );
     }
 
-    private void initializeResults(DynamicContext context) {
-        this.pendingResults.clear();
-
-        Item mapItem;
-        try {
-            mapItem = this.mapIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException | MoreThanOneItemException e) {
+    private List<Item> lookup(List<Item> maps, List<Item> rawKey) {
+        if (maps.size() != 1) {
             throw new UnexpectedTypeException(
                     "map:get expects exactly one map argument.",
                     getMetadata()
             );
         }
-
+        Item mapItem = maps.get(0);
         if (mapItem == null || !mapItem.isMap()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to map:get must be a map.",
@@ -79,9 +75,6 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
         }
 
         // Atomize $key and require that it atomizes to exactly one atomic value.
-        List<Item> rawKey = new ArrayList<>();
-        this.keyIterator.materialize(context, rawKey);
-
         List<Item> atomized = new ArrayList<>();
         for (Item it : rawKey) {
             atomized.addAll(it.atomizedValue());
@@ -96,54 +89,6 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
 
         Item key = atomized.get(0);
         List<Item> seq = mapItem.getSequenceByKey(key);
-        if (seq != null && !seq.isEmpty()) {
-            this.pendingResults.addAll(seq);
-        }
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.pendingResults.remove();
-        setNextResult();
-        return result;
-    }
-
-    private void setNextResult() {
-        this.hasNext = !this.pendingResults.isEmpty();
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.mapIterator.isOpen()) {
-            this.mapIterator.close();
-        }
-        if (this.keyIterator.isOpen()) {
-            this.keyIterator.close();
-        }
-        this.pendingResults.clear();
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("map:get is currently supported only in local execution mode.");
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("map:get is currently supported only in local execution mode.");
+        return seq == null ? List.of() : seq;
     }
 }
-

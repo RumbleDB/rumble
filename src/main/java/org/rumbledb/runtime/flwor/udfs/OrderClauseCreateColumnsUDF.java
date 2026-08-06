@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
@@ -29,7 +31,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
@@ -86,20 +87,19 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             );
 
             // apply expression in the dynamic context
-            RuntimeIterator iterator = expressionWithIterator.getIterator();
-            iterator.open(this.dataFrameContext.getContext());
-            if (!iterator.hasNext()) {
+            ItemRuntimePlan iterator = expressionWithIterator
+                .getIterator();
+            List<Item> items = iterator.materialize(this.dataFrameContext.getContext());
+            if (items.isEmpty()) {
                 if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.GREATEST) {
                     this.results.add(emptySequenceOrderIndexLast);
                 } else {
                     this.results.add(emptySequenceOrderIndexFirst);
                 }
                 this.results.add(null); // placeholder for valueColumn(2nd column)
-                iterator.close();
                 continue;
             }
-            while (iterator.hasNext()) {
-                Item nextItem = iterator.next();
+            for (Item nextItem : items) {
                 List<Item> atomized = nextItem.atomizedValue();
                 if (atomized.size() > 1) {
                     throw new OurBadException(
@@ -121,11 +121,10 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                         expressionWithIterator.getUri(),
                         expressionWithIterator.getIterator().getRuntimeStaticContext()
                     ),
-                    expressionWithIterator.getIterator().getMetadata()
+                    expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata()
                 );
                 createColumnsForItem(nextItem, expressionIndex);
             }
-            iterator.close();
 
         }
         return RowFactory.create(this.results.toArray());

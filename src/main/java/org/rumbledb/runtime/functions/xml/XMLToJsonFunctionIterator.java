@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -13,8 +15,7 @@ import org.rumbledb.items.parsing.JSONLiteralParsingUtils;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final String FUNCTIONS_NAMESPACE = "http://www.w3.org/2005/xpath-functions";
@@ -33,14 +34,14 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         Pattern.compile("[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
 
     public XMLToJsonFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item input = materializeInput(context);
         if (input == null) {
             return null;
@@ -53,7 +54,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private Item materializeInput(DynamicContext context) {
         try {
-            return this.getChild(0).materializeAtMostOneItemOrNull(context);
+            return this.getChild(0).materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:xml-to-json expects at most one input item [err:XPTY0004].",
@@ -69,14 +70,17 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
         Item options;
         try {
-            options = this.getChild(1).materializeAtMostOneItemOrNull(context);
+            options = this.getChild(1).materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "The options argument of fn:xml-to-json must be a single map item [err:XPTY0004].",
                     getMetadata()
             );
         }
+        return resolveIndentOption(options);
+    }
 
+    private boolean resolveIndentOption(Item options) {
         if (options == null) {
             throw new UnexpectedTypeException(
                     "The options argument of fn:xml-to-json must be a map item [err:XPTY0004].",

@@ -331,7 +331,7 @@ public class HtmlSerializer extends XmlSerializer {
     }
 
     @Override
-    protected boolean matchesExpandedQNameEntry(java.util.Set<String> entries, Item element) {
+    protected boolean matchesExpandedQNameEntry(Set<String> entries, Item element) {
         if (super.matchesExpandedQNameEntry(entries, element)) {
             return true;
         }

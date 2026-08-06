@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.maps;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,14 +10,11 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:put}:
@@ -27,17 +26,17 @@ import org.rumbledb.runtime.RuntimeIterator;
  *
  * This built-in is local execution only.
  */
-public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator mapIterator;
-    private final RuntimeIterator keyIterator;
-    private final RuntimeIterator valueIterator;
+    private final ItemRuntimePlan mapIterator;
+    private final ItemRuntimePlan keyIterator;
+    private final ItemRuntimePlan valueIterator;
 
     public MapPutFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -50,17 +49,22 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        // 1) Materialize $map as exactly one map(*)
-        Item mapItem;
-        try {
-            mapItem = this.mapIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException | MoreThanOneItemException e) {
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(
+            this.mapIterator.materialize(context),
+            this.keyIterator.materialize(context),
+            this.valueIterator.materialize(context)
+        );
+    }
+
+    private Item evaluate(List<Item> maps, List<Item> rawKey, List<Item> valueSequence) {
+        if (maps.size() != 1) {
             throw new UnexpectedTypeException(
                     "map:put expects exactly one map argument [err:XPTY0004].",
                     getMetadata()
             );
         }
+        Item mapItem = maps.get(0);
         if (mapItem == null || !mapItem.isMap()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to map:put must be a map [err:XPTY0004].",
@@ -69,9 +73,6 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         // 2) Atomize $key and require that it atomizes to exactly one atomic value.
-        List<Item> rawKey = new ArrayList<>();
-        this.keyIterator.materialize(context, rawKey);
-
         List<Item> atomized = new ArrayList<>();
         for (Item it : rawKey) {
             atomized.addAll(it.atomizedValue());
@@ -86,9 +87,6 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         Item key = atomized.get(0);
 
         // 3) Materialize $value as item()*
-        List<Item> valueSequence = new ArrayList<>();
-        this.valueIterator.materialize(context, valueSequence);
-
         if (mapItem.getMutabilityLevel() == -1) {
             return ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence);
         }
@@ -126,4 +124,3 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 }
-

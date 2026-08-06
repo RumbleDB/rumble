@@ -1,17 +1,25 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.FunctionCoercion;
@@ -23,24 +31,26 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import org.rumbledb.spark.SparkSessionManager;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.Collections;
 
-public class TypePromotionIterator extends HybridRuntimeIterator {
+public class TypePromotionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private final RuntimeIterator iterator;
+    private final ItemRuntimePlan iterator;
     private final SequenceType sequenceType;
-
     private final ItemType itemType;
 
-    private Item nextResult;
-    private int childIndex;
-
     public TypePromotionIterator(
-            RuntimeIterator iterator,
+            ItemRuntimePlan iterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext staticContext
@@ -62,89 +72,42 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
+                this.iterator,
+                context,
+                this.sequenceType,
+                this.itemType,
+                this.exceptionMessage,
+                getRuntimeStaticContext(),
+                getMetadata()
+        );
     }
 
-    @Override
-    public void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public void openLocal() {
-        this.childIndex = 0;
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.setNextResult();
-    }
-
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item currentResult = this.nextResult;
-            setNextResult();
-            return currentResult;
-        } else {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-        if (this.iterator.hasNext()) {
-            this.nextResult = this.iterator.next();
-            if (this.nextResult != null && !this.nextResult.getDynamicType().isResolved()) {
-                this.nextResult.getDynamicType().resolve(this.currentDynamicContextForLocalExecution, getMetadata());
-            }
-            this.childIndex++;
-        } else {
-            checkEmptySequence(this.childIndex);
-        }
-
-        this.hasNext = this.nextResult != null;
-        if (!hasNext()) {
-            return;
-        }
-
-        checkItemsSize(this.childIndex);
-        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, this.nextResult)) {
-            checkTypePromotion();
-        }
-    }
-
-    private void checkEmptySequence(long size) {
+    private static void checkEmptySequence(
+            long size,
+            SequenceType sequenceType,
+            String exceptionMessage,
+            ExceptionMetadata metadata
+    ) {
         if (
             size == 0
-                && this.sequenceType.getArity() == SequenceType.Arity.OneOrMore
+                && sequenceType.getArity() == SequenceType.Arity.OneOrMore
         ) {
             throw new UnexpectedTypeException(
-                    this.exceptionMessage
-                        + "Expecting"
-                        + ((this.sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? " at least" : "")
-                        + " one item, but the value provided is the empty sequence.",
-                    getMetadata()
-            );
-        }
-    }
-
-    private void checkItemsSize(long size) {
-        if (size > 0 && this.sequenceType.isEmptySequence()) {
-            throw new UnexpectedTypeException(
-                    this.exceptionMessage
-                        + "Expecting empty sequence, but the value provided has at least one item.",
-                    getMetadata()
+                    exceptionMessage
+                        + "Expecting at least one item, but the value provided is the empty sequence.",
+                    metadata
             );
         }
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
 
         int count = childRDD.take(2).size();
-        checkEmptySequence(count);
-        checkItemsSize(count);
+        checkEmptySequence(count, this.sequenceType, this.exceptionMessage, getMetadata());
         Function<Item, Item> transformation = new TypePromotionClosure(
                 this.exceptionMessage,
                 this.sequenceType,
@@ -154,14 +117,17 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
-        checkEmptySequence(df.isEmptySequence() ? 0 : 1);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.iterator,
+            dynamicContext
+        );
+        checkEmptySequence(
+            df.isEmptySequence() ? 0 : 1,
+            this.sequenceType,
+            this.exceptionMessage,
+            getMetadata()
+        );
         if (df.isEmptySequence()) {
             return df;
         }
@@ -199,7 +165,10 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
+            this.iterator,
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -222,49 +191,156 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         return NativeClauseContext.NoNativeQuery;
     }
 
-    private void checkTypePromotion() {
+    private static Item promoteItem(
+            Item item,
+            ItemType itemType,
+            SequenceType sequenceType,
+            String exceptionMessage,
+            RuntimeStaticContext staticContext,
+            ExceptionMetadata metadata
+    ) {
         if (
-            this.nextResult.isFunction()
-                && this.nextResult.getIdentifier() != null
-                && this.nextResult.getIdentifier().getArity() == 0
-                && Name.TAIL_CALL_OPTIMIZATION.equals(this.nextResult.getIdentifier().getName())
+            item.isFunction()
+                && item.getIdentifier() != null
+                && item.getIdentifier().getArity() == 0
+                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())
         ) {
-            return;
+            return item;
         }
         if (
-            (this.nextResult.isFunction() || this.nextResult.isMap() || this.nextResult.isArray())
-                && this.itemType.isFunctionItemType()
-                && this.itemType.getSignature() != null
+            (item.isFunction() || item.isMap() || item.isArray())
+                && itemType.isFunctionItemType()
+                && itemType.getSignature() != null
         ) {
-            this.nextResult = FunctionCoercion.coerceToFunctionItem(
-                this.nextResult,
-                this.itemType,
-                getRuntimeStaticContext(),
-                this.exceptionMessage
+            return FunctionCoercion.coerceToFunctionItem(
+                item,
+                itemType,
+                staticContext,
+                exceptionMessage
             );
-            return;
         }
-        if (!this.nextResult.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
+        if (!item.getDynamicType().canBePromotedTo(sequenceType.getItemType())) {
             throw new UnexpectedTypeException(
-                    this.exceptionMessage
-                        + this.nextResult.getDynamicType().toString()
+                    exceptionMessage
+                        + item.getDynamicType().toString()
                         + " cannot be promoted to type "
-                        + this.sequenceType
+                        + sequenceType
                         + ".",
-                    getMetadata()
+                    metadata
             );
         }
-        this.nextResult = CastIterator.castItemToType(
-            this.nextResult,
-            this.sequenceType.getItemType(),
-            getMetadata(),
-            this.staticContext
+        Item promotedItem = CastIterator.castItemToType(
+            item,
+            sequenceType.getItemType(),
+            metadata,
+            staticContext
         );
-        if (this.nextResult == null) {
+        if (promotedItem == null) {
             throw new OurBadException(
-                    "We were not able to promote " + this.nextResult + " to type " + this.sequenceType.getItemType()
+                    "We were not able to promote " + item + " to type " + sequenceType.getItemType()
             );
         }
+        return promotedItem;
+    }
+
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
+
+        private final ItemRuntimePlan childPlan;
+        private final DynamicContext context;
+        private final SequenceType sequenceType;
+        private final ItemType itemType;
+        private final String exceptionMessage;
+        private final RuntimeStaticContext staticContext;
+        private final ExceptionMetadata metadata;
+
+        private Cursor<Item> childCursor;
+        private Item nextResult;
+        private long childIndex;
+
+        private EvaluationCursor(
+                @NonNull ItemRuntimePlan childPlan,
+                @NonNull DynamicContext context,
+                @NonNull SequenceType sequenceType,
+                @NonNull ItemType itemType,
+                @NonNull String exceptionMessage,
+                @NonNull RuntimeStaticContext staticContext,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.childPlan = childPlan;
+            this.context = context;
+            this.sequenceType = sequenceType;
+            this.itemType = itemType;
+            this.exceptionMessage = exceptionMessage;
+            this.staticContext = staticContext;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.childIndex = 0;
+            this.childCursor = this.childPlan.getCursor(this.context);
+            setNextResult();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextResult != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.nextResult == null) {
+                throw new IteratorFlowException(IteratorFlowException.FLOW_EXCEPTION_MESSAGE, this.metadata);
+            }
+            Item result = this.nextResult;
+            setNextResult();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+            this.nextResult = null;
+        }
+
+        private void setNextResult() {
+            this.nextResult = null;
+            if (!this.childCursor.hasNext()) {
+                checkEmptySequence(
+                    this.childIndex,
+                    this.sequenceType,
+                    this.exceptionMessage,
+                    this.metadata
+                );
+                return;
+            }
+
+            Item candidate = this.childCursor.next();
+            if (candidate != null && !candidate.getDynamicType().isResolved()) {
+                candidate.getDynamicType().resolve(this.context, this.metadata);
+            }
+            this.childIndex++;
+            if (candidate == null) {
+                return;
+            }
+
+            if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, candidate)) {
+                candidate = promoteItem(
+                    candidate,
+                    this.itemType,
+                    this.sequenceType,
+                    this.exceptionMessage,
+                    this.staticContext,
+                    this.metadata
+                );
+            }
+            this.nextResult = candidate;
+        }
+
     }
 
 }

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -29,8 +31,7 @@ import org.rumbledb.exceptions.DuplicateAttributeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 
 import java.io.Serial;
@@ -38,29 +39,34 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 /**
  * Runtime iterator for direct element constructors.
  * 
  * @see org.rumbledb.expressions.xml.DirElemConstructorExpression
  */
-public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private final Name elementName;
-    private final List<RuntimeIterator> content;
+    private final List<ItemRuntimePlan> content;
     private final List<AttributeNodeRuntimeIterator> attributes;
     private final List<NamespaceDeclaration> namespaceDeclarations;
 
     public DirElemConstructorRuntimeIterator(
             Name elementName,
-            List<RuntimeIterator> content,
+            List<ItemRuntimePlan> content,
             List<AttributeNodeRuntimeIterator> attributes,
             List<NamespaceDeclaration> namespaceDeclarations,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(content, attributes), staticContext);
+        super(
+            Stream.concat(attributes.stream().<ItemRuntimePlan>map(iterator -> iterator), content.stream()).toList(),
+            staticContext
+        );
         this.content = content;
         this.attributes = attributes;
         this.namespaceDeclarations = namespaceDeclarations;
@@ -68,7 +74,17 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        return createElement(
+            (iterator, childContext) -> iterator.materialize(childContext),
+            dynamicContext
+        );
+    }
+
+    private Item createElement(
+            BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize,
+            DynamicContext dynamicContext
+    ) {
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -88,12 +104,11 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
             StringBuilder textAccumulator = null;
             boolean hasSeenNonAttributeNode = false;
 
-            for (RuntimeIterator iterator : this.content) {
+            for (ItemRuntimePlan iterator : this.content) {
                 boolean previousItemWasAtomic = false;
-                iterator.open(contextToUse);
-                while (iterator.hasNext()) {
+                for (Item childItem : materialize.apply(iterator, contextToUse)) {
                     List<Item> expandedItems = new ArrayList<>();
-                    XmlConstructorContentUtils.appendExpandedItem(iterator.next(), expandedItems);
+                    XmlConstructorContentUtils.appendExpandedItem(childItem, expandedItems);
                     for (Item item : expandedItems) {
 
                         if (item.isAttributeNode() || item.isNamespaceNode()) {
@@ -160,7 +175,6 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                         }
                     }
                 }
-                iterator.close();
             }
 
             // handle any remaining accumulated text at the end
@@ -188,22 +202,17 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         }
         // process regular attributes
         if (this.attributes != null) {
-            for (RuntimeIterator iterator : this.attributes) {
-                iterator.open(contextToUse);
-                while (iterator.hasNext()) {
-                    Item item = iterator.next();
-
+            for (ItemRuntimePlan iterator : this.attributes) {
+                for (Item item : materialize.apply(iterator, contextToUse)) {
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {
                         attributes.add(item.copy(true));
                     }
                 }
-                iterator.close();
             }
         }
         validateNoDuplicateAttributes(attributes);
         // create and return the element item
-        this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
                 this.elementName,
@@ -244,17 +253,6 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
             }
             attributeNames.add(expanded);
         }
-    }
-
-    private static List<RuntimeIterator> createChildList(
-            List<RuntimeIterator> content,
-            List<AttributeNodeRuntimeIterator> attributes
-    ) {
-        List<RuntimeIterator> children = new ArrayList<>();
-        // first add attributes, then content
-        children.addAll(attributes);
-        children.addAll(content);
-        return children;
     }
 
 }

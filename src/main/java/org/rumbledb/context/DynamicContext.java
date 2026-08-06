@@ -20,6 +20,8 @@
 
 package org.rumbledb.context;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.spark.api.java.JavaRDD;
@@ -31,7 +33,6 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -61,7 +62,7 @@ public class DynamicContext implements Serializable {
      */
     @Setter
     @Getter
-    private RuntimeIterator topLevelRuntimeIterator;
+    private ItemRuntimePlan topLevelRuntimeIterator;
 
     /**
      * Creates a new, empty module context (without parent).

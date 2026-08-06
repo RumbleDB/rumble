@@ -25,9 +25,9 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -39,12 +39,12 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Serial
     private static final long serialVersionUID = 1L;
     private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private final ItemRuntimePlan expression;
 
     List<Item> results;
 
     public ReturnFlatMapClosure(
-            RuntimeIterator expression,
+            ItemRuntimePlan expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columns
     ) {
@@ -53,7 +53,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         if (this.expression.isSparkJobNeeded()) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
         this.results = new ArrayList<>();
@@ -62,7 +62,8 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Override
     public Iterator<Item> call(Row row) {
         this.dataFrameContext.setFromRow(row);
-        this.expression.materialize(this.dataFrameContext.getContext(), this.results);
+        this.results.clear();
+        this.results.addAll(this.expression.materialize(this.dataFrameContext.getContext()));
         return this.results.iterator();
     }
 }

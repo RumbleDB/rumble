@@ -25,7 +25,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -37,7 +37,7 @@ import java.util.List;
  * 
  * @see org.rumbledb.expressions.xml.TextNodeConstructorExpression
  */
-public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class TextNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -59,7 +59,11 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        return createTextNode(this.contentIterator.materialize(dynamicContext), dynamicContext);
+    }
+
+    private Item createTextNode(List<Item> materialized, DynamicContext dynamicContext) {
         // Process content
         StringBuilder textContent = new StringBuilder();
         // processing of the content expression according to the spec
@@ -67,7 +71,6 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
 
         // 1. Atomization is applied to the value of the content expression,
         // converting it to a sequence of atomic values.
-        List<Item> materialized = this.contentIterator.materialize(dynamicContext);
         // 2. If the result of atomization is an empty sequence, no text node is constructed.
         if (materialized.isEmpty()) {
             return null;
@@ -84,7 +87,6 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
         textContent.deleteCharAt(textContent.length() - 1);
 
         // Create and return the text node item
-        this.hasNext = false;
         Item textItem = ItemFactory.getInstance()
             .createXmlTextNode(
                 textContent.toString()

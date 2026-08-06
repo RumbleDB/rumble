@@ -24,106 +24,150 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.spark.SparkSessionManager;
 
+import lombok.NonNull;
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
+public class ParallelizeFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private RuntimeIterator partitionsIterator;
 
-    public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan partitionsIterator;
+
+    public ParallelizeFunctionIterator(
+            List<ItemRuntimePlan> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
-        this.partitionsIterator = null;
-        if (this.getChildren().size() > 1) {
-            this.partitionsIterator = this.getChild(1);
-        }
+        this.partitionsIterator = this.getChildren().size() > 1 ? this.getChild(1) : null;
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<Item> rdd = null;
-        List<Item> contents = new ArrayList<>();
-        if (this.sequenceIterator.isDataFrame()) {
-            RuntimeDataFrame<Item> dataFrame = this.sequenceIterator.getDataFrame(context);
-            rdd = dataFrame.toRDD(this.getMetadata());
-            if (this.getChildren().size() == 1) {
-                return rdd;
-            } else {
-                return rdd.repartition(getNumberOfPartitions(context).getIntValue());
-            }
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        if (this.partitionsIterator == null) {
+            return this.sequenceIterator.getCursor(context);
         }
-        this.sequenceIterator.materialize(context, contents);
-        if (this.getChildren().size() == 1) {
-            rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
-        } else {
-            Item partitions = getNumberOfPartitions(context);
-            rdd = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .parallelize(
-                    contents,
-                    partitions.getIntValue()
-                );
-        }
-        return rdd;
+        return new EvaluationCursor(
+                this.sequenceIterator,
+                this.partitionsIterator,
+                context,
+                getMetadata()
+        );
     }
 
-    protected Item getNumberOfPartitions(DynamicContext context) {
-        Item partitions = null;
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        if (this.sequenceIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            RuntimeDataFrame<Item> dataFrame = this.sequenceIterator.getDataFrame(context);
+            JavaRDD<Item> rdd = dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata());
+            if (this.partitionsIterator == null) {
+                return rdd;
+            }
+            return rdd.repartition(
+                getNumberOfPartitions(this.partitionsIterator, context, getMetadata()).getIntValue()
+            );
+        }
+        List<Item> contents = this.sequenceIterator.materialize(context);
+        if (this.partitionsIterator == null) {
+            return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
+        }
+        Item partitions = getNumberOfPartitions(this.partitionsIterator, context, getMetadata());
+        return SparkSessionManager.getInstance()
+            .getJavaSparkContext()
+            .parallelize(contents, partitions.getIntValue());
+    }
+
+    private static Item getNumberOfPartitions(
+            ItemRuntimePlan partitionsPlan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        Item partitions;
         try {
-            partitions = this.partitionsIterator.materializeAtMostOneItemOrNull(context);
+            partitions = partitionsPlan.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but a sequence with more than one item is supplied.",
-                    getMetadata()
+                    metadata
             );
         }
         if (partitions == null) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but an empty sequence is supplied.",
-                    getMetadata()
+                    metadata
             );
         }
         if (!partitions.isInteger()) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but a non-integer is supplied.",
-                    getMetadata()
+                    metadata
             );
         }
         return partitions;
     }
 
-    @Override
-    protected void openLocal() {
-        this.getChild(0).open(this.currentDynamicContextForLocalExecution);
-        if (this.getChildren().size() > 1) {
-            getNumberOfPartitions(this.currentDynamicContextForLocalExecution);
+
+
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
+
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan partitionsPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> sequenceCursor;
+
+        private EvaluationCursor(
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan partitionsPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.partitionsPlan = partitionsPlan;
+            this.context = context;
+            this.metadata = metadata;
         }
-    }
 
-    @Override
-    protected void closeLocal() {
-        this.getChild(0).close();
-    }
+        @Override
+        protected void openLocal() {
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
+            getNumberOfPartitions(this.partitionsPlan, this.context, this.metadata);
+        }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.getChild(0).hasNext();
-    }
+        @Override
+        protected boolean hasNextLocal() {
+            return this.sequenceCursor.hasNext();
+        }
 
-    @Override
-    protected Item nextLocal() {
-        return this.getChild(0).next();
+        @Override
+        protected Item nextLocal() {
+            return this.sequenceCursor.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+        }
     }
 }

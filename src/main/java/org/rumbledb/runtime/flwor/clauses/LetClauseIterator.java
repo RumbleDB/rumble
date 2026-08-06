@@ -20,28 +20,28 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+
 import lombok.extern.log4j.Log4j2;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
-import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.TupleRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -54,6 +54,8 @@ import org.rumbledb.runtime.flwor.udfs.ExpressionEvaluationUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -70,24 +72,20 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.*;
 
-
 @Log4j2
-public class LetClauseIterator extends RuntimeTupleIterator {
-
+public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final Name variableName; // for efficient use in local iteration
-    private final SequenceType sequenceType;
-    private final RuntimeIterator assignmentIterator;
-    private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
-    private FlworTuple nextLocalTupleResult;
+    private Name variableName; // for efficient use in local iteration
+    private SequenceType sequenceType;
+    private ItemRuntimePlan assignmentIterator;
 
     public LetClauseIterator(
-            RuntimeTupleIterator child,
+            TupleRuntimePlan child,
             Name variableName,
             SequenceType sequenceType,
-            RuntimeIterator assignmentIterator,
+            ItemRuntimePlan assignmentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(child, staticContext);
@@ -97,96 +95,146 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.tupleContext = this.currentDynamicContext;
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
-        } else {
-            this.child.open(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-            setNextLocalTupleResult();
-        }
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
+        return new LetLocalCursor(
+                this.child,
+                this.variableName,
+                this.assignmentIterator,
+                getEvaluationDepthLimit(),
+                getConfiguration(),
+                context,
+                getMetadata()
+        );
     }
 
-    private void setNextLocalTupleResult() {
-        // if starting clause: result is a single tuple -> no more tuples after the first next call
-        if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.hasNext = false;
-            return;
+    private static final class LetLocalCursor extends AbstractLocalCursor<FlworTuple> {
+
+        private final TupleRuntimePlan childPlan;
+        private final Name variableName;
+        private final ItemRuntimePlan assignmentPlan;
+        private final int evaluationDepthLimit;
+        private final RumbleConfiguration configuration;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<FlworTuple> childCursor;
+        private DynamicContext tupleContext;
+        private FlworTuple nextTuple;
+        private boolean startingClause;
+
+        private LetLocalCursor(
+                TupleRuntimePlan childPlan,
+                Name variableName,
+                ItemRuntimePlan assignmentPlan,
+                int evaluationDepthLimit,
+                RumbleConfiguration configuration,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.childPlan = childPlan;
+            this.variableName = variableName;
+            this.assignmentPlan = assignmentPlan;
+            this.evaluationDepthLimit = evaluationDepthLimit;
+            this.configuration = configuration;
+            this.context = context;
+            this.metadata = metadata;
         }
 
-        if (this.child.hasNext()) {
-            FlworTuple inputTuple = this.child.next();
-            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
-                                                                                                   // variables from new
-                                                                                                   // tuple
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple);
-            this.hasNext = true;
-        } else {
-            this.child.close();
-            this.hasNext = false;
-        }
-    }
-
-    private FlworTuple generateTupleFromExpressionWithContext(FlworTuple inputTuple) {
-        FlworTuple resultTuple;
-        if (inputTuple == null) {
-            resultTuple = new FlworTuple(this.getConfiguration());
-        } else {
-            resultTuple = new FlworTuple(inputTuple);
-        }
-        if (this.assignmentIterator.isDataFrame()) {
-            HomogeneousItemDataFrame df = this.assignmentIterator.getDataFrame(this.tupleContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext);
-            resultTuple.putValue(this.variableName, df);
-        } else if (this.assignmentIterator.isRDDOrDataFrame()) {
-            JavaRDD<Item> itemRDD = this.assignmentIterator.getRDD(this.tupleContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext);
-            resultTuple.putValue(this.variableName, itemRDD);
-        } else {
-            List<Item> results = new ArrayList<>();
-            this.assignmentIterator.open(this.tupleContext);
-            while (this.assignmentIterator.hasNext()) {
-                results.add(this.assignmentIterator.next());
+        @Override
+        protected void openLocal() {
+            this.startingClause = this.childPlan == null
+                || this.evaluationDepthLimit == 0;
+            if (this.startingClause) {
+                this.tupleContext = this.context;
+                this.nextTuple = generateTuple(null);
+                return;
             }
-            this.assignmentIterator.close();
-            resultTuple.putValue(this.variableName, results);
+            this.childCursor = this.childPlan.createNativeCursor(this.context);
+            this.tupleContext = new DynamicContext(this.context);
+            advance();
         }
-        return resultTuple;
-    }
 
-    @Override
-    public FlworTuple next() {
-        if (this.hasNext) {
-            FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
-            setNextLocalTupleResult(); // calculate and store the next result
+        private void advance() {
+            if (!this.childCursor.hasNext()) {
+                this.nextTuple = null;
+                return;
+            }
+            FlworTuple inputTuple = this.childCursor.next();
+            this.tupleContext.getVariableValues().removeAllVariables();
+            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, this.metadata);
+            this.nextTuple = generateTuple(inputTuple);
+        }
+
+        private FlworTuple generateTuple(FlworTuple inputTuple) {
+            FlworTuple result = inputTuple == null
+                ? new FlworTuple(this.configuration)
+                : new FlworTuple(inputTuple);
+            if (this.assignmentPlan.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+                result.putValue(
+                    this.variableName,
+                    ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                        this.assignmentPlan,
+                        this.tupleContext
+                    )
+                );
+                this.tupleContext = new DynamicContext(this.context);
+            } else if (this.assignmentPlan.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+                result.putValue(
+                    this.variableName,
+                    this.assignmentPlan.getRDD(this.tupleContext)
+                );
+                this.tupleContext = new DynamicContext(this.context);
+            } else {
+                result.putValue(
+                    this.variableName,
+                    this.assignmentPlan.materialize(this.tupleContext)
+                );
+            }
             return result;
         }
-        throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
-    }
 
-    @Override
-    public void close() {
-        this.isOpen = false;
-        if (this.child != null && this.evaluationDepthLimit != 0) {
-            this.child.close();
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextTuple != null;
+        }
+
+        @Override
+        protected FlworTuple nextLocal() {
+            if (this.nextTuple == null) {
+                throw invalidState("No more let-clause tuples are available.");
+            }
+            FlworTuple result = this.nextTuple;
+            if (this.startingClause) {
+                this.nextTuple = null;
+            } else {
+                advance();
+            }
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+            this.tupleContext = null;
+            this.nextTuple = null;
         }
     }
 
     @Override
-    public FlworDataFrame getDataFrame(
+    public FlworDataFrame createNativeDataFrame(
             DynamicContext context
     ) {
         if (this.child != null && this.evaluationDepthLimit != 0) {
-            FlworDataFrame df = this.child.getDataFrame(context);
+            FlworDataFrame df = (FlworDataFrame) this.child.getDataFrame(context);
 
             if (!this.outputTupleProjection.containsKey(this.variableName)) {
                 return df;
             }
 
-            if (this.assignmentIterator.isRDDOrDataFrame()) {
+            if (this.assignmentIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
                 return getDataFrameAsJoin(context, this.outputTupleProjection, df);
             }
 
@@ -226,8 +274,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             );
         }
 
-        RuntimeIterator sequenceIterator = predicateAssignmentIterator.sequenceIterator();
-        RuntimeIterator predicateIterator = predicateAssignmentIterator.predicateIterator();
+        ItemRuntimePlan sequenceIterator = predicateAssignmentIterator
+            .sequenceIterator();
+        ItemRuntimePlan predicateIterator = predicateAssignmentIterator
+            .predicateIterator();
 
         // Is the left-hand-side of this predicate expression independent from input tuples?
         if (!isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
@@ -237,8 +287,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             );
         }
 
-        List<RuntimeIterator> contextItemEqualityCriteria = new ArrayList<>();
-        List<RuntimeIterator> inputTupleEqualityCriteria = new ArrayList<>();
+        List<ItemRuntimePlan> contextItemEqualityCriteria =
+            new ArrayList<>();
+        List<ItemRuntimePlan> inputTupleEqualityCriteria =
+            new ArrayList<>();
         String failureMessage = extractEqualityComparisonsForConjunction(
             predicateIterator,
             contextItemEqualityCriteria,
@@ -287,7 +339,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         ).getDataFrame();
 
         // We compute the hashes for both sides of the equality predicate.
-        RuntimeIterator contextItemValueExpression = getJoinKeyExpression(
+        ItemRuntimePlan contextItemValueExpression = getJoinKeyExpression(
             contextItemEqualityCriteria,
             getMetadata()
         );
@@ -303,7 +355,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             getConfiguration()
         );
 
-        RuntimeIterator inputTupleValueExpression = getJoinKeyExpression(
+        ItemRuntimePlan inputTupleValueExpression = getJoinKeyExpression(
             inputTupleEqualityCriteria,
             getMetadata()
         );
@@ -414,7 +466,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             .metadata(getMetadata())
             .build();
 
-        RuntimeIterator filteringPredicateIterator = new PredicateIterator(
+        ItemRuntimePlan filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(
                         this.variableName,
                         staticContext
@@ -437,8 +489,8 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         return new FlworDataFrame(inputDF);
     }
 
-    private RuntimeIterator getJoinKeyExpression(
-            List<RuntimeIterator> equalityCriteria,
+    private ItemRuntimePlan getJoinKeyExpression(
+            List<ItemRuntimePlan> equalityCriteria,
             ExceptionMetadata metadata
     ) {
         if (equalityCriteria.size() == 1) {
@@ -463,14 +515,14 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     }
 
     private static String extractEqualityComparisonsForConjunction(
-            RuntimeIterator predicateIterator,
-            List<RuntimeIterator> contextItemEqualityCriteria,
-            List<RuntimeIterator> inputTupleEqualityCriteria
+            ItemRuntimePlan predicateIterator,
+            List<ItemRuntimePlan> contextItemEqualityCriteria,
+            List<ItemRuntimePlan> inputTupleEqualityCriteria
     ) {
-        Stack<RuntimeIterator> candidateIterators = new Stack<>();
+        Stack<ItemRuntimePlan> candidateIterators = new Stack<>();
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
-            RuntimeIterator iterator = candidateIterators.pop();
+            ItemRuntimePlan iterator = candidateIterators.pop();
             if (iterator instanceof AndOperationIterator andIterator) {
                 candidateIterators.push(andIterator.getLeftIterator());
                 candidateIterators.push(andIterator.getRightIterator());
@@ -483,13 +535,17 @@ public class LetClauseIterator extends RuntimeTupleIterator {
                 return "We did detect a predicate expression, but the criterion inside the predicate is not a value equality comparison.";
             }
 
-            RuntimeIterator leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
-            RuntimeIterator rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
+            ItemRuntimePlan leftHandSideOfJoinEqualityCriterion =
+                comparisonIterator.getLeftIterator();
+            ItemRuntimePlan rightHandSideOfJoinEqualityCriterion =
+                comparisonIterator.getRightIterator();
             Set<Name> leftDependencies = new HashSet<>(
-                    leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+                    leftHandSideOfJoinEqualityCriterion.getVariableDependencies()
+                        .keySet()
             );
             Set<Name> rightDependencies = new HashSet<>(
-                    rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+                    rightHandSideOfJoinEqualityCriterion.getVariableDependencies()
+                        .keySet()
             );
 
             if (leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM)) {
@@ -516,8 +572,8 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     }
 
     public static boolean isExpressionIndependentFromInputTuple(
-            RuntimeIterator sequenceIterator,
-            RuntimeTupleIterator tupleIterator
+            ItemRuntimePlan sequenceIterator,
+            TupleRuntimePlan tupleIterator
     ) {
         // Check that the expression does not depend functionally on the input tuples
         Set<Name> intersection = new HashSet<>(
@@ -578,8 +634,8 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         projection.remove(this.variableName);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<Name, DynamicContext.VariableDependency> exprDependency = this.assignmentIterator
-            .getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> exprDependency =
+            this.assignmentIterator.getVariableDependencies();
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
@@ -622,7 +678,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             Dataset<Row> dataFrame,
             Name newVariableName,
             SequenceType sequenceType,
-            RuntimeIterator newVariableExpression,
+            ItemRuntimePlan newVariableExpression,
             DynamicContext context,
             List<Name> variablesInInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
@@ -662,8 +718,9 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             }
         }
 
-        // for (Name n : newVariableExpression.getVariableDependencies().keySet()) {
-        // System.out.println(n.toString() + " -> " + newVariableExpression.getVariableDependencies().get(n));
+        // for (Name n : org.rumbledb.runtime.plan.newVariableExpression.getVariableDependencies().keySet()) {
+        // System.out.println(n.toString() + " -> " +
+        // org.rumbledb.runtime.plan.newVariableExpression.getVariableDependencies().get(n));
         // }
         //
         // for (Name n : variablesInInputTuple) {
@@ -739,7 +796,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
 
     public static boolean registerLetClauseUDF(
             Dataset<Row> dataFrame,
-            RuntimeIterator newVariableExpression,
+            ItemRuntimePlan newVariableExpression,
             DynamicContext context,
             StructType inputSchema,
             List<FlworDataFrameColumn> UDFcolumns,
@@ -860,7 +917,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
             Name newVariableName,
-            RuntimeIterator iterator,
+            ItemRuntimePlan iterator,
             List<FlworDataFrameColumn> allColumns,
             StructType inputSchema,
             DynamicContext context
@@ -868,7 +925,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
         letContext.setView(input);
-        NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(
+            iterator,
+            letContext
+        );
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
@@ -923,7 +983,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         if (this.assignmentIterator.isSparkJobNeeded()) {
             return true;
         }
-        switch (getHighestExecutionMode()) {
+        switch (this.staticContext.getExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:
@@ -940,7 +1000,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.child != null) {
-            nativeClauseContext = this.child.generateNativeQuery(nativeClauseContext);
+            nativeClauseContext = NativeQueryRuntimePlan.generate(
+                this.child,
+                nativeClauseContext
+            );
             if (nativeClauseContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -948,7 +1011,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         nativeClauseContext.setClauseType(FLWOR_CLAUSES.LET);
-        NativeClauseContext expressionContext = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext expressionContext = NativeQueryRuntimePlan.generate(
+            this.assignmentIterator,
+            nativeClauseContext
+        );
         if (expressionContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

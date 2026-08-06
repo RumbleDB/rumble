@@ -26,8 +26,11 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -37,19 +40,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class NodeSetOperationIterator extends HybridRuntimeIterator {
+public class NodeSetOperationIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> computeNodeSet(context).iterator(),
+                getMetadata()
+        );
+    }
+
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
-    private final NodeSetExpression.NodeSetOperator operator;
-    private List<Item> localResults;
-    private int nextResultIndex;
+    private ItemRuntimePlan leftIterator;
+    private ItemRuntimePlan rightIterator;
+    private NodeSetExpression.NodeSetOperator operator;
 
     public NodeSetOperationIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightIterator,
             NodeSetExpression.NodeSetOperator operator,
             RuntimeStaticContext staticContext
     ) {
@@ -60,29 +73,7 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException("Invalid next call in node set operation", getMetadata());
-        }
-        Item result = this.localResults.get(this.nextResultIndex++);
-        this.hasNext = this.nextResultIndex < this.localResults.size();
-        return result;
-    }
-
-    @Override
-    public void openLocal() {
-        this.localResults = computeNodeSet(this.currentDynamicContextForLocalExecution);
-        this.nextResultIndex = 0;
-        this.hasNext = !this.localResults.isEmpty();
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> leftNodes = buildNodeRDD(
             this.leftIterator.getRDD(context),
             "left"
@@ -109,12 +100,6 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
         return result.sortBy(Item::getXmlDocumentPosition, true, 1);
     }
 
-    @Override
-    protected void closeLocal() {
-        this.localResults = null;
-        this.nextResultIndex = 0;
-    }
-
     private List<Item> computeNodeSet(DynamicContext context) {
         Set<Item> leftNodes = buildNodeSet(this.leftIterator, context, "left");
         Set<Item> rightNodes = buildNodeSet(this.rightIterator, context, "right");
@@ -138,7 +123,7 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
      * Builds an ordered set of nodes while validating that every item is an XML node with a document position.
      */
     private Set<Item> buildNodeSet(
-            RuntimeIterator iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             String side
     ) {

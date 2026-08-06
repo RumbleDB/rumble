@@ -1,39 +1,44 @@
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentValueException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ResolveURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public ResolveURIFunctionIterator(
-            List<RuntimeIterator> children,
+            List<ItemRuntimePlan> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
     }
 
-
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item relative = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(context);
+    }
+
+    private Item evaluate(DynamicContext context) {
+        Item relative = this.getChild(0).materializeFirstOrNull(context);
         if (relative == null) {
             return null;
         }
         Item base;
         if (this.getChildren().size() == 2) {
-            base = this.getChild(1).materializeFirstItemOrNull(context);
+            base = this.getChild(1).materializeFirstOrNull(context);
         } else {
             base = ItemFactory.getInstance().createAnyURIItem(this.staticContext.getStaticURI().toString());
         }

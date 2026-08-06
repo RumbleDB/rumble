@@ -6,8 +6,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -18,13 +18,13 @@ public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
     private static final long serialVersionUID = 1L;
 
     private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private final ItemRuntimePlan expression;
     private String classSimpleName;
 
     private List<T> results;
 
     public GenericForClauseUDF(
-            RuntimeIterator expression,
+            ItemRuntimePlan expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columnNames,
             String classSimpleName
@@ -34,7 +34,7 @@ public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
         if (this.expression.isSparkJobNeeded()) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -47,11 +47,9 @@ public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
 
         this.results.clear();
         // apply expression in the dynamic context
-        this.expression.open(this.dataFrameContext.getContext());
-        while (this.expression.hasNext()) {
-            this.results.add(toDFValue(this.expression.next()));
+        for (Item item : this.expression.materialize(this.dataFrameContext.getContext())) {
+            this.results.add(toDFValue(item));
         }
-        this.expression.close();
 
         return this.results;
     }

@@ -25,26 +25,29 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
-public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
+public class ArrayFlattenFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private final ItemRuntimePlan iterator;
 
     public ArrayFlattenFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -52,72 +55,39 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " FLATTEN function",
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    List<Item> flattened = new LinkedList<>();
+                    flatten(List.of(item), flattened);
+                    return flattened.iterator();
+                },
                 getMetadata()
         );
     }
 
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
-
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            flatten(Collections.singletonList(item));
-            if (!(this.nextResults.isEmpty())) {
-                break;
-            }
-        }
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    private void flatten(List<Item> items) {
+    private static void flatten(List<Item> items, Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
                 if (item.isArrayOfItems()) {
-                    flatten(item.getItemMembers());
+                    flatten(item.getItemMembers(), results);
                 } else {
-                    for (java.util.List<Item> member : item.getSequenceMembers()) {
-                        flatten(member);
+                    for (List<Item> member : item.getSequenceMembers()) {
+                        flatten(member, results);
                     }
                 }
             } else {
-                this.nextResults.add(item);
+                results.add(item);
             }
         }
     }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
+
 
     @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayFlattenClosure();
         return childRDD.flatMap(transformation);

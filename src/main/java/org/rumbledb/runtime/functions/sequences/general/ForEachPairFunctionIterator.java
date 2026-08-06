@@ -20,44 +20,49 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
+public class ForEachPairFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item> {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new ForEachPairLocalCursor(
+                this.sequenceIterator1,
+                this.sequenceIterator2,
+                this.actionIterator,
+                this.staticContext,
+                context
+        );
+    }
+
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator sequenceIterator1;
-    private final RuntimeIterator sequenceIterator2;
-    private final RuntimeIterator actionIterator;
-    private RuntimeIterator currentCallbackIterator;
-    private List<Item> inputItems1;
-    private List<Item> inputItems2;
-    private Item actionFunction;
-    private int pairIndex;
-    private RuntimeStaticContext firstArgumentContext;
-    private RuntimeStaticContext secondArgumentContext;
-    private MutableArgumentIterator mutableFirstArgumentIterator;
-    private MutableArgumentIterator mutableSecondArgumentIterator;
+    private final ItemRuntimePlan sequenceIterator1;
+    private final ItemRuntimePlan sequenceIterator2;
+    private final ItemRuntimePlan actionIterator;
 
     public ForEachPairFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -69,157 +74,138 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
         this.actionIterator = arguments.get(2);
     }
 
-    @Override
-    protected void openLocal() {
-        initializeState(this.currentDynamicContextForLocalExecution);
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
-    }
-
-    private void initializeState(DynamicContext context) {
-        this.inputItems1 = this.sequenceIterator1.materialize(context);
-        this.inputItems2 = this.sequenceIterator2.materialize(context);
-
-        List<Item> functionItems = this.actionIterator.materialize(context);
+    private static Item resolveAction(
+            ItemRuntimePlan actionPlan,
+            RuntimeStaticContext staticContext,
+            DynamicContext context
+    ) {
+        List<Item> functionItems = actionPlan.materialize(context);
         if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The third argument of fn:for-each-pair must be a single function item [err:XPTY0004].",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
-        this.actionFunction = functionItems.get(0);
-        if (this.actionFunction.getIdentifier().getArity() != 2) {
+        Item actionFunction = functionItems.get(0);
+        if (actionFunction.getIdentifier().getArity() != 2) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:for-each-pair must accept exactly two arguments [err:XPTY0004].",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
 
-        this.firstArgumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
-        this.secondArgumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
-        this.pairIndex = 0;
+        return actionFunction;
+    }
 
-        this.mutableFirstArgumentIterator = new MutableArgumentIterator(this.firstArgumentContext);
-        this.mutableSecondArgumentIterator = new MutableArgumentIterator(this.secondArgumentContext);
-        List<RuntimeIterator> callbackArguments = new ArrayList<>(2);
-        callbackArguments.add(this.mutableFirstArgumentIterator);
-        callbackArguments.add(this.mutableSecondArgumentIterator);
-        this.currentCallbackIterator = NamedFunctions.buildFunctionItemCallIterator(
-            this.actionFunction,
-            this.staticContext,
+    private static RuntimeStaticContext argumentContext(RuntimeStaticContext staticContext) {
+        return RuntimeStaticContext.builder()
+            .configuration(staticContext.getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(staticContext.getMetadata())
+            .build();
+    }
+
+    private static ItemRuntimePlan buildCallback(
+            Item action,
+            Item first,
+            Item second,
+            RuntimeStaticContext argumentContext,
+            RuntimeStaticContext staticContext
+    ) {
+        return NamedFunctions.buildFunctionItemCallIterator(
+            action,
+            staticContext,
             ExecutionMode.LOCAL,
-            callbackArguments,
+            List.of(
+                new ConstantRuntimeIterator(first, argumentContext),
+                new ConstantRuntimeIterator(second, argumentContext)
+            ),
             false
         );
     }
 
-    private void advanceToNextResult(DynamicContext context) {
-        while (true) {
-            if (this.currentCallbackIterator != null && this.currentCallbackIterator.hasNext()) {
-                this.hasNext = true;
-                return;
-            }
-            if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-                this.currentCallbackIterator.close();
-            }
+    private static final class ForEachPairLocalCursor extends AbstractLocalCursor<Item> {
 
-            if (
-                this.inputItems1 == null
-                    || this.inputItems2 == null
-                    || this.pairIndex >= this.inputItems1.size()
-                    || this.pairIndex >= this.inputItems2.size()
-            ) {
-                this.hasNext = false;
-                return;
-            }
+        private final ItemRuntimePlan firstPlan;
+        private final ItemRuntimePlan secondPlan;
+        private final ItemRuntimePlan actionPlan;
+        private final RuntimeStaticContext staticContext;
+        private final DynamicContext context;
+        private List<Item> firstItems;
+        private List<Item> secondItems;
+        private Item action;
+        private RuntimeStaticContext argumentContext;
+        private int pairIndex;
+        private Cursor<Item> callbackCursor;
 
-            this.mutableFirstArgumentIterator.setCurrentItem(this.inputItems1.get(this.pairIndex));
-            this.mutableSecondArgumentIterator.setCurrentItem(this.inputItems2.get(this.pairIndex));
-            this.pairIndex++;
-            this.currentCallbackIterator.open(context);
-        }
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.currentCallbackIterator.next();
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.sequenceIterator1.isOpen()) {
-            this.sequenceIterator1.close();
-        }
-        if (this.sequenceIterator2.isOpen()) {
-            this.sequenceIterator2.close();
-        }
-        if (this.actionIterator.isOpen()) {
-            this.actionIterator.close();
-        }
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.currentCallbackIterator = null;
-        this.inputItems1 = null;
-        this.inputItems2 = null;
-        this.actionFunction = null;
-        this.pairIndex = 0;
-        this.firstArgumentContext = null;
-        this.secondArgumentContext = null;
-        this.mutableFirstArgumentIterator = null;
-        this.mutableSecondArgumentIterator = null;
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("fn:for-each-pair is currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("fn:for-each-pair is currently supported only in local execution mode.");
-    }
-
-    private static class MutableArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
-        @Serial
-        private static final long serialVersionUID = 1L;
-        private Item currentItem;
-
-        MutableArgumentIterator(RuntimeStaticContext staticContext) {
-            super(null, staticContext);
-        }
-
-        void setCurrentItem(Item item) {
-            this.currentItem = item;
+        private ForEachPairLocalCursor(
+                ItemRuntimePlan firstPlan,
+                ItemRuntimePlan secondPlan,
+                ItemRuntimePlan actionPlan,
+                RuntimeStaticContext staticContext,
+                DynamicContext context
+        ) {
+            super(staticContext.getMetadata());
+            this.firstPlan = firstPlan;
+            this.secondPlan = secondPlan;
+            this.actionPlan = actionPlan;
+            this.staticContext = staticContext;
+            this.context = context;
         }
 
         @Override
-        public Item materializeFirstItemOrNull(DynamicContext context) {
-            return this.currentItem;
+        protected void openLocal() {
+            this.firstItems = this.firstPlan.materialize(this.context);
+            this.secondItems = this.secondPlan.materialize(this.context);
+            this.action = resolveAction(this.actionPlan, this.staticContext, this.context);
+            this.argumentContext = argumentContext(this.staticContext);
+            this.pairIndex = 0;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            while (this.callbackCursor == null || !this.callbackCursor.hasNext()) {
+                closeCallback();
+                if (this.pairIndex >= Math.min(this.firstItems.size(), this.secondItems.size())) {
+                    return false;
+                }
+                ItemRuntimePlan callback = buildCallback(
+                    this.action,
+                    this.firstItems.get(this.pairIndex),
+                    this.secondItems.get(this.pairIndex),
+                    this.argumentContext,
+                    this.staticContext
+                );
+                this.pairIndex++;
+                this.callbackCursor = callback.getCursor(this.context);
+            }
+            return true;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw invalidState("No more fn:for-each-pair results are available.");
+            }
+            return this.callbackCursor.next();
+        }
+
+        private void closeCallback() {
+            if (this.callbackCursor != null) {
+                this.callbackCursor.close();
+                this.callbackCursor = null;
+            }
+        }
+
+        @Override
+        protected void closeLocal() {
+            closeCallback();
+            this.firstItems = null;
+            this.secondItems = null;
+            this.action = null;
+            this.argumentContext = null;
+            this.pairIndex = 0;
         }
     }
 }

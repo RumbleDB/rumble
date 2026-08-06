@@ -1,31 +1,35 @@
 package org.rumbledb.runtime.functions.datetime;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class TimeInMillis extends AtMostOneItemLocalRuntimeIterator {
+public class TimeInMillis extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public TimeInMillis(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        long time = System.currentTimeMillis();
-        return ItemFactory.getInstance().createLongItem(time);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return currentTime();
+    }
+
+    private Item currentTime() {
+        return ItemFactory.getInstance().createLongItem(System.currentTimeMillis());
     }
 
 }

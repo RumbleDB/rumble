@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,11 +31,13 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -45,37 +49,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
 
     public SumFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.item = computeSum(
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return computeSum(
             zeroElement(context),
             this.getChild(0),
             context,
             getMetadata()
         );
-        if (this.item == null) {
-            return null;
-        }
-        return this.item;
     }
 
     private Item zeroElement(DynamicContext context) {
         if (this.getChildren().size() > 1) {
-            return this.getChild(1).materializeFirstItemOrNull(context);
+            return this.getChild(1).materializeFirstOrNull(context);
         } else {
             return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
         }
@@ -83,18 +81,18 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public static Item computeSum(
             Item zeroElement,
-            RuntimeIterator iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        if (iterator.isDataFrame()) {
+        if (iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             return computeDataFrame(
                 zeroElement,
                 iterator,
                 context,
                 metadata
             );
-        } else if (iterator.isRDDOrDataFrame()) {
+        } else if (iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return computeRDD(
                 zeroElement,
                 iterator,
@@ -102,7 +100,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 metadata
             );
         } else {
-            return computeLocally(
+            return computeLocalSum(
                 zeroElement,
                 iterator,
                 context,
@@ -111,50 +109,51 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
-    private static Item computeLocally(
+    private static Item computeLocalSum(
             Item zeroElement,
-            RuntimeIterator iterator,
+            ItemRuntimePlan plan,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        iterator.open(context);
-
         Item result = null;
-        while (iterator.hasNext()) {
-            Item nextValue = iterator.next();
-            if (nextValue.isUntypedAtomic()) {
-                nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
-            }
-            if (result == null) {
-                result = nextValue;
-            } else {
-                if (result.isUntypedAtomic()) {
-                    result = ItemFactory.getInstance().createDoubleItem(result.castToDoubleValue());
-                }
-                Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
-                if (sum == null) {
-                    throw new InvalidArgumentTypeException(
-                            " \"+\": operation not possible with parameters of type \""
-                                + result.getDynamicType().toString()
-                                + "\" and \""
-                                + nextValue.getDynamicType().toString()
-                                + "\"",
-                            metadata
-                    );
-                }
-                result = sum;
+        try (Cursor<Item> cursor = plan.getCursor(context)) {
+            while (cursor.hasNext()) {
+                result = addToSum(result, cursor.next(), metadata);
             }
         }
         if (result == null) {
             result = zeroElement;
         }
-        iterator.close();
+        return result;
+    }
+
+    static Item addToSum(Item currentSum, Item nextValue, ExceptionMetadata metadata) {
+        if (nextValue.isUntypedAtomic()) {
+            nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
+        }
+        if (currentSum == null) {
+            return nextValue;
+        }
+        if (currentSum.isUntypedAtomic()) {
+            currentSum = ItemFactory.getInstance().createDoubleItem(currentSum.castToDoubleValue());
+        }
+        Item result = AdditiveOperationIterator.processItem(currentSum, nextValue, false);
+        if (result == null) {
+            throw new InvalidArgumentTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                        + currentSum.getDynamicType().toString()
+                        + "\" and \""
+                        + nextValue.getDynamicType().toString()
+                        + "\"",
+                    metadata
+            );
+        }
         return result;
     }
 
     private static Item computeRDD(
             Item zeroElement,
-            RuntimeIterator iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -167,11 +166,14 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static Item computeDataFrame(
             Item zeroElement,
-            RuntimeIterator iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        HomogeneousItemDataFrame df = iterator.getDataFrame(context);
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            iterator,
+            context
+        );
         if (df.isEmptySequence()) {
             return zeroElement;
         }
@@ -202,7 +204,10 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

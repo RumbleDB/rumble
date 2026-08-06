@@ -19,13 +19,15 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -57,44 +59,21 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<Item> prefixItems;
-    private int currentIndex;
-
-    public InScopePrefixesFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public InScopePrefixesFunctionIterator(
+            List<ItemRuntimePlan> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.prefixItems = null;
-        this.currentIndex = 0;
-
-        // fn:in-scope-prefixes($element as element()) as xs:string*
-        // The function requires exactly one argument of type element().
-        Item element = this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-        this.prefixItems = computeInScopePrefixes(element);
-        this.hasNext = !this.prefixItems.isEmpty();
-    }
-
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in-scope-prefixes function",
-                    getMetadata()
-            );
-        }
-
-        Item result = this.prefixItems.get(this.currentIndex);
-        this.currentIndex++;
-
-        if (this.currentIndex >= this.prefixItems.size()) {
-            this.hasNext = false;
-        }
-
-        return result;
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.flatMapArgument(
+            this.getChild(0),
+            context,
+            this::computeInScopePrefixes,
+            getMetadata()
+        );
     }
 
     /**

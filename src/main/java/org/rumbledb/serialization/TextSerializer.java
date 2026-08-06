@@ -8,8 +8,10 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 
 import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
 
-public class TextSerializer implements Serializer, java.io.Serializable {
+public class TextSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -63,7 +65,7 @@ public class TextSerializer implements Serializer, java.io.Serializable {
 
     private void appendArrayMembers(Item array, StringBuilder sb, String indent) {
         boolean first = true;
-        for (java.util.List<Item> memberSequence : array.getSequenceMembers()) {
+        for (List<Item> memberSequence : array.getSequenceMembers()) {
             for (Item member : memberSequence) {
                 if (!first) {
                     sb.append(" ");

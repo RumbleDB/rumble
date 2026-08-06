@@ -17,35 +17,40 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 /**
  * XQuery 3.1 map constructor: atomized single-atomic keys and general- sequence values.
  */
-public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final List<RuntimeIterator> keys;
-    private final List<RuntimeIterator> values;
+    private final List<? extends ItemRuntimePlan> keys;
+    private final List<? extends ItemRuntimePlan> values;
     private final boolean mutable;
 
     public MapConstructorRuntimeIterator(
-            List<RuntimeIterator> keys,
-            List<RuntimeIterator> values,
+            List<? extends ItemRuntimePlan> keys,
+            List<? extends ItemRuntimePlan> values,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -56,12 +61,9 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private static Item atomizeSingleMapKey(
-            RuntimeIterator keyIterator,
-            DynamicContext dynamicContext,
-            org.rumbledb.exceptions.ExceptionMetadata metadata
+            List<Item> keySequence,
+            ExceptionMetadata metadata
     ) {
-        List<Item> keySequence = new ArrayList<>();
-        keyIterator.materialize(dynamicContext, keySequence);
         List<Item> atomized = new ArrayList<>();
         for (Item item : keySequence) {
             atomized.addAll(item.atomizedValue());
@@ -83,17 +85,19 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        return evaluate(iterator -> iterator.materialize(dynamicContext));
+    }
+
+    private Item evaluate(Function<ItemRuntimePlan, List<Item>> materialize) {
         List<Item> mapKeys = new ArrayList<>();
         List<List<Item>> valueSequences = new ArrayList<>();
         boolean allKeysString = true;
         boolean allValuesSingletons = true;
         for (int i = 0; i < this.keys.size(); i++) {
-            Item key = atomizeSingleMapKey(this.keys.get(i), dynamicContext, getMetadata());
+            Item key = atomizeSingleMapKey(materialize.apply(this.keys.get(i)), getMetadata());
             mapKeys.add(key);
-            RuntimeIterator valueIterator = this.values.get(i);
-            List<Item> valueSeq = new ArrayList<>();
-            valueIterator.materialize(dynamicContext, valueSeq);
+            List<Item> valueSeq = materialize.apply(this.values.get(i));
             if (!key.isString()) {
                 allKeysString = false;
             }
@@ -102,7 +106,6 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             }
             valueSequences.add(valueSeq);
         }
-        this.hasNext = false;
         if (allKeysString && allValuesSingletons) {
             return ItemFactory.getInstance()
                 .createObjectItem(

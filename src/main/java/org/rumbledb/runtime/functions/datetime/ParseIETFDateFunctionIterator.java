@@ -1,13 +1,14 @@
 package org.rumbledb.runtime.functions.datetime;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.time.DateTimeException;
@@ -22,7 +23,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ParseIETFDateFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final Map<String, Integer> MONTHS = createMonthMap();
@@ -119,18 +120,18 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
     );
 
     public ParseIETFDateFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
-        if (inputItem == null) {
-            return null;
-        }
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return evaluate(this.getChild(0).materializeFirstOrNull(context));
+    }
+
+    private Item evaluate(Item inputItem) {
         String lexicalValue = inputItem.getStringValue();
         try {
             ParsedDateTime parsedValue = parseIetfDate(lexicalValue);

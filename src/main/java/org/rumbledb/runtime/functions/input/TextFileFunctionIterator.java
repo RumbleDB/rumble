@@ -26,8 +26,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
-import org.rumbledb.runtime.RDDRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.*;
@@ -35,23 +36,23 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TextFileFunctionIterator extends RDDRuntimeIterator {
+public class TextFileFunctionIterator extends ItemRuntimePlan implements RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
     public static final int MIN_PARTITIONS = 10;
 
     public TextFileFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator urlIterator = this.getChild(0);
-        Item url = urlIterator.materializeFirstItemOrNull(context);
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        ItemRuntimePlan urlIterator = this.getChild(0);
+        Item url = urlIterator.materializeFirstOrNull(context);
         if (url == null) {
             return SparkSessionManager.getInstance()
                 .getJavaSparkContext()
@@ -64,7 +65,7 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
         );
         int partitions = MIN_PARTITIONS;
         if (this.getChildren().size() > 1) {
-            Item partitionsItem = this.getChild(1).materializeFirstItemOrNull(context);
+            Item partitionsItem = this.getChild(1).materializeFirstOrNull(context);
             if (partitionsItem != null) {
                 partitions = partitionsItem.getIntValue();
             }
