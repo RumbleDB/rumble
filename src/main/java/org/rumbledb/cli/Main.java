@@ -67,8 +67,9 @@ public class Main {
                 invocation.configuration(),
                 "CLI invocation must provide a configuration"
             );
+            LoggingConfiguration.configure(configuration.debug());
         } catch (Exception e) {
-            System.err.println("⚠️ CLI Error: " + e.getMessage());
+            ConsoleOutput.error("⚠️ CLI Error: " + e.getMessage());
             System.exit(42);
             return;
         }
@@ -91,18 +92,8 @@ public class Main {
                 );
             }
             System.exit(0);
-        } catch (Exception ex) {
-            boolean showErrorInfo = false;
-            if (configuration != null) {
-                showErrorInfo = configuration.debug().showErrorInfo();
-            }
-            handleException(ex, showErrorInfo);
-        } catch (OutOfMemoryError ex) {
-            boolean showErrorInfo = false;
-            if (configuration != null) {
-                showErrorInfo = configuration.debug().showErrorInfo();
-            }
-            handleException(ex, showErrorInfo);
+        } catch (Exception | OutOfMemoryError ex) {
+            handleException(ex, configuration.debug().showErrorInfo());
         }
     }
 

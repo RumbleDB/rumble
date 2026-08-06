@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -54,6 +54,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
 
+
+@Log4j2
 public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
@@ -208,8 +210,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
                 .createDataFrame(rowRDD, schema);
             return new HomogeneousItemDataFrame(result, getStaticType().getItemType());
         }
-        LogManager.getLogger("SimpleMapExpressionIterator")
-            .info("Rumble was able to optimize a simple map expression to a native SQL query.");
+        log.info("Rumble was able to optimize a simple map expression to a native SQL query.");
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         Dataset<Row> result = df.getDataFrame()
             .sparkSession()
