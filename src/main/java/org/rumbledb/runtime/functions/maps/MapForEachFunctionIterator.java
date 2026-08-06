@@ -26,12 +26,13 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +42,7 @@ import java.util.List;
  */
 public class MapForEachFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator mapIterator;
@@ -103,18 +105,18 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.keyArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("anyAtomicType"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
-        this.valueArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        this.keyArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("anyAtomicType"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
+        this.valueArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.mapKeys = this.mapItem.getItemKeys();
         this.keyIndex = 0;
 
@@ -170,17 +172,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.mapIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.actionIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeState(this.currentDynamicContextForLocalExecution);
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.mapIterator.isOpen()) {
             this.mapIterator.close();
@@ -213,7 +204,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("map:for-each is currently supported only in local execution mode.");
     }
 
@@ -222,6 +213,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
      */
     private static class MutableKeyArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
 
+        @Serial
         private static final long serialVersionUID = 1L;
         private Item currentKey;
 
@@ -244,6 +236,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
      */
     private static class MutableValueSequenceIterator extends HybridRuntimeIterator {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private final List<Item> items;
@@ -288,12 +281,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         }
 
         @Override
-        protected void resetLocal() {
-            this.position = 0;
-            setHasNextFromBuffer();
-        }
-
-        @Override
         protected void closeLocal() {
             this.position = 0;
             this.hasNext = false;
@@ -310,7 +297,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         }
 
         @Override
-        public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
             throw new OurBadException("Mutable value sequence iterators are local-only.");
         }
     }

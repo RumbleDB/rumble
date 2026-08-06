@@ -7,7 +7,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotConvertToQNameException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -15,6 +15,7 @@ import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
+import java.io.Serial;
 import java.util.Collections;
 
 /**
@@ -23,6 +24,7 @@ import java.util.Collections;
  */
 public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator iterator;
@@ -47,7 +49,7 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         return this.iterator.getDataFrame(dynamicContext);
     }
 
@@ -56,6 +58,7 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
         return this.iterator.getRDD(context)
             .map(
                 new Function<Item, Item>() {
+                    @Serial
                     private static final long serialVersionUID = 1L;
 
                     @Override
@@ -83,12 +86,6 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-    }
-
-    @Override
     public boolean hasNextLocal() {
         return this.iterator.hasNext();
     }
@@ -106,8 +103,8 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
             return item;
         }
         if (
-            this.targetType.isSubtypeOf(BuiltinTypesCatalogue.QNameItem)
-                || this.targetType.isSubtypeOf(BuiltinTypesCatalogue.NOTATIONItem)
+            isQNameLikeTargetType(this.targetType)
+                || isNotationLikeTargetType(this.targetType)
         ) {
             if (usesQNameCoercionErrorSemantics()) {
                 throw new CannotConvertToQNameException(
@@ -128,7 +125,32 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        return CastIterator.castItemToType(item, this.targetType, getMetadata(), this.staticContext);
+        Item converted = CastIterator.castItemToType(item, this.targetType, getMetadata(), this.staticContext);
+        if (converted == null) {
+            throw new UnexpectedTypeException(
+                    this.exceptionMessage
+                        + item.getDynamicType()
+                        + " cannot be implicitly converted to type "
+                        + this.targetType
+                        + ".",
+                    getMetadata()
+            );
+        }
+        return converted;
+    }
+
+    private boolean isQNameLikeTargetType(ItemType itemType) {
+        return itemType.equals(BuiltinTypesCatalogue.QNameItem)
+            || (itemType.isAtomicItemType()
+                && !itemType.equals(BuiltinTypesCatalogue.errorItem)
+                && itemType.getCastingPrimitiveType().equals(BuiltinTypesCatalogue.QNameItem));
+    }
+
+    private boolean isNotationLikeTargetType(ItemType itemType) {
+        return itemType.equals(BuiltinTypesCatalogue.NOTATIONItem)
+            || (itemType.isAtomicItemType()
+                && !itemType.equals(BuiltinTypesCatalogue.errorItem)
+                && itemType.getCastingPrimitiveType().equals(BuiltinTypesCatalogue.NOTATIONItem));
     }
 
     private boolean usesQNameCoercionErrorSemantics() {

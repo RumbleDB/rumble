@@ -1,6 +1,5 @@
 package org.rumbledb.api;
 
-import com.esotericsoftware.kryo.KryoSerializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -12,7 +11,7 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -43,7 +42,7 @@ import java.util.Map;
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
-public interface Item extends Serializable, KryoSerializable {
+public interface Item extends Serializable {
 
     /**
      * Makes a copy.
@@ -519,17 +518,6 @@ public interface Item extends Serializable, KryoSerializable {
     /**
      * Returns the string keys of the item, if it is a map.
      *
-     * @return the list of the keys.
-     * @deprecated use {@link #getStringKeys()} instead
-     */
-    @Deprecated
-    default List<String> getKeys() {
-        return this.getStringKeys();
-    }
-
-    /**
-     * Returns the string keys of the item, if it is a map.
-     *
      * @return a list of strings, corresponding to the keys of the map.
      * @throws UnsupportedOperationException if the item is not a map.
      * @throws OurBadException if the map contains non-string keys.
@@ -546,17 +534,6 @@ public interface Item extends Serializable, KryoSerializable {
      */
     default List<Item> getItemKeys() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Returns the values of the item, if it is a map.
-     *
-     * @return the list of the value items.
-     * @deprecated use {@link #getItemValues()} instead
-     */
-    @Deprecated
-    default List<Item> getValues() {
-        return this.getItemValues();
     }
 
     /**
@@ -785,17 +762,6 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Returns the members of the item if it is an array.
-     *
-     * @return the list of the array members.
-     * @deprecated use {@link #getItemMembers()} instead
-     */
-    @Deprecated
-    default List<Item> getItems() {
-        return this.getItemMembers();
-    }
-
-    /**
      * Returns the members of the item, if it is an array.
      *
      * @return the list of the members.
@@ -844,17 +810,6 @@ public interface Item extends Serializable, KryoSerializable {
             throws UnsupportedOperationException,
                 ArrayIndexOutOfBoundsException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Appends an item to the item, if it is an array.
-     *
-     * @param item the item to append.
-     * @throws UnsupportedOperationException if the item is not an array.
-     * @deprecated use {@link #appendItem(Item)} instead
-     */
-    default void append(Item item) throws UnsupportedOperationException {
-        this.appendItem(item);
     }
 
     /**
@@ -1033,6 +988,18 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the day-time (seconds) component of a duration item, i.e., the value of the
+     * duration excluding its months component. Unlike getDurationValue(), this is not
+     * anchored to any reference date, since days, hours, minutes and seconds have a fixed
+     * length and can be converted to a Duration unambiguously.
+     *
+     * @return the day-time component as a Duration.
+     */
+    default Duration getDayTimeDurationComponent() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Returns the EpochMillis of the item, if it's DateTime or Duration
      * It will collect all the parts of the item and compress it into the EpochMillis
      * 
@@ -1137,7 +1104,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
+    default Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

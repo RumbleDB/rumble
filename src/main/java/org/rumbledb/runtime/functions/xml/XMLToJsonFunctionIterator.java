@@ -16,6 +16,7 @@ import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final String FUNCTIONS_NAMESPACE = "http://www.w3.org/2005/xpath-functions";
     private static final Pattern JSON_NUMBER_PATTERN =
@@ -51,7 +53,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private Item materializeInput(DynamicContext context) {
         try {
-            return this.children.get(0).materializeAtMostOneItemOrNull(context);
+            return this.getChild(0).materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:xml-to-json expects at most one input item [err:XPTY0004].",
@@ -61,13 +63,13 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private boolean resolveIndentOption(DynamicContext context) {
-        if (this.children.size() < 2) {
+        if (this.getChildren().size() < 2) {
             return false;
         }
 
         Item options;
         try {
-            options = this.children.get(1).materializeAtMostOneItemOrNull(context);
+            options = this.getChild(1).materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "The options argument of fn:xml-to-json must be a single map item [err:XPTY0004].",

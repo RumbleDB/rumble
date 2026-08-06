@@ -25,9 +25,8 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
-
-import sparksoniq.spark.SparkSessionManager;
 
 public class ItemTypeFactory {
 

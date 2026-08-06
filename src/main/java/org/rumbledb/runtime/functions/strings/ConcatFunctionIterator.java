@@ -27,10 +27,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class ConcatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ConcatFunctionIterator(
@@ -43,7 +45,7 @@ public class ConcatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         StringBuilder builder = new StringBuilder();
-        for (RuntimeIterator iterator : this.children) {
+        for (RuntimeIterator iterator : this.getChildren()) {
             Item item = iterator.materializeFirstItemOrNull(context);
             // if not empty sequence
             if (item != null) {

@@ -27,6 +27,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -37,6 +38,7 @@ import java.util.List;
  */
 public class QNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public QNameFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
@@ -45,10 +47,10 @@ public class QNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item uriItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item uriItem = this.getChild(0).materializeFirstItemOrNull(context);
         String uriString = uriItem == null ? null : uriItem.getStringValue();
 
-        Item lexicalItem = this.children.get(1).materializeFirstItemOrNull(context);
+        Item lexicalItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (lexicalItem == null) {
             throw new UnexpectedTypeException(
                     "fn:QName: second argument must be xs:string (got empty sequence).",

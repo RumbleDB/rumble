@@ -3,7 +3,7 @@ package org.rumbledb.compiler.wrapper;
 public class DescendentSequentialProperties {
     private final boolean hasInterruptStatement;
     private final boolean hasNonExitSequentialStatement;
-    private boolean hasExitStatement;
+    private final boolean hasExitStatement;
 
     public DescendentSequentialProperties(boolean hasNonExitSequentialStatement, boolean hasInterruptStatement) {
         this.hasInterruptStatement = hasInterruptStatement;
@@ -31,10 +31,6 @@ public class DescendentSequentialProperties {
 
     public boolean hasExitStatement() {
         return this.hasExitStatement;
-    }
-
-    public void setHasExitStatement(boolean hasExitStatement) {
-        this.hasExitStatement = true;
     }
 
     public boolean hasNonExitSequentialStatement() {

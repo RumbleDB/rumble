@@ -26,11 +26,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
+import java.io.Serial;
+
 public class NullRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public NullRuntimeIterator(RuntimeStaticContext staticContext) {
         super(null, staticContext);

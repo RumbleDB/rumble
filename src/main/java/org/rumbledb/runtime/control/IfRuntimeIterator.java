@@ -25,14 +25,18 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
+import java.util.List;
+
 public class IfRuntimeIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator selectedIterator = null;
 
@@ -40,31 +44,16 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(condition);
-        this.children.add(branch);
-        this.children.add(elseBranch);
-        this.isUpdating = isUpdating;
-    }
-
-    public IfRuntimeIterator(
-            RuntimeIterator condition,
-            RuntimeIterator branch,
-            RuntimeIterator elseBranch,
-            RuntimeStaticContext staticContext
-    ) {
-        this(condition, branch, elseBranch, false, staticContext);
-    }
-
-    @Override
-    public void resetLocal() {
-        this.selectedIterator.close();
-        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.selectedIterator.hasNext();
+        super(
+            List.of(
+                condition,
+                branch,
+                elseBranch
+            ),
+            staticContext
+        );
     }
 
     @Override
@@ -95,12 +84,12 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
     }
 
     public RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
-        RuntimeIterator condition = this.children.get(0);
+        RuntimeIterator condition = this.getChild(0);
         boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
         if (effectiveBooleanValue) {
-            return this.children.get(1);
+            return this.getChild(1);
         } else {
-            return this.children.get(2);
+            return this.getChild(2);
         }
     }
 
@@ -116,7 +105,7 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
 
         return iterator.getDataFrame(dynamicContext);

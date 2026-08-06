@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.spark.sql.types.StructType;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
@@ -49,6 +49,7 @@ import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -126,21 +127,38 @@ import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.axis.ForwardAxis;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
+import org.rumbledb.expressions.xml.axis.ReverseAxis;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
+import org.rumbledb.expressions.xml.node_test.AnyKindTest;
+import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.CommentTest;
+import org.rumbledb.expressions.xml.node_test.DocumentTest;
+import org.rumbledb.expressions.xml.node_test.ElementTest;
+import org.rumbledb.expressions.xml.node_test.NameTest;
+import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 import org.apache.spark.sql.SparkSession;
 
 
@@ -150,19 +168,19 @@ import org.apache.spark.sql.SparkSession;
  */
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private final RumbleConfiguration rumbleRuntimeConfiguration;
 
     /**
      * Builds a new visitor.
      *
      * @param rumbleRuntimeConfiguration the configuration.
      */
-    InferTypeVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
+    InferTypeVisitor(RumbleConfiguration rumbleRuntimeConfiguration) {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
     }
 
     private void throwStaticTypeException(String message, ErrorCode code) {
-        if (this.rumbleRuntimeConfiguration.doStaticAnalysis()) {
+        if (this.rumbleRuntimeConfiguration.analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     message,
                     code
@@ -171,7 +189,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private void throwStaticTypeException(String message, ExceptionMetadata metadata) {
-        if (this.rumbleRuntimeConfiguration.doStaticAnalysis()) {
+        if (this.rumbleRuntimeConfiguration.analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     message,
                     metadata
@@ -180,7 +198,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private void throwStaticTypeException(String message, ErrorCode code, ExceptionMetadata metadata) {
-        if (this.rumbleRuntimeConfiguration.doStaticAnalysis()) {
+        if (this.rumbleRuntimeConfiguration.analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     message,
                     code,
@@ -551,6 +569,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
+    public StaticContext visitPathRootExpr(PathRootExpression expression, StaticContext argument) {
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.documentNode));
+        return argument;
+    }
+
+    @Override
     public StaticContext visitCommentNodeConstructor(
             CommentNodeConstructorExpression expression,
             StaticContext argument
@@ -648,6 +672,98 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    private SequenceType validateStrictAggregateInputType(
+            FunctionCallExpression expression,
+            Expression inputExpression,
+            String functionName
+    ) {
+        SequenceType inputType = requireInferredType(
+            inputExpression.getStaticSequenceType(),
+            expression.getClass().getSimpleName()
+        );
+        if (inputType.isEmptySequence()) {
+            return inputType;
+        }
+
+        ItemType inputItemType = inputType.getItemType();
+        if (
+            !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+                && !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
+                && !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem)
+        ) {
+            throwStaticTypeException(
+                functionName
+                    + " requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
+                    + inputType,
+                ErrorCode.InvalidArgumentType,
+                expression.getMetadata()
+            );
+        }
+
+        return inputType;
+    }
+
+    private SequenceType inferStrictAggregateReturnType(
+            FunctionCallExpression expression,
+            Expression inputExpression
+    ) {
+        SequenceType inputType = validateStrictAggregateInputType(expression, inputExpression, "fn:avg");
+        if (inputType.isEmptySequence()) {
+            return SequenceType.createSequenceType("anyAtomicType?");
+        }
+
+        ItemType inputItemType = inputType.getItemType();
+        ItemType returnItemType = inputItemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+            ? BuiltinTypesCatalogue.numericItem
+            : inputType.getItemType();
+
+        SequenceType.Arity returnArity =
+            (inputType.getArity() == SequenceType.Arity.One || inputType.getArity() == SequenceType.Arity.OneOrMore)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        return new SequenceType(returnItemType, returnArity);
+    }
+
+    private SequenceType inferStrictMinMaxReturnType(
+            FunctionCallExpression expression,
+            Expression inputExpression,
+            String functionName
+    ) {
+        SequenceType inputType = requireInferredType(
+            inputExpression.getStaticSequenceType(),
+            expression.getClass().getSimpleName()
+        );
+        if (inputType.isEmptySequence()) {
+            return SequenceType.createSequenceType("anyAtomicType?");
+        }
+
+        ItemType inputItemType = inputType.getItemType();
+        if (
+            !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                || inputItemType.equals(BuiltinTypesCatalogue.atomicItem)
+        ) {
+            throwStaticTypeException(
+                functionName
+                    + " requires its inferred input item type to be an atomic type other than xs:anyAtomicType, found "
+                    + inputType,
+                ErrorCode.InvalidArgumentType,
+                expression.getMetadata()
+            );
+        }
+
+        SequenceType.Arity returnArity =
+            (inputType.getArity() == SequenceType.Arity.One || inputType.getArity() == SequenceType.Arity.OneOrMore)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        return new SequenceType(inputItemType, returnArity);
+    }
+
+    private boolean isBuiltinFunctionName(Name functionName, String localName) {
+        return functionName.getLocalName().equals(localName)
+            && (functionName.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
+                || functionName.getNamespace().equals(Name.FN_NS));
+    }
+
     /**
      * For specific input functions we read the schema and annotate static type precisely
      * 
@@ -665,8 +781,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && args.get(0) instanceof StringLiteralExpression stringLiteralExpr
         ) {
             String path = stringLiteralExpr.getValue();
-            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
-            if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                staticContext.getStaticBaseURI(),
+                path,
+                expression.getMetadata()
+            );
+            if (!FileSystemUtil.exists(uri, expression.getMetadata())) {
                 return false;
             }
             try {
@@ -691,8 +811,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && args.get(0) instanceof StringLiteralExpression stringLiteralExpr
         ) {
             String path = stringLiteralExpr.getValue();
-            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
-            if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                staticContext.getStaticBaseURI(),
+                path,
+                expression.getMetadata()
+            );
+            if (!FileSystemUtil.exists(uri, expression.getMetadata())) {
                 return false;
             }
             StructType s = SparkSessionManager.getInstance()
@@ -729,14 +853,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         // handle 'round' function
-        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("round"))) {
+        if (isBuiltinFunctionName(functionName, "round")) {
             // set output type to the same of the first argument (special handling of numeric)
             expression.setStaticSequenceType(args.get(0).getStaticSequenceType());
             return true;
         }
         // handle 'size' function
         if (
-            functionName.equals(Name.createVariableInDefaultFunctionNamespace("size"))
+            isBuiltinFunctionName(functionName, "size")
                 && args.get(0).getStaticSequenceType().getArity() == SequenceType.Arity.One
         ) {
             // set output type to 'Integer' if inputType is 'Array'
@@ -746,15 +870,31 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return true;
         }
 
-        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("sum"))) {
+        if (isBuiltinFunctionName(functionName, "sum")) {
+            SequenceType inputType = validateStrictAggregateInputType(expression, args.get(0), "fn:sum");
             expression.setStaticSequenceType(
                 new SequenceType(
-                        args.get(0).getStaticSequenceType().getItemType(),
-                        args.get(0).getStaticSequenceType().getArity() == SequenceType.Arity.OneOrMore
+                        inputType.getItemType(),
+                        inputType.getArity() == SequenceType.Arity.OneOrMore
                             ? SequenceType.Arity.One
                             : SequenceType.Arity.OneOrZero
                 )
             );
+            return true;
+        }
+
+        if (isBuiltinFunctionName(functionName, "avg")) {
+            expression.setStaticSequenceType(inferStrictAggregateReturnType(expression, args.get(0)));
+            return true;
+        }
+
+        if (isBuiltinFunctionName(functionName, "min")) {
+            expression.setStaticSequenceType(inferStrictMinMaxReturnType(expression, args.get(0), "fn:min"));
+            return true;
+        }
+
+        if (isBuiltinFunctionName(functionName, "max")) {
+            expression.setStaticSequenceType(inferStrictMinMaxReturnType(expression, args.get(0), "fn:max"));
             return true;
         }
 
@@ -2083,6 +2223,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    @Override
     public StaticContext visitPostfixLookupExpression(PostfixLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
@@ -2121,6 +2262,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    @Override
     public StaticContext visitUnaryLookupExpression(UnaryLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
@@ -2356,6 +2498,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 } else if (forArities == SequenceType.Arity.OneOrMore) {
                     forArities = SequenceType.Arity.ZeroOrMore;
                 }
+            } else if (clause.getClauseType() == FLWOR_CLAUSES.WINDOW) {
+                forArities = SequenceType.Arity.ZeroOrMore;
             }
             clause = clause.getNextClause();
         }
@@ -2415,6 +2559,36 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
+    public StaticContext visitWindowClause(WindowClause expression, StaticContext argument) {
+        visit(expression.getExpression(), argument);
+        SequenceType sourceType = expression.getActualSequenceType() == null
+            ? expression.getExpression().getStaticSequenceType()
+            : expression.getActualSequenceType();
+        basicChecks(sourceType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        visit(
+            expression.getStartCondition().expression(),
+            expression.getStartCondition().expression().getStaticContext()
+        );
+        checkWindowConditionType(expression.getStartCondition().expression(), expression);
+        if (expression.getEndCondition() != null) {
+            visit(
+                expression.getEndCondition().expression(),
+                expression.getEndCondition().expression().getStaticContext()
+            );
+            checkWindowConditionType(expression.getEndCondition().expression(), expression);
+        }
+        return argument;
+    }
+
+    private void checkWindowConditionType(Expression condition, WindowClause clause) {
+        SequenceType conditionType = condition.getStaticSequenceType();
+        basicChecks(conditionType, clause.getClass().getSimpleName(), true, false, clause.getMetadata());
+        if (!conditionType.hasEffectiveBooleanValue()) {
+            throwStaticTypeException("Window condition has no effective boolean value", clause.getMetadata());
+        }
+    }
+
+    @Override
     public StaticContext visitLetClause(LetClause expression, StaticContext argument) {
         visit(expression.getExpression(), argument);
         SequenceType declaredType = expression.getActualSequenceType();
@@ -2471,7 +2645,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     inferredType = groupByVarExpr.getStaticSequenceType();
                     expectedType = inferredType;
                 } else {
-                    inferredType = ((TreatExpression) groupByVarExpr).getMainExpression().getStaticSequenceType();
+                    inferredType = groupByVarExpr.getStaticSequenceType();
                     expectedType = declaredType;
                 }
                 checkAndUpdateVariableStaticType(
@@ -3096,16 +3270,226 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitSlashExpr(SlashExpr slashExpr, StaticContext argument) {
-        visitDescendants(slashExpr, argument);
-        slashExpr.setStaticSequenceType(SequenceType.createSequenceType("item*"));
+        visit(slashExpr.getLeftExpression(), argument);
+        SequenceType leftType = requireInferredType(
+            slashExpr.getLeftExpression().getStaticSequenceType(),
+            "SlashExpr"
+        );
+        basicChecks(leftType, slashExpr.getClass().getSimpleName(), true, false, slashExpr.getMetadata());
+
+        Expression rightExpression = slashExpr.getRightExpression();
+        rightExpression.getStaticContext().setContextItemStaticType(new SequenceType(leftType.getItemType()));
+        try {
+            visit(rightExpression, argument);
+        } finally {
+            rightExpression.getStaticContext().setContextItemStaticType(null);
+        }
+        SequenceType rightType = requireInferredType(rightExpression.getStaticSequenceType(), "SlashExpr");
+        basicChecks(rightType, slashExpr.getClass().getSimpleName(), true, false, slashExpr.getMetadata());
+
+        SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
+        slashExpr.setStaticSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
         return argument;
     }
 
-    // TODO: Currently, step expressions are marked as string, but this type may differ. Update to relevant type.
     @Override
     public StaticContext visitStepExpr(StepExpr stepExpr, StaticContext argument) {
-        stepExpr.setStaticSequenceType(SequenceType.createSequenceType("item*"));
+        SequenceType contextType = stepExpr.getStaticContext().getContextItemStaticType();
+        SequenceType inferredType;
+        if (
+            contextType != null
+                && contextType.getItemType().isNodeItemType()
+                && isStaticallyEmptyStep(stepExpr, contextType.getItemType())
+        ) {
+            inferredType = SequenceType.createSequenceType("()");
+        } else {
+            ItemType inferredItemType = inferStepResultItemType(stepExpr);
+            inferredType = new SequenceType(inferredItemType, inferStepResultArity(stepExpr, contextType));
+        }
+
+        stepExpr.setStaticSequenceType(inferredType);
+        basicChecks(inferredType, stepExpr.getClass().getSimpleName(), true, true, stepExpr.getMetadata());
         return argument;
+    }
+
+    private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {
+        if (contextType == null || !contextType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)) {
+            return SequenceType.Arity.ZeroOrMore;
+        }
+        if (
+            (stepExpr instanceof ForwardStepExpr forwardStep && forwardStep.getForwardAxis().equals(ForwardAxis.SELF))
+                || (stepExpr instanceof ReverseStepExpr reverseStep
+                    && reverseStep.getReverseAxis().equals(ReverseAxis.PARENT))
+        ) {
+            return SequenceType.Arity.OneOrZero;
+        }
+        return SequenceType.Arity.ZeroOrMore;
+    }
+
+    private ItemType inferStepResultItemType(StepExpr stepExpr) {
+        NodeTest nodeTest = stepExpr.getNodeTest();
+        if (nodeTest instanceof AnyKindTest) {
+            return BuiltinTypesCatalogue.nodeItem;
+        }
+        if (nodeTest instanceof TextTest) {
+            return BuiltinTypesCatalogue.textNode;
+        }
+        if (nodeTest instanceof CommentTest) {
+            return BuiltinTypesCatalogue.commentNode;
+        }
+        if (nodeTest instanceof NamespaceNodeTest) {
+            return BuiltinTypesCatalogue.namespaceNode;
+        }
+        if (nodeTest instanceof PITest piTest) {
+            return piTest.hasTargetName()
+                ? ItemTypeFactory.processingInstructionNodeItemType(piTest.getTargetName())
+                : BuiltinTypesCatalogue.processingInstructionNode;
+        }
+        if (nodeTest instanceof DocumentTest documentTest) {
+            if (documentTest.isEmptyCheck()) {
+                return BuiltinTypesCatalogue.documentNode;
+            }
+            NodeTest innerTest = documentTest.getNodeTest();
+            if (innerTest instanceof ElementTest elementTest && elementTest.isNameWithoutTypeCheck()) {
+                return ItemTypeFactory.documentNodeItemType(
+                    ItemTypeFactory.elementNodeItemType(elementTest.getElementName())
+                );
+            }
+            return BuiltinTypesCatalogue.documentNode;
+        }
+        if (nodeTest instanceof AttributeTest attributeTest) {
+            return attributeTest.isNameWithoutTypeCheck()
+                ? ItemTypeFactory.attributeNodeItemType(attributeTest.getAttributeName())
+                : BuiltinTypesCatalogue.attributeNode;
+        }
+        if (nodeTest instanceof ElementTest elementTest) {
+            return elementTest.isNameWithoutTypeCheck()
+                ? ItemTypeFactory.elementNodeItemType(elementTest.getElementName())
+                : BuiltinTypesCatalogue.elementNode;
+        }
+        if (nodeTest instanceof NameTest nameTest) {
+            boolean attributePrincipalKind = stepExpr instanceof ForwardStepExpr forwardStep
+                && forwardStep.getForwardAxis().equals(ForwardAxis.ATTRIBUTE);
+            if (attributePrincipalKind) {
+                return nameTest.hasQName()
+                    ? ItemTypeFactory.attributeNodeItemType(nameTest.getExpandedName())
+                    : BuiltinTypesCatalogue.attributeNode;
+            }
+            return nameTest.hasQName()
+                ? ItemTypeFactory.elementNodeItemType(nameTest.getExpandedName())
+                : BuiltinTypesCatalogue.elementNode;
+        }
+        return BuiltinTypesCatalogue.nodeItem;
+    }
+
+    private boolean isStaticallyEmptyStep(StepExpr stepExpr, ItemType contextItemType) {
+        if (stepExpr instanceof ForwardStepExpr forwardStep) {
+            ForwardAxis axis = forwardStep.getForwardAxis();
+            if (axis.equals(ForwardAxis.ATTRIBUTE)) {
+                return !contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode);
+            }
+            if (axis.equals(ForwardAxis.SELF)) {
+                return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);
+            }
+            if (
+                axis.equals(ForwardAxis.CHILD)
+                    || axis.equals(ForwardAxis.DESCENDANT)
+                    || axis.equals(ForwardAxis.DESCENDANT_OR_SELF)
+            ) {
+                boolean hasNoDescendants = contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)
+                    || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.textNode)
+                    || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
+                    || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode)
+                    || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+                if (axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
+                    return hasNoDescendants
+                        && !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);
+                }
+                return hasNoDescendants;
+            }
+            return false;
+        }
+        if (stepExpr instanceof ReverseStepExpr reverseStep) {
+            ReverseAxis axis = reverseStep.getReverseAxis();
+            if (axis.equals(ReverseAxis.PARENT)) {
+                return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
+            }
+            if (axis.equals(ReverseAxis.ANCESTOR_OR_SELF)) {
+                return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, null);
+            }
+        }
+        return false;
+    }
+
+    private boolean nodeTestCanMatchContextNode(NodeTest nodeTest, ItemType contextItemType, ForwardAxis axis) {
+        if (nodeTest instanceof AnyKindTest) {
+            return true;
+        }
+        if (nodeTest instanceof TextTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.textNode);
+        }
+        if (nodeTest instanceof CommentTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.commentNode);
+        }
+        if (nodeTest instanceof NamespaceNodeTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode);
+        }
+        if (nodeTest instanceof PITest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+        }
+        if (nodeTest instanceof DocumentTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
+        }
+        if (nodeTest instanceof AttributeTest attributeTest) {
+            if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)) {
+                return false;
+            }
+            if (!attributeTest.isNameWithoutTypeCheck()) {
+                return true;
+            }
+            if (contextItemType instanceof AttributeNodeItemType namedAttributeType) {
+                return attributeTest.getAttributeName().equals(namedAttributeType.getNodeName());
+            }
+            return true;
+        }
+        if (nodeTest instanceof ElementTest elementTest) {
+            if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)) {
+                return false;
+            }
+            if (!elementTest.isNameWithoutTypeCheck()) {
+                return true;
+            }
+            if (contextItemType instanceof ElementNodeItemType namedElementType) {
+                return elementTest.getElementName().equals(namedElementType.getNodeName());
+            }
+            return true;
+        }
+        if (nodeTest instanceof NameTest nameTest) {
+            boolean attributePrincipalKind = axis != null && axis.equals(ForwardAxis.ATTRIBUTE);
+            if (attributePrincipalKind) {
+                if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)) {
+                    return false;
+                }
+                if (!nameTest.hasQName()) {
+                    return true;
+                }
+                if (contextItemType instanceof AttributeNodeItemType namedAttributeType) {
+                    return nameTest.getExpandedName().equals(namedAttributeType.getNodeName());
+                }
+                return true;
+            }
+            if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)) {
+                return false;
+            }
+            if (!nameTest.hasQName()) {
+                return true;
+            }
+            if (contextItemType instanceof ElementNodeItemType namedElementType) {
+                return nameTest.getExpandedName().equals(namedElementType.getNodeName());
+            }
+            return true;
+        }
+        return true;
     }
 
     // end xml

@@ -9,8 +9,15 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.IsoFields;
 import java.time.temporal.WeekFields;
+import java.util.HashMap;
+import java.util.Map;
+
+import lombok.EqualsAndHashCode;
 
 public final class CalendarFields {
+
+    private static final ThreadLocal<Map<CalendarKey, CachedCalendar>> CALENDAR_CACHE = ThreadLocal
+        .withInitial(HashMap::new);
 
     private CalendarFields() {
     }
@@ -20,18 +27,54 @@ public final class CalendarFields {
             ? context.placeZoneId.getId()
             : "GMT" + value.getOffset().getId().replace("Z", "+00:00");
 
-        Calendar cal = Calendar.getInstance(
-            TimeZone.getTimeZone(tzid),
-            context.uLocale
-        );
+        CachedCalendar cached = cachedCalendar(tzid, context.uLocale);
+        Calendar cal = cached.calendar;
         cal.setTimeInMillis(value.toInstant().toEpochMilli());
 
         if ("ISO".equalsIgnoreCase(context.calendarDesignator)) {
             cal.setFirstDayOfWeek(Calendar.MONDAY);
             cal.setMinimalDaysInFirstWeek(4);
+        } else {
+            cal.setFirstDayOfWeek(cached.defaultFirstDayOfWeek);
+            cal.setMinimalDaysInFirstWeek(cached.defaultMinimalDaysInFirstWeek);
         }
 
         return cal;
+    }
+
+    private static CachedCalendar cachedCalendar(String tzid, ULocale locale) {
+        Map<CalendarKey, CachedCalendar> cache = CALENDAR_CACHE.get();
+        return cache.computeIfAbsent(
+            new CalendarKey(tzid, locale),
+            key -> {
+                Calendar cal = Calendar.getInstance(TimeZone.getTimeZone(key.tzid), key.locale);
+                return new CachedCalendar(cal, cal.getFirstDayOfWeek(), cal.getMinimalDaysInFirstWeek());
+            }
+        );
+    }
+
+    private static final class CachedCalendar {
+        private final Calendar calendar;
+        private final int defaultFirstDayOfWeek;
+        private final int defaultMinimalDaysInFirstWeek;
+
+        private CachedCalendar(Calendar calendar, int defaultFirstDayOfWeek, int defaultMinimalDaysInFirstWeek) {
+            this.calendar = calendar;
+            this.defaultFirstDayOfWeek = defaultFirstDayOfWeek;
+            this.defaultMinimalDaysInFirstWeek = defaultMinimalDaysInFirstWeek;
+        }
+    }
+
+    @EqualsAndHashCode
+    private static final class CalendarKey {
+        private final String tzid;
+        private final ULocale locale;
+
+        private CalendarKey(String tzid, ULocale locale) {
+            this.tzid = tzid;
+            this.locale = locale;
+        }
+
     }
 
     // ISO requires Gregorian fields and ISO week rules; keep these

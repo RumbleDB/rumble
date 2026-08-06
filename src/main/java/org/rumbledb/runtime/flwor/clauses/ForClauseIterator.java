@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import lombok.Getter;
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -40,7 +41,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -48,20 +49,21 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ItemsToBinaryColumn;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.GenericForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
 import org.rumbledb.types.TypeMappings;
-import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,14 +78,18 @@ import java.util.TreeMap;
 public class ForClauseIterator extends RuntimeTupleIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // Properties
-    private Name variableName; // for efficient use in local iteration
-    private Name positionalVariableName; // for efficient use in local iteration
-    private RuntimeIterator assignmentIterator;
-    private boolean allowingEmpty;
-    private DataFrameContext dataFrameContext;
+    @Getter
+    private final Name variableName; // for efficient use in local iteration
+    @Getter
+    private final Name positionalVariableName; // for efficient use in local iteration
+    private final RuntimeIterator assignmentIterator;
+    @Getter
+    private final boolean allowingEmpty;
+    private final DataFrameContext dataFrameContext;
 
     // Computation state
     private transient DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
@@ -109,22 +115,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         this.dataFrameContext = new DataFrameContext();
     }
 
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public Name getPositionalVariableName() {
-        return this.positionalVariableName;
-    }
-
-    public RuntimeIterator getAssignmentIterator() {
-        return this.assignmentIterator;
-    }
-
-    public boolean isAllowingEmpty() {
-        return this.allowingEmpty;
-    }
-
     @Override
     public void open(DynamicContext context) {
         super.open(context);
@@ -137,24 +127,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
             setNextLocalTupleResult();
         } else { // if it's a start clause, get results using only the assignmentIterator
             this.assignmentIterator.open(this.currentDynamicContext);
-            this.position = 1;
-            this.isFirstItem = true;
-            setResultFromExpression();
-        }
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-
-        if (this.child != null && this.evaluationDepthLimit != 0) { // if it's not a start clause
-            this.child.reset(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-            this.position = 1;
-            this.isFirstItem = true;
-            setNextLocalTupleResult();
-        } else { // if it's a start clause, get results using only the assignmentIterator
-            this.assignmentIterator.reset(this.currentDynamicContext);
             this.position = 1;
             this.isFirstItem = true;
             setResultFromExpression();
@@ -614,7 +586,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         );
 
         FlworDataFrame nativeQueryResult = null;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                 df,
                 this.variableName,
@@ -781,7 +753,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         Dataset<Row> df = null;
         SequenceType sequenceType = null;
         if (iterator.isDataFrame()) {
-            JSoundDataFrame rows = iterator.getDataFrame(context);
+            HomogeneousItemDataFrame rows = iterator.getDataFrame(context);
             if (allowingEmpty) {
                 sequenceType = new SequenceType(rows.getItemType(), Arity.OneOrZero);
             } else {
@@ -1282,6 +1254,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         }
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.FOR) {
             return true;
@@ -1416,6 +1389,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
      *         it is not possible
      * @param nativeClauseContext context information to generate the native query
      */
+    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.allowingEmpty) {
             return NativeClauseContext.NoNativeQuery;

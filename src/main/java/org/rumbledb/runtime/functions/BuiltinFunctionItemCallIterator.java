@@ -22,11 +22,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,7 @@ import java.util.List;
  */
 public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Item functionItem;
@@ -48,18 +50,16 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        for (RuntimeIterator arg : functionArguments) {
-            if (arg != null) {
-                this.children.add(arg);
-            }
-        }
+        super(
+            functionArguments.stream().filter(arg -> arg != null).toList(),
+            staticContext.toBuilder().isUpdating(functionItem.getSignature().isUpdating()).build()
+        );
+
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
-        this.isUpdating = functionItem.getSignature().isUpdating();
 
-        FunctionCallArgumentCoercion.validateArity(functionItem, this.functionArguments, getMetadata());
-        FunctionCallArgumentCoercion.wrapAccordingToSignature(
+        FunctionCallArgumentConversion.validateArity(functionItem, this.functionArguments, getMetadata());
+        FunctionCallArgumentConversion.wrapAccordingToSignature(
             functionItem,
             this.functionArguments,
             staticContext
@@ -104,12 +104,6 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.builtinDelegate.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.builtinDelegate != null && this.builtinDelegate.isOpen()) {
             this.builtinDelegate.close();
@@ -141,7 +135,7 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         RuntimeIterator delegate = newBuiltinDelegate();
         return delegate.getDataFrame(dynamicContext);
     }

@@ -26,17 +26,18 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
 
-import sparksoniq.spark.SparkSessionManager;
-
+import java.io.Serial;
 import java.util.List;
 import java.util.Properties;
 
 public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public PostgreSQLTableFunctionIterator(
@@ -47,13 +48,13 @@ public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
 
-        String connectionString = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        String table = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+        String connectionString = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
+        String table = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
         int partitions = -1;
-        if (this.children.size() > 2) {
-            partitions = this.children.get(2).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 2) {
+            partitions = this.getChild(2).materializeFirstItemOrNull(context).getIntValue();
         }
 
         try {
@@ -66,7 +67,7 @@ public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
             if (partitions != -1) {
                 dataFrame = dataFrame.repartition(partitions);
             }
-            return new JSoundDataFrame(dataFrame);
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             RumbleException ex = new CannotRetrieveResourceException(
                     "Error retrieving PostgreSQL table: " + e.getMessage(),

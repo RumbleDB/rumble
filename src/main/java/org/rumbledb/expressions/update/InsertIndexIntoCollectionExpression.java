@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.update;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -11,11 +12,16 @@ import java.util.Arrays;
 import java.util.List;
 
 public class InsertIndexIntoCollectionExpression extends Expression {
+    @Getter
     private final Expression collection;
+    @Getter
     private final Expression contentExpression;
     private final Expression pos;
+    @Getter
     private final Mode mode;
+    @Getter
     private final boolean isFirst;
+    @Getter
     private final boolean isLast;
 
     public InsertIndexIntoCollectionExpression(
@@ -43,28 +49,8 @@ public class InsertIndexIntoCollectionExpression extends Expression {
         this.isLast = isLast;
     }
 
-    public Expression getCollection() {
-        return this.collection;
-    }
-
-    public Expression getContentExpression() {
-        return this.contentExpression;
-    }
-
     public Expression getPosition() {
         return this.pos;
-    }
-
-    public Mode getMode() {
-        return this.mode;
-    }
-
-    public boolean isLast() {
-        return this.isLast;
-    }
-
-    public boolean isFirst() {
-        return this.isFirst;
     }
 
     @Override

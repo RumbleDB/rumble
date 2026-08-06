@@ -27,8 +27,10 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidAttributeNameException;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.InvalidNodeNameException;
+import org.rumbledb.exceptions.NoNamespaceFoundForPrefixException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 
 import org.w3c.dom.Node;
@@ -74,6 +76,49 @@ public final class NamespaceBindingUtils {
         while (i < len) {
             cp = s.codePointAt(i);
             if (!isXmlNameChar(cp) || cp == ':') {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
+    }
+
+    /**
+     * XML 1.0 Name character checks (colon permitted).
+     */
+    public static boolean isValidXmlName(String s) {
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
+        int len = s.length();
+        int i = 0;
+        int cp = s.codePointAt(0);
+        if (!isXmlNameStartChar(cp)) {
+            return false;
+        }
+        i += Character.charCount(cp);
+        while (i < len) {
+            cp = s.codePointAt(i);
+            if (!isXmlNameChar(cp)) {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
+    }
+
+    /**
+     * XML 1.0 Nmtoken character checks (one or more NameChar code points).
+     */
+    public static boolean isValidXmlNmToken(String s) {
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
+        int len = s.length();
+        int i = 0;
+        while (i < len) {
+            int cp = s.codePointAt(i);
+            if (!isXmlNameChar(cp)) {
                 return false;
             }
             i += Character.charCount(cp);
@@ -176,6 +221,65 @@ public final class NamespaceBindingUtils {
         }
     }
 
+    public static void validateConstructedAttributeName(Name name, ExceptionMetadata metadata) {
+        String prefix = name.getPrefix();
+        String namespace = name.getNamespace();
+        if ((prefix == null || prefix.isEmpty()) && "xmlns".equals(name.getLocalName())) {
+            throw new InvalidAttributeNameException(
+                    "Computed attribute constructor cannot create a namespace declaration attribute named xmlns.",
+                    metadata
+            );
+        }
+        ReservedNamespaceBindingError error = getReservedNamespaceBindingError(prefix, namespace);
+        if (error == null) {
+            return;
+        }
+        switch (error) {
+            case XML_PREFIX_WRONG_URI:
+                throw new InvalidAttributeNameException(
+                        "The namespace prefix xml is bound to a namespace URI other than http://www.w3.org/XML/1998/namespace.",
+                        metadata
+                );
+            case XMLNS_PREFIX:
+                throw new InvalidAttributeNameException(
+                        "Computed attribute constructor cannot create a namespace declaration attribute with the xmlns prefix.",
+                        metadata
+                );
+            case NON_XML_PREFIX_XML_URI:
+                throw new InvalidAttributeNameException(
+                        "The namespace URI is http://www.w3.org/XML/1998/namespace but the prefix is not xml.",
+                        metadata
+                );
+            case XMLNS_URI:
+                throw new InvalidAttributeNameException(
+                        "Computed attribute constructor cannot use the xmlns namespace URI.",
+                        metadata
+                );
+            default:
+                return;
+        }
+    }
+
+    /**
+     * XQuery 3.1 computed attribute constructors:
+     * if the attribute QName has a namespace URI but no prefix, an implementation-defined prefix is used.
+     * The XML namespace is special-cased to use the required {@code xml} prefix.
+     */
+    public static Name normalizeComputedAttributeName(Name name) {
+        if (name == null) {
+            return null;
+        }
+        String namespace = name.getNamespace();
+        String prefix = name.getPrefix();
+        if (namespace != null && (prefix == null || prefix.isEmpty())) {
+            if (XML_NAMESPACE_URI.equals(namespace)) {
+                return new Name(namespace, "xml", name.getLocalName());
+            }
+            return new Name(namespace, "ns0", name.getLocalName());
+        }
+        return name;
+    }
+
     private static final class LexicalQNameSplit {
         final String prefix;
         final String local;
@@ -256,6 +360,38 @@ public final class NamespaceBindingUtils {
     }
 
     /**
+     * fn:resolve-QName (Functions and Operators 3.1 10.1.1): like {@link #parseLexicalQName}, but raises
+     * err:FONS0004 ({@link NoNamespaceFoundForPrefixException}) rather than err:FOCA0002 when the prefix is
+     * present but unbound.
+     */
+    public static Name parseLexicalQNameForResolveQName(
+            String lexical,
+            NamespaceResolver namespaceResolver,
+            ExceptionMetadata metadata
+    ) {
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        if (split.prefix == null) {
+            return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
+        }
+        String uri = namespaceResolver.resolvePrefix(split.prefix);
+        if (uri == null) {
+            throw new NoNamespaceFoundForPrefixException(
+                    "No namespace binding for prefix \"" + split.prefix + "\".",
+                    metadata
+            );
+        }
+        if (getReservedNamespaceBindingError(split.prefix, uri) != null) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName lexical value: reserved namespace binding for prefix \""
+                        + split.prefix
+                        + "\".",
+                    metadata
+            );
+        }
+        return new Name(uri, split.prefix, split.local);
+    }
+
+    /**
      * XQuery 3.1 computed attribute constructor: {@code xs:string} / {@code xs:untypedAtomic} name is converted to an
      * expanded QName. An unprefixed lexical form is a local name in <em>no</em> namespace (not the default element/type
      * namespace). A prefixed form resolves like {@link #parseLexicalQName}.
@@ -265,6 +401,43 @@ public final class NamespaceBindingUtils {
             NamespaceResolver namespaceResolver,
             ExceptionMetadata metadata
     ) {
+        if (lexical.startsWith("Q{")) {
+            int closeBrace = lexical.indexOf('}', 2);
+            if (closeBrace < 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (no closing '}') : " + lexical,
+                        metadata
+                );
+            }
+            String uriRaw = lexical.substring(2, closeBrace);
+            String local = lexical.substring(closeBrace + 1);
+            // XQuery EQNames use BracedURILiteral, which forbids brace characters inside the URI part.
+            // Dynamic computed attribute names coming from strings must reject malformed forms like Q{{}x or Q{}}x
+            // during QName conversion so the constructor raises XQDY0074 rather than constructing a bad node-name.
+            if (uriRaw.indexOf('{') >= 0 || uriRaw.indexOf('}') >= 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (invalid brace in URI part): " + lexical,
+                        metadata
+                );
+            }
+            if (local.isEmpty()) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (missing local name): " + lexical,
+                        metadata
+                );
+            }
+            if (!isValidNcName(local)) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName local name: " + lexical,
+                        metadata
+                );
+            }
+            String namespace = uriRaw.trim().replaceAll("\\s+", " ");
+            if (namespace.isEmpty()) {
+                return new Name(null, null, local);
+            }
+            return new Name(namespace, null, local);
+        }
         LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
         if (split.prefix == null) {
             return new Name(null, null, split.local);

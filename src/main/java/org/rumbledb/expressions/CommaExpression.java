@@ -21,11 +21,13 @@
 package org.rumbledb.expressions;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class CommaExpression extends Expression {
 
     private final List<Expression> expressions;
@@ -39,10 +41,6 @@ public class CommaExpression extends Expression {
     public CommaExpression(ExceptionMetadata metadata) {
         super(metadata);
         this.expressions = new ArrayList<>();
-    }
-
-    public List<Expression> getExpressions() {
-        return this.expressions;
     }
 
     @Override

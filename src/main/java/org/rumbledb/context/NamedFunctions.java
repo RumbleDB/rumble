@@ -20,12 +20,8 @@
 
 package org.rumbledb.context;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -36,7 +32,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
-import org.rumbledb.runtime.functions.FunctionCallArgumentCoercion;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
@@ -45,27 +41,25 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class NamedFunctions implements Serializable, KryoSerializable {
+public class NamedFunctions implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // two maps for User defined function are needed as execution mode is known at
     // static analysis phase
     // but functions items are fully known at runtimeIterator generation
-    private HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
+    private final HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
     public NamedFunctions() {
         this.userDefinedFunctions = new HashMap<>();
-    }
-
-    public void clearUserDefinedFunctions() {
-        this.userDefinedFunctions.clear();
     }
 
     /**
@@ -81,7 +75,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
             return buildFunctionItemCallIterator(
-                getUserDefinedFunction(identifier),
+                this.userDefinedFunctions.get(identifier),
                 callerRuntimeContext,
                 callerRuntimeContext.getExecutionMode(),
                 arguments,
@@ -126,15 +120,16 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             sequenceType = new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
         }
         SequenceType innerSequenceType = functionItem.getBodyIterator().getStaticType();
-        RuntimeStaticContext outerStaticContext = callerRuntimeContext.withStaticType(
-            sequenceType
-        )
-            .withExecutionMode(
-                executionModeForFunctionCall
-            );
-        RuntimeStaticContext innerStaticContext = callerRuntimeContext.withStaticType(
-            innerSequenceType
-        ).withExecutionMode(executionModeForFunctionCall);
+        RuntimeStaticContext outerStaticContext = callerRuntimeContext
+            .toBuilder()
+            .staticType(sequenceType)
+            .executionMode(executionModeForFunctionCall)
+            .build();
+        RuntimeStaticContext innerStaticContext = callerRuntimeContext
+            .toBuilder()
+            .staticType(innerSequenceType)
+            .executionMode(executionModeForFunctionCall)
+            .build();
         RuntimeIterator functionCallIterator;
         if (functionItem.isBuiltinFunction()) {
             if (arguments.stream().anyMatch(a -> a == null)) {
@@ -197,8 +192,9 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         }
         FunctionIdentifier functionIdentifier = function.getIdentifier();
         String queryLanguage = function.getModuleDynamicContext()
-            .getRumbleRuntimeConfiguration()
-            .getQueryLanguage();
+            .getRumbleConfiguration()
+            .semantics()
+            .queryLanguage();
         if (
             BuiltinFunctionCatalogue.exists(functionIdentifier, queryLanguage)
                 || this.userDefinedFunctions.containsKey(functionIdentifier)
@@ -214,9 +210,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
 
     public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
         FunctionItem functionItem = this.userDefinedFunctions.get(identifier);
-        FunctionItem copyFunctionItem = functionItem.deepCopy();
-        copyFunctionItem.setModuleDynamicContext(functionItem.getModuleDynamicContext());
-        return copyFunctionItem;
+        return functionItem.copyForLookup();
     }
 
     public static RuntimeIterator getBuiltInFunctionIterator(
@@ -225,9 +219,9 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             RuntimeStaticContext callerStaticContext,
             boolean argumentsAlreadyCoerced
     ) {
-        RumbleRuntimeConfiguration conf = callerStaticContext.getConfiguration();
+        RumbleConfiguration conf = callerStaticContext.getConfiguration();
         ExceptionMetadata metadata = callerStaticContext.getMetadata();
-        boolean checkReturnTypesOfBuiltinFunctions = conf.isCheckReturnTypeOfBuiltinFunctions();
+        boolean checkReturnTypesOfBuiltinFunctions = conf.analysis().checkReturnTypeOfBuiltinFunctions();
         BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
             identifier,
             callerStaticContext.getQueryLanguage()
@@ -244,11 +238,13 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         .equals(SequenceType.createSequenceType("item*"))
                 ) {
                     SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
-                    RuntimeStaticContext argStaticContext =
-                        callerStaticContext.withStaticType(sequenceType)
-                            .withExecutionMode(arguments.get(i).getHighestExecutionMode())
-                            .withMetadata(arguments.get(i).getMetadata());
-                    RuntimeIterator argumentIterator = FunctionCallArgumentCoercion.wrapForFunctionConversion(
+                    RuntimeStaticContext argStaticContext = callerStaticContext
+                        .toBuilder()
+                        .staticType(sequenceType)
+                        .executionMode(arguments.get(i).getHighestExecutionMode())
+                        .metadata(arguments.get(i).getMetadata())
+                        .build();
+                    RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
                         arguments.get(i),
                         sequenceType,
                         "Invalid argument for function " + identifier.getName() + ". ",
@@ -285,12 +281,19 @@ public class NamedFunctions implements Serializable, KryoSerializable {
 
         SequenceType catalogueReturnType = builtinFunction.getSignature().getReturnType();
 
-        RuntimeStaticContext delegateContext =
-            callerStaticContext.withStaticType(catalogueReturnType)
-                .withExecutionMode(callerStaticContext.getExecutionMode());
+        RuntimeStaticContext delegateContext = callerStaticContext
+            .toBuilder()
+            .staticType(catalogueReturnType)
+            .executionMode(callerStaticContext.getExecutionMode())
+            .build();
 
         if (!"format-number".equals(identifier.getName().getLocalName())) {
-            delegateContext.dropDecimalFormats();
+            // Remove decimal formats definition from the context
+            delegateContext = delegateContext
+                .toBuilder()
+                .decimalFormats(null)
+                .defaultDecimalFormat(null)
+                .build();
         }
 
         RuntimeIterator functionCallIterator;
@@ -324,9 +327,12 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         if (!checkReturnTypesOfBuiltinFunctions) {
             return functionCallIterator;
         }
-        RuntimeStaticContext returnCheckContext = callerStaticContext.withStaticType(catalogueReturnType)
-            .withExecutionMode(functionCallIterator.getHighestExecutionMode())
-            .withMetadata(functionCallIterator.getMetadata());
+        RuntimeStaticContext returnCheckContext = callerStaticContext
+            .toBuilder()
+            .staticType(catalogueReturnType)
+            .executionMode(functionCallIterator.getHighestExecutionMode())
+            .metadata(functionCallIterator.getMetadata())
+            .build();
         if (
             catalogueReturnType.isEmptySequence()
                 || catalogueReturnType.getArity().equals(Arity.One)
@@ -347,16 +353,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         );
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.userDefinedFunctions);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.userDefinedFunctions = kryo.readObject(input, HashMap.class);
-    }
 
     @Override
     public String toString() {

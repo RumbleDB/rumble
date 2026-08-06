@@ -8,10 +8,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class IRIToURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public IRIToURIFunctionIterator(
@@ -23,7 +25,7 @@ public class IRIToURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");

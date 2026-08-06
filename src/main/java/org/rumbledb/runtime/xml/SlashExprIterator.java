@@ -34,17 +34,19 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 
+import java.io.Serial;
 import java.util.*;
 
 public class SlashExprIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
         Item::getXmlDocumentPosition,
         Comparator.nullsLast(Comparator.naturalOrder())
     );
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private List<Item> results = null;
     private int nextResultCounter = 0;
     private Item nextResult;
@@ -63,10 +65,16 @@ public class SlashExprIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.leftIterator.getRDD(dynamicContext);
+        JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
+        long count = childRDD.count();
 
         // apply right iterator, usually a step
-        FlatMapFunction<Item, Item> transformation = new SlashExprClosure(this.rightIterator, dynamicContext);
-        JavaRDD<Item> result = childRDD.flatMap(transformation);
+        FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SlashExprClosureZipped(
+                this.rightIterator,
+                dynamicContext,
+                count
+        );
+        JavaRDD<Item> result = zippedChildRDD.flatMap(transformation);
 
         boolean allNodes;
         boolean allNonNodes = false;
@@ -80,10 +88,10 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         }
 
         if (allNodes) {
-            if (this.getConfiguration().optimizeSteps()) {
+            if (this.getConfiguration().optimization().optimizeSteps()) {
                 if (
-                    this.getConfiguration().optimizeStepExperimental()
-                        && this.getConfiguration().optimizeParentPointers()
+                    this.getConfiguration().optimization().optimizeStepsExperimental()
+                        && this.getConfiguration().optimization().optimizeParentPointers()
                 ) {
                     // skip sorting and uniqueness if not needed
                     // use optimizeParent as approximation for now, this is not verified
@@ -143,13 +151,6 @@ public class SlashExprIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.results = null;
-        this.nextResultCounter = 0;
-        setNextResult();
-    }
-
-    @Override
     public boolean hasNextLocal() {
         return this.hasNext;
     }
@@ -171,10 +172,14 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         if (this.results == null) {
             List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
             this.results = new ArrayList<>();
+            long last = left.size();
+            long position = 0;
             for (Item currentItem : left) {
                 DynamicContext currentContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
                 currentContext.getVariableValues()
                     .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
+                currentContext.getVariableValues().setPosition(++position);
+                currentContext.getVariableValues().setLast(last);
                 this.results.addAll(this.rightIterator.materialize(currentContext));
             }
             boolean allNodes = true;

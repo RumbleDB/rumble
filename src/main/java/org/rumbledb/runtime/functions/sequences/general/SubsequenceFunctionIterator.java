@@ -29,22 +29,23 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.spark.SparkSessionManager;
 
-import sparksoniq.spark.SparkSessionManager;
-
+import java.io.Serial;
 import java.util.List;
 
 public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator positionIterator;
     private RuntimeIterator lengthIterator;
     private Item nextResult;
     private int startPosition;
@@ -58,10 +59,10 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
-        this.positionIterator = this.children.get(1);
-        if (this.children.size() == 3) {
-            this.lengthIterator = this.children.get(2);
+        this.sequenceIterator = this.getChild(0);
+        this.positionIterator = this.getChild(1);
+        if (this.getChildren().size() == 3) {
+            this.lengthIterator = this.getChild(2);
         }
     }
 
@@ -91,7 +92,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         if (this.startPosition < this.optimizationThreshold) {
             return getDataFrameOld(dynamicContext);
         } else
@@ -101,8 +102,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     /**
      * Old implementation of getDataFrame, it is faster for low starting positions
      */
-    private JSoundDataFrame getDataFrameOld(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+    private HomogeneousItemDataFrame getDataFrameOld(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
 
         List<FlworDataFrameColumn> allColumns = df.getColumns();
@@ -138,15 +139,15 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                     Integer.toString(this.startPosition)
                 )
             );
-        return new JSoundDataFrame(ds, df.getItemType());
+        return new HomogeneousItemDataFrame(ds, df.getItemType());
     }
 
     /**
      * New implementation of getDataFrame using offset, it scales much better than the old implementation but is slower
      * for small values
      */
-    private JSoundDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+    private HomogeneousItemDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
 
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
@@ -170,7 +171,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                 df.getItemType()
             );
         }
-        return new JSoundDataFrame(df.getDataFrame(), df.getItemType());
+        return new HomogeneousItemDataFrame(df.getDataFrame(), df.getItemType());
     }
 
     @Override
@@ -182,11 +183,6 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.sequenceIterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        initializeLocal();
     }
 
     @Override
@@ -216,9 +212,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = false;
             return;
         } else {
-            if (this.sequenceIterator.isOpen()) {
-                this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-            } else {
+            if (!this.sequenceIterator.isOpen()) {
                 this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
             }
 
@@ -252,7 +246,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         this.startPosition = (int) Math.round(positionItem.getDoubleValue());
 
         this.length = -1;
-        if (this.children.size() == 3) {
+        if (this.getChildren().size() == 3) {
             Item lengthItem = this.lengthIterator
                 .materializeFirstItemOrNull(context);
             this.length = (int) Math.round(lengthItem.getDoubleValue());

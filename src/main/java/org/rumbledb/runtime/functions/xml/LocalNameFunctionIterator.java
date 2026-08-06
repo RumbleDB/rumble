@@ -9,9 +9,11 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class LocalNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public LocalNameFunctionIterator(
@@ -38,8 +40,8 @@ public class LocalNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private Item getContextNode(DynamicContext context) {
-        if (!this.children.isEmpty()) {
-            return this.children.get(0).materializeFirstItemOrNull(context);
+        if (!this.getChildren().isEmpty()) {
+            return this.getChild(0).materializeFirstItemOrNull(context);
         }
         return context.getVariableValues()
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())

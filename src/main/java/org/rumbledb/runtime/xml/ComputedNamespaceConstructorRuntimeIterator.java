@@ -32,6 +32,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,11 +45,12 @@ import java.util.regex.Pattern;
  */
 public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
-    private String staticPrefix;
-    private DataFunctionIterator prefixIterator;
-    private DataFunctionIterator uriIterator;
+    private final String staticPrefix;
+    private final DataFunctionIterator prefixIterator;
+    private final DataFunctionIterator uriIterator;
 
     /**
      * Constructor for static prefix: namespace prefix { uri }
@@ -138,7 +140,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
             );
         }
         Item prefixItem = atomizedPrefixItems.get(0);
-        if (!prefixItem.isAtomic()) {
+        if (!prefixItem.isAtomic() || !(prefixItem.isString() || prefixItem.isUntypedAtomic())) {
             throw new UnexpectedStaticTypeException(
                     "Computed namespace constructor prefix must evaluate to an empty sequence or a single atomic value of type xs:string or xs:untypedAtomic"
             );

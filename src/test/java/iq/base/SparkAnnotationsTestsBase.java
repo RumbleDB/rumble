@@ -20,7 +20,7 @@ package iq.base;
 import org.apache.spark.SparkConf;
 import org.junit.jupiter.api.BeforeAll;
 import scala.util.Properties;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 public abstract class SparkAnnotationsTestsBase extends AnnotationsTestsBase {
 
@@ -37,6 +37,7 @@ public abstract class SparkAnnotationsTestsBase extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
         sparkConfiguration.set("spark.sql.crossJoin.enabled", "true");
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
+        sparkConfiguration.set("spark.log.level", "ERROR");
         configureSpark(sparkConfiguration);
 
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);

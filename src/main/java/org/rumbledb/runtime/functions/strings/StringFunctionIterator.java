@@ -29,10 +29,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public StringFunctionIterator(
@@ -52,13 +54,13 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.children.size() == 0) {
+        if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             Item contextItem = items.get(0);
             return stringResultFromItem(contextItem);
         }
 
-        Item item = this.children.get(0)
+        Item item = this.getChild(0)
             .materializeFirstItemOrNull(context);
 
         if (item == null) {

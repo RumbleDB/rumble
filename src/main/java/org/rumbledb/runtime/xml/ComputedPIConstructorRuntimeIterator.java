@@ -33,6 +33,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +45,7 @@ import java.util.regex.Pattern;
  * @see org.rumbledb.expressions.xml.ComputedPIConstructorExpression
  */
 public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
     private final String staticTarget;
@@ -98,7 +100,10 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
                 );
             }
             Item atomizedNameItem = atomizedNameItems.get(0);
-            if (!atomizedNameItem.isAtomic()) {
+            if (
+                !atomizedNameItem.isAtomic()
+                    || !(atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic())
+            ) {
                 throw new UnexpectedStaticTypeException(
                         "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic"
                 );

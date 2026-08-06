@@ -20,31 +20,24 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class FloatItem implements Item {
+public class FloatItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private float value;
-
-    public FloatItem() {
-    }
 
     public FloatItem(float value) {
         this.value = value;
@@ -53,20 +46,6 @@ public class FloatItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new FloatItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
@@ -136,6 +115,7 @@ public class FloatItem implements Item {
         return this.value;
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         if (Float.isNaN(this.value) || Float.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
@@ -143,10 +123,12 @@ public class FloatItem implements Item {
         return BigDecimal.valueOf(this.value);
     }
 
+    @Override
     public int castToIntValue() {
         return Float.valueOf(this.value).intValue();
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return BigDecimal.valueOf(this.value).toBigInteger();
     }
@@ -154,20 +136,6 @@ public class FloatItem implements Item {
     @Override
     public boolean isFloat() {
         return true;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeFloat(this.value);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readFloat();
-    }
-
-    public int hashCode() {
-        return (int) Math.round(this.value);
     }
 
     @Override

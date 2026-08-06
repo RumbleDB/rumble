@@ -6,10 +6,12 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParentAxisIterator extends AxisIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ParentAxisIterator(RuntimeStaticContext staticContext) {
@@ -26,7 +28,10 @@ public class ParentAxisIterator extends AxisIterator {
                 throw new UnexpectedNodeException("Expected at least a node type as context item", getMetadata());
             }
             for (Item node : currentContext) {
-                this.results.add(node.parent());
+                Item parent = node.parent();
+                if (parent != null) {
+                    this.results.add(parent);
+                }
             }
         }
         storeNextResult();

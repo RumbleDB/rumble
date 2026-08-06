@@ -18,11 +18,9 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.Objects;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -32,40 +30,20 @@ import org.rumbledb.types.ItemType;
 /**
  * Atomic item representing an {@code xs:QName} value as an expanded name ({@link Name}).
  */
-public class QNameItem implements Item {
+public class QNameItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name name;
 
-    public QNameItem() {
-        super();
-    }
-
     public QNameItem(Name name) {
-        super();
         this.name = Objects.requireNonNull(name, "name");
     }
 
     @Override
     public Item copy(boolean mutable) {
         return new QNameItem(this.name);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isQName()) {
-            return false;
-        }
-        return this.name.equals(otherItem.getQNameValue());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name.hashCode();
     }
 
     @Override
@@ -78,15 +56,7 @@ public class QNameItem implements Item {
         return this.name;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.name);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.name = kryo.readObject(input, Name.class);
-    }
 
     @Override
     public boolean isQName() {

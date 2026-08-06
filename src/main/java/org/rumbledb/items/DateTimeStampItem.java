@@ -1,31 +1,20 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+public class DateTimeStampItem extends AbstractAtomicItem {
 
-
-public class DateTimeStampItem implements Item {
-
+    @Serial
     private static final long serialVersionUID = 1L;
     private DateTimeItem value;
 
-    public DateTimeStampItem() {
-        super();
-    }
-
     DateTimeStampItem(OffsetDateTime value, boolean checkTimezone) {
-        super();
         if (!checkTimezone) {
             throw new IllegalArgumentException("There is no timezone in dateTime");
         }
@@ -42,20 +31,6 @@ public class DateTimeStampItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new DateTimeStampItem(this.value.getDateTimeValue(), true);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
@@ -86,21 +61,6 @@ public class DateTimeStampItem implements Item {
     @Override
     public boolean getEffectiveBooleanValue() {
         return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return this.value.hashCode();
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        this.value.write(kryo, output);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value.read(kryo, input);
     }
 
     @Override

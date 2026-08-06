@@ -17,6 +17,7 @@
 
 package org.rumbledb.expressions.primary;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -28,10 +29,11 @@ import java.util.List;
 /**
  * XQuery 3.1 map constructor: {@code map { key : value, ... }}.
  */
+@Getter
 public class MapConstructorExpression extends Expression {
 
-    private List<Expression> keys;
-    private List<Expression> values;
+    private final List<Expression> keys;
+    private final List<Expression> values;
 
     public MapConstructorExpression(
             List<Expression> keys,
@@ -41,14 +43,6 @@ public class MapConstructorExpression extends Expression {
         super(metadata);
         this.keys = keys;
         this.values = values;
-    }
-
-    public List<Expression> getKeys() {
-        return this.keys;
-    }
-
-    public List<Expression> getValues() {
-        return this.values;
     }
 
     @Override

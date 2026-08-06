@@ -27,22 +27,24 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.spark.SparkSessionManager;
 
 import scala.Tuple2;
-import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
+    private final RuntimeIterator sequenceIterator;
     private List<Item> results;
     private int currentIndex = 0;
 
@@ -51,7 +53,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
+        this.sequenceIterator = this.getChild(0);
     }
 
     @Override
@@ -67,8 +69,8 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
         LogManager.getLogger("ReverseFunctioniterator")
@@ -83,7 +85,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
                 )
             );
         String tempName = SparkSessionManager.temporaryColumnName;
-        JSoundDataFrame result = childDataFrame.evaluateSQL(
+        HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
             String.format(
                 "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
                 selectSQL,
@@ -113,20 +115,6 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.results = new ArrayList<>();
-        this.currentIndex = 0;
-
-        List<Item> items = this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
-
-        for (int i = items.size() - 1; i >= 0; i--) {
-            this.results.add(items.get(i));
-        }
-
-        this.hasNext = this.results.size() != 0;
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.rumbledb.expressions.typing;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -11,6 +12,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
+@Getter
 public class CastExpression extends Expression {
 
     private Expression mainExpression;
@@ -35,19 +37,12 @@ public class CastExpression extends Expression {
         return visitor.visitCastExpression(this, argument);
     }
 
-    public SequenceType getSequenceType() {
-        return this.sequenceType;
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
-
     @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.mainExpression);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

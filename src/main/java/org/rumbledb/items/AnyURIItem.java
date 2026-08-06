@@ -20,52 +20,36 @@
 
 package org.rumbledb.items;
 
+import lombok.Getter;
+import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-public class AnyURIItem implements Item {
+public class AnyURIItem extends AbstractAtomicItem {
 
-
+    @Serial
     private static final long serialVersionUID = 1L;
+    private String lexicalValue;
+
+    @Getter
     private URI value;
 
-    public AnyURIItem() {
-        super();
-    }
-
     public AnyURIItem(String value) {
-        super();
+        if (value == null) {
+            throw new IllegalArgumentException();
+        }
+        this.lexicalValue = value;
         this.value = parseAnyURIString(value);
     }
 
     @Override
     public Item copy(boolean mutable) {
-        return new AnyURIItem(this.value.toString());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
+        return new AnyURIItem(this.lexicalValue);
     }
 
     static URI parseAnyURIString(String anyURIString) throws IllegalArgumentException {
@@ -74,42 +58,23 @@ public class AnyURIItem implements Item {
         try {
             return new URI(anyURIString);
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e.getMessage());
+            return null;
         }
     }
 
     @Override
     public String getStringValue() {
-        return this.value.toString();
+        return this.lexicalValue;
     }
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.value.toString().isEmpty();
-    }
-
-    @Override
-    public int hashCode() {
-        return this.value.hashCode();
-    }
-
-    public URI getValue() {
-        return this.value;
+        return !this.lexicalValue.isEmpty();
     }
 
     @Override
     public Object getVariantValue() {
         return getStringValue();
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = kryo.readObject(input, URI.class);
     }
 
     @Override

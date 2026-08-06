@@ -22,15 +22,23 @@ package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.SerializationParameterUtils;
+import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.Serializers;
+import org.rumbledb.serialization.SerializerUtils;
 
+import java.io.Serial;
 import java.util.List;
 
 public class SerializeFunctionIterator extends LocalFunctionCallIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public SerializeFunctionIterator(
@@ -43,17 +51,44 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            Item joinString = ItemFactory.getInstance().createStringItem(" ");
-            List<Item> items = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
-
-            StringBuilder stringBuilder = new StringBuilder();
-            for (Item item : items) {
-                stringBuilder.append(item.serialize());
-                stringBuilder.append(joinString.getStringValue());
+            List<Item> items = this.getChild(0).materialize(this.currentDynamicContextForLocalExecution);
+            SerializationParameters params = resolveSerializationParameters();
+            SerializationParameters itemParams = SerializationParameters.copy(params);
+            if ("xml".equalsIgnoreCase(params.getMethod())) {
+                itemParams.setOmitXmlDeclaration(true);
+            }
+            Serializer serializer = Serializers.from(itemParams);
+            String itemSeparator = params.getItemSeparator();
+            if (itemSeparator == null) {
+                itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
             }
 
-            if (items.size() > 0) {
-                stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+            StringBuilder stringBuilder = new StringBuilder();
+            if ("json".equalsIgnoreCase(params.getMethod())) {
+                if (items.isEmpty()) {
+                    stringBuilder.append("null");
+                } else if (items.size() == 1) {
+                    stringBuilder.append(serializer.serialize(items.get(0)));
+                } else {
+                    throw new InvalidArgumentTypeException(
+                            "JSON serialization requires the top-level sequence to contain at most one item.",
+                            getMetadata()
+                    );
+                }
+            } else {
+                if (
+                    "xml".equalsIgnoreCase(params.getMethod())
+                        && !params.getOmitXmlDeclaration()
+                        && !items.isEmpty()
+                ) {
+                    SerializerUtils.appendXmlDeclaration(stringBuilder, params);
+                }
+                for (int i = 0; i < items.size(); i++) {
+                    if (i > 0) {
+                        stringBuilder.append(itemSeparator);
+                    }
+                    stringBuilder.append(serializer.serialize(items.get(i)));
+                }
             }
             this.hasNext = false;
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
@@ -63,5 +98,18 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
+    }
+
+    private SerializationParameters resolveSerializationParameters() {
+        SerializationParameters params = SerializationParameterUtils.defaultsForSerializeFunction(
+            this.staticContext.getQueryLanguage()
+        );
+        if (this.getChildren().size() < 2) {
+            return params;
+        }
+
+        List<Item> optionsItems = this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
+        SerializationParameterUtils.applyParameterItems(params, optionsItems, getMetadata());
+        return params;
     }
 }

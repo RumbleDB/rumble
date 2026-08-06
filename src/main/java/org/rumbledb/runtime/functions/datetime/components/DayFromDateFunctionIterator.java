@@ -7,10 +7,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class DayFromDateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public DayFromDateFunctionIterator(
@@ -22,7 +24,7 @@ public class DayFromDateFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item dateItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item dateItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (dateItem == null) {
             return null;
         }

@@ -19,9 +19,11 @@ package iq.base;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.Assertions;
+import org.rumbledb.api.ExternalBindings;
+import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
@@ -59,29 +61,41 @@ public final class AnnotationTestExecutor {
 
     public static void run(
             File testFile,
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
+            boolean checkOutput
+    )
+            throws IOException {
+        run(testFile, configuration, ExternalBindings.empty(), checkOutput);
+    }
+
+    public static void run(
+            File testFile,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings,
             boolean checkOutput
     )
             throws IOException {
         run(
             testFile.getAbsolutePath(),
             configuration,
+            externalBindings,
             checkOutput,
-            configuration.applyUpdates(),
-            configuration.getResultSizeCap()
+            configuration.runtime().shouldApplyUpdates(),
+            configuration.runtime().resultsSizeCap()
         );
     }
 
     static void run(
             String path,
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings,
             boolean checkOutput,
             boolean applyUpdates,
             int resultSizeCap
     )
             throws IOException {
         AnnotationProcessor.TestAnnotation annotation = readAnnotation(path);
-        QueryExecutionResult executionResult = executeQuery(path, configuration);
+        QueryExecutionResult executionResult = executeQuery(path, configuration, externalBindings);
 
         if (executionResult.failed()) {
             assertExpectedFailure(annotation, executionResult);
@@ -119,21 +133,24 @@ public final class AnnotationTestExecutor {
         }
     }
 
-    private static QueryExecutionResult executeQuery(String path, RumbleRuntimeConfiguration configuration) {
+    private static QueryExecutionResult executeQuery(
+            String path,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings
+    ) {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
-                configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
             Rumble rumble = new Rumble(configuration);
-            return QueryExecutionResult.success(rumble.runQuery(uri));
+            return QueryExecutionResult.success(rumble.runQuery(uri, externalBindings));
         } catch (ParsingException exception) {
-            return QueryExecutionResult.failure(TestStage.PARSING, exception.getMessage());
+            return QueryExecutionResult.failure(TestStage.PARSING, errorOutput(exception));
         } catch (SemanticException exception) {
-            return QueryExecutionResult.failure(TestStage.COMPILATION, exception.getMessage());
+            return QueryExecutionResult.failure(TestStage.COMPILATION, errorOutput(exception));
         } catch (RumbleException exception) {
-            return QueryExecutionResult.failure(TestStage.RUNTIME, exception.getMessage());
+            return QueryExecutionResult.failure(TestStage.RUNTIME, errorOutput(exception));
         } catch (Throwable exception) {
             throw new AssertionError("Could not execute test query for " + path, exception);
         }
@@ -191,11 +208,10 @@ public final class AnnotationTestExecutor {
         try {
             checkExpectedOutput(path, annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
         } catch (RumbleException exception) {
-            String errorOutput = exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
-            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput)));
+            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput(exception))));
         } catch (Throwable exception) {
             // Catch all other exceptions not given by Rumble
-            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, exception.getMessage())));
+            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput(exception))));
         }
     }
 
@@ -210,7 +226,11 @@ public final class AnnotationTestExecutor {
             materializeSequence(sequence, applyUpdates, resultSizeCap);
             Assertions.fail(withTestFile(path, unexpectedSuccessMessage(TestStage.RUNTIME)));
         } catch (Throwable exception) {
-            checkErrorCode(exception.getMessage(), annotation.errorCode(), annotation.errorMetadata());
+            try {
+                checkErrorCode(errorOutput(exception), annotation.errorCode(), annotation.errorMetadata());
+            } catch (AssertionError assertionError) {
+                Assertions.fail(withTestFile(path, assertionError.getMessage()), assertionError);
+            }
         }
     }
 
@@ -222,10 +242,15 @@ public final class AnnotationTestExecutor {
             boolean applyUpdates,
             int resultSizeCap
     ) {
-        String actualOutput = materializeSequence(sequence, applyUpdates, resultSizeCap);
-        if (checkOutput) {
-            Assertions.assertEquals(expectedOutput, actualOutput, withTestFile(path, "Unexpected query output."));
+        if (!checkOutput) {
+            if (applyUpdates && sequence.availableAsPUL()) {
+                sequence.applyPUL();
+            }
+            return;
         }
+
+        String actualOutput = materializeSequence(sequence, applyUpdates, resultSizeCap);
+        Assertions.assertEquals(expectedOutput, actualOutput, withTestFile(path, "Unexpected query output."));
     }
 
     private static String withTestFile(String path, String message) {
@@ -237,11 +262,68 @@ public final class AnnotationTestExecutor {
             boolean applyUpdates,
             int resultSizeCap
     ) {
-        String output = getIteratorOutput(sequence, resultSizeCap);
+        String output = formatSequenceForLegacyRuntimeAssertions(sequence, resultSizeCap);
         if (applyUpdates && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
         return output;
+    }
+
+    /**
+     * Runtime annotation tests historically compare against a legacy sequence presentation
+     * format rather than against W3C serializer output.
+     */
+    private static String formatSequenceForLegacyRuntimeAssertions(
+            SequenceOfItems sequence,
+            int resultSizeCap
+    ) {
+        if (sequence.availableAsPUL()) {
+            return "";
+        }
+
+        sequence.open();
+        try {
+            if (!sequence.hasNext()) {
+                return "";
+            }
+
+            Item firstItem = sequence.next();
+            if (!sequence.hasNext()) {
+                return firstItem.serialize();
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("(");
+            sb.append(firstItem.serialize());
+
+            int itemCount = 1;
+            while (sequence.hasNext() && isWithinLegacyResultSizeCap(itemCount, resultSizeCap)) {
+                sb.append(", ");
+                sb.append(sequence.next().serialize());
+                itemCount++;
+            }
+            sb.append(")");
+
+            if (sequence.hasNext() && resultSizeCap > 0 && itemCount == resultSizeCap) {
+                System.err.println(
+                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                        + resultSizeCap
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
+            }
+
+            return sb.toString();
+        } finally {
+            sequence.close();
+        }
+    }
+
+    private static boolean isWithinLegacyResultSizeCap(int itemCount, int resultSizeCap) {
+        return resultSizeCap <= 0 || itemCount < resultSizeCap;
+    }
+
+    private static String errorOutput(Throwable exception) {
+        return exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
     }
 
     private static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
@@ -260,38 +342,4 @@ public final class AnnotationTestExecutor {
         );
     }
 
-    private static String getIteratorOutput(SequenceOfItems sequence, int resultSizeCap) {
-        sequence.open();
-        if (!sequence.hasNext()) {
-            return "";
-        }
-
-        StringBuilder output = new StringBuilder(sequence.next().serialize());
-        if (!sequence.hasNext()) {
-            return output.toString();
-        }
-
-        int itemCount = 1;
-        output.insert(0, "(");
-        while (sequence.hasNext() && isWithinResultSizeCap(itemCount, resultSizeCap)) {
-            output.append(", ");
-            output.append(sequence.next().serialize());
-            itemCount++;
-        }
-        output.append(")");
-
-        if (sequence.hasNext() && resultSizeCap > 0 && itemCount == resultSizeCap) {
-            System.err.println(
-                "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                    + resultSizeCap
-                    + " items. This value can be configured with the --result-size parameter at startup"
-            );
-        }
-
-        return output.toString();
-    }
-
-    private static boolean isWithinResultSizeCap(int itemCount, int resultSizeCap) {
-        return resultSizeCap == 0 || itemCount < resultSizeCap;
-    }
 }

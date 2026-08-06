@@ -38,6 +38,7 @@ import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -115,6 +116,7 @@ import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -169,6 +171,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitForClause(ForClause expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitWindowClause(WindowClause expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -308,6 +314,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitAttributeNodeContent(AttributeNodeContentExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitPathRootExpr(PathRootExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

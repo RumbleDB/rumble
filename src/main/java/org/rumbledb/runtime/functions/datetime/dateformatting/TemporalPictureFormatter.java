@@ -5,6 +5,10 @@ import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 final class TemporalPictureFormatter {
 
@@ -12,6 +16,8 @@ final class TemporalPictureFormatter {
     interface ComponentSupport {
         boolean supports(char component);
     }
+
+    private static final Map<String, ParsedPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
 
     private TemporalPictureFormatter() {
     }
@@ -27,47 +33,76 @@ final class TemporalPictureFormatter {
             ComponentSupport componentSupport,
             ExceptionMetadata metadata
     ) {
-        FormattingRequest request = new FormattingRequest(
-                value,
-                pictureString,
-                hasExplicitTimezone,
-                formattingContext,
-                componentSupport,
-                metadata
-        );
-
-        PictureScanState state = new PictureScanState();
-
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < pictureString.length(); i++) {
-            i = consumeCharacter(request, state, result, i);
+        ParsedPicture parsed = PICTURE_CACHE.get(pictureString);
+        if (parsed == null) {
+            parsed = parsePicture(pictureString, metadata);
+            PICTURE_CACHE.putIfAbsent(pictureString, parsed);
         }
 
-        appendTrailingLiteralOrFail(request, state, result);
-        return applyFallbackPrefixes(result.toString(), state, formattingContext);
+        StringBuilder result = new StringBuilder();
+        for (Segment segment : parsed.segments) {
+            if (segment.marker == null) {
+                result.append(segment.literal);
+                continue;
+            }
+
+            result.append(
+                TemporalComponentRenderer.render(
+                    value,
+                    segment.marker,
+                    hasExplicitTimezone,
+                    formattingContext,
+                    componentSupport,
+                    pictureString,
+                    metadata
+                )
+            );
+        }
+
+        return applyFallbackPrefixes(result.toString(), parsed, formattingContext);
+    }
+
+    /**
+     * Scans and parses a picture string once into an ordered list of literal/marker segments.
+     */
+    private static ParsedPicture parsePicture(String pictureString, ExceptionMetadata metadata) {
+        ParseRequest request = new ParseRequest(pictureString, metadata);
+        PictureScanState state = new PictureScanState();
+        List<Segment> segments = new ArrayList<>();
+        StringBuilder pendingLiteral = new StringBuilder();
+
+        for (int i = 0; i < pictureString.length(); i++) {
+            i = consumeCharacter(request, state, pendingLiteral, segments, i);
+        }
+
+        appendTrailingLiteralOrFail(request, state, pendingLiteral);
+        flushLiteral(pendingLiteral, segments);
+
+        return new ParsedPicture(segments, state.languageSensitiveOutput, state.calendarSensitiveOutput);
     }
 
     private static int consumeCharacter(
-            FormattingRequest request,
+            ParseRequest request,
             PictureScanState state,
-            StringBuilder result,
+            StringBuilder pendingLiteral,
+            List<Segment> segments,
             int index
     ) {
         if (state.insideVariableMarker) {
-            return consumeVariableMarkerCharacter(request, state, result, index);
+            return consumeVariableMarkerCharacter(request, state, pendingLiteral, segments, index);
         }
 
-        return consumeLiteralCharacter(request, state, result, index);
+        return consumeLiteralCharacter(request, state, pendingLiteral, index);
     }
 
     /**
      * Consumes a character while scanning the inside of a variable marker.
      */
     private static int consumeVariableMarkerCharacter(
-            FormattingRequest request,
+            ParseRequest request,
             PictureScanState state,
-            StringBuilder result,
+            StringBuilder pendingLiteral,
+            List<Segment> segments,
             int index
     ) {
         if (request.pictureString.charAt(index) != ']') {
@@ -85,17 +120,8 @@ final class TemporalPictureFormatter {
         state.languageSensitiveOutput = state.languageSensitiveOutput || usesLanguage(variableMarker);
         state.calendarSensitiveOutput = state.calendarSensitiveOutput || usesCalendar(variableMarker);
 
-        result.append(
-            TemporalComponentRenderer.render(
-                request.value,
-                variableMarker,
-                request.hasExplicitTimezone,
-                request.formattingContext,
-                request.componentSupport,
-                request.pictureString,
-                request.metadata
-            )
-        );
+        flushLiteral(pendingLiteral, segments);
+        segments.add(Segment.marker(variableMarker));
 
         state.insideVariableMarker = false;
         state.startOfSequence = index + 1;
@@ -107,19 +133,19 @@ final class TemporalPictureFormatter {
      * Consumes a character while scanning literal text outside a variable marker.
      */
     private static int consumeLiteralCharacter(
-            FormattingRequest request,
+            ParseRequest request,
             PictureScanState state,
-            StringBuilder result,
+            StringBuilder pendingLiteral,
             int index
     ) {
         char c = request.pictureString.charAt(index);
 
         if (c == ']') {
-            return consumeClosingBracket(request, state, result, index);
+            return consumeClosingBracket(request, state, pendingLiteral, index);
         }
 
         if (c == '[') {
-            return consumeOpeningBracket(request, state, result, index);
+            return consumeOpeningBracket(request, state, pendingLiteral, index);
         }
 
         return index;
@@ -129,16 +155,16 @@ final class TemporalPictureFormatter {
      * Consumes an escaped closing bracket or reports a syntax error for an unmatched closing bracket.
      */
     private static int consumeClosingBracket(
-            FormattingRequest request,
+            ParseRequest request,
             PictureScanState state,
-            StringBuilder result,
+            StringBuilder pendingLiteral,
             int index
     ) {
         if (!hasNextCharacter(request.pictureString, index, ']')) {
             throw syntaxError(request.pictureString, request.metadata);
         }
 
-        result.append(request.pictureString, state.startOfSequence, index + 1);
+        pendingLiteral.append(request.pictureString, state.startOfSequence, index + 1);
         state.startOfSequence = index + 2;
 
         return index + 1;
@@ -148,9 +174,9 @@ final class TemporalPictureFormatter {
      * Consumes an opening bracket as either an escaped literal or the start of a variable marker.
      */
     private static int consumeOpeningBracket(
-            FormattingRequest request,
+            ParseRequest request,
             PictureScanState state,
-            StringBuilder result,
+            StringBuilder pendingLiteral,
             int index
     ) {
         if (isLastCharacter(request.pictureString, index)) {
@@ -158,37 +184,37 @@ final class TemporalPictureFormatter {
         }
 
         if (hasNextCharacter(request.pictureString, index, '[')) {
-            return consumeEscapedOpeningBracket(request, state, result, index);
+            return consumeEscapedOpeningBracket(request, state, pendingLiteral, index);
         }
 
-        return beginVariableMarker(request, state, result, index);
+        return beginVariableMarker(request, state, pendingLiteral, index);
     }
 
     /**
      * Consumes an escaped opening bracket and appends it as literal text.
      */
     private static int consumeEscapedOpeningBracket(
-            FormattingRequest request,
+            ParseRequest request,
             PictureScanState state,
-            StringBuilder result,
+            StringBuilder pendingLiteral,
             int index
     ) {
-        result.append(request.pictureString, state.startOfSequence, index + 1);
+        pendingLiteral.append(request.pictureString, state.startOfSequence, index + 1);
         state.startOfSequence = index + 2;
 
         return index + 1;
     }
 
     /**
-     * Starts a variable marker and appends the preceding literal text.
+     * Starts a variable marker and flushes the preceding literal text.
      */
     private static int beginVariableMarker(
-            FormattingRequest request,
+            ParseRequest request,
             PictureScanState state,
-            StringBuilder result,
+            StringBuilder pendingLiteral,
             int index
     ) {
-        result.append(request.pictureString, state.startOfSequence, index);
+        pendingLiteral.append(request.pictureString, state.startOfSequence, index);
         state.insideVariableMarker = true;
         state.startOfSequence = index + 1;
 
@@ -199,9 +225,9 @@ final class TemporalPictureFormatter {
      * Appends trailing literal text or reports a syntax error for an unclosed variable marker.
      */
     private static void appendTrailingLiteralOrFail(
-            FormattingRequest request,
+            ParseRequest request,
             PictureScanState state,
-            StringBuilder result
+            StringBuilder pendingLiteral
     ) {
         if (state.startOfSequence == request.pictureString.length()) {
             return;
@@ -211,7 +237,16 @@ final class TemporalPictureFormatter {
             throw syntaxError(request.pictureString, request.metadata);
         }
 
-        result.append(request.pictureString.substring(state.startOfSequence));
+        pendingLiteral.append(request.pictureString, state.startOfSequence, request.pictureString.length());
+    }
+
+    private static void flushLiteral(StringBuilder pendingLiteral, List<Segment> segments) {
+        if (pendingLiteral.length() == 0) {
+            return;
+        }
+
+        segments.add(Segment.literal(pendingLiteral.toString()));
+        pendingLiteral.setLength(0);
     }
 
     /**
@@ -219,14 +254,14 @@ final class TemporalPictureFormatter {
      */
     private static String applyFallbackPrefixes(
             String formatted,
-            PictureScanState state,
+            ParsedPicture parsed,
             FormattingContext formattingContext
     ) {
-        if (state.calendarSensitiveOutput && formattingContext.calendarFallback) {
+        if (parsed.calendarSensitiveOutput && formattingContext.calendarFallback) {
             formatted = "[Calendar: " + formattingContext.calendarDesignator + "] " + formatted;
         }
 
-        if (state.languageSensitiveOutput && formattingContext.languageFallback) {
+        if (parsed.languageSensitiveOutput && formattingContext.languageFallback) {
             formatted = "[Language: " + formattingContext.effectiveLanguage + "] " + formatted;
         }
 
@@ -299,30 +334,56 @@ final class TemporalPictureFormatter {
     }
 
     /**
-     * Bundles the immutable inputs needed while formatting a picture string.
+     * Bundles the inputs needed while parsing a picture string.
      */
-    private static final class FormattingRequest {
-        final OffsetDateTime value;
+    private static final class ParseRequest {
         final String pictureString;
-        final boolean hasExplicitTimezone;
-        final FormattingContext formattingContext;
-        final ComponentSupport componentSupport;
         final ExceptionMetadata metadata;
 
-        private FormattingRequest(
-                OffsetDateTime value,
-                String pictureString,
-                boolean hasExplicitTimezone,
-                FormattingContext formattingContext,
-                ComponentSupport componentSupport,
-                ExceptionMetadata metadata
-        ) {
-            this.value = value;
+        private ParseRequest(String pictureString, ExceptionMetadata metadata) {
             this.pictureString = pictureString;
-            this.hasExplicitTimezone = hasExplicitTimezone;
-            this.formattingContext = formattingContext;
-            this.componentSupport = componentSupport;
             this.metadata = metadata;
+        }
+    }
+
+    /**
+     * One piece of a parsed picture string: either a literal run of text, or a variable marker to render
+     * against a specific date value. Exactly one of the two fields is non-null.
+     */
+    private static final class Segment {
+        final String literal;
+        final VariableMarker marker;
+
+        private Segment(String literal, VariableMarker marker) {
+            this.literal = literal;
+            this.marker = marker;
+        }
+
+        static Segment literal(String text) {
+            return new Segment(text, null);
+        }
+
+        static Segment marker(VariableMarker marker) {
+            return new Segment(null, marker);
+        }
+    }
+
+    /**
+     * The immutable result of parsing a picture string
+     */
+    private static final class ParsedPicture {
+        final List<Segment> segments;
+        final boolean languageSensitiveOutput;
+        final boolean calendarSensitiveOutput;
+
+        private ParsedPicture(
+                List<Segment> segments,
+                boolean languageSensitiveOutput,
+                boolean calendarSensitiveOutput
+        ) {
+            this.segments = segments;
+            this.languageSensitiveOutput = languageSensitiveOutput;
+            this.calendarSensitiveOutput = calendarSensitiveOutput;
         }
     }
 }

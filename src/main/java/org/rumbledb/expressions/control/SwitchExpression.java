@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.control;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -29,6 +30,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class SwitchExpression extends Expression {
 
     private final Expression testCondition;
@@ -45,18 +47,6 @@ public class SwitchExpression extends Expression {
         this.testCondition = testCondition;
         this.cases = cases;
         this.defaultExpression = defaultExpression;
-    }
-
-    public Expression getTestCondition() {
-        return this.testCondition;
-    }
-
-    public List<SwitchCase> getCases() {
-        return this.cases;
-    }
-
-    public Expression getDefaultExpression() {
-        return this.defaultExpression;
     }
 
     @Override

@@ -27,11 +27,13 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.regex.Matcher;
 
 public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public MatchesFunctionIterator(
@@ -43,17 +45,17 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item regexpItem = this.children.get(1)
+        Item regexpItem = this.getChild(1)
             .materializeFirstItemOrNull(context);
-        Item stringItem = this.children.get(0)
+        Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         if (stringItem == null) {
             stringItem = ItemFactory.getInstance().createStringItem("");
         }
         String pattern = regexpItem.getStringValue();
         String flags = null;
-        if (this.children.size() == 3) {
-            Item flagsItem = this.children.get(2)
+        if (this.getChildren().size() == 3) {
+            Item flagsItem = this.getChild(2)
                 .materializeFirstItemOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();

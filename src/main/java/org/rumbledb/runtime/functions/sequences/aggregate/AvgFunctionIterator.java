@@ -31,6 +31,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import java.util.TreeMap;
 public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Item item;
 
@@ -52,7 +54,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item count = CountFunctionIterator.computeCount(
-            this.children.get(0),
+            this.getChild(0),
             context,
             getMetadata()
         );
@@ -64,7 +66,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Item sum = SumFunctionIterator.computeSum(
             ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
-            this.children.get(0),
+            this.getChild(0),
             context,
             getMetadata()
         );
@@ -77,8 +79,9 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return this.item;
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator expr) {
+        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVERAGE);

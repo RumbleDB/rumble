@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.declaration;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidVariableDeclarationException;
@@ -20,10 +21,14 @@ import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAss
 public class VariableDeclStatement extends Statement {
     // Default is True for statement variable declaration.
     private final boolean DEFAULT_ASSIGNABLE = true;
+    @Getter
     private final List<Annotation> annotations;
+    @Getter
     private final Name variableName;
     private final SequenceType variableSequenceType;
+    @Getter
     private final Expression variableExpression;
+    @Getter
     private final boolean isAssignable;
 
     public VariableDeclStatement(
@@ -90,23 +95,8 @@ public class VariableDeclStatement extends Statement {
         return SequenceType.createSequenceType("item*");
     }
 
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
     public SequenceType getActualSequenceType() {
         return this.variableSequenceType;
     }
 
-    public Expression getVariableExpression() {
-        return this.variableExpression;
-    }
-
-    public List<Annotation> getAnnotations() {
-        return this.annotations;
-    }
-
-    public boolean isAssignable() {
-        return this.isAssignable;
-    }
 }

@@ -20,6 +20,7 @@
 
 package org.rumbledb.types;
 
+import lombok.Getter;
 import org.apache.log4j.LogManager;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -28,14 +29,20 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.EqualsAndHashCode;
+
+@Getter
+@EqualsAndHashCode
 public class SequenceType implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private ItemType itemType;
     private Arity arity;
@@ -106,19 +113,14 @@ public class SequenceType implements Serializable {
         return this.arity == Arity.Zero;
     }
 
-    public ItemType getItemType() {
-        return this.itemType;
-    }
-
-    public Arity getArity() {
-        return this.arity;
-    }
-
     public boolean isSubtypeOf(SequenceType superType) {
         if (isEmptySequence()) {
             return superType.isEmptySequence()
                 || superType.arity == Arity.OneOrZero
                 || superType.arity == Arity.ZeroOrMore;
+        }
+        if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
+            return hasOnlyEmptySequenceAsValue() ? emptySequenceIsSubtypeOf(superType) : true;
         }
         return this.itemType.isSubtypeOf(superType.getItemType())
             &&
@@ -129,6 +131,9 @@ public class SequenceType implements Serializable {
     public boolean isSubtypeOfOrCanBePromotedTo(SequenceType superType) {
         if (isEmptySequence()) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+        }
+        if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
+            return hasOnlyEmptySequenceAsValue() ? emptySequenceIsSubtypeOf(superType) : true;
         }
         return this.isAritySubtypeOf(superType.arity)
             && (this.itemType.isSubtypeOf(superType.getItemType())
@@ -142,6 +147,16 @@ public class SequenceType implements Serializable {
     // TODO: consider removing it
     public boolean isAritySubtypeOf(Arity superArity) {
         return this.arity.isSubtypeOf(superArity);
+    }
+
+    private boolean hasOnlyEmptySequenceAsValue() {
+        return this.arity == Arity.Zero || this.arity == Arity.OneOrZero || this.arity == Arity.ZeroOrMore;
+    }
+
+    private boolean emptySequenceIsSubtypeOf(SequenceType superType) {
+        return superType.isEmptySequence()
+            || superType.arity == Arity.OneOrZero
+            || superType.arity == Arity.ZeroOrMore;
     }
 
     public boolean hasEffectiveBooleanValue() {
@@ -239,20 +254,6 @@ public class SequenceType implements Serializable {
             }
         }
         return this;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof SequenceType sequenceType)) {
-            return false;
-        }
-        if (isEmptySequence()) {
-            return sequenceType.isEmptySequence();
-        }
-        if (sequenceType.isEmptySequence()) {
-            return false;
-        }
-        return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
     }
 
     public enum Arity {

@@ -1,5 +1,7 @@
 package org.rumbledb.types;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.api.Item;
 
 import java.util.Collections;
@@ -9,6 +11,7 @@ import java.util.List;
  * Facets class represent a container with the ability to get and set facets and is intended to be a mutable proxy that
  * will be passed to a DerivedAtomicType to indicate the specified facets
  */
+@Getter
 public class Facets {
 
     /**
@@ -62,168 +65,36 @@ public class Facets {
         return facets;
     }
 
-    private Item minInclusive, maxInclusive;
-    private Item minExclusive, maxExclusive;
-    private Integer minLength, length, maxLength, totalDigits, fractionDigits;
+    @Setter
+    private Item minInclusive;
+    @Setter
+    private Item maxInclusive;
+    @Setter
+    private Item minExclusive;
+    @Setter
+    private Item maxExclusive;
+    private Integer minLength;
+    private Integer length;
+    private Integer maxLength;
+    private Integer totalDigits;
+    @Setter
+    private Integer fractionDigits;
     private List<String> constraints = Collections.emptyList();
     private List<Item> enumeration;
+    @Setter
     private TimezoneFacet explicitTimezone;
+    @Setter
     private WhitespaceFacet whiteSpace;
+    @Setter
     private List<String> pattern;
 
     // Fundamental facets (XSD 1.1 §4.2)
     private OrderedFacetValue ordered;
+    @Setter
     private Boolean bounded;
+    @Setter
     private CardinalityFacetValue cardinality;
     private Boolean numeric;
-
-    public Facets() {
-
-    }
-
-    public Item getMinInclusive() {
-        return this.minInclusive;
-    }
-
-    public void setMinInclusive(Item minInclusive) {
-        this.minInclusive = minInclusive;
-    }
-
-    public Item getMaxInclusive() {
-        return this.maxInclusive;
-    }
-
-    public void setMaxInclusive(Item maxInclusive) {
-        this.maxInclusive = maxInclusive;
-    }
-
-    public Item getMinExclusive() {
-        return this.minExclusive;
-    }
-
-    public void setMinExclusive(Item minExclusive) {
-        this.minExclusive = minExclusive;
-    }
-
-    public Item getMaxExclusive() {
-        return this.maxExclusive;
-    }
-
-    public void setMaxExclusive(Item maxExclusive) {
-        this.maxExclusive = maxExclusive;
-    }
-
-    public Integer getLength() {
-        return this.length;
-    }
-
-    public void setLength(Integer length) {
-        this.length = length;
-    }
-
-    public Integer getMinLength() {
-        return this.minLength;
-    }
-
-    public void setMinLength(Integer minLength) {
-        this.minLength = minLength;
-    }
-
-    public Integer getMaxLength() {
-        return this.maxLength;
-    }
-
-    public void setMaxLength(Integer maxLength) {
-        this.maxLength = maxLength;
-    }
-
-    public Integer getTotalDigits() {
-        return this.totalDigits;
-    }
-
-    public void setTotalDigits(Integer totalDigits) {
-        this.totalDigits = totalDigits;
-    }
-
-    public Integer getFractionDigits() {
-        return this.fractionDigits;
-    }
-
-    public void setFractionDigits(Integer fractionDigits) {
-        this.fractionDigits = fractionDigits;
-    }
-
-    public List<String> getConstraints() {
-        return this.constraints;
-    }
-
-    public void setConstraints(List<String> constraints) {
-        this.constraints = constraints;
-    }
-
-    public List<Item> getEnumeration() {
-        return this.enumeration;
-    }
-
-    public void setEnumeration(List<Item> enumeration) {
-        this.enumeration = enumeration;
-    }
-
-    public TimezoneFacet getExplicitTimezone() {
-        return this.explicitTimezone;
-    }
-
-    public void setExplicitTimezone(TimezoneFacet explicitTimezone) {
-        this.explicitTimezone = explicitTimezone;
-    }
-
-    public WhitespaceFacet getWhiteSpace() {
-        return this.whiteSpace;
-    }
-
-    public void setWhiteSpace(WhitespaceFacet whiteSpace) {
-        this.whiteSpace = whiteSpace;
-    }
-
-    public List<String> getPattern() {
-        return this.pattern;
-    }
-
-    public void setPattern(List<String> pattern) {
-        this.pattern = pattern;
-    }
-
-    public OrderedFacetValue getOrdered() {
-        return this.ordered;
-    }
-
-    public void setOrdered(OrderedFacetValue ordered) {
-        this.ordered = ordered;
-    }
-
-    public Boolean getBounded() {
-        return this.bounded;
-    }
-
-    public void setBounded(Boolean bounded) {
-        this.bounded = bounded;
-    }
-
-    public CardinalityFacetValue getCardinality() {
-        return this.cardinality;
-    }
-
-    public void setCardinality(CardinalityFacetValue cardinality) {
-        this.cardinality = cardinality;
-    }
-
-    public Boolean getNumeric() {
-        return this.numeric;
-    }
-
-    public void setNumeric(Boolean numeric) {
-        this.numeric = numeric;
-    }
 
     /**
      * Creates a Facets with the given pattern regex strings.

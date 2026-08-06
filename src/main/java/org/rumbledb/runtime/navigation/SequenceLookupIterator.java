@@ -26,7 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -38,17 +38,17 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
-
 public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private int position;
+    private final RuntimeIterator iterator;
+    private final int position;
     private final int optimizationThreshold = 10_000_000; // do optimization only if position is above this threshold
 
     public SequenceLookupIterator(
@@ -111,7 +111,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public Item lookupDF(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         df = df.evaluateSQL(
             String.format(
@@ -121,10 +121,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             ),
             df.getItemType()
         );
-        JavaRDD<Item> rdd = dataFrameToRDDOfItems(
-            df,
-            this.getMetadata()
-        );
+        JavaRDD<Item> rdd = df.toRDD(this.getMetadata());
 
         List<Item> results = rdd.take(1);
         if (results.isEmpty()) {
@@ -157,13 +154,14 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE
                 && this.iterator instanceof CommaExpressionIterator childIterator
         ) {
+            List<RuntimeIterator> children = childIterator.getOperands();
             if (
-                childIterator.getChildren().size() == 2
-                    && childIterator.getChildren().get(0) instanceof ComparisonIterator
-                    && childIterator.getChildren().get(1) instanceof BooleanRuntimeIterator
+                children.size() == 2
+                    && children.get(0) instanceof ComparisonIterator
+                    && children.get(1) instanceof BooleanRuntimeIterator
                     && this.position == 1
             ) {
-                NativeClauseContext childContext = childIterator.getChildren()
+                NativeClauseContext childContext = children
                     .get(0)
                     .generateNativeQuery(nativeClauseContext);
                 if (childContext == NativeClauseContext.NoNativeQuery) {

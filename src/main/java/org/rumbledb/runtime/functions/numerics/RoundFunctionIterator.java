@@ -32,12 +32,14 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
 public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public RoundFunctionIterator(
@@ -49,7 +51,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item value = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        Item value = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
         if (value == null) {
             return null;
         }
@@ -72,8 +74,8 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return value;
         }
         int precision;
-        if (this.children.size() > 1) {
-            precision = this.children.get(1)
+        if (this.getChildren().size() > 1) {
+            precision = this.getChild(1)
                 .materializeFirstItemOrNull(dynamicContext)
                 .getIntValue();
         }
@@ -140,7 +142,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext value = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

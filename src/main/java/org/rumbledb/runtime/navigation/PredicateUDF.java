@@ -30,17 +30,19 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.ItemType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PredicateUDF implements UDF1<Row, Boolean> {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator expression;
     private final DynamicContext dynamicContext;
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
-    List<Item> currentItems = new ArrayList<>();
+    final List<Item> currentItems = new ArrayList<>();
 
     public PredicateUDF(
             RuntimeIterator expression,

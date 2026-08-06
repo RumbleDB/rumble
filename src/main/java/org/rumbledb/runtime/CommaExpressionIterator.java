@@ -32,35 +32,26 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.spark.SparkSessionManager;
 
-import sparksoniq.spark.SparkSessionManager;
-
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class CommaExpressionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private Item nextResult;
     private int childIndex;
 
-
     public CommaExpressionIterator(
             List<RuntimeIterator> childIterators,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
         super(childIterators, staticContext);
-        this.isUpdating = isUpdating;
-    }
-
-    public CommaExpressionIterator(
-            List<RuntimeIterator> childIterators,
-            RuntimeStaticContext staticContext
-    ) {
-        this(childIterators, false, staticContext);
     }
 
     @Override
@@ -76,8 +67,8 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     private void startLocal() {
         this.childIndex = 0;
 
-        if (this.children.size() >= 1) {
-            this.currentChild = this.children.get(this.childIndex);
+        if (this.getChildren().size() >= 1) {
+            this.currentChild = this.getChild(this.childIndex);
             this.currentChild.open(this.currentDynamicContextForLocalExecution);
         } else {
             this.currentChild = null;
@@ -104,11 +95,11 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
                 this.nextResult = this.currentChild.next();
             } else {
                 this.currentChild.close();
-                if (++this.childIndex == this.children.size()) {
+                if (++this.childIndex == this.getChildren().size()) {
                     this.currentChild = null;
                     break;
                 }
-                this.currentChild = this.children.get(this.childIndex);
+                this.currentChild = this.getChild(this.childIndex);
                 this.currentChild.open(this.currentDynamicContextForLocalExecution);
             }
         }
@@ -122,28 +113,29 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        startLocal();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.currentChild != null) {
             this.currentChild.close();
         }
     }
 
+    public List<RuntimeIterator> getOperands() {
+        // This method is currently used in SequenceLookupIterator and ObjectConstructorRuntimeIterator
+        // Because getChildren is protected and not visible from there
+        return getChildren();
+    }
+
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        if (!this.children.isEmpty()) {
+        if (!this.getChildren().isEmpty()) {
             this.childIndex = 0;
-            this.currentChild = this.children.get(this.childIndex);
+            this.currentChild = this.getChild(this.childIndex);
 
             JavaRDD<Item> childRDD = this.currentChild.getRDD(dynamicContext);
             this.childIndex++;
 
-            while (this.childIndex < this.children.size()) {
-                this.currentChild = this.children.get(this.childIndex);
+            while (this.childIndex < this.getChildren().size()) {
+                this.currentChild = this.getChild(this.childIndex);
                 JavaRDD<Item> nextChildRDD = this.currentChild.getRDD(dynamicContext);
                 childRDD = childRDD.union(nextChildRDD);
                 this.childIndex++;
@@ -158,7 +150,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         List<NativeClauseContext> childClauses = new ArrayList<>();
-        for (RuntimeIterator iterator : this.children) {
+        for (RuntimeIterator iterator : this.getChildren()) {
             NativeClauseContext childContext = iterator.generateNativeQuery(nativeClauseContext);
             if (childContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
@@ -232,17 +224,14 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
         );
     }
 
-    public List<RuntimeIterator> getChildren() {
-        return this.children;
-    }
-
+    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!isUpdating()) {
             return new PendingUpdateList();
         }
 
         PendingUpdateList pul = new PendingUpdateList();
-        for (RuntimeIterator child : this.children) {
+        for (RuntimeIterator child : this.getChildren()) {
             pul.mergeUpdates(child.getPendingUpdateList(context), this.getMetadata());
         }
         return pul;

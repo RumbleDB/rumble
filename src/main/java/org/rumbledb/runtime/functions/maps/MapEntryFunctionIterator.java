@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.maps;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import org.rumbledb.runtime.RuntimeIterator;
  */
 public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator keyIterator;

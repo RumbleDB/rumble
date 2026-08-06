@@ -1,9 +1,9 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -12,30 +12,20 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+public class DateTimeItem extends AbstractAtomicItem {
 
-public class DateTimeItem implements Item {
-
+    @Serial
     private static final long serialVersionUID = 1L;
     private OffsetDateTime value;
     private boolean hasTimeZone = true;
-    Pattern dateTimePattern = Pattern.compile(
+    private static final Pattern dateTimePattern = Pattern.compile(
         "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    public DateTimeItem() {
-        super();
-    }
-
     DateTimeItem(OffsetDateTime value, boolean hasTimeZone) {
-        super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
     }
@@ -50,7 +40,7 @@ public class DateTimeItem implements Item {
     }
 
     private void getDateTimeFromString(String dateTimeString) {
-        if (!this.dateTimePattern.matcher(dateTimeString).matches()) {
+        if (!dateTimePattern.matcher(dateTimeString).matches()) {
             throw new IllegalArgumentException("Invalid date string: " + dateTimeString);
         }
         int yearIncrement = 0;
@@ -97,20 +87,6 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public String getStringValue() {
         String stringValue = this.value.format(
             this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE_TIME : DateTimeFormatter.ISO_LOCAL_DATE_TIME
@@ -145,26 +121,6 @@ public class DateTimeItem implements Item {
     @Override
     public boolean getEffectiveBooleanValue() {
         return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return this.value.hashCode();
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.value.format(DateTimeFormatter.ISO_INSTANT));
-        output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.value.getOffset().toString());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        String dateTimeString = input.readString();
-        this.hasTimeZone = input.readBoolean();
-        ZoneId zone = ZoneId.of(input.readString());
-        this.value = OffsetDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
     }
 
     @Override

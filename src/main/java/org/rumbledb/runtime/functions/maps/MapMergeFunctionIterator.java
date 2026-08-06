@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.maps;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +14,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.MapSameKeyWrapper;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -48,6 +48,7 @@ import org.rumbledb.runtime.RuntimeIterator;
  */
 public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static class AccumulatedEntry {
@@ -143,7 +144,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
         // 3. Implement fold-left over maps with a hashed same-key accumulator.
         // Streaming consumption avoids materializing huge sequences of maps.
-        Map<MapSameKeyWrapper, AccumulatedEntry> accumulator = new HashMap<>();
+        Map<Item, AccumulatedEntry> accumulator = new HashMap<>();
         boolean sawAnyMap = false;
         boolean allKeysString = true;
         boolean allValuesSingletons = true;
@@ -165,10 +166,9 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                         bSeq = new ArrayList<>();
                     }
 
-                    MapSameKeyWrapper lookup = new MapSameKeyWrapper(bKey);
-                    AccumulatedEntry existing = accumulator.get(lookup);
+                    AccumulatedEntry existing = accumulator.get(bKey);
                     if (existing == null) {
-                        accumulator.put(lookup, new AccumulatedEntry(bKey, new ArrayList<>(bSeq)));
+                        accumulator.put(bKey, new AccumulatedEntry(bKey, new ArrayList<>(bSeq)));
                         if (allKeysString && !bKey.isString()) {
                             allKeysString = false;
                         }

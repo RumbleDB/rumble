@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.postfix;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Getter
 public class DynamicFunctionCallExpression extends Expression {
 
     private Expression mainExpression;
@@ -50,10 +52,6 @@ public class DynamicFunctionCallExpression extends Expression {
         }
     }
 
-    public List<Expression> getArguments() {
-        return this.arguments;
-    }
-
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
@@ -72,10 +70,7 @@ public class DynamicFunctionCallExpression extends Expression {
         return visitor.visitDynamicFunctionCallExpression(this, argument);
     }
 
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
-
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

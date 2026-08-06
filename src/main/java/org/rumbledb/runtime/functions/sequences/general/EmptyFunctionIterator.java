@@ -30,11 +30,13 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.List;
 
 public class EmptyFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public EmptyFunctionIterator(
@@ -46,11 +48,11 @@ public class EmptyFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        if (this.children.get(0).isRDDOrDataFrame()) {
-            List<Item> i = this.children.get(0).getRDD(dynamicContext).take(1);
+        if (this.getChild(0).isRDDOrDataFrame()) {
+            List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
             return ItemFactory.getInstance().createBooleanItem(i.isEmpty());
         }
-        Item first = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        Item first = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
         if (first == null) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
@@ -59,7 +61,7 @@ public class EmptyFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
