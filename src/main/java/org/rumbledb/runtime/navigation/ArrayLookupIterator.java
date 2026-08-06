@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.navigation;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Dataset;
@@ -49,6 +49,8 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.Map;
 
+
+@Log4j2
 public class ArrayLookupIterator extends HybridRuntimeIterator {
 
 
@@ -217,10 +219,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                             getMetadata()
                     );
                 }
-                LogManager.getLogger("ArrayLookupIterator")
-                    .warn(
-                        "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
-                    );
+                log.warn(
+                    "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
+                );
                 return NativeClauseContext.NoNativeQuery;
             }
 
@@ -235,10 +236,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                             getMetadata()
                     );
                 }
-                LogManager.getLogger("ArrayLookupIterator")
-                    .warn(
-                        "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
-                    );
+                log.warn(
+                    "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
+                );
                 return NativeClauseContext.NoNativeQuery;
             }
             newContext.setResultingType(
@@ -399,10 +399,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        LogManager.getLogger("ArrayLookupIterator")
-            .warn(
-                "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
-            );
+        log.warn(
+            "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
+        );
         return HomogeneousItemDataFrame.emptyDataFrame();
     }
 }

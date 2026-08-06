@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.typing;
 
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -15,6 +17,7 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.List;
 
+@Log4j2
 public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -39,7 +42,7 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
                     getMetadata()
             );
         }
-        System.err.println("Item is of type function");
+        log.debug("Item is of type function");
         Item functionItem = functionIterator.materializeFirstItemOrNull(context);
         if (!(functionItem instanceof FunctionItem function)) {
             throw new OurBadException("Expected argument to be of type function and not be null");

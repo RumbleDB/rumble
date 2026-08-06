@@ -1,7 +1,7 @@
 package iq;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.SparkConf;
 import org.junit.jupiter.api.Assertions;
 import org.rumbledb.api.Item;
@@ -24,6 +24,8 @@ import java.net.URI;
 import java.util.*;
 import java.util.function.Consumer;
 
+
+@Log4j2
 public class UpdatesForRumbleBenchmark {
 
     private static final String APP_NAME = "Rumble application";
@@ -340,15 +342,14 @@ public class UpdatesForRumbleBenchmark {
 
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
-        System.err.println("Java version: " + javaVersion);
-        System.err.println("Scala version: " + scalaVersion);
+        log.info("Java version: {}", javaVersion);
+        log.info("Scala version: {}", scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         if (sparkConfiguration.get("spark.app.name", "<none>").equals("<none")) {
-            LogManager.getLogger("SparkSessionManager")
-                .warn(
-                    "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
-                        + APP_NAME
-                );
+            log.warn(
+                "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                    + APP_NAME
+            );
             sparkConfiguration.setAppName(APP_NAME);
         }
         sparkConfiguration.set("spark.master", "local[*]");
@@ -372,7 +373,7 @@ public class UpdatesForRumbleBenchmark {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
+        log.info("Spark version: {}", SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     public List<Item> benchmarkDeltaTest(Rumble rumble, URI uri) throws IOException {
@@ -567,9 +568,9 @@ public class UpdatesForRumbleBenchmark {
         try {
             File oldTable = new File(tableURI.getPath());
             FileUtils.deleteDirectory(oldTable);
-            System.err.println("Deleted file: " + oldTable.getAbsolutePath());
+            log.info("Deleted file: {}", oldTable.getAbsolutePath());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Could not delete old table.", e);
             Assertions.fail();
         }
     }
@@ -619,9 +620,9 @@ public class UpdatesForRumbleBenchmark {
             }
         }
 
-        System.out.println("##########################################");
-        System.out.println("DONE");
-        System.out.println("##########################################");
+        log.info("##########################################");
+        log.info("DONE");
+        log.info("##########################################");
 
     }
 

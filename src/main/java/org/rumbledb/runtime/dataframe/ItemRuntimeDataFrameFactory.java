@@ -7,6 +7,8 @@
 
 package org.rumbledb.runtime.dataframe;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.io.Serial;
 import java.util.List;
 
@@ -22,6 +24,7 @@ import org.rumbledb.types.ItemType;
 /**
  * Encodes item RDDs as {@link HomogeneousItemDataFrame}s.
  */
+@Log4j2
 public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactory<Item> {
 
     @Serial
@@ -46,7 +49,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
                 TypeInferrenceUtils.TypeMergeMode.LAX
             );
             if (staticContext.getConfiguration().analysis().printInferredTypes()) {
-                System.err.println("Inferred DataFrame type:\n" + itemType);
+                log.debug("Inferred DataFrame type:\n" + itemType);
             }
         }
         return ValidateTypeIterator.convertLocalItemsToDataFrame(items, itemType, context, true, staticContext);
