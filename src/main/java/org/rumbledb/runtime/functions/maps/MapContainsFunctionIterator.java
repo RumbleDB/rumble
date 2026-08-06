@@ -24,6 +24,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -31,6 +32,7 @@ import java.util.List;
  */
 public class MapContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public MapContainsFunctionIterator(
@@ -42,8 +44,8 @@ public class MapContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item map = this.children.get(0).materializeFirstItemOrNull(context);
-        Item key = this.children.get(1).materializeFirstItemOrNull(context);
+        Item map = this.getChild(0).materializeFirstItemOrNull(context);
+        Item key = this.getChild(1).materializeFirstItemOrNull(context);
         boolean contains = map.getSequenceByKey(key) != null;
         return ItemFactory.getInstance().createBooleanItem(contains);
     }

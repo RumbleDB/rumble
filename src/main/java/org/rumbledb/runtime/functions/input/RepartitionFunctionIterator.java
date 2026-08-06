@@ -24,18 +24,20 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
+import java.io.Serial;
 import java.util.List;
 
 public class RepartitionFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private int numberPartitions;
 
     public RepartitionFunctionIterator(
@@ -62,11 +64,6 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
@@ -74,7 +71,7 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
-        this.numberPartitions = this.children.get(1).materializeFirstItemOrNull(dynamicContext).getIntValue();
+        this.numberPartitions = this.getChild(1).materializeFirstItemOrNull(dynamicContext).getIntValue();
         JavaRDD<Item> resultRDD = childRDD.repartition(this.numberPartitions);
         return resultRDD;
     }
@@ -90,10 +87,10 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
-        this.numberPartitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
-        JSoundDataFrame result = childDataFrame.repartition(this.numberPartitions);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        this.numberPartitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
+        HomogeneousItemDataFrame result = childDataFrame.repartition(this.numberPartitions);
         return result;
     }
 }

@@ -27,13 +27,16 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+
+import java.io.Serial;
 import java.math.BigDecimal;
 
 public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public DecimalRuntimeIterator(BigDecimal value, RuntimeStaticContext staticContext) {
         super(null, staticContext);

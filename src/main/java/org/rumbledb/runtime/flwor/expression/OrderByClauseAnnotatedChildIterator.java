@@ -20,13 +20,17 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
+import lombok.Getter;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.io.Serializable;
 
+@Getter
 public class OrderByClauseAnnotatedChildIterator implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private final boolean ascending;
@@ -44,22 +48,6 @@ public class OrderByClauseAnnotatedChildIterator implements Serializable {
         this.ascending = ascending;
         this.uri = uri;
         this.emptyOrder = empty_order;
-    }
-
-    public RuntimeIterator getIterator() {
-        return this.iterator;
-    }
-
-    public boolean isAscending() {
-        return this.ascending;
-    }
-
-    public String getUri() {
-        return this.uri;
-    }
-
-    public OrderByClauseSortingKey.EMPTY_ORDER getEmptyOrder() {
-        return this.emptyOrder;
     }
 
 }

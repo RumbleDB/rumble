@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -29,9 +30,10 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class SimpleMapExpression extends Expression {
-    private Expression leftExpression;
-    private Expression rightExpression;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
 
     public SimpleMapExpression(
             Expression leftExpression,
@@ -53,14 +55,7 @@ public class SimpleMapExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
-    public Expression getLeftExpression() {
-        return this.leftExpression;
-    }
-
-    public Expression getRightExpression() {
-        return this.rightExpression;
-    }
-
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

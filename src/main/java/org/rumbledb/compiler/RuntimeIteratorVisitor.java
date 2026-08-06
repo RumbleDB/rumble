@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -66,6 +66,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -142,6 +143,7 @@ import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
@@ -172,6 +174,7 @@ import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.ReturnClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.WhereClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.WindowClauseIterator;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
@@ -248,7 +251,9 @@ import org.rumbledb.runtime.xml.ComputedNamespaceConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DocumentNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirectCommentConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.PathRootRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
@@ -262,10 +267,10 @@ import org.rumbledb.types.SequenceType;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
-    private VisitorConfig visitorConfig;
-    private RumbleRuntimeConfiguration config;
+    private final VisitorConfig visitorConfig;
+    private final RumbleConfiguration config;
 
-    public RuntimeIteratorVisitor(RumbleRuntimeConfiguration config) {
+    public RuntimeIteratorVisitor(RumbleConfiguration config) {
         this.visitorConfig = VisitorConfig.runtimeIteratorVisitorConfig;
         this.config = config;
     }
@@ -300,10 +305,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else {
             RuntimeIterator runtimeIterator = new CommaExpressionIterator(
                     result,
-                    expression.isUpdating(),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-            runtimeIterator.setStaticContext(expression.getStaticContext());
             return runtimeIterator;
         }
     }
@@ -329,16 +332,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     returnClause.getReturnExpr(),
                     argument
                 ),
-                expression.isUpdating(),
-                new RuntimeStaticContext(
-                        this.config,
-                        expression.getStaticSequenceType(),
-                        returnClause.getHighestExecutionMode(this.visitorConfig),
-                        returnClause.getMetadata(),
-                        expression.getStaticContext()
-                )
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    .toBuilder()
+                    .executionMode(returnClause.getHighestExecutionMode(this.visitorConfig))
+                    .metadata(returnClause.getMetadata())
+                    .build()
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
 
@@ -369,6 +368,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     assignmentIterator,
                     letClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
+        } else if (clause instanceof WindowClause windowClause) {
+            RuntimeIterator sourceIterator = this.visit(windowClause.getExpression(), argument);
+            RuntimeIterator startIterator = this.visit(windowClause.getStartCondition().expression(), argument);
+            RuntimeIterator endIterator = windowClause.getEndCondition() == null
+                ? null
+                : this.visit(windowClause.getEndCondition().expression(), argument);
+            return new WindowClauseIterator(
+                    previousIterator,
+                    windowClause,
+                    sourceIterator,
+                    startIterator,
+                    endIterator,
+                    windowClause.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
         } else if (clause instanceof GroupByClause groupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
             for (GroupByVariableDeclaration var : groupByClause.getGroupVariables()) {
@@ -384,7 +397,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpressionIterator,
                             variableName,
-                            clause.getMetadata()
+                            var.getCollationURI(),
+                            var.getActualSequenceType()
                     )
                 );
             }
@@ -441,7 +455,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getVariableName(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
     // endregion
@@ -459,7 +472,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 lookupIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -477,7 +489,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 nameIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -495,7 +506,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 replacerIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -515,7 +525,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 positionIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -531,7 +540,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 toAppendIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -555,7 +563,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getMutabilityLevel(),
                 expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -575,7 +582,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 mode,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -607,7 +613,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -622,7 +627,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -639,7 +644,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -676,7 +681,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -695,7 +700,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 isBefore,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -711,7 +716,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 mode,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -788,7 +793,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 filterIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -802,7 +807,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 n,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        iterator.setStaticContext(expression.getStaticContext());
+
         return iterator;
     }
 
@@ -815,7 +820,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 lookupIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -828,7 +833,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 lookupIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -846,7 +851,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 lookupIterator,
                 staticContextForRuntime
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
 
@@ -862,7 +866,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 lookupIterator,
                 staticContextForRuntime
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -885,7 +889,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 arguments,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -896,7 +900,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 mainIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -927,7 +931,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
         }
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -943,7 +947,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
-            runtimeIterator.setStaticContext(expression.getStaticContext());
+
             return runtimeIterator;
         } else {
             List<RuntimeIterator> keys = expression.getKeys()
@@ -960,7 +964,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
-            runtimeIterator.setStaticContext(expression.getStaticContext());
+
             return runtimeIterator;
         }
     }
@@ -997,7 +1001,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
-            runtimeIterator.setStaticContext(expression.getStaticContext());
+
             return runtimeIterator;
         }
         RuntimeIterator runtimeIterator = new MapConstructorRuntimeIterator(
@@ -1006,7 +1010,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                 expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1025,7 +1029,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getNamespaceDeclarations(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1046,7 +1050,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1079,7 +1083,23 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitDocumentNodeConstructor(
+            DocumentNodeConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = expression.getContentExpression() != null
+            ? this.visit(expression.getContentExpression(), argument)
+            : null;
+        RuntimeIterator runtimeIterator = new DocumentNodeConstructorRuntimeIterator(
+                contentIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+
         return runtimeIterator;
     }
 
@@ -1116,7 +1136,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1150,7 +1170,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1187,7 +1207,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1204,7 +1224,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 ),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        result.setStaticContext(expression.getStaticContext());
+
         return result;
     }
 
@@ -1217,7 +1237,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getContent(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        result.setStaticContext(expression.getStaticContext());
+
         return result;
     }
 
@@ -1235,7 +1255,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 ),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        result.setStaticContext(expression.getStaticContext());
+
         return result;
     }
 
@@ -1245,7 +1265,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getContent(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1266,7 +1286,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 atomizedValues,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1279,7 +1299,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getContent(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1288,7 +1308,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new ContextExpressionIterator(
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1305,10 +1325,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 paramNameToSequenceTypes,
                 returnType,
                 bodyIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                expression.isUpdating()
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1344,11 +1363,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     identifier,
                     arguments,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                    expression.isUpdating(),
                     expression.isTailCallOptimization()
             );
         }
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1361,7 +1379,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getIdentifier(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
     // endregion
@@ -1373,7 +1391,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getLexicalValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1383,7 +1401,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1393,7 +1411,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1403,7 +1421,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1412,7 +1430,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new NullRuntimeIterator(
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1422,7 +1440,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getValue(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
     // endregion
@@ -1440,6 +1458,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             rightExpression,
             argument
         );
+        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            left = new DataFunctionIterator(
+                    Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
 
         RuntimeIterator runtimeIterator = new AdditiveOperationIterator(
                 left,
@@ -1447,7 +1477,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.isMinus(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1463,6 +1493,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             rightExpression,
             argument
         );
+        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            left = new DataFunctionIterator(
+                    Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
 
         RuntimeIterator runtimeIterator = new MultiplicativeOperationIterator(
                 left,
@@ -1470,7 +1512,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getMultiplicativeOperator(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1492,7 +1534,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1514,7 +1556,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1536,7 +1578,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1546,7 +1588,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(expression.getMainExpression(), argument),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1558,7 +1600,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.isNegated(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1571,7 +1613,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1585,18 +1627,28 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getOperator(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
     @Override
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
-        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
-        if (left instanceof StepExprIterator) {
-            // We potentially need to atomize
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+
+        RuntimeIterator left = this.visit(leftExpression, argument);
+        RuntimeIterator right = this.visit(rightExpression, argument);
+        if (!(leftExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
+            // Atomic comparison operators require atomized operands. If the operands are not atomic, we need to wrap
+            // them in a DataFunctionIterator to atomize them.
             left = new DataFunctionIterator(
                     Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!(rightExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
@@ -1606,7 +1658,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getComparisonOperator(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1620,7 +1672,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getOperator(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1633,7 +1685,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 right,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1645,7 +1697,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getSequenceType(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1658,14 +1710,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.isValidate(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         RuntimeIterator resultIterator = new TreatIterator(
                 runtimeIterator,
                 new SequenceType(BuiltinTypesCatalogue.item, expression.getSequenceType().getArity()),
                 ErrorCode.InvalidInstance,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        resultIterator.setStaticContext(expression.getStaticContext());
+
         return resultIterator;
     }
 
@@ -1675,11 +1727,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new TreatIterator(
                 childExpression,
                 expression.getSequenceType(),
-                expression.isUpdating(),
                 expression.errorCodeThatShouldBeThrown(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1691,7 +1742,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getSequenceType(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1703,7 +1754,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getSequenceType(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
     // endregion
@@ -1731,11 +1782,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     conditionIterator,
                     thenIterator,
                     elseIterator,
-                    expression.isUpdating(),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1755,7 +1805,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(expression.getDefaultExpression(), argument),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
     // endregion
@@ -1782,10 +1832,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 defaultCase,
-                expression.isUpdating(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1812,7 +1861,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new WhileStatementIterator(
                 testConditionIterator,
                 statementIterator,
-                statement.isSequential(),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
@@ -1851,7 +1899,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new AssignStatementIterator(
                 this.visit(statement.getAssignExpression(), argument),
                 statement.getName(),
-                statement.isSequential(),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
@@ -1860,7 +1907,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitApplyStatement(ApplyStatement statement, RuntimeIterator argument) {
         return new ApplyStatementIterator(
                 this.visit(statement.getApplyExpression(), argument),
-                statement.isSequential(),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
@@ -1879,8 +1925,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitExitStatement(ExitStatement statement, RuntimeIterator argument) {
         return new ExitStatementIterator(
                 this.visit(statement.getExitExpression(), argument),
-                true,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    .toBuilder()
+                    .isSequential(true)
+                    .build()
         );
     }
 
@@ -1931,7 +1979,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(statement.getDefaultStatement(), argument),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(statement.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -1959,7 +2007,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 defaultCase,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(statement.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -2041,7 +2089,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
-        runtimeIterator.setStaticContext(statement.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -2058,15 +2106,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     returnClause.getReturnStatement(),
                     argument
                 ),
-                new RuntimeStaticContext(
-                        this.config,
-                        statement.getStaticSequenceType(),
-                        returnClause.getHighestExecutionMode(this.visitorConfig),
-                        returnClause.getMetadata(),
-                        statement.getStaticContext()
-                )
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(statement.getStaticContext());
+
         return runtimeIterator;
     }
 
@@ -2078,6 +2120,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             leftExpression,
             argument
         );
+        if (!isStaticallyGuaranteedNodeSequence(leftExpression)) {
+            left = new TreatIterator(
+                    left,
+                    new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore),
+                    ErrorCode.UnexpectedNode,
+                    slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
         RuntimeIterator right = this.visit(
             rightExpression,
             argument
@@ -2088,8 +2138,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 right,
                 slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-        runtimeIterator.setStaticContext(slashExpr.getStaticContext());
+
         return runtimeIterator;
+    }
+
+    private boolean isStaticallyGuaranteedNodeSequence(Expression expression) {
+        SequenceType staticType = expression.getStaticSequenceType();
+        return staticType != null
+            && staticType.isSubtypeOf(new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore));
     }
 
     @Override
@@ -2099,26 +2155,34 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new StepExprIterator(
                 axisIterator,
                 nodeTest,
-                new RuntimeStaticContext(
-                        this.config,
-                        SequenceType.createSequenceType("item"),
-                        stepExpr.getHighestExecutionMode(this.visitorConfig),
-                        stepExpr.getMetadata(),
-                        stepExpr.getStaticContext()
-                )
+                stepExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    .toBuilder()
+                    .staticType(SequenceType.createSequenceType("item"))
+                    .build()
         );
+    }
+
+    @Override
+    public RuntimeIterator visitPathRootExpr(
+            org.rumbledb.expressions.xml.PathRootExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator runtimeIterator = new PathRootRuntimeIterator(
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+
+        return runtimeIterator;
     }
 
     private AxisIterator visitAxisStep(StepExpr stepExpr, ExceptionMetadata metadata) {
         return stepExpr.accept(
             new AxisIteratorVisitor(),
-            new RuntimeStaticContext(
-                    this.config,
-                    SequenceType.createSequenceType("string"),
-                    ExecutionMode.LOCAL,
-                    metadata,
-                    stepExpr.getStaticContext()
-            )
+            stepExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+                .toBuilder()
+                .staticType(SequenceType.createSequenceType("string"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(metadata)
+                .build()
         );
     }
 

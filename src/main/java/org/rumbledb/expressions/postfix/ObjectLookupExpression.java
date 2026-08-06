@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.postfix;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -30,6 +31,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class ObjectLookupExpression extends Expression {
 
     private Expression mainExpression;
@@ -61,16 +63,9 @@ public class ObjectLookupExpression extends Expression {
         sb.append("\n");
     }
 
-    public Expression getLookupExpression() {
-        return this.lookupExpression;
-    }
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitObjectLookupExpression(this, argument);
     }
 
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
 }

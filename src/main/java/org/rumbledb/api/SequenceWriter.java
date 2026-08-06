@@ -11,7 +11,7 @@ import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -39,8 +39,8 @@ import org.rumbledb.serialization.Serializers;
  * and saved as text files.</li>
  * </ul>
  *
- * The serialization method (json, tyson, xml-json-hybrid, yaml, delta, ...) is always taken from
- * {@link SerializationParameters#getMethod()}, which is the single source of truth for the output
+ * The serialization method (json, tyson, adaptive, xml-json-hybrid, yaml, delta, ...) is always taken from
+ * {@code SerializationParameters#getMethod()}, which is the single source of truth for the output
  * format.
  */
 public class SequenceWriter {
@@ -48,7 +48,7 @@ public class SequenceWriter {
     private static final int SINGLE_PARTITION_CAP = 1000000000;
 
     private final SequenceOfItems sequence;
-    private final RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
     private final DataFrameWriter<Row> dataFrameWriter;
     private SaveMode mode;
     private final SerializationParameters serializationParameters;
@@ -70,7 +70,7 @@ public class SequenceWriter {
             DataFrameWriter<Row> dataFrameWriter,
             SaveMode mode,
             SerializationParameters serializationParameters,
-            RumbleRuntimeConfiguration configuration
+            RumbleConfiguration configuration
     ) {
         this.sequence = sequence;
         this.configuration = configuration;
@@ -98,7 +98,7 @@ public class SequenceWriter {
      * TODO: update comment here
      * It determines the initial mode:
      * <ul>
-     * <li>If the method is {@code xml-json-hybrid} or {@code tyson}, or if obtaining a DataFrame
+     * <li>If the method is {@code adaptive}, {@code xml-json-hybrid}, or {@code tyson}, or if obtaining a DataFrame
      * fails, the writer is created in RDD mode.</li>
      * <li>Otherwise, the writer is created in DataFrame mode based on the DataFrame returned by
      * {@link SequenceOfItems#getAsDataFrame()}.</li>
@@ -113,12 +113,17 @@ public class SequenceWriter {
         this.serializationParameters = SerializationParameters.copy(params);
         DataFrameWriter<Row> w = null;
         String method = this.serializationParameters.getMethod();
-        if (method != null && (method.equals("xml-json-hybrid") || method.equals("tyson"))) {
+        if (
+            method != null
+                && (method.equals("adaptive")
+                    || method.equals("xml-json-hybrid")
+                    || method.equals("tyson"))
+        ) {
             this.mode = SaveMode.ErrorIfExists; // Default save mode
         } else {
             try {
                 Dataset<Row> dataFrame = sequence.getAsDataFrame();
-                int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
+                int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
                 if (requestedPartitions > 0) {
                     dataFrame = dataFrame.repartition(requestedPartitions);
                 }
@@ -161,7 +166,7 @@ public class SequenceWriter {
         SerializationParameters params = SerializationParameters.copy(this.serializationParameters);
         params.setMethod(source);
         if (this.dataFrameWriter != null) {
-            if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
+            if (!source.equals("adaptive") && !source.equals("xml-json-hybrid") && !source.equals("tyson")) {
                 return createNewInstance(
                     this.dataFrameWriter.format(source),
                     null,
@@ -172,10 +177,10 @@ public class SequenceWriter {
                 return createNewInstance(null, newMode, params);
             }
         }
-        if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
+        if (!source.equals("adaptive") && !source.equals("xml-json-hybrid") && !source.equals("tyson")) {
             try {
                 Dataset<Row> dataFrame = this.sequence.getAsDataFrame();
-                int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
+                int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
                 if (requestedPartitions > 0) {
                     dataFrame = dataFrame.repartition(requestedPartitions);
                 }
@@ -276,7 +281,6 @@ public class SequenceWriter {
         URI outputUri = null;
         outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             path,
-            this.configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
         String method = this.serializationParameters.getMethod();
@@ -304,19 +308,20 @@ public class SequenceWriter {
         // RDD mode: serialize each item via Serializer and save as text.
         if (
             !(method.equals("json")
+                || method.equals("adaptive")
                 || method.equals("tyson")
                 || method.equals("xml-json-hybrid")
                 || method.equals("yaml")
                 || method.equals("delta"))
         ) {
             throw new CliException(
-                    "Rumble cannot output another format than json or tyson or xml-json-hybrid or yaml if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
+                    "Rumble cannot output another format than json or adaptive or tyson or xml-json-hybrid or yaml if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
             );
         }
-        if (FileSystemUtil.exists(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
+        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
             switch (this.mode) {
                 case Overwrite:
-                    FileSystemUtil.delete(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+                    FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
                     break;
                 case Ignore:
                     return;
@@ -335,10 +340,10 @@ public class SequenceWriter {
         JavaRDD<Item> rdd = this.sequence.getAsRDD();
         Serializer serializer = getSerializer();
         JavaRDD<String> outputRDD = rdd.map(o -> serializer.serialize(o));
-        int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
+        int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
         if (requestedPartitions == 1) {
             List<String> lines = outputRDD.take(SINGLE_PARTITION_CAP);
-            FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+            FileSystemUtil.write(outputUri, lines, ExceptionMetadata.EMPTY_METADATA);
             return;
         }
         if (requestedPartitions > 0) {

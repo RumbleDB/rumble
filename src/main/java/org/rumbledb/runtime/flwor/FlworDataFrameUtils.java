@@ -50,7 +50,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -78,13 +78,14 @@ import org.rumbledb.items.QNameItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.TextItem;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -94,16 +95,15 @@ import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.immutable.ArraySeq;
 import scala.collection.Iterator;
-import sparksoniq.spark.SparkSessionManager;
 
 public class FlworDataFrameUtils {
 
     // we use UUID to escape backtick within DataFrame columns
-    public static String backtickEscape = "d32a3242-b15d-46b8-b689-d2288f7f492f";
+    public static final String backtickEscape = "d32a3242-b15d-46b8-b689-d2288f7f492f";
 
-    private static ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
+    private static final ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
 
-    private static ThreadLocal<List<Item>> lastObjectItemCache = ThreadLocal.withInitial(() -> null);
+    private static final ThreadLocal<List<Item>> lastObjectItemCache = ThreadLocal.withInitial(() -> null);
 
     public static void registerKryoClassesKryo(Kryo kryo) {
         kryo.register(Item.class);
@@ -141,7 +141,7 @@ public class FlworDataFrameUtils {
 
         kryo.register(ArrayList.class);
 
-        kryo.register(RumbleRuntimeConfiguration.class);
+        kryo.register(RumbleConfiguration.class);
 
         kryo.register(DocumentItem.class);
         kryo.register(ElementItem.class);
@@ -867,14 +867,14 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * Zips a JSoundDataFrame to a special column.
+     * Zips an item runtime DataFrame to a special column.
      *
-     * @param jdf - the JSoundDataframe to perform the operation on
+     * @param dataFrame the runtime DataFrame to perform the operation on
      * @param offset - starting offset for the first index
-     * @return returns JSoundDataFrame with the added column containing indices (with some specific UUID)
+     * @return the underlying DataFrame with the added column containing indices (with some specific UUID)
      */
-    public static Dataset<Row> zipWithIndex(JSoundDataFrame jdf, Long offset) {
-        return zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName);
+    public static Dataset<Row> zipWithIndex(RuntimeDataFrame<Item> dataFrame, Long offset) {
+        return zipWithIndex(dataFrame.getDataFrame(), offset, SparkSessionManager.countColumnName);
     }
 
     /**

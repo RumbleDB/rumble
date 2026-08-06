@@ -26,20 +26,21 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
+import java.io.Serial;
 import java.util.List;
 
 public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator searchIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator searchIterator;
     private Item search;
     private Item nextResult;
     private int currentIndex;
@@ -49,13 +50,13 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.sequenceIterator = this.children.get(0);
-        this.searchIterator = this.children.get(1);
+        this.sequenceIterator = this.getChild(0);
+        this.searchIterator = this.getChild(1);
     }
 
     private void checkCollation(DynamicContext context) {
-        if (this.children.size() == 3) {
-            String collation = this.children.get(2)
+        if (this.getChildren().size() == 3) {
+            String collation = this.getChild(2)
                 .materializeFirstItemOrNull(context)
                 .getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
@@ -90,14 +91,6 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.currentIndex = 0;
-        checkCollation(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }
@@ -124,14 +117,11 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             } else {
-                long c = ComparisonIterator.compareItems(
-                    item,
-                    this.search,
-                    ComparisonOperator.VC_EQ,
-                    ExceptionMetadata.EMPTY_METADATA
-                );
-                // if its double or float we additionally check that its not NanN, NaN cannot be found with indexOf
-                if (c == 0 && ((!this.search.isDouble() && !this.search.isFloat()) || !this.search.isNaN())) {
+                // index-of uses eq semantics, except that untyped atomic values are compared as strings
+                // and non-comparable values simply do not match. Atomic deep equality provides exactly
+                // those rules, with the exception of NaN, which eq never considers equal.
+                boolean searchIsNaN = (this.search.isDouble() || this.search.isFloat()) && this.search.isNaN();
+                if (!searchIsNaN && AtomicDeepEqual.deepEqual(item, this.search)) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
                     break;
                 }

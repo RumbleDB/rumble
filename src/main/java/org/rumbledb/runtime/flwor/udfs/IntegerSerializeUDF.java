@@ -25,16 +25,18 @@ import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class IntegerSerializeUDF implements UDF1<Integer, byte[]> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<Item> nextResult;
+    private final List<Item> nextResult;
 
-    private DataFrameContext dataFrameContext;
+    private final DataFrameContext dataFrameContext;
 
     public IntegerSerializeUDF() {
         this.dataFrameContext = new DataFrameContext();

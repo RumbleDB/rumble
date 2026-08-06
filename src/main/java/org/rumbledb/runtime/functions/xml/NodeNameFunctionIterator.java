@@ -29,6 +29,7 @@ import org.rumbledb.items.StringItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -56,6 +57,7 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-name">XPath Functions 3.1: fn:name</a>
  */
 public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public NodeNameFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
@@ -110,13 +112,13 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
      * If a parameter is provided, uses the first parameter.
      */
     private Item getContextNode() {
-        if (this.children.isEmpty()) {
+        if (this.getChildren().isEmpty()) {
             // No argument provided, use context item
             return this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
         }
         // Argument provided, use first parameter
-        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }

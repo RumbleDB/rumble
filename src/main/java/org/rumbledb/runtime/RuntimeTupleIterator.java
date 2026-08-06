@@ -20,12 +20,9 @@
 
 package org.rumbledb.runtime;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import lombok.Getter;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -38,24 +35,34 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
-import sparksoniq.jsoniq.tuple.FlworTuple;
-
+import java.io.Serial;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
+public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+
+    @Getter
     private final RuntimeStaticContext staticContext;
-    protected RuntimeTupleIterator child;
+    protected final RuntimeTupleIterator child;
+
+    /**
+     * Limit on how deep the evaluation occurs.
+     * If it is 0, the clause ignores its child (this is for join purposes).
+     */
+    @Getter
     protected int evaluationDepthLimit;
 
     protected transient DynamicContext currentDynamicContext;
     protected transient boolean hasNext;
+    @Getter
     protected transient boolean isOpen;
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
@@ -74,6 +81,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return this.child;
     }
 
+    @Override
     public void open(DynamicContext context) {
         if (this.isOpen) {
             throw new IteratorFlowException(
@@ -86,41 +94,19 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this.currentDynamicContext = context;
     }
 
+    @Override
     public void close() {
         this.isOpen = false;
         this.child.close();
     }
 
-    public void reset(DynamicContext context) {
-        this.hasNext = true;
-        this.currentDynamicContext = context;
-        this.child.reset(context);
-    }
 
     @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeBoolean(this.hasNext);
-        output.writeBoolean(this.isOpen);
-        kryo.writeObject(output, this.currentDynamicContext);
-        kryo.writeObject(output, this.child);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.hasNext = input.readBoolean();
-        this.isOpen = input.readBoolean();
-        this.currentDynamicContext = kryo.readObject(input, DynamicContext.class);
-        this.child = kryo.readObject(input, RuntimeTupleIterator.class);
-    }
-
-    public boolean isOpen() {
-        return this.isOpen;
-    }
-
     public boolean hasNext() {
         return this.hasNext;
     }
 
+    @Override
     public abstract FlworTuple next();
 
     public ExceptionMetadata getMetadata() {
@@ -131,7 +117,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return this.staticContext.getExecutionMode();
     }
 
-    public RumbleRuntimeConfiguration getConfiguration() {
+    public RumbleConfiguration getConfiguration() {
         return this.staticContext.getConfiguration();
     }
 
@@ -219,16 +205,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      */
     public Set<Name> getOutputTupleVariableNames() {
         return new HashSet<Name>();
-    }
-
-    /**
-     * Returns the limit on how deep the evaluation occurs.
-     * If it is 0, the clause ignores its child (this is for join purposes).
-     * 
-     * @return The evaluation depth limit. -1 if none.
-     */
-    public int getEvaluationDepthLimit() {
-        return this.evaluationDepthLimit;
     }
 
     /**
@@ -411,12 +387,4 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return NativeClauseContext.NoNativeQuery;
     }
 
-    /**
-     * Returns the runtime static context of the clause.
-     * 
-     * @return the static context of the clause.
-     */
-    public RuntimeStaticContext getStaticContext() {
-        return this.staticContext;
-    }
 }

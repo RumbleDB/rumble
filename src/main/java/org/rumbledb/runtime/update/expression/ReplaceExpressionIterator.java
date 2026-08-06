@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,10 +26,11 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 public class ReplaceExpressionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator mainIterator;
-    private RuntimeIterator locatorIterator;
-    private RuntimeIterator replacerIterator;
+    private final RuntimeIterator mainIterator;
+    private final RuntimeIterator locatorIterator;
+    private final RuntimeIterator replacerIterator;
 
     public ReplaceExpressionIterator(
             RuntimeIterator mainIterator,
@@ -36,12 +38,14 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator replacerIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(mainIterator, locatorIterator, replacerIterator), staticContext);
+        super(
+            Arrays.asList(mainIterator, locatorIterator, replacerIterator),
+            staticContext.toBuilder().isUpdating(true).build()
+        );
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.replacerIterator = replacerIterator;
-        this.isUpdating = true;
     }
 
     @Override
@@ -56,11 +60,6 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-
-    }
-
-    @Override
-    protected void resetLocal() {
 
     }
 

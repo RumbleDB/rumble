@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
+import java.io.Serial;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 public class FormatDateFunctionIterator extends DateFormattingFunctionIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public FormatDateFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {

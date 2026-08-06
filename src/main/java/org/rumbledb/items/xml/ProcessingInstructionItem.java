@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -11,19 +8,17 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ProcessingInstructionItem implements Item {
+public class ProcessingInstructionItem extends AbstractNodeItem {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String target;
     private String content;
     private Item parent;
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public ProcessingInstructionItem() {
-    }
 
     public ProcessingInstructionItem(Node processingInstructionNode) {
         this.target = processingInstructionNode.getNodeName();
@@ -63,6 +58,11 @@ public class ProcessingInstructionItem implements Item {
     }
 
     @Override
+    public void addParentToDescendants() {
+        // Processing-instruction nodes are leaves and therefore have no descendants to update.
+    }
+
+    @Override
     public Item parent() {
         return this.parent;
     }
@@ -95,35 +95,6 @@ public class ProcessingInstructionItem implements Item {
     @Override
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ProcessingInstructionItem otherItem)) {
-            return false;
-        }
-        return this.getXmlDocumentPosition().equals(otherItem.getXmlDocumentPosition());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.documentPos.hashCode();
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.parent);
-        output.writeString(this.target);
-        output.writeString(this.content);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.parent = (Item) kryo.readClassAndObject(input);
-        this.target = input.readString();
-        this.content = input.readString();
     }
 
     @Override

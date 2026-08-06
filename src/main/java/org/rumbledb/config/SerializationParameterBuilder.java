@@ -54,6 +54,10 @@ public final class SerializationParameterBuilder {
         return build(parameters, SerializationParameters.defaults());
     }
 
+    public static SerializationParameters build(Map<String, String> parameters, String queryLanguage) {
+        return build(parameters, SerializationParameters.defaults(queryLanguage));
+    }
+
     /**
      * Builds a {@link SerializationParameters} instance by copying an existing template and applying overrides.
      * A defensive copy of {@code defaults} is created so that the original instance is never mutated.
@@ -86,11 +90,11 @@ public final class SerializationParameterBuilder {
     public static void update(SerializationParameters params, String optionName, String optionValue)
             throws InvalidSerializationParameterValueException {
 
-        if (optionValue == null || optionValue.trim().isEmpty()) {
+        if (optionValue == null) {
             throw new InvalidSerializationParameterValueException(
                     optionName,
-                    optionValue == null ? "null" : "''",
-                    "a non-empty string"
+                    "null",
+                    "a valid value"
             );
         }
 
@@ -103,6 +107,9 @@ public final class SerializationParameterBuilder {
                 case "encoding":
                     validateEncoding(optionName, optionValue);
                     params.setEncoding(optionValue);
+                    break;
+                case "version":
+                    params.setVersion(optionValue);
                     break;
                 case "omit-xml-declaration":
                     params.setOmitXmlDeclaration(parseBoolean(optionName, optionValue));
@@ -269,10 +276,11 @@ public final class SerializationParameterBuilder {
     }
 
     /**
-     * Parses a NormalizationForm enum value from string.
-     * Accepts: NFC, NFD, NFKC, NFKD, fully-normalized, or none (case-sensitive).
+     * Parses a normalization-form parameter value.
+     * The host language may choose to pass through values that the serializer does not support;
+     * those are then reported by the serializer as SESU0011 rather than being rejected here.
      */
-    private static SerializationParameters.NormalizationForm parseNormalizationForm(
+    private static String parseNormalizationForm(
             String parameterName,
             String value
     ) {
@@ -284,20 +292,14 @@ public final class SerializationParameterBuilder {
             );
         }
         String trimmed = value.trim();
-        // Map "fully-normalized" to "FULLY_NORMALIZED" enum value
-        if (trimmed.equals("fully-normalized")) {
-            return SerializationParameters.NormalizationForm.FULLY_NORMALIZED;
-        }
-        // Try direct enum value (case-sensitive)
-        try {
-            return SerializationParameters.NormalizationForm.valueOf(trimmed);
-        } catch (IllegalArgumentException e) {
+        if (trimmed.isEmpty()) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
                     "'NFC', 'NFD', 'NFKC', 'NFKD', 'fully-normalized', or 'none'"
             );
         }
+        return trimmed;
     }
 
     /**
@@ -314,14 +316,27 @@ public final class SerializationParameterBuilder {
                     "'UNSPECIFIED', 'JSON', 'XML', 'HTML', or 'TEXT'"
             );
         }
-        String upper = value.toUpperCase().trim();
+        String normalized = value.trim();
+        if (normalized.startsWith("Q{") && normalized.endsWith("}xml")) {
+            return SerializationParameters.JsonNodeOutputMethod.XML;
+        }
+        if (normalized.startsWith("Q{") && normalized.endsWith("}xhtml")) {
+            return SerializationParameters.JsonNodeOutputMethod.XHTML;
+        }
+        if (normalized.startsWith("Q{") && normalized.endsWith("}html")) {
+            return SerializationParameters.JsonNodeOutputMethod.HTML;
+        }
+        if (normalized.startsWith("Q{") && normalized.endsWith("}text")) {
+            return SerializationParameters.JsonNodeOutputMethod.TEXT;
+        }
+        String upper = normalized.toUpperCase();
         try {
             return SerializationParameters.JsonNodeOutputMethod.valueOf(upper);
         } catch (IllegalArgumentException e) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
-                    "'UNSPECIFIED', 'JSON', 'XML', 'HTML', or 'TEXT'"
+                    "'XML', 'XHTML', 'HTML', 'TEXT', or the equivalent no-namespace EQName form"
             );
         }
     }
@@ -357,12 +372,12 @@ public final class SerializationParameterBuilder {
     }
 
     /**
-     * Parses a comma-separated string into a Set of strings.
+     * Parses a whitespace- or comma-separated string into a Set of strings.
      */
     private static Set<String> parseStringSet(String parameterName, String value) {
         Set<String> result = new HashSet<>();
         if (value != null && !value.trim().isEmpty()) {
-            String[] parts = value.split(",");
+            String[] parts = value.trim().split("[,\\s]+");
             for (String part : parts) {
                 String trimmed = part.trim();
                 if (!trimmed.isEmpty()) {

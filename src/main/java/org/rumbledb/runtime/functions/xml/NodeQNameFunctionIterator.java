@@ -29,6 +29,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -66,6 +67,7 @@ import java.util.List;
  *      Operators 3.1: fn:node-name</a>
  */
 public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Item resultItem;
@@ -134,14 +136,14 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
      * Spec: "If the argument is omitted, it defaults to the context item."
      */
     private Item getContextNode() {
-        if (this.children.isEmpty()) {
+        if (this.getChildren().isEmpty()) {
             // No argument provided, use context item
             return this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
         }
         // Argument provided, use first parameter (may materialize to the empty sequence).
-        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
 

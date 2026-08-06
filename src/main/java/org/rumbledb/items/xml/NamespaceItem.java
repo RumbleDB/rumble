@@ -1,8 +1,6 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -10,19 +8,27 @@ import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class NamespaceItem implements Item {
+public class NamespaceItem extends AbstractNodeItem {
+    @Serial
     private static final long serialVersionUID = 1L;
+
+    /**
+     * Nnamespace prefix (possibly empty).
+     */
+    @Getter
     private String prefix;
+
+    /**
+     * Namespaces URI.
+     */
+    @Getter
     private String uri;
     private Item parent;
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public NamespaceItem() {
-    }
 
     /**
      * Constructor for a namespace item.
@@ -65,21 +71,7 @@ public class NamespaceItem implements Item {
         // Namespaces do not have descendants.
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.parent);
-        output.writeString(this.prefix);
-        output.writeString(this.uri);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.parent = (Item) kryo.readClassAndObject(input);
-        this.prefix = input.readString();
-        this.uri = input.readString();
-    }
 
     @Override
     public boolean isNode() {
@@ -99,20 +91,6 @@ public class NamespaceItem implements Item {
             return null;
         }
         return NamespaceBindingUtils.nameLocalOnly(this.prefix);
-    }
-
-    /**
-     * Returns the namespace prefix (possibly empty).
-     */
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    /**
-     * Returns the namespace URI.
-     */
-    public String getUri() {
-        return this.uri;
     }
 
     @Override
@@ -144,19 +122,6 @@ public class NamespaceItem implements Item {
     @Override
     public String nodeKind() {
         return "namespace";
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof NamespaceItem otherNamespaceItem)) {
-            return false;
-        }
-        return this.getXmlDocumentPosition().equals(otherNamespaceItem.getXmlDocumentPosition());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.documentPos.hashCode();
     }
 
     @Override

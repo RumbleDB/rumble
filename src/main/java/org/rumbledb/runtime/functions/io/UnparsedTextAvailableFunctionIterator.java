@@ -6,11 +6,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.Serial;
-import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.List;
 
 public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -26,22 +23,23 @@ public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRun
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item hrefItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item hrefItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (hrefItem == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-        if (this.children.size() == 2) {
-            Item encodingItem = this.children.get(1).materializeFirstItemOrNull(context);
-            try {
-                Charset.forName(encodingItem.getStringValue());
-            } catch (Exception e) {
-                return ItemFactory.getInstance().createBooleanItem(false);
-            }
+        String encoding = null;
+        if (this.getChildren().size() == 2) {
+            Item encodingItem = this.getChild(1).materializeFirstItemOrNull(context);
+            encoding = encodingItem.getStringValue();
         }
         try {
-            String href = hrefItem.getStringValue();
-            URI uri = href.isEmpty() ? this.staticURI : FileSystemUtil.resolveURI(this.staticURI, href, getMetadata());
-            FileSystemUtil.readContent(uri, getConfiguration(), getMetadata());
+            UnparsedTextReader.read(
+                this.staticContext.getStaticURI(),
+                hrefItem.getStringValue(),
+                encoding,
+                getConfiguration().semantics().xmlVersion(),
+                getMetadata()
+            );
             return ItemFactory.getInstance().createBooleanItem(true);
         } catch (Exception e) {
             return ItemFactory.getInstance().createBooleanItem(false);

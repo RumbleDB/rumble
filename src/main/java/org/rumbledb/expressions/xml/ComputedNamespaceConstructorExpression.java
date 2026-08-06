@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.xml;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -34,6 +35,7 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-computed-namespaces">XQuery 3.1, 3.9.3.7: Computed Namespace
  *      Constructors</a>
  */
+@Getter
 public class ComputedNamespaceConstructorExpression extends Expression {
     /** The static prefix (if specified) */
     private final String prefix;
@@ -82,18 +84,6 @@ public class ComputedNamespaceConstructorExpression extends Expression {
         return this.prefix != null;
     }
 
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    public Expression getPrefixExpression() {
-        return this.prefixExpression;
-    }
-
-    public Expression getUriExpression() {
-        return this.uriExpression;
-    }
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitComputedNamespaceConstructor(this, argument);
@@ -101,7 +91,14 @@ public class ComputedNamespaceConstructorExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>();
+        List<Node> result = new ArrayList<>();
+        if (this.prefixExpression != null) {
+            result.add(this.prefixExpression);
+        }
+        if (this.uriExpression != null) {
+            result.add(this.uriExpression);
+        }
+        return result;
     }
 
     @Override
@@ -120,4 +117,3 @@ public class ComputedNamespaceConstructorExpression extends Expression {
         sb.append(" }\n");
     }
 }
-

@@ -21,7 +21,9 @@
 package org.rumbledb.compiler;
 
 import org.apache.log4j.LogManager;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.bindings.DataFrameBinding;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.BuiltinFunctionExecutionModes;
@@ -53,6 +55,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
@@ -96,12 +99,14 @@ import java.util.Map.Entry;
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
-    private RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
+    private ExternalBindings externalBindings;
     private List<Statement> exitStatementChildren;
 
-    ExecutionModeVisitor(RumbleRuntimeConfiguration configuration) {
+    ExecutionModeVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
         this.configuration = configuration;
+        this.externalBindings = externalBindings;
         this.exitStatementChildren = new ArrayList<>();
     }
 
@@ -111,7 +116,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     public ExecutionMode DATAFRAMEifConfigurationAllows() {
-        if (this.configuration.dataFrameExecution()) {
+        if (this.configuration.runtime().useDataFrameExecution()) {
             return ExecutionMode.DATAFRAME;
         } else {
             return ExecutionMode.RDD;
@@ -410,6 +415,45 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
+    public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
+        this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
+
+        StaticContext startContext = clause.getStartCondition().expression().getStaticContext();
+        clause.getStartCondition()
+            .variables()
+            .names()
+            .forEach(name -> startContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
+        this.visit(clause.getStartCondition().expression(), startContext);
+
+        if (clause.getEndCondition() != null) {
+            StaticContext endContext = clause.getEndCondition().expression().getStaticContext();
+            clause.getStartCondition()
+                .variables()
+                .names()
+                .forEach(name -> endContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
+            clause.getEndCondition()
+                .variables()
+                .names()
+                .forEach(name -> endContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
+            this.visit(clause.getEndCondition().expression(), endContext);
+        }
+
+        clause.setHighestExecutionMode(ExecutionMode.LOCAL);
+        argument.setVariableStorageMode(clause.getWindowVariable(), ExecutionMode.LOCAL);
+        clause.getStartCondition()
+            .variables()
+            .names()
+            .forEach(name -> argument.setVariableStorageMode(name, ExecutionMode.LOCAL));
+        if (clause.getEndCondition() != null) {
+            clause.getEndCondition()
+                .variables()
+                .names()
+                .forEach(name -> argument.setVariableStorageMode(name, ExecutionMode.LOCAL));
+        }
+        return argument;
+    }
+
+    @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
         this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
 
@@ -583,9 +627,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (
             variableDeclaration.external()
                 && (arity.equals(Arity.ZeroOrMore) || arity.equals(Arity.OneOrMore))
-                && this.configuration.getExternalVariableValueReadFromDataFrame(
-                    variableDeclaration.getVariableName()
-                ) != null
+                && this.externalBindings.get(variableDeclaration.getVariableName(), DataFrameBinding.class).isPresent()
         ) {
             variableDeclaration.setVariableHighestStorageMode(ExecutionMode.DATAFRAME);
         } else {
@@ -922,7 +964,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         // END eq optimization
         expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));
-        if (!expression.getStaticContext().getRumbleConfiguration().getNativeSQLPredicates()) {
+        if (!expression.getStaticContext().getRumbleConfiguration().runtime().useNativeSQLPredicates()) {
             if (expression.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)) {
                 expression.setHighestExecutionMode(ExecutionMode.RDD);
             }
@@ -950,7 +992,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (expression.getHighestExecutionMode().equals(ExecutionMode.RDD)) {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
         }
-        if (!this.configuration.getDataFrameExecutionModeDetection()) {
+        if (!this.configuration.runtime().detectDataFrameExecutionMode()) {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
         }
         return argument;

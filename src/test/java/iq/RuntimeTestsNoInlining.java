@@ -21,49 +21,16 @@
 package iq;
 
 
-import java.util.Arrays;
-import java.util.Collections;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.Name;
-import org.rumbledb.items.ItemFactory;
+import org.rumbledb.config.RumbleConfiguration;
 
 public class RuntimeTestsNoInlining extends RuntimeTests {
 
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--print-iterator-tree",
-                    "yes",
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--function-inlining",
-                    "no",
-                    "--apply-updates",
-                    "yes",
-                    "--lax-json-null-validation",
-                    "no",
-                    "--lax-json-null-validation",
-                    "no",
-                    "--result-size",
-                    "200" }
-        ).setExternalVariableValue(
-            Name.createVariableInNoNamespace("externalStringItem"),
-            Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
-        )
-            .setExternalVariableValue(
-                Name.createVariableInNoNamespace("externalIntegerItems"),
-                Arrays.asList(
-                    new Item[] {
-                        ItemFactory.getInstance().createIntItem(1),
-                        ItemFactory.getInstance().createIntItem(2),
-                        ItemFactory.getInstance().createIntItem(3),
-                        ItemFactory.getInstance().createIntItem(4),
-                        ItemFactory.getInstance().createIntItem(5),
-                    }
-                )
-            );
+    public RumbleConfiguration getConfiguration() {
+        return RumbleConfiguration.builder()
+            .configureRuntime(runtime -> runtime.resultsSizeCap(200).shouldApplyUpdates(true))
+            .configureSemantics(semantics -> semantics.laxJSONNullValidation(false))
+            .configureOptimization(optimization -> optimization.useFunctionInlining(false))
+            .build();
     }
 
 }

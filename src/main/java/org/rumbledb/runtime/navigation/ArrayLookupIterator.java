@@ -34,7 +34,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -43,16 +43,18 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Map;
 
 public class ArrayLookupIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private int lookup;
     private Item nextResult;
     private java.util.Queue<Item> lookupResultQueue;
@@ -91,19 +93,12 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.lookupResultQueue = null;
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
 
     private void initLookupPosition(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.children.get(1);
+        RuntimeIterator lookupIterator = this.getChild(1);
 
         try {
             Item lookupExpression = lookupIterator.materializeExactlyOneItem(context);
@@ -172,7 +167,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         initLookupPosition(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this.lookup);
 
@@ -194,7 +189,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
-            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
+            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
                 .getVariableDependencies();
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
@@ -213,7 +208,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
             ItemType resultType = newContext.getResultingType().getItemType();
             if (!(resultType.isArrayItemType())) {
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
                                 + " so that the lookup will always result in the empty sequence no matter what. "
@@ -231,7 +226,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
             schema = newContext.getSchema();
             if (!(schema instanceof ArrayType arraySchema)) {
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
                                 + " so that the lookup will always result in the empty sequence no matter what. "
@@ -258,8 +253,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+    @Override
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
@@ -350,7 +346,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                 .getType()
                 .getArrayContentFacet();
             String sql;
-            JSoundDataFrame res;
+            HomogeneousItemDataFrame res;
             if (elementType.isObjectItemType()) {
                 sql = String.format(
                     "SELECT `%s`.*, `%s`, `%s`, `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
@@ -390,11 +386,11 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     this.lookup
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                res = new JSoundDataFrame(df, elementType);
+                res = new HomogeneousItemDataFrame(df, elementType);
             }
             return res;
         }
-        if (getConfiguration().doStaticAnalysis()) {
+        if (getConfiguration().analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     "This is not a sequence of arrays,"
                         + " so that the lookup will always result in the empty sequence no matter what. "
@@ -407,6 +403,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             .warn(
                 "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
             );
-        return JSoundDataFrame.emptyDataFrame();
+        return HomogeneousItemDataFrame.emptyDataFrame();
     }
 }

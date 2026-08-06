@@ -5,21 +5,23 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Item arrayItem;
     private final RuntimeIterator indexIterator;
-    private Queue<Item> pendingResults;
+    private final Queue<Item> pendingResults;
 
     public ArrayFunctionCallIterator(
             Item arrayItem,
@@ -116,15 +118,6 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.indexIterator != null) {
-            this.indexIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.indexIterator != null && this.indexIterator.isOpen()) {
             this.indexIterator.close();
@@ -145,7 +138,7 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
                 "Array function calls are currently supported only in local execution mode."
         );

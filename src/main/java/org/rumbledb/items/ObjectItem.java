@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,13 +38,11 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-public class ObjectItem implements Item {
+public class ObjectItem extends AbstractMapItem {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<Item> values;
     private List<String> keys;
@@ -57,7 +56,6 @@ public class ObjectItem implements Item {
     private Collection collection;
 
     public ObjectItem() {
-        super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
         this.keyStringToIndex = new HashMap<>();
@@ -70,7 +68,6 @@ public class ObjectItem implements Item {
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
-        super();
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
@@ -98,34 +95,6 @@ public class ObjectItem implements Item {
         return result;
     }
 
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isObject()) {
-            return false;
-        }
-        for (String s : getStringKeys()) {
-            Item v = otherItem.getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        for (String s : otherItem.getStringKeys()) {
-            Item v = getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!otherItem.getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     /**
      * ObjectItem constructor from the given map data structure.
      * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single
@@ -137,7 +106,6 @@ public class ObjectItem implements Item {
     public ObjectItem(Map<String, ?> keyValuePairs)
 
     {
-        super();
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
@@ -216,10 +184,12 @@ public class ObjectItem implements Item {
         return this.keys.size();
     }
 
+    @Override
     public boolean hasKey(String key) throws UnsupportedOperationException {
         return this.keyStringToIndex.containsKey(key);
     }
 
+    @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return false;
@@ -384,40 +354,7 @@ public class ObjectItem implements Item {
         }
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.keys);
-        kryo.writeObject(output, this.values);
-        output.writeInt(this.mutabilityLevel);
-        output.writeLong(this.topLevelID);
-        kryo.writeObject(output, this.pathIn);
-        kryo.writeObject(output, this.location);
-        output.writeDouble(this.topLevelOrder);
-        kryo.writeObjectOrNull(output, this.collection, Collection.class);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.keys = kryo.readObject(input, ArrayList.class);
-        this.values = kryo.readObject(input, ArrayList.class);
-        this.mutabilityLevel = input.readInt();
-        this.topLevelID = input.readLong();
-        this.pathIn = kryo.readObject(input, String.class);
-        this.location = kryo.readObject(input, String.class);
-        this.topLevelOrder = input.readDouble();
-        this.collection = kryo.readObjectOrNull(input, Collection.class);
-        rebuildKeyStringIndex();
-    }
-
-    public int hashCode() {
-        int result = 0;
-        result += getStringKeys().size();
-        for (String s : getStringKeys()) {
-            result += getItemByKey(s).hashCode();
-        }
-        return result;
-    }
 
     @Override
     public ItemType getDynamicType() {

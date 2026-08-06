@@ -20,9 +20,12 @@
 
 package org.rumbledb.runtime.misc;
 
+import java.io.Serial;
 import java.time.*;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastException;
@@ -53,11 +56,15 @@ import java.util.Arrays;
 public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Item left;
     private Item right;
+    @Getter
     private final ComparisonExpression.ComparisonOperator comparisonOperator;
+    @Getter
     private final RuntimeIterator leftIterator;
+    @Getter
     private final RuntimeIterator rightIterator;
 
 
@@ -73,21 +80,9 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         this.comparisonOperator = comparisonOperator;
     }
 
-    public ComparisonExpression.ComparisonOperator getComparisonOperator() {
-        return this.comparisonOperator;
-    }
-
     public boolean isValueEquality() {
         return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ)
             || this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.GC_EQ);
-    }
-
-    public RuntimeIterator getLeftIterator() {
-        return this.leftIterator;
-    }
-
-    public RuntimeIterator getRightIterator() {
-        return this.rightIterator;
     }
 
     @Override
@@ -152,6 +147,25 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
         if (!this.left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
+        }
+
+        String activeCollation = getRuntimeStaticContext().getDefaultCollation();
+        if (
+            !Name.DEFAULT_COLLATION_NS.equals(activeCollation)
+                && CollationSupport.isStringCollationType(this.left)
+                && CollationSupport.isStringCollationType(this.right)
+        ) {
+            int comparison = CollationSupport.compareStrings(
+                this.left.getStringValue(),
+                this.right.getStringValue(),
+                activeCollation,
+                getMetadata()
+            );
+            return comparisonResultToBooleanItem(
+                comparison,
+                this.comparisonOperator,
+                getMetadata()
+            );
         }
 
         long comparison = compareItems(this.left, this.right, this.comparisonOperator, getMetadata());
@@ -238,12 +252,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             double r = right.getDoubleValue();
             return processDouble(l, r);
         }
-        if (left.isNumeric() && right.isDouble()) {
-            double l = left.castToDoubleValue();
-            double r = right.getDoubleValue();
-            return processDouble(l, r);
-        }
-
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
             float r;
@@ -290,9 +298,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 case GC_EQ:
                 case VC_NE:
                 case GC_NE:
-                    Duration l = left.getDurationValue();
-                    Duration r = right.getDurationValue();
-                    return processDuration(l, r);
+                    return processMixedDuration(left, right);
                 default:
             }
         }
@@ -512,6 +518,24 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         return l.compareTo(r);
     }
 
+    /**
+     * Two durations are equal iff their months component and their
+     * day-time (seconds) component are both equal
+     */
+    private static int processMixedDuration(
+            Item left,
+            Item right
+    ) {
+        long leftMonths = left.getPeriodValue().toTotalMonths();
+        long rightMonths = right.getPeriodValue().toTotalMonths();
+        if (leftMonths != rightMonths) {
+            return Long.compare(leftMonths, rightMonths);
+        }
+        Duration leftDayTime = left.getDayTimeDurationComponent();
+        Duration rightDayTime = right.getDayTimeDurationComponent();
+        return leftDayTime.compareTo(rightDayTime);
+    }
+
     private static int processPeriod(
             Period l,
             Period r
@@ -553,7 +577,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             String l,
             String r
     ) {
-        return l.compareTo(r);
+        return CollationSupport.compareByCodePoint(l, r);
     }
 
     private static int processBytes(

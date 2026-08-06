@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.postfix;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@Getter
 public class FilterExpression extends Expression {
 
     private Expression mainExpression;
@@ -61,17 +63,9 @@ public class FilterExpression extends Expression {
         sb.append("]\n");
     }
 
-    public Expression getPredicateExpression() {
-        return this.predicateExpression;
-    }
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFilterExpression(this, argument);
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
     }
 
     @Override

@@ -27,10 +27,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class LowerCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public LowerCaseFunctionIterator(
@@ -42,7 +44,7 @@ public class LowerCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item stringItem = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
 
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");

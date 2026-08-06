@@ -31,17 +31,19 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public CSVFileFunctionIterator(
@@ -52,18 +54,18 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        Item stringItem = this.children.get(0)
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         Item optionsObjectItem;
         try {
             DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
-            if (this.children.size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
+            if (this.getChildren().size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
                 ObjectItem options = (ObjectItem) optionsObjectItem;
                 List<String> keys = options.getStringKeys();
                 List<Item> values = options.getItemValues();
@@ -90,7 +92,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                 }
             }
             Dataset<Row> dataFrame = dfr.csv(FileSystemUtil.convertURIToStringForSpark(uri));
-            return new JSoundDataFrame(dataFrame);
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException || e instanceof IllegalArgumentException) {
                 RumbleException ex = new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
@@ -103,6 +105,6 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     private Item getObjectItem(DynamicContext context) {
-        return this.children.get(1).materializeFirstItemOrNull(context);
+        return this.getChild(1).materializeFirstItemOrNull(context);
     }
 }

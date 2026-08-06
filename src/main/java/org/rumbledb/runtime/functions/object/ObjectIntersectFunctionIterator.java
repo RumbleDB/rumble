@@ -31,6 +31,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -40,15 +41,16 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
     /**
      *
      */
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
 
     public ObjectIntersectFunctionIterator(
             List<RuntimeIterator> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
     }
 
     @Override

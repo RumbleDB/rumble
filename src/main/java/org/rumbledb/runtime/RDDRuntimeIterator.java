@@ -26,10 +26,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.util.List;
 
 public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     protected RDDRuntimeIterator(
@@ -39,6 +41,7 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
         super(children, staticContext);
     }
 
+    @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
     }
@@ -60,11 +63,6 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
-    }
-
-    @Override
-    protected void resetLocal() {
         throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 

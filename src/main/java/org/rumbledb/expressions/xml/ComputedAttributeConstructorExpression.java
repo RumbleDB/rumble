@@ -20,8 +20,10 @@
 
 package org.rumbledb.expressions.xml;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -35,6 +37,7 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedAttributes">XQuery 3.1, 3.9.3.2: Computed Attribute
  *      Constructors</a>
  */
+@Getter
 public class ComputedAttributeConstructorExpression extends Expression {
     /** The static attribute name (if specified) */
     private final Name attributeName;
@@ -74,36 +77,12 @@ public class ComputedAttributeConstructorExpression extends Expression {
             ExceptionMetadata metadata
     ) {
         super(metadata);
+        if (nameExpression == null) {
+            throw new OurBadException("Dynamic computed attribute constructors must have a name expression.");
+        }
         this.attributeName = null;
         this.nameExpression = nameExpression;
         this.valueExpression = valueExpression;
-    }
-
-    /**
-     * Get the static attribute name
-     * 
-     * @return The static attribute name
-     */
-    public Name getAttributeName() {
-        return this.attributeName;
-    }
-
-    /**
-     * Get the dynamic attribute name expression
-     * 
-     * @return The dynamic attribute name expression
-     */
-    public Expression getNameExpression() {
-        return this.nameExpression;
-    }
-
-    /**
-     * Get the value expression
-     * 
-     * @return The value expression
-     */
-    public Expression getValueExpression() {
-        return this.valueExpression;
     }
 
     /**

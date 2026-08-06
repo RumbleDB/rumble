@@ -10,6 +10,7 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 
 public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Name ANALYZE_STRING_RESULT_NAME = new Name(Name.FN_NS, "fn", "analyze-string-result");
     private static final Name MATCH_NAME = new Name(Name.FN_NS, "fn", "match");
@@ -38,13 +40,13 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
     public Item materializeFirstItemOrNull(DynamicContext context) {
         ItemFactory factory = ItemFactory.getInstance();
 
-        Item inputItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
         String input = inputItem == null ? "" : inputItem.getStringValue();
 
-        String pattern = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+        String pattern = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
         String flags = null;
-        if (this.children.size() == 3) {
-            Item flagsItem = this.children.get(2).materializeFirstItemOrNull(context);
+        if (this.getChildren().size() == 3) {
+            Item flagsItem = this.getChild(2).materializeFirstItemOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }

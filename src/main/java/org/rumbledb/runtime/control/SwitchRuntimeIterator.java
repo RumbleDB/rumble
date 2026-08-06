@@ -26,17 +26,19 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
+import java.io.Serial;
 import java.util.Map;
+import java.util.stream.Stream;
 
 
 public class SwitchRuntimeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
     private final Map<RuntimeIterator, RuntimeIterator> cases;
@@ -49,11 +51,13 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator defaultReturn,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(test);
-        this.children.addAll(cases.keySet());
-        this.children.addAll(cases.values());
-        this.children.add(defaultReturn);
+        super(
+            Stream.concat(
+                Stream.concat(Stream.of(test), cases.keySet().stream()),
+                Stream.concat(cases.values().stream(), Stream.of(defaultReturn))
+            ).toList(),
+            staticContext
+        );
         this.testField = test;
         this.cases = cases;
         this.defaultReturn = defaultReturn;
@@ -82,14 +86,6 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     @Override
     public void closeLocal() {
         this.matchingIterator.close();
-    }
-
-    @Override
-    public void resetLocal() {
-        this.matchingIterator.close();
-        this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.matchingIterator.hasNext();
     }
 
     private RuntimeIterator selectApplicableIterator(
@@ -133,16 +129,13 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
                 if (caseValue == null) {
                     return this.cases.get(caseKey);
                 } else {
-                    break;
+                    continue;
                 }
             }
-            long comparison = ComparisonIterator.compareItems(
-                testValue,
-                caseValue,
-                ComparisonOperator.VC_EQ,
-                getMetadata()
-            );
-            if (comparison == 0) {
+            if (caseValue == null) {
+                continue;
+            }
+            if (AtomicDeepEqual.deepEqual(testValue, caseValue)) {
                 return this.cases.get(caseKey);
             }
         }
@@ -168,7 +161,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
 
         return iterator.getDataFrame(dynamicContext);

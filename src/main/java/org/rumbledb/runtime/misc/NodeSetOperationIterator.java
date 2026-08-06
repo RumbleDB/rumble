@@ -28,6 +28,8 @@ import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -36,11 +38,12 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class NodeSetOperationIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
-    private NodeSetExpression.NodeSetOperator operator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
+    private final NodeSetExpression.NodeSetOperator operator;
     private List<Item> localResults;
     private int nextResultIndex;
 
@@ -110,11 +113,6 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         this.localResults = null;
         this.nextResultIndex = 0;
-    }
-
-    @Override
-    protected void resetLocal() {
-        openLocal();
     }
 
     private List<Item> computeNodeSet(DynamicContext context) {

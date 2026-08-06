@@ -1,8 +1,13 @@
 package org.rumbledb.context;
 
+import lombok.EqualsAndHashCode;
+
+import lombok.Getter;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 
+@Getter
+@EqualsAndHashCode
 public class BuiltinFunction {
 
     /**
@@ -33,39 +38,6 @@ public class BuiltinFunction {
         this.signature = signature;
         this.functionIteratorClass = functionIteratorClass;
         this.builtinFunctionExecutionMode = builtInFunctionExecutionMode;
-    }
-
-    public FunctionIdentifier getIdentifier() {
-        return this.identifier;
-    }
-
-    public FunctionSignature getSignature() {
-        return this.signature;
-    }
-
-    public Class<? extends RuntimeIterator> getFunctionIteratorClass() {
-        return this.functionIteratorClass;
-    }
-
-    public BuiltinFunctionExecutionMode getBuiltinFunctionExecutionMode() {
-        return this.builtinFunctionExecutionMode;
-    }
-
-    @Override
-    public boolean equals(Object instance) {
-        return instance instanceof BuiltinFunction builtinFunction
-            && this.getIdentifier().equals(builtinFunction.getIdentifier())
-            && this.getSignature().equals(builtinFunction.getSignature())
-            && this.getFunctionIteratorClass().equals(builtinFunction.getFunctionIteratorClass())
-            && this.getBuiltinFunctionExecutionMode() == builtinFunction.getBuiltinFunctionExecutionMode();
-    }
-
-    @Override
-    public int hashCode() {
-        return this.getIdentifier().hashCode()
-            + this.getSignature().hashCode()
-            + this.getFunctionIteratorClass().hashCode()
-            + this.getBuiltinFunctionExecutionMode().hashCode();
     }
 
 }

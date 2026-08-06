@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
@@ -32,40 +29,31 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class LazyObjectItem implements Item {
+public class LazyObjectItem extends AbstractMapItem {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private List<String> keys;
-    private Map<String, Item> values;
-    transient private Map<String, LazyValue> lazyValues;
+    private final List<String> keys;
+    private final Map<String, Item> values;
+    final transient private Map<String, LazyValue> lazyValues;
 
     public class LazyValue {
-        private RuntimeIterator iterator;
-        private DynamicContext context;
-        private boolean isArray;
+        private final RuntimeIterator iterator;
+        private final DynamicContext context;
+        private final boolean isArray;
 
         public LazyValue(RuntimeIterator iterator, DynamicContext context, boolean isArray) {
             this.iterator = iterator;
             this.context = context;
             this.isArray = isArray;
-        }
-
-        public RuntimeIterator getIterator() {
-            return this.iterator;
-        }
-
-        public DynamicContext getDynamicContext() {
-            return this.context;
-        }
-
-        public boolean isArray() {
-            return this.isArray();
         }
 
         public Item getItem() {
@@ -83,7 +71,6 @@ public class LazyObjectItem implements Item {
     }
 
     public LazyObjectItem() {
-        super();
         this.keys = new ArrayList<>();
         this.values = new HashMap<>();
         this.lazyValues = new HashMap<>();
@@ -104,35 +91,6 @@ public class LazyObjectItem implements Item {
         return result;
 
     }
-
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isObject()) {
-            return false;
-        }
-        for (String s : this.getStringKeys()) {
-            Item v = otherItem.getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        for (String s : otherItem.getStringKeys()) {
-            Item v = getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!otherItem.getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
 
     // region maps
 
@@ -310,29 +268,7 @@ public class LazyObjectItem implements Item {
         }
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.keys);
-        materialize();
-        kryo.writeObject(output, this.values);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.keys = kryo.readObject(input, ArrayList.class);
-        this.values = kryo.readObject(input, HashMap.class);
-        this.lazyValues = new HashMap<>();
-    }
-
-    public int hashCode() {
-        int result = 0;
-        result += getStringKeys().size();
-        for (String s : getStringKeys()) {
-            result += getItemByKey(s).hashCode();
-        }
-        return result;
-    }
 
     @Override
     public ItemType getDynamicType() {

@@ -21,6 +21,8 @@
 package org.rumbledb.expressions.module;
 
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -31,8 +33,11 @@ import java.util.List;
 
 public class LibraryModule extends Module {
 
+    @Setter
     protected StaticContext staticContext;
-    private String namespace;
+    @Getter
+    private final String namespace;
+    @Getter
     private final Prolog prolog;
 
     public LibraryModule(Prolog prolog, String namespace, ExceptionMetadata metadata) {
@@ -41,20 +46,9 @@ public class LibraryModule extends Module {
         this.namespace = namespace;
     }
 
+    @Override
     public StaticContext getStaticContext() {
         return this.staticContext;
-    }
-
-    public String getNamespace() {
-        return this.namespace;
-    }
-
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
-    }
-
-    public Prolog getProlog() {
-        return this.prolog;
     }
 
     @Override
@@ -71,6 +65,7 @@ public class LibraryModule extends Module {
         return visitor.visitLibraryModule(this, argument);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

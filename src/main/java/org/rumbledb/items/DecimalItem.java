@@ -20,59 +20,38 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+public class DecimalItem extends AbstractAtomicItem {
 
-
-public class DecimalItem implements Item {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
     private BigDecimal value;
 
-    public DecimalItem() {
-        super();
-    }
+    // Float/double casts retain their exact decimal value for op:same-key while serializing
+    // with the concise lexical representation users expect from the source numeric value.
+    private String displayValue;
 
     public DecimalItem(BigDecimal decimal) {
-        super();
         this.value = decimal;
+    }
+
+    public DecimalItem(BigDecimal decimal, String displayValue) {
+        this.value = decimal;
+        this.displayValue = displayValue;
     }
 
     @Override
     public Item copy(boolean mutable) {
-        return new DecimalItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    public BigDecimal getValue() {
-        return this.value;
+        return new DecimalItem(this.value, this.displayValue);
     }
 
     @Override
@@ -87,6 +66,9 @@ public class DecimalItem implements Item {
 
     @Override
     public String getStringValue() {
+        if (this.displayValue != null) {
+            return this.displayValue;
+        }
         return String.valueOf(this.value.stripTrailingZeros().toPlainString());
     }
 
@@ -95,22 +77,27 @@ public class DecimalItem implements Item {
         return !(this.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
     }
 
+    @Override
     public double castToDoubleValue() {
         return getDecimalValue().doubleValue();
     }
 
+    @Override
     public float castToFloatValue() {
         return getDecimalValue().floatValue();
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         return getDecimalValue();
     }
 
+    @Override
     public int castToIntValue() {
         return getDecimalValue().intValue();
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return getDecimalValue().toBigInteger();
     }
@@ -118,23 +105,6 @@ public class DecimalItem implements Item {
     @Override
     public boolean isDecimal() {
         return true;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = kryo.readObject(input, BigDecimal.class);
-    }
-
-    public int hashCode() {
-        if (getDecimalValue().stripTrailingZeros().scale() == 0) {
-            return getDecimalValue().intValue();
-        }
-        return getDecimalValue().hashCode();
     }
 
     @Override
@@ -147,6 +117,7 @@ public class DecimalItem implements Item {
         return new NativeClauseContext(context, this.value.toString(), SequenceType.createSequenceType("decimal"));
     }
 
+    @Override
     public boolean isNumeric() {
         return true;
     }

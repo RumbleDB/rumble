@@ -23,6 +23,7 @@ package org.rumbledb.expressions.xml;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -36,17 +37,14 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedAttributes">XQuery 3.1, 3.9.3.2: Computed Attribute
  *      Constructors</a>
  */
+@Getter
 public class AttributeNodeContentExpression extends Expression {
 
-    private String content;
+    private final String content;
 
     public AttributeNodeContentExpression(String content, ExceptionMetadata metadata) {
         super(metadata);
         this.content = content;
-    }
-
-    public String getContent() {
-        return this.content;
     }
 
     @Override

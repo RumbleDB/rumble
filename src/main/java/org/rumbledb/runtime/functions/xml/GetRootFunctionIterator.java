@@ -14,9 +14,11 @@ import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class GetRootFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public GetRootFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
@@ -42,11 +44,11 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
                     || node instanceof TextItem
                     || node instanceof CommentItem
             ) {
-                if (node.parent() == null) {
-                    // Node is already the root.
-                    return node;
+                Item current = node;
+                while (current.parent() != null) {
+                    current = current.parent();
                 }
-                return node.parent();
+                return current;
             }
             throw new UnsupportedFeatureException(
                     "The argument must be a reference to a supported XML node type",
@@ -57,11 +59,11 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
     }
 
     private Item getContextNode() {
-        if (this.children.isEmpty()) {
+        if (this.getChildren().isEmpty()) {
             return this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
         }
-        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }

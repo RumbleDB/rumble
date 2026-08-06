@@ -30,16 +30,20 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.misc.CollationSupport;
+
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private DataFrameContext dataFrameContext;
-    private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
+    private final DataFrameContext dataFrameContext;
+    private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
     private Item nextItem;
-    private List<String> result;
+    private final List<String> result;
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
@@ -79,12 +83,32 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
             this.result.add(OrderByClauseIterator.StringFlagForEmptySequence);
             return;
         }
-        if (this.nextItem.isArray() || this.nextItem.isObject()) {
+        List<Item> atomized = this.nextItem.atomizedValue();
+        if (atomized.size() > 1) {
             throw new UnexpectedTypeException(
-                    "Order by variable can not contain arrays or objects.",
+                    "Order by variable must atomize to at most one item.",
                     expressionWithIterator.getIterator().getMetadata()
             );
         }
+        if (atomized.isEmpty()) {
+            this.result.add(OrderByClauseIterator.StringFlagForEmptySequence);
+            return;
+        }
+        this.nextItem = atomized.get(0);
+        if (!this.nextItem.isAtomic()) {
+            throw new UnexpectedTypeException(
+                    "Order by variable must atomize to an atomic value.",
+                    expressionWithIterator.getIterator().getMetadata()
+            );
+        }
+        this.nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(
+            this.nextItem,
+            CollationSupport.resolveCollation(
+                expressionWithIterator.getUri(),
+                expressionWithIterator.getIterator().getRuntimeStaticContext()
+            ),
+            expressionWithIterator.getIterator().getMetadata()
+        );
         this.result.add(this.nextItem.getDynamicType().getName().getLocalName());
     }
 }

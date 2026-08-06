@@ -1,15 +1,23 @@
 package org.rumbledb.expressions.xml.node_test;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import lombok.NoArgsConstructor;
+import lombok.Getter;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
+
+@NoArgsConstructor(force = true)
 public class AttributeTest implements NodeTest {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Name attributeName;
-    private boolean hasWildcard;
-    private Name typeName;
+    /**
+     * Expanded name from the kind test (namespace URI + local name).
+     * Only valid when isNameWithoutTypeCheck is true.
+     */
+    @Getter
+    private final Name attributeName;
+    private final boolean hasWildcard;
+    private final Name typeName;
 
     public AttributeTest(Name attributeName, Name typeName) {
         this.attributeName = attributeName;
@@ -27,12 +35,6 @@ public class AttributeTest implements NodeTest {
         this.attributeName = null;
         this.typeName = null;
         this.hasWildcard = hasWildcard;
-    }
-
-    public AttributeTest() {
-        this.attributeName = null;
-        this.typeName = null;
-        this.hasWildcard = false;
     }
 
     @Override
@@ -59,29 +61,9 @@ public class AttributeTest implements NodeTest {
         return this.attributeName != null && this.typeName == null;
     }
 
-    /**
-     * Expanded name from the kind test (namespace URI + local name). Only valid when
-     * {@link #isNameWithoutTypeCheck()} is true.
-     */
-    public Name getAttributeName() {
-        return this.attributeName;
-    }
-
     public boolean isWildcardOnly() {
         return this.attributeName == null && this.typeName == null && this.hasWildcard;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.attributeName);
-        kryo.writeObject(output, this.typeName);
-        output.writeBoolean(this.hasWildcard);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.attributeName = kryo.readObject(input, Name.class);
-        this.typeName = kryo.readObject(input, Name.class);
-        this.hasWildcard = input.readBoolean();
-    }
 }

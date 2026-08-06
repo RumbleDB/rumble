@@ -1,22 +1,20 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import lombok.Getter;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
-import java.util.Arrays;
+
+import java.io.Serial;
 import java.util.regex.Pattern;
 
-public class HexBinaryItem implements Item {
+public class HexBinaryItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private byte[] value;
     private String stringValue;
 
@@ -24,10 +22,6 @@ public class HexBinaryItem implements Item {
     private final static String hexOctet = "(" + hexDigit + hexDigit + ")";
     private final static String hexBinary = hexOctet + "*";
     private final static Pattern hexBinaryPattern = Pattern.compile(hexBinary);
-
-    public HexBinaryItem() {
-        super();
-    }
 
     HexBinaryItem(String stringValue) {
         this.stringValue = stringValue;
@@ -37,24 +31,6 @@ public class HexBinaryItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new HexBinaryItem(this.stringValue);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    public byte[] getValue() {
-        return this.value;
     }
 
     @Override
@@ -100,24 +76,6 @@ public class HexBinaryItem implements Item {
     @Override
     public boolean isHexBinary() {
         return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(this.getValue());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this.getValue().length);
-        output.writeBytes(this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        int bytesLength = input.readInt();
-        this.value = input.readBytes(bytesLength);
-        this.stringValue = Hex.encodeHexString(this.value);
     }
 
     @Override

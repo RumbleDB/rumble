@@ -5,15 +5,17 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExitStatementException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class ProgramIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator statementsAndExprIterator;
     private PendingUpdateList pendingUpdateList;
@@ -56,11 +58,6 @@ public class ProgramIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.statementsAndExprIterator.reset(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         if (!this.encounteredExitStatement) {
             return this.statementsAndExprIterator.hasNext();
@@ -74,7 +71,7 @@ public class ProgramIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         try {
             return this.statementsAndExprIterator.getDataFrame(dynamicContext);
         } catch (ExitStatementException exitStatementException) {

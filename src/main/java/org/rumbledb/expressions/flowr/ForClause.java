@@ -23,6 +23,8 @@ package org.rumbledb.expressions.flowr;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -36,13 +38,17 @@ import org.rumbledb.types.SequenceType;
 
 public class ForClause extends Clause {
 
+    @Getter
     private final Name variableName;
     private final boolean allowingEmpty;
+    @Getter
     private final Name positionalVariableName;
     protected SequenceType sequenceType;
+    @Getter
     protected Expression expression;
 
     // Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
 
@@ -66,16 +72,8 @@ public class ForClause extends Clause {
 
     }
 
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
     public boolean isAllowEmpty() {
         return this.allowingEmpty;
-    }
-
-    public Name getPositionalVariableName() {
-        return this.positionalVariableName;
     }
 
     public SequenceType getSequenceType() {
@@ -86,10 +84,6 @@ public class ForClause extends Clause {
         return this.sequenceType;
     }
 
-    public Expression getExpression() {
-        return this.expression;
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (
             !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
@@ -98,10 +92,6 @@ public class ForClause extends Clause {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
-    }
-
-    public void setVariableHighestStorageMode(ExecutionMode mode) {
-        this.variableHighestStorageMode = mode;
     }
 
     @Override
@@ -121,6 +111,7 @@ public class ForClause extends Clause {
         return visitor.visitForClause(this, argument);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

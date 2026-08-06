@@ -4,11 +4,12 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public IcebergTableFunctionIterator(
@@ -26,8 +28,8 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator collectionNameIterator = this.children.get(0);
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+        RuntimeIterator collectionNameIterator = this.getChild(0);
         String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
 
         String metadataName = qualifyForMetadata(collectionName);

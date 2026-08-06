@@ -16,14 +16,16 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+import java.io.Serial;
 import java.util.Arrays;
 
 public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
-    private boolean isBefore;
+    private final boolean isBefore;
 
     public InsertSearchIntoCollectionIterator(
             RuntimeIterator targetIterator,
@@ -31,17 +33,12 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
             boolean isBefore,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext);
+        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.isBefore = isBefore;
 
-        this.isUpdating = true;
 
-    }
-
-    public boolean hasPositionIterator() {
-        return false;
     }
 
     @Override
@@ -56,11 +53,6 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-
-    }
-
-    @Override
-    protected void resetLocal() {
 
     }
 

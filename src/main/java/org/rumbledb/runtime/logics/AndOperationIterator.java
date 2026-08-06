@@ -20,8 +20,10 @@
 
 package org.rumbledb.runtime.logics;
 
+import java.io.Serial;
 import java.util.Arrays;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,11 +34,13 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
+@Getter
 public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
 
     public AndOperationIterator(
             RuntimeIterator leftIterator,
@@ -46,14 +50,6 @@ public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
-    }
-
-    public RuntimeIterator getLeftIterator() {
-        return this.leftIterator;
-    }
-
-    public RuntimeIterator getRightIterator() {
-        return this.rightIterator;
     }
 
     @Override

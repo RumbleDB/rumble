@@ -7,9 +7,11 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class EnvironmentVariableFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public EnvironmentVariableFunctionIterator(
@@ -21,7 +23,7 @@ public class EnvironmentVariableFunctionIterator extends AtMostOneItemLocalRunti
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item nameItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item nameItem = this.getChild(0).materializeFirstItemOrNull(context);
         String value = System.getenv(nameItem.getStringValue());
         if (value == null) {
             return null;

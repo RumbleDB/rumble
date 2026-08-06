@@ -1,41 +1,32 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.format.DateTimeParseException;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-public class YearMonthDurationItem implements Item {
+public class YearMonthDurationItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Period value;
-    Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
-
-    public YearMonthDurationItem() {
-        super();
-    }
+    private static final Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
     public YearMonthDurationItem(Period value) {
-        super();
         this.value = Period.of(value.getYears(), value.getMonths(), 0);
     }
 
     public YearMonthDurationItem(String value) {
-        if (!this.yearMonthDurationRegex.matcher(value).matches()) {
+        if (!yearMonthDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:yearMonthDuration: \"" + value + "\"");
         }
         try {
@@ -74,35 +65,6 @@ public class YearMonthDurationItem implements Item {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(this.value);
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = normalizeMonthsToYears(Period.parse(input.readString()));
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public String getStringValue() {
         return normalizeDuration(normalizeMonthsToYears(this.value));
     }
@@ -119,8 +81,14 @@ public class YearMonthDurationItem implements Item {
         return Duration.between(anchor, target);
     }
 
+    @Override
     public Period getPeriodValue() {
         return this.value;
+    }
+
+    @Override
+    public Duration getDayTimeDurationComponent() {
+        return Duration.ZERO;
     }
 
     @Override

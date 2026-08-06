@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -47,26 +48,26 @@ import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.SequenceType;
-
-import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
 
 
 public class JoinClauseIterator extends RuntimeTupleIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // Properties
     @SuppressWarnings("unused")
-    private boolean isLeftOuterJoin;
+    private final boolean isLeftOuterJoin;
     @SuppressWarnings("unused")
-    private DataFrameContext dataFrameContext;
+    private final DataFrameContext dataFrameContext;
 
     // Computation state
     @SuppressWarnings("unused")
@@ -203,35 +204,36 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         if (rightTupleSideEqualityCriteria.size() == 1) {
             rightHandSideEqualityCriterion = rightTupleSideEqualityCriteria.get(0);
         } else {
+            RuntimeStaticContext rhsStaticContext = staticContext
+                .toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(metadata)
+                .build();
+
             rightHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
                             rightTupleSideEqualityCriteria,
-                            staticContext.withStaticType(SequenceType.createSequenceType("item*"))
-                                .withExecutionMode(ExecutionMode.LOCAL)
-                                .withMetadata(metadata)
+                            rhsStaticContext
                     ),
-                    staticContext
-                        .withStaticType(SequenceType.createSequenceType("item*"))
-                        .withExecutionMode(ExecutionMode.LOCAL)
-                        .withMetadata(metadata),
+                    rhsStaticContext,
                     false
             );
         }
         if (leftTupleSideEqualityCriteria.size() == 1) {
             leftHandSideEqualityCriterion = leftTupleSideEqualityCriteria.get(0);
         } else {
+            RuntimeStaticContext lhsStaticContext = staticContext.toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(metadata)
+                .build();
             leftHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
                             leftTupleSideEqualityCriteria,
-                            staticContext.withStaticType(
-                                SequenceType.createSequenceType("item*")
-                            ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(metadata)
+                            lhsStaticContext
                     ),
-                    new RuntimeStaticContext(
-                            staticContext.withStaticType(SequenceType.createSequenceType("item*"))
-                                .withExecutionMode(ExecutionMode.LOCAL)
-                                .withMetadata(metadata)
-                    ),
+                    lhsStaticContext,
                     false
             );
         }
@@ -434,6 +436,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         return null;
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         return false;
     }

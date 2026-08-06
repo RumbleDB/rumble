@@ -23,6 +23,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -30,6 +31,7 @@ import java.util.List;
  */
 public class MapSizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public MapSizeFunctionIterator(
@@ -41,7 +43,7 @@ public class MapSizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item map = this.children.get(0).materializeFirstItemOrNull(context);
+        Item map = this.getChild(0).materializeFirstItemOrNull(context);
         if (map == null) {
             return null;
         }

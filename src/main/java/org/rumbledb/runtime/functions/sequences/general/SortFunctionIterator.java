@@ -11,7 +11,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -20,6 +20,7 @@ import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.List;
  * {@code fn:sort($input, $collation?, $key)}.
  */
 public class SortFunctionIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator inputIterator;
@@ -184,7 +186,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
             arguments,
             false
         );
-        return materializeIterator(call, context);
+        return materializeKeyIterator(call, context);
     }
 
     private List<Item> keyFromArrayLookup(Item keyArray, Item item, DynamicContext context) {
@@ -200,7 +202,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
                 indexIterator,
                 localStaticContext()
         );
-        return materializeIterator(lookup, context);
+        return materializeKeyIterator(lookup, context);
     }
 
     private List<Item> keyFromMapLookup(Item mapItem, Item item, DynamicContext context) {
@@ -217,7 +219,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
                 keyIterator,
                 localStaticContext()
         );
-        return materializeIterator(lookup, context);
+        return materializeKeyIterator(lookup, context);
     }
 
     private List<Item> materializeIterator(RuntimeIterator iterator, DynamicContext context) {
@@ -233,11 +235,22 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
+    private List<Item> materializeKeyIterator(RuntimeIterator iterator, DynamicContext context) {
+        List<Item> rawItems = materializeIterator(iterator, context);
+        List<Item> atomizedKeys = new ArrayList<>();
+        for (Item rawItem : rawItems) {
+            fnDataAppend(rawItem, atomizedKeys);
+        }
+        return atomizedKeys;
+    }
+
     private RuntimeStaticContext localStaticContext() {
         return getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(ExecutionMode.LOCAL)
-            .withMetadata(getMetadata());
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
     }
 
     @Override
@@ -253,20 +266,6 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         Item result = this.sortedItems.get(this.nextIndex++);
         this.hasNext = this.nextIndex < this.sortedItems.size();
         return result;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.inputIterator.reset(this.currentDynamicContextForLocalExecution);
-        if (this.collationIterator != null) {
-            this.collationIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        if (this.keyIterator != null) {
-            this.keyIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.nextIndex = 0;
-        this.hasNext = !this.sortedItems.isEmpty();
     }
 
     @Override
@@ -295,7 +294,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("fn:sort is currently supported only in local execution mode.");
     }
 

@@ -84,7 +84,8 @@ import org.rumbledb.runtime.functions.input.PostgreSQLTableFunctionIterator;
 import org.rumbledb.runtime.functions.input.RepartitionFunctionIterator;
 import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonLinesFunctionIterator;
-import org.rumbledb.runtime.functions.input.UnparsedTextLinesFunctionIterator;
+import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
+import org.rumbledb.runtime.functions.io.UnparsedTextLinesFunctionIterator;
 import org.rumbledb.runtime.functions.input.XmlFilesFunctionIterator;
 import org.rumbledb.runtime.functions.io.CollectionFunctionIterator;
 import org.rumbledb.runtime.functions.io.DocAvailableFunctionIterator;
@@ -234,15 +235,15 @@ import org.rumbledb.runtime.functions.xml.ParseXMLFragmentFunctionIterator;
 import org.rumbledb.runtime.functions.xml.ParseXMLFunctionIterator;
 import org.rumbledb.runtime.functions.xml.PathFunctionIterator;
 import org.rumbledb.runtime.functions.xml.XMLToJsonFunctionIterator;
+import org.rumbledb.spark.ml.AnnotateFunctionIterator;
+import org.rumbledb.spark.ml.BinaryClassificationMetricsFunctionIterator;
+import org.rumbledb.spark.ml.GetEstimatorFunctionIterator;
+import org.rumbledb.spark.ml.GetTransformerFunctionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
-import sparksoniq.spark.ml.AnnotateFunctionIterator;
-import sparksoniq.spark.ml.BinaryClassificationMetricsFunctionIterator;
-import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
-import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -259,7 +260,7 @@ public class BuiltinFunctionCatalogue {
 
     private static FunctionIdentifier resolveIdentifierFallback(FunctionIdentifier identifier) {
         Name name = identifier.getName();
-        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
+        if (Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(name.getNamespace())) {
             FunctionIdentifier fn = new FunctionIdentifier(
                     new Name(Name.FN_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()
@@ -299,10 +300,6 @@ public class BuiltinFunctionCatalogue {
         return null;
     }
 
-    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
-        return getBuiltinFunction(identifier, null);
-    }
-
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return builtinFunctions.get(identifier);
@@ -331,10 +328,6 @@ public class BuiltinFunctionCatalogue {
             return builtinFunctions.get(resolved);
         }
         return null;
-    }
-
-    public static boolean exists(FunctionIdentifier identifier) {
-        return exists(identifier, null);
     }
 
     public static boolean exists(FunctionIdentifier identifier, String queryLanguage) {
@@ -803,14 +796,14 @@ public class BuiltinFunctionCatalogue {
         new Name(Name.JN_NS, "jn", "text-file"),
         List.of("string"),
         "item*",
-        UnparsedTextLinesFunctionIterator.class,
+        TextFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction text_file2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "text-file"),
         List.of("string", "integer?"),
         "item*",
-        UnparsedTextLinesFunctionIterator.class,
+        TextFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     /**
@@ -1056,14 +1049,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction min1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "min"),
-        List.of("item*"),
+        List.of("anyAtomicType*"),
         "anyAtomicType?",
         MinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction min2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "min"),
-        List.of("item*", "string"),
+        List.of("anyAtomicType*", "string"),
         "anyAtomicType?",
         MinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1073,14 +1066,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction max1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "max"),
-        List.of("item*"),
+        List.of("anyAtomicType*"),
         "anyAtomicType?",
         MaxFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction max2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "max"),
-        List.of("item*", "string"),
+        List.of("anyAtomicType*", "string"),
         "anyAtomicType?",
         MaxFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1090,7 +1083,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction avg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "avg"),
-        List.of("item*"),
+        List.of("anyAtomicType*"),
         "anyAtomicType?",
         AvgFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4087,16 +4080,16 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction innermost = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "innermost"),
-        List.of("item*"),
-        "item*",
+        List.of("node()*"),
+        "node()*",
         InnermostFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
     static final BuiltinFunction outermost = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "outermost"),
-        List.of("item*"),
-        "item*",
+        List.of("node()*"),
+        "node()*",
         OutermostFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );

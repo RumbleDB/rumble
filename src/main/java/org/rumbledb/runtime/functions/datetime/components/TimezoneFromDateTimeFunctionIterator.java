@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
+import java.io.Serial;
 import java.time.Duration;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -12,6 +13,7 @@ import java.util.List;
 
 public class TimezoneFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public TimezoneFromDateTimeFunctionIterator(
@@ -23,7 +25,7 @@ public class TimezoneFromDateTimeFunctionIterator extends AtMostOneItemLocalRunt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item dateTimeItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item dateTimeItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (dateTimeItem == null || !dateTimeItem.hasTimeZone()) {
             return null;
         }

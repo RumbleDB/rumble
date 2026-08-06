@@ -17,9 +17,11 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -35,10 +37,11 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
  */
 public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final List<RuntimeIterator> keys;
     private final List<RuntimeIterator> values;
-    private boolean mutable;
+    private final boolean mutable;
 
     public MapConstructorRuntimeIterator(
             List<RuntimeIterator> keys,
@@ -46,8 +49,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
-        super(keys, staticContext);
-        this.children.addAll(values);
+        super(Stream.concat(keys.stream(), values.stream()).toList(), staticContext);
         this.keys = keys;
         this.values = values;
         this.mutable = mutable;

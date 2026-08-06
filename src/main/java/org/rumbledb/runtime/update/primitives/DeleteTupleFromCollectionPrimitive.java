@@ -1,13 +1,13 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 import org.apache.spark.sql.SparkSession;
 
 
 public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
-    private Collection collection;
-    private double rowOrder;
+    private final Collection collection;
+    private final double rowOrder;
     @SuppressWarnings("unused")
     private ExceptionMetadata metadata;
 

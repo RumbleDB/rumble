@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -31,8 +32,11 @@ import java.util.List;
 
 public class ObjectConstructorExpression extends Expression {
 
+    @Getter
     private boolean isMergedConstructor = false;
+    @Getter
     private List<Expression> values;
+    @Getter
     private List<Expression> keys;
     private List<Boolean> isReferenced;
     private Expression childExpression;
@@ -55,18 +59,6 @@ public class ObjectConstructorExpression extends Expression {
         super(metadata);
         this.childExpression = expression;
         this.isMergedConstructor = true;
-    }
-
-    public List<Expression> getKeys() {
-        return this.keys;
-    }
-
-    public List<Expression> getValues() {
-        return this.values;
-    }
-
-    public boolean isMergedConstructor() {
-        return this.isMergedConstructor;
     }
 
     @Override

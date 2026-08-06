@@ -10,16 +10,18 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
@@ -146,14 +148,6 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.arrayIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.positionIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.arrayIterator.isOpen()) {
             this.arrayIterator.close();
@@ -177,7 +171,7 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
                 "array:get is currently supported only in local execution mode."
         );

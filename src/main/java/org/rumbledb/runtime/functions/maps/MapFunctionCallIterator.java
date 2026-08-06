@@ -23,12 +23,13 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,11 +40,12 @@ import java.util.Queue;
  */
 public class MapFunctionCallIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Item mapItem;
     private final RuntimeIterator keyIterator;
-    private Queue<Item> pendingResults;
+    private final Queue<Item> pendingResults;
 
     public MapFunctionCallIterator(
             Item mapItem,
@@ -112,16 +114,6 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.keyIterator != null) {
-            this.keyIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        this.pendingResults.clear();
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.keyIterator != null && this.keyIterator.isOpen()) {
             this.keyIterator.close();
@@ -140,7 +132,7 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("Map function calls are currently supported only in local execution mode.");
     }
 

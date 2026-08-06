@@ -1,5 +1,7 @@
 package org.rumbledb.expressions.update;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.*;
@@ -8,11 +10,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Getter
 public class TransformExpression extends Expression {
 
     private List<CopyDeclaration> copyDeclarations;
     private Expression modifyExpression;
     private Expression returnExpression;
+    @Setter
     private int mutabilityLevel;
 
     public TransformExpression(
@@ -31,23 +35,11 @@ public class TransformExpression extends Expression {
         this.mutabilityLevel = 0;
     }
 
-    public List<CopyDeclaration> getCopyDeclarations() {
-        return this.copyDeclarations;
-    }
-
     public List<Expression> getCopySourceExpressions() {
         return this.copyDeclarations.stream()
             .filter(Objects::nonNull)
             .map(CopyDeclaration::getSourceExpression)
             .collect(Collectors.toList());
-    }
-
-    public Expression getModifyExpression() {
-        return this.modifyExpression;
-    }
-
-    public Expression getReturnExpression() {
-        return this.returnExpression;
     }
 
     @Override
@@ -82,11 +74,4 @@ public class TransformExpression extends Expression {
         sb.append("\n");
     }
 
-    public int getMutabilityLevel() {
-        return this.mutabilityLevel;
-    }
-
-    public void setMutabilityLevel(int mutabilityLevel) {
-        this.mutabilityLevel = mutabilityLevel;
-    }
 }

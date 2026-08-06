@@ -20,11 +20,7 @@
 
 package org.rumbledb.items;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,43 +37,60 @@ import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
+import org.rumbledb.spark.ml.ApplyEstimatorRuntimeIterator;
+import org.rumbledb.spark.ml.ApplyTransformerRuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
-import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
-import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
-import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
-
 public class FunctionItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;
     private List<Name> parameterNames;
 
-    // signature contains type information for all parameters and the return value
+    /**
+     * Signature contains type information for all parameters and the return value
+     */
     private FunctionSignature signature;
-    private RuntimeIterator bodyIterator;
+
+    /**
+     * The body iterator is not serialized directly, but through the FunctionBodyIteratorFactory,
+     * which allows for creating new instances of the body iterator when needed.
+     */
+    private FunctionBodyIteratorFactory bodyIteratorFactory;
+
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
-    private Map<Name, JSoundDataFrame> dataFrameVariablesInClosure;
+    private Map<Name, HomogeneousItemDataFrame> dataFrameVariablesInClosure;
 
     /**
      * When true, this item was created for a builtin named function reference ({@code name#arity}).
      */
     private boolean isBuiltin;
 
-    protected FunctionItem() {
-        super();
+    /**
+     * Creates a new function value for a named-function lookup. The function body factory is immutable: ordinary
+     * bodies are created from its serialized snapshot and retained Spark ML bodies are intentionally shared. The
+     * closure maps, on the other hand, must be per value because lookup binds the current dynamic context into them.
+     * Their captured sequences and items can remain shared because lookup only adds or replaces map entries.
+     */
+    private FunctionItem(FunctionItem source) {
+        this.identifier = source.identifier;
+        this.parameterNames = source.parameterNames;
+        this.signature = source.signature;
+        this.bodyIteratorFactory = source.bodyIteratorFactory;
+        this.dynamicModuleContext = source.dynamicModuleContext;
+        this.localVariablesInClosure = new HashMap<>(source.localVariablesInClosure);
+        this.RDDVariablesInClosure = new HashMap<>(source.RDDVariablesInClosure);
+        this.dataFrameVariablesInClosure = new HashMap<>(source.dataFrameVariablesInClosure);
+        this.isBuiltin = source.isBuiltin;
     }
 
     public FunctionItem(
@@ -101,7 +114,7 @@ public class FunctionItem implements Item {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIterator = bodyIterator;
+        this.bodyIteratorFactory = createBodyIteratorFactory(bodyIterator);
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -117,7 +130,7 @@ public class FunctionItem implements Item {
             RuntimeIterator bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<Name, JSoundDataFrame> DFVariablesInClosure
+            Map<Name, HomogeneousItemDataFrame> DFVariablesInClosure
     ) {
         this(
             identifier,
@@ -140,13 +153,13 @@ public class FunctionItem implements Item {
             RuntimeIterator bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<Name, JSoundDataFrame> DFVariablesInClosure,
+            Map<Name, HomogeneousItemDataFrame> DFVariablesInClosure,
             boolean isBuiltin
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIterator = bodyIterator;
+        this.bodyIteratorFactory = createBodyIteratorFactory(bodyIterator);
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
@@ -184,7 +197,7 @@ public class FunctionItem implements Item {
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType, isUpdating);
-        this.bodyIterator = bodyIterator;
+        this.bodyIteratorFactory = createBodyIteratorFactory(bodyIterator);
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -212,30 +225,55 @@ public class FunctionItem implements Item {
         return this.signature;
     }
 
+    @Override
     public DynamicContext getModuleDynamicContext() {
         return this.dynamicModuleContext;
     }
 
+    @Override
     public RuntimeIterator getBodyIterator() {
-        return this.bodyIterator;
+        return this.bodyIteratorFactory.getPrototype();
     }
 
+    public RuntimeIterator createBodyIterator() {
+        return this.bodyIteratorFactory.createExecutionInstance();
+    }
+
+    /**
+     * Returns an independent function value without serializing its iterator tree.
+     *
+     * This is suitable for named-function lookup, which only extends the closure of the returned value. The closure
+     * maps are copied while immutable function metadata and the body factory are shared.
+     */
+    public FunctionItem copyForLookup() {
+        return new FunctionItem(this);
+    }
+
+    private static FunctionBodyIteratorFactory createBodyIteratorFactory(RuntimeIterator bodyIterator) {
+        boolean retainBody = bodyIterator instanceof ApplyEstimatorRuntimeIterator
+            || bodyIterator instanceof ApplyTransformerRuntimeIterator;
+        return new FunctionBodyIteratorFactory(bodyIterator, retainBody);
+    }
+
+    @Override
     public Map<Name, List<Item>> getLocalVariablesInClosure() {
         return this.localVariablesInClosure;
     }
 
+    @Override
     public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
         return this.RDDVariablesInClosure;
     }
 
-    public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
+    @Override
+    public Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
         return this.dataFrameVariablesInClosure;
     }
 
     @Override
     public boolean equals(Object other) {
-        // functions can not be compared
-        return false;
+        // XDM functions have no value equality, so Java collections use object identity.
+        return this == other;
     }
 
     @Override
@@ -268,7 +306,7 @@ public class FunctionItem implements Item {
             sb.append(param + " ");
         }
         sb.append("Signature: " + this.signature + "\n");
-        sb.append("Body:\n" + this.bodyIterator + "\n");
+        sb.append("Body:\n" + getBodyIterator() + "\n");
         sb.append("Closure:\n");
         sb.append("  Local:\n");
         for (Name name : this.localVariablesInClosure.keySet()) {
@@ -290,66 +328,7 @@ public class FunctionItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.identifier.hashCode()
-            + String.join("", this.parameterNames.toString()).hashCode()
-            + this.signature.hashCode();
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.identifier);
-        kryo.writeObject(output, this.parameterNames);
-        kryo.writeObject(output, this.signature.getParameterTypes());
-        kryo.writeObject(output, this.signature.getReturnType());
-        // kryo.writeObject(output, this.bodyIterator);
-        kryo.writeObject(output, this.localVariablesInClosure);
-        kryo.writeObject(output, this.RDDVariablesInClosure);
-        kryo.writeObject(output, this.dataFrameVariablesInClosure);
-        kryo.writeObject(output, this.dynamicModuleContext);
-
-        // convert RuntimeIterator to byte[] data
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(this.bodyIterator);
-            oos.flush();
-            byte[] data = bos.toByteArray();
-            output.writeInt(data.length);
-            output.writeBytes(data);
-        } catch (Exception e) {
-            throw new OurBadException(
-                    "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
-            );
-        }
-        output.writeBoolean(this.isBuiltin);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.identifier = kryo.readObject(input, FunctionIdentifier.class);
-        this.parameterNames = kryo.readObject(input, ArrayList.class);
-        List<SequenceType> parameters = kryo.readObject(input, ArrayList.class);
-        SequenceType returnType = kryo.readObject(input, SequenceType.class);
-        this.signature = new FunctionSignature(parameters, returnType);
-        // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
-        this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.dataFrameVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
-
-        try {
-            int dataLength = input.readInt();
-            byte[] data = input.readBytes(dataLength);
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            this.bodyIterator = (RuntimeIterator) ois.readObject();
-        } catch (Exception e) {
-            throw new OurBadException(
-                    "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
-            );
-        }
-        this.isBuiltin = input.readBoolean();
+        return System.identityHashCode(this);
     }
 
     @Override
@@ -358,22 +337,7 @@ public class FunctionItem implements Item {
     }
 
     public FunctionItem deepCopy() {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(this);
-            oos.flush();
-            byte[] data = bos.toByteArray();
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            return (FunctionItem) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            RumbleException rumbleException = new OurBadException(
-                    "Error while deep copying the function body runtimeIterator"
-            );
-            rumbleException.initCause(e);
-            throw rumbleException;
-        }
+        return new FunctionItem(this);
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
@@ -399,10 +363,11 @@ public class FunctionItem implements Item {
 
     @Override
     public boolean isEstimator() {
-        if (this.bodyIterator instanceof ApplyEstimatorRuntimeIterator) {
+        var bodyIterator = getBodyIterator();
+        if (bodyIterator instanceof ApplyEstimatorRuntimeIterator) {
             return true;
         }
-        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+        if (bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
             return coercionRuntimeIterator.getCallableItem().isEstimator();
         }
         return false;
@@ -410,10 +375,11 @@ public class FunctionItem implements Item {
 
     @Override
     public Estimator<?> getEstimator() {
-        if (this.bodyIterator instanceof ApplyEstimatorRuntimeIterator estimatorRuntimeIterator) {
+        var bodyIterator = getBodyIterator();
+        if (bodyIterator instanceof ApplyEstimatorRuntimeIterator estimatorRuntimeIterator) {
             return estimatorRuntimeIterator.getEstimator();
         }
-        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+        if (bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
             return coercionRuntimeIterator.getCallableItem().getEstimator();
         }
         throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
@@ -421,10 +387,11 @@ public class FunctionItem implements Item {
 
     @Override
     public boolean isTransformer() {
-        if (this.bodyIterator instanceof ApplyTransformerRuntimeIterator) {
+        var bodyIterator = getBodyIterator();
+        if (bodyIterator instanceof ApplyTransformerRuntimeIterator) {
             return true;
         }
-        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+        if (bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
             return coercionRuntimeIterator.getCallableItem().isTransformer();
         }
         return false;
@@ -432,18 +399,14 @@ public class FunctionItem implements Item {
 
     @Override
     public Transformer getTransformer() {
-        if (this.bodyIterator instanceof ApplyTransformerRuntimeIterator transformerRuntimeIterator) {
+        var bodyIterator = getBodyIterator();
+        if (bodyIterator instanceof ApplyTransformerRuntimeIterator transformerRuntimeIterator) {
             return transformerRuntimeIterator.getTransformer();
         }
-        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+        if (bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
             return coercionRuntimeIterator.getCallableItem().getTransformer();
         }
         throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
-    }
-
-
-    public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
-        this.dynamicModuleContext = dynamicModuleContext;
     }
 
     @Override
