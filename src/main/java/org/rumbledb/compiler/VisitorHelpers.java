@@ -162,11 +162,7 @@ public class VisitorHelpers {
                 .resolve(location, configuration, metadata)
         ) {
             String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8.name());
-            URI systemId = resource.getSystemId();
-            if (configuration.semantics().staticBaseUri() != null) {
-                systemId = resolveStaticBaseUri(configuration.semantics().staticBaseUri());
-            }
-            return new ModuleSource(query, systemId);
+            return new ModuleSource(query, resource.getSystemId());
         }
     }
 
@@ -243,12 +239,18 @@ public class VisitorHelpers {
     )
             throws IOException {
         ModuleSource source = readModuleSource(location, compilationConfiguration, metadata);
-        return parseLibraryModule(
+        LibraryModule libraryModule = parseLibraryModule(
             source.query(),
             source.systemId(),
             importingModuleContext,
             compilationConfiguration
         );
+        // Keep the requested absolute import location for diagnostics and spec-visible import behavior,
+        // but deduplicate module loading by the resolved resource identity when the implementation can
+        // determine that distinct import URIs refer to the same underlying resource.
+        libraryModule.setLocation(location.toString());
+        libraryModule.setModuleIdentity(source.systemId().toString());
+        return libraryModule;
     }
 
     public static MainModule parseMainModuleFromQuery(
@@ -491,6 +493,8 @@ public class VisitorHelpers {
             // TODO Handle module extras
             JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
+            libraryModule.setLocation(uri.toString());
+            libraryModule.setModuleIdentity(uri.toString());
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;
@@ -537,6 +541,8 @@ public class VisitorHelpers {
             // TODO Handle module extras
             XQueryParser.ModuleContext main = parser.module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
+            libraryModule.setLocation(uri.toString());
+            libraryModule.setModuleIdentity(uri.toString());
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;

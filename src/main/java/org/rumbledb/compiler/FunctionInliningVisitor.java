@@ -30,13 +30,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
-
-
 public class FunctionInliningVisitor extends CloneVisitor {
 
     private String queryLanguage;
 
+
+    private static FunctionDeclaration getDirectFunctionDeclaration(
+            Prolog prolog,
+            org.rumbledb.context.FunctionIdentifier functionIdentifier
+    ) {
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
+                return declaration;
+            }
+        }
+        return null;
+    }
 
     private boolean isVariableReferenced(Node expression, Name name) {
         if (expression instanceof VariableReferenceExpression variableReference) {
@@ -465,7 +474,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
     // 2. Contain an exit statement.
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
-        FunctionDeclaration targetFunction = getFunctionDeclarationFromProlog(
+        FunctionDeclaration targetFunction = getDirectFunctionDeclaration(
             (Prolog) argument,
             expression.getFunctionIdentifier()
         );
