@@ -20,7 +20,6 @@
 
 package org.rumbledb.spark;
 
-import org.apache.logging.log4j.Level;
 import lombok.extern.log4j.Log4j2;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
@@ -32,6 +31,7 @@ import org.apache.spark.sql.types.FloatType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.cli.LoggingConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -80,7 +80,6 @@ public class SparkSessionManager {
     private static final String APP_NAME = "Rumble application";
     private static final String DEFAULT_APP_NAME = "<none>";
     private static SparkSessionManager instance;
-    private static Level LOG_LEVEL = Level.OFF;
     private SparkConf configuration;
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
@@ -144,16 +143,6 @@ public class SparkSessionManager {
         return instance;
     }
 
-    public static void setLogLevel(Level level) {
-        LOG_LEVEL = level;
-        if (instance != null && instance.session != null) {
-            instance.session.sparkContext().setLogLevel(level.name());
-        }
-        if (instance != null && instance.configuration != null) {
-            instance.applySparkLogLevelToConfiguration();
-        }
-    }
-
     public SparkSession getOrCreateSession() {
         if (this.configuration == null) {
             setDefaultConfiguration();
@@ -184,7 +173,7 @@ public class SparkSessionManager {
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
-            applySparkLogLevelToConfiguration();
+            this.configuration.set("spark.log.level", LoggingConfiguration.getSparkLogLevel().name());
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(
                     "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
@@ -206,13 +195,10 @@ public class SparkSessionManager {
             initializeKryoSerialization();
 
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
+            org.rumbledb.cli.LoggingConfiguration.apply();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
-    }
-
-    private void applySparkLogLevelToConfiguration() {
-        this.configuration.set("spark.log.level", LOG_LEVEL.name());
     }
 
     private void initializeKryoSerialization() {

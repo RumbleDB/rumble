@@ -25,9 +25,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.spi.StandardLevel;
 import org.rumbledb.config.model.DebugConfig;
 import org.rumbledb.exceptions.CliException;
-import org.rumbledb.spark.SparkSessionManager;
 
-final class LoggingConfiguration {
+public final class LoggingConfiguration {
     private static final String LOGGER_NAME = "org.rumbledb";
     private static final Level DEFAULT_APPLICATION_LEVEL = Level.WARN;
     private static final Level DEFAULT_SPARK_LEVEL = Level.OFF;
@@ -39,12 +38,27 @@ final class LoggingConfiguration {
             .toList()
     );
 
+    private static DebugConfig currentDebugConfig = null;
+
     private LoggingConfiguration() {
     }
 
     static void configure(DebugConfig debugConfig) {
-        Configurator.setLevel(LOGGER_NAME, resolveApplicationLevel(debugConfig));
-        SparkSessionManager.setLogLevel(resolveSparkLevel(debugConfig));
+        currentDebugConfig = debugConfig;
+        apply();
+    }
+
+    public static void apply() {
+        if (currentDebugConfig == null) {
+            return;
+        }
+        Level appLevel = resolveApplicationLevel(currentDebugConfig);
+        Level sparkLevel = resolveSparkLevel(currentDebugConfig);
+
+        Configurator.setLevel(LOGGER_NAME, appLevel);
+        Configurator.setLevel("org.apache.spark", sparkLevel);
+        Configurator.setLevel("org.sparkproject", sparkLevel);
+        Configurator.setLevel("org.apache.hadoop", sparkLevel);
     }
 
     private static Level resolveApplicationLevel(DebugConfig debugConfig) {
@@ -59,6 +73,13 @@ final class LoggingConfiguration {
             return DEFAULT_SPARK_LEVEL;
         }
         return parseLevel(debugConfig.sparkLogLevel(), "--spark-log-level");
+    }
+
+    public static Level getSparkLogLevel() {
+        if (currentDebugConfig == null || isBlank(currentDebugConfig.sparkLogLevel())) {
+            return DEFAULT_SPARK_LEVEL;
+        }
+        return resolveSparkLevel(currentDebugConfig);
     }
 
     private static Level parseLevel(String rawLevel, String optionName) {
