@@ -22,12 +22,18 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
+import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
@@ -97,9 +103,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
     private final Map<String, StaticContext> importedModuleContexts;
+    private final Map<String, ModuleImportSurface> importedModuleSurfaces;
+    private final IdentityHashMap<StaticContext, Set<String>> importedModuleLocationsByContext;
 
     StaticContextVisitor() {
         this.importedModuleContexts = new HashMap<>();
+        this.importedModuleSurfaces = new HashMap<>();
+        this.importedModuleLocationsByContext = new IdentityHashMap<>();
     }
 
     @Override
@@ -129,25 +139,99 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
         this.importedModuleContexts.clear();
+        this.importedModuleSurfaces.clear();
+        this.importedModuleLocationsByContext.clear();
         StaticContext generatedContext = visitDescendants(mainModule, argument);
         return generatedContext;
     }
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
+        String moduleLocation = libraryModule.getModuleIdentityOrLocation();
+        if (!this.importedModuleContexts.containsKey(moduleLocation)) {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
-            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
+            this.importedModuleContexts.put(moduleLocation, moduleContext);
+            this.importedModuleSurfaces.put(
+                moduleLocation,
+                buildImportSurface(libraryModule.getProlog(), moduleContext)
+            );
         }
-        argument.importModuleContext(
-            this.importedModuleContexts.get(libraryModule.getNamespace())
+        Set<String> importedModuleLocations = this.importedModuleLocationsByContext.computeIfAbsent(
+            argument,
+            ignored -> new HashSet<>()
         );
+        if (importedModuleLocations.contains(moduleLocation)) {
+            return argument;
+        }
+        StaticContext importedContext = this.importedModuleContexts.get(moduleLocation);
+        ModuleImportSurface importedSurface = this.importedModuleSurfaces.get(moduleLocation);
+        for (ModuleImportSurface.ImportedVariableBinding binding : importedSurface.getVariableBindings().values()) {
+            Name variableName = binding.getName();
+            if (argument.hasVariableInScopeOnly(variableName)) {
+                throw new VariableAlreadyExistsException(variableName, libraryModule.getMetadata());
+            }
+        }
+        for (FunctionIdentifier functionIdentifier : importedSurface.getFunctionSignatures().keySet()) {
+            if (
+                BuiltinFunctionCatalogue.exists(functionIdentifier, argument.getQueryLanguage())
+                    || argument.hasFunctionSignatureInScopeOnly(functionIdentifier)
+            ) {
+                throw new DuplicateFunctionIdentifierException(functionIdentifier, libraryModule.getMetadata());
+            }
+        }
+        for (ModuleImportSurface.ImportedVariableBinding binding : importedSurface.getVariableBindings().values()) {
+            Name variableName = binding.getName();
+            argument.addVariable(
+                variableName,
+                binding.getSequenceType(),
+                binding.getMetadata(),
+                binding.isAssignable()
+            );
+            argument.setVariableStorageMode(
+                variableName,
+                binding.getStorageMode()
+            );
+        }
+        for (
+            Map.Entry<FunctionIdentifier, FunctionSignature> entry : importedSurface.getFunctionSignatures()
+                .entrySet()
+        ) {
+            argument.addFunctionSignature(
+                entry.getKey(),
+                entry.getValue()
+            );
+        }
+        importedModuleLocations.add(moduleLocation);
         argument.getInScopeSchemaTypes()
             .importModuleTypes(
-                this.importedModuleContexts.get(libraryModule.getNamespace()).getInScopeSchemaTypes()
+                importedContext.getInScopeSchemaTypes()
             );
         return argument;
+    }
+
+    private static ModuleImportSurface buildImportSurface(Prolog prolog, StaticContext moduleContext) {
+        ModuleImportSurface surface = new ModuleImportSurface();
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            Name variableName = declaration.getVariableName();
+            surface.addVariableBinding(
+                new ModuleImportSurface.ImportedVariableBinding(
+                        variableName,
+                        moduleContext.getVariableSequenceType(variableName),
+                        moduleContext.getVariableMetadata(variableName),
+                        moduleContext.getVariableStorageMode(variableName),
+                        moduleContext.getIsAssignable(variableName)
+                )
+            );
+        }
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            FunctionIdentifier functionIdentifier = declaration.getFunctionIdentifier();
+            surface.addFunctionSignature(
+                functionIdentifier,
+                moduleContext.getFunctionSignature(functionIdentifier)
+            );
+        }
+        return surface;
     }
 
     // region primary
@@ -194,6 +278,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         populateFunctionDeclarationStaticContext(functionDeclarationContext, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
+        if (
+            BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), argument.getQueryLanguage())
+                || argument.hasFunctionSignatureInScopeOnly(expression.getFunctionIdentifier())
+        ) {
+            throw new DuplicateFunctionIdentifierException(
+                    expression.getFunctionIdentifier(),
+                    declaration.getMetadata()
+            );
+        }
         argument.addFunctionSignature(
             expression.getFunctionIdentifier(),
             new FunctionSignature(
@@ -432,7 +525,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (variableDeclaration.getExpression() != null) {
             this.visit(variableDeclaration.getExpression(), argument);
         }
-        // first pass.
+        if (argument.hasVariableInScopeOnly(variableDeclaration.getVariableName())) {
+            throw new VariableAlreadyExistsException(
+                    variableDeclaration.getVariableName(),
+                    variableDeclaration.getMetadata()
+            );
+        }
         argument.addVariable(
             variableDeclaration.getVariableName(),
             variableDeclaration.getActualSequenceType(),

@@ -282,6 +282,10 @@ public class StaticContext {
         return getInScopeVariable(varName).getSequenceType();
     }
 
+    public ExceptionMetadata getVariableMetadata(Name varName) {
+        return getInScopeVariable(varName).getMetadata();
+    }
+
     public ExecutionMode getVariableStorageMode(Name varName) {
         return getInScopeVariable(varName).getStorageMode();
     }
@@ -315,6 +319,22 @@ public class StaticContext {
 
     public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
         this.staticallyKnownFunctionSignatures.put(identifier, signature);
+    }
+
+    public boolean hasFunctionSignatureInScopeOnly(FunctionIdentifier identifier) {
+        return this.staticallyKnownFunctionSignatures.containsKey(identifier);
+    }
+
+    public Map<Name, InScopeVariable> getInScopeVariables() {
+        return this.inScopeVariables;
+    }
+
+    public Map<FunctionIdentifier, FunctionSignature> getStaticallyKnownFunctionSignatures() {
+        return this.staticallyKnownFunctionSignatures;
+    }
+
+    public void show() {
+        System.err.println(this);
     }
 
     @Override
@@ -508,17 +528,6 @@ public class StaticContext {
             return lexicalQName;
         }
         return "Q{" + namespace + "}" + localName;
-    }
-
-    public void importModuleContext(StaticContext moduleContext) {
-        for (Name name : moduleContext.inScopeVariables.keySet()) {
-            InScopeVariable variable = moduleContext.inScopeVariables.get(name);
-            this.inScopeVariables.put(name, variable);
-        }
-        for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
-            FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
-            this.staticallyKnownFunctionSignatures.put(fi, signature);
-        }
     }
 
     public void setUserDefinedFunctionsExecutionModes(

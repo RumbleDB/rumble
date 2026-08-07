@@ -39,6 +39,12 @@ public class LibraryModule extends Module {
     private final String namespace;
     @Getter
     private final Prolog prolog;
+    @Getter
+    @Setter
+    private String location;
+    @Getter
+    @Setter
+    private String moduleIdentity;
 
     public LibraryModule(Prolog prolog, String namespace, ExceptionMetadata metadata) {
         super(metadata);
@@ -84,5 +90,8 @@ public class LibraryModule extends Module {
         sb.append("module namespace " + this.namespace + ";\n");
         this.prolog.serializeToJSONiq(sb, indent);
     }
-}
 
+    public String getModuleIdentityOrLocation() {
+        return this.moduleIdentity != null ? this.moduleIdentity : this.location;
+    }
+}
