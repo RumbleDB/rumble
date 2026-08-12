@@ -129,6 +129,9 @@ public class ParseIETFDateFunctionIterator extends AbstractAtMostOneItemRuntimeP
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item inputItem = this.getChild(0).materializeFirstOrNull(context);
+        if (inputItem == null) {
+            return null;
+        }
         String lexicalValue = inputItem.getStringValue();
         try {
             ParsedDateTime parsedValue = parseIetfDate(lexicalValue);
