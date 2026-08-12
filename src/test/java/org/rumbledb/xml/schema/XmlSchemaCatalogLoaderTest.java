@@ -37,6 +37,7 @@ import org.rumbledb.context.InScopeSchemaTypes;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.SchemaImportException;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -111,6 +112,11 @@ public class XmlSchemaCatalogLoaderTest {
                           </xs:restriction>
                         </xs:simpleType>
                         <xs:complexType name="Record"/>
+                        <xs:element name="AnonymousValue">
+                          <xs:simpleType>
+                            <xs:restriction base="xs:string"/>
+                          </xs:simpleType>
+                        </xs:element>
                         """));
 
         MainModule module = compile(
@@ -123,6 +129,7 @@ public class XmlSchemaCatalogLoaderTest {
         Name restrictedCodeName = new Name(NAMESPACE, "t", "RestrictedCode");
         Name codesName = new Name(NAMESPACE, "t", "Codes");
         Name unionName = new Name(NAMESPACE, "t", "CodeOrInteger");
+        Name recordName = new Name(NAMESPACE, "t", "Record");
         ItemType code = inScopeTypes.getInScopeSchemaType(codeName);
         ItemType restrictedCode = inScopeTypes.getInScopeSchemaType(restrictedCodeName);
         ItemType union = inScopeTypes.getInScopeSchemaType(unionName);
@@ -131,6 +138,11 @@ public class XmlSchemaCatalogLoaderTest {
                 catalog.getTypeDefinition(restrictedCodeName).orElseThrow();
         XSTypeDefinition codesDefinition = catalog.getTypeDefinition(codesName).orElseThrow();
         XSTypeDefinition unionDefinition = catalog.getTypeDefinition(unionName).orElseThrow();
+        XSTypeDefinition recordDefinition =
+                catalog.getTypeDefinition(recordName).orElseThrow();
+        XSTypeDefinition anonymousDefinition = catalog.getSchemaModel()
+                .getElementDeclaration("AnonymousValue", NAMESPACE)
+                .getTypeDefinition();
 
         Assertions.assertEquals(BuiltinTypesCatalogue.stringItem, code.getBaseType());
         Assertions.assertEquals(code, restrictedCode.getBaseType());
@@ -147,10 +159,21 @@ public class XmlSchemaCatalogLoaderTest {
         Assertions.assertSame(
                 union, catalog.getGeneralizedAtomicItemType(unionDefinition).orElseThrow());
         Assertions.assertSame(code, catalog.getListItemType(codesDefinition).orElseThrow());
+        XmlSchemaTypeAnnotation listAnnotation = catalog.getTypeAnnotation(codesDefinition);
+        Assertions.assertEquals(codesName, listAnnotation.name());
+        Assertions.assertTrue(listAnnotation.isDerivedFrom(new Name(Name.XS_NS, "xs", "anySimpleType")));
+        Assertions.assertTrue(
+                catalog.getTypeAnnotation(recordDefinition).isDerivedFrom(new Name(Name.XS_NS, "xs", "anyType")));
+        XmlSchemaTypeAnnotation anonymousAnnotation = catalog.getTypeAnnotation(anonymousDefinition);
+        Assertions.assertSame(anonymousAnnotation, catalog.getTypeAnnotation(anonymousDefinition));
+        Assertions.assertEquals(
+                "http://rumbledb.org/anonymous-schema-types",
+                anonymousAnnotation.name().getNamespace());
+        Assertions.assertTrue(anonymousAnnotation.isDerivedFrom(BuiltinTypesCatalogue.stringItem.getName()));
         Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(codesName));
         Assertions.assertFalse(
                 inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "RestrictedCodeOrInteger")));
-        Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "Record")));
+        Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(recordName));
     }
 
     @Test

@@ -24,7 +24,7 @@ public class AttributeItem extends AbstractNodeItem {
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
-    private ItemType typeAnnotation;
+    private XmlSchemaTypeAnnotation typeAnnotation;
     private NodeTypedValue nodeTypedValue;
     // TODO: add is-id, is-idrefs
 
@@ -228,14 +228,14 @@ public class AttributeItem extends AbstractNodeItem {
      */
     @Override
     public List<Item> typeName() {
-        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+        if (this.typeAnnotation == null) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName()));
+        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.name()));
     }
 
     @Override
-    public void setSchemaType(ItemType typeAnnotation) {
+    public void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation) {
         if (typeAnnotation == null) {
             clearSchemaType();
             return;
@@ -244,7 +244,7 @@ public class AttributeItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(ItemType typeAnnotation, List<Item> typedValue) {
+    public void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
         if (typeAnnotation == null) {
             throw new IllegalArgumentException("A schema type annotation cannot be null.");
         }
@@ -260,7 +260,7 @@ public class AttributeItem extends AbstractNodeItem {
     }
 
     @Override
-    public ItemType getSchemaType() {
+    public XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
         return this.typeAnnotation;
     }
 }

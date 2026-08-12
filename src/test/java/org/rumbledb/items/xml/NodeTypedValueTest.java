@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.TypedValueUnavailableException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.BuiltinTypeValidator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
 public class NodeTypedValueTest {
 
@@ -52,24 +53,29 @@ public class NodeTypedValueTest {
     public void annotatedElementReturnsStoredTypedValueWithoutRecastingItsLexicalValue() {
         Item element = createElement("0042");
         Item integer = FACTORY.createIntegerItem("42");
-        element.setSchemaType(BuiltinTypesCatalogue.integerItem, List.of(integer));
+        XmlSchemaTypeAnnotation annotation = annotation(BuiltinTypesCatalogue.integerItem);
+        element.setSchemaType(annotation, List.of(integer));
 
         List<Item> typedValue = element.typedValue();
 
         Assertions.assertEquals(1, typedValue.size());
         Assertions.assertSame(integer, typedValue.get(0));
-        Assertions.assertEquals(BuiltinTypesCatalogue.integerItem, element.getSchemaType());
+        Assertions.assertEquals(annotation, element.getSchemaTypeAnnotation());
+        Assertions.assertEquals(
+                BuiltinTypesCatalogue.integerItem.getName(),
+                element.typeName().get(0).getQNameValue());
     }
 
     @Test
     public void nodeCopyPreservesItsSchemaAnnotationAndTypedValue() {
         Item element = createElement("0042");
         Item integer = FACTORY.createIntegerItem("42");
-        element.setSchemaType(BuiltinTypesCatalogue.integerItem, List.of(integer));
+        XmlSchemaTypeAnnotation annotation = annotation(BuiltinTypesCatalogue.integerItem);
+        element.setSchemaType(annotation, List.of(integer));
 
         Item copy = element.copy(false);
 
-        Assertions.assertEquals(BuiltinTypesCatalogue.integerItem, copy.getSchemaType());
+        Assertions.assertSame(annotation, copy.getSchemaTypeAnnotation());
         Assertions.assertSame(integer, copy.typedValue().get(0));
     }
 
@@ -92,7 +98,7 @@ public class NodeTypedValueTest {
     @Test
     public void unavailableTypedValueRaisesFoty0012() {
         Item element = createElement("content");
-        element.setSchemaType(BuiltinTypesCatalogue.stringItem);
+        element.setSchemaType(annotation(BuiltinTypesCatalogue.stringItem));
 
         TypedValueUnavailableException exception =
                 Assertions.assertThrows(TypedValueUnavailableException.class, element::atomizedValue);
@@ -103,11 +109,11 @@ public class NodeTypedValueTest {
     @Test
     public void clearingSchemaTypeRestoresUntypedBehavior() {
         Item element = createElement("42");
-        element.setSchemaType(BuiltinTypesCatalogue.integerItem, List.of(FACTORY.createIntegerItem("42")));
+        element.setSchemaType(annotation(BuiltinTypesCatalogue.integerItem), List.of(FACTORY.createIntegerItem("42")));
 
         element.clearSchemaType();
 
-        Assertions.assertNull(element.getSchemaType());
+        Assertions.assertNull(element.getSchemaTypeAnnotation());
         Assertions.assertTrue(element.typeName().isEmpty());
         Assertions.assertTrue(element.typedValue().get(0).isUntypedAtomic());
     }
@@ -117,13 +123,14 @@ public class NodeTypedValueTest {
         Item first = FACTORY.createStringItem("first");
         Item second = FACTORY.createStringItem("second");
         Item element = createElement("first second");
-        element.setSchemaType(BuiltinTypesCatalogue.stringItem, List.of(first, second));
+        XmlSchemaTypeAnnotation stringAnnotation = annotation(BuiltinTypesCatalogue.stringItem);
+        element.setSchemaType(stringAnnotation, List.of(first, second));
 
         Assertions.assertEquals(List.of(first, second), element.typedValue());
         Assertions.assertThrows(
                 UnsupportedOperationException.class, () -> element.typedValue().add(FACTORY.createStringItem("third")));
 
-        element.setSchemaType(BuiltinTypesCatalogue.stringItem, Collections.emptyList());
+        element.setSchemaType(stringAnnotation, Collections.emptyList());
         Assertions.assertTrue(element.typedValue().isEmpty());
     }
 
@@ -138,13 +145,15 @@ public class NodeTypedValueTest {
     public void rejectedTypedValueDoesNotPartiallyChangeTheNode() {
         Item element = createElement("42");
         Item integer = FACTORY.createIntegerItem("42");
-        element.setSchemaType(BuiltinTypesCatalogue.integerItem, List.of(integer));
+        XmlSchemaTypeAnnotation integerAnnotation = annotation(BuiltinTypesCatalogue.integerItem);
+        element.setSchemaType(integerAnnotation, List.of(integer));
 
         Assertions.assertThrows(
                 OurBadException.class,
-                () -> element.setSchemaType(BuiltinTypesCatalogue.stringItem, List.of(createElement("invalid"))));
+                () -> element.setSchemaType(
+                        annotation(BuiltinTypesCatalogue.stringItem), List.of(createElement("invalid"))));
 
-        Assertions.assertEquals(BuiltinTypesCatalogue.integerItem, element.getSchemaType());
+        Assertions.assertSame(integerAnnotation, element.getSchemaTypeAnnotation());
         Assertions.assertSame(integer, element.typedValue().get(0));
     }
 
@@ -152,13 +161,31 @@ public class NodeTypedValueTest {
     public void attributeRequiresAndStoresAnAvailableTypedValue() {
         Item attribute = FACTORY.createXmlAttributeNode(new Name("", "", "count"), "42");
         Item integer = FACTORY.createIntegerItem("42");
+        XmlSchemaTypeAnnotation integerAnnotation = annotation(BuiltinTypesCatalogue.integerItem);
 
-        Assertions.assertThrows(
-                OurBadException.class, () -> attribute.setSchemaType(BuiltinTypesCatalogue.integerItem));
-        attribute.setSchemaType(BuiltinTypesCatalogue.integerItem, List.of(integer));
+        Assertions.assertThrows(OurBadException.class, () -> attribute.setSchemaType(integerAnnotation));
+        attribute.setSchemaType(integerAnnotation, List.of(integer));
 
+        Assertions.assertSame(integerAnnotation, attribute.getSchemaTypeAnnotation());
         Assertions.assertSame(integer, attribute.typedValue().get(0));
         Assertions.assertSame(integer, attribute.copy(false).typedValue().get(0));
+    }
+
+    @Test
+    public void atomicAnnotationsRetainTheirNamedSchemaHierarchy() {
+        XmlSchemaTypeAnnotation annotation = annotation(BuiltinTypesCatalogue.positiveIntegerItem);
+
+        Assertions.assertTrue(annotation.isDerivedFrom(BuiltinTypesCatalogue.positiveIntegerItem.getName()));
+        Assertions.assertTrue(annotation.isDerivedFrom(BuiltinTypesCatalogue.integerItem.getName()));
+        Assertions.assertTrue(annotation.isDerivedFrom(BuiltinTypesCatalogue.decimalItem.getName()));
+        Assertions.assertTrue(annotation.isDerivedFrom(BuiltinTypesCatalogue.atomicItem.getName()));
+        Assertions.assertThrows(
+                UnsupportedOperationException.class,
+                () -> annotation.typeHierarchy().add(BuiltinTypesCatalogue.stringItem.getName()));
+    }
+
+    private static XmlSchemaTypeAnnotation annotation(ItemType itemType) {
+        return XmlSchemaTypeAnnotation.forAtomicItemType(itemType);
     }
 
     private static Item createElement(String value) {
