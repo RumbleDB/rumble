@@ -23,20 +23,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import lombok.Value;
+import lombok.experimental.Accessors;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.types.ItemType;
 
 /** The XML Schema type assigned to an element or attribute node. */
-public record XmlSchemaTypeAnnotation(Name name, List<Name> typeHierarchy) implements Serializable {
+@Value
+@Accessors(fluent = true)
+public class XmlSchemaTypeAnnotation implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public XmlSchemaTypeAnnotation {
-        Objects.requireNonNull(name, "A schema type annotation must have a name.");
-        Objects.requireNonNull(typeHierarchy, "A schema type hierarchy cannot be null.");
-        typeHierarchy = List.copyOf(typeHierarchy);
-        if (typeHierarchy.isEmpty() || !name.equals(typeHierarchy.get(0))) {
+    Name name;
+    List<Name> typeHierarchy;
+
+    public XmlSchemaTypeAnnotation(Name name, List<Name> typeHierarchy) {
+        this.name = Objects.requireNonNull(name, "A schema type annotation must have a name.");
+        this.typeHierarchy =
+                List.copyOf(Objects.requireNonNull(typeHierarchy, "A schema type hierarchy cannot be null."));
+        if (this.typeHierarchy.isEmpty() || !this.name.equals(this.typeHierarchy.get(0))) {
             throw new IllegalArgumentException("A schema type hierarchy must start with the annotated type.");
         }
     }
