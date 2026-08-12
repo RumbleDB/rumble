@@ -25,6 +25,7 @@ import java.time.*;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -122,13 +123,20 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
         if (right == null) {
             return null;
         }
-        return applyComparison(left, right, this.comparisonOperator, getMetadata());
+        return applyComparison(
+            left,
+            right,
+            this.comparisonOperator,
+            getRuntimeStaticContext().getDefaultCollation(),
+            getMetadata()
+        );
     }
 
     private static Item applyComparison(
             Item left,
             Item right,
             ComparisonOperator operator,
+            String activeCollation,
             ExceptionMetadata metadata
     ) {
         if (left.isArray() || right.isArray()) {
@@ -161,6 +169,20 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
 
         if (!left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", metadata);
+        }
+
+        if (
+            !Name.DEFAULT_COLLATION_NS.equals(activeCollation)
+                && CollationSupport.isStringCollationType(left)
+                && CollationSupport.isStringCollationType(right)
+        ) {
+            int comparison = CollationSupport.compareStrings(
+                left.getStringValue(),
+                right.getStringValue(),
+                activeCollation,
+                metadata
+            );
+            return comparisonResultToBooleanItem(comparison, operator, metadata);
         }
 
         long comparison = compareItems(left, right, operator, metadata);
