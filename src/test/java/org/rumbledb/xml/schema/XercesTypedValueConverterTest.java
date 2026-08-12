@@ -19,6 +19,9 @@ package org.rumbledb.xml.schema;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -31,17 +34,24 @@ import org.apache.xerces.impl.xs.SchemaGrammar;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.module.SchemaImport;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 public class XercesTypedValueConverterTest {
 
     private static final XercesBuiltinAtomicTypeMapper TYPE_MAPPER = new XercesBuiltinAtomicTypeMapper();
-    private static final XercesTypedValueConverter CONVERTER = new XercesTypedValueConverter();
+    private static final XercesTypedValueConverter CONVERTER = new XercesTypedValueConverter(new XmlSchemaTypeMapper());
 
     @Test
     public void mapsBuiltInAtomicTypesByExpandedName() {
@@ -157,6 +167,59 @@ public class XercesTypedValueConverterTest {
         Assertions.assertThrows(OurBadException.class, () -> CONVERTER.convert(notation));
     }
 
+    @Test
+    public void convertsImportedAtomicRestrictionsWithTheCatalogType(@TempDir Path directory) throws Exception {
+        XmlSchemaCatalog catalog = loadCatalog(directory);
+        XSSimpleType codeSchemaType = schemaType(catalog, "Code");
+        ItemType codeItemType = catalog.getAtomicItemType(codeSchemaType).orElseThrow();
+
+        List<Item> result = catalog.convertTypedValue(validate(codeSchemaType, "  ABC  ", Map.of()));
+
+        Assertions.assertEquals(1, result.size());
+        Assertions.assertEquals("ABC", result.get(0).getStringValue());
+        Assertions.assertSame(codeItemType, result.get(0).getDynamicType());
+    }
+
+    @Test
+    public void convertsUnionValuesUsingTheSelectedAtomicMember(@TempDir Path directory) throws Exception {
+        XmlSchemaCatalog catalog = loadCatalog(directory);
+        XSSimpleType unionType = schemaType(catalog, "IntegerOrCode");
+        ItemType codeItemType =
+                catalog.getAtomicItemType(schemaType(catalog, "Code")).orElseThrow();
+
+        Item integer =
+                catalog.convertTypedValue(validate(unionType, "42", Map.of())).get(0);
+        Item code =
+                catalog.convertTypedValue(validate(unionType, "ABC", Map.of())).get(0);
+
+        Assertions.assertEquals(BigInteger.valueOf(42), integer.getIntegerValue());
+        Assertions.assertSame(BuiltinTypesCatalogue.integerItem, integer.getDynamicType());
+        Assertions.assertEquals("ABC", code.getStringValue());
+        Assertions.assertSame(codeItemType, code.getDynamicType());
+    }
+
+    @Test
+    public void convertsListsToAtomicSequencesIncludingUnionQNames(@TempDir Path directory) throws Exception {
+        XmlSchemaCatalog catalog = loadCatalog(directory);
+
+        List<Item> integers =
+                catalog.convertTypedValue(validate(schemaType(catalog, "Integers"), " 1  02 3 ", Map.of()));
+        List<Item> mixed = catalog.convertTypedValue(
+                validate(schemaType(catalog, "IntegersOrQNames"), "1 p:value 2", Map.of("p", "urn:values")));
+
+        Assertions.assertEquals(
+                List.of(BigInteger.ONE, BigInteger.valueOf(2), BigInteger.valueOf(3)),
+                integers.stream().map(Item::getIntegerValue).toList());
+        Assertions.assertThrows(
+                UnsupportedOperationException.class,
+                () -> integers.add(ItemFactory.getInstance().createIntegerItem("4")));
+        Assertions.assertEquals(BigInteger.ONE, mixed.get(0).getIntegerValue());
+        Assertions.assertEquals(
+                new Name("urn:values", "p", "value"), mixed.get(1).getQNameValue());
+        Assertions.assertSame(BuiltinTypesCatalogue.QNameItem, mixed.get(1).getDynamicType());
+        Assertions.assertEquals(BigInteger.valueOf(2), mixed.get(2).getIntegerValue());
+    }
+
     private static Item convert(String typeName, String lexicalValue, Map<String, String> namespaces) throws Exception {
         XSSimpleType schemaType = builtinType(typeName);
         List<Item> result = CONVERTER.convert(validate(schemaType, lexicalValue, namespaces));
@@ -179,6 +242,56 @@ public class XercesTypedValueConverterTest {
     private static XSSimpleType builtinType(String name) {
         XSTypeDefinition type = SchemaGrammar.SG_SchemaNS.getGlobalTypeDecl(name);
         return Assertions.assertInstanceOf(XSSimpleType.class, type);
+    }
+
+    private static XSSimpleType schemaType(XmlSchemaCatalog catalog, String name) {
+        XSTypeDefinition type =
+                catalog.getTypeDefinition(new Name("urn:test", "t", name)).orElseThrow();
+        return Assertions.assertInstanceOf(XSSimpleType.class, type);
+    }
+
+    private static XmlSchemaCatalog loadCatalog(Path directory) throws Exception {
+        Files.writeString(
+                directory.resolve("types.xsd"),
+                """
+                    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                               xmlns:t="urn:test"
+                               targetNamespace="urn:test">
+                      <xs:simpleType name="Code">
+                        <xs:restriction base="xs:token">
+                          <xs:pattern value="[A-Z]+"/>
+                        </xs:restriction>
+                      </xs:simpleType>
+                      <xs:simpleType name="IntegerOrCode">
+                        <xs:union memberTypes="xs:integer t:Code"/>
+                      </xs:simpleType>
+                      <xs:simpleType name="Integers">
+                        <xs:list itemType="xs:integer"/>
+                      </xs:simpleType>
+                      <xs:simpleType name="IntegerOrQName">
+                        <xs:union memberTypes="xs:integer xs:QName"/>
+                      </xs:simpleType>
+                      <xs:simpleType name="IntegersOrQNames">
+                        <xs:list itemType="t:IntegerOrQName"/>
+                      </xs:simpleType>
+                    </xs:schema>
+                    """);
+
+        RumbleConfiguration configuration = RumbleConfiguration.builder()
+                .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+                .build();
+        SchemaImport schemaImport = new SchemaImport(
+                "urn:test",
+                SchemaImport.BindingKind.PREFIX,
+                "t",
+                List.of("types.xsd"),
+                ExceptionMetadata.EMPTY_METADATA);
+        URI baseUri = directory.resolve("query.xq").toUri();
+        return XmlSchemaCatalogLoader.load(
+                        List.of(schemaImport),
+                        baseUri,
+                        new CompilationConfiguration(configuration, new ResourceResolver()))
+                .orElseThrow();
     }
 
     private record TestValidationContext(Map<String, String> namespaces) implements ValidationContext {

@@ -27,7 +27,9 @@ import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
+import org.apache.xerces.xs.XSValue;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -38,10 +40,12 @@ public final class XmlSchemaCatalog {
 
     private final XSModel schemaModel;
     private final XmlSchemaTypeMapper typeMapper;
+    private final XercesTypedValueConverter typedValueConverter;
 
     XmlSchemaCatalog(XSModel schemaModel) {
         this.schemaModel = Objects.requireNonNull(schemaModel, "schemaModel must not be null");
         this.typeMapper = new XmlSchemaTypeMapper();
+        this.typedValueConverter = new XercesTypedValueConverter(this.typeMapper);
     }
 
     public Optional<XSTypeDefinition> getTypeDefinition(Name name) {
@@ -86,6 +90,10 @@ public final class XmlSchemaCatalog {
 
     XmlSchemaTypeAnnotation getTypeAnnotation(XSTypeDefinition schemaType) {
         return this.typeMapper.mapTypeAnnotation(schemaType);
+    }
+
+    List<Item> convertTypedValue(XSValue schemaValue) {
+        return this.typedValueConverter.convert(schemaValue);
     }
 
     XSModel getSchemaModel() {
