@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
@@ -32,19 +33,24 @@ import org.apache.xerces.xs.XSTypeDefinition;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
-/** Maps Xerces simple types to the generalized atomic types used by XQuery. */
-final class XmlSchemaSimpleTypeMapper {
+/** Maps Xerces type definitions to Rumble's query types and node annotations. */
+final class XmlSchemaTypeMapper {
+
+    private static final String ANONYMOUS_TYPE_NAMESPACE = "http://rumbledb.org/anonymous-schema-types";
 
     private final XercesBuiltinAtomicTypeMapper builtinTypeMapper;
     private final Map<XSTypeDefinition, Optional<ItemType>> mappedTypes;
+    private final Map<XSTypeDefinition, XmlSchemaTypeAnnotation> mappedAnnotations;
     private final Set<XSTypeDefinition> typesBeingMapped;
 
-    XmlSchemaSimpleTypeMapper() {
+    XmlSchemaTypeMapper() {
         this.builtinTypeMapper = new XercesBuiltinAtomicTypeMapper();
         this.mappedTypes = new IdentityHashMap<>();
+        this.mappedAnnotations = new IdentityHashMap<>();
         this.typesBeingMapped = Collections.newSetFromMap(new IdentityHashMap<>());
     }
 
@@ -68,6 +74,13 @@ final class XmlSchemaSimpleTypeMapper {
         }
         this.mappedTypes.put(schemaType, result);
         return result;
+    }
+
+    XmlSchemaTypeAnnotation mapTypeAnnotation(XSTypeDefinition schemaType) {
+        if (schemaType == null) {
+            throw new OurBadException("A Xerces schema type definition cannot be null.");
+        }
+        return this.mappedAnnotations.computeIfAbsent(schemaType, this::createTypeAnnotation);
     }
 
     Optional<ItemType> getListItemType(XSTypeDefinition schemaType) {
@@ -117,6 +130,34 @@ final class XmlSchemaSimpleTypeMapper {
         return Optional.of(new ArrayList<>(memberTypes));
     }
 
+    private XmlSchemaTypeAnnotation createTypeAnnotation(XSTypeDefinition schemaType) {
+        Name name = declaredNameOf(schemaType);
+        if (name == null) {
+            name = new Name(ANONYMOUS_TYPE_NAMESPACE, null, "anonymousType-" + UUID.randomUUID());
+        }
+
+        List<Name> hierarchy = new ArrayList<>();
+        hierarchy.add(name);
+        XSTypeDefinition current = schemaType;
+        while (current != null) {
+            XSTypeDefinition baseType = current.getBaseType();
+            if (baseType == null || baseType == current) {
+                break;
+            }
+            Name baseName = declaredNameOf(baseType);
+            if (baseName != null && !hierarchy.contains(baseName)) {
+                hierarchy.add(baseName);
+            }
+            current = baseType;
+        }
+        if (schemaType instanceof XSSimpleTypeDefinition simpleType
+                && simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_ATOMIC) {
+            insertBefore(hierarchy, xsName("anyAtomicType"), xsName("anySimpleType"));
+        }
+        addIfAbsent(hierarchy, xsName("anyType"));
+        return new XmlSchemaTypeAnnotation(name, hierarchy);
+    }
+
     private static boolean isPureUnion(XSSimpleTypeDefinition unionType) {
         // Xerces reports the fixed whitespace facet on a direct union even though it is not a restriction.
         short constrainingFacets = (short) (unionType.getDefinedFacets() & ~XSSimpleTypeDefinition.FACET_WHITESPACE);
@@ -138,7 +179,26 @@ final class XmlSchemaSimpleTypeMapper {
         if (schemaType.getAnonymous() || schemaType.getName() == null) {
             return null;
         }
-        return new Name(emptyToNull(schemaType.getNamespace()), null, schemaType.getName());
+        String namespace = emptyToNull(schemaType.getNamespace());
+        return new Name(namespace, Name.XS_NS.equals(namespace) ? "xs" : null, schemaType.getName());
+    }
+
+    private static void insertBefore(List<Name> names, Name name, Name successor) {
+        if (names.contains(name)) {
+            return;
+        }
+        int successorIndex = names.indexOf(successor);
+        names.add(successorIndex < 0 ? names.size() : successorIndex, name);
+    }
+
+    private static void addIfAbsent(List<Name> names, Name name) {
+        if (!names.contains(name)) {
+            names.add(name);
+        }
+    }
+
+    private static Name xsName(String localName) {
+        return new Name(Name.XS_NS, "xs", localName);
     }
 
     private static String emptyToNull(String value) {

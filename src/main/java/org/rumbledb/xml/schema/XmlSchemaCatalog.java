@@ -29,6 +29,7 @@ import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -36,11 +37,11 @@ import org.rumbledb.types.ItemType;
 public final class XmlSchemaCatalog {
 
     private final XSModel schemaModel;
-    private final XmlSchemaSimpleTypeMapper simpleTypeMapper;
+    private final XmlSchemaTypeMapper typeMapper;
 
     XmlSchemaCatalog(XSModel schemaModel) {
         this.schemaModel = Objects.requireNonNull(schemaModel, "schemaModel must not be null");
-        this.simpleTypeMapper = new XmlSchemaSimpleTypeMapper();
+        this.typeMapper = new XmlSchemaTypeMapper();
     }
 
     public Optional<XSTypeDefinition> getTypeDefinition(Name name) {
@@ -58,7 +59,7 @@ public final class XmlSchemaCatalog {
         List<ItemType> result = new ArrayList<>();
         for (int index = 0; index < schemaTypes.getLength(); index++) {
             XSTypeDefinition schemaType = (XSTypeDefinition) schemaTypes.item(index);
-            this.simpleTypeMapper
+            this.typeMapper
                     .mapGeneralizedAtomicType(schemaType)
                     .filter(ItemType::hasName)
                     .filter(type -> !BuiltinTypesCatalogue.typeExists(type.getName()))
@@ -72,15 +73,19 @@ public final class XmlSchemaCatalog {
                 || simpleType.getVariety() != XSSimpleTypeDefinition.VARIETY_ATOMIC) {
             return Optional.empty();
         }
-        return this.simpleTypeMapper.mapGeneralizedAtomicType(schemaType);
+        return this.typeMapper.mapGeneralizedAtomicType(schemaType);
     }
 
     Optional<ItemType> getGeneralizedAtomicItemType(XSTypeDefinition schemaType) {
-        return this.simpleTypeMapper.mapGeneralizedAtomicType(schemaType);
+        return this.typeMapper.mapGeneralizedAtomicType(schemaType);
     }
 
     Optional<ItemType> getListItemType(XSTypeDefinition schemaType) {
-        return this.simpleTypeMapper.getListItemType(schemaType);
+        return this.typeMapper.getListItemType(schemaType);
+    }
+
+    XmlSchemaTypeAnnotation getTypeAnnotation(XSTypeDefinition schemaType) {
+        return this.typeMapper.mapTypeAnnotation(schemaType);
     }
 
     XSModel getSchemaModel() {
