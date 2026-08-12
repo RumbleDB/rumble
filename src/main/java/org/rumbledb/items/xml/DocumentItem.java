@@ -24,8 +24,10 @@ public class DocumentItem extends AbstractNodeItem {
     // TODO: add base-uri, document-uri
 
     public DocumentItem(Node documentNode, List<Item> children) {
-        this.stringValue = documentNode.getTextContent();
         this.children = children;
+        // org.w3c.dom.Document#getTextContent() returns null. Derive the XDM
+        // string value from the converted child nodes instead.
+        this.stringValue = computeStringValue(children);
         this.documentElement = getDocumentElement();
     }
 
@@ -37,11 +39,14 @@ public class DocumentItem extends AbstractNodeItem {
      */
     public DocumentItem(List<Item> children) {
         this.children = children;
-        // Compute string value as concatenated text content of children in document order
-        StringBuilder sb = new StringBuilder();
-        computeStringValue(children, sb);
-        this.stringValue = sb.toString();
+        this.stringValue = computeStringValue(children);
         this.documentElement = getDocumentElement();
+    }
+
+    private static String computeStringValue(List<Item> items) {
+        StringBuilder result = new StringBuilder();
+        appendStringValue(items, result);
+        return result.toString();
     }
 
     @Override
@@ -56,12 +61,12 @@ public class DocumentItem extends AbstractNodeItem {
     /**
      * Recursively computes the string value by concatenating text node descendants in document order.
      */
-    private void computeStringValue(List<Item> items, StringBuilder sb) {
+    private static void appendStringValue(List<Item> items, StringBuilder result) {
         for (Item item : items) {
             if (item.isTextNode()) {
-                sb.append(item.getStringValue());
+                result.append(item.getStringValue());
             } else if (item.isElementNode() && item.children() != null) {
-                computeStringValue(item.children(), sb);
+                appendStringValue(item.children(), result);
             }
         }
     }
