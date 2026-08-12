@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -12,21 +13,18 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-
 public class TreatExpression extends Expression {
 
     @Getter
     private Expression mainExpression;
+
     @Getter
     private SequenceType sequenceType;
+
     private ErrorCode errorCode;
 
     public TreatExpression(
-            Expression mainExpression,
-            SequenceType sequenceType,
-            ErrorCode errorCode,
-            ExceptionMetadata metadata
-    ) {
+            Expression mainExpression, SequenceType sequenceType, ErrorCode errorCode, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
@@ -56,12 +54,10 @@ public class TreatExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(
-            " ("
+        buffer.append(" ("
                 + (this.sequenceType.toString())
                 + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
-                + ") "
-        );
+                + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
         buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
@@ -77,5 +73,4 @@ public class TreatExpression extends Expression {
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append(" treat as " + this.sequenceType.toString() + "\n");
     }
-
 }

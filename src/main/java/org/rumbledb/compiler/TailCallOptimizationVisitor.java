@@ -13,12 +13,9 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
     @Override
     public Node visitFunctionDeclaration(FunctionDeclaration expression, Node argument) {
         FunctionDeclaration fd = new FunctionDeclaration(
-                (InlineFunctionExpression) visit(expression.getExpression(), argument),
-                expression.getMetadata()
-        );
+                (InlineFunctionExpression) visit(expression.getExpression(), argument), expression.getMetadata());
 
-        InlineFunctionExpression inlineFunctionExpression =
-            (InlineFunctionExpression) fd.getExpression();
+        InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) fd.getExpression();
 
         Expression body = inlineFunctionExpression.getBody().getExpression();
 
@@ -49,7 +46,7 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
 
     private boolean isTailRecursiveCall(FunctionCallExpression functionCall, FunctionIdentifier fd) {
         return functionCall.getFunctionIdentifier().equals(fd)
-            && functionCall.getArguments().size() == fd.getArity()
-            && !functionCall.isPartialApplication();
+                && functionCall.getArguments().size() == fd.getArity()
+                && !functionCall.isPartialApplication();
     }
 }

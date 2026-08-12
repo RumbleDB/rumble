@@ -22,6 +22,7 @@ import java.io.Serializable;
 
 import lombok.Getter;
 import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -52,10 +53,7 @@ public final class TreatTypeValidator implements Serializable {
     private final ExceptionMetadata metadata;
 
     public TreatTypeValidator(
-            @NonNull SequenceType sequenceType,
-            @NonNull ErrorCode errorCode,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull SequenceType sequenceType, @NonNull ErrorCode errorCode, @NonNull ExceptionMetadata metadata) {
         this.sequenceType = sequenceType;
         this.errorCode = errorCode;
         this.metadata = metadata;
@@ -79,50 +77,37 @@ public final class TreatTypeValidator implements Serializable {
     }
 
     public void validateEmpty(long itemCount) {
-        if (
-            itemCount == 0
+        if (itemCount == 0
                 && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    || this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)
-        ) {
+                        || this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
             throw error("Empty sequence");
         }
     }
 
     public void validateMaximumCardinality(long itemCount) {
-        if (
-            itemCount > 1
+        if (itemCount > 1
                 && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    || this.sequenceType.getArity() == SequenceType.Arity.OneOrZero)
-        ) {
+                        || this.sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
             throw error("A sequence of more than one item");
         }
     }
 
     public RuntimeException error(String type) {
         if (this.errorCode.equals(ErrorCode.DynamicTypeTreatErrorCode)) {
-            return new TreatException(
-                    type + " cannot be treated as type " + this.sequenceType,
-                    this.metadata
-            );
+            return new TreatException(type + " cannot be treated as type " + this.sequenceType, this.metadata);
         }
         if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
             return new UnexpectedTypeException(
-                    type + " is not expected here. The expected type is " + this.sequenceType,
-                    this.metadata
-            );
+                    type + " is not expected here. The expected type is " + this.sequenceType, this.metadata);
         }
         if (this.errorCode.equals(ErrorCode.InvalidInstance)) {
             return new InvalidInstanceException(
-                    "Invalid instance because of arity mismatch. The expected arity is "
-                        + this.sequenceType.getArity(),
-                    this.metadata
-            );
+                    "Invalid instance because of arity mismatch. The expected arity is " + this.sequenceType.getArity(),
+                    this.metadata);
         }
         if (this.errorCode.equals(ErrorCode.UnexpectedNode)) {
             return new UnexpectedNodeException(
-                    type + " is not expected here. The expected type is " + this.sequenceType,
-                    this.metadata
-            );
+                    type + " is not expected here. The expected type is " + this.sequenceType, this.metadata);
         }
         return new OurBadException("Unexpected error code in treat as iterator.", this.metadata);
     }

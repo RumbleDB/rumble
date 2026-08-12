@@ -1,26 +1,25 @@
 package org.rumbledb.config;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
 /**
  * Utility class to manipulate RumbleConfiguration as JSON objects.
- * 
+ *
  * This is mainly used for the public configuration API. Our internal Java code should use the RumbleConfiguration class
  * directly, and not rely on this class because it is not type-safe and does not provide compile-time guarantees.
  */
 public final class RumbleConfigurationResolver {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private RumbleConfigurationResolver() {
-    }
+    private RumbleConfigurationResolver() {}
 
     public static RumbleConfiguration apply(RumbleConfiguration baseConfiguration, Map<String, ?> entries) {
         ObjectNode mergedTree = MAPPER.valueToTree(baseConfiguration);

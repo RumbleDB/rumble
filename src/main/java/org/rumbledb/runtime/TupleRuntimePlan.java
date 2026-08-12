@@ -20,47 +20,40 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
-import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-
-import org.rumbledb.runtime.flwor.tuple.FlworTuple;
-
 import java.io.Serial;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class TupleRuntimePlan
-        extends
-            RuntimePlan<FlworTuple>
-        implements
-            LocalRuntimePlan<FlworTuple>,
-            NativeQueryRuntimePlan {
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
+
+public abstract class TupleRuntimePlan extends RuntimePlan<FlworTuple>
+        implements LocalRuntimePlan<FlworTuple>, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     protected final TupleRuntimePlan child;
     protected int evaluationDepthLimit;
 
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
-    protected TupleRuntimePlan(
-            TupleRuntimePlan child,
-            RuntimeStaticContext staticContext
-    ) {
+    protected TupleRuntimePlan(TupleRuntimePlan child, RuntimeStaticContext staticContext) {
         super(staticContext);
         this.child = child;
         this.evaluationDepthLimit = -1;
@@ -90,8 +83,7 @@ public abstract class TupleRuntimePlan
      * @return the projection needed by this clause.
      */
     protected abstract Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> parentProjection
-    );
+            Map<Name, DynamicContext.VariableDependency> parentProjection);
 
     /**
      * Computes and stores the DataFrame projection that this clause needs to receive from its child clause.
@@ -104,8 +96,7 @@ public abstract class TupleRuntimePlan
      * @param parentProjection the projection needed by the parent clause.
      */
     public void setInputAndOutputTupleVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> parentProjection
-    ) {
+            Map<Name, DynamicContext.VariableDependency> parentProjection) {
         this.outputTupleProjection = parentProjection;
         this.inputTupleProjection = this.getInputTupleVariableDependencies(parentProjection);
         if (this.child != null) {
@@ -129,8 +120,7 @@ public abstract class TupleRuntimePlan
      *         dynamic context.
      */
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
-        Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<Name, DynamicContext.VariableDependency>();
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
@@ -167,8 +157,7 @@ public abstract class TupleRuntimePlan
         if (limit == 0) {
             if (!(this instanceof ForClauseIterator || this instanceof LetClauseIterator)) {
                 throw new OurBadException(
-                        "We cannot stop the evaluation of FLWOR clauses at any other place than a let or a for clause."
-                );
+                        "We cannot stop the evaluation of FLWOR clauses at any other place than a let or a for clause.");
             }
         }
         if (limit == -1) {
@@ -180,8 +169,7 @@ public abstract class TupleRuntimePlan
         if (this.child == null) {
             if (limit > 0) {
                 throw new OurBadException(
-                        "We cannot stop the evaluation of FLWOR clauses beyond the height of the tree."
-                );
+                        "We cannot stop the evaluation of FLWOR clauses beyond the height of the tree.");
             }
         }
         if (this.child != null) {
@@ -213,14 +201,13 @@ public abstract class TupleRuntimePlan
      * Returns the clause subtree at the specified offset.
      * The parameter is compatible with setEvaluationDepthLimit, i.e., it returns the subtree right
      * below where the evaluation stops with the same limit.
-     * 
+     *
      * @return The evaluation depth limit. -1 if none.
      */
     public TupleRuntimePlan getSubtreeBeyondLimit(int limit) {
         if (this.child == null) {
             throw new OurBadException(
-                    "Trying to get FLWOR clause subtree at depth " + limit + " but there are not further descendants."
-            );
+                    "Trying to get FLWOR clause subtree at depth " + limit + " but there are not further descendants.");
         }
         if (limit == 0) {
             return this.child;
@@ -232,7 +219,7 @@ public abstract class TupleRuntimePlan
     /**
      * Returns the height of the clause within the current FLWOR expression, i.e.,
      * the number of descendant clauses.
-     * 
+     *
      * @return The number of descendant clauses. 0 if it is a starting clause.
      */
     public int getHeight() {
@@ -245,7 +232,7 @@ public abstract class TupleRuntimePlan
     /**
      * Says whether or not the clause and its descendants include a clause
      * of the specified kind.
-     * 
+     *
      * @param kind the kind of clause to test for.
      * @return true if there is one. False otherwise.
      */
@@ -338,7 +325,7 @@ public abstract class TupleRuntimePlan
 
     /**
      * Returns the runtime static context of the clause.
-     * 
+     *
      * @return the static context of the clause.
      */
     public RuntimeStaticContext getStaticContext() {

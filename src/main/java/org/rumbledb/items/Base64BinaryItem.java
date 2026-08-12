@@ -1,15 +1,16 @@
 package org.rumbledb.items;
 
-import lombok.Getter;
 import java.io.Serial;
 import java.util.Base64;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-
 
 public class Base64BinaryItem extends AbstractAtomicItem {
 
@@ -29,8 +30,10 @@ public class Base64BinaryItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     @Getter
     private byte[] value;
+
     private String stringValue;
 
     public Base64BinaryItem(String stringValue) {

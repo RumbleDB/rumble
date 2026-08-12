@@ -20,7 +20,15 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.*;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
+import com.google.gson.stream.JsonReader;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,33 +39,20 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.Cursor;
-
-import com.google.gson.stream.JsonReader;
-
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.*;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-
-public class JsonLinesFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
+public class JsonLinesFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
 
-    public JsonLinesFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public JsonLinesFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
     }
@@ -66,20 +61,13 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         Item path = this.iterator.materializeFirstOrNull(context);
         URI uri = FileSystemUtil.resolveFileSystemURI(
-            this.staticContext.getStaticURI(),
-            path.getStringValue(),
-            getMetadata()
-        );
-        InputStream input = FileSystemUtil.getDataInputStream(
-            uri,
-            getMetadata()
-        );
+                this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
+        InputStream input = FileSystemUtil.getDataInputStream(uri, getMetadata());
         return new JsonLinesCursor(
                 input,
                 path.getStringValue(),
                 getMetadata(),
-                this.getRuntimeStaticContext().isQuerySideEffecting()
-        );
+                this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     @Override
@@ -94,10 +82,7 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
 
         JavaRDD<String> strings;
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                getMetadata()
-            );
+            InputStream is = FileSystemUtil.getDataInputStream(uri, getMetadata());
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             List<String> lines = new ArrayList<>();
             String line = null;
@@ -109,16 +94,11 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
                 throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
             }
             if (partitions == -1) {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelize(lines);
+                strings =
+                        SparkSessionManager.getInstance().getJavaSparkContext().parallelize(lines);
             } else {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelize(
-                        lines,
-                        partitions
-                    );
+                strings =
+                        SparkSessionManager.getInstance().getJavaSparkContext().parallelize(lines, partitions);
             }
         } else {
             if (!FileSystemUtil.exists(uri, getMetadata())) {
@@ -128,21 +108,15 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
             String path = FileSystemUtil.convertURIToStringForSpark(uri);
 
             if (partitions == -1) {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .textFile(path);
+                strings =
+                        SparkSessionManager.getInstance().getJavaSparkContext().textFile(path);
             } else {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .textFile(
-                        path,
-                        partitions
-                    );
+                strings =
+                        SparkSessionManager.getInstance().getJavaSparkContext().textFile(path, partitions);
             }
         }
-        return strings.mapPartitions(
-            new JSONSyntaxToItemMapper(getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting())
-        );
+        return strings.mapPartitions(new JSONSyntaxToItemMapper(
+                getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting()));
     }
 
     private static final class JsonLinesCursor extends AbstractLocalCursor<Item> {
@@ -154,11 +128,7 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
         private BufferedReader reader;
 
         private JsonLinesCursor(
-                InputStream input,
-                String path,
-                ExceptionMetadata metadata,
-                boolean querySideEffecting
-        ) {
+                InputStream input, String path, ExceptionMetadata metadata, boolean querySideEffecting) {
             super(metadata);
             this.input = input;
             this.path = path;
@@ -176,14 +146,13 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
             try {
                 String line = this.reader.readLine();
                 this.next = line == null
-                    ? null
-                    : ItemParser.getItemFromObject(
-                        new JsonReader(new StringReader(line)),
-                        true,
-                        JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
-                        this.metadata,
-                        this.querySideEffecting
-                    );
+                        ? null
+                        : ItemParser.getItemFromObject(
+                                new JsonReader(new StringReader(line)),
+                                true,
+                                JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
+                                this.metadata,
+                                this.querySideEffecting);
             } catch (IOException exception) {
                 throw this.resourceError(exception);
             }
@@ -212,12 +181,8 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan
 
         private RumbleException resourceError(IOException exception) {
             RumbleException result = new CannotRetrieveResourceException(
-                    "I/O error while accessing file: "
-                        + this.path
-                        + " Cause: "
-                        + exception.getMessage(),
-                    this.metadata
-            );
+                    "I/O error while accessing file: " + this.path + " Cause: " + exception.getMessage(),
+                    this.metadata);
             result.initCause(exception);
             return result;
         }

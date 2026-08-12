@@ -17,10 +17,6 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
-
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -36,6 +32,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * F&amp;O 3.1 array:remove — returns a new array with members at the given 1-based positions omitted
@@ -49,10 +46,7 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
     private final ItemRuntimePlan arrayIterator;
     private final ItemRuntimePlan positionsIterator;
 
-    public ArrayRemoveFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayRemoveFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("array:remove must have exactly two arguments.");
@@ -61,23 +55,18 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
         this.positionsIterator = arguments.get(1);
     }
 
-
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         List<Item> arrays = this.arrayIterator.materialize(context);
         List<Item> positionItems = this.positionsIterator.materialize(context);
         if (arrays.size() != 1) {
             throw new UnexpectedTypeException(
-                    "array:remove expects exactly one array as the first argument.",
-                    getMetadata()
-            );
+                    "array:remove expects exactly one array as the first argument.", getMetadata());
         }
         Item arrayItem = arrays.get(0);
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:remove must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:remove must be an array.", getMetadata());
         }
         int size = arrayItem.getSize();
         if (positionItems.isEmpty()) {
@@ -89,16 +78,12 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
         for (Item p : positionItems) {
             if (!p.isNumeric()) {
                 throw new UnexpectedTypeException(
-                        "Type error; positions in array:remove must be numeric.",
-                        getMetadata()
-                );
+                        "Type error; positions in array:remove must be numeric.", getMetadata());
             }
             BigInteger pos = p.isInteger() ? p.castToIntegerValue() : BigInteger.valueOf(p.castToIntValue());
             if (pos.compareTo(min) < 0 || pos.compareTo(max) > 0) {
                 throw new ArrayIndexOutOfBoundsException(
-                        "array:remove position out of bounds: " + pos + ", array length: " + size,
-                        getMetadata()
-                );
+                        "array:remove position out of bounds: " + pos + ", array length: " + size, getMetadata());
             }
             positionsToRemove.add(pos);
         }
@@ -112,7 +97,7 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
                 }
             }
             return ItemFactory.getInstance()
-                .createArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> keptMembers = new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
@@ -123,9 +108,8 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
                 }
             }
             return ItemFactory.getInstance()
-                .createSequenceArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createSequenceArrayItem(
+                            keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
-
-
 }

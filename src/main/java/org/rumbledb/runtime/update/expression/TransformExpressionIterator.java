@@ -1,11 +1,5 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-
-import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -20,16 +15,18 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class TransformExpressionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            UpdatingRuntimePlan {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Map<Name, ? extends ItemRuntimePlan> copyDeclMap;
     private final ItemRuntimePlan modifyIterator;
     private final ItemRuntimePlan returnIterator;
@@ -42,15 +39,11 @@ public class TransformExpressionIterator extends ItemRuntimePlan
             ItemRuntimePlan returnIterator,
             RuntimeStaticContext staticContext,
             int mutabilityLevel,
-            boolean resultMutable
-    ) {
+            boolean resultMutable) {
         super(
-            Stream.concat(
-                copyDeclMap.values().stream(),
-                Stream.of(modifyIterator, returnIterator)
-            ).toList(),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+                Stream.concat(copyDeclMap.values().stream(), Stream.of(modifyIterator, returnIterator))
+                        .toList(),
+                staticContext.toBuilder().isUpdating(true).build());
 
         this.copyDeclMap = copyDeclMap;
         this.modifyIterator = modifyIterator;
@@ -68,8 +61,7 @@ public class TransformExpressionIterator extends ItemRuntimePlan
                 this.mutabilityLevel,
                 this.mutable,
                 context,
-                getMetadata()
-        );
+                getMetadata());
     }
 
     @Override
@@ -122,8 +114,7 @@ public class TransformExpressionIterator extends ItemRuntimePlan
                 int mutabilityLevel,
                 boolean resultMutable,
                 DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                ExceptionMetadata metadata) {
             super(metadata);
             this.copyDeclarations = copyDeclarations;
             this.modifyPlan = modifyPlan;

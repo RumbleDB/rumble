@@ -23,10 +23,7 @@ public interface UpdatingRuntimePlan {
             return updatingPlan.getPendingUpdateList(context);
         }
         throw new OurBadException(
-                "The runtime plan "
-                    + plan.getClass().getCanonicalName()
-                    + " does not support pending updates.",
-                plan.getRuntimeStaticContext().getMetadata()
-        );
+                "The runtime plan " + plan.getClass().getCanonicalName() + " does not support pending updates.",
+                plan.getRuntimeStaticContext().getMetadata());
     }
 }

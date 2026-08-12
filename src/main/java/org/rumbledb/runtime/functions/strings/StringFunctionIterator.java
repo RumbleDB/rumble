@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,19 +30,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class StringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StringFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -64,5 +60,4 @@ public class StringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         Item item = this.getChild(0).materializeFirstOrNull(context);
         return item == null ? null : stringResultFromItem(item);
     }
-
 }

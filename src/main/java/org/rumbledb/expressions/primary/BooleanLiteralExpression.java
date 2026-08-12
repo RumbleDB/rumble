@@ -20,7 +20,6 @@
 
 package org.rumbledb.expressions.primary;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,9 +70,7 @@ public class BooleanLiteralExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
-        if (this.value)
-            sb.append("true\n");
-        else
-            sb.append("false\n");
+        if (this.value) sb.append("true\n");
+        else sb.append("false\n");
     }
 }

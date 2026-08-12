@@ -1,13 +1,13 @@
 package org.rumbledb.expressions.scripting.control;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.statement.Statement;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ConditionalStatement extends Statement {
     private final Expression conditionExpression;
@@ -18,8 +18,7 @@ public class ConditionalStatement extends Statement {
             Expression conditionExpression,
             Statement thenStatement,
             Statement elseStatement,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.conditionExpression = conditionExpression;
         this.thenStatement = thenStatement;

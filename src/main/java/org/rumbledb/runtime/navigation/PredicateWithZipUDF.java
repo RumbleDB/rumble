@@ -20,10 +20,15 @@
 
 package org.rumbledb.runtime.navigation;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
+
+import scala.Option;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -31,14 +36,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
-
-import scala.Option;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
     @Serial
@@ -56,8 +56,7 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
             DynamicContext context,
             ExceptionMetadata metadata,
             ItemType itemType,
-            long contextSize
-    ) {
+            long contextSize) {
         this.expression = expression;
         this.dynamicContext = new DynamicContext(context);
         this.metadata = metadata;
@@ -80,10 +79,9 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
         this.dynamicContext.getVariableValues().setLast(this.contextSize);
 
         boolean result = EffectiveBooleanValue.evaluateOrCheckPosition(
-            this.expression,
-            this.dynamicContext,
-            this.dynamicContext.getVariableValues().getPosition()
-        );
+                this.expression,
+                this.dynamicContext,
+                this.dynamicContext.getVariableValues().getPosition());
 
         return result;
     }

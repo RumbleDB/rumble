@@ -1,12 +1,11 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.commons.lang3.SerializationUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -16,27 +15,24 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
-
 
 public class AppendExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan arrayIterator;
     private final ItemRuntimePlan toAppendIterator;
 
     public AppendExpressionIterator(
-            ItemRuntimePlan arrayIterator,
-            ItemRuntimePlan toAppendIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan arrayIterator, ItemRuntimePlan toAppendIterator, RuntimeStaticContext staticContext) {
         super(
-            Arrays.asList(arrayIterator, toAppendIterator),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+                Arrays.asList(arrayIterator, toAppendIterator),
+                staticContext.toBuilder().isUpdating(true).build());
 
         this.arrayIterator = arrayIterator;
         this.toAppendIterator = toAppendIterator;
@@ -62,26 +58,22 @@ public class AppendExpressionIterator extends UpdatingExpressionIterator {
             if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target",
-                        this.getRuntimeStaticContext().getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
-                        this.getRuntimeStaticContext().getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
             up = factory.createInsertIntoArrayPrimitive(
-                target,
-                locator,
-                Collections.singletonList(content),
-                this.getRuntimeStaticContext().getMetadata()
-            );
+                    target,
+                    locator,
+                    Collections.singletonList(content),
+                    this.getRuntimeStaticContext().getMetadata());
         } else {
             throw new InvalidUpdateTargetException(
                     "Append expression target must be a single array",
-                    this.getRuntimeStaticContext().getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

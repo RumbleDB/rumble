@@ -1,30 +1,27 @@
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
 
 public class DeltaFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DeltaFileFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public DeltaFileFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -38,14 +35,12 @@ public class DeltaFileFunctionIterator extends ItemRuntimePlan implements DataFr
         }
 
         Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .read()
-            .format("delta")
-            .load(FileSystemUtil.convertURIToStringForSpark(uri));
+                .getOrCreateSession()
+                .read()
+                .format("delta")
+                .load(FileSystemUtil.convertURIToStringForSpark(uri));
 
         return DeltaTableFunctionIterator.postProcess(
-            dataFrame,
-            "delta.`" + FileSystemUtil.convertURIToStringForSpark(uri) + "`"
-        );
+                dataFrame, "delta.`" + FileSystemUtil.convertURIToStringForSpark(uri) + "`");
     }
 }

@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,22 +30,17 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.List;
 
 public class StringLengthFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringLengthFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StringLengthFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -74,10 +70,7 @@ public class StringLengthFunctionIterator extends AbstractAtMostOneItemRuntimePl
         if (this.getChildren().size() == 0) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(
-            this.getChild(0),
-            nativeClauseContext
-        );
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -85,7 +78,6 @@ public class StringLengthFunctionIterator extends AbstractAtMostOneItemRuntimePl
         return new NativeClauseContext(
                 childContext,
                 resultString,
-                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-        );
+                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
     }
 }

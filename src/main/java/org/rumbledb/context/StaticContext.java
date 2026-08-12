@@ -21,15 +21,16 @@
 package org.rumbledb.context;
 
 import java.net.URI;
-import java.util.LinkedHashSet;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -37,8 +38,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.SerializationParameterUtils;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -47,11 +48,14 @@ public class StaticContext {
 
     @Getter
     private Map<Name, InScopeVariable> inScopeVariables;
+
     private Map<String, String> staticallyKnownNamespaces;
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private InScopeSchemaTypes inScopeSchemaTypes;
+
     @Setter
     private String queryLanguage;
+
     private StaticContext parent;
     private URI staticBaseURI;
     private String staticBaseUriString;
@@ -74,6 +78,7 @@ public class StaticContext {
     @Setter
     @Getter
     private SequenceType contextItemStaticType;
+
     private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
     private static final Map<String, String> defaultBindings;
 
@@ -118,12 +123,11 @@ public class StaticContext {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
-        SerializationParameters configuredSerializationParameters = configuration
-            .output()
-            .serializationParameters();
+        SerializationParameters configuredSerializationParameters =
+                configuration.output().serializationParameters();
         this.serializationParameters = configuredSerializationParameters == null
-            ? SerializationParameters.defaults(this.queryLanguage)
-            : SerializationParameters.copy(configuredSerializationParameters);
+                ? SerializationParameters.defaults(this.queryLanguage)
+                : SerializationParameters.copy(configuredSerializationParameters);
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
         this.isQuerySideEffecting = false;
@@ -256,10 +260,7 @@ public class StaticContext {
                 ancestor = ancestor.parent;
             }
             throw new UnknownFunctionCallException(
-                    identifier.getName(),
-                    identifier.getArity(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    identifier.getName(), identifier.getArity(), ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -267,15 +268,13 @@ public class StaticContext {
     public void replaceVariableSequenceType(Name varName, SequenceType newSequenceType) {
         InScopeVariable variable = getInScopeVariable(varName);
         this.inScopeVariables.replace(
-            varName,
-            new InScopeVariable(
-                    varName,
-                    newSequenceType,
-                    variable.getMetadata(),
-                    variable.getStorageMode(),
-                    variable.isAssignable()
-            )
-        );
+                varName,
+                new InScopeVariable(
+                        varName,
+                        newSequenceType,
+                        variable.getMetadata(),
+                        variable.getStorageMode(),
+                        variable.isAssignable()));
     }
 
     public SequenceType getVariableSequenceType(Name varName) {
@@ -290,27 +289,13 @@ public class StaticContext {
         getInScopeVariable(varName).setStorageMode(mode);
     }
 
-    public void addVariable(
-            Name varName,
-            SequenceType type,
-            ExceptionMetadata metadata
-    ) {
-        this.inScopeVariables.put(
-            varName,
-            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET)
-        );
+    public void addVariable(Name varName, SequenceType type, ExceptionMetadata metadata) {
+        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET));
     }
 
-    public void addVariable(
-            Name varName,
-            SequenceType type,
-            ExceptionMetadata metadata,
-            boolean isAssignable
-    ) {
+    public void addVariable(Name varName, SequenceType type, ExceptionMetadata metadata, boolean isAssignable) {
         this.inScopeVariables.put(
-            varName,
-            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET, isAssignable)
-        );
+                varName, new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET, isAssignable));
     }
 
     public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
@@ -393,7 +378,7 @@ public class StaticContext {
             return true;
         }
         return defaultBindings.containsKey(prefix)
-            && defaultBindings.get(prefix).equals(this.staticallyKnownNamespaces.get(prefix));
+                && defaultBindings.get(prefix).equals(this.staticallyKnownNamespaces.get(prefix));
     }
 
     public String resolveNamespace(String prefix) {
@@ -421,7 +406,7 @@ public class StaticContext {
      * Returns the default serialization parameters stored in the static context.
      *
      * Spec references:
-     * 
+     *
      * <ul>
      * <li>XQuery 3.1 Static Context Components (link:
      * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
@@ -450,12 +435,7 @@ public class StaticContext {
         }
         if ("parameter-document".equals(name)) {
             SerializationParameterUtils.applyParameterDocument(
-                this.serializationParameters,
-                this,
-                value,
-                getExplicitSerializationParameterNames(),
-                metadata
-            );
+                    this.serializationParameters, this, value, getExplicitSerializationParameterNames(), metadata);
             return;
         }
         if ("cdata-section-elements".equals(name) || "suppress-indentation".equals(name)) {
@@ -522,8 +502,7 @@ public class StaticContext {
     }
 
     public void setUserDefinedFunctionsExecutionModes(
-            UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures
-    ) {
+            UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures) {
         if (this.parent != null) {
             throw new OurBadException("Statically known function signatures can only be stored in the module context.");
         }
@@ -612,7 +591,7 @@ public class StaticContext {
 
     public boolean isStaticallyKnownCollation(String uri) {
         return getStaticallyKnownCollations().contains(uri)
-            || CollationCatalogue.isDefaultStaticallyKnownCollation(uri);
+                || CollationCatalogue.isDefaultStaticallyKnownCollation(uri);
     }
 
     public Set<String> getStaticallyKnownCollations() {
@@ -646,28 +625,24 @@ public class StaticContext {
     // with same variable with sequence type arity changed from 1 to + and form ? to *
     // used by groupBy clause
     public void incrementArities(StaticContext stopContext, Set<Name> varToExclude) {
-        this.inScopeVariables.replaceAll(
-            (key, value) -> varToExclude.contains(key)
+        this.inScopeVariables.replaceAll((key, value) -> varToExclude.contains(key)
                 ? value
                 : new InScopeVariable(
                         value.getName(),
                         incrementArity(value.getSequenceType()),
                         value.getMetadata(),
-                        value.getStorageMode()
-                )
-        );
+                        value.getStorageMode()));
         StaticContext current = this.parent;
         while (current != null && current != stopContext) {
             for (Map.Entry<Name, InScopeVariable> entry : current.inScopeVariables.entrySet()) {
                 if (!this.inScopeVariables.containsKey(entry.getKey())) {
                     this.addVariable(
-                        entry.getKey(),
-                        varToExclude.contains(entry.getKey())
-                            ? entry.getValue().getSequenceType()
-                            : incrementArity(entry.getValue().getSequenceType()),
-                        entry.getValue().getMetadata(),
-                        entry.getValue().isAssignable()
-                    );
+                            entry.getKey(),
+                            varToExclude.contains(entry.getKey())
+                                    ? entry.getValue().getSequenceType()
+                                    : incrementArity(entry.getValue().getSequenceType()),
+                            entry.getValue().getMetadata(),
+                            entry.getValue().isAssignable());
                 }
             }
             current = current.parent;
@@ -675,9 +650,7 @@ public class StaticContext {
     }
 
     private SequenceType incrementArity(SequenceType sequenceType) {
-        return sequenceType == null
-            ? SequenceType.createSequenceType("item*")
-            : sequenceType.incrementArity();
+        return sequenceType == null ? SequenceType.createSequenceType("item*") : sequenceType.incrementArity();
     }
 
     public void bindDefaultNamespaces() {
@@ -721,10 +694,7 @@ public class StaticContext {
             return;
         }
         if (this.decimalFormats.containsKey(name)) {
-            throw new SemanticException(
-                    "Decimal format already declared: " + name,
-                    metadata
-            );
+            throw new SemanticException("Decimal format already declared: " + name, metadata);
         }
         this.decimalFormats.put(name, decimalFormat);
     }

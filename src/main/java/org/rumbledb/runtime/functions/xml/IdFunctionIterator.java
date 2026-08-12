@@ -1,16 +1,5 @@
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.NodeNotInDocumentException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,18 +9,24 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class IdFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.NodeNotInDocumentException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
+public class IdFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
-    public IdFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public IdFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -65,9 +60,7 @@ public class IdFunctionIterator extends ItemRuntimePlan
         }
         if (!root.isDocumentNode()) {
             throw new NodeNotInDocumentException(
-                    "fn:id: the node is not part of a tree rooted in a document node",
-                    getMetadata()
-            );
+                    "fn:id: the node is not part of a tree rooted in a document node", getMetadata());
         }
 
         Map<String, Item> firstElementByIdValue = new HashMap<>();
@@ -89,11 +82,7 @@ public class IdFunctionIterator extends ItemRuntimePlan
         if (node.isElementNode()) {
             for (Item attribute : node.attributes()) {
                 Name name = attribute.nodeName();
-                if (
-                    name != null
-                        && Name.XML_NS.equals(name.getNamespace())
-                        && "id".equals(name.getLocalName())
-                ) {
+                if (name != null && Name.XML_NS.equals(name.getNamespace()) && "id".equals(name.getLocalName())) {
                     String normalizedId = attribute.getStringValue().trim().replaceAll("\\s+", " ");
                     firstElementByIdValue.putIfAbsent(normalizedId, node);
                 }
@@ -109,7 +98,7 @@ public class IdFunctionIterator extends ItemRuntimePlan
             return this.getChild(1).materializeFirstOrNull(context);
         }
         return context.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-            .get(0);
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0);
     }
 }

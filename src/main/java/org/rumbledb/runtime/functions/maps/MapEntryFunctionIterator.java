@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.List;
 
@@ -10,6 +8,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:entry}:
@@ -27,10 +26,7 @@ public class MapEntryFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private final ItemRuntimePlan keyIterator;
     private final ItemRuntimePlan valueIterator;
 
-    public MapEntryFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MapEntryFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.keyIterator = arguments.get(0);
         this.valueIterator = arguments.get(1);
@@ -47,10 +43,7 @@ public class MapEntryFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private Item createEntry(Item key, List<Item> valueSequence) {
         return ItemFactory.getInstance()
-            .createMapItem(
-                key,
-                valueSequence,
-                this.getRuntimeStaticContext().isQuerySideEffecting()
-            );
+                .createMapItem(
+                        key, valueSequence, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 }

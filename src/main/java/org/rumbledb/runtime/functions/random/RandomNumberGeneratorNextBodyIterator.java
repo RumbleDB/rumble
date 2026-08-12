@@ -1,13 +1,13 @@
 package org.rumbledb.runtime.functions.random;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Random;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
-import java.util.Random;
 
 /**
  * Body of the "next" entry of a random-number-generator map: deterministically derives the next seed in
@@ -28,10 +28,6 @@ public class RandomNumberGeneratorNextBodyIterator extends AbstractAtMostOneItem
     public Item evaluateAtMostOne(DynamicContext context) {
         long nextSeed = new Random(this.seed).nextLong();
         return RandomNumberGeneratorMapBuilder.build(
-            nextSeed,
-            this.staticContext,
-            new DynamicContext(context.getRumbleConfiguration()),
-            getMetadata()
-        );
+                nextSeed, this.staticContext, new DynamicContext(context.getRumbleConfiguration()), getMetadata());
     }
 }

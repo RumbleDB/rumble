@@ -1,9 +1,9 @@
 package org.rumbledb.runtime.functions.random;
 
-import org.rumbledb.api.Item;
-
 import java.util.Iterator;
 import java.util.Random;
+
+import org.rumbledb.api.Item;
 
 public abstract class GeneratedRandomsIterator implements Iterator<Item> {
     protected Random random;

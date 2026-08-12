@@ -20,9 +20,9 @@
 
 package org.rumbledb.expressions;
 
-
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -71,18 +71,15 @@ public abstract class Expression extends Node {
         super(metadata);
     }
 
-    public RuntimeStaticContext getStaticContextForRuntime(
-            RumbleConfiguration conf,
-            VisitorConfig visitorConfig
-    ) {
+    public RuntimeStaticContext getStaticContextForRuntime(RumbleConfiguration conf, VisitorConfig visitorConfig) {
         return RuntimeStaticContext.fromStaticContext(this.staticContext)
-            .configuration(conf)
-            .staticType(getStaticSequenceType())
-            .executionMode(getHighestExecutionMode(visitorConfig))
-            .metadata(getMetadata())
-            .isUpdating(isUpdating())
-            .isSequential(isSequential())
-            .build();
+                .configuration(conf)
+                .staticType(getStaticSequenceType())
+                .executionMode(getHighestExecutionMode(visitorConfig))
+                .metadata(getMetadata())
+                .isUpdating(isUpdating())
+                .isSequential(isSequential())
+                .build();
     }
 
     /**
@@ -93,10 +90,8 @@ public abstract class Expression extends Node {
      */
     public boolean alwaysReturnsAtMostOneItem() {
         return this.staticSequenceType.getArity().equals(Arity.One)
-            ||
-            this.staticSequenceType.getArity().equals(Arity.OneOrZero)
-            ||
-            this.staticSequenceType.getArity().equals(Arity.Zero);
+                || this.staticSequenceType.getArity().equals(Arity.OneOrZero)
+                || this.staticSequenceType.getArity().equals(Arity.Zero);
     }
 
     /**
@@ -120,7 +115,7 @@ public abstract class Expression extends Node {
     /**
      * Sets the sequential property of the expression. An expression can only
      * be one of the following:
-     * 
+     *
      * <ul>
      * <li>non-updating sequential,</li>
      * <li>non-updating non-sequential,</li>
@@ -156,7 +151,6 @@ public abstract class Expression extends Node {
         return isUpdating() && !this.isSequential;
     }
 
-
     @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
@@ -175,19 +169,15 @@ public abstract class Expression extends Node {
         } else {
             buffer.append(" | " + "not in sequential block");
         }
-        buffer.append(
-            " | "
+        buffer.append(" | "
                 + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
-        buffer.append(
-            " | "
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
+        buffer.append(" | "
                 + (this.getStaticContext() != null && this.getStaticContext().isQuerySideEffecting()
-                    ? "query side effecting"
-                    : "query without side effects")
-        );
+                        ? "query side effecting"
+                        : "query without side effects"));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

@@ -1,13 +1,5 @@
 package org.rumbledb.serialization;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.FunctionsNonSerializableException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.xml.NamespaceItem;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.nio.charset.Charset;
@@ -18,6 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FunctionsNonSerializableException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.xml.NamespaceItem;
 
 public class XmlSerializer implements Serializer, Serializable {
 
@@ -138,13 +138,11 @@ public class XmlSerializer implements Serializer, Serializable {
         boolean preserveWhitespace = mustPreserveWhitespace(item);
         boolean hasSignificantTextChild = hasSignificantTextChild(children);
         for (Item child : children) {
-            if (
-                indenting
+            if (indenting
                     && containsElementLikeChild
                     && !preserveWhitespace
                     && !hasSignificantTextChild
-                    && shouldIndentBeforeChild(child)
-            ) {
+                    && shouldIndentBeforeChild(child)) {
                 sb.append("\n").append(childIndent);
             }
             serialize(child, sb, childIndent, false);
@@ -195,12 +193,7 @@ public class XmlSerializer implements Serializer, Serializable {
     }
 
     protected boolean matchesElementNamespace(Item element, Item namespace) {
-        if (
-            element == null
-                || element.nodeName() == null
-                || namespace == null
-                || !namespace.isNamespaceNode()
-        ) {
+        if (element == null || element.nodeName() == null || namespace == null || !namespace.isNamespaceNode()) {
             return false;
         }
         NamespaceItem namespaceItem = (NamespaceItem) namespace;
@@ -255,9 +248,8 @@ public class XmlSerializer implements Serializer, Serializable {
         }
         if (!isXml11()) {
             throw serializationError(
-                "Prefix undeclaration requires XML 1.1 or later when using the XML or XHTML output method.",
-                "SEPM0010"
-            );
+                    "Prefix undeclaration requires XML 1.1 or later when using the XML or XHTML output method.",
+                    "SEPM0010");
         }
         return true;
     }
@@ -364,17 +356,15 @@ public class XmlSerializer implements Serializer, Serializable {
 
     protected boolean mustPreserveWhitespace(Item element) {
         return matchesExpandedQNameEntry(this.params.getSuppressIndentation(), element)
-            || hasXmlSpacePreserve(element)
-            || hasPreserveWhitespaceAncestor(element);
+                || hasXmlSpacePreserve(element)
+                || hasPreserveWhitespaceAncestor(element);
     }
 
     private boolean hasPreserveWhitespaceAncestor(Item element) {
         Item current = element == null ? null : element.parent();
         while (current != null && current.isElementNode()) {
-            if (
-                matchesExpandedQNameEntry(this.params.getSuppressIndentation(), current)
-                    || hasXmlSpacePreserve(current)
-            ) {
+            if (matchesExpandedQNameEntry(this.params.getSuppressIndentation(), current)
+                    || hasXmlSpacePreserve(current)) {
                 return true;
             }
             current = current.parent();
@@ -384,12 +374,10 @@ public class XmlSerializer implements Serializer, Serializable {
 
     private boolean hasXmlSpacePreserve(Item element) {
         for (Item attribute : element.attributes()) {
-            if (
-                attribute.nodeName() != null
+            if (attribute.nodeName() != null
                     && "space".equals(attribute.nodeName().getLocalName())
                     && Name.XML_NS.equals(attribute.nodeName().getNamespace())
-                    && "preserve".equals(attribute.getStringValue())
-            ) {
+                    && "preserve".equals(attribute.getStringValue())) {
                 return true;
             }
         }
@@ -403,9 +391,7 @@ public class XmlSerializer implements Serializer, Serializable {
         String namespace = element.nodeName().getNamespace();
         String localName = element.nodeName().getLocalName();
         boolean hasNoNamespace = namespace == null || namespace.isEmpty();
-        String expandedName = hasNoNamespace
-            ? localName
-            : "Q{" + namespace + "}" + localName;
+        String expandedName = hasNoNamespace ? localName : "Q{" + namespace + "}" + localName;
         if (entries.contains(expandedName)) {
             return true;
         }
@@ -430,7 +416,9 @@ public class XmlSerializer implements Serializer, Serializable {
 
     protected boolean hasSignificantTextChild(List<Item> children) {
         for (Item child : children) {
-            if (child.isTextNode() && child.getStringValue() != null && !child.getStringValue().trim().isEmpty()) {
+            if (child.isTextNode()
+                    && child.getStringValue() != null
+                    && !child.getStringValue().trim().isEmpty()) {
                 return true;
             }
         }
@@ -449,24 +437,22 @@ public class XmlSerializer implements Serializer, Serializable {
     protected void appendCDataText(String value, StringBuilder sb) {
         Map<String, String> characterMaps = this.params.getCharacterMaps();
         StringBuilder cdataSegment = new StringBuilder();
-        for (int index = 0; index < value.length();) {
+        for (int index = 0; index < value.length(); ) {
             int codePoint = value.codePointAt(index);
             String current = new String(Character.toChars(codePoint));
             String replacement = characterMaps == null ? null : characterMaps.get(current);
             if (replacement != null) {
                 flushCDataSegment(cdataSegment, sb);
                 sb.append(replacement);
-            } else if (
-                mustSerializeAsCharacterReference(codePoint, false) || !isEncodableInSelectedEncoding(codePoint)
-            ) {
+            } else if (mustSerializeAsCharacterReference(codePoint, false)
+                    || !isEncodableInSelectedEncoding(codePoint)) {
                 flushCDataSegment(cdataSegment, sb);
                 appendEscapedXmlCodePoint(sb, codePoint, false);
             } else if (!isRepresentableInSelectedXmlVersion(codePoint)) {
                 throw new RumbleException(
                         "Character #" + codePoint + " is not representable in XML " + getEffectiveVersion("1.0") + ".",
                         ErrorCode.CodepointNotValidErrorCode,
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             } else {
                 cdataSegment.appendCodePoint(codePoint);
             }
@@ -477,10 +463,7 @@ public class XmlSerializer implements Serializer, Serializable {
 
     protected RumbleException serializationError(String message, String errorCode) {
         return new RumbleException(
-                message,
-                new ErrorCode(new Name(Name.ERROR_NS, "err", errorCode)),
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                message, new ErrorCode(new Name(Name.ERROR_NS, "err", errorCode)), ExceptionMetadata.EMPTY_METADATA);
     }
 
     private String escapeXml(String value, boolean inAttribute) {
@@ -531,8 +514,7 @@ public class XmlSerializer implements Serializer, Serializable {
             throw new RumbleException(
                     "Character #" + codePoint + " is not representable in XML " + getEffectiveVersion("1.0") + ".",
                     ErrorCode.CodepointNotValidErrorCode,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
 
         if (!isEncodableInSelectedEncoding(codePoint)) {
@@ -565,15 +547,15 @@ public class XmlSerializer implements Serializer, Serializable {
         }
         if (isXml11()) {
             return codePoint <= 0xD7FF
-                || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
-                || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
+                    || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+                    || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
         }
         if (codePoint == 0x9 || codePoint == 0xA || codePoint == 0xD) {
             return true;
         }
         return (codePoint >= 0x20 && codePoint <= 0xD7FF)
-            || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
-            || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
+                || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+                || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
     }
 
     private boolean isEncodableInSelectedEncoding(int codePoint) {
@@ -596,9 +578,7 @@ public class XmlSerializer implements Serializer, Serializable {
         int start = 0;
         while (start <= value.length()) {
             int split = value.indexOf("]]>", start);
-            String segment = split < 0
-                ? value.substring(start)
-                : value.substring(start, split + 2);
+            String segment = split < 0 ? value.substring(start) : value.substring(start, split + 2);
             sb.append("<![CDATA[").append(segment).append("]]>");
             if (split < 0) {
                 break;

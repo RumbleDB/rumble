@@ -19,7 +19,8 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,9 +29,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Implementation of the fn:base-uri function according to XPath and XQuery Functions and Operators 3.1
@@ -44,14 +43,14 @@ import java.util.List;
  * has one; otherwise it returns the empty sequence."
  *
  * Function signatures (Functions and Operators 3.1, {@code fn:base-uri}):
- * 
+ *
  * <ul>
  * <li>fn:base-uri() as xs:anyURI?</li>
  * <li>fn:base-uri($arg as node()?) as xs:anyURI?</li>
  * </ul>
  *
  * Rules:
- * 
+ *
  * <ul>
  * <li>If the argument is omitted, it defaults to the context item (.).</li>
  * <li>If the argument is supplied and is the empty sequence, the function returns the empty sequence.</li>
@@ -65,21 +64,14 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public BaseUriFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public BaseUriFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ContextOrArgumentLocalCursor.flatMapFirstArgumentOrContext(
-            this.getChildren(),
-            context,
-            this::evaluate,
-            getMetadata()
-        );
+                this.getChildren(), context, this::evaluate, getMetadata());
     }
 
     private List<Item> evaluate(Item node) {
@@ -87,10 +79,7 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
             return List.of();
         }
         if (!node.isNode()) {
-            throw new UnexpectedTypeException(
-                    "The argument must be a reference to an XML node",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("The argument must be a reference to an XML node", getMetadata());
         }
         return node.baseUri();
     }

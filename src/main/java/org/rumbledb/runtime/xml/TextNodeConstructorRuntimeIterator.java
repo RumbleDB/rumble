@@ -20,6 +20,10 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,13 +32,9 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Runtime iterator for text node constructors.
- * 
+ *
  * @see org.rumbledb.expressions.xml.TextNodeConstructorExpression
  */
 public class TextNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -46,14 +46,12 @@ public class TextNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRun
 
     /**
      * Constructor for text node constructor runtime iterator
-     * 
+     *
      * @param contentIterator Iterator for the content expression
      * @param staticContext The static context
      */
     public TextNodeConstructorRuntimeIterator(
-            DataFunctionIterator contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            DataFunctionIterator contentIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
     }
@@ -82,16 +80,11 @@ public class TextNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRun
         // remove the last space
         textContent.deleteCharAt(textContent.length() - 1);
         // Create and return the text node item
-        Item textItem = ItemFactory.getInstance()
-            .createXmlTextNode(
-                textContent.toString()
-            );
+        Item textItem = ItemFactory.getInstance().createXmlTextNode(textContent.toString());
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             textItem.setXmlDocumentPosition(documentPath, 0);
         }
         return textItem;
     }
-
-
 }

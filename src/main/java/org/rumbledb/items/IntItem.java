@@ -20,6 +20,9 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -27,14 +30,11 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 public class IntItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private int value;
 
     public IntItem(int value) {
@@ -120,8 +120,6 @@ public class IntItem extends AbstractAtomicItem {
     public boolean isDouble() {
         return false;
     }
-
-
 
     @Override
     public ItemType getDynamicType() {

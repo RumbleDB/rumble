@@ -20,50 +20,44 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.*;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-import scala.Tuple2;
-
-import java.io.Serial;
-import java.util.*;
 
 public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new IteratorLocalCursor<>(
-                () -> computeLocalResults(context).iterator(),
-                getMetadata()
-        );
+        return new IteratorLocalCursor<>(() -> computeLocalResults(context).iterator(), getMetadata());
     }
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
-        Item::getXmlDocumentPosition,
-        Comparator.nullsLast(Comparator.naturalOrder())
-    );
+
+    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR =
+            Comparator.comparing(Item::getXmlDocumentPosition, Comparator.nullsLast(Comparator.naturalOrder()));
     private ItemRuntimePlan leftIterator;
     private ItemRuntimePlan rightIterator;
 
-
     public SlashExprIterator(
-            ItemRuntimePlan sequence,
-            ItemRuntimePlan stepIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan sequence, ItemRuntimePlan stepIterator, RuntimeStaticContext staticContext) {
         super(Arrays.asList(sequence, stepIterator), staticContext);
         this.leftIterator = sequence;
         this.rightIterator = stepIterator;
@@ -76,11 +70,8 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
         long count = childRDD.count();
 
         // apply right iterator, usually a step
-        FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SlashExprClosureZipped(
-                this.rightIterator,
-                dynamicContext,
-                count
-        );
+        FlatMapFunction<Tuple2<Item, Long>, Item> transformation =
+                new SlashExprClosureZipped(this.rightIterator, dynamicContext, count);
         JavaRDD<Item> result = zippedChildRDD.flatMap(transformation);
 
         boolean allNodes;
@@ -88,18 +79,21 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
         if (this.rightIterator instanceof StepExprIterator) {
             allNodes = true;
         } else {
-            if (result.isEmpty())
-                return result;
+            if (result.isEmpty()) return result;
             allNodes = result.map(Item::isNode).reduce(Boolean::logicalAnd);
             allNonNodes = !result.map(Item::isNode).reduce(Boolean::logicalOr);
         }
 
         if (allNodes) {
             if (this.getRuntimeStaticContext().getConfiguration().optimization().optimizeSteps()) {
-                if (
-                    this.getRuntimeStaticContext().getConfiguration().optimization().optimizeStepsExperimental()
-                        && this.getRuntimeStaticContext().getConfiguration().optimization().optimizeParentPointers()
-                ) {
+                if (this.getRuntimeStaticContext()
+                                .getConfiguration()
+                                .optimization()
+                                .optimizeStepsExperimental()
+                        && this.getRuntimeStaticContext()
+                                .getConfiguration()
+                                .optimization()
+                                .optimizeParentPointers()) {
                     // skip sorting and uniqueness if not needed
                     // use optimizeParent as approximation for now, this is not verified
                     return result;
@@ -109,19 +103,17 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
                 // stable
 
                 // group by document
-                JavaPairRDD<Object, Iterable<Item>> res = result.groupBy(
-                    (Function<Item, Object>) item -> item.getXmlDocumentPosition().getPath()
-                );
+                JavaPairRDD<Object, Iterable<Item>> res = result.groupBy((Function<Item, Object>)
+                        item -> item.getXmlDocumentPosition().getPath());
                 // sort and uniqueness per document
-                JavaRDD<Iterator<Item>> r2 = res.map(
-                    (Function<Tuple2<Object, Iterable<Item>>, Iterator<Item>>) tuple -> {
-                        ArrayList<Item> l = new ArrayList<>();
-                        tuple._2().iterator().forEachRemaining(l::add);
-                        l = new ArrayList<>(new HashSet<>(l));
-                        l.sort(DOCUMENT_ORDER_COMPARATOR);
-                        return l.iterator();
-                    }
-                );
+                JavaRDD<Iterator<Item>> r2 =
+                        res.map((Function<Tuple2<Object, Iterable<Item>>, Iterator<Item>>) tuple -> {
+                            ArrayList<Item> l = new ArrayList<>();
+                            tuple._2().iterator().forEachRemaining(l::add);
+                            l = new ArrayList<>(new HashSet<>(l));
+                            l.sort(DOCUMENT_ORDER_COMPARATOR);
+                            return l.iterator();
+                        });
                 // put all documents together again
                 return r2.flatMap((FlatMapFunction<Iterator<Item>, Item>) it -> it);
             } else {
@@ -134,12 +126,8 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
             return result;
         } else {
             throw new NodeAndNonNodeException(
-                    "A mix of nodes and non-nodes was encountered as a result of a step expression.",
-                    getMetadata()
-            );
+                    "A mix of nodes and non-nodes was encountered as a result of a step expression.", getMetadata());
         }
-
-
     }
 
     private List<Item> computeLocalResults(DynamicContext context) {
@@ -149,8 +137,9 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
         long position = 0;
         for (Item currentItem : left) {
             DynamicContext currentContext = new DynamicContext(context);
-            currentContext.getVariableValues()
-                .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
+            currentContext
+                    .getVariableValues()
+                    .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
             currentContext.getVariableValues().setPosition(++position);
             currentContext.getVariableValues().setLast(last);
             localResults.addAll(this.rightIterator.materialize(currentContext));
@@ -169,9 +158,7 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
             localResults.sort(DOCUMENT_ORDER_COMPARATOR);
         } else if (!allNonNodes) {
             throw new NodeAndNonNodeException(
-                    "A mix of nodes and non-nodes was encountered as a result of a step expression.",
-                    getMetadata()
-            );
+                    "A mix of nodes and non-nodes was encountered as a result of a step expression.", getMetadata());
         }
         return localResults;
     }

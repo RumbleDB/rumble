@@ -20,12 +20,12 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import java.io.Serial;
+import java.util.List;
+import java.util.Objects;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -33,28 +33,23 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.SequenceExceptionOneOrMore;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-
-import java.io.Serial;
-import java.util.List;
-import java.util.Objects;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 public class OneOrMoreIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
 
-    public OneOrMoreIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public OneOrMoreIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
     }
@@ -71,20 +66,16 @@ public class OneOrMoreIterator extends ItemRuntimePlan
             return childRDD;
         }
         throw new SequenceExceptionOneOrMore(
-                "fn:one-or-more() called with a sequence containing less than 1 item",
-                getMetadata()
-        );
+                "fn:one-or-more() called with a sequence containing less than 1 item", getMetadata());
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
-            .fromPlan(this.getChild(0), context);
+        HomogeneousItemDataFrame childDataFrame =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
         if (childDataFrame.isEmptySequence()) {
             throw new SequenceExceptionOneOrMore(
-                    "fn:one-or-more() called with a sequence containing less than 1 item",
-                    getMetadata()
-            );
+                    "fn:one-or-more() called with a sequence containing less than 1 item", getMetadata());
         }
         return childDataFrame;
     }
@@ -108,9 +99,7 @@ public class OneOrMoreIterator extends ItemRuntimePlan
             this.childCursor = this.childPlan.getCursor(this.context);
             if (!this.childCursor.hasNext()) {
                 throw new SequenceExceptionOneOrMore(
-                        "fn:one-or-more() called with a sequence containing less than 1 item",
-                        this.metadata
-                );
+                        "fn:one-or-more() called with a sequence containing less than 1 item", this.metadata);
             }
         }
 
@@ -123,9 +112,7 @@ public class OneOrMoreIterator extends ItemRuntimePlan
         protected Item nextLocal() {
             if (!this.childCursor.hasNext()) {
                 throw new IteratorFlowException(
-                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
-                        this.metadata
-                );
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function", this.metadata);
             }
             return this.childCursor.next();
         }
@@ -137,6 +124,5 @@ public class OneOrMoreIterator extends ItemRuntimePlan
                 this.childCursor = null;
             }
         }
-
     }
 }

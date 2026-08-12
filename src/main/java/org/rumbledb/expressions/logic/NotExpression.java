@@ -24,12 +24,12 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
 
 @Getter
 public class NotExpression extends Expression {
@@ -61,5 +61,4 @@ public class NotExpression extends Expression {
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
     }
-
 }

@@ -20,6 +20,7 @@ package org.rumbledb.runtime.cursor;
 import java.util.function.Function;
 
 import lombok.NonNull;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -41,8 +42,7 @@ public final class MappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
             @NonNull RuntimePlan<I> inputPlan,
             @NonNull DynamicContext context,
             @NonNull Function<? super I, ? extends O> mapper,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull ExceptionMetadata metadata) {
         super(metadata);
         this.inputPlan = inputPlan;
         this.context = context;

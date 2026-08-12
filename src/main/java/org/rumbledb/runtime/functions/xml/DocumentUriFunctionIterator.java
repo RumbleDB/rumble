@@ -19,7 +19,8 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,9 +29,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Implementation of the fn:document-uri function according to XPath and XQuery Functions and Operators 3.1
@@ -44,18 +43,18 @@ import java.util.List;
  * document node, if it has one; otherwise it returns the empty sequence."
  *
  * Function signature (Functions and Operators 3.1, {@code fn:document-uri}):
- * 
+ *
  * <ul>
  * <li>fn:document-uri($arg as node()?) as xs:anyURI?</li>
  * </ul>
  *
  * Rules:
- * 
+ *
  * <ul>
  * <li>If the argument is supplied and is the empty sequence, the function returns the empty sequence.</li>
  * <li>Otherwise, the function returns dm:document-uri($arg).</li>
  * </ul>
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-document-uri">XPath and XQuery Functions and
  *      Operators 3.1: fn:document-uri</a>
  */
@@ -63,21 +62,14 @@ public class DocumentUriFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DocumentUriFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public DocumentUriFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ContextOrArgumentLocalCursor.flatMapFirstArgumentOrContext(
-            this.getChildren(),
-            context,
-            this::evaluate,
-            getMetadata()
-        );
+                this.getChildren(), context, this::evaluate, getMetadata());
     }
 
     private List<Item> evaluate(Item node) {
@@ -85,10 +77,7 @@ public class DocumentUriFunctionIterator extends LocalFunctionCallIterator {
             return List.of();
         }
         if (!node.isNode()) {
-            throw new UnexpectedTypeException(
-                    "The argument must be a reference to an XML node",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("The argument must be a reference to an XML node", getMetadata());
         }
         return node.documentUri();
     }

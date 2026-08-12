@@ -1,16 +1,5 @@
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.NodeNotInDocumentException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,18 +7,24 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class IdRefFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.NodeNotInDocumentException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
+public class IdRefFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
-    public IdRefFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public IdRefFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -58,9 +53,7 @@ public class IdRefFunctionIterator extends ItemRuntimePlan
         }
         if (!root.isDocumentNode()) {
             throw new NodeNotInDocumentException(
-                    "fn:idref: the node is not part of a tree rooted in a document node",
-                    getMetadata()
-            );
+                    "fn:idref: the node is not part of a tree rooted in a document node", getMetadata());
         }
 
         List<Item> matches = new ArrayList<>();
@@ -70,11 +63,9 @@ public class IdRefFunctionIterator extends ItemRuntimePlan
     }
 
     private static void collectIdrefs(Item node, Set<String> candidateIds, List<Item> matches) {
-        if (
-            (node.isElementNode() || node.isAttributeNode())
+        if ((node.isElementNode() || node.isAttributeNode())
                 && node.isIdrefs()
-                && containsCandidate(node.getStringValue(), candidateIds)
-        ) {
+                && containsCandidate(node.getStringValue(), candidateIds)) {
             matches.add(node);
         }
         if (node.isElementNode()) {
@@ -105,7 +96,7 @@ public class IdRefFunctionIterator extends ItemRuntimePlan
             return this.getChild(1).materializeFirstOrNull(context);
         }
         return context.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-            .get(0);
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0);
     }
 }

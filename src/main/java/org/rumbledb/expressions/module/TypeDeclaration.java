@@ -20,23 +20,19 @@
 
 package org.rumbledb.expressions.module;
 
+import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.ItemType;
 
-import java.util.Collections;
-import java.util.List;
-
 public class TypeDeclaration extends Node {
 
     private final ItemType typeDefinition;
 
-    public TypeDeclaration(
-            ItemType typeDefinition,
-            ExceptionMetadata metadata
-    ) {
+    public TypeDeclaration(ItemType typeDefinition, ExceptionMetadata metadata) {
         super(metadata);
         this.typeDefinition = typeDefinition;
     }
@@ -77,4 +73,3 @@ public class TypeDeclaration extends Node {
         return Collections.emptyList();
     }
 }
-

@@ -20,18 +20,19 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
 
@@ -44,18 +45,13 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
     private List<Item> nextResult;
     private List<byte[]> results;
 
-    public ForClauseUDF(
-            ItemRuntimePlan expression,
-            DynamicContext context,
-            List<FlworDataFrameColumn> columnNames
-    ) {
+    public ForClauseUDF(ItemRuntimePlan expression, DynamicContext context, List<FlworDataFrameColumn> columnNames) {
         this.dataFrameContext = new DataFrameContext(context, columnNames);
         this.expression = expression;
         if (this.expression.isSparkJobNeeded()) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getRuntimeStaticContext().getMetadata()
-            );
+                    this.expression.getRuntimeStaticContext().getMetadata());
         }
 
         this.nextResult = new ArrayList<>();
@@ -71,13 +67,8 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
         for (Item nextItem : this.expression.materialize(this.dataFrameContext.getContext())) {
             this.nextResult.clear();
             this.nextResult.add(nextItem);
-            this.results.add(
-                FlworDataFrameUtils.serializeItemList(
-                    this.nextResult,
-                    this.dataFrameContext.getKryo(),
-                    this.dataFrameContext.getOutput()
-                )
-            );
+            this.results.add(FlworDataFrameUtils.serializeItemList(
+                    this.nextResult, this.dataFrameContext.getKryo(), this.dataFrameContext.getOutput()));
         }
 
         return this.results;

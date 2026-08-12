@@ -1,16 +1,5 @@
 package org.rumbledb.runtime.xml.axis;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedNodeException;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,13 +7,23 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnexpectedNodeException;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
 public abstract class AxisIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
-    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
-        Item::getXmlDocumentPosition,
-        Comparator.nullsLast(Comparator.naturalOrder())
-    );
+
+    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR =
+            Comparator.comparing(Item::getXmlDocumentPosition, Comparator.nullsLast(Comparator.naturalOrder()));
 
     protected enum ResultOrder {
         DOCUMENT_ORDER_DISTINCT,
@@ -61,27 +60,16 @@ public abstract class AxisIterator extends ItemRuntimePlan implements LocalRunti
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new AxisLocalCursor(
-                this.axis,
-                this.resultOrder,
-                context,
-                getRuntimeStaticContext()
-        );
+        return new AxisLocalCursor(this.axis, this.resultOrder, context, getRuntimeStaticContext());
     }
 
     private static List<Item> prepareResults(
-            Axis axis,
-            ResultOrder resultOrder,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
-        List<Item> contextItems = context.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, staticContext.getMetadata());
+            Axis axis, ResultOrder resultOrder, DynamicContext context, RuntimeStaticContext staticContext) {
+        List<Item> contextItems =
+                context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, staticContext.getMetadata());
         if (contextItems.isEmpty()) {
             throw new UnexpectedNodeException(
-                    "Expected at least a node type as context item",
-                    staticContext.getMetadata()
-            );
+                    "Expected at least a node type as context item", staticContext.getMetadata());
         }
         List<Item> selectedItems = selectAxis(axis, contextItems);
         if (resultOrder == ResultOrder.PRESERVE_SELECTION_ORDER) {
@@ -231,11 +219,7 @@ public abstract class AxisIterator extends ItemRuntimePlan implements LocalRunti
         private int position;
 
         private AxisLocalCursor(
-                Axis axis,
-                ResultOrder resultOrder,
-                DynamicContext context,
-                RuntimeStaticContext staticContext
-        ) {
+                Axis axis, ResultOrder resultOrder, DynamicContext context, RuntimeStaticContext staticContext) {
             super(staticContext.getMetadata());
             this.axis = axis;
             this.resultOrder = resultOrder;
@@ -245,12 +229,7 @@ public abstract class AxisIterator extends ItemRuntimePlan implements LocalRunti
 
         @Override
         protected void openLocal() {
-            this.results = prepareResults(
-                this.axis,
-                this.resultOrder,
-                this.context,
-                this.staticContext
-            );
+            this.results = prepareResults(this.axis, this.resultOrder, this.context, this.staticContext);
             this.position = 0;
         }
 

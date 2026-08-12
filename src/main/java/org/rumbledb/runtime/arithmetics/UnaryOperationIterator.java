@@ -20,7 +20,10 @@
 
 package org.rumbledb.runtime.arithmetics;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collections;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -31,27 +34,20 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
-
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Collections;
 
 public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     private final boolean negated;
     private final ItemRuntimePlan child;
+
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public UnaryOperationIterator(
-            ItemRuntimePlan child,
-            boolean negated,
-            RuntimeStaticContext staticContext
-    ) {
+    public UnaryOperationIterator(ItemRuntimePlan child, boolean negated, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.negated = negated;
@@ -64,9 +60,7 @@ public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan imp
             item = this.child.materializeAtMostOne(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "Unary expression requires at most one item in its input sequence.",
-                    getMetadata()
-            );
+                    "Unary expression requires at most one item in its input sequence.", getMetadata());
         }
         return applyOperator(item, this.negated, getMetadata());
     }
@@ -82,11 +76,7 @@ public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan imp
         if (!negated) {
             if (!item.isNumeric()) {
                 throw new UnexpectedTypeException(
-                        "Unary expression has non numeric args "
-                            +
-                            item.serialize(),
-                        metadata
-                );
+                        "Unary expression has non numeric args " + item.serialize(), metadata);
             }
             return item;
         }
@@ -95,7 +85,7 @@ public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan imp
         }
         if (item.isInteger()) {
             return ItemFactory.getInstance()
-                .createIntegerItem(BigInteger.valueOf(-1).multiply(item.getIntegerValue()));
+                    .createIntegerItem(BigInteger.valueOf(-1).multiply(item.getIntegerValue()));
         }
         if (item.isFloat()) {
             return ItemFactory.getInstance().createFloatItem(-1 * item.getFloatValue());
@@ -105,22 +95,14 @@ public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan imp
         }
         if (item.isDecimal()) {
             return ItemFactory.getInstance()
-                .createDecimalItem(item.getDecimalValue().multiply(new BigDecimal(-1)));
+                    .createDecimalItem(item.getDecimalValue().multiply(new BigDecimal(-1)));
         }
-        throw new UnexpectedTypeException(
-                "Unary expression has non numeric args "
-                    +
-                    item.serialize(),
-                metadata
-        );
+        throw new UnexpectedTypeException("Unary expression has non numeric args " + item.serialize(), metadata);
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(
-            this.child,
-            nativeClauseContext
-        );
+        NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(this.child, nativeClauseContext);
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -130,15 +112,10 @@ public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan imp
         String leftQuery = leftResult.getResultingQuery();
         SequenceType resultType = leftResult.getResultingType();
         if (this.negated) {
-            String resultingQuery = "( "
-                + " - "
-                + leftQuery
-                + " )";
+            String resultingQuery = "( " + " - " + leftQuery + " )";
             return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
         } else {
-            String resultingQuery = "( "
-                + leftQuery
-                + " )";
+            String resultingQuery = "( " + leftQuery + " )";
             return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
         }
     }

@@ -15,19 +15,19 @@
  * limitations under the License.
  *
  * Authors: Matteo Agnoletto (EPMatt)
- * 
+ *
  */
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * Exception for XQDY0025: It is a dynamic error if any attribute of a constructed element
  * does not have a name that is distinct from the names of all other attributes of the constructed element.
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xquery-31/#ERRXQDY0025">XQuery 3.1, F: XQDY0025</a>
  */
 public class DuplicateAttributeException extends RumbleException {
@@ -37,16 +37,14 @@ public class DuplicateAttributeException extends RumbleException {
 
     public DuplicateAttributeException(String attributeName, ExceptionMetadata metadata) {
         super(
-            "Dynamic error; Duplicate attribute name in element constructor: " + attributeName,
-            ErrorCode.DuplicateAttributeErrorCode,
-            metadata
-        );
+                "Dynamic error; Duplicate attribute name in element constructor: " + attributeName,
+                ErrorCode.DuplicateAttributeErrorCode,
+                metadata);
     }
 
     public DuplicateAttributeException(String attributeName) {
         super(
-            "Dynamic error; Duplicate attribute name in element constructor: " + attributeName,
-            ErrorCode.DuplicateAttributeErrorCode
-        );
+                "Dynamic error; Duplicate attribute name in element constructor: " + attributeName,
+                ErrorCode.DuplicateAttributeErrorCode);
     }
 }

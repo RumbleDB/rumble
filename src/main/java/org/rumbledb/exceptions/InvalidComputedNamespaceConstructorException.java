@@ -20,14 +20,14 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * Exception for XQDY0101: It is a dynamic error if a computed namespace constructor attempts to do any of the
  * following:
- * 
+ *
  * <ul>
  * <li>Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace</li>
  * <li>Bind a prefix other than xml to the namespace URI http://www.w3.org/XML/1998/namespace</li>
@@ -47,4 +47,3 @@ public class InvalidComputedNamespaceConstructorException extends RumbleExceptio
         super(message, ErrorCode.InvalidComputedNamespaceConstructorErrorCode, metadata);
     }
 }
-

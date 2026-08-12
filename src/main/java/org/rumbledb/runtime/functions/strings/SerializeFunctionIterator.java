@@ -20,45 +20,37 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.serialization.SerializationParameterUtils;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.Serializers;
 import org.rumbledb.serialization.SerializerUtils;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.serialization.Serializers;
 
 public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public SerializeFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public SerializeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        List<Item> options = this.getChildren().size() < 2
-            ? null
-            : this.getChild(1).materialize(context);
-        SerializationParameters params = SerializationParameterUtils.defaultsForSerializeFunction(
-            this.staticContext.getQueryLanguage()
-        );
+        List<Item> options =
+                this.getChildren().size() < 2 ? null : this.getChild(1).materialize(context);
+        SerializationParameters params =
+                SerializationParameterUtils.defaultsForSerializeFunction(this.staticContext.getQueryLanguage());
         if (options != null) {
             SerializationParameterUtils.applyParameterItems(params, options, getMetadata());
         }
@@ -83,8 +75,7 @@ public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             } else {
                 throw new InvalidArgumentTypeException(
                         "JSON serialization requires the top-level sequence to contain at most one item.",
-                        getMetadata()
-                );
+                        getMetadata());
             }
         } else {
             if ("xml".equalsIgnoreCase(params.getMethod()) && !params.getOmitXmlDeclaration() && !items.isEmpty()) {

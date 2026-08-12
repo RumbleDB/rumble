@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.typing;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -8,18 +9,13 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class PrefixFromQNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public PrefixFromQNameFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public PrefixFromQNameFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -31,10 +27,7 @@ public class PrefixFromQNameFunctionIterator extends AbstractAtMostOneItemRuntim
             return null;
         }
         String prefix = qnameItem.getQNameValue().getPrefix();
-        if (prefix == null)
-            return null;
+        if (prefix == null) return null;
         return ItemFactory.getInstance().createNCNameItem(prefix);
     }
-
-
 }

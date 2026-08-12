@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.flwor.tuple;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -30,9 +33,6 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class FlworKey {
 
     private final List<Item> keyItems;
@@ -40,7 +40,6 @@ public class FlworKey {
     public FlworKey(List<Item> contents) {
         this.keyItems = new ArrayList<>();
         this.keyItems.addAll(contents);
-
     }
 
     @Override
@@ -67,7 +66,6 @@ public class FlworKey {
      * @param flworKey "other" FlworKey to be compared against
      * @return true if both items are equal, false otherwise (also when types are different)
      */
-
     public boolean equalFlworKey(FlworKey flworKey) {
         if (this.keyItems.size() != flworKey.keyItems.size()) {
             throw new OurBadException("Invalid sort key: Key sizes can't be different.");
@@ -80,11 +78,7 @@ public class FlworKey {
             Item item2 = flworKey.keyItems.get(index);
 
             // check for incorrect ordering inputs
-            if (
-                (item1 != null && !item1.isAtomic())
-                    ||
-                    (item2 != null && !item2.isAtomic())
-            ) {
+            if ((item1 != null && !item1.isAtomic()) || (item2 != null && !item2.isAtomic())) {
                 throw new OurBadException("Non atomic key not allowed");
             }
 
@@ -105,10 +99,7 @@ public class FlworKey {
      * @return comparison value (-1=smaller, 0=equal, 1=larger) * index (of the expression that determines ordering)
      */
     public int compareWithFlworKey(
-            FlworKey flworKey,
-            List<OrderByClauseAnnotatedChildIterator> expressions,
-            ExceptionMetadata metadata
-    ) {
+            FlworKey flworKey, List<OrderByClauseAnnotatedChildIterator> expressions, ExceptionMetadata metadata) {
         if (this.keyItems.size() != flworKey.keyItems.size()) {
             throw new OurBadException("Invalid sort key: Key sizes can't be different.", metadata);
         }
@@ -123,11 +114,7 @@ public class FlworKey {
             Item item2 = flworKey.keyItems.get(index);
 
             // check for incorrect ordering inputs
-            if (
-                (item1 != null && !item1.isAtomic())
-                    ||
-                    (item2 != null && !item2.isAtomic())
-            ) {
+            if ((item1 != null && !item1.isAtomic()) || (item2 != null && !item2.isAtomic())) {
                 throw new OurBadException("Non atomic key not allowed", metadata);
             }
 
@@ -149,11 +136,9 @@ public class FlworKey {
                         result = 1;
                         break;
                     }
-                    if (
-                        (item1.isDouble() && Double.isNaN(item1.getDoubleValue()))
+                    if ((item1.isDouble() && Double.isNaN(item1.getDoubleValue()))
                             && item2.isDouble()
-                            && Double.isNaN(item2.getDoubleValue())
-                    ) {
+                            && Double.isNaN(item2.getDoubleValue())) {
                         result = 0;
                         break;
                     }
@@ -166,23 +151,17 @@ public class FlworKey {
                         break;
                     }
 
-                    comparison = ComparisonIterator.compareItems(
-                        item1,
-                        item2,
-                        ComparisonOperator.VC_EQ,
-                        metadata
-                    );
+                    comparison = ComparisonIterator.compareItems(item1, item2, ComparisonOperator.VC_EQ, metadata);
                     if (comparison == Long.MIN_VALUE) {
                         throw new UnexpectedTypeException(
                                 " \""
-                                    + ComparisonOperator.VC_EQ
-                                    + "\": operation not possible with parameters of type \""
-                                    + item1.getDynamicType().toString()
-                                    + "\" and \""
-                                    + item2.getDynamicType().toString()
-                                    + "\"",
-                                metadata
-                        );
+                                        + ComparisonOperator.VC_EQ
+                                        + "\": operation not possible with parameters of type \""
+                                        + item1.getDynamicType().toString()
+                                        + "\" and \""
+                                        + item2.getDynamicType().toString()
+                                        + "\"",
+                                metadata);
                     }
                     result = (int) comparison;
                     break;
@@ -199,11 +178,9 @@ public class FlworKey {
                         result = -1;
                         break;
                     }
-                    if (
-                        (item1.isDouble() && Double.isNaN(item1.getDoubleValue()))
+                    if ((item1.isDouble() && Double.isNaN(item1.getDoubleValue()))
                             && item2.isDouble()
-                            && Double.isNaN(item2.getDoubleValue())
-                    ) {
+                            && Double.isNaN(item2.getDoubleValue())) {
                         result = 0;
                         break;
                     }
@@ -217,30 +194,22 @@ public class FlworKey {
                     }
 
                     comparison = ComparisonIterator.compareItems(
-                        item1,
-                        item2,
-                        ComparisonOperator.VC_EQ,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
+                            item1, item2, ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
                     if (comparison == Long.MIN_VALUE) {
                         throw new UnexpectedTypeException(
                                 " \""
-                                    + ComparisonOperator.VC_EQ
-                                    + "\": operation not possible with parameters of type \""
-                                    + item1.getDynamicType().toString()
-                                    + "\" and \""
-                                    + item2.getDynamicType().toString()
-                                    + "\"",
-                                metadata
-                        );
+                                        + ComparisonOperator.VC_EQ
+                                        + "\": operation not possible with parameters of type \""
+                                        + item1.getDynamicType().toString()
+                                        + "\" and \""
+                                        + item2.getDynamicType().toString()
+                                        + "\"",
+                                metadata);
                     }
                     result = (int) comparison;
                     break;
                 case NONE:
-                    throw new OurBadException(
-                            "Behavior of empty sequence ordering was not resolved",
-                            metadata
-                    );
+                    throw new OurBadException("Behavior of empty sequence ordering was not resolved", metadata);
             }
 
             // Simplify comparison result to -1/0/1
@@ -255,7 +224,4 @@ public class FlworKey {
         // if keys are fully equal, return 0
         return result;
     }
-
-
-
 }

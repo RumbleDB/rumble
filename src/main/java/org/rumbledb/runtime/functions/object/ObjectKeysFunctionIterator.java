@@ -20,19 +20,6 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-
 import java.io.Serial;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,30 +27,36 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 public class ObjectKeysFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
 
-    public ObjectKeysFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ObjectKeysFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ObjectKeysLocalCursor(
-                this.iterator,
-                context,
-                getMetadata()
-        );
+        return new ObjectKeysLocalCursor(this.iterator, context, getMetadata());
     }
 
     @Override
@@ -82,11 +75,7 @@ public class ObjectKeysFunctionIterator extends ItemRuntimePlan
         private Iterator<String> currentKeys;
         private String nextKey;
 
-        private ObjectKeysLocalCursor(
-                ItemRuntimePlan inputPlan,
-                DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+        private ObjectKeysLocalCursor(ItemRuntimePlan inputPlan, DynamicContext context, ExceptionMetadata metadata) {
             super(metadata);
             this.inputPlan = inputPlan;
             this.context = context;
@@ -114,9 +103,7 @@ public class ObjectKeysFunctionIterator extends ItemRuntimePlan
                     return;
                 }
                 Item item = this.inputCursor.next();
-                this.currentKeys = item.isObject()
-                    ? item.getStringKeys().iterator()
-                    : Collections.emptyIterator();
+                this.currentKeys = item.isObject() ? item.getStringKeys().iterator() : Collections.emptyIterator();
             }
         }
 

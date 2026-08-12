@@ -20,8 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,27 +29,22 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.CollationSupport;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class StartsWithFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StartsWithFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StartsWithFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         String collation = this.getChildren().size() == 3
-            ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
-            : getRuntimeStaticContext().getDefaultCollation();
+                ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
+                : getRuntimeStaticContext().getDefaultCollation();
 
         Item substringItem = this.getChild(1).materializeFirstOrNull(context);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
@@ -60,13 +55,7 @@ public class StartsWithFunctionIterator extends AbstractAtMostOneItemRuntimePlan
             return ItemFactory.getInstance().createBooleanItem(false);
         }
         boolean result = CollationSupport.startsWith(
-            stringItem.getStringValue(),
-            substringItem.getStringValue(),
-            collation,
-            getMetadata()
-        );
+                stringItem.getStringValue(), substringItem.getStringValue(), collation, getMetadata());
         return ItemFactory.getInstance().createBooleanItem(result);
     }
-
-
 }

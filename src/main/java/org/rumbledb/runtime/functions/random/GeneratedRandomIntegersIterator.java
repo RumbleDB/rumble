@@ -1,9 +1,9 @@
 package org.rumbledb.runtime.functions.random;
 
+import java.util.PrimitiveIterator;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
-
-import java.util.PrimitiveIterator;
 
 public class GeneratedRandomIntegersIterator extends GeneratedRandomsIterator {
     private final PrimitiveIterator.OfInt iterator;
@@ -26,5 +26,4 @@ public class GeneratedRandomIntegersIterator extends GeneratedRandomsIterator {
     public boolean hasNext() {
         return this.iterator.hasNext();
     }
-
 }

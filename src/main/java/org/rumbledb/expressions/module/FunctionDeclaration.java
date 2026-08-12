@@ -20,9 +20,12 @@
 
 package org.rumbledb.expressions.module;
 
+import java.util.Collections;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -30,20 +33,15 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 
-import java.util.Collections;
-import java.util.List;
-
 public class FunctionDeclaration extends Node {
 
     private final InlineFunctionExpression functionExpression;
+
     @Setter
     @Getter
     private boolean recursive = false;
 
-    public FunctionDeclaration(
-            InlineFunctionExpression functionExpression,
-            ExceptionMetadata metadata
-    ) {
+    public FunctionDeclaration(InlineFunctionExpression functionExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.functionExpression = functionExpression;
     }
@@ -95,5 +93,4 @@ public class FunctionDeclaration extends Node {
         indentIt(sb, indent);
         this.functionExpression.serializeToJSONiq(sb, 0);
     }
-
 }

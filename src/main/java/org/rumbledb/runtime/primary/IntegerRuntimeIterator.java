@@ -20,29 +20,26 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
 public class IntegerRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Item item;
 
-    public IntegerRuntimeIterator(
-            String lexicalValue,
-            RuntimeStaticContext staticContext
-    ) {
+    public IntegerRuntimeIterator(String lexicalValue, RuntimeStaticContext staticContext) {
         super(List.of(), staticContext);
         this.item = ItemFactory.getInstance().createIntegerItem(lexicalValue);
     }
@@ -55,9 +52,6 @@ public class IntegerRuntimeIterator extends AbstractAtMostOneItemRuntimePlan imp
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
-                nativeClauseContext,
-                "" + this.item.getIntegerValue(),
-                SequenceType.createSequenceType("integer")
-        );
+                nativeClauseContext, "" + this.item.getIntegerValue(), SequenceType.createSequenceType("integer"));
     }
 }

@@ -1,6 +1,5 @@
 package org.rumbledb.exceptions;
 
-
 import java.io.Serial;
 
 public class MoreThanOneItemException extends RumbleException {

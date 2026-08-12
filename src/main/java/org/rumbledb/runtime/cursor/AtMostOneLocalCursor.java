@@ -18,6 +18,7 @@
 package org.rumbledb.runtime.cursor;
 
 import lombok.NonNull;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
@@ -37,8 +38,7 @@ public final class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
     }
 
     @Override
-    protected final void openLocal() {
-    }
+    protected final void openLocal() {}
 
     @Override
     protected final boolean hasNextLocal() {

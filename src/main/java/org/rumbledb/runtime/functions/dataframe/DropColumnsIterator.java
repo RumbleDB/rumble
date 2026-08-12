@@ -1,9 +1,7 @@
 package org.rumbledb.runtime.functions.dataframe;
 
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -11,16 +9,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class DropColumnsIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+public class DropColumnsIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -30,23 +26,18 @@ public class DropColumnsIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DropColumnsIterator(
-            List<ItemRuntimePlan> children,
-            RuntimeStaticContext staticContext
-    ) {
+    public DropColumnsIterator(List<ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame dataFrame = ItemRuntimeDataFrameFactory.INSTANCE
-            .fromPlan(this.getChild(0), context);
+        HomogeneousItemDataFrame dataFrame = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
         List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         String[] columnsToDrop = new String[columnsToDropItems.size()];
         int i = 0;

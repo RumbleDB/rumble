@@ -1,6 +1,5 @@
 package org.rumbledb.expressions.xml.node_test;
 
-
 import java.io.Serial;
 
 public class AnyKindTest implements NodeTest {
@@ -11,6 +10,4 @@ public class AnyKindTest implements NodeTest {
     public String toString() {
         return "node()";
     }
-
-
 }

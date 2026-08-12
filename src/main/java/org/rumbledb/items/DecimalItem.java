@@ -34,6 +34,7 @@ public class DecimalItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private BigDecimal value;
 
     // Float/double casts retain their exact decimal value for op:same-key while serializing

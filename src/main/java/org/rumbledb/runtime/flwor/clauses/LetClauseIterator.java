@@ -20,19 +20,22 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.util.*;
 
-import lombok.extern.log4j.Log4j2;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -42,41 +45,37 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.udfs.ExpressionEvaluationUDF;
 import org.rumbledb.runtime.flwor.udfs.GenericLetClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
-import org.rumbledb.runtime.flwor.udfs.ExpressionEvaluationUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
-
-// import org.rumbledb.exceptions.ExceptionMetadata;
-
-import org.rumbledb.runtime.flwor.tuple.FlworTuple;
-import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.util.*;
 
 @Log4j2
 public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private Name variableName; // for efficient use in local iteration
     private SequenceType sequenceType;
     private ItemRuntimePlan assignmentIterator;
@@ -86,8 +85,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             Name variableName,
             SequenceType sequenceType,
             ItemRuntimePlan assignmentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(child, staticContext);
         this.variableName = variableName;
         this.sequenceType = sequenceType;
@@ -103,8 +101,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 getEvaluationDepthLimit(),
                 getConfiguration(),
                 context,
-                getMetadata()
-        );
+                getMetadata());
     }
 
     private static final class LetLocalCursor extends AbstractLocalCursor<FlworTuple> {
@@ -128,8 +125,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 int evaluationDepthLimit,
                 RumbleConfiguration configuration,
                 DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                ExceptionMetadata metadata) {
             super(metadata);
             this.childPlan = childPlan;
             this.variableName = variableName;
@@ -142,8 +138,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         @Override
         protected void openLocal() {
-            this.startingClause = this.childPlan == null
-                || this.evaluationDepthLimit == 0;
+            this.startingClause = this.childPlan == null || this.evaluationDepthLimit == 0;
             if (this.startingClause) {
                 this.tupleContext = this.context;
                 this.nextTuple = generateTuple(null);
@@ -166,29 +161,20 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         }
 
         private FlworTuple generateTuple(FlworTuple inputTuple) {
-            FlworTuple result = inputTuple == null
-                ? new FlworTuple(this.configuration)
-                : new FlworTuple(inputTuple);
+            FlworTuple result = inputTuple == null ? new FlworTuple(this.configuration) : new FlworTuple(inputTuple);
             if (this.assignmentPlan.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
                 result.putValue(
-                    this.variableName,
-                    ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-                        this.assignmentPlan,
-                        this.tupleContext
-                    )
-                );
+                        this.variableName,
+                        ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.assignmentPlan, this.tupleContext));
                 this.tupleContext = new DynamicContext(this.context);
-            } else if (this.assignmentPlan.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-                result.putValue(
-                    this.variableName,
-                    this.assignmentPlan.getRDD(this.tupleContext)
-                );
+            } else if (this.assignmentPlan
+                    .getRuntimeStaticContext()
+                    .getExecutionMode()
+                    .isRDDOrDataFrame()) {
+                result.putValue(this.variableName, this.assignmentPlan.getRDD(this.tupleContext));
                 this.tupleContext = new DynamicContext(this.context);
             } else {
-                result.putValue(
-                    this.variableName,
-                    this.assignmentPlan.materialize(this.tupleContext)
-                );
+                result.putValue(this.variableName, this.assignmentPlan.materialize(this.tupleContext));
             }
             return result;
         }
@@ -224,9 +210,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     }
 
     @Override
-    public FlworDataFrame createNativeDataFrame(
-            DynamicContext context
-    ) {
+    public FlworDataFrame createNativeDataFrame(DynamicContext context) {
         if (this.child != null && this.evaluationDepthLimit != 0) {
             FlworDataFrame df = (FlworDataFrame) this.child.getDataFrame(context);
 
@@ -234,75 +218,65 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 return df;
             }
 
-            if (this.assignmentIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            if (this.assignmentIterator
+                    .getRuntimeStaticContext()
+                    .getExecutionMode()
+                    .isRDDOrDataFrame()) {
                 return getDataFrameAsJoin(context, this.outputTupleProjection, df);
             }
 
             Dataset<Row> result = bindLetVariableInDataFrame(
-                df.getDataFrame(),
-                this.variableName,
-                this.sequenceType,
-                this.assignmentIterator,
-                context,
-                (this.child == null || this.evaluationDepthLimit == 0)
-                    ? Collections.emptyList()
-                    : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
-                this.outputTupleProjection,
-                false,
-                getConfiguration()
-            );
+                    df.getDataFrame(),
+                    this.variableName,
+                    this.sequenceType,
+                    this.assignmentIterator,
+                    context,
+                    (this.child == null || this.evaluationDepthLimit == 0)
+                            ? Collections.emptyList()
+                            : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                    this.outputTupleProjection,
+                    false,
+                    getConfiguration());
 
             return new FlworDataFrame(result);
         }
         throw new RuntimeException(
-                "Unexpected program state reached. Initial let clauses are always locally executed."
-        );
+                "Unexpected program state reached. Initial let clauses are always locally executed.");
     }
 
     public FlworDataFrame getDataFrameAsJoin(
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> parentProjection,
-            FlworDataFrame childDF
-    ) {
+            FlworDataFrame childDF) {
         // We try to detect an equi-join.
 
         // Is this a predicate expression?
         if (!(this.assignmentIterator instanceof PredicateIterator predicateAssignmentIterator)) {
             throw new JobWithinAJobException(
                     "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble is able to handle large scale left outer joins, but this requires the let expression to be a predicate expression, the left-hand-side of which is independent from the previous variables of the current FLWOR expression.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
-        ItemRuntimePlan sequenceIterator = predicateAssignmentIterator
-            .sequenceIterator();
-        ItemRuntimePlan predicateIterator = predicateAssignmentIterator
-            .predicateIterator();
+        ItemRuntimePlan sequenceIterator = predicateAssignmentIterator.sequenceIterator();
+        ItemRuntimePlan predicateIterator = predicateAssignmentIterator.predicateIterator();
 
         // Is the left-hand-side of this predicate expression independent from input tuples?
         if (!isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
             throw new JobWithinAJobException(
                     "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble attempted to detect a join but the left-hand-side of the predicate expression in this let clause depends on the previous variables of the current FLWOR expression. You can try again by making sure that such is not the case.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
-        List<ItemRuntimePlan> contextItemEqualityCriteria =
-            new ArrayList<>();
-        List<ItemRuntimePlan> inputTupleEqualityCriteria =
-            new ArrayList<>();
+        List<ItemRuntimePlan> contextItemEqualityCriteria = new ArrayList<>();
+        List<ItemRuntimePlan> inputTupleEqualityCriteria = new ArrayList<>();
         String failureMessage = extractEqualityComparisonsForConjunction(
-            predicateIterator,
-            contextItemEqualityCriteria,
-            inputTupleEqualityCriteria
-        );
+                predicateIterator, contextItemEqualityCriteria, inputTupleEqualityCriteria);
 
         if (failureMessage != null) {
             throw new JobWithinAJobException(
                     "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. "
-                        + failureMessage,
-                    getMetadata()
-            );
+                            + failureMessage,
+                    getMetadata());
         }
 
         // Now we know we can execute the query as an equi-join.
@@ -315,14 +289,12 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
             throw new UnsupportedFeatureException(
                     "Rumble detected an equi-join, but does not support yet position() in the join predicate.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
             throw new UnsupportedFeatureException(
                     "Rumble detected an equi-join, but does not support yet last() in the join predicate.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         // Now we execute the left-hand-side of the predicate, which is the right side of the join.
@@ -330,97 +302,70 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         Map<Name, VariableDependency> sequenceDependencies = new HashMap<>();
         sequenceDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
         Dataset<Row> expressionDF = ForClauseIterator.getDataFrameStartingClause(
-            sequenceIterator,
-            Name.CONTEXT_ITEM,
-            null,
-            false,
-            context,
-            sequenceDependencies
-        ).getDataFrame();
+                        sequenceIterator, Name.CONTEXT_ITEM, null, false, context, sequenceDependencies)
+                .getDataFrame();
 
         // We compute the hashes for both sides of the equality predicate.
-        ItemRuntimePlan contextItemValueExpression = getJoinKeyExpression(
-            contextItemEqualityCriteria,
-            getMetadata()
-        );
+        ItemRuntimePlan contextItemValueExpression = getJoinKeyExpression(contextItemEqualityCriteria, getMetadata());
         expressionDF = LetClauseIterator.bindLetVariableInDataFrame(
-            expressionDF,
-            Name.createVariableInNoNamespace(SparkSessionManager.rightHandSideHashColumnName),
-            this.sequenceType,
-            contextItemValueExpression,
-            context,
-            Collections.singletonList(Name.CONTEXT_ITEM),
-            null,
-            true,
-            getConfiguration()
-        );
+                expressionDF,
+                Name.createVariableInNoNamespace(SparkSessionManager.rightHandSideHashColumnName),
+                this.sequenceType,
+                contextItemValueExpression,
+                context,
+                Collections.singletonList(Name.CONTEXT_ITEM),
+                null,
+                true,
+                getConfiguration());
 
-        ItemRuntimePlan inputTupleValueExpression = getJoinKeyExpression(
-            inputTupleEqualityCriteria,
-            getMetadata()
-        );
+        ItemRuntimePlan inputTupleValueExpression = getJoinKeyExpression(inputTupleEqualityCriteria, getMetadata());
         inputDF = LetClauseIterator.bindLetVariableInDataFrame(
-            inputDF,
-            Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
-            this.sequenceType,
-            inputTupleValueExpression,
-            context,
-            (this.child == null || this.evaluationDepthLimit == 0)
-                ? Collections.emptyList()
-                : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
-            null,
-            true,
-            getConfiguration()
-        );
+                inputDF,
+                Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
+                this.sequenceType,
+                inputTupleValueExpression,
+                context,
+                (this.child == null || this.evaluationDepthLimit == 0)
+                        ? Collections.emptyList()
+                        : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                null,
+                true,
+                getConfiguration());
 
         // We group the right-hand-side of the join by hash to prepare the left outer join.
         String hashedExpressionResults = FlworDataFrameUtils.createTempView(expressionDF);
-        FlworDataFrameColumn variableNameAggregatedColumn = new FlworDataFrameColumn(
-                this.variableName,
-                FlworDataFrameColumn.ColumnFormat.NATIVE_SEQUENCE
-        );
-        boolean isBinary = FlworDataFrameUtils.isVariableAvailableAsSerializedSequence(
-            expressionDF.schema(),
-            Name.CONTEXT_ITEM
-        );
-        expressionDF = expressionDF.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT `%s`, collect_list(`%s`) AS %s FROM %s GROUP BY `%s`",
-                    SparkSessionManager.rightHandSideHashColumnName,
-                    Name.CONTEXT_ITEM.toString(),
-                    variableNameAggregatedColumn,
-                    hashedExpressionResults,
-                    SparkSessionManager.rightHandSideHashColumnName
-                )
-            );
-
+        FlworDataFrameColumn variableNameAggregatedColumn =
+                new FlworDataFrameColumn(this.variableName, FlworDataFrameColumn.ColumnFormat.NATIVE_SEQUENCE);
+        boolean isBinary =
+                FlworDataFrameUtils.isVariableAvailableAsSerializedSequence(expressionDF.schema(), Name.CONTEXT_ITEM);
+        expressionDF = expressionDF
+                .sparkSession()
+                .sql(String.format(
+                        "SELECT `%s`, collect_list(`%s`) AS %s FROM %s GROUP BY `%s`",
+                        SparkSessionManager.rightHandSideHashColumnName,
+                        Name.CONTEXT_ITEM.toString(),
+                        variableNameAggregatedColumn,
+                        hashedExpressionResults,
+                        SparkSessionManager.rightHandSideHashColumnName));
 
         // We serialize back all grouped items as sequences of items.
         if (isBinary) {
             String groupedResults = FlworDataFrameUtils.createTempView(expressionDF);
-            expressionDF.sparkSession()
-                .udf()
-                .register(
-                    "serializeArray",
-                    new GroupClauseSerializeAggregateResultsUDF(),
-                    DataTypes.BinaryType
-                );
-            FlworDataFrameColumn newVariableNameAggregatedColumn = new FlworDataFrameColumn(
-                    this.variableName,
-                    FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
-            );
+            expressionDF
+                    .sparkSession()
+                    .udf()
+                    .register("serializeArray", new GroupClauseSerializeAggregateResultsUDF(), DataTypes.BinaryType);
+            FlworDataFrameColumn newVariableNameAggregatedColumn =
+                    new FlworDataFrameColumn(this.variableName, FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE);
 
-            expressionDF = expressionDF.sparkSession()
-                .sql(
-                    String.format(
-                        "SELECT `%s`, serializeArray(%s) AS %s FROM %s",
-                        SparkSessionManager.rightHandSideHashColumnName,
-                        variableNameAggregatedColumn,
-                        newVariableNameAggregatedColumn,
-                        groupedResults
-                    )
-                );
+            expressionDF = expressionDF
+                    .sparkSession()
+                    .sql(String.format(
+                            "SELECT `%s`, serializeArray(%s) AS %s FROM %s",
+                            SparkSessionManager.rightHandSideHashColumnName,
+                            variableNameAggregatedColumn,
+                            newVariableNameAggregatedColumn,
+                            groupedResults));
             variableNameAggregatedColumn = newVariableNameAggregatedColumn;
         }
         String groupedAndSerializedResults = FlworDataFrameUtils.createTempView(expressionDF);
@@ -436,89 +381,63 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         DynamicContext.mergeVariableDependencies(prefilterProjection, predicateDependencies);
         prefilterProjection.put(this.variableName, prefilterProjection.get(Name.CONTEXT_ITEM));
         prefilterProjection.remove(Name.CONTEXT_ITEM);
-        List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(
-            inputSchema,
-            prefilterProjection,
-            null,
-            variableNamesToExclude
-        );
+        List<FlworDataFrameColumn> columnsToSelect =
+                FlworDataFrameUtils.getColumns(inputSchema, prefilterProjection, null, variableNamesToExclude);
         String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(columnsToSelect, true);
 
         // Now we proceed with the left outer join.
         inputDF = inputDF.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT %s %s FROM %s LEFT OUTER JOIN %s ON `%s` = `%s`",
-                    projectionVariables,
-                    variableNameAggregatedColumn,
-                    inputTuples,
-                    groupedAndSerializedResults,
-                    SparkSessionManager.rightHandSideHashColumnName,
-                    SparkSessionManager.leftHandSideHashColumnName
-                )
-            );
+                .sql(String.format(
+                        "SELECT %s %s FROM %s LEFT OUTER JOIN %s ON `%s` = `%s`",
+                        projectionVariables,
+                        variableNameAggregatedColumn,
+                        inputTuples,
+                        groupedAndSerializedResults,
+                        SparkSessionManager.rightHandSideHashColumnName,
+                        SparkSessionManager.leftHandSideHashColumnName));
 
         // We now post-filter on the predicate, by hash group.
-        RuntimeStaticContext staticContext = this.getStaticContext()
-            .toBuilder()
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        RuntimeStaticContext staticContext = this.getStaticContext().toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
 
         ItemRuntimePlan filteringPredicateIterator = new PredicateIterator(
-                new VariableReferenceIterator(
-                        this.variableName,
-                        staticContext
-                ),
-                predicateIterator,
-                staticContext
-        );
+                new VariableReferenceIterator(this.variableName, staticContext), predicateIterator, staticContext);
         inputDF = LetClauseIterator.bindLetVariableInDataFrame(
-            inputDF,
-            this.variableName,
-            this.sequenceType,
-            filteringPredicateIterator,
-            context,
-            new ArrayList<Name>(this.getOutputTupleVariableNames()),
-            parentProjection,
-            false,
-            getConfiguration()
-        );
+                inputDF,
+                this.variableName,
+                this.sequenceType,
+                filteringPredicateIterator,
+                context,
+                new ArrayList<Name>(this.getOutputTupleVariableNames()),
+                parentProjection,
+                false,
+                getConfiguration());
 
         return new FlworDataFrame(inputDF);
     }
 
-    private ItemRuntimePlan getJoinKeyExpression(
-            List<ItemRuntimePlan> equalityCriteria,
-            ExceptionMetadata metadata
-    ) {
+    private ItemRuntimePlan getJoinKeyExpression(List<ItemRuntimePlan> equalityCriteria, ExceptionMetadata metadata) {
         if (equalityCriteria.size() == 1) {
             return equalityCriteria.get(0);
         }
 
-        RuntimeStaticContext staticContext = this.getStaticContext()
-            .toBuilder()
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(metadata)
-            .build();
+        RuntimeStaticContext staticContext = this.getStaticContext().toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(metadata)
+                .build();
 
         return new ArrayRuntimeIterator(
-                new CommaExpressionIterator(
-                        equalityCriteria,
-                        staticContext
-                ),
-                staticContext,
-                false
-        );
+                new CommaExpressionIterator(equalityCriteria, staticContext), staticContext, false);
     }
 
     private static String extractEqualityComparisonsForConjunction(
             ItemRuntimePlan predicateIterator,
             List<ItemRuntimePlan> contextItemEqualityCriteria,
-            List<ItemRuntimePlan> inputTupleEqualityCriteria
-    ) {
+            List<ItemRuntimePlan> inputTupleEqualityCriteria) {
         Stack<ItemRuntimePlan> candidateIterators = new Stack<>();
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
@@ -535,18 +454,14 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 return "We did detect a predicate expression, but the criterion inside the predicate is not a value equality comparison.";
             }
 
-            ItemRuntimePlan leftHandSideOfJoinEqualityCriterion =
-                comparisonIterator.getLeftIterator();
-            ItemRuntimePlan rightHandSideOfJoinEqualityCriterion =
-                comparisonIterator.getRightIterator();
-            Set<Name> leftDependencies = new HashSet<>(
-                    leftHandSideOfJoinEqualityCriterion.getVariableDependencies()
-                        .keySet()
-            );
-            Set<Name> rightDependencies = new HashSet<>(
-                    rightHandSideOfJoinEqualityCriterion.getVariableDependencies()
-                        .keySet()
-            );
+            ItemRuntimePlan leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
+            ItemRuntimePlan rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
+            Set<Name> leftDependencies = new HashSet<>(leftHandSideOfJoinEqualityCriterion
+                    .getVariableDependencies()
+                    .keySet());
+            Set<Name> rightDependencies = new HashSet<>(rightHandSideOfJoinEqualityCriterion
+                    .getVariableDependencies()
+                    .keySet());
 
             if (leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM)) {
                 if (!rightDependencies.contains(Name.CONTEXT_ITEM)) {
@@ -572,13 +487,10 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     }
 
     public static boolean isExpressionIndependentFromInputTuple(
-            ItemRuntimePlan sequenceIterator,
-            TupleRuntimePlan tupleIterator
-    ) {
+            ItemRuntimePlan sequenceIterator, TupleRuntimePlan tupleIterator) {
         // Check that the expression does not depend functionally on the input tuples
-        Set<Name> intersection = new HashSet<>(
-                sequenceIterator.getVariableDependencies().keySet()
-        );
+        Set<Name> intersection =
+                new HashSet<>(sequenceIterator.getVariableDependencies().keySet());
         intersection.retainAll(tupleIterator.getOutputTupleVariableNames());
         return intersection.isEmpty();
     }
@@ -586,7 +498,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(this.assignmentIterator.getVariableDependencies());
+                new TreeMap<>(this.assignmentIterator.getVariableDependencies());
         if (this.child != null && this.evaluationDepthLimit != 0) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
@@ -618,8 +530,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> parentProjection
-    ) {
+            Map<Name, DynamicContext.VariableDependency> parentProjection) {
         if (this.child == null || this.evaluationDepthLimit == 0) {
             return Collections.emptyMap();
         }
@@ -627,32 +538,26 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         // start with an empty projection.
 
         // copy over the projection needed by the parent clause.
-        Map<Name, DynamicContext.VariableDependency> projection =
-            new TreeMap<>(parentProjection);
+        Map<Name, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
 
         // remove the variable that this clause binds.
         projection.remove(this.variableName);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<Name, DynamicContext.VariableDependency> exprDependency =
-            this.assignmentIterator.getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> exprDependency = this.assignmentIterator.getVariableDependencies();
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
-                    if (
-                        this.child != null
+                    if (this.child != null
                             && this.evaluationDepthLimit != 0
-                            && this.child.getOutputTupleVariableNames().contains(variable)
-                    ) {
+                            && this.child.getOutputTupleVariableNames().contains(variable)) {
                         projection.put(variable, DynamicContext.VariableDependency.FULL);
                     }
                 }
             } else {
-                if (
-                    this.child != null
+                if (this.child != null
                         && this.evaluationDepthLimit != 0
-                        && this.child.getOutputTupleVariableNames().contains(variable)
-                ) {
+                        && this.child.getOutputTupleVariableNames().contains(variable)) {
                     projection.put(variable, exprDependency.get(variable));
                 }
             }
@@ -662,7 +567,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
     /**
      * Extends a DataFrame with a new column obtained from the evaluation of an expression for each tuple.
-     * 
+     *
      * @param dataFrame the DataFrame to extend
      * @param newVariableName the name of the new column (variable)
      * @param sequenceType the sequence type of the new bound item, not used in case of hash
@@ -683,17 +588,12 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             List<Name> variablesInInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             boolean hash,
-            RumbleConfiguration conf
-    ) {
+            RumbleConfiguration conf) {
         StructType inputSchema = dataFrame.schema();
         // inputSchema.printTreeString();
 
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-            inputSchema,
-            outputTupleVariableDependencies,
-            null,
-            Collections.singletonList(newVariableName)
-        );
+                inputSchema, outputTupleVariableDependencies, null, Collections.singletonList(newVariableName));
         // for (String c : allColumns) {
         // System.out.println(c);
         // }
@@ -704,13 +604,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             Dataset<Row> nativeQueryResult = null;
             if (conf.runtime().useNativeExecution()) {
                 nativeQueryResult = tryNativeQuery(
-                    dataFrame,
-                    newVariableName,
-                    newVariableExpression,
-                    allColumns,
-                    inputSchema,
-                    context
-                );
+                        dataFrame, newVariableName, newVariableExpression, allColumns, inputSchema, context);
             }
 
             if (nativeQueryResult != null) {
@@ -729,11 +623,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         // was not possible, we use let udf
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
-            inputSchema,
-            newVariableExpression.getVariableDependencies(),
-            variablesInInputTuple,
-            null
-        );
+                inputSchema, newVariableExpression.getVariableDependencies(), variablesInInputTuple, null);
         // for (String c : UDFcolumns) {
         // System.out.println("UDF " + c);
         // }
@@ -741,21 +631,12 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         boolean isNative = false;
         if (!hash) {
             isNative = registerLetClauseUDF(
-                dataFrame,
-                newVariableExpression,
-                context,
-                inputSchema,
-                UDFcolumns,
-                sequenceType
-            );
+                    dataFrame, newVariableExpression, context, inputSchema, UDFcolumns, sequenceType);
         } else {
-            dataFrame.sparkSession()
-                .udf()
-                .register(
-                    "hashUDF",
-                    new HashUDF(newVariableExpression, context, UDFcolumns),
-                    DataTypes.LongType
-                );
+            dataFrame
+                    .sparkSession()
+                    .udf()
+                    .register("hashUDF", new HashUDF(newVariableExpression, context, UDFcolumns), DataTypes.LongType);
         }
 
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
@@ -767,29 +648,17 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         FlworDataFrameColumn dfColumnNative = new FlworDataFrameColumn(newVariableName, ColumnFormat.FULLY_NATIVE);
 
         if (!hash) {
-            dataFrame = dataFrame.sparkSession()
-                .sql(
-                    String.format(
-                        "select %s letClauseUDF(%s) as %s from %s",
-                        selectSQL,
-                        UDFParameters,
-                        isNative ? dfColumnNative : dfColumnSequence,
-                        input
-                    )
-                );
-
+            dataFrame = dataFrame
+                    .sparkSession()
+                    .sql(String.format(
+                            "select %s letClauseUDF(%s) as %s from %s",
+                            selectSQL, UDFParameters, isNative ? dfColumnNative : dfColumnSequence, input));
 
         } else {
-            dataFrame = dataFrame.sparkSession()
-                .sql(
-                    String.format(
-                        "select %s hashUDF(%s) as %s from %s",
-                        selectSQL,
-                        UDFParameters,
-                        dfColumnNative,
-                        input
-                    )
-                );
+            dataFrame = dataFrame
+                    .sparkSession()
+                    .sql(String.format(
+                            "select %s hashUDF(%s) as %s from %s", selectSQL, UDFParameters, dfColumnNative, input));
         }
         return dataFrame;
     }
@@ -800,105 +669,79 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             DynamicContext context,
             StructType inputSchema,
             List<FlworDataFrameColumn> UDFcolumns,
-            SequenceType sequenceType
-    ) {
+            SequenceType sequenceType) {
         // for the moment we only consider native types with single arity (what about optional)
-        if (
-            sequenceType != null
+        if (sequenceType != null
                 && !sequenceType.isEmptySequence()
-                && sequenceType.getArity().equals(SequenceType.Arity.One)
-        ) {
+                && sequenceType.getArity().equals(SequenceType.Arity.One)) {
             ItemType itemType = sequenceType.getItemType();
 
             if (itemType.equals(BuiltinTypesCatalogue.stringItem)) {
-                dataFrame.sparkSession()
-                    .udf()
-                    .register(
-                        "letClauseUDF",
-                        new GenericLetClauseUDF<String>(
-                                newVariableExpression,
-                                context,
-                                UDFcolumns,
-                                "String"
-                        ),
-                        DataTypes.StringType
-                    );
+                dataFrame
+                        .sparkSession()
+                        .udf()
+                        .register(
+                                "letClauseUDF",
+                                new GenericLetClauseUDF<String>(newVariableExpression, context, UDFcolumns, "String"),
+                                DataTypes.StringType);
                 return true;
             }
 
             if (itemType.equals(BuiltinTypesCatalogue.intItem)) {
-                dataFrame.sparkSession()
-                    .udf()
-                    .register(
-                        "letClauseUDF",
-                        new GenericLetClauseUDF<Integer>(
-                                newVariableExpression,
-                                context,
-                                UDFcolumns,
-                                "Integer"
-                        ),
-                        DataTypes.IntegerType
-                    );
+                dataFrame
+                        .sparkSession()
+                        .udf()
+                        .register(
+                                "letClauseUDF",
+                                new GenericLetClauseUDF<Integer>(newVariableExpression, context, UDFcolumns, "Integer"),
+                                DataTypes.IntegerType);
                 return true;
             }
 
             if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
-                dataFrame.sparkSession()
-                    .udf()
-                    .register(
-                        "letClauseUDF",
-                        new GenericLetClauseUDF<Integer>(
-                                newVariableExpression,
-                                context,
-                                UDFcolumns,
-                                "BigDecimal"
-                        ),
-                        TypeMappings.decimalType
-                    );
+                dataFrame
+                        .sparkSession()
+                        .udf()
+                        .register(
+                                "letClauseUDF",
+                                new GenericLetClauseUDF<Integer>(
+                                        newVariableExpression, context, UDFcolumns, "BigDecimal"),
+                                TypeMappings.decimalType);
                 return true;
             }
 
             if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
-                dataFrame.sparkSession()
-                    .udf()
-                    .register(
-                        "letClauseUDF",
-                        new GenericLetClauseUDF<BigDecimal>(
-                                newVariableExpression,
-                                context,
-                                UDFcolumns,
-                                "BigDecimal"
-                        ),
-                        TypeMappings.decimalType
-                    );
+                dataFrame
+                        .sparkSession()
+                        .udf()
+                        .register(
+                                "letClauseUDF",
+                                new GenericLetClauseUDF<BigDecimal>(
+                                        newVariableExpression, context, UDFcolumns, "BigDecimal"),
+                                TypeMappings.decimalType);
                 return true;
             }
 
             if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
-                dataFrame.sparkSession()
-                    .udf()
-                    .register(
-                        "letClauseUDF",
-                        new GenericLetClauseUDF<Double>(
-                                newVariableExpression,
-                                context,
-                                UDFcolumns,
-                                "Double"
-                        ),
-                        DataTypes.DoubleType
-                    );
+                dataFrame
+                        .sparkSession()
+                        .udf()
+                        .register(
+                                "letClauseUDF",
+                                new GenericLetClauseUDF<Double>(newVariableExpression, context, UDFcolumns, "Double"),
+                                DataTypes.DoubleType);
                 return true;
             }
         }
 
         // if it is not one of the allowed sequence type we just return the default udf
-        dataFrame.sparkSession()
-            .udf()
-            .register(
-                "letClauseUDF",
-                new ExpressionEvaluationUDF(newVariableExpression, context, UDFcolumns),
-                DataTypes.createArrayType(DataTypes.BinaryType)
-            );
+        dataFrame
+                .sparkSession()
+                .udf()
+                .register(
+                        "letClauseUDF",
+                        new ExpressionEvaluationUDF(newVariableExpression, context, UDFcolumns),
+                        DataTypes.createArrayType(DataTypes.BinaryType));
         return false;
     }
 
@@ -920,43 +763,36 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             ItemRuntimePlan iterator,
             List<FlworDataFrameColumn> allColumns,
             StructType inputSchema,
-            DynamicContext context
-    ) {
+            DynamicContext context) {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
         letContext.setView(input);
-        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(
-            iterator,
-            letContext
-        );
+        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(iterator, letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
-        log.info(
-            "Rumble was able to optimize a let clause to a native SQL query: "
+        log.info("Rumble was able to optimize a let clause to a native SQL query: "
                 + String.format(
-                    "select %s %s as `%s` from (%s)",
-                    selectSQL,
-                    nativeQuery.getResultingQuery(),
-                    SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
-                        ? newVariableName + ".sequence"
-                        : newVariableName,
-                    nativeQuery.getView()
-                )
-        );
-        return dataFrame.sparkSession()
-            .sql(
-                String.format(
-                    "select %s %s as `%s` from (%s)",
-                    selectSQL,
-                    nativeQuery.getResultingQuery(),
-                    SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
-                        ? newVariableName + ".sequence"
-                        : newVariableName,
-                    nativeQuery.getView()
-                )
-            );
+                        "select %s %s as `%s` from (%s)",
+                        selectSQL,
+                        nativeQuery.getResultingQuery(),
+                        SequenceType.Arity.OneOrMore.isSubtypeOf(
+                                        nativeQuery.getResultingType().getArity())
+                                ? newVariableName + ".sequence"
+                                : newVariableName,
+                        nativeQuery.getView()));
+        return dataFrame
+                .sparkSession()
+                .sql(String.format(
+                        "select %s %s as `%s` from (%s)",
+                        selectSQL,
+                        nativeQuery.getResultingQuery(),
+                        SequenceType.Arity.OneOrMore.isSubtypeOf(
+                                        nativeQuery.getResultingType().getArity())
+                                ? newVariableName + ".sequence"
+                                : newVariableName,
+                        nativeQuery.getView()));
     }
 
     @Override
@@ -1000,10 +836,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.child != null) {
-            nativeClauseContext = NativeQueryRuntimePlan.generate(
-                this.child,
-                nativeClauseContext
-            );
+            nativeClauseContext = NativeQueryRuntimePlan.generate(this.child, nativeClauseContext);
             if (nativeClauseContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -1011,40 +844,30 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             return NativeClauseContext.NoNativeQuery;
         }
         nativeClauseContext.setClauseType(FLWOR_CLAUSES.LET);
-        NativeClauseContext expressionContext = NativeQueryRuntimePlan.generate(
-            this.assignmentIterator,
-            nativeClauseContext
-        );
+        NativeClauseContext expressionContext =
+                NativeQueryRuntimePlan.generate(this.assignmentIterator, nativeClauseContext);
         if (expressionContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         String variableName = nativeClauseContext.addVariable(this.variableName).toString();
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-            (StructType) nativeClauseContext.getSchema(),
-            null,
-            null,
-            null
-        );
-        if (SequenceType.Arity.OneOrMore.isSubtypeOf(expressionContext.getResultingType().getArity())) {
+        List<FlworDataFrameColumn> allColumns =
+                FlworDataFrameUtils.getColumns((StructType) nativeClauseContext.getSchema(), null, null, null);
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                expressionContext.getResultingType().getArity())) {
             variableName = variableName + ".sequence";
         }
         String resultString = String.format(
-            "select %s %s as `%s` from (%s)",
-            FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-            expressionContext.getResultingQuery(),
-            variableName,
-            expressionContext.getView()
-        );
-        NativeClauseContext letClauseContext = new NativeClauseContext(nativeClauseContext);
-        letClauseContext.setSchema(
-            ((StructType) letClauseContext.getSchema()).add(
+                "select %s %s as `%s` from (%s)",
+                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                expressionContext.getResultingQuery(),
                 variableName,
-                TypeMappings.getDataFrameDataTypeFromItemType(
-                    expressionContext.getResultingType().getItemType(),
-                    this.getStaticContext()
-                )
-            )
-        );
+                expressionContext.getView());
+        NativeClauseContext letClauseContext = new NativeClauseContext(nativeClauseContext);
+        letClauseContext.setSchema(((StructType) letClauseContext.getSchema())
+                .add(
+                        variableName,
+                        TypeMappings.getDataFrameDataTypeFromItemType(
+                                expressionContext.getResultingType().getItemType(), this.getStaticContext())));
         letClauseContext.setView(resultString);
         letClauseContext.setResultingQuery(null);
         letClauseContext.setResultingType(null);

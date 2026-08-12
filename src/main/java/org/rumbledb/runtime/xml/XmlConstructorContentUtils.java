@@ -20,14 +20,13 @@
 
 package org.rumbledb.runtime.xml;
 
-import org.rumbledb.api.Item;
-
 import java.util.List;
+
+import org.rumbledb.api.Item;
 
 final class XmlConstructorContentUtils {
 
-    private XmlConstructorContentUtils() {
-    }
+    private XmlConstructorContentUtils() {}
 
     static void appendExpandedItem(Item item, List<Item> result) {
         if (item.isDocumentNode()) {

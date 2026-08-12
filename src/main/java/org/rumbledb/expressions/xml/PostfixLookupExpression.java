@@ -20,16 +20,16 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 // clone of ObjectLookupExpression but for xquery lookup
 @Getter
@@ -52,8 +52,7 @@ public class PostfixLookupExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.mainExpression);
-        if (this.lookupExpression != null)
-            result.add(this.lookupExpression);
+        if (this.lookupExpression != null) result.add(this.lookupExpression);
         return result;
     }
 
@@ -62,10 +61,8 @@ public class PostfixLookupExpression extends Expression {
         indentIt(sb, indent);
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append("?");
-        if (this.lookupExpression != null)
-            this.lookupExpression.serializeToJSONiq(sb, 0);
-        else
-            sb.append("*");
+        if (this.lookupExpression != null) this.lookupExpression.serializeToJSONiq(sb, 0);
+        else sb.append("*");
         sb.append("\n");
     }
 
@@ -73,5 +70,4 @@ public class PostfixLookupExpression extends Expression {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitPostfixLookupExpression(this, argument);
     }
-
 }

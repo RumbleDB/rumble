@@ -20,8 +20,6 @@
 
 package org.rumbledb.runtime.control;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.Arrays;
 
@@ -31,6 +29,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -44,15 +43,12 @@ public class AtMostOneItemIfRuntimeIterator extends AbstractAtMostOneItemRuntime
             ItemRuntimePlan condition,
             ItemRuntimePlan branch,
             ItemRuntimePlan elseBranch,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(condition, branch, elseBranch), staticContext);
     }
 
     @Override
-    public Item evaluateAtMostOne(
-            DynamicContext dynamicContext
-    ) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         ItemRuntimePlan condition = this.getChild(0);
         boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(condition, dynamicContext);
 
@@ -65,24 +61,17 @@ public class AtMostOneItemIfRuntimeIterator extends AbstractAtMostOneItemRuntime
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext conditionResult = NativeQueryRuntimePlan.generate(
-            this.getChild(0),
-            nativeClauseContext
-        );
+        NativeClauseContext conditionResult = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (conditionResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext thenResult = NativeQueryRuntimePlan.generate(
-            this.getChild(1),
-            new NativeClauseContext(conditionResult, null, null)
-        );
+        NativeClauseContext thenResult =
+                NativeQueryRuntimePlan.generate(this.getChild(1), new NativeClauseContext(conditionResult, null, null));
         if (thenResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext elseResult = NativeQueryRuntimePlan.generate(
-            this.getChild(2),
-            new NativeClauseContext(thenResult, null, null)
-        );
+        NativeClauseContext elseResult =
+                NativeQueryRuntimePlan.generate(this.getChild(2), new NativeClauseContext(thenResult, null, null));
         if (elseResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -96,26 +85,26 @@ public class AtMostOneItemIfRuntimeIterator extends AbstractAtMostOneItemRuntime
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( "
-            + "IF( "
-            + conditionResult.getResultingQuery()
-            + ", "
-            + thenResult.getResultingQuery()
-            + ", "
-            + elseResult.getResultingQuery()
-            + " ) )";
+                + "IF( "
+                + conditionResult.getResultingQuery()
+                + ", "
+                + thenResult.getResultingQuery()
+                + ", "
+                + elseResult.getResultingQuery()
+                + " ) )";
         SequenceType.Arity resultingArity = (thenResult.getResultingType().getArity() == SequenceType.Arity.One
-            && elseResult.getResultingType().getArity() == SequenceType.Arity.One)
+                        && elseResult.getResultingType().getArity() == SequenceType.Arity.One)
                 ? SequenceType.Arity.One
                 : SequenceType.Arity.OneOrZero;
         return new NativeClauseContext(
                 elseResult,
                 resultingQuery,
                 new SequenceType(
-                        thenResult.getResultingType()
-                            .getItemType()
-                            .findLeastCommonSuperTypeWith(elseResult.getResultingType().getItemType()),
-                        resultingArity
-                )
-        );
+                        thenResult
+                                .getResultingType()
+                                .getItemType()
+                                .findLeastCommonSuperTypeWith(
+                                        elseResult.getResultingType().getItemType()),
+                        resultingArity));
     }
 }

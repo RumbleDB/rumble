@@ -1,6 +1,5 @@
 package org.rumbledb.items;
 
-
 import java.io.Serial;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -12,16 +11,15 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class TimeItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private OffsetTime value;
     private boolean hasTimeZone = true;
     private static final Pattern timeRegex = Pattern.compile(
-        "(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
-    );
+            "(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
 
     TimeItem(OffsetTime value, boolean hasTimeZone) {
         this.value = value;
@@ -54,9 +52,7 @@ public class TimeItem extends AbstractAtomicItem {
             }
         } catch (Exception e) {
             throw new DatetimeOverflowOrUnderflow(
-                    "Invalid xs:time: \"" + timeString + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Invalid xs:time: \"" + timeString + "\"", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -83,11 +79,8 @@ public class TimeItem extends AbstractAtomicItem {
     @Override
     public String getStringValue() {
         return this.value.format(
-            this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_TIME : DateTimeFormatter.ISO_LOCAL_TIME
-        );
+                this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_TIME : DateTimeFormatter.ISO_LOCAL_TIME);
     }
-
-
 
     @Override
     public ItemType getDynamicType() {

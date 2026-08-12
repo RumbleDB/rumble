@@ -1,7 +1,8 @@
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -9,20 +10,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentValueException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ResolveURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ResolveURIFunctionIterator(
-            List<ItemRuntimePlan> children,
-            RuntimeStaticContext staticContext
-    ) {
+    public ResolveURIFunctionIterator(List<ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
@@ -36,7 +31,8 @@ public class ResolveURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         if (this.getChildren().size() == 2) {
             base = this.getChild(1).materializeFirstOrNull(context);
         } else {
-            base = ItemFactory.getInstance().createAnyURIItem(this.staticContext.getStaticURI().toString());
+            base = ItemFactory.getInstance()
+                    .createAnyURIItem(this.staticContext.getStaticURI().toString());
         }
         if (base == null) {
             return null;
@@ -53,15 +49,12 @@ public class ResolveURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         return ItemFactory.getInstance().createAnyURIItem(stringURI);
     }
 
-
     private URI parseURI(String uri) {
         try {
             return URI.create(uri);
         } catch (IllegalArgumentException e) {
             throw new InvalidArgumentValueException(
-                    "Malformed URI: " + uri + " Cause: " + e.getMessage(),
-                    getMetadata()
-            );
+                    "Malformed URI: " + uri + " Cause: " + e.getMessage(), getMetadata());
         }
     }
 }

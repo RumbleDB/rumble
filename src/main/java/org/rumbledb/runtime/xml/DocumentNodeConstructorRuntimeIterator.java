@@ -20,7 +20,11 @@
 
 package org.rumbledb.runtime.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.BiFunction;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,49 +33,41 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.BiFunction;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Runtime iterator for document node constructors.
- * 
+ *
  * Document node constructors create document nodes according to the XQuery 3.1 specification.
  * All document node constructors are computed constructors. The result of a document node
  * constructor is a new document node, with its own node identity.
- * 
+ *
  * @see org.rumbledb.expressions.xml.DocumentNodeConstructorExpression
  */
 public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan contentIterator;
 
     /**
      * Constructor for document node constructor runtime iterator
-     * 
+     *
      * @param contentIterator Iterator for the content expression
      * @param staticContext The static context
      */
-    public DocumentNodeConstructorRuntimeIterator(
-            ItemRuntimePlan contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+    public DocumentNodeConstructorRuntimeIterator(ItemRuntimePlan contentIterator, RuntimeStaticContext staticContext) {
         super(
-            contentIterator != null ? Collections.singletonList(contentIterator) : Collections.emptyList(),
-            staticContext
-        );
+                contentIterator != null ? Collections.singletonList(contentIterator) : Collections.emptyList(),
+                staticContext);
         this.contentIterator = contentIterator;
     }
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize = (iterator, childContext) -> iterator
-            .materialize(childContext);
+        BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize =
+                (iterator, childContext) -> iterator.materialize(childContext);
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -88,15 +84,9 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
         // Step 1e of 3.9.1.3 Content. The result of processing the content expression is a sequence
         // of nodes called the content sequence.
         List<Item> processedContent = processContentExpression(
-            this.contentIterator == null
-                ? List.of()
-                : materialize.apply(this.contentIterator, contextToUse)
-        );
+                this.contentIterator == null ? List.of() : materialize.apply(this.contentIterator, contextToUse));
         // Create and return the document node item
-        Item documentItem = ItemFactory.getInstance()
-            .createXmlDocumentNode(
-                processedContent
-            );
+        Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(processedContent);
         // Set the parent of the child nodes to the document node
         documentItem.addParentToDescendants();
         // Set XML document position if this is the top-level runtime iterator
@@ -108,10 +98,9 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
         return documentItem;
     }
 
-
     /**
      * Processes the content expression of the document node constructor.
-     * 
+     *
      * Processing of the document node constructor proceeds as follows:
      * 1. If the content sequence contains a document node, the document node is replaced in the content
      * sequence by its children.
@@ -164,10 +153,9 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
                         textAccumulator = null;
                     }
                     contentSequence.add(
-                        item.isNode()
-                            ? NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext)
-                            : item
-                    );
+                            item.isNode()
+                                    ? NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext)
+                                    : item);
                     previousItemWasAtomic = false;
                 }
             }
@@ -203,14 +191,12 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
             if (item.isAttributeNode()) {
                 // 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
                 throw new UnexpectedStaticTypeException(
-                        "Document node constructor content cannot contain attribute nodes [err:XPTY0004]"
-                );
+                        "Document node constructor content cannot contain attribute nodes [err:XPTY0004]");
             }
             // 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
             if (item.isNamespaceNode()) {
                 throw new UnexpectedStaticTypeException(
-                        "Document node constructor content cannot contain namespace nodes [err:XPTY0004]"
-                );
+                        "Document node constructor content cannot contain namespace nodes [err:XPTY0004]");
             }
         }
     }

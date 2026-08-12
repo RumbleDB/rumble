@@ -18,9 +18,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class MoreThanOneBoundarySpaceDeclarationException extends RumbleException {
 

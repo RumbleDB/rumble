@@ -17,10 +17,6 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +29,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ArrayReverseFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -41,10 +38,7 @@ public class ArrayReverseFunctionIterator extends AbstractAtMostOneItemRuntimePl
 
     private final ItemRuntimePlan arrayIterator;
 
-    public ArrayReverseFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayReverseFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 1) {
             throw new OurBadException("array:reverse must have exactly one argument.");
@@ -52,15 +46,11 @@ public class ArrayReverseFunctionIterator extends AbstractAtMostOneItemRuntimePl
         this.arrayIterator = arguments.get(0);
     }
 
-
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         List<Item> items = this.arrayIterator.materialize(context);
         if (items.size() > 1) {
-            throw new UnexpectedTypeException(
-                    "array:reverse expects exactly one array argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("array:reverse expects exactly one array argument.", getMetadata());
         }
         return reverse(items.isEmpty() ? null : items.get(0));
     }
@@ -70,10 +60,7 @@ public class ArrayReverseFunctionIterator extends AbstractAtMostOneItemRuntimePl
             return null;
         }
         if (!arrayItem.isArray()) {
-            throw new UnexpectedTypeException(
-                    "Type error; argument to array:reverse must be an array.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("Type error; argument to array:reverse must be an array.", getMetadata());
         }
 
         if (arrayItem.isArrayOfItems()) {
@@ -81,15 +68,15 @@ public class ArrayReverseFunctionIterator extends AbstractAtMostOneItemRuntimePl
             List<Item> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);
             return ItemFactory.getInstance()
-                .createArrayItem(reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createArrayItem(
+                            reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);
             return ItemFactory.getInstance()
-                .createSequenceArrayItem(reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createSequenceArrayItem(
+                            reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
-
-
 }

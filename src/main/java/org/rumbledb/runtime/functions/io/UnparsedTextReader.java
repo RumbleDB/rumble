@@ -1,5 +1,11 @@
 package org.rumbledb.runtime.functions.io;
 
+import java.net.URI;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidEncodingException;
 import org.rumbledb.exceptions.RumbleException;
@@ -7,17 +13,9 @@ import org.rumbledb.exceptions.UnavailableResourceException;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.xml.XMLUtils;
 
-import java.net.URI;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
-
 public final class UnparsedTextReader {
 
-    private UnparsedTextReader() {
-    }
-
+    private UnparsedTextReader() {}
 
     private static URI resolveHref(URI staticBaseUri, String href, ExceptionMetadata metadata) {
         if (href.isEmpty()) {
@@ -27,12 +25,7 @@ public final class UnparsedTextReader {
     }
 
     public static String read(
-            URI staticBaseUri,
-            String href,
-            String encoding,
-            String xmlVersion,
-            ExceptionMetadata metadata
-    ) {
+            URI staticBaseUri, String href, String encoding, String xmlVersion, ExceptionMetadata metadata) {
         URI uri;
         try {
             uri = resolveHref(staticBaseUri, href, metadata);
@@ -44,18 +37,14 @@ public final class UnparsedTextReader {
             throw ex;
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
-                    "The URI supplied to fn:unparsed-text() is invalid or cannot be resolved: " + href,
-                    metadata
-            );
+                    "The URI supplied to fn:unparsed-text() is invalid or cannot be resolved: " + href, metadata);
             ex.initCause(e);
             throw ex;
         }
 
         if (uri.getFragment() != null) {
             throw new UnavailableResourceException(
-                    "A URI containing a fragment identifier is not valid for fn:unparsed-text().",
-                    metadata
-            );
+                    "A URI containing a fragment identifier is not valid for fn:unparsed-text().", metadata);
         }
 
         byte[] bytes;
@@ -69,9 +58,7 @@ public final class UnparsedTextReader {
             throw ex;
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
-                    "Unable to retrieve the resource supplied to fn:unparsed-text(): " + uri,
-                    metadata
-            );
+                    "Unable to retrieve the resource supplied to fn:unparsed-text(): " + uri, metadata);
             ex.initCause(e);
             throw ex;
         }
@@ -82,9 +69,7 @@ public final class UnparsedTextReader {
                 charset = Charset.forName(encoding);
             } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
                 InvalidEncodingException ex = new InvalidEncodingException(
-                        "Invalid or unsupported encoding supplied to fn:unparsed-text(): " + encoding,
-                        metadata
-                );
+                        "Invalid or unsupported encoding supplied to fn:unparsed-text(): " + encoding, metadata);
                 ex.initCause(e);
                 throw ex;
             }
@@ -98,10 +83,9 @@ public final class UnparsedTextReader {
         } catch (CharacterCodingException e) {
             InvalidEncodingException ex = new InvalidEncodingException(
                     "Unable to decode the resource supplied to fn:unparsed-text() using encoding "
-                        + charset.name()
-                        + ".",
-                    metadata
-            );
+                            + charset.name()
+                            + ".",
+                    metadata);
             ex.initCause(e);
             throw ex;
         }
@@ -116,10 +100,9 @@ public final class UnparsedTextReader {
             if (!XMLUtils.isValidXmlCharacter(codepoint, xmlVersion)) {
                 throw new InvalidEncodingException(
                         "The resource supplied to fn:unparsed-text() contains a character "
-                            + "that is not permitted in XML: U+"
-                            + Integer.toHexString(codepoint).toUpperCase(),
-                        metadata
-                );
+                                + "that is not permitted in XML: U+"
+                                + Integer.toHexString(codepoint).toUpperCase(),
+                        metadata);
             }
             i += Character.charCount(codepoint);
         }

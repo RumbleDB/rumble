@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.typing;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.Collections;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -12,34 +13,27 @@ import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.io.Serial;
-import java.util.Collections;
-
 public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan child;
     private final SequenceType sequenceType;
 
-    public CastableIterator(
-            ItemRuntimePlan child,
-            SequenceType sequenceType,
-            RuntimeStaticContext staticContext
-    ) {
+    public CastableIterator(ItemRuntimePlan child, SequenceType sequenceType, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.sequenceType = sequenceType;
     }
 
     @Override
-    public Item evaluateAtMostOne(
-            DynamicContext dynamicContext
-    ) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         ItemRuntimePlan child = this.child;
         SequenceType sequenceType = this.sequenceType;
         RuntimeStaticContext staticContext = this.staticContext;
@@ -48,17 +42,15 @@ public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
             sequenceType.resolve(dynamicContext, metadata);
         }
         ItemType targetItemType = sequenceType.getItemType();
-        boolean validCastTarget =
-            targetItemType.isAtomicItemType()
+        boolean validCastTarget = targetItemType.isAtomicItemType()
                 || (targetItemType.isUnionType()
-                    && targetItemType.getTypes().stream().allMatch(ItemType::isAtomicItemType));
+                        && targetItemType.getTypes().stream().allMatch(ItemType::isAtomicItemType));
         if (!validCastTarget) {
             throw new UnknownCastTypeException(
                     "The type "
-                        + targetItemType.getIdentifierString()
-                        + " is not atomic. Castable can only be used with atomic types.",
-                    metadata
-            );
+                            + targetItemType.getIdentifierString()
+                            + " is not atomic. Castable can only be used with atomic types.",
+                    metadata);
         }
         Item item;
         try {
@@ -71,24 +63,16 @@ public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         if (item == null) {
             return ItemFactory.getInstance()
-                .createBooleanItem(sequenceType.getArity().equals(Arity.OneOrZero));
+                    .createBooleanItem(sequenceType.getArity().equals(Arity.OneOrZero));
         }
         checkInvalidCastable(item, metadata, sequenceType.getItemType());
         try {
-            Item res = CastIterator.castItemToType(
-                item,
-                sequenceType.getItemType(),
-                metadata,
-                staticContext
-            );
-            return ItemFactory.getInstance()
-                .createBooleanItem(res != null);
+            Item res = CastIterator.castItemToType(item, sequenceType.getItemType(), metadata, staticContext);
+            return ItemFactory.getInstance().createBooleanItem(res != null);
         } catch (Exception e) {
-            return ItemFactory.getInstance()
-                .createBooleanItem(false);
+            return ItemFactory.getInstance().createBooleanItem(false);
         }
     }
-
 
     static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {
         // the target type cannot be xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType
@@ -104,11 +88,9 @@ public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
         }
 
         String message = String.format(
-            "Can not atomize an %1$s item: an %1$s has probably been passed where "
-                +
-                "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-            item.getDynamicType().toString()
-        );
+                "Can not atomize an %1$s item: an %1$s has probably been passed where "
+                        + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                item.getDynamicType().toString());
         throw new NonAtomicKeyException(message, metadata);
     }
 }

@@ -20,42 +20,39 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.NonNull;
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-import scala.Tuple2;
-
-import lombok.NonNull;
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
 
 public class InsertBeforeFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
-
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan positionIterator;
     private final ItemRuntimePlan insertIterator;
     private int insertPosition; // position to start inserting
 
-    public InsertBeforeFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public InsertBeforeFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
@@ -65,12 +62,7 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new EvaluationCursor(
-                this.sequenceIterator,
-                this.positionIterator,
-                this.insertIterator,
-                context,
-                getMetadata()
-        );
+                this.sequenceIterator, this.positionIterator, this.insertIterator, context, getMetadata());
     }
 
     @Override
@@ -79,18 +71,14 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
 
-        if (
-            this.insertIterator.getRuntimeStaticContext()
-                .getExecutionMode()
-                .isRDDOrDataFrame()
-        ) {
+        if (this.insertIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
             JavaRDD<Item> beforeRDD = zippedRDD
-                .filter((item) -> item._2() < this.insertPosition - 1)
-                .map((item) -> item._1);
+                    .filter((item) -> item._2() < this.insertPosition - 1)
+                    .map((item) -> item._1);
             JavaRDD<Item> afterRDD = zippedRDD
-                .filter((item) -> item._2() >= this.insertPosition - 1)
-                .map((item) -> item._1);
+                    .filter((item) -> item._2() >= this.insertPosition - 1)
+                    .map((item) -> item._1);
             return beforeRDD.union(insertsRDD).union(afterRDD);
         }
 
@@ -98,29 +86,29 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
         int numPartitions = zippedRDD.partitions().size();
         int indexOfInsertion = this.insertPosition;
 
-        return zippedRDD.mapPartitionsWithIndex((partitionIndex, iterator) -> {
-            List<Item> list = new ArrayList<>();
-            int lastIndex = -1;
-            if (partitionIndex == 0 && indexOfInsertion - 1 < 0) {
-                list.addAll(inserts);
-            }
-            Tuple2<Item, Long> element;
-            while (iterator.hasNext()) {
-                element = iterator.next();
-                if (element._2() == indexOfInsertion - 1) {
-                    list.addAll(inserts);
-                }
-                list.add(element._1());
-                lastIndex = element._2().intValue();
-            }
-            if (partitionIndex == numPartitions - 1 && indexOfInsertion - 1 > lastIndex) {
-                list.addAll(inserts);
-            }
-            return list.iterator();
-        }, false);
+        return zippedRDD.mapPartitionsWithIndex(
+                (partitionIndex, iterator) -> {
+                    List<Item> list = new ArrayList<>();
+                    int lastIndex = -1;
+                    if (partitionIndex == 0 && indexOfInsertion - 1 < 0) {
+                        list.addAll(inserts);
+                    }
+                    Tuple2<Item, Long> element;
+                    while (iterator.hasNext()) {
+                        element = iterator.next();
+                        if (element._2() == indexOfInsertion - 1) {
+                            list.addAll(inserts);
+                        }
+                        list.add(element._1());
+                        lastIndex = element._2().intValue();
+                    }
+                    if (partitionIndex == numPartitions - 1 && indexOfInsertion - 1 > lastIndex) {
+                        list.addAll(inserts);
+                    }
+                    return list.iterator();
+                },
+                false);
     }
-
-
 
     private void init(DynamicContext context) {
         Item positionItem = this.positionIterator.materializeFirstOrNull(context);
@@ -145,8 +133,7 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
                 @NonNull ItemRuntimePlan positionPlan,
                 @NonNull ItemRuntimePlan insertPlan,
                 @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
+                @NonNull ExceptionMetadata metadata) {
             super(metadata);
             this.sequencePlan = sequencePlan;
             this.positionPlan = positionPlan;
@@ -215,10 +202,7 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
 
         private RuntimeException exhausted() {
             return new IteratorFlowException(
-                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "insert-before function",
-                    this.metadata
-            );
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "insert-before function", this.metadata);
         }
-
     }
 }

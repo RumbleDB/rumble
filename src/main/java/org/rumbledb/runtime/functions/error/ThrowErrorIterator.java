@@ -1,7 +1,8 @@
 package org.rumbledb.runtime.functions.error;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
+import java.io.Serial;
+import java.util.List;
+import java.util.function.Supplier;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -10,42 +11,33 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
-import java.util.function.Supplier;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ThrowErrorIterator(
-            List<ItemRuntimePlan> children,
-            RuntimeStaticContext staticContext
-    ) {
+    public ThrowErrorIterator(List<ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Supplier<List<Item>> errorValue = this.getChildren().size() == 3
-            ? () -> this.getChild(2).materialize(context)
-            : List::of;
+        Supplier<List<Item>> errorValue =
+                this.getChildren().size() == 3 ? () -> this.getChild(2).materialize(context) : List::of;
         if (this.getChildren().isEmpty()) {
             // No argument case.
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
                     ErrorCode.UnidentifiedErrorExceptionCode,
-                    this.getRuntimeStaticContext().getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         }
         Item errorCodeItem = this.getChild(0).materializeFirstOrNull(context);
         if (errorCodeItem == null) {
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
                     ErrorCode.UnidentifiedErrorExceptionCode,
-                    this.getRuntimeStaticContext().getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         }
         Name errorCode = errorCodeItem.getQNameValue();
         if (this.getChildren().size() == 1) {
@@ -53,8 +45,7 @@ public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
             throw new RumbleException(
                     "An error has been raised without an error description.",
                     new ErrorCode(errorCode),
-                    this.getRuntimeStaticContext().getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         }
         String description = this.getChild(1).materializeFirstOrNull(context).getStringValue();
         if (this.getChildren().size() == 2) {
@@ -62,18 +53,14 @@ public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
             throw new RumbleException(
                     description,
                     new ErrorCode(errorCode),
-                    this.getRuntimeStaticContext().getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         } else {
             // Error code, description, and object case.
             throw new RumbleException(
                     description,
                     new ErrorCode(errorCode),
                     this.getRuntimeStaticContext().getMetadata(),
-                    errorValue.get()
-            );
+                    errorValue.get());
         }
     }
-
-
 }

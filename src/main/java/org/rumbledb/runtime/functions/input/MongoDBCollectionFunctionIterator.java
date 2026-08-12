@@ -20,34 +20,28 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.util.List;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-
-
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.util.List;
 
 public class MongoDBCollectionFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public MongoDBCollectionFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MongoDBCollectionFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -64,21 +58,19 @@ public class MongoDBCollectionFunctionIterator extends ItemRuntimePlan implement
 
         try {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .format("mongodb")
-                .option("spark.mongodb.read.connection.uri", uri)
-                .option("collection", collection)
-                .load();
+                    .getOrCreateSession()
+                    .read()
+                    .format("mongodb")
+                    .option("spark.mongodb.read.connection.uri", uri)
+                    .option("collection", collection)
+                    .load();
             if (partitions != -1) {
                 dataFrame = dataFrame.repartition(partitions);
             }
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             RumbleException ex = new CannotRetrieveResourceException(
-                    "Error retrieving MongoDB collection: " + e.getMessage(),
-                    getMetadata()
-            );
+                    "Error retrieving MongoDB collection: " + e.getMessage(), getMetadata());
             ex.initCause(e);
             throw ex;
         }

@@ -20,28 +20,26 @@
 
 package iq;
 
-import iq.base.SparkAnnotationsTestsBase;
-import iq.base.TestFileDiscovery;
-import org.rumbledb.config.RumbleConfiguration;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import iq.base.SparkAnnotationsTestsBase;
+import iq.base.TestFileDiscovery;
+
+import org.rumbledb.config.RumbleConfiguration;
+
 public class BugsXQuery extends SparkAnnotationsTestsBase {
 
-    public static final File runtimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/bugs-xquery"
-    );
+    public static final File runtimeTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/bugs-xquery");
 
     @Override
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(runtime -> runtime.shouldApplyUpdates(true))
-            .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
-            .build();
+                .configureRuntime(runtime -> runtime.shouldApplyUpdates(true))
+                .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+                .build();
     }
 
     @Override

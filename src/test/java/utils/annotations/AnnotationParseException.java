@@ -37,10 +37,6 @@ public class AnnotationParseException extends Exception {
 
     private static String formatMessage(String annotationText, String errorMessage) {
         return String.format(
-            "Could not parse annotation.\n Reason: [%s]\nAnnotation text: [%s]",
-            errorMessage,
-            annotationText
-        );
+                "Could not parse annotation.\n Reason: [%s]\nAnnotation text: [%s]", errorMessage, annotationText);
     }
 }
-

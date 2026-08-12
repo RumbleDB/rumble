@@ -1,25 +1,21 @@
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.Base64;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.Base64;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class CollationKeyFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public CollationKeyFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public CollationKeyFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -34,6 +30,7 @@ public class CollationKeyFunctionIterator extends AbstractAtMostOneItemRuntimePl
             collationUri = this.staticContext.getDefaultCollation();
         }
         byte[] bytes = CollationResolver.collationKeyBytes(keyItem.getStringValue(), collationUri, getMetadata());
-        return ItemFactory.getInstance().createBase64BinaryItem(Base64.getEncoder().encodeToString(bytes));
+        return ItemFactory.getInstance()
+                .createBase64BinaryItem(Base64.getEncoder().encodeToString(bytes));
     }
 }

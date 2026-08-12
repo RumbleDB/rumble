@@ -33,8 +33,7 @@ public class CatchPattern implements Serializable {
             String localName,
             boolean namespaceWildcard,
             boolean localNameWildcard,
-            String displayText
-    ) {
+            String displayText) {
         this.namespace = namespace;
         this.localName = localName;
         this.namespaceWildcard = namespaceWildcard;
@@ -80,5 +79,4 @@ public class CatchPattern implements Serializable {
     public String toString() {
         return this.displayText;
     }
-
 }

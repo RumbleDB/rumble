@@ -20,7 +20,11 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.function.IntSupplier;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,25 +34,17 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
-import java.util.function.IntSupplier;
 
 public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public RoundFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public RoundFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -56,33 +52,28 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         Item value = this.getChild(0).materializeFirstOrNull(dynamicContext);
         return evaluate(
-            value,
-            () -> this.getChildren().size() > 1
-                ? this.getChild(1).materializeFirstOrNull(dynamicContext).getIntValue()
-                : 0
-        );
+                value,
+                () -> this.getChildren().size() > 1
+                        ? this.getChild(1)
+                                .materializeFirstOrNull(dynamicContext)
+                                .getIntValue()
+                        : 0);
     }
 
     private Item evaluate(Item value, IntSupplier precisionSupplier) {
         if (value == null) {
             return null;
         }
-        if (
-            (value.isDouble() && Double.isNaN(value.getDoubleValue()))
-                || (value.isFloat() && Float.isNaN(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
             return value;
         }
-        if (
-            (value.isDouble() && Double.isInfinite(value.getDoubleValue()))
-                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
             return value;
         }
-        if (
-            (value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
-                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))
-        ) {
+        if ((value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
+                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))) {
             return value;
         }
         int precision = precisionSupplier.getAsInt();
@@ -136,19 +127,14 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
 
     private double getSign(double doubleValue) {
         double sign = 0;
-        if (doubleValue > 0)
-            sign = 1;
-        if (doubleValue < 0)
-            sign = -1;
+        if (doubleValue > 0) sign = 1;
+        if (doubleValue < 0) sign = -1;
         return sign;
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = NativeQueryRuntimePlan.generate(
-            this.getChild(0),
-            nativeClauseContext
-        );
+        NativeClauseContext value = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -158,15 +144,12 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
         if (!value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "( CAST ("
-            + "ROUND( "
-            + value.getResultingQuery()
-            + " ) AS FLOAT)"
-            + " )";
+        String resultingQuery = "( CAST (" + "ROUND( " + value.getResultingQuery() + " ) AS FLOAT)" + " )";
         return new NativeClauseContext(
                 value,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.floatItem,
+                        value.getResultingType().getArity()));
     }
 }

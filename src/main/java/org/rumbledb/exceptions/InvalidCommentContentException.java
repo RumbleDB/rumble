@@ -20,9 +20,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * Exception for XQDY0072: computed comment constructor content contains illegal hyphen sequences.
@@ -36,10 +36,8 @@ public class InvalidCommentContentException extends RumbleException {
 
     public InvalidCommentContentException(String content, ExceptionMetadata metadata) {
         super(
-            "Dynamic error; invalid comment content: \"" + content + "\"",
-            ErrorCode.InvalidCommentContentErrorCode,
-            metadata
-        );
+                "Dynamic error; invalid comment content: \"" + content + "\"",
+                ErrorCode.InvalidCommentContentErrorCode,
+                metadata);
     }
 }
-

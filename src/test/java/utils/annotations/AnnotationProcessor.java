@@ -46,16 +46,13 @@ public class AnnotationProcessor {
 
     public static String readAnnotationText(Reader reader) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(reader);
-        return String
-            .join(
-                " ",
-                (Iterable<String>) bufferedReader.lines()
-                    .map(String::trim)
-                    .filter((line) -> line.startsWith(MAGIC_COOKIE))
-                    .map((line) -> line.substring(MAGIC_COOKIE.length()).trim())::iterator
-            )
-            .replace(":)", "")
-            .trim();
+        return String.join(" ", (Iterable<String>) bufferedReader
+                        .lines()
+                        .map(String::trim)
+                        .filter((line) -> line.startsWith(MAGIC_COOKIE))
+                        .map((line) -> line.substring(MAGIC_COOKIE.length()).trim())::iterator)
+                .replace(":)", "")
+                .trim();
     }
 
     public static TestAnnotation readAnnotation(Reader reader) throws IOException, AnnotationParseException {
@@ -88,17 +85,11 @@ public class AnnotationProcessor {
 
         if (expectation == null) {
             throw new AnnotationParseException(
-                    annotationText,
-                    String.format("Missing test expectation (e.g. [%s]).", SHOULD_PARSE)
-            );
+                    annotationText, String.format("Missing test expectation (e.g. [%s]).", SHOULD_PARSE));
         }
 
         return new TestAnnotation(
-                expectation,
-                parameters.get(OUTPUT_KEY),
-                parameters.get(ERROR_MESSAGE),
-                parameters.get(ERROR_METADATA)
-        );
+                expectation, parameters.get(OUTPUT_KEY), parameters.get(ERROR_MESSAGE), parameters.get(ERROR_METADATA));
     }
 
     public static UpdateDimensions readUpdateDimensions(Reader reader) throws IOException, AnnotationParseException {
@@ -121,16 +112,10 @@ public class AnnotationProcessor {
     private static UpdateDimensions parseUpdateDimensions(String annotationText, String value)
             throws AnnotationParseException {
         if (!value.matches("\\[\\d+,\\d+]")) {
-            throw new AnnotationParseException(
-                    annotationText,
-                    "UpdateDim key does not match regex: \"\\[\\d+,\\d+]\""
-            );
+            throw new AnnotationParseException(annotationText, "UpdateDim key does not match regex: \"\\[\\d+,\\d+]\"");
         }
         String[] dimensions = value.substring(1, value.length() - 1).split(",");
-        return new UpdateDimensions(
-                Integer.parseInt(dimensions[0]),
-                Integer.parseInt(dimensions[1])
-        );
+        return new UpdateDimensions(Integer.parseInt(dimensions[0]), Integer.parseInt(dimensions[1]));
     }
 
     // Declaration order follows the query pipeline and is used for stage comparisons.
@@ -187,9 +172,7 @@ public class AnnotationProcessor {
 
         public boolean acceptsFailureAt(TestStage failureStage) {
             // Positive annotations guarantee only their target stage; later failures are out of scope.
-            return expectsSuccess()
-                ? failureStage.isAfter(this.stage)
-                : failureStage == this.stage;
+            return expectsSuccess() ? failureStage.isAfter(this.stage) : failureStage == this.stage;
         }
 
         private static AnnotationExpectation fromToken(String token) {
@@ -203,14 +186,8 @@ public class AnnotationProcessor {
     }
 
     public record TestAnnotation(
-            AnnotationExpectation expectation,
-            String output,
-            String errorCode,
-            String errorMetadata) {
-    }
+            AnnotationExpectation expectation, String output, String errorCode, String errorMetadata) {}
 
     // Update tests use these coordinates to run files in deterministic dependency order.
-    public record UpdateDimensions(int dimension1, int dimension2) {
-    }
-
+    public record UpdateDimensions(int dimension1, int dimension2) {}
 }

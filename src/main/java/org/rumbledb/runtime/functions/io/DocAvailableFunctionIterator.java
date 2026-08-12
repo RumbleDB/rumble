@@ -1,6 +1,10 @@
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.InputStream;
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -8,21 +12,13 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.InputStream;
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class DocAvailableFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DocAvailableFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public DocAvailableFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -34,10 +30,7 @@ public class DocAvailableFunctionIterator extends AbstractAtMostOneItemRuntimePl
         }
         try {
             URI uri = FileSystemUtil.resolveURI(
-                this.staticContext.getStaticURI(),
-                uriItem.getStringValue(),
-                getMetadata()
-            );
+                    this.staticContext.getStaticURI(), uriItem.getStringValue(), getMetadata());
             InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getMetadata());
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
@@ -47,6 +40,4 @@ public class DocAvailableFunctionIterator extends AbstractAtMostOneItemRuntimePl
             return ItemFactory.getInstance().createBooleanItem(false);
         }
     }
-
-
 }

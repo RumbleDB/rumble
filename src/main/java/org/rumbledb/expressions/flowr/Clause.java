@@ -20,10 +20,10 @@
 
 package org.rumbledb.expressions.flowr;
 
-import lombok.extern.log4j.Log4j2;
-
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -49,6 +49,7 @@ public abstract class Clause extends Node {
     protected Clause previousClause;
     protected Clause nextClause;
     protected final FLWOR_CLAUSES clauseType;
+
     @Setter
     protected StaticContext staticContext;
 
@@ -99,20 +100,14 @@ public abstract class Clause extends Node {
         if (!lastLetClause.getClauseType().equals(FLWOR_CLAUSES.LET)) {
             return returnClause;
         }
-        if (
-            !(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
-                ||
-                lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
-        ) {
+        if (!(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+                || lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))) {
             return returnClause;
         }
         Clause newFirstClause = lastLetClause.nextClause;
-        while (
-            newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+        while (newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
                 && (newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
-                    ||
-                    newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
-        ) {
+                        || newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))) {
             lastLetClause = lastLetClause.nextClause;
             newFirstClause = lastLetClause.nextClause;
         }
@@ -127,14 +122,8 @@ public abstract class Clause extends Node {
         newFirstClause.previousClause = null;
         lastLetClause.nextClause = null;
 
-        Expression returnExpr = new FlworExpression(
-                returnClause,
-                this.getMetadata()
-        );
-        returnClause = new ReturnClause(
-                returnExpr,
-                this.getMetadata()
-        );
+        Expression returnExpr = new FlworExpression(returnClause, this.getMetadata());
+        returnClause = new ReturnClause(returnExpr, this.getMetadata());
         lastLetClause.chainWith(returnClause);
 
         return returnClause;
@@ -153,20 +142,14 @@ public abstract class Clause extends Node {
         if (!lastLetClause.getClauseType().equals(FLWOR_CLAUSES.LET)) {
             return returnClause;
         }
-        if (
-            !(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
-                ||
-                lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
-        ) {
+        if (!(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+                || lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))) {
             return returnClause;
         }
         Clause newFirstClause = lastLetClause.nextClause;
-        while (
-            newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+        while (newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
                 && (newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
-                    ||
-                    newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
-        ) {
+                        || newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))) {
             lastLetClause = lastLetClause.nextClause;
             newFirstClause = lastLetClause.nextClause;
         }
@@ -181,14 +164,8 @@ public abstract class Clause extends Node {
         newFirstClause.previousClause = null;
         lastLetClause.nextClause = null;
 
-        Statement returnStatement = new FlowrStatement(
-                returnClause,
-                this.getMetadata()
-        );
-        returnClause = new ReturnStatementClause(
-                returnStatement,
-                this.getMetadata()
-        );
+        Statement returnStatement = new FlowrStatement(returnClause, this.getMetadata());
+        returnClause = new ReturnStatementClause(returnStatement, this.getMetadata());
         lastLetClause.chainWith(returnClause);
 
         return returnClause;
@@ -196,7 +173,7 @@ public abstract class Clause extends Node {
 
     private static void logInitialLetGroupByWarning() {
         log.warn(
-            """
+                """
                     It seems you are using a group by clause in a FLWOR expression that starts with a let clause. This is rather unusual and it might lead to surprises. We recommend always inserting a 'return' after a series of initial let clauses.
                     For example:
 
@@ -207,10 +184,8 @@ public abstract class Clause extends Node {
                       for $t in 1 to $z
                       group by $m := $t mod 2
                       return $m + $x\
-                    """
-        );
+                    """);
     }
-
 
     @Override
     public void print(StringBuilder buffer, int indent) {
@@ -225,15 +200,12 @@ public abstract class Clause extends Node {
         }
     }
 
-    public RuntimeStaticContext getStaticContextForRuntime(
-            RumbleConfiguration conf,
-            VisitorConfig visitorConfig
-    ) {
+    public RuntimeStaticContext getStaticContextForRuntime(RumbleConfiguration conf, VisitorConfig visitorConfig) {
         return RuntimeStaticContext.fromStaticContext(this.staticContext)
-            .configuration(conf)
-            .staticType(null)
-            .executionMode(getHighestExecutionMode(visitorConfig))
-            .metadata(getMetadata())
-            .build();
+                .configuration(conf)
+                .staticType(null)
+                .executionMode(getHighestExecutionMode(visitorConfig))
+                .metadata(getMetadata())
+                .build();
     }
 }

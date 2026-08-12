@@ -20,28 +20,23 @@
 
 package org.rumbledb.runtime.control;
 
-import org.rumbledb.runtime.EffectiveBooleanValue;
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.*;
+import java.io.Serial;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.*;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-import java.io.Serial;
-import java.util.List;
-
 public class IfRuntimeIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item>,
-            UpdatingRuntimePlan {
-
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -50,16 +45,8 @@ public class IfRuntimeIterator extends ItemRuntimePlan
             ItemRuntimePlan condition,
             ItemRuntimePlan branch,
             ItemRuntimePlan elseBranch,
-            RuntimeStaticContext staticContext
-    ) {
-        super(
-            List.of(
-                condition,
-                branch,
-                elseBranch
-            ),
-            staticContext
-        );
+            RuntimeStaticContext staticContext) {
+        super(List.of(condition, branch, elseBranch), staticContext);
     }
 
     @Override
@@ -67,9 +54,7 @@ public class IfRuntimeIterator extends ItemRuntimePlan
         return this.selectApplicableIterator(context).getCursor(context);
     }
 
-    public ItemRuntimePlan selectApplicableIterator(
-            DynamicContext dynamicContext
-    ) {
+    public ItemRuntimePlan selectApplicableIterator(DynamicContext dynamicContext) {
         ItemRuntimePlan condition = this.getChild(0);
         boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(condition, dynamicContext);
         if (effectiveBooleanValue) {
@@ -81,17 +66,13 @@ public class IfRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        ItemRuntimePlan iterator = selectApplicableIterator(
-            dynamicContext
-        );
+        ItemRuntimePlan iterator = selectApplicableIterator(dynamicContext);
         return iterator.getRDD(dynamicContext);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        ItemRuntimePlan iterator = selectApplicableIterator(
-            dynamicContext
-        );
+        ItemRuntimePlan iterator = selectApplicableIterator(dynamicContext);
 
         return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, dynamicContext);
     }

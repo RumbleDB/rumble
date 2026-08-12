@@ -38,9 +38,7 @@ public class AxisIteratorVisitor {
                 return new DescendantOrSelfAxisIterator(staticContext);
             default:
                 throw new UnsupportedFeatureException(
-                        "Axis " + forwardStep.getForwardAxis() + "unrecognized",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        "Axis " + forwardStep.getForwardAxis() + "unrecognized", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -58,9 +56,7 @@ public class AxisIteratorVisitor {
                 return new PrecedingSiblingAxisIterator(staticContext);
             default:
                 throw new UnsupportedFeatureException(
-                        "Axis " + reverseStep.getReverseAxis() + "unrecognized",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        "Axis " + reverseStep.getReverseAxis() + "unrecognized", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 }

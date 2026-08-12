@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -9,19 +9,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class SubstringBeforeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public SubstringBeforeFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public SubstringBeforeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -35,27 +30,16 @@ public class SubstringBeforeFunctionIterator extends AbstractAtMostOneItemRuntim
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
-        if (
-            substringItem == null
+        if (substringItem == null
                 || substringItem.getStringValue().isEmpty()
-                ||
-                stringItem == null
-                || stringItem.getStringValue().isEmpty()
-        ) {
+                || stringItem == null
+                || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createStringItem("");
         }
         int indexOfOccurrence = stringItem.getStringValue().indexOf(substringItem.getStringValue());
         return indexOfOccurrence == -1
-            ? ItemFactory.getInstance().createStringItem("")
-            : ItemFactory.getInstance()
-                .createStringItem(
-                    stringItem.getStringValue()
-                        .substring(
-                            0,
-                            indexOfOccurrence
-                        )
-                );
+                ? ItemFactory.getInstance().createStringItem("")
+                : ItemFactory.getInstance()
+                        .createStringItem(stringItem.getStringValue().substring(0, indexOfOccurrence));
     }
-
-
 }

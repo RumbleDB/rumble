@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.numerics.exponential;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,12 +29,10 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.List;
 
 public class Exp10FunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
@@ -42,10 +41,7 @@ public class Exp10FunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
 
     private final ItemRuntimePlan argument;
 
-    public Exp10FunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public Exp10FunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.argument = arguments.get(0);
     }
@@ -65,26 +61,20 @@ public class Exp10FunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext powerQuery = NativeQueryRuntimePlan.generate(
-            this.argument,
-            nativeClauseContext
-        );
+        NativeClauseContext powerQuery = NativeQueryRuntimePlan.generate(this.argument, nativeClauseContext);
         if (powerQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (SequenceType.Arity.OneOrMore.isSubtypeOf(powerQuery.getResultingType().getArity())) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                powerQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "POW( "
-            + "10.0"
-            + ", "
-            + powerQuery.getResultingQuery()
-            + " )";
+        String resultingQuery = "POW( " + "10.0" + ", " + powerQuery.getResultingQuery() + " )";
         return new NativeClauseContext(
                 powerQuery,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, powerQuery.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.doubleItem,
+                        powerQuery.getResultingType().getArity()));
     }
-
 }

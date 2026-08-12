@@ -12,16 +12,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.NonNull;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrameFactory;
@@ -65,17 +67,13 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    RuntimePlan(
-            @NonNull RuntimeStaticContext staticContext,
-            RuntimeDataFrameFactory<T> dataFrameFactory
-    ) {
+    RuntimePlan(@NonNull RuntimeStaticContext staticContext, RuntimeDataFrameFactory<T> dataFrameFactory) {
         // Cache the casted capabilities for convenience and to avoid repeated casts
         this.localCapability = this instanceof LocalRuntimePlan<?> ? (LocalRuntimePlan<T>) this : null;
         this.rddCapability = this instanceof RDDRuntimePlan<?> ? (RDDRuntimePlan<T>) this : null;
         this.dataFrameCapability = this instanceof DataFrameRuntimePlan<?> ? (DataFrameRuntimePlan<T>) this : null;
-        this.atMostOneCapability = this instanceof AtMostOneLocalRuntimePlan<?>
-            ? (AtMostOneLocalRuntimePlan<T>) this
-            : null;
+        this.atMostOneCapability =
+                this instanceof AtMostOneLocalRuntimePlan<?> ? (AtMostOneLocalRuntimePlan<T>) this : null;
 
         boolean supportsLocal = this.localCapability != null;
         boolean supportsRDD = this.rddCapability != null;
@@ -84,28 +82,32 @@ public abstract class RuntimePlan<T> implements Serializable {
         // Compiler configuration may prefer a representation this plan cannot produce natively, so select the
         // closest supported capability and make it authoritative for all runtime consumers.
         ExecutionMode requestedExecutionMode = staticContext.getExecutionMode();
-        ExecutionMode nativeExecutionMode = switch (requestedExecutionMode) {
-            case LOCAL -> supportsLocal
-                ? ExecutionMode.LOCAL
-                : supportsRDD
-                    ? ExecutionMode.RDD
-                    : supportsDataFrame ? ExecutionMode.DATAFRAME : requestedExecutionMode;
-            case RDD -> supportsRDD
-                ? ExecutionMode.RDD
-                : supportsDataFrame
-                    ? ExecutionMode.DATAFRAME
-                    : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
-            case DATAFRAME -> supportsDataFrame
-                ? ExecutionMode.DATAFRAME
-                : supportsRDD ? ExecutionMode.RDD : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
-            case UNSET -> requestedExecutionMode;
-        };
+        ExecutionMode nativeExecutionMode =
+                switch (requestedExecutionMode) {
+                    case LOCAL -> supportsLocal
+                            ? ExecutionMode.LOCAL
+                            : supportsRDD
+                                    ? ExecutionMode.RDD
+                                    : supportsDataFrame ? ExecutionMode.DATAFRAME : requestedExecutionMode;
+                    case RDD -> supportsRDD
+                            ? ExecutionMode.RDD
+                            : supportsDataFrame
+                                    ? ExecutionMode.DATAFRAME
+                                    : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
+                    case DATAFRAME -> supportsDataFrame
+                            ? ExecutionMode.DATAFRAME
+                            : supportsRDD
+                                    ? ExecutionMode.RDD
+                                    : supportsLocal ? ExecutionMode.LOCAL : requestedExecutionMode;
+                    case UNSET -> requestedExecutionMode;
+                };
 
         this.staticContext = nativeExecutionMode == requestedExecutionMode
-            ? staticContext
-            : staticContext.toBuilder().executionMode(nativeExecutionMode).build();
+                ? staticContext
+                : staticContext.toBuilder().executionMode(nativeExecutionMode).build();
         this.metadata = this.staticContext.getMetadata();
-        this.materializationCap = this.staticContext.getConfiguration().runtime().materializationCap();
+        this.materializationCap =
+                this.staticContext.getConfiguration().runtime().materializationCap();
         this.dataFrameFactory = dataFrameFactory;
     }
 
@@ -122,15 +124,11 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final Cursor<T> getCursor(@NonNull DynamicContext context) {
         return this.executeSelectedRepresentation(
-            context,
-            cursor -> cursor,
-            rdd -> RuntimePlanConversions.rddToCursor(rdd, this.materializationCap, this.metadata),
-            dataFrame -> RuntimePlanConversions.rddToCursor(
-                dataFrame.toRDD(this.metadata),
-                this.materializationCap,
-                this.metadata
-            )
-        );
+                context,
+                cursor -> cursor,
+                rdd -> RuntimePlanConversions.rddToCursor(rdd, this.materializationCap, this.metadata),
+                dataFrame -> RuntimePlanConversions.rddToCursor(
+                        dataFrame.toRDD(this.metadata), this.materializationCap, this.metadata));
     }
 
     /**
@@ -139,11 +137,10 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final JavaRDD<T> getRDD(@NonNull DynamicContext context) {
         return this.executeSelectedRepresentation(
-            context,
-            cursor -> RuntimePlanConversions.cursorToRDD(cursor, this.materializationCap, this.metadata),
-            rdd -> rdd,
-            dataFrame -> dataFrame.toRDD(this.metadata)
-        );
+                context,
+                cursor -> RuntimePlanConversions.cursorToRDD(cursor, this.materializationCap, this.metadata),
+                rdd -> rdd,
+                dataFrame -> dataFrame.toRDD(this.metadata));
     }
 
     /**
@@ -154,23 +151,18 @@ public abstract class RuntimePlan<T> implements Serializable {
             throw this.unsupportedDataFrameConversion();
         }
         return this.executeSelectedRepresentation(
-            context,
-            cursor -> this.dataFrameFactory.fromList(
-                RuntimePlanConversions.materializeCursor(cursor),
                 context,
-                this.staticContext
-            ),
-            rdd -> this.dataFrameFactory.fromRDD(rdd, context, this.staticContext),
-            dataFrame -> dataFrame
-        );
+                cursor -> this.dataFrameFactory.fromList(
+                        RuntimePlanConversions.materializeCursor(cursor), context, this.staticContext),
+                rdd -> this.dataFrameFactory.fromRDD(rdd, context, this.staticContext),
+                dataFrame -> dataFrame);
     }
 
     private <R, E extends Exception> R executeSelectedRepresentation(
             DynamicContext context,
             ExecutionAdapter<Cursor<T>, R, E> fromCursor,
             ExecutionAdapter<JavaRDD<T>, R, E> fromRDD,
-            ExecutionAdapter<RuntimeDataFrame<T>, R, E> fromDataFrame
-    )
+            ExecutionAdapter<RuntimeDataFrame<T>, R, E> fromDataFrame)
             throws E {
         return switch (this.staticContext.getExecutionMode()) {
             case LOCAL -> {
@@ -196,21 +188,17 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     private OurBadException missingCapability(ExecutionMode mode) {
-        return new OurBadException(
-                "The runtime plan "
-                    + this.getClass().getCanonicalName()
-                    + " prefers "
-                    + mode
-                    + " execution but does not implement any local, RDD, or DataFrame execution capability."
-        );
+        return new OurBadException("The runtime plan "
+                + this.getClass().getCanonicalName()
+                + " prefers "
+                + mode
+                + " execution but does not implement any local, RDD, or DataFrame execution capability.");
     }
 
     private OurBadException unsupportedDataFrameConversion() {
-        return new OurBadException(
-                "The runtime plan "
-                    + this.getClass().getCanonicalName()
-                    + " cannot convert its selected native representation to a DataFrame."
-        );
+        return new OurBadException("The runtime plan "
+                + this.getClass().getCanonicalName()
+                + " cannot convert its selected native representation to a DataFrame.");
     }
 
     /**
@@ -224,19 +212,11 @@ public abstract class RuntimePlan<T> implements Serializable {
             return this.materializeDirectAtMostOne(context);
         }
         return this.executeSelectedRepresentation(
-            context,
-            RuntimePlanConversions::materializeCursor,
-            rdd -> RuntimePlanConversions.collectRDDWithLimit(
-                rdd,
-                this.materializationCap,
-                this.metadata
-            ),
-            dataFrame -> RuntimePlanConversions.collectRDDWithLimit(
-                dataFrame.toRDD(this.metadata),
-                this.materializationCap,
-                this.metadata
-            )
-        );
+                context,
+                RuntimePlanConversions::materializeCursor,
+                rdd -> RuntimePlanConversions.collectRDDWithLimit(rdd, this.materializationCap, this.metadata),
+                dataFrame -> RuntimePlanConversions.collectRDDWithLimit(
+                        dataFrame.toRDD(this.metadata), this.materializationCap, this.metadata));
     }
 
     /**
@@ -250,13 +230,10 @@ public abstract class RuntimePlan<T> implements Serializable {
             return this.atMostOneCapability.evaluateAtMostOne(context);
         }
         return this.executeSelectedRepresentation(
-            context,
-            RuntimePlan::materializeFirstFromCursor,
-            RuntimePlan::firstOrNull,
-            dataFrame -> firstOrNull(
-                dataFrame.toRDD(this.metadata)
-            )
-        );
+                context,
+                RuntimePlan::materializeFirstFromCursor,
+                RuntimePlan::firstOrNull,
+                dataFrame -> firstOrNull(dataFrame.toRDD(this.metadata)));
     }
 
     /**
@@ -276,12 +253,10 @@ public abstract class RuntimePlan<T> implements Serializable {
             return this.materializeDirectAtMostOne(context);
         }
         return this.executeSelectedRepresentation(
-            context,
-            cursor -> materializeAtMostFromCursor(cursor, limit),
-            rdd -> rdd.take(limit),
-            dataFrame -> dataFrame.toRDD(this.metadata)
-                .take(limit)
-        );
+                context,
+                cursor -> materializeAtMostFromCursor(cursor, limit),
+                rdd -> rdd.take(limit),
+                dataFrame -> dataFrame.toRDD(this.metadata).take(limit));
     }
 
     /**
@@ -296,20 +271,10 @@ public abstract class RuntimePlan<T> implements Serializable {
             return this.atMostOneCapability.evaluateAtMostOne(context);
         }
         return this.executeSelectedRepresentation(
-            context,
-            (cursor) -> RuntimePlan.materializeAtMostOneFromCursor(
-                cursor,
-                this.metadata
-            ),
-            rdd -> RuntimePlan.materializeAtMostOneFromRDD(
-                rdd,
-                this.metadata
-            ),
-            dataFrame -> RuntimePlan.materializeAtMostOneFromRDD(
-                dataFrame.toRDD(this.metadata),
-                this.metadata
-            )
-        );
+                context,
+                (cursor) -> RuntimePlan.materializeAtMostOneFromCursor(cursor, this.metadata),
+                rdd -> RuntimePlan.materializeAtMostOneFromRDD(rdd, this.metadata),
+                dataFrame -> RuntimePlan.materializeAtMostOneFromRDD(dataFrame.toRDD(this.metadata), this.metadata));
     }
 
     /**
@@ -321,8 +286,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @throws MoreThanOneItemException if the plan produces more than one result
      */
     public final T materializeExactlyOne(@NonNull DynamicContext context)
-            throws NoItemException,
-                MoreThanOneItemException {
+            throws NoItemException, MoreThanOneItemException {
         T result = this.materializeAtMostOne(context);
         if (result == null) {
             throw new NoItemException();

@@ -20,8 +20,6 @@
 
 package org.rumbledb.runtime.logics;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.Collections;
 
@@ -32,6 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -40,12 +39,10 @@ public class NotOperationIterator extends AbstractAtMostOneItemRuntimePlan imple
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan child;
 
-    public NotOperationIterator(
-            ItemRuntimePlan child,
-            RuntimeStaticContext staticContext
-    ) {
+    public NotOperationIterator(ItemRuntimePlan child, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(child), staticContext);
         this.child = child;
     }
@@ -58,21 +55,20 @@ public class NotOperationIterator extends AbstractAtMostOneItemRuntimePlan imple
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childResult = NativeQueryRuntimePlan.generate(
-            this.child,
-            nativeClauseContext
-        );
+        NativeClauseContext childResult = NativeQueryRuntimePlan.generate(this.child, nativeClauseContext);
         if (childResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childResult.getResultingType().getArity())) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                childResult.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( NOT " + childResult.getResultingQuery() + " )";
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.booleanItem, childResult.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.booleanItem,
+                        childResult.getResultingType().getArity()));
     }
 }

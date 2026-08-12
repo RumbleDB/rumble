@@ -1,27 +1,24 @@
 package org.rumbledb.runtime.functions.io;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class CollectionFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public CollectionFunctionIterator(
-            List<ItemRuntimePlan> children,
-            RuntimeStaticContext staticContext
-    ) {
+    public CollectionFunctionIterator(List<ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
@@ -32,8 +29,7 @@ public class CollectionFunctionIterator extends ItemRuntimePlan implements DataF
         if (this.getChildren().isEmpty()) {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }
-        Item stringItem = this.getChild(0)
-            .materializeFirstOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         if (stringItem == null) {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }
@@ -45,5 +41,4 @@ public class CollectionFunctionIterator extends ItemRuntimePlan implements DataF
         // DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
         return HomogeneousItemDataFrame.emptyDataFrame();
     }
-
 }

@@ -20,12 +20,12 @@
 
 package org.rumbledb.expressions;
 
-
-import lombok.Getter;
-import org.rumbledb.exceptions.ExceptionMetadata;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import lombok.Getter;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 @Getter
 public class CommaExpression extends Expression {
@@ -73,6 +73,4 @@ public class CommaExpression extends Expression {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitCommaExpression(this, argument);
     }
-
 }
-

@@ -20,8 +20,6 @@
 
 package org.rumbledb.runtime.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.List;
 import java.util.function.Function;
@@ -33,24 +31,23 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Runtime iterator for attribute nodes in a direct element constructor.
- * 
+ *
  * @see org.rumbledb.expressions.xml.AttributeNodeExpression
  */
 public class AttributeNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Name attributeName;
     private final List<DataFunctionIterator> atomizedValues;
 
     public AttributeNodeRuntimeIterator(
-            Name attributeName,
-            List<DataFunctionIterator> atomizedValues,
-            RuntimeStaticContext staticContext
-    ) {
+            Name attributeName, List<DataFunctionIterator> atomizedValues, RuntimeStaticContext staticContext) {
         super(atomizedValues, staticContext);
         this.attributeName = attributeName;
         this.atomizedValues = atomizedValues;
@@ -86,12 +83,6 @@ public class AttributeNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePl
         // The resulting string becomes the string-value property of the attribute node.
         // this is performed by using the same StringBuilder for all the attribute components
         // Create and return the attribute
-        return ItemFactory.getInstance()
-            .createXmlAttributeNode(
-                this.attributeName,
-                sb.toString()
-            );
+        return ItemFactory.getInstance().createXmlAttributeNode(this.attributeName, sb.toString());
     }
-
-
 }

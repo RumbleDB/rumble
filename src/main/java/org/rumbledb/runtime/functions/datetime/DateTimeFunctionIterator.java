@@ -1,9 +1,9 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -11,9 +11,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.time.OffsetTime;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class DateTimeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -23,10 +21,7 @@ public class DateTimeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private final ItemRuntimePlan dateIterator;
     private final ItemRuntimePlan timeIterator;
 
-    public DateTimeFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public DateTimeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.dateIterator = arguments.get(0);
         this.timeIterator = arguments.get(1);
@@ -52,10 +47,7 @@ public class DateTimeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
                 return ItemFactory.getInstance().createDateTimeItem(dt, true);
             } else {
-                throw new InconsistentTimezonesException(
-                        "The two arguments have inconsistent timezones",
-                        metadata
-                );
+                throw new InconsistentTimezonesException("The two arguments have inconsistent timezones", metadata);
             }
         } else if (dateItem.hasTimeZone() && !timeItem.hasTimeZone()) {
             dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());

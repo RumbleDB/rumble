@@ -20,13 +20,13 @@
 
 package org.rumbledb.expressions.control;
 
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -42,8 +42,7 @@ public class TryCatchExpression extends Expression {
     public TryCatchExpression(
             Expression tryExpression,
             Map<CatchPattern, Expression> catchExpressions,
-            ExceptionMetadata metadataFromContext
-    ) {
+            ExceptionMetadata metadataFromContext) {
         super(metadataFromContext);
         this.tryExpression = tryExpression;
         this.catchExpressions = new LinkedHashMap<>(catchExpressions);

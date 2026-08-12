@@ -20,8 +20,12 @@
 
 package org.rumbledb.expressions.primary;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -29,32 +33,25 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class FunctionCallExpression extends Expression {
 
     private final FunctionIdentifier identifier;
+
     @Getter
     private final List<Expression> arguments; // null for placeholder
+
     @Getter
     private final boolean isPartialApplication;
+
     @Setter
     @Getter
     private boolean isTailCallOptimization;
 
-    public FunctionCallExpression(
-            Name functionName,
-            List<Expression> arguments,
-            ExceptionMetadata metadata
-    ) {
+    public FunctionCallExpression(Name functionName, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         this.arguments = arguments;
         this.isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
-        this.identifier = new FunctionIdentifier(
-                functionName,
-                this.arguments.size()
-        );
+        this.identifier = new FunctionIdentifier(functionName, this.arguments.size());
         this.isTailCallOptimization = false;
     }
 
@@ -88,13 +85,11 @@ public class FunctionCallExpression extends Expression {
         }
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(
-            " | "
+        buffer.append(" | "
                 + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
         buffer.append("\n");
         for (Expression arg : this.arguments) {
             if (arg == null) {

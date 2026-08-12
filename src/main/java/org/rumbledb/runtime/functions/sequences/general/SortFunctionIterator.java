@@ -1,8 +1,9 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
-
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -14,26 +15,21 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code fn:sort}:
  * {@code fn:sort($input)}, {@code fn:sort($input, $collation?)},
  * {@code fn:sort($input, $collation?, $key)}.
  */
-public class SortFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+public class SortFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -47,10 +43,7 @@ public class SortFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan collationIterator;
     private final ItemRuntimePlan keyIterator;
 
-    public SortFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public SortFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         int n = arguments.size();
         if (n < 1 || n > 3) {
@@ -78,12 +71,8 @@ public class SortFunctionIterator extends ItemRuntimePlan
             if (SortKeyComparison.sortKeysDeepEqual(left.keys, right.keys, collationUri, sortStaticContext)) {
                 return 0;
             }
-            boolean less = SortKeyComparison.sortKeysDeepLessThan(
-                left.keys,
-                right.keys,
-                collationUri,
-                sortStaticContext
-            );
+            boolean less =
+                    SortKeyComparison.sortKeysDeepLessThan(left.keys, right.keys, collationUri, sortStaticContext);
             return less ? -1 : 1;
         };
         rows.sort(comparator);
@@ -106,8 +95,7 @@ public class SortFunctionIterator extends ItemRuntimePlan
         if (collation.size() != 1 || !collation.get(0).isString()) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to fn:sort must be empty sequence or a single xs:string.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return collation.get(0).getStringValue();
     }
@@ -119,15 +107,11 @@ public class SortFunctionIterator extends ItemRuntimePlan
         List<Item> keySpec = this.keyIterator.materialize(context);
         if (keySpec.isEmpty()) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to fn:sort must be exactly one item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to fn:sort must be exactly one item.", getMetadata());
         }
         if (keySpec.size() != 1) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to fn:sort must be exactly one item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to fn:sort must be exactly one item.", getMetadata());
         }
 
         Item spec = keySpec.get(0);
@@ -144,9 +128,7 @@ public class SortFunctionIterator extends ItemRuntimePlan
             return (item, ctx) -> keyFromMapLookup(keyMap, item, ctx);
         }
         throw new UnexpectedTypeException(
-                "Type error; third argument to fn:sort must be a function item, map, or array.",
-                getMetadata()
-        );
+                "Type error; third argument to fn:sort must be a function item, map, or array.", getMetadata());
     }
 
     private List<Item> fnDataKeySequence(Item item) {
@@ -172,21 +154,11 @@ public class SortFunctionIterator extends ItemRuntimePlan
         out.addAll(item.atomizedValue());
     }
 
-    private List<Item> invokeKeyFunction(
-            FunctionItem functionItem,
-            Item item,
-            DynamicContext context
-    ) {
+    private List<Item> invokeKeyFunction(FunctionItem functionItem, Item item, DynamicContext context) {
         List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(new ConstantRuntimeIterator(item, localStaticContext()));
-        ItemRuntimePlan call = NamedFunctions
-            .buildFunctionItemCallIterator(
-                functionItem,
-                this.staticContext,
-                ExecutionMode.LOCAL,
-                arguments,
-                false
-            );
+        ItemRuntimePlan call = NamedFunctions.buildFunctionItemCallIterator(
+                functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
         return materializeKeyIterator(call, context);
     }
 
@@ -194,18 +166,10 @@ public class SortFunctionIterator extends ItemRuntimePlan
         if (!item.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; when the key is an array, each input item must be a single numeric index.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        ItemRuntimePlan indexIterator = new ConstantRuntimeIterator(
-                item,
-                localStaticContext()
-        );
-        ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(
-                keyArray,
-                indexIterator,
-                localStaticContext()
-        );
+        ItemRuntimePlan indexIterator = new ConstantRuntimeIterator(item, localStaticContext());
+        ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(keyArray, indexIterator, localStaticContext());
         return materializeKeyIterator(lookup, context);
     }
 
@@ -214,32 +178,18 @@ public class SortFunctionIterator extends ItemRuntimePlan
         if (atomized.size() != 1) {
             throw new UnexpectedTypeException(
                     "Type error; map key function expects each input item to atomize to a single atomic value.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        ItemRuntimePlan keyIterator = new ConstantRuntimeIterator(
-                atomized.get(0),
-                localStaticContext()
-        );
-        MapFunctionCallIterator lookup = new MapFunctionCallIterator(
-                mapItem,
-                keyIterator,
-                localStaticContext()
-        );
+        ItemRuntimePlan keyIterator = new ConstantRuntimeIterator(atomized.get(0), localStaticContext());
+        MapFunctionCallIterator lookup = new MapFunctionCallIterator(mapItem, keyIterator, localStaticContext());
         return materializeKeyIterator(lookup, context);
     }
 
-    private List<Item> materializeIterator(
-            ItemRuntimePlan iterator,
-            DynamicContext context
-    ) {
+    private List<Item> materializeIterator(ItemRuntimePlan iterator, DynamicContext context) {
         return iterator.materialize(context);
     }
 
-    private List<Item> materializeKeyIterator(
-            ItemRuntimePlan iterator,
-            DynamicContext context
-    ) {
+    private List<Item> materializeKeyIterator(ItemRuntimePlan iterator, DynamicContext context) {
         List<Item> rawItems = materializeIterator(iterator, context);
         List<Item> atomizedKeys = new ArrayList<>();
         for (Item rawItem : rawItems) {
@@ -249,12 +199,11 @@ public class SortFunctionIterator extends ItemRuntimePlan
     }
 
     private RuntimeStaticContext localStaticContext() {
-        return getRuntimeStaticContext()
-            .toBuilder()
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        return getRuntimeStaticContext().toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
     }
 
     @FunctionalInterface

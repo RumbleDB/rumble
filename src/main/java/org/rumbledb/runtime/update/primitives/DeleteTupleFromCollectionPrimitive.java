@@ -1,13 +1,14 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.spark.SparkSessionManager;
 import org.apache.spark.sql.SparkSession;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.spark.SparkSessionManager;
 
 public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
     private final Collection collection;
     private final double rowOrder;
+
     @SuppressWarnings("unused")
     private ExceptionMetadata metadata;
 
@@ -53,12 +54,10 @@ public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 
         String deleteQuery = String.format(
-            "DELETE FROM %s WHERE %s = %s",
-            this.collection.getPhysicalName(),
-            SparkSessionManager.rowOrderColumnName,
-            String.valueOf(this.rowOrder)
-        );
+                "DELETE FROM %s WHERE %s = %s",
+                this.collection.getPhysicalName(),
+                SparkSessionManager.rowOrderColumnName,
+                String.valueOf(this.rowOrder));
         session.sql(deleteQuery);
     }
-
 }

@@ -1,5 +1,11 @@
 package org.rumbledb.runtime.scripting.flwor;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -9,26 +15,18 @@ import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ReturnStatementClauseIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final TupleRuntimePlan clauseIterator;
     private final ItemRuntimePlan expression;
 
     public ReturnStatementClauseIterator(
-            TupleRuntimePlan clauseIterator,
-            ItemRuntimePlan expression,
-            RuntimeStaticContext context
-    ) {
+            TupleRuntimePlan clauseIterator, ItemRuntimePlan expression, RuntimeStaticContext context) {
         super(Collections.singletonList(expression), context);
         this.clauseIterator = clauseIterator;
         this.expression = expression;
@@ -58,8 +56,7 @@ public class ReturnStatementClauseIterator extends AbstractAtMostOneItemRuntimeP
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
-        Map<Name, DynamicContext.VariableDependency> dependencies =
-            this.expression.getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> dependencies = this.expression.getVariableDependencies();
         Set<Name> allTupleNames = this.clauseIterator.getOutputTupleVariableNames();
         Map<Name, DynamicContext.VariableDependency> projection = new HashMap<>();
         for (Name n : dependencies.keySet()) {
@@ -69,5 +66,4 @@ public class ReturnStatementClauseIterator extends AbstractAtMostOneItemRuntimeP
         }
         this.clauseIterator.setInputAndOutputTupleVariableDependencies(projection);
     }
-
 }

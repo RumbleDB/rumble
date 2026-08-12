@@ -1,6 +1,5 @@
 package org.rumbledb.expressions.xml.node_test;
 
-
 import java.io.Serial;
 
 /**
@@ -16,7 +15,4 @@ public class CommentTest implements NodeTest {
     public String toString() {
         return "comment()";
     }
-
-
 }
-

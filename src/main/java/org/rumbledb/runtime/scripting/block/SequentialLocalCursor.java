@@ -10,11 +10,12 @@ package org.rumbledb.runtime.scripting.block;
 import java.util.List;
 
 import lombok.NonNull;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
  * Drains a sequence of side-effecting plans before streaming a result plan.
@@ -30,8 +31,7 @@ final class SequentialLocalCursor<T> extends AbstractLocalCursor<T> {
             @NonNull List<? extends RuntimePlan<?>> prefixPlans,
             @NonNull RuntimePlan<T> resultPlan,
             @NonNull DynamicContext context,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull ExceptionMetadata metadata) {
         super(metadata);
         this.prefixPlans = List.copyOf(prefixPlans);
         this.resultPlan = resultPlan;

@@ -20,10 +20,6 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +33,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ArrayTailFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -45,10 +42,7 @@ public class ArrayTailFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     private final ItemRuntimePlan arrayIterator;
 
-    public ArrayTailFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayTailFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 1) {
             throw new OurBadException("array:tail must have exactly one argument.");
@@ -56,15 +50,11 @@ public class ArrayTailFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         this.arrayIterator = arguments.get(0);
     }
 
-
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         List<Item> items = this.arrayIterator.materialize(context);
         if (items.size() > 1) {
-            throw new UnexpectedTypeException(
-                    "array:tail expects exactly one array argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("array:tail expects exactly one array argument.", getMetadata());
         }
         return tail(items.isEmpty() ? null : items.get(0));
     }
@@ -74,37 +64,29 @@ public class ArrayTailFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             return null;
         }
         if (!arrayItem.isArray()) {
-            throw new UnexpectedTypeException(
-                    "Type error; argument to array:tail must be an array.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("Type error; argument to array:tail must be an array.", getMetadata());
         }
 
         int size = arrayItem.getSize();
         if (size == 0) {
-            throw new ArrayIndexOutOfBoundsException(
-                    "array:tail called on an empty array.",
-                    getMetadata()
-            );
+            throw new ArrayIndexOutOfBoundsException("array:tail called on an empty array.", getMetadata());
         }
 
         if (size == 1) {
-            return ItemFactory.getInstance()
-                .createArrayItem(Collections.emptyList(), false);
+            return ItemFactory.getInstance().createArrayItem(Collections.emptyList(), false);
         }
 
         if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
             return ItemFactory.getInstance()
-                .createArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
             return ItemFactory.getInstance()
-                .createSequenceArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createSequenceArrayItem(
+                            tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
-
-
 }

@@ -17,10 +17,6 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +28,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * F&amp;O 3.1 array:append — returns a new array with one additional member (the appendage sequence).
@@ -44,10 +41,7 @@ public class ArrayAppendFunctionIterator extends AbstractAtMostOneItemRuntimePla
     private final ItemRuntimePlan arrayIterator;
     private final ItemRuntimePlan appendageIterator;
 
-    public ArrayAppendFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayAppendFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("array:append must have exactly two arguments.");
@@ -55,7 +49,6 @@ public class ArrayAppendFunctionIterator extends AbstractAtMostOneItemRuntimePla
         this.arrayIterator = arguments.get(0);
         this.appendageIterator = arguments.get(1);
     }
-
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
@@ -66,32 +59,27 @@ public class ArrayAppendFunctionIterator extends AbstractAtMostOneItemRuntimePla
             newItems.addAll(arrayItem.getItemMembers());
             newItems.add(appendage.get(0));
             return ItemFactory.getInstance()
-                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> newMemberSequences = new ArrayList<>(arrayItem.getSize() + 1);
             newMemberSequences.addAll(arrayItem.getSequenceMembers());
             newMemberSequences.add(appendage);
             return ItemFactory.getInstance()
-                .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createSequenceArrayItem(
+                            newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
     private Item requireArray(List<Item> items) {
         if (items.size() != 1) {
             throw new UnexpectedTypeException(
-                    "array:append expects exactly one array as the first argument.",
-                    getMetadata()
-            );
+                    "array:append expects exactly one array as the first argument.", getMetadata());
         }
         Item arrayItem = items.get(0);
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:append must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:append must be an array.", getMetadata());
         }
         return arrayItem;
     }
-
-
 }

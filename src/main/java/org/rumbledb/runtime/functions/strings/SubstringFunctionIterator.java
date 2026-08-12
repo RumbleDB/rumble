@@ -20,8 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,19 +29,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class SubstringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public SubstringFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public SubstringFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -55,9 +50,7 @@ public class SubstringFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         Item indexItem = this.getChild(1).materializeFirstOrNull(context);
         if (indexItem == null) {
             throw new UnexpectedTypeException(
-                    "Type error; Start index parameter can't be empty sequence ",
-                    getMetadata()
-            );
+                    "Type error; Start index parameter can't be empty sequence ", getMetadata());
         }
         int index = (int) Math.round(indexItem.getDoubleValue() - 1);
         if (index >= stringItem.getStringValue().length()) {
@@ -67,9 +60,7 @@ public class SubstringFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             Item endIndexItem = this.getChild(2).materializeFirstOrNull(context);
             if (endIndexItem == null) {
                 throw new UnexpectedTypeException(
-                        "Type error; End index parameter can't be empty sequence ",
-                        getMetadata()
-                );
+                        "Type error; End index parameter can't be empty sequence ", getMetadata());
             }
             double endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
             if (endIndex < index || endIndex <= 0) {
@@ -86,7 +77,6 @@ public class SubstringFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
         return ItemFactory.getInstance().createStringItem(result);
     }
-
 
     private double sanitizeEndIndex(Item stringItem, Item endIndexItem, int startIndex) {
         // char indexing starts from 1 in JSONiq

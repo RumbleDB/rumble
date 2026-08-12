@@ -20,7 +20,10 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,24 +32,17 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
 
 public class FloorFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FloorFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public FloorFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -56,16 +52,12 @@ public class FloorFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
         if (value == null) {
             return null;
         }
-        if (
-            (value.isDouble() && Double.isNaN(value.getDoubleValue()))
-                || (value.isFloat() && Float.isNaN(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
             return value;
         }
-        if (
-            (value.isDouble() && Double.isInfinite(value.getDoubleValue()))
-                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
             return value;
         }
         if (value.isInt()) {
@@ -79,34 +71,17 @@ public class FloorFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
             return ItemFactory.getInstance().createDecimalItem(bd);
         }
         if (value.isFloat()) {
-            return ItemFactory.getInstance()
-                .createFloatItem(
-                    (float) Math.floor(
-                        value.getFloatValue()
-                    )
-                );
+            return ItemFactory.getInstance().createFloatItem((float) Math.floor(value.getFloatValue()));
         }
         if (value.isDouble()) {
-            return ItemFactory.getInstance()
-                .createDoubleItem(
-                    Math.floor(
-                        value.castToDoubleValue()
-                    )
-                );
+            return ItemFactory.getInstance().createDoubleItem(Math.floor(value.castToDoubleValue()));
         }
-        throw new UnexpectedTypeException(
-                "Unexpected value in floor(): " + value.getDynamicType(),
-                getMetadata()
-        );
+        throw new UnexpectedTypeException("Unexpected value in floor(): " + value.getDynamicType(), getMetadata());
     }
-
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = NativeQueryRuntimePlan.generate(
-            this.getChild(0),
-            nativeClauseContext
-        );
+        NativeClauseContext value = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -116,16 +91,12 @@ public class FloorFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
         if (!value.getResultingType().getItemType().isNumeric()) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "( CAST ("
-            + "FLOOR( "
-            + value.getResultingQuery()
-            + " ) AS FLOAT)"
-            + " )";
+        String resultingQuery = "( CAST (" + "FLOOR( " + value.getResultingQuery() + " ) AS FLOAT)" + " )";
         return new NativeClauseContext(
                 value,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.floatItem,
+                        value.getResultingType().getArity()));
     }
-
 }

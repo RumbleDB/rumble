@@ -20,27 +20,22 @@
 
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class UnparsedTextFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public UnparsedTextFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public UnparsedTextFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -57,14 +52,11 @@ public class UnparsedTextFunctionIterator extends AbstractAtMostOneItemRuntimePl
         }
 
         String result = UnparsedTextReader.read(
-            this.staticContext.getStaticURI(),
-            hrefItem.getStringValue(),
-            encoding,
-            getConfiguration().semantics().xmlVersion(),
-            getMetadata()
-        );
+                this.staticContext.getStaticURI(),
+                hrefItem.getStringValue(),
+                encoding,
+                getConfiguration().semantics().xmlVersion(),
+                getMetadata());
         return ItemFactory.getInstance().createStringItem(result);
     }
-
-
 }

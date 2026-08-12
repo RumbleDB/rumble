@@ -1,27 +1,31 @@
 package org.rumbledb.items;
 
-import lombok.Getter;
+import java.io.Serial;
+import java.util.regex.Pattern;
+
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-
-import java.io.Serial;
-import java.util.regex.Pattern;
 
 public class HexBinaryItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     @Getter
     private byte[] value;
+
     private String stringValue;
 
-    private final static String hexDigit = "[\\da-fA-F]";
-    private final static String hexOctet = "(" + hexDigit + hexDigit + ")";
-    private final static String hexBinary = hexOctet + "*";
-    private final static Pattern hexBinaryPattern = Pattern.compile(hexBinary);
+    private static final String hexDigit = "[\\da-fA-F]";
+    private static final String hexOctet = "(" + hexDigit + hexDigit + ")";
+    private static final String hexBinary = hexOctet + "*";
+    private static final Pattern hexBinaryPattern = Pattern.compile(hexBinary);
 
     HexBinaryItem(String stringValue) {
         this.stringValue = stringValue;

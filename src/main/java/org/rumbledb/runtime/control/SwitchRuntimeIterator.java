@@ -20,35 +20,33 @@
 
 package org.rumbledb.runtime.control;
 
+import java.io.Serial;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.misc.AtomicDeepEqual;
-
-import java.io.Serial;
-import java.util.Map;
-import java.util.stream.Stream;
-
 
 public class SwitchRuntimeIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan testField;
     private final Map<ItemRuntimePlan, ItemRuntimePlan> cases;
     private final ItemRuntimePlan defaultReturn;
@@ -57,15 +55,13 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
             ItemRuntimePlan test,
             Map<ItemRuntimePlan, ItemRuntimePlan> cases,
             ItemRuntimePlan defaultReturn,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.concat(
-                Stream.concat(Stream.of(test), cases.keySet().stream()),
-                Stream.concat(cases.values().stream(), Stream.of(defaultReturn))
-            ).toList(),
-            staticContext
-        );
+                Stream.concat(
+                                Stream.concat(Stream.of(test), cases.keySet().stream()),
+                                Stream.concat(cases.values().stream(), Stream.of(defaultReturn)))
+                        .toList(),
+                staticContext);
         this.testField = test;
         this.cases = cases;
         this.defaultReturn = defaultReturn;
@@ -89,8 +85,7 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
                 Map<ItemRuntimePlan, ItemRuntimePlan> cases,
                 ItemRuntimePlan defaultPlan,
                 DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                ExceptionMetadata metadata) {
             super(metadata);
             this.testPlan = testPlan;
             this.cases = cases;
@@ -154,22 +149,16 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         }
     }
 
-    private ItemRuntimePlan selectApplicableIterator(
-            DynamicContext dynamicContext
-    ) {
+    private ItemRuntimePlan selectApplicableIterator(DynamicContext dynamicContext) {
         Item testValue = this.testField.materializeFirstOrNull(dynamicContext);
 
         if (testValue != null) {
             if (testValue.isArray()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an array type",
-                        getMetadata()
-                );
+                        "Invalid args. Switch condition cannot be an array type", getMetadata());
             } else if (testValue.isObject()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an object type",
-                        getMetadata()
-                );
+                        "Invalid args. Switch condition cannot be an object type", getMetadata());
             }
         }
 
@@ -178,15 +167,10 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
 
             if (caseValue != null) {
                 if (caseValue.isArray()) {
-                    throw new NonAtomicKeyException(
-                            "Invalid args. Switch case cannot be an array type",
-                            getMetadata()
-                    );
+                    throw new NonAtomicKeyException("Invalid args. Switch case cannot be an array type", getMetadata());
                 } else if (caseValue.isObject()) {
                     throw new NonAtomicKeyException(
-                            "Invalid args. Switch case  cannot be an object type",
-                            getMetadata()
-                    );
+                            "Invalid args. Switch case  cannot be an object type", getMetadata());
                 }
             }
 
@@ -211,18 +195,14 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        ItemRuntimePlan iterator = selectApplicableIterator(
-            dynamicContext
-        );
+        ItemRuntimePlan iterator = selectApplicableIterator(dynamicContext);
 
         return iterator.getRDD(dynamicContext);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        ItemRuntimePlan iterator = selectApplicableIterator(
-            dynamicContext
-        );
+        ItemRuntimePlan iterator = selectApplicableIterator(dynamicContext);
 
         return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, dynamicContext);
     }

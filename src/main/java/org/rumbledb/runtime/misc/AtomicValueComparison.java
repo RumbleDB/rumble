@@ -32,8 +32,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  */
 public final class AtomicValueComparison {
 
-    private AtomicValueComparison() {
-    }
+    private AtomicValueComparison() {}
 
     /**
      * Returns whether two atomic values belong to the same distinct/grouping equivalence class.
@@ -42,12 +41,7 @@ public final class AtomicValueComparison {
         return equal(left, right, Name.DEFAULT_COLLATION_NS, ExceptionMetadata.EMPTY_METADATA);
     }
 
-    public static boolean equal(
-            Item left,
-            Item right,
-            String collationUri,
-            ExceptionMetadata metadata
-    ) {
+    public static boolean equal(Item left, Item right, String collationUri, ExceptionMetadata metadata) {
         if (left == right) {
             return true;
         }
@@ -56,11 +50,8 @@ public final class AtomicValueComparison {
         }
         if (CollationSupport.isStringCollationType(left) && CollationSupport.isStringCollationType(right)) {
             return CollationSupport.compareStrings(
-                left.getStringValue(),
-                right.getStringValue(),
-                collationUri,
-                metadata
-            ) == 0;
+                            left.getStringValue(), right.getStringValue(), collationUri, metadata)
+                    == 0;
         }
         return AtomicDeepEqual.deepEqual(left, right);
     }
@@ -95,16 +86,14 @@ public final class AtomicValueComparison {
         if (item.isHexBinary() || item.isBase64Binary()) {
             return Arrays.hashCode(item.getBinaryValue());
         }
-        if (
-            item.isDate()
+        if (item.isDate()
                 || item.isTime()
                 || item.isDateTime()
                 || item.isGYear()
                 || item.isGYearMonth()
                 || item.isGMonth()
                 || item.isGMonthDay()
-                || item.isGDay()
-        ) {
+                || item.isGDay()) {
             return 0x47;
         }
         if (item.isDuration() || item.isYearMonthDuration() || item.isDayTimeDuration()) {

@@ -1,11 +1,12 @@
 package org.rumbledb.expressions.scripting.control;
 
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.types.SequenceType;
-
-import java.util.List;
 
 /**
  * This is a helper class that organizes the children statements of a TypeSwitchStatement.
@@ -29,5 +30,4 @@ public class TypeSwitchStatementCase {
         this.union = null;
         this.returnStatement = returnStatement;
     }
-
 }

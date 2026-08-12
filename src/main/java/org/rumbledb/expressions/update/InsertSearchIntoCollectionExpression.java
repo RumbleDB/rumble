@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class InsertSearchIntoCollectionExpression extends Expression {
@@ -17,11 +18,7 @@ public class InsertSearchIntoCollectionExpression extends Expression {
     private boolean isBefore;
 
     public InsertSearchIntoCollectionExpression(
-            Expression targetExpression,
-            Expression contentExpression,
-            boolean isBefore,
-            ExceptionMetadata metadata
-    ) {
+            Expression targetExpression, Expression contentExpression, boolean isBefore, ExceptionMetadata metadata) {
         super(metadata);
         if (targetExpression == null) {
             throw new OurBadException("Tarrget must be identified for edit.");
@@ -53,5 +50,4 @@ public class InsertSearchIntoCollectionExpression extends Expression {
         this.targetExpression.serializeToJSONiq(sb, 0);
         sb.append(" into collection\n");
     }
-
 }

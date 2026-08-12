@@ -20,10 +20,15 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
+
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,31 +37,22 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
 
 public class CSVFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public CSVFileFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public CSVFileFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        Item stringItem = this.getChild(0)
-            .materializeFirstOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         String url = stringItem.getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
@@ -64,7 +60,8 @@ public class CSVFileFunctionIterator extends ItemRuntimePlan implements DataFram
         }
         Item optionsObjectItem;
         try {
-            DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
+            DataFrameReader dfr =
+                    SparkSessionManager.getInstance().getOrCreateSession().read();
             if (this.getChildren().size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
                 ObjectItem options = (ObjectItem) optionsObjectItem;
                 List<String> keys = options.getStringKeys();
@@ -86,8 +83,7 @@ public class CSVFileFunctionIterator extends ItemRuntimePlan implements DataFram
                     } else {
                         throw new UnexpectedTypeException(
                                 "Only boolean, string, and numeric types allowed as values",
-                                this.getRuntimeStaticContext().getMetadata()
-                        );
+                                this.getRuntimeStaticContext().getMetadata());
                     }
                 }
             }
@@ -99,7 +95,8 @@ public class CSVFileFunctionIterator extends ItemRuntimePlan implements DataFram
                 ex.initCause(e);
                 throw ex;
             } else {
-                throw new UnexpectedTypeException(e.getMessage(), this.getRuntimeStaticContext().getMetadata());
+                throw new UnexpectedTypeException(
+                        e.getMessage(), this.getRuntimeStaticContext().getMetadata());
             }
         }
     }

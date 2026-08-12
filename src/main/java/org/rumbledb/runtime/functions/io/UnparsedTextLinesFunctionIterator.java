@@ -1,30 +1,28 @@
 package org.rumbledb.runtime.functions.io;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
-
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
 
 public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implements RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private static final Pattern LINE_SPLIT_PATTERN = Pattern.compile("\r\n|\r|\n");
 
-    public UnparsedTextLinesFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public UnparsedTextLinesFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -33,9 +31,7 @@ public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implement
         ItemRuntimePlan hrefIterator = this.getChild(0);
         Item hrefItem = hrefIterator.materializeFirstOrNull(context);
         if (hrefItem == null) {
-            return SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .emptyRDD();
+            return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
         }
         String encoding = null;
         if (this.getChildren().size() == 2) {
@@ -44,12 +40,11 @@ public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implement
         }
 
         String text = UnparsedTextReader.read(
-            this.staticContext.getStaticURI(),
-            hrefItem.getStringValue(),
-            encoding,
-            getConfiguration().semantics().xmlVersion(),
-            getMetadata()
-        );
+                this.staticContext.getStaticURI(),
+                hrefItem.getStringValue(),
+                encoding,
+                getConfiguration().semantics().xmlVersion(),
+                getMetadata());
 
         String[] split = LINE_SPLIT_PATTERN.split(text, -1);
         List<String> lines = new ArrayList<>(split.length);
@@ -62,8 +57,8 @@ public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implement
         }
 
         return SparkSessionManager.getInstance()
-            .getJavaSparkContext()
-            .parallelize(lines)
-            .mapPartitions(new StringToStringItemMapper());
+                .getJavaSparkContext()
+                .parallelize(lines)
+                .mapPartitions(new StringToStringItemMapper());
     }
 }

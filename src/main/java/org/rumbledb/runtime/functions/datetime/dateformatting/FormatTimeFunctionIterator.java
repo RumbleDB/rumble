@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -10,16 +8,14 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class FormatTimeFunctionIterator extends DateFormattingFunctionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FormatTimeFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public FormatTimeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -37,12 +33,12 @@ public class FormatTimeFunctionIterator extends DateFormattingFunctionIterator {
     @Override
     protected boolean supportsComponent(char component) {
         return component == 'H'
-            || component == 'h'
-            || component == 'P'
-            || component == 'm'
-            || component == 's'
-            || component == 'f'
-            || component == 'Z'
-            || component == 'z';
+                || component == 'h'
+                || component == 'P'
+                || component == 'm'
+                || component == 's'
+                || component == 'f'
+                || component == 'Z'
+                || component == 'z';
     }
 }

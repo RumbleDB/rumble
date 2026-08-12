@@ -4,8 +4,7 @@ import java.util.regex.Pattern;
 
 public final class FormattingCalendarModeSupport {
 
-    private FormattingCalendarModeSupport() {
-    }
+    private FormattingCalendarModeSupport() {}
 
     public static final String DEFAULT = "ISO";
 

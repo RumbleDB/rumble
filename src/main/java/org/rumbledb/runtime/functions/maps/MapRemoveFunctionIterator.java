@@ -1,9 +1,5 @@
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +14,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:remove}:
@@ -28,7 +25,6 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
  */
 public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
-
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item mapItem = null;
@@ -36,16 +32,12 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             mapItem = this.mapIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "map:remove expects exactly one map argument [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "map:remove expects exactly one map argument [err:XPTY0004].", getMetadata());
         }
 
         if (mapItem == null || !mapItem.isMap()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to map:remove must be a map [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "Type error; first argument to map:remove must be a map [err:XPTY0004].", getMetadata());
         }
 
         List<Item> rawKeys = this.keysIterator.materialize(context);
@@ -60,9 +52,7 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             for (Item a : atomized) {
                 if (a == null || !a.isAtomic()) {
                     throw new UnexpectedTypeException(
-                            "map:remove expects keys that atomize to atomic items [err:XPTY0004].",
-                            getMetadata()
-                    );
+                            "map:remove expects keys that atomize to atomic items [err:XPTY0004].", getMetadata());
                 }
                 keysToRemove.add(a);
             }
@@ -106,13 +96,15 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         }
         if (allKeysString && allValuesSingletons) {
             return ItemFactory.getInstance()
-                .createObjectItemOptimized(
-                    newStringKeyValuePairs,
-                    this.getRuntimeStaticContext().isQuerySideEffecting()
-                );
+                    .createObjectItemOptimized(
+                            newStringKeyValuePairs,
+                            this.getRuntimeStaticContext().isQuerySideEffecting());
         }
         return ItemFactory.getInstance()
-            .createMapItem(newKeyValuePairs, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
+                .createMapItem(
+                        newKeyValuePairs,
+                        getMetadata(),
+                        this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     @Serial
@@ -121,10 +113,7 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private final ItemRuntimePlan mapIterator;
     private final ItemRuntimePlan keysIterator;
 
-    public MapRemoveFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MapRemoveFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("map:remove must have exactly two arguments.");
@@ -132,7 +121,6 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         this.mapIterator = arguments.get(0);
         this.keysIterator = arguments.get(1);
     }
-
 
     private static boolean shouldRemoveKey(Item mapKey, List<Item> keysToRemove) {
         for (Item keyToRemove : keysToRemove) {

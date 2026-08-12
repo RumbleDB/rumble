@@ -20,24 +20,23 @@
 
 package org.rumbledb.runtime.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidElementNameExpressionException;
-import org.rumbledb.exceptions.InvalidComputedNamespaceConstructorException;
-import org.rumbledb.exceptions.UnexpectedStaticTypeException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
-
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidComputedNamespaceConstructorException;
+import org.rumbledb.exceptions.InvalidElementNameExpressionException;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Runtime iterator for computed namespace constructors.
@@ -48,6 +47,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
     private final String staticPrefix;
     private final DataFunctionIterator prefixIterator;
@@ -61,10 +61,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
      * @param staticContext The runtime static context
      */
     public ComputedNamespaceConstructorRuntimeIterator(
-            String staticPrefix,
-            DataFunctionIterator uriIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            String staticPrefix, DataFunctionIterator uriIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(uriIterator), staticContext);
         this.staticPrefix = staticPrefix;
         this.prefixIterator = null;
@@ -79,14 +76,8 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
      * @param staticContext The runtime static context
      */
     public ComputedNamespaceConstructorRuntimeIterator(
-            DataFunctionIterator prefixIterator,
-            DataFunctionIterator uriIterator,
-            RuntimeStaticContext staticContext
-    ) {
-        super(
-            List.of(prefixIterator, uriIterator),
-            staticContext
-        );
+            DataFunctionIterator prefixIterator, DataFunctionIterator uriIterator, RuntimeStaticContext staticContext) {
+        super(List.of(prefixIterator, uriIterator), staticContext);
         this.staticPrefix = null;
         this.prefixIterator = prefixIterator;
         this.uriIterator = uriIterator;
@@ -111,7 +102,6 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         return namespaceItem;
     }
 
-
     private String resolvePrefix(Function<ItemRuntimePlan, List<Item>> materialize) {
         // Spec: "If the constructor specifies a Prefix, it is used as the prefix for the namespace node."
         if (this.staticPrefix != null) {
@@ -129,14 +119,12 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         // xs:untypedAtomic, a type error is raised [err:XPTY0004]."
         if (atomizedPrefixItems.size() != 1) {
             throw new UnexpectedStaticTypeException(
-                    "Computed namespace constructor prefix must evaluate to an empty sequence or a single atomic value of type xs:string or xs:untypedAtomic"
-            );
+                    "Computed namespace constructor prefix must evaluate to an empty sequence or a single atomic value of type xs:string or xs:untypedAtomic");
         }
         Item prefixItem = atomizedPrefixItems.get(0);
         if (!prefixItem.isAtomic() || !(prefixItem.isString() || prefixItem.isUntypedAtomic())) {
             throw new UnexpectedStaticTypeException(
-                    "Computed namespace constructor prefix must evaluate to an empty sequence or a single atomic value of type xs:string or xs:untypedAtomic"
-            );
+                    "Computed namespace constructor prefix must evaluate to an empty sequence or a single atomic value of type xs:string or xs:untypedAtomic");
         }
         // Spec: "If the result of atomization is an empty sequence or a single atomic value of type xs:string or
         // xs:untypedAtomic, then the following rules are applied in order:"
@@ -149,9 +137,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         // Spec: "Otherwise, a dynamic error is raised [err:XQDY0074]."
         if (!isValidNCName(prefix)) {
             throw new InvalidElementNameExpressionException(
-                    "Computed namespace constructor prefix cannot be cast to xs:NCName.",
-                    getMetadata()
-            );
+                    "Computed namespace constructor prefix cannot be cast to xs:NCName.", getMetadata());
         }
         return prefix;
     }
@@ -167,14 +153,12 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         }
         if (atomizedUriItems.size() != 1) {
             throw new InvalidElementNameExpressionException(
-                    "Computed namespace constructor URI must evaluate to a single atomic value"
-            );
+                    "Computed namespace constructor URI must evaluate to a single atomic value");
         }
         Item uriItem = atomizedUriItems.get(0);
         if (!uriItem.isAtomic()) {
             throw new InvalidElementNameExpressionException(
-                    "Computed namespace constructor URI must evaluate to a single atomic value"
-            );
+                    "Computed namespace constructor URI must evaluate to a single atomic value");
         }
         return uriItem.getStringValue();
     }
@@ -184,20 +168,17 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         // following:"
         if (uri == null) {
             throw new InvalidComputedNamespaceConstructorException(
-                    "Computed namespace constructor URI cannot be null.",
-                    getMetadata()
-            );
+                    "Computed namespace constructor URI cannot be null.", getMetadata());
         }
         // Spec: "Bind any prefix (including the empty prefix) to a zero-length namespace URI."
         if (uri.isEmpty()) {
             throw new InvalidComputedNamespaceConstructorException(
                     "Computed namespace constructor cannot bind a prefix to a zero-length namespace URI.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         // Spec: "Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace."
-        NamespaceBindingUtils.ReservedNamespaceBindingError error = NamespaceBindingUtils
-            .getReservedNamespaceBindingError(prefix, uri);
+        NamespaceBindingUtils.ReservedNamespaceBindingError error =
+                NamespaceBindingUtils.getReservedNamespaceBindingError(prefix, uri);
         if (error == null) {
             return;
         }
@@ -205,23 +186,18 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
             case XML_PREFIX_WRONG_URI:
                 throw new InvalidComputedNamespaceConstructorException(
                         "Computed namespace constructor cannot bind the prefix xml to a non-XML namespace URI.",
-                        getMetadata()
-                );
+                        getMetadata());
             case XMLNS_PREFIX:
                 throw new InvalidComputedNamespaceConstructorException(
-                        "Computed namespace constructor cannot bind the prefix xmlns.",
-                        getMetadata()
-                );
+                        "Computed namespace constructor cannot bind the prefix xmlns.", getMetadata());
             case NON_XML_PREFIX_XML_URI:
                 throw new InvalidComputedNamespaceConstructorException(
                         "Computed namespace constructor cannot bind a non-xml prefix to the XML namespace URI.",
-                        getMetadata()
-                );
+                        getMetadata());
             case XMLNS_URI:
                 throw new InvalidComputedNamespaceConstructorException(
                         "Computed namespace constructor cannot bind any prefix to the xmlns namespace URI.",
-                        getMetadata()
-                );
+                        getMetadata());
             default:
                 return;
         }

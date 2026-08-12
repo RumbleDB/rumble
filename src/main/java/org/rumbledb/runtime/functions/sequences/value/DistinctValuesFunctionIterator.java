@@ -20,48 +20,41 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.AtomicValueComparisonKey;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class DistinctValuesFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item>,
-            NativeQueryRuntimePlan {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan sequenceIterator;
 
-    public DistinctValuesFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public DistinctValuesFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.sequenceIterator = arguments.get(0);
     }
@@ -72,14 +65,13 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
                 this.sequenceIterator,
                 this.getChildren().size() == 2 ? this.getChild(1) : null,
                 context,
-                getMetadata()
-        );
+                getMetadata());
     }
 
     private String resolveCollation(DynamicContext context) {
         String explicitCollation = this.getChildren().size() == 2
-            ? this.getChild(1).materializeFirstOrNull(context).getStringValue()
-            : null;
+                ? this.getChild(1).materializeFirstOrNull(context).getStringValue()
+                : null;
         String collation = CollationSupport.resolveCollation(explicitCollation, getRuntimeStaticContext());
         CollationSupport.checkCollationSupported(collation, getMetadata());
         return collation;
@@ -89,11 +81,10 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         String collation = resolveCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        return childRDD.map(
-            item -> new AtomicValueComparisonKey(item, collation, this.getRuntimeStaticContext().getMetadata())
-        )
-            .distinct()
-            .map(AtomicValueComparisonKey::getItem);
+        return childRDD.map(item -> new AtomicValueComparisonKey(
+                        item, collation, this.getRuntimeStaticContext().getMetadata()))
+                .distinct()
+                .map(AtomicValueComparisonKey::getItem);
     }
 
     @Override
@@ -102,32 +93,19 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
         ItemType itemType = getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(getConfiguration())) {
             itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                rdd,
-                getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
+                    rdd, getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
         }
         return ValidateTypeIterator.convertRDDToValidDataFrame(
-            rdd,
-            itemType,
-            dynamicContext,
-            true,
-            getRuntimeStaticContext()
-        );
+                rdd, itemType, dynamicContext, true, getRuntimeStaticContext());
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext sequenceQuery = NativeQueryRuntimePlan.generate(
-            this.sequenceIterator,
-            nativeClauseContext
-        );
+        NativeClauseContext sequenceQuery = NativeQueryRuntimePlan.generate(this.sequenceIterator, nativeClauseContext);
         if (sequenceQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "DISTINCT( "
-            + sequenceQuery.getResultingQuery()
-            + " )";
+        String resultingQuery = "DISTINCT( " + sequenceQuery.getResultingQuery() + " )";
         return new NativeClauseContext(sequenceQuery, resultingQuery, sequenceQuery.getResultingType());
     }
 
@@ -146,8 +124,7 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
                 ItemRuntimePlan sequencePlan,
                 ItemRuntimePlan collationPlan,
                 DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                ExceptionMetadata metadata) {
             super(metadata);
             this.sequencePlan = sequencePlan;
             this.collationPlan = collationPlan;
@@ -158,12 +135,10 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
         @Override
         protected void openLocal() {
             String explicitCollation = this.collationPlan == null
-                ? null
-                : this.collationPlan.materializeFirstOrNull(this.context).getStringValue();
-            this.activeCollation = CollationSupport.resolveCollation(
-                explicitCollation,
-                this.sequencePlan.getRuntimeStaticContext()
-            );
+                    ? null
+                    : this.collationPlan.materializeFirstOrNull(this.context).getStringValue();
+            this.activeCollation =
+                    CollationSupport.resolveCollation(explicitCollation, this.sequencePlan.getRuntimeStaticContext());
             CollationSupport.checkCollationSupported(this.activeCollation, this.metadata);
             this.sequenceCursor = this.sequencePlan.getCursor(this.context);
             advance();

@@ -20,7 +20,11 @@
 
 package org.rumbledb.runtime.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -33,38 +37,31 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Function;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Runtime iterator for computed attribute constructors.
- * 
+ *
  * @see org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression
  */
 public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Name staticAttributeName;
     private final DataFunctionIterator nameIterator;
     private final DataFunctionIterator contentExpression;
 
     /**
      * Constructor for static attribute name: attribute attributeName { value }
-     * 
+     *
      * @param staticAttributeName The static attribute name (expanded)
      * @param contentExpression The value iterator
      * @param staticContext The runtime static context
      */
     public ComputedAttributeConstructorRuntimeIterator(
-            Name staticAttributeName,
-            DataFunctionIterator contentExpression,
-            RuntimeStaticContext staticContext
-    ) {
+            Name staticAttributeName, DataFunctionIterator contentExpression, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(contentExpression), staticContext);
         this.staticAttributeName = staticAttributeName;
         this.nameIterator = null;
@@ -73,7 +70,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
 
     /**
      * Constructor for dynamic attribute name: attribute { nameExpression } { value }
-     * 
+     *
      * @param nameIterator The dynamic attribute name iterator (wrapped in AtomizationIterator)
      * @param contentExpression The value iterator
      * @param staticContext The runtime static context
@@ -81,12 +78,8 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
     public ComputedAttributeConstructorRuntimeIterator(
             DataFunctionIterator nameIterator,
             DataFunctionIterator contentExpression,
-            RuntimeStaticContext staticContext
-    ) {
-        super(
-            List.of(nameIterator, contentExpression),
-            staticContext
-        );
+            RuntimeStaticContext staticContext) {
+        super(List.of(nameIterator, contentExpression), staticContext);
         this.staticAttributeName = null;
         this.nameIterator = nameIterator;
         this.contentExpression = contentExpression;
@@ -98,7 +91,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
         Item attributeName;
         if (this.staticAttributeName != null) {
             attributeName = ItemFactory.getInstance()
-                .createQNameItem(NamespaceBindingUtils.normalizeComputedAttributeName(this.staticAttributeName));
+                    .createQNameItem(NamespaceBindingUtils.normalizeComputedAttributeName(this.staticAttributeName));
         } else {
             // Dynamic attribute name - evaluate the name expression
             // processing of the name expression according to
@@ -110,15 +103,13 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
-                        getMetadata()
-                );
+                        getMetadata());
             }
             Item atomizedNameItem = atomizedNameItems.get(0);
             if (!(atomizedNameItem.isAtomic())) {
                 throw new UnexpectedStaticTypeException(
                         "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
-                        getMetadata()
-                );
+                        getMetadata());
             }
             if (atomizedNameItem.isQName()) {
                 // 2. If the atomized value of the name expression is of type xs:QName:
@@ -127,9 +118,8 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
                 // b. The resulting expanded QName (including its prefix) is used as the node-name
                 // property of the constructed attribute node.
                 attributeName = ItemFactory.getInstance()
-                    .createQNameItem(
-                        NamespaceBindingUtils.normalizeComputedAttributeName(atomizedNameItem.getQNameValue())
-                    );
+                        .createQNameItem(
+                                NamespaceBindingUtils.normalizeComputedAttributeName(atomizedNameItem.getQNameValue()));
             } else if (atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic()) {
                 // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic,
                 // that value is converted to an expanded QName. If the string value contains a namespace
@@ -141,23 +131,18 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
                 String collapsed = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
                 try {
                     attributeName = ItemFactory.getInstance()
-                        .createQNameItem(
-                            NamespaceBindingUtils.normalizeComputedAttributeName(
-                                NamespaceBindingUtils.parseLexicalQNameForComputedAttribute(
-                                    collapsed,
-                                    NamespaceBindingUtils.namespaceResolver(this.staticContext),
-                                    getMetadata()
-                                )
-                            )
-                        );
+                            .createQNameItem(NamespaceBindingUtils.normalizeComputedAttributeName(
+                                    NamespaceBindingUtils.parseLexicalQNameForComputedAttribute(
+                                            collapsed,
+                                            NamespaceBindingUtils.namespaceResolver(this.staticContext),
+                                            getMetadata())));
                 } catch (InvalidLexicalValueException e) {
                     throw new InvalidElementNameExpressionException(e.getMessage(), getMetadata());
                 }
             } else {
                 throw new UnexpectedStaticTypeException(
                         "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
-                        getMetadata()
-                );
+                        getMetadata());
             }
         }
         NamespaceBindingUtils.validateConstructedAttributeName(attributeName.getQNameValue(), getMetadata());
@@ -199,11 +184,8 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
         // Note: this is a MAY, so we are not mandated to raise an error here
         // Create and return the attribute item
         // 4: The parent property of the attribute node is set to empty.
-        Item attributeItem = ItemFactory.getInstance()
-            .createXmlAttributeNode(
-                attributeName.getQNameValue(),
-                attributeValue
-            );
+        Item attributeItem =
+                ItemFactory.getInstance().createXmlAttributeNode(attributeName.getQNameValue(), attributeValue);
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             attributeItem.setXmlDocumentPosition(documentPath, 0);
@@ -211,10 +193,9 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
         return attributeItem;
     }
 
-
     private static boolean isXmlIdAttribute(Name attributeName) {
         return attributeName != null
-            && "id".equals(attributeName.getLocalName())
-            && Name.XML_NS.equals(attributeName.getNamespace());
+                && "id".equals(attributeName.getLocalName())
+                && Name.XML_NS.equals(attributeName.getNamespace());
     }
 }

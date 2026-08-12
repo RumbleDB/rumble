@@ -1,10 +1,10 @@
 package org.rumbledb.types;
 
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.util.Set;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing the generic 'item' item type
@@ -20,8 +20,6 @@ public class JsonItemType extends AbstractItemType {
     JsonItemType() {
         this.name = new Name(Name.JS_NS, "js", "json-item");
     }
-
-
 
     @Override
     public boolean hasName() {

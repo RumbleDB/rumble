@@ -19,19 +19,20 @@
  */
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Expression representing a direct element constructor.
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-element-constructor">XQuery 3.1, 3.9.1: Direct Element
  *      Constructors</a>
  */
@@ -53,7 +54,7 @@ public class DirElemConstructorExpression extends Expression {
 
     /**
      * Constructor for a direct element constructor.
-     * 
+     *
      * @param elementName Resolved expanded name of the element
      * @param content The content of the element
      * @param attributes The attributes of the element
@@ -65,8 +66,7 @@ public class DirElemConstructorExpression extends Expression {
             List<Expression> content,
             List<Expression> attributes,
             List<NamespaceDeclaration> namespaceDeclarations,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.elementName = elementName;
         this.content = content;
@@ -125,5 +125,4 @@ public class DirElemConstructorExpression extends Expression {
         }
         sb.append("</" + this.elementName + ">\n");
     }
-
 }

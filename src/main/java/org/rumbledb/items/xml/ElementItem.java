@@ -1,16 +1,5 @@
 package org.rumbledb.items.xml;
 
-import lombok.Setter;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.typing.CastIterator;
-import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,9 +8,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.w3c.dom.Node;
+
+import lombok.Setter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
 public class ElementItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private List<Item> children;
     private List<Item> attributes;
     private Map<String, String> namespaces;
@@ -29,6 +32,7 @@ public class ElementItem extends AbstractNodeItem {
     private String stringValue;
     private Item parent;
     private ItemType typeAnnotation;
+
     @Setter
     private boolean inheritNamespacesFromParent;
     // TODO: add base-uri, is-id, is-idrefs
@@ -54,11 +58,7 @@ public class ElementItem extends AbstractNodeItem {
     }
 
     public ElementItem(
-            Node elementNode,
-            List<Item> children,
-            List<Item> attributes,
-            Map<String, String> namespaceBindings
-    ) {
+            Node elementNode, List<Item> children, List<Item> attributes, Map<String, String> namespaceBindings) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode);
         this.stringValue = elementNode.getTextContent();
         this.children = children;
@@ -69,8 +69,7 @@ public class ElementItem extends AbstractNodeItem {
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
                 addOrReplaceNamespace(
-                    ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue())
-                );
+                        ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue()));
             }
         }
     }
@@ -133,8 +132,6 @@ public class ElementItem extends AbstractNodeItem {
             attribute.addParentToDescendants();
         });
     }
-
-
 
     @Override
     public boolean isNode() {
@@ -201,8 +198,7 @@ public class ElementItem extends AbstractNodeItem {
         }
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : this.namespaces.entrySet()) {
-            Item namespaceItem = ItemFactory.getInstance()
-                .createXmlNamespaceNode(entry.getKey(), entry.getValue());
+            Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue());
             namespaceItem.setParent(this);
             result.add(namespaceItem);
         }
@@ -217,7 +213,7 @@ public class ElementItem extends AbstractNodeItem {
          * Recursion would instantiate namespace node instances for each ancestor element, resulting in a higher memory
          * footprint.
          * A LinkedHashMap is used so that:
-         * 
+         *
          * <ul>
          * <li>Insertion order is preserved for stable iteration.</li>
          * <li>Later puts for the same prefix override earlier values.</li>
@@ -253,8 +249,7 @@ public class ElementItem extends AbstractNodeItem {
         // Step 3: Create NamespaceItem nodes from the final in-scope map.
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : inScope.entrySet()) {
-            Item namespaceItem = ItemFactory.getInstance()
-                .createXmlNamespaceNode(entry.getKey(), entry.getValue());
+            Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue());
             namespaceItem.setParent(this);
             result.add(namespaceItem);
         }
@@ -349,9 +344,7 @@ public class ElementItem extends AbstractNodeItem {
         if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
-        );
+        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName()));
     }
 
     /**
@@ -428,8 +421,8 @@ public class ElementItem extends AbstractNodeItem {
 
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {
         return name != null
-            && normalizeNamespaceComponent(name.getPrefix()).equals(normalizeNamespaceComponent(prefix))
-            && !normalizeNamespaceComponent(uri).equals(normalizeNamespaceComponent(name.getNamespace()));
+                && normalizeNamespaceComponent(name.getPrefix()).equals(normalizeNamespaceComponent(prefix))
+                && !normalizeNamespaceComponent(uri).equals(normalizeNamespaceComponent(name.getNamespace()));
     }
 
     private String normalizeNamespaceComponent(String value) {
@@ -445,24 +438,20 @@ public class ElementItem extends AbstractNodeItem {
         return candidate;
     }
 
-
     @Override
     public List<Item> atomizedValue() {
         if (this.typeAnnotation != null) {
             Item typedValue = CastIterator.castItemToType(
-                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+                    ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
+                    this.typeAnnotation,
+                    ExceptionMetadata.EMPTY_METADATA);
             return Collections.singletonList(typedValue);
         }
         // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
         // For element nodes, typed-value is based on the element's string value, which is the
         // concatenation of descendant text nodes in document order and therefore excludes comment
         // and processing-instruction content.
-        return Collections.singletonList(
-            ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue)
-        );
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
     @Override

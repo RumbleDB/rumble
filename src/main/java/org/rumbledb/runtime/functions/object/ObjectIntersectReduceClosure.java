@@ -27,22 +27,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.spark.api.java.function.Function2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 
 public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item> {
 
-
     @Serial
     private static final long serialVersionUID = 1L;
 
-
     @Override
     public Item call(Item v1, Item v2) throws Exception {
-        if (!v1.isObject())
-            return v2;
-        else if (!v2.isObject())
-            return v1;
+        if (!v1.isObject()) return v2;
+        else if (!v2.isObject()) return v1;
 
         LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
 
@@ -66,11 +63,11 @@ public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item>
                 // add the matching key's value to the list
                 Item value = v2.getItemByKey(key);
                 Item prevValue = keyValuePairs.get(key).get(0);
-                for (Item elem : value.getItemMembers())
-                    prevValue.appendItem(elem);
+                for (Item elem : value.getItemMembers()) prevValue.appendItem(elem);
             }
         }
 
         return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
     }
-};
+}
+;

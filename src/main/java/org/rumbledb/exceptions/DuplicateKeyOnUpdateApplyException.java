@@ -1,8 +1,8 @@
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class DuplicateKeyOnUpdateApplyException extends RumbleException {
 
@@ -11,11 +11,10 @@ public class DuplicateKeyOnUpdateApplyException extends RumbleException {
 
     public DuplicateKeyOnUpdateApplyException(String keyInfo, ExceptionMetadata metadata) {
         super(
-            "Dynamic Updating error; Duplicate keys inserted into target object during update application: "
-                + keyInfo
-                + ".",
-            ErrorCode.DuplicateKeyOnUpdateApplyErrorCode,
-            metadata
-        );
+                "Dynamic Updating error; Duplicate keys inserted into target object during update application: "
+                        + keyInfo
+                        + ".",
+                ErrorCode.DuplicateKeyOnUpdateApplyErrorCode,
+                metadata);
     }
 }

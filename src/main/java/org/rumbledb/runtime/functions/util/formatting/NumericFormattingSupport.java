@@ -9,17 +9,14 @@ import java.util.*;
  */
 public final class NumericFormattingSupport {
 
-    private NumericFormattingSupport() {
-    }
+    private NumericFormattingSupport() {}
 
     public static String toDecimalString(BigInteger value) {
         return value.bitLength() < 63 ? Long.toString(value.longValueExact()) : value.toString();
     }
 
     public static String applyGrouping(String digits, NumericPicture picture) {
-        Integer repeatingInterval = picture.isRepeatingGrouping()
-            ? picture.getRepeatingGroupingInterval()
-            : null;
+        Integer repeatingInterval = picture.isRepeatingGrouping() ? picture.getRepeatingGroupingInterval() : null;
         return applyGrouping(digits, picture.getGroupingPositions(), repeatingInterval, true);
     }
 
@@ -29,11 +26,7 @@ public final class NumericFormattingSupport {
      * fixed periodic interval instead of at the explicit positions.
      */
     public static String applyGrouping(
-            String digits,
-            List<GroupingPos> groupingPositions,
-            Integer repeatingInterval,
-            boolean groupFromRight
-    ) {
+            String digits, List<GroupingPos> groupingPositions, Integer repeatingInterval, boolean groupFromRight) {
         if (groupingPositions == null || groupingPositions.isEmpty()) {
             return digits;
         }

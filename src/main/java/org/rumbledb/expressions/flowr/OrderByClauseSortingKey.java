@@ -21,23 +21,23 @@
 package org.rumbledb.expressions.flowr;
 
 import lombok.Getter;
+
 import org.rumbledb.expressions.Expression;
 
 public class OrderByClauseSortingKey {
     @Getter
     private final Expression expression;
+
     @Getter
     private final boolean ascending;
+
     @Getter
     private final EMPTY_ORDER emptyOrder;
+
     private final String collationURI;
 
     public OrderByClauseSortingKey(
-            Expression expression,
-            boolean ascending,
-            String collationURI,
-            EMPTY_ORDER empty_order
-    ) {
+            Expression expression, boolean ascending, String collationURI, EMPTY_ORDER empty_order) {
         this.expression = expression;
         this.ascending = ascending;
         this.collationURI = collationURI;

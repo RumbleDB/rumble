@@ -1,6 +1,8 @@
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -8,19 +10,13 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class IRIToURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public IRIToURIFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public IRIToURIFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -33,12 +29,10 @@ public class IRIToURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         if (!(inputItem.isString() || inputItem.isAnyURI() || inputItem.isUntypedAtomic())) {
             throw new UnexpectedTypeException(
                     "fn:iri-to-uri expects a string, xs:anyURI, or xs:untypedAtomic argument [err:XPTY0004].",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return ItemFactory.getInstance().createStringItem(encodeIri(inputItem.getStringValue()));
     }
-
 
     private static String encodeIri(String value) {
         StringBuilder result = new StringBuilder(value.length());

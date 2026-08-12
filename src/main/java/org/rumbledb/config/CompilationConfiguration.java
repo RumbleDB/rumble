@@ -7,14 +7,12 @@
 
 package org.rumbledb.config;
 
-import org.rumbledb.resources.ResourceResolver;
-
 import java.util.Objects;
 
+import org.rumbledb.resources.ResourceResolver;
+
 /** Configuration and resource resolution services used during compilation. */
-public record CompilationConfiguration(
-        RumbleConfiguration runtimeConfiguration,
-        ResourceResolver resourceResolver) {
+public record CompilationConfiguration(RumbleConfiguration runtimeConfiguration, ResourceResolver resourceResolver) {
 
     public CompilationConfiguration {
         Objects.requireNonNull(runtimeConfiguration, "runtimeConfiguration must not be null");

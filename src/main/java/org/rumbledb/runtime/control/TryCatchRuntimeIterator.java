@@ -20,12 +20,6 @@
 
 package org.rumbledb.runtime.control;
 
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
@@ -35,36 +29,36 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.control.CatchPattern;
-
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 public class TryCatchRuntimeIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
-
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan tryExpression;
     private final Map<CatchPattern, ? extends ItemRuntimePlan> catchExpressions;
 
     public TryCatchRuntimeIterator(
             ItemRuntimePlan tryExpression,
             Map<CatchPattern, ? extends ItemRuntimePlan> catchExpressions,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.concat(Stream.of(tryExpression), catchExpressions.values().stream()).toList(),
-            staticContext
-        );
+                Stream.concat(Stream.of(tryExpression), catchExpressions.values().stream())
+                        .toList(),
+                staticContext);
         this.tryExpression = tryExpression;
         this.catchExpressions = catchExpressions;
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new IteratorLocalCursor<>(
-                () -> evaluate(context).iterator(),
-                getMetadata()
-        );
+        return new IteratorLocalCursor<>(() -> evaluate(context).iterator(), getMetadata());
     }
 
     private List<Item> evaluate(DynamicContext context) {
@@ -72,9 +66,7 @@ public class TryCatchRuntimeIterator extends ItemRuntimePlan implements LocalRun
             return this.tryExpression.materialize(context);
         } catch (Throwable throwable) {
             RumbleException exception = RumbleException.unnestException(throwable);
-            ItemRuntimePlan catchingExpression = findMatchingCatch(
-                exception
-            );
+            ItemRuntimePlan catchingExpression = findMatchingCatch(exception);
             if (catchingExpression == null) {
                 throw throwable;
             }

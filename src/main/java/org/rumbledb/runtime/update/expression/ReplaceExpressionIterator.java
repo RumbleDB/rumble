@@ -1,13 +1,12 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.SerializationUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -19,6 +18,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -27,6 +27,7 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan mainIterator;
     private final ItemRuntimePlan locatorIterator;
     private final ItemRuntimePlan replacerIterator;
@@ -35,12 +36,10 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
             ItemRuntimePlan mainIterator,
             ItemRuntimePlan locatorIterator,
             ItemRuntimePlan replacerIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Arrays.asList(mainIterator, locatorIterator, replacerIterator),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+                Arrays.asList(mainIterator, locatorIterator, replacerIterator),
+                staticContext.toBuilder().isUpdating(true).build());
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
@@ -59,8 +58,7 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
         } catch (NoItemException e) {
             throw new UpdateTargetIsEmptySeqException(
                     "Target of replace expression is empty",
-                    this.getRuntimeStaticContext().getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }
@@ -76,7 +74,7 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
                 copyContent.add((Item) SerializationUtils.clone(item));
             }
             content = ItemFactory.getInstance()
-                .createArrayItem(copyContent, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createArrayItem(copyContent, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
@@ -85,57 +83,42 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
             if (!locator.isString()) {
                 throw new CannotCastUpdateSelectorException(
                         "Replace expression selection cannot be cast to String type",
-                        this.getRuntimeStaticContext().getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
             if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target",
-                        this.getRuntimeStaticContext().getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
-                        this.getRuntimeStaticContext().getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
             up = factory.createReplaceInObjectPrimitive(
-                target,
-                locator,
-                content,
-                this.getRuntimeStaticContext().getMetadata()
-            );
+                    target, locator, content, this.getRuntimeStaticContext().getMetadata());
         } else if (target.isArray()) {
             if (!locator.isInt()) {
                 throw new CannotCastUpdateSelectorException(
                         "Replace expression selection cannot be cast to Int type",
-                        this.getRuntimeStaticContext().getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
             if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target",
-                        this.getRuntimeStaticContext().getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
-                        this.getRuntimeStaticContext().getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
             up = factory.createReplaceInArrayPrimitive(
-                target,
-                locator,
-                content,
-                this.getRuntimeStaticContext().getMetadata()
-            );
+                    target, locator, content, this.getRuntimeStaticContext().getMetadata());
         } else {
             throw new InvalidUpdateTargetException(
                     "Replace expression target must be a single array or object",
-                    this.getRuntimeStaticContext().getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

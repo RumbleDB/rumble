@@ -20,15 +20,15 @@
 
 package org.rumbledb.expressions.arithmetic;
 
+import java.util.Arrays;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class AdditiveExpression extends Expression {
@@ -37,11 +37,7 @@ public class AdditiveExpression extends Expression {
     private final boolean isMinus;
 
     public AdditiveExpression(
-            Expression leftExpression,
-            Expression rightExpression,
-            boolean isMinus,
-            ExceptionMetadata metadata
-    ) {
+            Expression leftExpression, Expression rightExpression, boolean isMinus, ExceptionMetadata metadata) {
         super(metadata);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
@@ -85,10 +81,8 @@ public class AdditiveExpression extends Expression {
         sb.append(")\n");
 
         indentIt(sb, indent);
-        if (this.isMinus)
-            sb.append("-\n");
-        else
-            sb.append("+\n");
+        if (this.isMinus) sb.append("-\n");
+        else sb.append("+\n");
 
         indentIt(sb, indent);
         sb.append("(\n");
@@ -98,5 +92,4 @@ public class AdditiveExpression extends Expression {
         indentIt(sb, indent);
         sb.append(")\n");
     }
-
 }

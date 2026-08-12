@@ -20,7 +20,6 @@
 
 package org.rumbledb.items.xml;
 
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
@@ -36,12 +35,12 @@ import lombok.EqualsAndHashCode;
 public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private String path;
     private int docPosition;
 
     // needed for kryo
-    public XMLDocumentPosition() {
-    }
+    public XMLDocumentPosition() {}
 
     public XMLDocumentPosition(String path, int docPosition) {
         this.path = path;
@@ -51,8 +50,6 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
     public static String generateConstructedTreePath() {
         return "constructed:" + UUID.randomUUID();
     }
-
-
 
     public String getPath() {
         return this.path;
@@ -70,5 +67,4 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
         }
         return pathResult;
     }
-
 }

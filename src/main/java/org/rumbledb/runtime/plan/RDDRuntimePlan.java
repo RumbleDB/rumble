@@ -8,6 +8,7 @@
 package org.rumbledb.runtime.plan;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.context.DynamicContext;
 
 /**

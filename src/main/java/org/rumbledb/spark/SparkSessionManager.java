@@ -20,7 +20,6 @@
 
 package org.rumbledb.spark;
 
-import lombok.extern.log4j.Log4j2;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -30,6 +29,9 @@ import org.apache.spark.sql.types.DoubleType;
 import org.apache.spark.sql.types.FloatType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.LoggingConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -66,14 +68,12 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
-import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.flwor.tuple.FlworKey;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
-
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
 
 @Log4j2
 public class SparkSessionManager {
@@ -109,8 +109,7 @@ public class SparkSessionManager {
     public static final String tableLocationColumnName = "__tableLocation";
     public static final String rowOrderColumnName = "__rowOrder";
 
-    private SparkSessionManager() {
-    }
+    private SparkSessionManager() {}
 
     private SparkSessionManager(SparkConf conf) {
         this.configuration = conf;
@@ -158,27 +157,23 @@ public class SparkSessionManager {
         try {
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", DEFAULT_APP_NAME).equals(DEFAULT_APP_NAME)) {
-                log.warn(
-                    "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
-                        + APP_NAME
-                );
+                log.warn("No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                        + APP_NAME);
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/test.myCollection");
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
             this.configuration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
             this.configuration.set(
-                "spark.sql.catalog.spark_catalog",
-                "org.apache.spark.sql.delta.catalog.DeltaCatalog"
-            );
+                    "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
-            this.configuration.set("spark.log.level", LoggingConfiguration.getSparkLogLevel().name());
+            this.configuration.set(
+                    "spark.log.level", LoggingConfiguration.getSparkLogLevel().name());
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(
-                    "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
-            );
+                    "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured.");
         }
     }
 
@@ -195,7 +190,10 @@ public class SparkSessionManager {
         if (this.session == null) {
             initializeKryoSerialization();
 
-            this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
+            this.session = SparkSession.builder()
+                    .config(this.configuration)
+                    .enableHiveSupport()
+                    .getOrCreate();
             LoggingConfiguration.apply();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
@@ -262,7 +260,6 @@ public class SparkSessionManager {
         }
     }
 
-
     public void initializeConfigurationAndSession(SparkConf conf, boolean setAppName) {
         if (setAppName) {
             conf.setAppName(APP_NAME);
@@ -279,9 +276,9 @@ public class SparkSessionManager {
             initializeSession();
         }
         if (this.javaSparkContext == null) {
-            this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
+            this.javaSparkContext =
+                    JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
         return this.javaSparkContext;
     }
-
 }

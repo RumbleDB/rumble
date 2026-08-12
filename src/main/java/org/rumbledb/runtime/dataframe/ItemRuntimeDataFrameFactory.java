@@ -7,18 +7,19 @@
 
 package org.rumbledb.runtime.dataframe;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import lombok.extern.log4j.Log4j2;
-
 import java.io.Serial;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
@@ -34,22 +35,15 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
 
     public static final ItemRuntimeDataFrameFactory INSTANCE = new ItemRuntimeDataFrameFactory();
 
-    private ItemRuntimeDataFrameFactory() {
-    }
+    private ItemRuntimeDataFrameFactory() {}
 
     @Override
     public HomogeneousItemDataFrame fromList(
-            List<Item> items,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+            List<Item> items, DynamicContext context, RuntimeStaticContext staticContext) {
         ItemType itemType = staticContext.getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
             itemType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items,
-                staticContext.getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
+                    items, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
             if (staticContext.getConfiguration().analysis().printInferredTypes()) {
                 log.debug("Inferred DataFrame type:\n" + itemType);
             }
@@ -59,17 +53,11 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
 
     @Override
     public HomogeneousItemDataFrame fromRDD(
-            JavaRDD<Item> rdd,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+            JavaRDD<Item> rdd, DynamicContext context, RuntimeStaticContext staticContext) {
         ItemType itemType = staticContext.getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
             itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                rdd,
-                staticContext.getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
+                    rdd, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
         }
         return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
     }
@@ -81,7 +69,6 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
         }
         throw new OurBadException(
                 "Expected an item plan to produce a homogeneous item DataFrame.",
-                plan.getRuntimeStaticContext().getMetadata()
-        );
+                plan.getRuntimeStaticContext().getMetadata());
     }
 }

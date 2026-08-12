@@ -20,31 +20,26 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.MatchesEmptyStringException;
-import org.rumbledb.exceptions.InvalidReplacementStringException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidReplacementStringException;
+import org.rumbledb.exceptions.MatchesEmptyStringException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ReplaceFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ReplaceFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -67,9 +62,7 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
         if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
             throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
-                    getMetadata()
-            );
+                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string", getMetadata());
         }
 
         Item replacementStringItem = this.getChild(2).materializeFirstOrNull(context);
@@ -78,9 +71,7 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             replacement = Matcher.quoteReplacement(replacement);
         } else if (!(checkReplacementStringForValidity(replacement))) {
             throw new InvalidReplacementStringException(
-                    "'" + replacement + "' contains a disallowed sequence of characters",
-                    getMetadata()
-            );
+                    "'" + replacement + "' contains a disallowed sequence of characters", getMetadata());
         }
 
         String input;
@@ -92,9 +83,7 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
         Matcher m = compiledRegex.getPattern().matcher(input);
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
-
     }
-
 
     private static boolean checkReplacementStringForValidity(String repl) {
         int i = 0;
@@ -110,7 +99,8 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 }
                 i += 2;
             } else if (repl.charAt(i) == '$') { // '$' must always be followed by a digit
-                if ((i + 1 >= repl.length()) || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
+                if ((i + 1 >= repl.length())
+                        || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
                     return false;
                 }
                 i += 2;

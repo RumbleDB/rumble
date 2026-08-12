@@ -20,19 +20,18 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Getter
 public class OrderByClause extends Clause {
-
 
     private final List<OrderByClauseSortingKey> sortingKeys;
     private final boolean isStable;
@@ -61,21 +60,16 @@ public class OrderByClause extends Clause {
     @Override
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
-        if (this.isStable)
-            sb.append("stable ");
+        if (this.isStable) sb.append("stable ");
         sb.append("order by ");
         int i = 0;
         for (OrderByClauseSortingKey orderby : this.sortingKeys) {
             orderby.getExpression().serializeToJSONiq(sb, 0);
-            if (orderby.isAscending())
-                sb.append(" ascending");
-            else
-                sb.append(" descending");
+            if (orderby.isAscending()) sb.append(" ascending");
+            else sb.append(" descending");
             if (orderby.getEmptyOrder() != OrderByClauseSortingKey.EMPTY_ORDER.NONE) {
-                if (orderby.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.LEAST)
-                    sb.append(" empty least");
-                else
-                    sb.append(" empty greatest");
+                if (orderby.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.LEAST) sb.append(" empty least");
+                else sb.append(" empty greatest");
             }
             if (orderby.getUri() != null && !orderby.getUri().equals("")) {
                 sb.append(" collation \"" + orderby.getUri() + "\"");
@@ -93,5 +87,4 @@ public class OrderByClause extends Clause {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitOrderByClause(this, argument);
     }
-
 }

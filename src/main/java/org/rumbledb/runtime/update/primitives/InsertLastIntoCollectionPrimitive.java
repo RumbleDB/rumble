@@ -1,11 +1,9 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.spark.SparkSessionManager;
+import org.apache.spark.sql.expressions.Window;
 
 import static org.apache.spark.sql.functions.expr;
 import static org.apache.spark.sql.functions.lit;
@@ -13,15 +11,14 @@ import static org.apache.spark.sql.functions.max;
 import static org.apache.spark.sql.functions.monotonically_increasing_id;
 import static org.apache.spark.sql.functions.row_number;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.spark.SparkSessionManager;
+
 public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
     private final Collection collection;
     private Dataset<Row> contents;
 
-    public InsertLastIntoCollectionPrimitive(
-            Collection collection,
-            Dataset<Row> contents,
-            ExceptionMetadata metadata
-    ) {
+    public InsertLastIntoCollectionPrimitive(Collection collection, Dataset<Row> contents, ExceptionMetadata metadata) {
         this.contents = contents;
         this.collection = collection;
     }
@@ -63,13 +60,11 @@ public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
         final String tmpRowNumOrder = SparkSessionManager.tempRowNumOrderColumnName;
 
         // Get highest current row id to seed new rows and maximum row order to calculate base
-        Row aggRow = session
-            .table(this.collection.getPhysicalName())
-            .agg(
-                max(SparkSessionManager.rowIdColumnName).alias(tmpMaxRowId),
-                max(SparkSessionManager.rowOrderColumnName).alias(tmpMaxRowOrder)
-            )
-            .first();
+        Row aggRow = session.table(this.collection.getPhysicalName())
+                .agg(
+                        max(SparkSessionManager.rowIdColumnName).alias(tmpMaxRowId),
+                        max(SparkSessionManager.rowOrderColumnName).alias(tmpMaxRowOrder))
+                .first();
         Long rowIDStart = aggRow.getAs(tmpMaxRowId);
         rowIDStart = rowIDStart == null ? 0L : rowIDStart;
 
@@ -85,28 +80,25 @@ public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
 
         // Adding metadata columns
         Dataset<Row> rowNumDF = this.contents.withColumn(tmpRowNum, monotonically_increasing_id());
-        Dataset<Row> rowNumDF2 = rowNumDF.withColumn(
-            tmpRowNumSeq,
-            row_number().over(Window.orderBy(tmpRowNum))
-        ).drop(tmpRowNum);
-        Dataset<Row> rowIdDF = rowNumDF2.withColumn(
-            SparkSessionManager.rowIdColumnName,
-            expr(String.format("cast(%d as long) + %s", rowIDStart, tmpRowNumSeq))
-        ).drop(tmpRowNumSeq);
+        Dataset<Row> rowNumDF2 = rowNumDF.withColumn(tmpRowNumSeq, row_number().over(Window.orderBy(tmpRowNum)))
+                .drop(tmpRowNum);
+        Dataset<Row> rowIdDF = rowNumDF2
+                .withColumn(
+                        SparkSessionManager.rowIdColumnName,
+                        expr(String.format("cast(%d as long) + %s", rowIDStart, tmpRowNumSeq)))
+                .drop(tmpRowNumSeq);
 
-        Dataset<Row> rowNumDF3 = rowIdDF.withColumn(
-            tmpRowNumOrder,
-            row_number().over(Window.orderBy(lit(1)))
-        );
-        Dataset<Row> rowNumOrderDF = rowNumDF3.withColumn(
-            SparkSessionManager.rowOrderColumnName,
-            expr(String.format("%f + (%s - 1) * %f", rowOrderBase, tmpRowNumOrder, interval)).cast("double")
-        ).drop(tmpRowNumOrder);
+        Dataset<Row> rowNumDF3 = rowIdDF.withColumn(tmpRowNumOrder, row_number().over(Window.orderBy(lit(1))));
+        Dataset<Row> rowNumOrderDF = rowNumDF3
+                .withColumn(
+                        SparkSessionManager.rowOrderColumnName,
+                        expr(String.format("%f + (%s - 1) * %f", rowOrderBase, tmpRowNumOrder, interval))
+                                .cast("double"))
+                .drop(tmpRowNumOrder);
 
         this.contents = rowNumOrderDF;
 
         // Insert the new rows into the collection
         this.collection.insertUnordered(this.contents);
     }
-
 }

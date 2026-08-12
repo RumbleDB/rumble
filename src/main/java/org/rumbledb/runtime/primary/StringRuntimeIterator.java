@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,15 +29,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.List;
 
 public class StringRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Item item;
 
     public StringRuntimeIterator(String value, RuntimeStaticContext staticContext) {
@@ -53,9 +53,6 @@ public class StringRuntimeIterator extends AbstractAtMostOneItemRuntimePlan impl
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
-                nativeClauseContext,
-                '"' + this.item.getStringValue() + '"',
-                SequenceType.createSequenceType("string")
-        );
+                nativeClauseContext, '"' + this.item.getStringValue() + '"', SequenceType.createSequenceType("string"));
     }
 }

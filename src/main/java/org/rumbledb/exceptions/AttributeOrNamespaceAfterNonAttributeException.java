@@ -20,9 +20,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * Exception for XQTY0024: It is a type error if the content sequence in an element constructor
@@ -39,5 +39,3 @@ public class AttributeOrNamespaceAfterNonAttributeException extends RumbleExcept
         super(message, ErrorCode.AttributeOrNamespaceAfterNonAttributeErrorCode);
     }
 }
-
-

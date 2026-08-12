@@ -1,11 +1,12 @@
 package org.rumbledb.bindings;
 
-import lombok.NoArgsConstructor;
-import lombok.Value;
+import java.util.Objects;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import java.util.Objects;
+import lombok.NoArgsConstructor;
+import lombok.Value;
 
 @Value
 @NoArgsConstructor(force = true)

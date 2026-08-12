@@ -20,40 +20,35 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
-import lombok.NonNull;
-import java.io.Serial;
-import java.util.List;
-
-public class RemoveFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
-
+public class RemoveFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan positionIterator;
     private int removePosition; // position to remove the item
 
-
-    public RemoveFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public RemoveFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
@@ -74,8 +69,6 @@ public class RemoveFunctionIterator extends ItemRuntimePlan
         return filteredRDD.map((item) -> item._1);
     }
 
-
-
     private void init(DynamicContext context) {
         Item positionItem = this.positionIterator.materializeFirstOrNull(context);
         this.removePosition = positionItem.getIntValue();
@@ -95,8 +88,7 @@ public class RemoveFunctionIterator extends ItemRuntimePlan
                 @NonNull ItemRuntimePlan sequencePlan,
                 @NonNull ItemRuntimePlan positionPlan,
                 @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
+                @NonNull ExceptionMetadata metadata) {
             super(metadata);
             this.sequencePlan = sequencePlan;
             this.positionPlan = positionPlan;
@@ -140,10 +132,7 @@ public class RemoveFunctionIterator extends ItemRuntimePlan
 
         private RuntimeException exhausted() {
             return new IteratorFlowException(
-                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "remove function",
-                    this.metadata
-            );
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "remove function", this.metadata);
         }
-
     }
 }

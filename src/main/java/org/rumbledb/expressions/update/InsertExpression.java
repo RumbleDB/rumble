@@ -1,29 +1,31 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class InsertExpression extends Expression {
 
     @Getter
     private final Expression mainExpression;
+
     @Getter
     private final Expression toInsertExpression;
+
     private final Expression positionExpression;
 
     public InsertExpression(
             Expression mainExpression,
             Expression toInsertExpression,
             Expression positionExpression,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.mainExpression = mainExpression;
         this.toInsertExpression = toInsertExpression;
@@ -44,8 +46,8 @@ public class InsertExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return this.positionExpression == null
-            ? Arrays.asList(this.mainExpression, this.toInsertExpression)
-            : Arrays.asList(this.mainExpression, this.toInsertExpression, this.positionExpression);
+                ? Arrays.asList(this.mainExpression, this.toInsertExpression)
+                : Arrays.asList(this.mainExpression, this.toInsertExpression, this.positionExpression);
     }
 
     @Override

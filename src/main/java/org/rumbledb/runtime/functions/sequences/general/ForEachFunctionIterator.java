@@ -20,9 +20,11 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -34,26 +36,15 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
-public class ForEachFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+public class ForEachFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ForEachLocalCursor(
-                this.sequenceIterator,
-                this.actionIterator,
-                context,
-                getRuntimeStaticContext()
-        );
+        return new ForEachLocalCursor(this.sequenceIterator, this.actionIterator, context, getRuntimeStaticContext());
     }
 
     @Serial
@@ -62,10 +53,7 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan actionIterator;
 
-    public ForEachFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ForEachFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("fn:for-each must have exactly two arguments.");
@@ -75,53 +63,41 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
     }
 
     private static Item resolveAction(
-            ItemRuntimePlan actionIterator,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan actionIterator, DynamicContext context, RuntimeStaticContext staticContext) {
         List<Item> functionItems = actionIterator.materialize(context);
         if (functionItems.size() != 1) {
             throw new UnexpectedTypeException(
                     "The second argument of fn:for-each must be a single function item [err:XPTY0004].",
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
         Item function = functionItems.get(0);
         if (!acceptsSingleArgument(function)) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:for-each must accept exactly one argument [err:XPTY0004].",
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
 
         return function;
     }
 
     private static List<Item> invokeAction(
-            Item function,
-            Item item,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+            Item function, Item item, DynamicContext context, RuntimeStaticContext staticContext) {
         RuntimeStaticContext argumentContext = RuntimeStaticContext.builder()
-            .configuration(staticContext.getConfiguration())
-            .staticType(SequenceType.createSequenceType("item"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(staticContext.getMetadata())
-            .build();
+                .configuration(staticContext.getConfiguration())
+                .staticType(SequenceType.createSequenceType("item"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(staticContext.getMetadata())
+                .build();
         List<ItemRuntimePlan> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(new ConstantRuntimeIterator(item, argumentContext));
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
-            .configuration(staticContext.getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(staticContext.getMetadata())
-            .build();
+                .configuration(staticContext.getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(staticContext.getMetadata())
+                .build();
         ItemRuntimePlan callback = new DynamicFunctionCallIterator(
-                new ConstantRuntimeIterator(function, functionItemContext),
-                callbackArguments,
-                functionItemContext
-        );
+                new ConstantRuntimeIterator(function, functionItemContext), callbackArguments, functionItemContext);
         return callback.materialize(context);
     }
 
@@ -146,8 +122,7 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
                 ItemRuntimePlan sequencePlan,
                 ItemRuntimePlan actionPlan,
                 DynamicContext context,
-                RuntimeStaticContext staticContext
-        ) {
+                RuntimeStaticContext staticContext) {
             super(staticContext.getMetadata());
             this.sequencePlan = sequencePlan;
             this.actionPlan = actionPlan;
@@ -166,11 +141,8 @@ public class ForEachFunctionIterator extends ItemRuntimePlan
         protected boolean hasNextLocal() {
             while (!this.currentResults.hasNext() && this.sequenceCursor.hasNext()) {
                 this.currentResults = invokeAction(
-                    this.action,
-                    this.sequenceCursor.next(),
-                    this.context,
-                    this.staticContext
-                ).iterator();
+                                this.action, this.sequenceCursor.next(), this.context, this.staticContext)
+                        .iterator();
             }
             return this.currentResults.hasNext();
         }

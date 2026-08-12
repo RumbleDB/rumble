@@ -1,5 +1,8 @@
 package org.rumbledb.compiler;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.Name;
@@ -13,9 +16,6 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.types.SequenceType;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 /**
  * Rewrites direct partial application of builtins, e.g. {@code fn:max(0, ?)},
  * into
@@ -27,15 +27,13 @@ import java.util.stream.Collectors;
 public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
     private static String getQueryLanguage(Expression expression) {
-        return expression.getStaticContext() == null ? null : expression.getStaticContext().getQueryLanguage();
+        return expression.getStaticContext() == null
+                ? null
+                : expression.getStaticContext().getQueryLanguage();
     }
 
     private InlineFunctionExpression rewriteBuiltinPartialApplication(
-            Name functionName,
-            BuiltinFunction builtin,
-            List<Expression> arguments,
-            Expression sourceExpression
-    ) {
+            Name functionName, BuiltinFunction builtin, List<Expression> arguments, Expression sourceExpression) {
         List<SequenceType> parameterTypes = builtin.getSignature().getParameterTypes();
         Map<Name, SequenceType> params = new LinkedHashMap<>();
 
@@ -53,40 +51,29 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
             Name parameterName = Name.createVariableInNoNamespace(String.format("param%s", i));
             params.put(parameterName, parameterTypes.get(i));
-            VariableReferenceExpression variableReference = new VariableReferenceExpression(
-                    parameterName,
-                    sourceExpression.getMetadata()
-            );
+            VariableReferenceExpression variableReference =
+                    new VariableReferenceExpression(parameterName, sourceExpression.getMetadata());
             variableReference.setActualType(parameterTypes.get(i));
             fullArguments.add(variableReference);
         }
 
-        FunctionCallExpression bodyCall = new FunctionCallExpression(
-                functionName,
-                fullArguments,
-                sourceExpression.getMetadata()
-        );
-        StatementsAndOptionalExpr body = new StatementsAndOptionalExpr(
-                Collections.emptyList(),
-                bodyCall,
-                sourceExpression.getMetadata()
-        );
+        FunctionCallExpression bodyCall =
+                new FunctionCallExpression(functionName, fullArguments, sourceExpression.getMetadata());
+        StatementsAndOptionalExpr body =
+                new StatementsAndOptionalExpr(Collections.emptyList(), bodyCall, sourceExpression.getMetadata());
         return new InlineFunctionExpression(
                 Collections.emptyList(),
                 null,
                 params,
                 builtin.getSignature().getReturnType(),
                 body,
-                sourceExpression.getMetadata()
-        );
+                sourceExpression.getMetadata());
     }
 
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
         BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
-            expression.getFunctionIdentifier(),
-            getQueryLanguage(expression)
-        );
+                expression.getFunctionIdentifier(), getQueryLanguage(expression));
 
         if (!expression.isPartialApplication() || builtin == null) {
             // In case of non-partial application or non-builtin function, we still need to keep descending Because a
@@ -95,19 +82,17 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
             return super.visitFunctionCall(expression, argument);
         }
 
-        List<Expression> arguments = expression.getArguments()
-            .stream()
-            .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
-            .collect(Collectors.toList());
+        List<Expression> arguments = expression.getArguments().stream()
+                .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+                .collect(Collectors.toList());
         return rewriteBuiltinPartialApplication(expression.getFunctionName(), builtin, arguments, expression);
     }
 
     @Override
     public Node visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, Node argument) {
-        List<Expression> arguments = expression.getArguments()
-            .stream()
-            .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
-            .collect(Collectors.toList());
+        List<Expression> arguments = expression.getArguments().stream()
+                .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+                .collect(Collectors.toList());
         Expression rewrittenMainExpression = (Expression) visit(expression.getMainExpression(), argument);
 
         if (!(rewrittenMainExpression instanceof NamedFunctionReferenceExpression namedFunctionReference)) {
@@ -115,19 +100,13 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
         }
 
         BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
-            namedFunctionReference.getIdentifier(),
-            getQueryLanguage(namedFunctionReference)
-        );
+                namedFunctionReference.getIdentifier(), getQueryLanguage(namedFunctionReference));
         boolean isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
         if (!isPartialApplication || builtin == null) {
             return super.visitDynamicFunctionCallExpression(expression, argument);
         }
 
         return rewriteBuiltinPartialApplication(
-            namedFunctionReference.getIdentifier().getName(),
-            builtin,
-            arguments,
-            expression
-        );
+                namedFunctionReference.getIdentifier().getName(), builtin, arguments, expression);
     }
 }

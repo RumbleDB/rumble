@@ -20,13 +20,13 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -35,19 +35,16 @@ import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -67,8 +64,7 @@ public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
                 ItemRuntimePlan inputPlan,
                 ItemRuntimePlan keysPlan,
                 DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                ExceptionMetadata metadata) {
             super(metadata);
             this.inputPlan = inputPlan;
             this.keysPlan = keysPlan;
@@ -107,8 +103,7 @@ public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
             if (removalKeys.isEmpty()) {
                 throw new InvalidSelectorException(
                         "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
-                        this.metadata
-                );
+                        this.metadata);
             }
             List<String> result = new ArrayList<>();
             for (Item removalKeyItem : removalKeys) {
@@ -135,12 +130,10 @@ public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private ItemRuntimePlan iterator;
 
-    public ObjectRemoveKeysFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ObjectRemoveKeysFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
@@ -150,8 +143,7 @@ public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         List<String> result = new ArrayList<>();
         for (Item removalKeyItem : removalKeys) {
@@ -168,23 +160,18 @@ public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         List<String> removalKeys = getRemovalKeys(context);
-        FlatMapFunction<Item, Item> transformation = new ObjectRemoveKeysClosure(
-                removalKeys,
-                getMetadata()
-        );
+        FlatMapFunction<Item, Item> transformation = new ObjectRemoveKeysClosure(removalKeys, getMetadata());
         return childRDD.flatMap(transformation);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame dataFrame = ItemRuntimeDataFrameFactory.INSTANCE
-            .fromPlan(this.iterator, context);
+        HomogeneousItemDataFrame dataFrame = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
         List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         String[] columnsToDrop = new String[columnsToDropItems.size()];
         int i = 0;

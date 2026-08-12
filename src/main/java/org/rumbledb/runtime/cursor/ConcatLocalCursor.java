@@ -39,10 +39,7 @@ public final class ConcatLocalCursor<T> extends AbstractLocalCursor<T> {
     private boolean hasNext;
 
     public ConcatLocalCursor(
-            List<? extends RuntimePlan<T>> childPlans,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            List<? extends RuntimePlan<T>> childPlans, DynamicContext context, ExceptionMetadata metadata) {
         super(metadata);
         this.childPlans = List.copyOf(Objects.requireNonNull(childPlans, "child plans cannot be null"));
         this.context = Objects.requireNonNull(context, "dynamic context cannot be null");

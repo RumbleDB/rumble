@@ -17,20 +17,18 @@
 
 package iq.base;
 
+import java.util.List;
+
 import org.rumbledb.api.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.items.ItemFactory;
 
-import java.util.List;
-
 public final class TestConfigurations {
 
-    private TestConfigurations() {
-    }
+    private TestConfigurations() {}
 
     public static RumbleConfiguration.RumbleConfigurationBuilder defaultConfigurationBuilder() {
-        return RumbleConfiguration.builder()
-            .configureRuntime(r -> r.materializationCap(200));
+        return RumbleConfiguration.builder().configureRuntime(r -> r.materializationCap(200));
     }
 
     public static RumbleConfiguration defaultConfiguration() {
@@ -40,23 +38,16 @@ public final class TestConfigurations {
     public static ExternalBindings defaultExternalBindings() {
         ExternalBindings externalBindings = ExternalBindings.empty();
         externalBindings.bindItem(
-            "externalStringItem",
-            ItemFactory.getInstance().createStringItem("this is a string")
-        );
+                "externalStringItem", ItemFactory.getInstance().createStringItem("this is a string"));
         externalBindings.bindItems(
-            "externalIntegerItems",
-            List.of(
-                ItemFactory.getInstance().createIntItem(1),
-                ItemFactory.getInstance().createIntItem(2),
-                ItemFactory.getInstance().createIntItem(3),
-                ItemFactory.getInstance().createIntItem(4),
-                ItemFactory.getInstance().createIntItem(5)
-            )
-        );
-        externalBindings.bindLiteral(
-            "externalUnparsedString",
-            "unparsed string"
-        );
+                "externalIntegerItems",
+                List.of(
+                        ItemFactory.getInstance().createIntItem(1),
+                        ItemFactory.getInstance().createIntItem(2),
+                        ItemFactory.getInstance().createIntItem(3),
+                        ItemFactory.getInstance().createIntItem(4),
+                        ItemFactory.getInstance().createIntItem(5)));
+        externalBindings.bindLiteral("externalUnparsedString", "unparsed string");
         return externalBindings;
     }
 }

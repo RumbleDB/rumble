@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -32,19 +33,14 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public TokenizeFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public TokenizeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -53,25 +49,14 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         return new TokenizeLocalCursor(this.getChildren(), context, getMetadata());
     }
 
-    private static String[] tokenize(
-            String input,
-            String separator,
-            String flags,
-            ExceptionMetadata metadata
-    ) {
+    private static String[] tokenize(String input, String separator, String flags, ExceptionMetadata metadata) {
         if (separator == null) {
             return RegexPatternUtils.tokenizeOnXmlWhitespace(input);
         }
-        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
-            separator,
-            flags,
-            metadata
-        );
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(separator, flags, metadata);
         if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
             throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
-                    metadata
-            );
+                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string", metadata);
         }
         return RegexPatternUtils.tokenize(input, compiledRegex.getPattern());
     }
@@ -85,10 +70,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         private int position;
 
         private TokenizeLocalCursor(
-                List<ItemRuntimePlan> arguments,
-                DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                List<ItemRuntimePlan> arguments, DynamicContext context, ExceptionMetadata metadata) {
             super(metadata);
             this.arguments = arguments;
             this.context = context;
@@ -133,10 +115,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         }
 
         private UnexpectedTypeException invalidSeparator() {
-            return new UnexpectedTypeException(
-                    "Second parameter of tokenize must be a string.",
-                    this.metadata
-            );
+            return new UnexpectedTypeException("Second parameter of tokenize must be a string.", this.metadata);
         }
 
         @Override

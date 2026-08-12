@@ -19,7 +19,8 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,9 +29,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Implementation of the fn:nilled function according to XPath and XQuery Functions and Operators 3.1
@@ -47,7 +46,7 @@ import java.util.List;
  * returned by Item.nilled().
  *
  * Function signature (Functions and Operators 3.1, {@code fn:nilled}):
- * 
+ *
  * <ul>
  * <li>fn:nilled($arg as node()?) as xs:boolean?</li>
  * </ul>
@@ -65,21 +64,14 @@ public class NilledFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public NilledFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public NilledFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ContextOrArgumentLocalCursor.flatMapFirstArgumentOrContext(
-            this.getChildren(),
-            context,
-            this::evaluate,
-            getMetadata()
-        );
+                this.getChildren(), context, this::evaluate, getMetadata());
     }
 
     private List<Item> evaluate(Item node) {
@@ -87,10 +79,7 @@ public class NilledFunctionIterator extends LocalFunctionCallIterator {
             return List.of();
         }
         if (!node.isNode()) {
-            throw new UnexpectedTypeException(
-                    "The argument must be a reference to an XML node",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("The argument must be a reference to an XML node", getMetadata());
         }
         return node.nilled();
     }

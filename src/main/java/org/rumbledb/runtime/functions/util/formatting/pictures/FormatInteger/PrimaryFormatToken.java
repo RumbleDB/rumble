@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
 import lombok.Getter;
+
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
 
 @Getter
@@ -20,11 +21,7 @@ public class PrimaryFormatToken {
     private final NumericPicture numericPicture;
     private final String otherToken;
 
-    private PrimaryFormatToken(
-            String type,
-            NumericPicture numericPicture,
-            String otherToken
-    ) {
+    private PrimaryFormatToken(String type, NumericPicture numericPicture, String otherToken) {
         this.type = type;
         this.numericPicture = numericPicture;
         this.otherToken = otherToken;
@@ -65,5 +62,4 @@ public class PrimaryFormatToken {
     public static PrimaryFormatToken other(String otherToken) {
         return new PrimaryFormatToken(OTHER, null, otherToken);
     }
-
 }

@@ -1,23 +1,21 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Getter
 public class DeleteSearchFromCollectionExpression extends Expression {
     private Expression contentExpression;
 
-    public DeleteSearchFromCollectionExpression(
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+    public DeleteSearchFromCollectionExpression(Expression contentExpression, ExceptionMetadata metadata) {
         // TODO: The current implementations only accounts for two callening modes- table, and delta-file
         // Extension to other modes can be done by increasing flags for using enum instead
         super(metadata);
@@ -45,5 +43,4 @@ public class DeleteSearchFromCollectionExpression extends Expression {
         sb.append(" from collection ");
         sb.append("\n");
     }
-
 }

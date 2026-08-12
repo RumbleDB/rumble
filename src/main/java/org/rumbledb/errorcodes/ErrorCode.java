@@ -20,9 +20,6 @@
 
 package org.rumbledb.errorcodes;
 
-import lombok.Getter;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -30,6 +27,9 @@ import java.util.Map;
 import java.util.Objects;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+
+import org.rumbledb.context.Name;
 
 @Getter
 @EqualsAndHashCode
@@ -171,9 +171,9 @@ public final class ErrorCode implements Serializable {
      * Namespace declaration attribute value contains an enclosed expression (direct
      * element constructor).
      */
-    public static final ErrorCode NamespaceDeclarationAttributeEnclosedExpressionErrorCode = registerBuiltIn(
-        "XQST0022"
-    );
+    public static final ErrorCode NamespaceDeclarationAttributeEnclosedExpressionErrorCode =
+            registerBuiltIn("XQST0022");
+
     public static final ErrorCode ModuleDeclarationErrorCode = registerBuiltIn("XQST0016");
     public static final ErrorCode InvalidJsoniqVersionErrorCode = registerBuiltIn("XQST0031");
     public static final ErrorCode MultipleBaseURIExceptionCode = registerBuiltIn("XQST0032");

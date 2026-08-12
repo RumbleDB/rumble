@@ -17,8 +17,6 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Objects;
@@ -33,6 +31,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 /**
@@ -40,36 +39,22 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
  */
 public final class EffectiveBooleanValue {
 
-    private EffectiveBooleanValue() {
-    }
+    private EffectiveBooleanValue() {}
 
     public static boolean evaluate(ItemRuntimePlan plan, DynamicContext context) {
         return evaluateOrCheckPosition(plan, context, null);
     }
 
-    public static boolean evaluateOrCheckPosition(
-            ItemRuntimePlan plan,
-            DynamicContext context,
-            Item position
-    ) {
+    public static boolean evaluateOrCheckPosition(ItemRuntimePlan plan, DynamicContext context, Item position) {
         Objects.requireNonNull(plan, "plan cannot be null");
         Objects.requireNonNull(context, "dynamic context cannot be null");
         try (Cursor<Item> cursor = plan.getCursor(context)) {
-            return evaluateOpenSequence(
-                cursor::hasNext,
-                cursor::next,
-                plan.getRuntimeStaticContext(),
-                position
-            );
+            return evaluateOpenSequence(cursor::hasNext, cursor::next, plan.getRuntimeStaticContext(), position);
         }
     }
 
     static boolean evaluateOpenSequence(
-            BooleanSupplier hasNext,
-            Supplier<Item> next,
-            RuntimeStaticContext staticContext,
-            Item position
-    ) {
+            BooleanSupplier hasNext, Supplier<Item> next, RuntimeStaticContext staticContext, Item position) {
         if (!hasNext.getAsBoolean()) {
             return false;
         }
@@ -91,44 +76,33 @@ public final class EffectiveBooleanValue {
                 return true;
             }
             if (item.isObject() || item.isArray()) {
-                System.err.println(
-                    "Note: effective boolean value of "
+                System.err.println("Note: effective boolean value of "
                         + (item.isObject() ? "Object " : "Array ")
                         + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n"
                         + " If you want to revert to the old functionality use the --default-language jsoniq10 "
-                        + "command line option"
-                );
+                        + "command line option");
             }
             throw new InvalidArgumentTypeException(
                     "Effective boolean value not defined for items of type " + item.getDynamicType(),
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
 
         if (hasNext.getAsBoolean()) {
             throw new InvalidArgumentTypeException(
                     "Effective boolean value not defined for sequences of more than one atomic item. "
-                        + "Sequence containing: "
-                        + item.serialize()
-                        + " must be a singleton.",
-                    staticContext.getMetadata()
-            );
+                            + "Sequence containing: "
+                            + item.serialize()
+                            + " must be a singleton.",
+                    staticContext.getMetadata());
         }
         return result;
     }
 
-    private static boolean evaluateNumeric(
-            Item item,
-            Item position,
-            RuntimeStaticContext staticContext
-    ) {
+    private static boolean evaluateNumeric(Item item, Item position, RuntimeStaticContext staticContext) {
         if (position != null) {
             return ComparisonIterator.compareItems(
-                item,
-                position,
-                ComparisonOperator.VC_EQ,
-                staticContext.getMetadata()
-            ) == 0;
+                            item, position, ComparisonOperator.VC_EQ, staticContext.getMetadata())
+                    == 0;
         }
         if (item.isInt()) {
             return item.getIntValue() != 0;

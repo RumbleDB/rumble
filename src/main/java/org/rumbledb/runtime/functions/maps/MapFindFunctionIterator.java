@@ -17,10 +17,6 @@
 
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,12 +30,12 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
  */
 public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
-
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
@@ -48,22 +44,19 @@ public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             keyItem = this.keyIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "map:find expects exactly one atomic key as second argument.",
-                    getMetadata()
-            );
+                    "map:find expects exactly one atomic key as second argument.", getMetadata());
         }
         if (keyItem == null || !keyItem.isAtomic()) {
             throw new UnexpectedTypeException(
-                    "map:find expects exactly one atomic key as second argument.",
-                    getMetadata()
-            );
+                    "map:find expects exactly one atomic key as second argument.", getMetadata());
         }
 
         List<Item> inputItems = this.inputIterator.materialize(context);
         List<List<Item>> foundMembers = new ArrayList<>();
         scanItems(inputItems, keyItem, foundMembers);
         return ItemFactory.getInstance()
-            .createSequenceArrayItem(foundMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+                .createSequenceArrayItem(
+                        foundMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     @Serial
@@ -72,10 +65,7 @@ public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private final ItemRuntimePlan inputIterator;
     private final ItemRuntimePlan keyIterator;
 
-    public MapFindFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MapFindFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("map:find must have exactly two arguments.");
@@ -83,7 +73,6 @@ public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         this.inputIterator = arguments.get(0);
         this.keyIterator = arguments.get(1);
     }
-
 
     private void scanItems(List<Item> items, Item lookupKey, List<List<Item>> foundMembers) {
         for (Item item : items) {

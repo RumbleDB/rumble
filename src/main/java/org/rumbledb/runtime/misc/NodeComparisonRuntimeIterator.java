@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.misc;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.Arrays;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -33,15 +34,13 @@ import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.Arrays;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Runtime iterator for node comparisons.
- * 
+ *
  * Node comparisons are used to compare two nodes, by their identity or by their document order.
- * 
+ *
  * @see NodeComparisonExpression
  */
 public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -56,8 +55,7 @@ public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimeP
             ItemRuntimePlan leftIterator,
             ItemRuntimePlan rightIterator,
             NodeComparisonExpression.NodeComparisonOperator operator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
@@ -87,8 +85,7 @@ public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimeP
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Left operand of node comparison must be a single node or empty sequence, got more than one item",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         try {
@@ -96,8 +93,7 @@ public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimeP
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Right operand of node comparison must be a single node or empty sequence, got more than one item",
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         return applyComparison(leftItem, rightItem, this.operator, getMetadata());
@@ -107,8 +103,7 @@ public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimeP
             Item leftItem,
             Item rightItem,
             NodeComparisonExpression.NodeComparisonOperator operator,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         // 2. If either operand is an empty sequence, the result of the comparison is an empty sequence,
         // and the implementation need not evaluate the other operand or apply the operator.
         // However, an implementation may choose to evaluate the other operand in order to determine whether it raises
@@ -121,16 +116,12 @@ public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimeP
         // is raised [err:XPTY0004].
         if (!leftItem.isNode()) {
             throw new UnexpectedTypeException(
-                    "Left operand of node comparison must be a node, got: " + leftItem.getDynamicType(),
-                    metadata
-            );
+                    "Left operand of node comparison must be a node, got: " + leftItem.getDynamicType(), metadata);
         }
 
         if (!rightItem.isNode()) {
             throw new UnexpectedTypeException(
-                    "Right operand of node comparison must be a node, got: " + rightItem.getDynamicType(),
-                    metadata
-            );
+                    "Right operand of node comparison must be a node, got: " + rightItem.getDynamicType(), metadata);
         }
 
         boolean result;
@@ -147,13 +138,12 @@ public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimeP
                 if (leftPos == null || rightPos == null) {
                     throw new UnexpectedTypeException(
                             "Node comparison in document order requires both operands to have a document position.",
-                            metadata
-                    );
+                            metadata);
                 }
                 int comparison = leftPos.compareTo(rightPos);
                 result = operator == NodeComparisonExpression.NodeComparisonOperator.NC_PRECEDES
-                    ? comparison < 0
-                    : comparison > 0;
+                        ? comparison < 0
+                        : comparison > 0;
                 break;
             default:
                 throw new OurBadException("Unrecognized node comparison operator: " + operator);

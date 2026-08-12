@@ -1,6 +1,5 @@
 package org.rumbledb.items;
 
-
 import java.io.Serial;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -18,6 +17,7 @@ public class YearMonthDurationItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private Period value;
     private static final Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
@@ -33,9 +33,7 @@ public class YearMonthDurationItem extends AbstractAtomicItem {
             this.value = normalizeMonthsToYears(Period.parse(value));
         } catch (DateTimeParseException e) {
             throw new DurationOverflowOrUnderflow(
-                    "Invalid xs:yearMonthDuration: \"" + value + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Invalid xs:yearMonthDuration: \"" + value + "\"", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -104,20 +102,18 @@ public class YearMonthDurationItem extends AbstractAtomicItem {
         }
         StringBuilder sb = new StringBuilder();
         sb.append((period.isNegative()) ? "-P" : "P");
-        if (period.getYears() != 0)
-            sb.append(Math.abs(period.getYears())).append("Y");
-        if (period.getMonths() != 0)
-            sb.append(Math.abs(period.getMonths())).append("M");
-        if (period.getDays() != 0)
-            sb.append(Math.abs(period.getDays())).append("D");
+        if (period.getYears() != 0) sb.append(Math.abs(period.getYears())).append("Y");
+        if (period.getMonths() != 0) sb.append(Math.abs(period.getMonths())).append("M");
+        if (period.getDays() != 0) sb.append(Math.abs(period.getDays())).append("D");
         return sb.toString();
     }
 
     public static Period normalizeMonthsToYears(Period period) {
         Period normalized = period.normalized();
         if (normalized.getMonths() >= 12) {
-            return normalized.minusMonths(normalized.getMonths() - (normalized.getMonths() % 12))
-                .plusYears(normalized.getMonths() / 12);
+            return normalized
+                    .minusMonths(normalized.getMonths() - (normalized.getMonths() % 12))
+                    .plusYears(normalized.getMonths() / 12);
         }
         return normalized;
     }
@@ -151,5 +147,4 @@ public class YearMonthDurationItem extends AbstractAtomicItem {
     public double getSecond() {
         return 0;
     }
-
 }

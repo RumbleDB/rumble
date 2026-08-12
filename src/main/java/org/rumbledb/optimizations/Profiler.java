@@ -1,12 +1,12 @@
 package org.rumbledb.optimizations;
 
-import lombok.extern.log4j.Log4j2;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class Profiler {
@@ -17,12 +17,10 @@ public class Profiler {
     public static void increase() {
         ++counter;
         String stackTrace = String.join(
-            "\n",
-            Arrays.asList(Thread.currentThread().getStackTrace())
-                .stream()
-                .map(x -> x.toString())
-                .collect(Collectors.toList())
-        );
+                "\n",
+                Arrays.asList(Thread.currentThread().getStackTrace()).stream()
+                        .map(x -> x.toString())
+                        .collect(Collectors.toList()));
         if (!stacks.containsKey(stackTrace)) {
             stacks.put(stackTrace, 1);
         } else {
@@ -38,20 +36,17 @@ public class Profiler {
         int total = 0;
         for (String key : stacks.keySet()) {
             total += stacks.get(key);
-            if (stacks.get(key) != max)
-                continue;
+            if (stacks.get(key) != max) continue;
             log.debug(
-                """
+                    """
                         Occurrences: {}
                         {}\
                         """,
-                stacks.get(key),
-                key
-            );
+                    stacks.get(key),
+                    key);
         }
         log.debug("Size: {}", stacks.size());
         log.debug("Total: {}", total);
         return counter;
     }
-
 }

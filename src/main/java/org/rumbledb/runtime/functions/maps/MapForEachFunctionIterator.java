@@ -17,9 +17,10 @@
 
 package org.rumbledb.runtime.functions.maps;
 
-
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,31 +31,21 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * FO 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*)
  * as item()*.
  */
-public class MapForEachFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+public class MapForEachFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new MapForEachLocalCursor(
-                this.mapIterator,
-                this.actionIterator,
-                this.staticContext,
-                context
-        );
+        return new MapForEachLocalCursor(this.mapIterator, this.actionIterator, this.staticContext, context);
     }
 
     @Serial
@@ -63,10 +54,7 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan mapIterator;
     private final ItemRuntimePlan actionIterator;
 
-    public MapForEachFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MapForEachFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("map:for-each must have exactly two arguments.");
@@ -79,14 +67,12 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
             ItemRuntimePlan mapPlan,
             ItemRuntimePlan actionPlan,
             RuntimeStaticContext staticContext,
-            DynamicContext context
-    ) {
+            DynamicContext context) {
         List<Item> mapArguments = mapPlan.materialize(context);
         if (mapArguments.size() != 1 || !mapArguments.get(0).isMap()) {
             throw new UnexpectedTypeException(
                     "The first argument of map:for-each must be a single map item [err:XPTY0004].",
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
         Item mapItem = mapArguments.get(0);
 
@@ -94,37 +80,31 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
         if (functionArguments.size() != 1 || !functionArguments.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The second argument of map:for-each must be a single function item [err:XPTY0004].",
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
         Item actionFunction = functionArguments.get(0);
         if (actionFunction.getIdentifier().getArity() != 2) {
             throw new UnexpectedTypeException(
                     "The function passed to map:for-each must accept exactly two arguments [err:XPTY0004].",
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
 
         RuntimeStaticContext keyArgumentContext = RuntimeStaticContext.builder()
-            .configuration(staticContext.getConfiguration())
-            .staticType(SequenceType.createSequenceType("anyAtomicType"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(staticContext.getMetadata())
-            .build();
+                .configuration(staticContext.getConfiguration())
+                .staticType(SequenceType.createSequenceType("anyAtomicType"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(staticContext.getMetadata())
+                .build();
         RuntimeStaticContext valueArgumentContext = RuntimeStaticContext.builder()
-            .configuration(staticContext.getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(staticContext.getMetadata())
-            .build();
+                .configuration(staticContext.getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(staticContext.getMetadata())
+                .build();
         return new Invocation(mapItem, actionFunction, keyArgumentContext, valueArgumentContext);
     }
 
-    private static ItemRuntimePlan buildCallback(
-            Invocation invocation,
-            Item key,
-            RuntimeStaticContext staticContext
-    ) {
+    private static ItemRuntimePlan buildCallback(Invocation invocation, Item key, RuntimeStaticContext staticContext) {
         List<ItemRuntimePlan> valueChildren = new ArrayList<>();
         List<Item> values = invocation.map.getSequenceByKey(key);
         if (values != null) {
@@ -133,15 +113,13 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
             }
         }
         return NamedFunctions.buildFunctionItemCallIterator(
-            invocation.action,
-            staticContext,
-            ExecutionMode.LOCAL,
-            List.of(
-                new ConstantRuntimeIterator(key, invocation.keyContext),
-                new CommaExpressionIterator(valueChildren, invocation.valueContext)
-            ),
-            false
-        );
+                invocation.action,
+                staticContext,
+                ExecutionMode.LOCAL,
+                List.of(
+                        new ConstantRuntimeIterator(key, invocation.keyContext),
+                        new CommaExpressionIterator(valueChildren, invocation.valueContext)),
+                false);
     }
 
     private static final class Invocation {
@@ -150,12 +128,7 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
         private final RuntimeStaticContext keyContext;
         private final RuntimeStaticContext valueContext;
 
-        private Invocation(
-                Item map,
-                Item action,
-                RuntimeStaticContext keyContext,
-                RuntimeStaticContext valueContext
-        ) {
+        private Invocation(Item map, Item action, RuntimeStaticContext keyContext, RuntimeStaticContext valueContext) {
             this.map = map;
             this.action = action;
             this.keyContext = keyContext;
@@ -177,8 +150,7 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
                 ItemRuntimePlan mapPlan,
                 ItemRuntimePlan actionPlan,
                 RuntimeStaticContext staticContext,
-                DynamicContext context
-        ) {
+                DynamicContext context) {
             super(staticContext.getMetadata());
             this.mapPlan = mapPlan;
             this.actionPlan = actionPlan;
@@ -188,12 +160,7 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
 
         @Override
         protected void openLocal() {
-            this.invocation = resolveInvocation(
-                this.mapPlan,
-                this.actionPlan,
-                this.staticContext,
-                this.context
-            );
+            this.invocation = resolveInvocation(this.mapPlan, this.actionPlan, this.staticContext, this.context);
             this.keys = this.invocation.map.getItemKeys().iterator();
         }
 
@@ -204,11 +171,7 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan
                 if (!this.keys.hasNext()) {
                     return false;
                 }
-                ItemRuntimePlan callback = buildCallback(
-                    this.invocation,
-                    this.keys.next(),
-                    this.staticContext
-                );
+                ItemRuntimePlan callback = buildCallback(this.invocation, this.keys.next(), this.staticContext);
                 this.callbackCursor = callback.getCursor(this.context);
             }
             return true;

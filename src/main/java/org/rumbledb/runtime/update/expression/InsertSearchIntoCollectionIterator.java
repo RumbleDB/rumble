@@ -1,9 +1,11 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.Arrays;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -11,17 +13,16 @@ import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
-
-import java.io.Serial;
-import java.util.Arrays;
 
 public class InsertSearchIntoCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan targetIterator;
     private final ItemRuntimePlan contentIterator;
     private final boolean isBefore;
@@ -30,17 +31,13 @@ public class InsertSearchIntoCollectionIterator extends UpdatingExpressionIterat
             ItemRuntimePlan targetIterator,
             ItemRuntimePlan contentIterator,
             boolean isBefore,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Arrays.asList(targetIterator, contentIterator),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+                Arrays.asList(targetIterator, contentIterator),
+                staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.isBefore = isBefore;
-
-
     }
 
     @Override
@@ -59,33 +56,24 @@ public class InsertSearchIntoCollectionIterator extends UpdatingExpressionIterat
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "More than one target item cannot be used for insertion.",
-                    this.getRuntimeStaticContext().getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
                     "One target item must be provided for search based insertion. Please check if the target expression provided resolves to a valid target in the collection.",
-                    this.getRuntimeStaticContext().getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = null;
         if (this.isBefore) {
             up = factory.createInsertBeforeIntoCollectionPrimitive(
-                target,
-                contentDF,
-                this.getRuntimeStaticContext().getMetadata()
-            );
+                    target, contentDF, this.getRuntimeStaticContext().getMetadata());
         } else {
             up = factory.createInsertAfterIntoCollectionPrimitive(
-                target,
-                contentDF,
-                this.getRuntimeStaticContext().getMetadata()
-            );
+                    target, contentDF, this.getRuntimeStaticContext().getMetadata());
         }
 
         pul.addUpdatePrimitive(up);
         return pul;
     }
-
 }

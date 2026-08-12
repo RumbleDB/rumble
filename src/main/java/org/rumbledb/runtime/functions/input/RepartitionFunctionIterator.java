@@ -20,30 +20,26 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.util.List;
+
+import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-
-import java.io.Serial;
-import java.util.List;
-
 public class RepartitionFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item>,
-            NativeQueryRuntimePlan {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -51,10 +47,7 @@ public class RepartitionFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan iterator;
     private final ItemRuntimePlan partitionCountIterator;
 
-    public RepartitionFunctionIterator(
-            List<ItemRuntimePlan> inputIterators,
-            RuntimeStaticContext staticContext
-    ) {
+    public RepartitionFunctionIterator(List<ItemRuntimePlan> inputIterators, RuntimeStaticContext staticContext) {
         super(inputIterators, staticContext);
         this.iterator = inputIterators.get(0);
         this.partitionCountIterator = inputIterators.get(1);
@@ -65,13 +58,12 @@ public class RepartitionFunctionIterator extends ItemRuntimePlan
         return this.iterator.getCursor(context);
     }
 
-
-
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
-        int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(dynamicContext)
-            .getIntValue();
+        int numberPartitions = this.partitionCountIterator
+                .materializeFirstOrNull(dynamicContext)
+                .getIntValue();
         return childRDD.repartition(numberPartitions);
     }
 
@@ -82,9 +74,9 @@ public class RepartitionFunctionIterator extends ItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
-            .fromPlan(this.iterator, context);
-        int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(context).getIntValue();
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
+        int numberPartitions =
+                this.partitionCountIterator.materializeFirstOrNull(context).getIntValue();
         return childDataFrame.repartition(numberPartitions);
     }
 }

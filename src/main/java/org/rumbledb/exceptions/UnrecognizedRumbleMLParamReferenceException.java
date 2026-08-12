@@ -20,9 +20,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class UnrecognizedRumbleMLParamReferenceException extends RumbleException {
 
@@ -31,10 +31,8 @@ public class UnrecognizedRumbleMLParamReferenceException extends RumbleException
 
     public UnrecognizedRumbleMLParamReferenceException(String message, ExceptionMetadata metadata) {
         super(
-            "Unrecognized Rumble ML parameter; "
-                + message,
-            ErrorCode.UnrecognizedRumbleMLParamReferenceErrorCode,
-            metadata
-        );
+                "Unrecognized Rumble ML parameter; " + message,
+                ErrorCode.UnrecognizedRumbleMLParamReferenceErrorCode,
+                metadata);
     }
 }

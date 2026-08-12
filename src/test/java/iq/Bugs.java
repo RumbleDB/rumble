@@ -20,17 +20,14 @@
 
 package iq;
 
-import iq.base.SparkAnnotationsTestsBase;
-
 import java.io.File;
+
+import iq.base.SparkAnnotationsTestsBase;
 
 public class Bugs extends SparkAnnotationsTestsBase {
 
-    public static final File runtimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/bugs"
-    );
+    public static final File runtimeTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/bugs");
 
     @Override
     protected File testDirectory() {

@@ -20,21 +20,21 @@
 
 package org.rumbledb.runtime.navigation;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.ItemType;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PredicateUDF implements UDF1<Row, Boolean> {
     @Serial
@@ -47,11 +47,7 @@ public class PredicateUDF implements UDF1<Row, Boolean> {
     final List<Item> currentItems = new ArrayList<>();
 
     public PredicateUDF(
-            ItemRuntimePlan expression,
-            DynamicContext context,
-            ExceptionMetadata metadata,
-            ItemType itemType
-    ) {
+            ItemRuntimePlan expression, DynamicContext context, ExceptionMetadata metadata, ItemType itemType) {
         this.expression = expression;
         this.dynamicContext = new DynamicContext(context);
         this.metadata = metadata;

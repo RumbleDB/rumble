@@ -20,12 +20,12 @@
 
 package org.rumbledb.runtime;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-
-import java.io.Serial;
-import java.util.List;
 
 public class EmptySequenceIterator extends AbstractAtMostOneItemRuntimePlan {
 

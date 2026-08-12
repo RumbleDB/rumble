@@ -20,23 +20,24 @@
 
 package org.rumbledb.items;
 
-
-import org.apache.commons.lang3.StringUtils;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
-
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+
+import org.apache.commons.lang3.StringUtils;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 public class FloatItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private float value;
 
     public FloatItem(float value) {
@@ -167,10 +168,7 @@ public class FloatItem extends AbstractAtomicItem {
             return NativeClauseContext.NoNativeQuery;
         }
         return new NativeClauseContext(
-                context,
-                "CAST (" + this.value + "D AS FLOAT)",
-                SequenceType.createSequenceType("float")
-        );
+                context, "CAST (" + this.value + "D AS FLOAT)", SequenceType.createSequenceType("float"));
     }
 
     @Override

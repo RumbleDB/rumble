@@ -1,6 +1,9 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+
 import org.apache.spark.api.java.function.Function;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -9,12 +12,11 @@ import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-
 public class TypePromotionClosure implements Function<Item, Item> {
     private final String exceptionMessage;
     private final SequenceType sequenceType;
     private final ExceptionMetadata metadata;
+
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -31,20 +33,17 @@ public class TypePromotionClosure implements Function<Item, Item> {
                 Item result = CastIterator.castItemToType(input, this.sequenceType.getItemType(), this.metadata);
                 if (result == null) {
                     throw new OurBadException(
-                            "We were not able to promote " + input + " to type " + this.sequenceType.getItemType()
-                    );
+                            "We were not able to promote " + input + " to type " + this.sequenceType.getItemType());
                 }
                 return result;
             }
             throw new UnexpectedTypeException(
                     this.exceptionMessage
-                        +
-                        input.getDynamicType().toString()
-                        + " cannot be promoted to type "
-                        + this.sequenceType.getItemType().toString()
-                        + this.sequenceType.getArity().getSymbol(),
-                    this.metadata
-            );
+                            + input.getDynamicType().toString()
+                            + " cannot be promoted to type "
+                            + this.sequenceType.getItemType().toString()
+                            + this.sequenceType.getArity().getSymbol(),
+                    this.metadata);
         }
         return input;
     }

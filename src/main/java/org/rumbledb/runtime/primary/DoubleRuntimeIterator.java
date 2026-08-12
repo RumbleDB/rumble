@@ -20,29 +20,28 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
 public class DoubleRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Item item;
 
     public DoubleRuntimeIterator(Double value, RuntimeStaticContext staticContext) {
         super(List.of(), staticContext);
         this.item = ItemFactory.getInstance().createDoubleItem(value);
-
     }
 
     @Override
@@ -53,9 +52,6 @@ public class DoubleRuntimeIterator extends AbstractAtMostOneItemRuntimePlan impl
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
-                nativeClauseContext,
-                "" + this.item.getDoubleValue(),
-                SequenceType.createSequenceType("double")
-        );
+                nativeClauseContext, "" + this.item.getDoubleValue(), SequenceType.createSequenceType("double"));
     }
 }

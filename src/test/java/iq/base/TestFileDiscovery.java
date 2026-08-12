@@ -30,10 +30,9 @@ import java.util.stream.Stream;
 public final class TestFileDiscovery {
 
     private static final String JSONIQ_EXTENSION = ".jq";
-    private static final String[] XQUERY_EXTENSIONS = { ".xq", ".xqy", ".xquery" };
+    private static final String[] XQUERY_EXTENSIONS = {".xq", ".xqy", ".xquery"};
 
-    private TestFileDiscovery() {
-    }
+    private TestFileDiscovery() {}
 
     public static List<File> jsoniqFiles(File directory) throws IOException {
         return files(directory, JSONIQ_EXTENSION);
@@ -51,15 +50,13 @@ public final class TestFileDiscovery {
 
         Set<String> allowedExtensions = Set.copyOf(Arrays.asList(extensions));
         try (Stream<Path> paths = Files.walk(root)) {
-            return paths
-                .filter(Files::isRegularFile)
-                .filter(path -> hasExtension(path, allowedExtensions))
-                .sorted(
-                    Comparator.comparing((Path path) -> path.getFileName().toString())
-                        .thenComparing(Path::toString)
-                )
-                .map(Path::toFile)
-                .toList();
+            return paths.filter(Files::isRegularFile)
+                    .filter(path -> hasExtension(path, allowedExtensions))
+                    .sorted(Comparator.comparing(
+                                    (Path path) -> path.getFileName().toString())
+                            .thenComparing(Path::toString))
+                    .map(Path::toFile)
+                    .toList();
         }
     }
 

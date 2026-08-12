@@ -17,10 +17,12 @@
 
 package iq.base;
 
-import lombok.extern.log4j.Log4j2;
 import org.apache.spark.SparkConf;
 import org.junit.jupiter.api.BeforeAll;
+
+import lombok.extern.log4j.Log4j2;
 import scala.util.Properties;
+
 import org.rumbledb.spark.SparkSessionManager;
 
 @Log4j2
@@ -43,7 +45,9 @@ public abstract class SparkAnnotationsTestsBase extends AnnotationsTestsBase {
         configureSpark(sparkConfiguration);
 
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        log.info("Spark version: {}", SparkSessionManager.getInstance().getJavaSparkContext().version());
+        log.info(
+                "Spark version: {}",
+                SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     protected void configureSpark(SparkConf sparkConfiguration) {

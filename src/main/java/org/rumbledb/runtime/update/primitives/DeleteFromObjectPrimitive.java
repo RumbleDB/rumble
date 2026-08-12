@@ -1,13 +1,13 @@
 package org.rumbledb.runtime.update.primitives;
 
+import java.util.*;
+
+import static org.apache.spark.sql.functions.col;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.spark.SparkSessionManager;
-
-import static org.apache.spark.sql.functions.col;
-
-import java.util.*;
 
 public class DeleteFromObjectPrimitive implements UpdatePrimitive {
     private Item target;
@@ -19,9 +19,7 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
         for (Item item : namesToRemove) {
             if (targetObject.getItemByKey(item.getStringValue()) == null) {
                 throw new CannotResolveUpdateSelectorException(
-                        "Cannot delete key that does not exist in target object",
-                        metadata
-                );
+                        "Cannot delete key that does not exist in target object", metadata);
             }
         }
 
@@ -59,13 +57,13 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
                 String key = item.getStringValue();
                 String fullPath = pathIn + key;
                 String type = SparkSessionManager.getInstance()
-                    .getOrCreateSession()
-                    .sql("DESC (SELECT " + fullPath + " FROM " + location + ")")
-                    .filter(col("col_name").equalTo(key))
-                    .select("data_type")
-                    .collectAsList()
-                    .get(0)
-                    .getString(0);
+                        .getOrCreateSession()
+                        .sql("DESC (SELECT " + fullPath + " FROM " + location + ")")
+                        .filter(col("col_name").equalTo(key))
+                        .select("data_type")
+                        .collectAsList()
+                        .get(0)
+                        .getString(0);
                 this.applySetFieldInCollection(location, rowID, fullPath, "CAST(NULL AS " + type + ")");
             }
         } else {
@@ -92,5 +90,4 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
     public boolean isDeleteObject() {
         return true;
     }
-
 }
