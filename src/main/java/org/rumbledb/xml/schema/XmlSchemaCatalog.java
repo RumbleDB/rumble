@@ -17,21 +17,29 @@
 
 package org.rumbledb.xml.schema;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSModel;
+import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSTypeDefinition;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
 /** The Xerces XML Schema component model available to one XQuery module. */
 public final class XmlSchemaCatalog {
 
     private final XSModel schemaModel;
+    private final XmlSchemaAtomicTypeMapper atomicTypeMapper;
 
     XmlSchemaCatalog(XSModel schemaModel) {
         this.schemaModel = Objects.requireNonNull(schemaModel, "schemaModel must not be null");
+        this.atomicTypeMapper = new XmlSchemaAtomicTypeMapper();
     }
 
     public Optional<XSTypeDefinition> getTypeDefinition(Name name) {
@@ -42,6 +50,24 @@ public final class XmlSchemaCatalog {
 
     public boolean containsNamespace(String namespace) {
         return this.schemaModel.getNamespaces().contains(emptyToNull(namespace));
+    }
+
+    public List<ItemType> getNamedAtomicItemTypes() {
+        XSNamedMap schemaTypes = this.schemaModel.getComponents(XSConstants.TYPE_DEFINITION);
+        List<ItemType> result = new ArrayList<>();
+        for (int index = 0; index < schemaTypes.getLength(); index++) {
+            XSTypeDefinition schemaType = (XSTypeDefinition) schemaTypes.item(index);
+            this.atomicTypeMapper
+                    .map(schemaType)
+                    .filter(ItemType::hasName)
+                    .filter(type -> !BuiltinTypesCatalogue.typeExists(type.getName()))
+                    .ifPresent(result::add);
+        }
+        return List.copyOf(result);
+    }
+
+    Optional<ItemType> getAtomicItemType(XSTypeDefinition schemaType) {
+        return this.atomicTypeMapper.map(schemaType);
     }
 
     XSModel getSchemaModel() {

@@ -32,10 +32,13 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.InScopeSchemaTypes;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.SchemaImportException;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.resources.ResourceResolver;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
 public class XmlSchemaCatalogLoaderTest {
 
@@ -78,6 +81,57 @@ public class XmlSchemaCatalogLoaderTest {
                 .getXmlSchemaCatalog()
                 .getTypeDefinition(new Name(NAMESPACE, "t", "Code"))
                 .isPresent());
+    }
+
+    @Test
+    public void registersNamedAtomicRestrictionsWithTheirTypeHierarchy(@TempDir Path directory) throws Exception {
+        Files.writeString(
+                directory.resolve("types.xsd"),
+                schema(
+                        NAMESPACE,
+                        """
+                        <xs:simpleType name="Code">
+                          <xs:restriction base="xs:string"/>
+                        </xs:simpleType>
+                        <xs:simpleType name="RestrictedCode">
+                          <xs:restriction base="t:Code">
+                            <xs:pattern value="[A-Z]+"/>
+                          </xs:restriction>
+                        </xs:simpleType>
+                        <xs:simpleType name="Codes">
+                          <xs:list itemType="t:Code"/>
+                        </xs:simpleType>
+                        <xs:simpleType name="CodeOrInteger">
+                          <xs:union memberTypes="t:Code xs:integer"/>
+                        </xs:simpleType>
+                        <xs:complexType name="Record"/>
+                        """));
+
+        MainModule module = compile(
+                "import schema namespace t = \"urn:test\" at \"types.xsd\"; 1 instance of t:RestrictedCode",
+                directory.resolve("query.xq").toUri(),
+                new ResourceResolver());
+
+        InScopeSchemaTypes inScopeTypes = module.getStaticContext().getInScopeSchemaTypes();
+        Name codeName = new Name(NAMESPACE, "t", "Code");
+        Name restrictedCodeName = new Name(NAMESPACE, "t", "RestrictedCode");
+        ItemType code = inScopeTypes.getInScopeSchemaType(codeName);
+        ItemType restrictedCode = inScopeTypes.getInScopeSchemaType(restrictedCodeName);
+        XmlSchemaCatalog catalog = module.getStaticContext().getXmlSchemaCatalog();
+        XSTypeDefinition restrictedCodeDefinition =
+                catalog.getTypeDefinition(restrictedCodeName).orElseThrow();
+
+        Assertions.assertEquals(BuiltinTypesCatalogue.stringItem, code.getBaseType());
+        Assertions.assertEquals(code, restrictedCode.getBaseType());
+        Assertions.assertEquals(BuiltinTypesCatalogue.stringItem, restrictedCode.getPrimitiveType());
+        Assertions.assertSame(
+                restrictedCode,
+                catalog.getAtomicItemType(restrictedCodeDefinition).orElseThrow());
+        Assertions.assertTrue(restrictedCode.isSubtypeOf(code));
+        Assertions.assertTrue(restrictedCode.isSubtypeOf(BuiltinTypesCatalogue.stringItem));
+        Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "Codes")));
+        Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "CodeOrInteger")));
+        Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "Record")));
     }
 
     @Test

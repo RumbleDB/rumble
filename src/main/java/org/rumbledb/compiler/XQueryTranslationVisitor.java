@@ -468,7 +468,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             prolog.addDeclaration(optionDeclaration);
         }
         XmlSchemaCatalogLoader.load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
-                .ifPresent(this.moduleContext::setXmlSchemaCatalog);
+                .ifPresent(catalog -> {
+                    this.moduleContext.setXmlSchemaCatalog(catalog);
+                    for (ItemType itemType : catalog.getNamedAtomicItemTypes()) {
+                        this.moduleContext.getInScopeSchemaTypes().addInScopeSchemaType(itemType, prolog.getMetadata());
+                    }
+                });
         return prolog;
     }
 
