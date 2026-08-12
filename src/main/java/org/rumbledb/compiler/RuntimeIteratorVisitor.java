@@ -263,6 +263,7 @@ import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.TextNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.TextNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.UnaryLookupIterator;
+import org.rumbledb.runtime.xml.ValidateBuiltinTypeRuntimeIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -1484,8 +1485,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
     @Override
     public ItemRuntimePlan visitValidateExpression(ValidateExpression expression, ItemRuntimePlan argument) {
-        throw new UnsupportedFeatureException(
-                "XML Schema validate expressions are not executable yet.", expression.getMetadata());
+        if (expression.getValidationMode() != ValidateExpression.ValidationMode.TYPE) {
+            throw new UnsupportedFeatureException(
+                    "Strict and lax XML Schema validation are not executable yet.", expression.getMetadata());
+        }
+        ItemRuntimePlan operand = this.visit(expression.getMainExpression(), argument);
+        return new ValidateBuiltinTypeRuntimeIterator(
+                operand,
+                BuiltinTypesCatalogue.getItemTypeByName(expression.getTypeName()),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override

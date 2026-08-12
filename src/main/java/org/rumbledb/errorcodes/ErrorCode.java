@@ -158,9 +158,11 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode UnexpectedTypeErrorCode = registerBuiltIn("XPTY0004");
     public static final ErrorCode NodeAndNonNode = registerBuiltIn("XPTY0018");
     public static final ErrorCode UnexpectedNode = registerBuiltIn("XPTY0019");
+    public static final ErrorCode ValidateOperandTypeErrorCode = registerBuiltIn("XQTY0030");
 
     public static final ErrorCode InvalidInstance = registerBuiltIn("XQDY0027");
     public static final ErrorCode InvalidProcessingInstructionTargetCastErrorCode = registerBuiltIn("XQDY0041");
+    public static final ErrorCode InvalidValidateDocumentStructureErrorCode = registerBuiltIn("XQDY0061");
     public static final ErrorCode CycleInVariableDeclarationsErrorCode = registerBuiltIn("XQDY0054");
     public static final ErrorCode InvalidProcessingInstructionContentErrorCode = registerBuiltIn("XQDY0026");
     public static final ErrorCode InvalidProcessingInstructionTargetErrorCode = registerBuiltIn("XQDY0064");
@@ -203,6 +205,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DecimalFormatPropertyInvalidValueErrorCode = registerBuiltIn("XQST0097");
     public static final ErrorCode DecimalFormatPropertyConflictErrorCode = registerBuiltIn("XQST0098");
     public static final ErrorCode DuplicateDecimalFormatPropertyErrorCode = registerBuiltIn("XQST0114");
+    public static final ErrorCode ValidateTypeNotFoundErrorCode = registerBuiltIn("XQST0104");
 
     public static final ErrorCode AtomizationError = registerBuiltIn("FOTY0012");
     public static final ErrorCode UnexpectedFunctionItem = registerBuiltIn("FOTY0015");

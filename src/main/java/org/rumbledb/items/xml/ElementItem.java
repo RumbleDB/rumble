@@ -444,7 +444,8 @@ public class ElementItem extends AbstractNodeItem {
             Item typedValue = CastIterator.castItemToType(
                     ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
                     this.typeAnnotation,
-                    ExceptionMetadata.EMPTY_METADATA);
+                    ExceptionMetadata.EMPTY_METADATA,
+                    NamespaceBindingUtils.namespaceResolver(this));
             return Collections.singletonList(typedValue);
         }
         // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
