@@ -54,7 +54,7 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.TypeMappings;
 
 @Log4j2
-public class ValidateTypeIterator extends ItemRuntimePlan
+public class JSONiqValidateIterator extends ItemRuntimePlan
         implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
 
     @Serial
@@ -65,7 +65,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
     private final boolean isValidate;
     private final ItemValidator validator;
 
-    public ValidateTypeIterator(
+    public JSONiqValidateIterator(
             ItemRuntimePlan instance, ItemType itemType, boolean isValidate, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(instance), staticContext);
         this.iterator = instance;
@@ -347,7 +347,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             }
 
             if (dataType instanceof StructType structType) {
-                return ValidateTypeIterator.convertLocalItemToRow(item, structType, context);
+                return JSONiqValidateIterator.convertLocalItemToRow(item, structType, context);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {

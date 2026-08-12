@@ -31,7 +31,7 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.ItemType;
 
 /** Local evaluation of XQuery {@code validate type} for built-in atomic types. */
-public final class ValidateBuiltinTypeRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+public final class XQueryValidateIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -39,8 +39,7 @@ public final class ValidateBuiltinTypeRuntimeIterator extends AbstractAtMostOneI
     private final ItemRuntimePlan operand;
     private final ItemType targetType;
 
-    public ValidateBuiltinTypeRuntimeIterator(
-            ItemRuntimePlan operand, ItemType targetType, RuntimeStaticContext staticContext) {
+    public XQueryValidateIterator(ItemRuntimePlan operand, ItemType targetType, RuntimeStaticContext staticContext) {
         super(List.of(operand), staticContext);
         this.operand = operand;
         this.targetType = targetType;

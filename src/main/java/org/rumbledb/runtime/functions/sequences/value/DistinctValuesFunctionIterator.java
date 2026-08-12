@@ -42,8 +42,8 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 
 public class DistinctValuesFunctionIterator extends ItemRuntimePlan
@@ -95,7 +95,7 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
             itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
                     rdd, getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
         }
-        return ValidateTypeIterator.convertRDDToValidDataFrame(
+        return JSONiqValidateIterator.convertRDDToValidDataFrame(
                 rdd, itemType, dynamicContext, true, getRuntimeStaticContext());
     }
 

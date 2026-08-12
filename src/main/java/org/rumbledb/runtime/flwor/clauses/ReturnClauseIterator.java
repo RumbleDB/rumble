@@ -68,7 +68,7 @@ import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.SequenceType;
@@ -307,7 +307,7 @@ public class ReturnClauseIterator extends ItemRuntimePlan
         }
 
         JavaRDD<Item> rdd = createNativeRDD(context);
-        return ValidateTypeIterator.convertRDDToValidDataFrame(
+        return JSONiqValidateIterator.convertRDDToValidDataFrame(
                 rdd,
                 this.expression.getRuntimeStaticContext().getStaticType().getItemType(),
                 context,

@@ -23,20 +23,27 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import org.rumbledb.api.Rumble;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.typing.ValidateExpression;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 @Timeout(1000)
-public class ValidateBuiltinTypeTest {
+public class XQueryValidateBuiltinTypeTest {
 
     private static Rumble rumble;
+    private static RumbleConfiguration xqueryConfiguration;
 
     @BeforeAll
     public static void setUp() {
-        RumbleConfiguration configuration = RumbleConfiguration.builder()
+        xqueryConfiguration = RumbleConfiguration.builder()
                 .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
                 .build();
-        rumble = new Rumble(configuration);
+        rumble = new Rumble(xqueryConfiguration);
     }
 
     @Test
@@ -57,6 +64,17 @@ public class ValidateBuiltinTypeTest {
         assertTrue("let $input := <value>42</value> "
                 + "let $validated := validate type xs:integer { $input } "
                 + "return $validated instance of element() and not($input is $validated)");
+    }
+
+    @Test
+    public void infersExactlyOneResultWhilePreservingTheNodeKind() {
+        MainModule module = VisitorHelpers.parseMainModuleFromQuery(
+                "validate type xs:string { (<a/>, <b/>) }", xqueryConfiguration, ExternalBindings.empty());
+        ValidateExpression expression = Assertions.assertInstanceOf(ValidateExpression.class, module.getExpression());
+        Assertions.assertEquals(
+                SequenceType.Arity.One, expression.getStaticSequenceType().getArity());
+        Assertions.assertTrue(
+                expression.getStaticSequenceType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.elementNode));
     }
 
     @Test
