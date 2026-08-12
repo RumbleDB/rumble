@@ -264,6 +264,12 @@
                 <artifactId>spotless-maven-plugin</artifactId>
                 <version>3.7.0</version>
                 <configuration>
+                    <pom>
+                        <sortPom>
+                            <nrOfIndentSpace>4</nrOfIndentSpace>
+                        </sortPom>
+                    </pom>
+
                     <java>
                         <includes>
                             <!-- include all java files in "java" folders under "src" -->
@@ -272,14 +278,29 @@
                         <eclipse>
                             <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
                         </eclipse>
+
+                        <palantirJavaFormat>
+                            <version>2.39.0</version>
+                            <style>PALANTIR</style>
+                        </palantirJavaFormat>
+
+                        <importOrder>
+                            <order>java|javax,org,,\#,com,org.rumbledb,,\#org.rumbledb</order>
+                            <semanticSort>true</semanticSort>
+                        </importOrder>
+
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+
                         <removeUnusedImports/>
+                        <formatAnnotations/>
                     </java>
                     <antlr4>
                         <includes>
                             <include>src/main/java/org/rumbledb/parser/*/*.g4</include>
                         </includes>
 
-                        <antlr4Formatter />
+                        <antlr4Formatter/>
                     </antlr4>
                 </configuration>
             </plugin>
