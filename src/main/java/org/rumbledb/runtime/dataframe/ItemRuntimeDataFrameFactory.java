@@ -20,8 +20,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 
 /**
@@ -48,7 +48,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
                 log.debug("Inferred DataFrame type:\n" + itemType);
             }
         }
-        return ValidateTypeIterator.convertLocalItemsToDataFrame(items, itemType, context, true, staticContext);
+        return JSONiqValidateIterator.convertLocalItemsToDataFrame(items, itemType, context, true, staticContext);
     }
 
     @Override
@@ -59,7 +59,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
             itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
                     rdd, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
         }
-        return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
+        return JSONiqValidateIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
     }
 
     public HomogeneousItemDataFrame fromPlan(ItemRuntimePlan plan, DynamicContext context) {

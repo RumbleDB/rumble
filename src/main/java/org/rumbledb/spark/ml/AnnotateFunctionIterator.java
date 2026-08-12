@@ -13,7 +13,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
@@ -44,18 +44,18 @@ public class AnnotateFunctionIterator extends ItemRuntimePlan implements DataFra
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = inputDataAsDataFrame.toRDD(getMetadata());
-                return ValidateTypeIterator.convertRDDToValidDataFrame(
+                return JSONiqValidateIterator.convertRDDToValidDataFrame(
                         inputDataAsRDDOfItems, schemaType, context, true, this.staticContext);
             }
 
             if (inputDataIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return ValidateTypeIterator.convertRDDToValidDataFrame(
+                return JSONiqValidateIterator.convertRDDToValidDataFrame(
                         rdd, schemaType, context, true, this.staticContext);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return ValidateTypeIterator.convertLocalItemsToDataFrame(
+            return JSONiqValidateIterator.convertLocalItemsToDataFrame(
                     items, schemaType, context, true, this.staticContext);
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
