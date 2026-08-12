@@ -393,15 +393,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             } else if (child instanceof XQueryParser.SchemaImportContext) {
                 // Not supported yet; previously skipped as well.
             } else if (child instanceof XQueryParser.ModuleImportContext namespace) {
-                LibraryModule libraryModule = this.processModuleImport(namespace);
-                libraryModules.add(libraryModule);
-                if (namespaces.contains(libraryModule.getNamespace())) {
+                String importedNamespace = URILiteralUtils.normalizeAsAnyURI(
+                    processURILiteral(namespace.targetNamespace)
+                );
+                if (namespaces.contains(importedNamespace)) {
                     throw new DuplicateModuleTargetNamespaceException(
-                            "Duplicate module target namespace: " + libraryModule.getNamespace(),
+                            "Duplicate module target namespace: " + importedNamespace,
                             createMetadataFromContext(namespace)
                     );
                 }
-                namespaces.add(libraryModule.getNamespace());
+                namespaces.add(importedNamespace);
+                libraryModules.add(this.processModuleImport(namespace));
             }
         }
 
@@ -3792,7 +3794,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (ctx.ncName() != null) {
             bindNamespace(
                 ctx.ncName().getText(),
-                libraryModule.getNamespace(),
+                namespace,
                 metadata
             );
         }
