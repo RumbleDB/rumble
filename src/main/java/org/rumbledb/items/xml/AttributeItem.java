@@ -165,7 +165,8 @@ public class AttributeItem extends AbstractNodeItem {
             Item typedValue = CastIterator.castItemToType(
                     ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
                     this.typeAnnotation,
-                    ExceptionMetadata.EMPTY_METADATA);
+                    ExceptionMetadata.EMPTY_METADATA,
+                    NamespaceBindingUtils.namespaceResolver(this.parent));
             return Collections.singletonList(typedValue);
         }
         return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));

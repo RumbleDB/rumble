@@ -229,8 +229,8 @@ import org.rumbledb.runtime.scripting.mutation.AssignStatementIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.CastableIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.runtime.typing.TreatIterator;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.expression.AppendExpressionIterator;
 import org.rumbledb.runtime.update.expression.CreateCollectionIterator;
 import org.rumbledb.runtime.update.expression.DeleteExpressionIterator;
@@ -263,6 +263,7 @@ import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.TextNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.TextNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.UnaryLookupIterator;
+import org.rumbledb.runtime.xml.XQueryValidateIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -1466,7 +1467,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitValidateTypeExpression(ValidateTypeExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
-        ItemRuntimePlan runtimeIterator = new ValidateTypeIterator(
+        ItemRuntimePlan runtimeIterator = new JSONiqValidateIterator(
                 childExpression,
                 expression.getSequenceType().getItemType(),
                 expression.isValidate(),
@@ -1484,8 +1485,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
     @Override
     public ItemRuntimePlan visitValidateExpression(ValidateExpression expression, ItemRuntimePlan argument) {
-        throw new UnsupportedFeatureException(
-                "XML Schema validate expressions are not executable yet.", expression.getMetadata());
+        if (expression.getValidationMode() != ValidateExpression.ValidationMode.TYPE) {
+            throw new UnsupportedFeatureException(
+                    "Strict and lax XML Schema validation are not executable yet.", expression.getMetadata());
+        }
+        ItemRuntimePlan operand = this.visit(expression.getMainExpression(), argument);
+        return new XQueryValidateIterator(
+                operand,
+                BuiltinTypesCatalogue.getItemTypeByName(expression.getTypeName()),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
