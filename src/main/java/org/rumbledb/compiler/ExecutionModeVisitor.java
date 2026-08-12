@@ -82,6 +82,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.TransformExpression;
@@ -689,6 +690,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             default:
                 return argument;
         }
+    }
+
+    @Override
+    public StaticContext visitValidateExpression(ValidateExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
     }
 
     @Override

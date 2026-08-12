@@ -37,6 +37,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.ExecutionMode;
@@ -119,6 +120,7 @@ import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
@@ -1478,6 +1480,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return resultIterator;
+    }
+
+    @Override
+    public ItemRuntimePlan visitValidateExpression(ValidateExpression expression, ItemRuntimePlan argument) {
+        throw new UnsupportedFeatureException(
+                "XML Schema validate expressions are not executable yet.", expression.getMetadata());
     }
 
     @Override
