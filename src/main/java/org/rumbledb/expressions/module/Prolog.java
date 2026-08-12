@@ -40,6 +40,7 @@ public class Prolog extends Node {
     private List<Node> declarations;
 
     private final List<LibraryModule> importedModules;
+    private final List<SchemaImport> schemaImports;
 
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
@@ -51,10 +52,15 @@ public class Prolog extends Node {
         this.declarations.addAll(functionDeclarations);
         this.declarations.addAll(typeDeclarations);
         this.importedModules = new ArrayList<>();
+        this.schemaImports = new ArrayList<>();
     }
 
     public void addImportedModule(LibraryModule importedModule) {
         this.importedModules.add(importedModule);
+    }
+
+    public void addSchemaImport(SchemaImport schemaImport) {
+        this.schemaImports.add(schemaImport);
     }
 
     public List<FunctionDeclaration> getFunctionDeclarations() {
@@ -110,6 +116,7 @@ public class Prolog extends Node {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
+        result.addAll(this.schemaImports);
         result.addAll(this.importedModules);
         result.addAll(this.declarations);
         return result;
@@ -117,9 +124,14 @@ public class Prolog extends Node {
 
     @Override
     public void serializeToJSONiq(StringBuilder sb, int indent) {
-        for (int i = 0; i < this.declarations.size(); i++) {
-            this.declarations.get(i).serializeToJSONiq(sb, indent);
-            this.importedModules.get(i).serializeToJSONiq(sb, indent);
+        for (SchemaImport schemaImport : this.schemaImports) {
+            schemaImport.serializeToJSONiq(sb, indent);
+        }
+        for (LibraryModule importedModule : this.importedModules) {
+            importedModule.serializeToJSONiq(sb, indent);
+        }
+        for (Node declaration : this.declarations) {
+            declaration.serializeToJSONiq(sb, indent);
         }
     }
 
