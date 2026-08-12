@@ -20,14 +20,15 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Expression representing a computed processing instruction constructor.
@@ -73,11 +74,7 @@ public class ComputedPIConstructorExpression extends Expression {
      * @param contentExpression The content expression
      * @param metadata The exception metadata
      */
-    public ComputedPIConstructorExpression(
-            String target,
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+    public ComputedPIConstructorExpression(String target, Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.target = target;
         this.nameExpression = null;
@@ -92,10 +89,7 @@ public class ComputedPIConstructorExpression extends Expression {
      * @param metadata The exception metadata
      */
     public ComputedPIConstructorExpression(
-            Expression nameExpression,
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression nameExpression, Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.target = null;
         this.nameExpression = nameExpression;
@@ -141,4 +135,3 @@ public class ComputedPIConstructorExpression extends Expression {
         sb.append(" }\n");
     }
 }
-

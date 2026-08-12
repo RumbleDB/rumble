@@ -26,9 +26,8 @@ public class RuntimeTestsNoParallelism extends RuntimeTests {
 
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(runtime -> runtime.resultsSizeCap(200).useParallelExecution(false))
-            .configureSemantics(semantics -> semantics.laxJSONNullValidation(false))
-            .build();
+                .configureRuntime(runtime -> runtime.resultsSizeCap(200).useParallelExecution(false))
+                .configureSemantics(semantics -> semantics.laxJSONNullValidation(false))
+                .build();
     }
-
 }

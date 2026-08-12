@@ -20,11 +20,11 @@
 
 package org.rumbledb.exceptions;
 
-import lombok.Value;
-import lombok.experimental.Accessors;
-
 import java.io.Serial;
 import java.io.Serializable;
+
+import lombok.Value;
+import lombok.experimental.Accessors;
 
 @Value
 @Accessors(fluent = true)
@@ -34,5 +34,4 @@ public class SourcePosition implements Serializable {
 
     int line;
     int column;
-
 }

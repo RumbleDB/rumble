@@ -20,14 +20,15 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Expression representing a computed namespace constructor.
@@ -51,11 +52,7 @@ public class ComputedNamespaceConstructorExpression extends Expression {
      * @param uriExpression The URI expression
      * @param metadata The exception metadata
      */
-    public ComputedNamespaceConstructorExpression(
-            String prefix,
-            Expression uriExpression,
-            ExceptionMetadata metadata
-    ) {
+    public ComputedNamespaceConstructorExpression(String prefix, Expression uriExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.prefix = prefix;
         this.prefixExpression = null;
@@ -70,10 +67,7 @@ public class ComputedNamespaceConstructorExpression extends Expression {
      * @param metadata The exception metadata
      */
     public ComputedNamespaceConstructorExpression(
-            Expression prefixExpression,
-            Expression uriExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression prefixExpression, Expression uriExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.prefix = null;
         this.prefixExpression = prefixExpression;

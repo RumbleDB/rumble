@@ -18,6 +18,7 @@
 package org.rumbledb.runtime.cursor;
 
 import lombok.NonNull;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 

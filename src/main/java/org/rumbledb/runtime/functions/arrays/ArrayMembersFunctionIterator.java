@@ -20,35 +20,31 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.navigation.ArrayMembersClosure;
-
 import java.io.Serial;
 import java.util.List;
 
-public class ArrayMembersFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.navigation.ArrayMembersClosure;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
+public class ArrayMembersFunctionIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
 
-    public ArrayMembersFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayMembersFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
     }
@@ -65,10 +61,11 @@ public class ArrayMembersFunctionIterator extends ItemRuntimePlan
                     if (item.isArrayOfItems()) {
                         return item.getItemMembers().iterator();
                     }
-                    return item.getSequenceMembers().stream().flatMap(List::stream).iterator();
+                    return item.getSequenceMembers().stream()
+                            .flatMap(List::stream)
+                            .iterator();
                 },
-                getMetadata()
-        );
+                getMetadata());
     }
 
     @Override
@@ -78,7 +75,4 @@ public class ArrayMembersFunctionIterator extends ItemRuntimePlan
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
     }
-
-
-
 }

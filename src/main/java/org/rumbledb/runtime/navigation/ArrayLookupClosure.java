@@ -20,18 +20,20 @@
 
 package org.rumbledb.runtime.navigation;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import org.rumbledb.api.Item;
+
 public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Integer lookup;
 
     public ArrayLookupClosure(Integer lookup) {
@@ -61,4 +63,5 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
         }
         return results.iterator();
     }
-};
+}
+;

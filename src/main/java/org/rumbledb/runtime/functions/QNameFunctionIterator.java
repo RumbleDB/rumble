@@ -17,8 +17,8 @@
 
 package org.rumbledb.runtime.functions;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -27,10 +27,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-
-import java.io.Serial;
-import java.util.List;
 
 /**
  * {@code fn:QName($paramURI as xs:string?, $paramQName as xs:string) as xs:QName}
@@ -43,10 +41,7 @@ public class QNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public QNameFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public QNameFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -58,15 +53,11 @@ public class QNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         Item lexicalItem = this.getChild(1).materializeFirstOrNull(context);
         if (lexicalItem == null) {
             throw new UnexpectedTypeException(
-                    "fn:QName: second argument must be xs:string (got empty sequence).",
-                    getMetadata()
-            );
+                    "fn:QName: second argument must be xs:string (got empty sequence).", getMetadata());
         }
         String lexicalString = lexicalItem.getStringValue();
 
         Name expanded = NamespaceBindingUtils.parseFnQName(uriString, lexicalString, getMetadata());
         return ItemFactory.getInstance().createQNameItem(expanded);
     }
-
-
 }

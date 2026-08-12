@@ -1,12 +1,9 @@
 package org.rumbledb.runtime.typing;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-
-import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -17,6 +14,9 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -25,37 +25,35 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.TypeMappings;
 import org.rumbledb.types.SequenceType.Arity;
-
-import org.rumbledb.spark.SparkSessionManager;
-
-import lombok.NonNull;
-import java.io.Serial;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.List;
-
+import org.rumbledb.types.TypeMappings;
 
 public class TreatIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item>,
-            UpdatingRuntimePlan,
-            NativeQueryRuntimePlan {
+        implements LocalRuntimePlan<Item>,
+                RDDRuntimePlan<Item>,
+                DataFrameRuntimePlan<Item>,
+                UpdatingRuntimePlan,
+                NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
     private final TreatTypeValidator validator;
 
@@ -63,20 +61,16 @@ public class TreatIterator extends ItemRuntimePlan
             ItemRuntimePlan iterator,
             SequenceType sequenceType,
             ErrorCode errorCode,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Collections.singletonList(iterator), staticContext);
         this.iterator = iterator;
         this.validator = new TreatTypeValidator(sequenceType, errorCode, getMetadata());
-        if (
-            !this.staticContext.getExecutionMode().equals(ExecutionMode.LOCAL)
+        if (!this.staticContext.getExecutionMode().equals(ExecutionMode.LOCAL)
                 && (sequenceType.isEmptySequence()
-                    || sequenceType.getArity().equals(Arity.One)
-                    || sequenceType.getArity().equals(Arity.OneOrZero))
-        ) {
+                        || sequenceType.getArity().equals(Arity.One)
+                        || sequenceType.getArity().equals(Arity.OneOrZero))) {
             throw new OurBadException(
-                    "A treat as iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
-            );
+                    "A treat as iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?.");
         }
     }
 
@@ -111,10 +105,7 @@ public class TreatIterator extends ItemRuntimePlan
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         this.validator.resolve(dynamicContext);
-        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-            this.iterator,
-            dynamicContext
-        );
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, dynamicContext);
         this.validator.validateEmpty(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;
@@ -133,23 +124,17 @@ public class TreatIterator extends ItemRuntimePlan
 
     /**
      * Converts a homogeneous RDD of atomic values to a DataFrame
-     * 
+     *
      * @param rdd the RDD containing the atomic values.
      * @param itemType the dynamic type of these values.
      * @return
      */
     public static HomogeneousItemDataFrame convertToDataFrame(
-            JavaRDD<?> rdd,
-            ItemType itemType,
-            RuntimeStaticContext staticContext
-    ) {
-        List<StructField> fields = Collections.singletonList(
-            DataTypes.createStructField(
+            JavaRDD<?> rdd, ItemType itemType, RuntimeStaticContext staticContext) {
+        List<StructField> fields = Collections.singletonList(DataTypes.createStructField(
                 SparkSessionManager.nonObjectJSONiqItemColumnName,
                 TypeMappings.getDataFrameDataTypeFromItemType(itemType, staticContext),
-                true
-            )
-        );
+                true));
         StructType schema = DataTypes.createStructType(fields);
 
         JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i));
@@ -170,10 +155,7 @@ public class TreatIterator extends ItemRuntimePlan
         private int resultCount;
 
         private EvaluationCursor(
-                @NonNull ItemRuntimePlan childPlan,
-                @NonNull DynamicContext context,
-                TreatTypeValidator validator
-        ) {
+                @NonNull ItemRuntimePlan childPlan, @NonNull DynamicContext context, TreatTypeValidator validator) {
             super(Objects.requireNonNull(validator, "validator").getMetadata());
             this.childPlan = childPlan;
             this.context = context;
@@ -197,9 +179,7 @@ public class TreatIterator extends ItemRuntimePlan
         protected Item nextLocal() {
             if (this.nextResult == null) {
                 throw new IteratorFlowException(
-                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE,
-                        this.validator.getMetadata()
-                );
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE, this.validator.getMetadata());
             }
             Item result = this.nextResult;
             setNextResult();
@@ -224,8 +204,7 @@ public class TreatIterator extends ItemRuntimePlan
 
             Item candidate = this.childCursor.next();
             if (candidate != null && !candidate.getDynamicType().isResolved()) {
-                candidate.getDynamicType()
-                    .resolve(this.context, this.validator.getMetadata());
+                candidate.getDynamicType().resolve(this.context, this.validator.getMetadata());
             }
             if (candidate == null) {
                 return;

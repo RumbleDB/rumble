@@ -20,29 +20,29 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 
-import lombok.NonNull;
-import java.io.Serial;
-import java.util.List;
-
 public class ParallelizeFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -50,10 +50,7 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan partitionsIterator;
 
-    public ParallelizeFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public ParallelizeFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.partitionsIterator = this.getChildren().size() > 1 ? this.getChild(1) : null;
@@ -64,12 +61,7 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
         if (this.partitionsIterator == null) {
             return this.sequenceIterator.getCursor(context);
         }
-        return new EvaluationCursor(
-                this.sequenceIterator,
-                this.partitionsIterator,
-                context,
-                getMetadata()
-        );
+        return new EvaluationCursor(this.sequenceIterator, this.partitionsIterator, context, getMetadata());
     }
 
     @Override
@@ -80,50 +72,38 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
             if (this.partitionsIterator == null) {
                 return rdd;
             }
-            return rdd.repartition(
-                getNumberOfPartitions(this.partitionsIterator, context, getMetadata()).getIntValue()
-            );
+            return rdd.repartition(getNumberOfPartitions(this.partitionsIterator, context, getMetadata())
+                    .getIntValue());
         }
         List<Item> contents = this.sequenceIterator.materialize(context);
         if (this.partitionsIterator == null) {
             return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         }
         Item partitions = getNumberOfPartitions(this.partitionsIterator, context, getMetadata());
-        return SparkSessionManager.getInstance()
-            .getJavaSparkContext()
-            .parallelize(contents, partitions.getIntValue());
+        return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents, partitions.getIntValue());
     }
 
     private static Item getNumberOfPartitions(
-            ItemRuntimePlan partitionsPlan,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            ItemRuntimePlan partitionsPlan, DynamicContext context, ExceptionMetadata metadata) {
         Item partitions;
         try {
             partitions = partitionsPlan.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but a sequence with more than one item is supplied.",
-                    metadata
-            );
+                    metadata);
         }
         if (partitions == null) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but an empty sequence is supplied.",
-                    metadata
-            );
+                    metadata);
         }
         if (!partitions.isInteger()) {
             throw new UnexpectedTypeException(
-                    "The second parameter of parallelize must be an integer, but a non-integer is supplied.",
-                    metadata
-            );
+                    "The second parameter of parallelize must be an integer, but a non-integer is supplied.", metadata);
         }
         return partitions;
     }
-
-
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
@@ -137,8 +117,7 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
                 @NonNull ItemRuntimePlan sequencePlan,
                 @NonNull ItemRuntimePlan partitionsPlan,
                 @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
+                @NonNull ExceptionMetadata metadata) {
             super(metadata);
             this.sequencePlan = sequencePlan;
             this.partitionsPlan = partitionsPlan;

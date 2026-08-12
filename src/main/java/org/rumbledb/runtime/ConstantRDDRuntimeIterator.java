@@ -20,31 +20,25 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-
 import java.io.Serial;
 import java.util.List;
 
-public class ConstantRDDRuntimeIterator extends ItemRuntimePlan
-        implements
-            RDDRuntimePlan<Item> {
+import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
+public class ConstantRDDRuntimeIterator extends ItemRuntimePlan implements RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     private final JavaRDD<Item> items;
 
-    public ConstantRDDRuntimeIterator(
-            JavaRDD<Item> items,
-            RuntimeStaticContext staticContext
-    ) {
+    public ConstantRDDRuntimeIterator(JavaRDD<Item> items, RuntimeStaticContext staticContext) {
         super(List.of(), staticContext);
         this.items = items;
     }

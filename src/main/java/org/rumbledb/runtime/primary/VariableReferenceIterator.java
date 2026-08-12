@@ -20,15 +20,17 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-
-import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.types.*;
+
+import lombok.Getter;
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -36,38 +38,29 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
-import lombok.NonNull;
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 public class VariableReferenceIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item>,
-            NativeQueryRuntimePlan {
-
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     @Getter
     private final Name variableName;
 
-    public VariableReferenceIterator(
-            Name variableName,
-            RuntimeStaticContext staticContext
-    ) {
+    public VariableReferenceIterator(Name variableName, RuntimeStaticContext staticContext) {
         super(List.of(), staticContext);
         this.variableName = variableName;
     }
@@ -87,7 +80,6 @@ public class VariableReferenceIterator extends ItemRuntimePlan
         return context.getVariableValues().getDataFrameVariableValue(this.variableName, getMetadata());
     }
 
-
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         Name name = nativeClauseContext.getVariable(this.variableName);
@@ -97,9 +89,10 @@ public class VariableReferenceIterator extends ItemRuntimePlan
         }
         // check if name is in the schema
         if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, name)) {
-            List<Item> items = nativeClauseContext.getContext()
-                .getVariableValues()
-                .getLocalVariableValue(this.variableName, getMetadata());
+            List<Item> items = nativeClauseContext
+                    .getContext()
+                    .getVariableValues()
+                    .getLocalVariableValue(this.variableName, getMetadata());
             if (items.size() != 1) {
                 // only possible to turn into native, sequence of length 1
                 return NativeClauseContext.NoNativeQuery;
@@ -129,15 +122,10 @@ public class VariableReferenceIterator extends ItemRuntimePlan
             variableType = variableType.getArrayContentFacet();
         }
         NativeClauseContext newContext = new NativeClauseContext(
-                nativeClauseContext,
-                "`" + escapedName + "`",
-                new SequenceType(variableType, arity)
-        );
+                nativeClauseContext, "`" + escapedName + "`", new SequenceType(variableType, arity));
         newContext.setSchema(fieldType);
         return newContext;
     }
-
-
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
@@ -155,10 +143,7 @@ public class VariableReferenceIterator extends ItemRuntimePlan
         private int currentIndex;
 
         private EvaluationCursor(
-                @NonNull Name variableName,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
+                @NonNull Name variableName, @NonNull DynamicContext context, @NonNull ExceptionMetadata metadata) {
             super(metadata);
             this.variableName = variableName;
             this.context = context;
@@ -167,8 +152,7 @@ public class VariableReferenceIterator extends ItemRuntimePlan
 
         @Override
         protected void openLocal() {
-            this.items = this.context.getVariableValues()
-                .getLocalVariableValue(this.variableName, this.metadata);
+            this.items = this.context.getVariableValues().getLocalVariableValue(this.variableName, this.metadata);
             this.currentIndex = 0;
         }
 
@@ -181,9 +165,7 @@ public class VariableReferenceIterator extends ItemRuntimePlan
         protected Item nextLocal() {
             if (!hasNextLocal()) {
                 throw new IteratorFlowException(
-                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + this.variableName,
-                        this.metadata
-                );
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + this.variableName, this.metadata);
             }
             return this.items.get(this.currentIndex++);
         }
@@ -193,6 +175,5 @@ public class VariableReferenceIterator extends ItemRuntimePlan
             this.items = null;
             this.currentIndex = 0;
         }
-
     }
 }

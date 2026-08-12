@@ -21,14 +21,15 @@ package org.rumbledb.config.model;
 import java.io.Serializable;
 import java.util.Objects;
 
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import org.rumbledb.exceptions.CliException;
-
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.extern.jackson.Jacksonized;
+
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+
+import org.rumbledb.exceptions.CliException;
 
 @Value
 @NoArgsConstructor(force = true)
@@ -54,13 +55,10 @@ public class SemanticsConfig implements Serializable {
             Boolean laxJSONNullValidation,
             String queryLanguage,
             String xmlVersion,
-            String staticBaseUri
-    ) {
+            String staticBaseUri) {
         this.datesWithTimeZone = Objects.requireNonNullElse(datesWithTimeZone, DEFAULT_DATES_WITH_TIMEZONE);
-        this.laxJSONNullValidation = Objects.requireNonNullElse(
-            laxJSONNullValidation,
-            DEFAULT_LAX_JSON_NULL_VALIDATION
-        );
+        this.laxJSONNullValidation =
+                Objects.requireNonNullElse(laxJSONNullValidation, DEFAULT_LAX_JSON_NULL_VALIDATION);
         this.queryLanguage = Objects.requireNonNullElse(queryLanguage, DEFAULT_QUERY_LANGUAGE);
         this.xmlVersion = Objects.requireNonNullElse(xmlVersion, DEFAULT_XML_VERSION);
         this.staticBaseUri = staticBaseUri;
@@ -76,9 +74,7 @@ public class SemanticsConfig implements Serializable {
             return normalized;
         }
 
-        throw new CliException(
-                "Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ")."
-        );
+        throw new CliException("Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ").");
     }
 
     @JsonPOJOBuilder(withPrefix = "")

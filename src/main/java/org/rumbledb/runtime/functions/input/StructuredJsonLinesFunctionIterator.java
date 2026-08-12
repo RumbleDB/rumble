@@ -20,35 +20,31 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
 
 import org.apache.spark.SparkException;
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
 
 public class StructuredJsonLinesFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StructuredJsonLinesFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StructuredJsonLinesFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -62,10 +58,10 @@ public class StructuredJsonLinesFunctionIterator extends ItemRuntimePlan impleme
         }
         try {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .option("mode", "FAILFAST")
-                .json(FileSystemUtil.convertURIToStringForSpark(uri));
+                    .getOrCreateSession()
+                    .read()
+                    .option("mode", "FAILFAST")
+                    .json(FileSystemUtil.convertURIToStringForSpark(uri));
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
@@ -74,10 +70,9 @@ public class StructuredJsonLinesFunctionIterator extends ItemRuntimePlan impleme
             if (e instanceof SparkException) {
                 throw new RumbleException(
                         "File "
-                            + uri
-                            + " contains a malformed JSON document that does not fit into the JSON lines format.",
-                        getMetadata()
-                );
+                                + uri
+                                + " contains a malformed JSON document that does not fit into the JSON lines format.",
+                        getMetadata());
             }
             throw e;
         }

@@ -17,16 +17,15 @@
 
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * XPath/XQuery map:contains($map, $key) implementation.
@@ -39,10 +38,7 @@ public class MapContainsFunctionIterator extends AbstractAtMostOneItemRuntimePla
     private final ItemRuntimePlan mapIterator;
     private final ItemRuntimePlan keyIterator;
 
-    public MapContainsFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MapContainsFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.mapIterator = arguments.get(0);
         this.keyIterator = arguments.get(1);

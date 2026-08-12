@@ -1,28 +1,26 @@
 package org.rumbledb.items;
 
-
 import java.io.Serial;
 import java.time.OffsetDateTime;
 import java.time.Year;
 import java.time.ZoneOffset;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class gYearItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private boolean hasTimeZone;
     private Year year;
     private ZoneOffset offset;
-    private static final Pattern gYearRegex = Pattern.compile(
-        "-?([1-9][0-9]{3,}|0[0-9]{3})(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
-    );
+    private static final Pattern gYearRegex =
+            Pattern.compile("-?([1-9][0-9]{3,}|0[0-9]{3})(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
 
     gYearItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.year = Year.of(dateTime.getYear());
@@ -66,11 +64,10 @@ public class gYearItem extends AbstractAtomicItem {
     @Override
     public String getStringValue() {
         return String.format(
-            "%s%04d%s",
-            this.year.getValue() < 0 ? "-" : "",
-            Math.abs(this.year.getValue()),
-            this.hasTimeZone ? this.offset.toString() : ""
-        );
+                "%s%04d%s",
+                this.year.getValue() < 0 ? "-" : "",
+                Math.abs(this.year.getValue()),
+                this.hasTimeZone ? this.offset.toString() : "");
     }
 
     @Override
@@ -82,8 +79,6 @@ public class gYearItem extends AbstractAtomicItem {
     public boolean hasTimeZone() {
         return this.hasTimeZone;
     }
-
-
 
     @Override
     public boolean getEffectiveBooleanValue() {
@@ -103,14 +98,6 @@ public class gYearItem extends AbstractAtomicItem {
     @Override
     public OffsetDateTime getDateTimeValue() {
         return OffsetDateTime.of(
-            this.year.getValue(),
-            1,
-            1,
-            0,
-            0,
-            0,
-            0,
-            this.hasTimeZone ? this.offset : ZoneOffset.UTC
-        );
+                this.year.getValue(), 1, 1, 0, 0, 0, 0, this.hasTimeZone ? this.offset : ZoneOffset.UTC);
     }
 }

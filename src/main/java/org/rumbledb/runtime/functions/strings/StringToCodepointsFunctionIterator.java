@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,29 +31,20 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringToCodepointsFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StringToCodepointsFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new StringToCodepointsLocalCursor(
-                this.getChild(0),
-                context,
-                getMetadata()
-        );
+        return new StringToCodepointsLocalCursor(this.getChild(0), context, getMetadata());
     }
 
     private static final class StringToCodepointsLocalCursor extends AbstractLocalCursor<Item> {
@@ -63,10 +55,7 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
         private int position;
 
         private StringToCodepointsLocalCursor(
-                ItemRuntimePlan argumentPlan,
-                DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                ItemRuntimePlan argumentPlan, DynamicContext context, ExceptionMetadata metadata) {
             super(metadata);
             this.argumentPlan = argumentPlan;
             this.context = context;

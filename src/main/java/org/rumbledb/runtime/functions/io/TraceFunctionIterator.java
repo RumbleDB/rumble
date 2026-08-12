@@ -18,10 +18,12 @@
  *
  */
 
-
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
@@ -32,54 +34,33 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public TraceFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public TraceFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new TraceLocalCursor(
-                this.getChild(0),
-                this.getChildren().size() == 2 ? this.getChild(1) : null,
-                context,
-                getMetadata()
-        );
+                this.getChild(0), this.getChildren().size() == 2 ? this.getChild(1) : null, context, getMetadata());
     }
 
     private static void writeTrace(
-            Item result,
-            String label,
-            int position,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+            Item result, String label, int position, DynamicContext context, ExceptionMetadata metadata) {
         RumbleConfiguration configuration = context.getRumbleConfiguration();
         if (configuration == null || configuration.output().logPath() == null) {
             return;
         }
         URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            configuration.output().logPath(),
-            metadata
-        );
+                configuration.output().logPath(), metadata);
         FileSystemUtil.append(
-            uri,
-            Collections.singletonList(label + " [" + position + "]: " + result.serialize()),
-            metadata
-        );
+                uri, Collections.singletonList(label + " [" + position + "]: " + result.serialize()), metadata);
     }
 
     private static final class TraceLocalCursor extends AbstractLocalCursor<Item> {
@@ -96,8 +77,7 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
                 ItemRuntimePlan valuePlan,
                 ItemRuntimePlan labelPlan,
                 DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                ExceptionMetadata metadata) {
             super(metadata);
             this.valuePlan = valuePlan;
             this.labelPlan = labelPlan;
@@ -108,8 +88,8 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
         @Override
         protected void openLocal() {
             this.label = this.labelPlan == null
-                ? ""
-                : this.labelPlan.materializeFirstOrNull(this.context).getStringValue();
+                    ? ""
+                    : this.labelPlan.materializeFirstOrNull(this.context).getStringValue();
             this.position = 0;
             this.valueCursor = this.valuePlan.getCursor(this.context);
         }

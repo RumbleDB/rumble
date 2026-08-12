@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,22 +29,17 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.List;
 
 public class ExistsFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ExistsFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public ExistsFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
@@ -51,13 +47,11 @@ public class ExistsFunctionIterator extends AbstractAtMostOneItemRuntimePlan imp
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         if (this.getChild(0).getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             return ItemFactory.getInstance()
-                .createBooleanItem(
-                    !this.getChild(0)
-                        .getDataFrame(dynamicContext)
-                        .toRDD(this.getRuntimeStaticContext().getMetadata())
-                        .take(1)
-                        .isEmpty()
-                );
+                    .createBooleanItem(!this.getChild(0)
+                            .getDataFrame(dynamicContext)
+                            .toRDD(this.getRuntimeStaticContext().getMetadata())
+                            .take(1)
+                            .isEmpty());
         }
         if (this.getChild(0).getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
@@ -72,28 +66,22 @@ public class ExistsFunctionIterator extends AbstractAtMostOneItemRuntimePlan imp
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(
-            this.getChild(0),
-            nativeClauseContext
-        );
+        NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (childQuery != NativeClauseContext.NoNativeQuery) {
-            if (
-                childQuery.getResultingType().getItemType().isArrayItemType()
-                    || SequenceType.Arity.OneOrMore.isSubtypeOf(childQuery.getResultingType().getArity())
-            ) {
+            if (childQuery.getResultingType().getItemType().isArrayItemType()
+                    || SequenceType.Arity.OneOrMore.isSubtypeOf(
+                            childQuery.getResultingType().getArity())) {
                 String resultingQuery = String.format("size(%s) > 0", childQuery.getResultingQuery());
                 return new NativeClauseContext(
                         childQuery,
                         resultingQuery,
-                        new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
-                );
+                        new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
             } else {
                 String resultingQuery = String.format("not %s is null", childQuery.getResultingQuery());
                 return new NativeClauseContext(
                         childQuery,
                         resultingQuery,
-                        new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
-                );
+                        new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
             }
         }
         return NativeClauseContext.NoNativeQuery;

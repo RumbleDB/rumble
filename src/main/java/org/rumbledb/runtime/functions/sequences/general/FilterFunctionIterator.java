@@ -1,9 +1,8 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
-
-import org.rumbledb.runtime.EffectiveBooleanValue;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -12,27 +11,19 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
-public class FilterFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+public class FilterFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new FilterLocalCursor(
-                this.sequenceIterator,
-                this.predicateIterator,
-                context,
-                getRuntimeStaticContext()
-        );
+        return new FilterLocalCursor(this.sequenceIterator, this.predicateIterator, context, getRuntimeStaticContext());
     }
 
     @Serial
@@ -41,10 +32,7 @@ public class FilterFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan predicateIterator;
 
-    public FilterFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public FilterFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("fn:filter must have exactly two arguments.");
@@ -54,53 +42,41 @@ public class FilterFunctionIterator extends ItemRuntimePlan
     }
 
     private static Item resolvePredicate(
-            ItemRuntimePlan predicateIterator,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan predicateIterator, DynamicContext context, RuntimeStaticContext staticContext) {
         List<Item> predicateItems = predicateIterator.materialize(context);
         if (predicateItems.size() != 1) {
             throw new UnexpectedTypeException(
                     "The second argument of fn:filter must be a single function item [err:XPTY0004].",
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
         Item predicate = predicateItems.get(0);
         if (!acceptsSingleArgument(predicate)) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:filter must accept exactly one argument [err:XPTY0004].",
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
 
         return predicate;
     }
 
     private static boolean matches(
-            Item predicate,
-            Item item,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+            Item predicate, Item item, DynamicContext context, RuntimeStaticContext staticContext) {
         RuntimeStaticContext argumentContext = RuntimeStaticContext.builder()
-            .configuration(staticContext.getConfiguration())
-            .staticType(SequenceType.createSequenceType("item"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(staticContext.getMetadata())
-            .build();
+                .configuration(staticContext.getConfiguration())
+                .staticType(SequenceType.createSequenceType("item"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(staticContext.getMetadata())
+                .build();
         List<ItemRuntimePlan> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(new ConstantRuntimeIterator(item, argumentContext));
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
-            .configuration(staticContext.getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(staticContext.getMetadata())
-            .build();
+                .configuration(staticContext.getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(staticContext.getMetadata())
+                .build();
         ItemRuntimePlan callback = new DynamicFunctionCallIterator(
-                new ConstantRuntimeIterator(predicate, functionItemContext),
-                callbackArguments,
-                functionItemContext
-        );
+                new ConstantRuntimeIterator(predicate, functionItemContext), callbackArguments, functionItemContext);
         return EffectiveBooleanValue.evaluate(callback, context);
     }
 
@@ -125,8 +101,7 @@ public class FilterFunctionIterator extends ItemRuntimePlan
                 ItemRuntimePlan sequencePlan,
                 ItemRuntimePlan predicatePlan,
                 DynamicContext context,
-                RuntimeStaticContext staticContext
-        ) {
+                RuntimeStaticContext staticContext) {
             super(staticContext.getMetadata());
             this.sequencePlan = sequencePlan;
             this.predicatePlan = predicatePlan;

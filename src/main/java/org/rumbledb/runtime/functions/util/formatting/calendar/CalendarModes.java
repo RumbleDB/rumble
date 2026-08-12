@@ -1,67 +1,33 @@
 package org.rumbledb.runtime.functions.util.formatting.calendar;
 
-
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 public final class CalendarModes {
 
-    private CalendarModes() {
-    }
+    private CalendarModes() {}
 
     // Best-effort mappings from W3C calendar designators to ICU calendar keywords.
     // ICU provides the calendar data. If formatted dates are wrong for
     // these calendars, the ICU calendar may need
     // tuning to specification. This is not exhaustevly tested by the current QT3 test.
     private static final Map<String, String> ICU_TYPES = Map.ofEntries(
-        Map.entry("ISO", "gregorian"),
-        Map.entry("AD", "gregorian"),
-        Map.entry("CE", "gregorian"),
-        Map.entry("AH", "islamic"),
-        Map.entry("AP", "persian"),
-        Map.entry("AM", "hebrew"),
-        Map.entry("BE", "buddhist"),
-        Map.entry("JE", "japanese"),
-        Map.entry("CL", "chinese")
-    );
+            Map.entry("ISO", "gregorian"),
+            Map.entry("AD", "gregorian"),
+            Map.entry("CE", "gregorian"),
+            Map.entry("AH", "islamic"),
+            Map.entry("AP", "persian"),
+            Map.entry("AM", "hebrew"),
+            Map.entry("BE", "buddhist"),
+            Map.entry("JE", "japanese"),
+            Map.entry("CL", "chinese"));
 
     private static final Set<String> KNOWN_DESIGNATORS = Set.of(
-        "AD",
-        "AH",
-        "AME",
-        "AM",
-        "AP",
-        "AS",
-        "BE",
-        "CB",
-        "CE",
-        "CL",
-        "CS",
-        "EE",
-        "FE",
-        "ISO",
-        "JE",
-        "KE",
-        "KY",
-        "ME",
-        "MS",
-        "NS",
-        "OS",
-        "RS",
-        "SE",
-        "SH",
-        "SS",
-        "TE",
-        "VE",
-        "VS"
-    );
+            "AD", "AH", "AME", "AM", "AP", "AS", "BE", "CB", "CE", "CL", "CS", "EE", "FE", "ISO", "JE", "KE", "KY",
+            "ME", "MS", "NS", "OS", "RS", "SE", "SH", "SS", "TE", "VE", "VS");
 
-    private static final Set<String> JAVA_TIME_FIELD_DESIGNATORS = Set.of(
-        "ISO",
-        "AD",
-        "CE"
-    );
+    private static final Set<String> JAVA_TIME_FIELD_DESIGNATORS = Set.of("ISO", "AD", "CE");
 
     private static final String FALLBACK_DESIGNATOR = "AD";
     private static final String FALLBACK_ICU_TYPE = ICU_TYPES.get(FALLBACK_DESIGNATOR);
@@ -106,5 +72,4 @@ public final class CalendarModes {
         }
         return JAVA_TIME_FIELD_DESIGNATORS.contains(designator.toUpperCase(Locale.ROOT));
     }
-
 }

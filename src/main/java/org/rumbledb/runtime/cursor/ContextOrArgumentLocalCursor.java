@@ -17,17 +17,17 @@
 
 package org.rumbledb.runtime.cursor;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
 import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Resolves an explicit argument, or the context item when the argument is omitted, and maps the resolved value.
@@ -50,8 +50,7 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
             ItemRuntimePlan argumentPlan,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends List<? extends O>> mapper,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull ExceptionMetadata metadata) {
         super(metadata);
         this.argumentPlan = argumentPlan;
         this.context = context;
@@ -63,8 +62,7 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
             @NonNull ItemRuntimePlan argumentPlan,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends O> mapper,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull ExceptionMetadata metadata) {
         return new ContextOrArgumentLocalCursor<>(
                 argumentPlan,
                 context,
@@ -72,16 +70,14 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
                     O result = mapper.apply(item);
                     return result == null ? Collections.emptyList() : Collections.singletonList(result);
                 },
-                metadata
-        );
+                metadata);
     }
 
     public static <O> ContextOrArgumentLocalCursor<O> mapFirstArgumentOrContext(
             @NonNull List<? extends ItemRuntimePlan> argumentPlans,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends O> mapper,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull ExceptionMetadata metadata) {
         return new ContextOrArgumentLocalCursor<>(
                 argumentPlans.isEmpty() ? null : argumentPlans.get(0),
                 context,
@@ -89,16 +85,14 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
                     O result = mapper.apply(item);
                     return result == null ? Collections.emptyList() : Collections.singletonList(result);
                 },
-                metadata
-        );
+                metadata);
     }
 
     public static <O> ContextOrArgumentLocalCursor<O> flatMapArgument(
             @NonNull ItemRuntimePlan argumentPlan,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends List<? extends O>> mapper,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull ExceptionMetadata metadata) {
         return new ContextOrArgumentLocalCursor<>(argumentPlan, context, mapper, metadata);
     }
 
@@ -106,23 +100,19 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
             @NonNull List<? extends ItemRuntimePlan> argumentPlans,
             @NonNull DynamicContext context,
             @NonNull Function<? super Item, ? extends List<? extends O>> mapper,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull ExceptionMetadata metadata) {
         return new ContextOrArgumentLocalCursor<>(
-                argumentPlans.isEmpty() ? null : argumentPlans.get(0),
-                context,
-                mapper,
-                metadata
-        );
+                argumentPlans.isEmpty() ? null : argumentPlans.get(0), context, mapper, metadata);
     }
 
     @Override
     protected void openLocal() {
         Item argument = this.argumentPlan == null
-            ? this.context.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, this.metadata)
-                .get(0)
-            : this.argumentPlan.materializeFirstOrNull(this.context);
+                ? this.context
+                        .getVariableValues()
+                        .getLocalVariableValue(Name.CONTEXT_ITEM, this.metadata)
+                        .get(0)
+                : this.argumentPlan.materializeFirstOrNull(this.context);
         List<? extends O> mappedResults = this.mapper.apply(argument);
         this.results = mappedResults == null ? Collections.emptyList() : mappedResults;
         this.position = 0;

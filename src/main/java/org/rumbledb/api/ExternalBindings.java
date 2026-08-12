@@ -1,13 +1,14 @@
 package org.rumbledb.api;
 
+import java.util.List;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.rumbledb.bindings.ItemSequenceBinding;
+
 import org.rumbledb.bindings.DataFrameBinding;
+import org.rumbledb.bindings.ItemSequenceBinding;
 import org.rumbledb.bindings.LexicalBinding;
 import org.rumbledb.context.Name;
-
-import java.util.List;
 
 public class ExternalBindings {
     private final org.rumbledb.bindings.ExternalBindings bindings;

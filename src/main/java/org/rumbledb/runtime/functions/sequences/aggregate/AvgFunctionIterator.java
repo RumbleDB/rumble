@@ -20,7 +20,11 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -32,23 +36,15 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public AvgFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public AvgFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -58,11 +54,7 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         if (!child.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return computeLocalAverage(child, context, getMetadata());
         }
-        Item count = CountFunctionIterator.computeCount(
-            child,
-            context,
-            getMetadata()
-        );
+        Item count = CountFunctionIterator.computeCount(child, context, getMetadata());
         if (count.isInt() && count.getIntValue() == 0) {
             return null;
         }
@@ -70,24 +62,16 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             return null;
         }
         Item sum = SumFunctionIterator.computeSum(
-            ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
-            child,
-            context,
-            getMetadata()
-        );
+                ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO), child, context, getMetadata());
         return MultiplicativeOperationIterator.processItem(
-            sum,
-            count,
-            MultiplicativeExpression.MultiplicativeOperator.DIV,
-            getMetadata()
-        );
+                sum, count, MultiplicativeExpression.MultiplicativeOperator.DIV, getMetadata());
     }
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.getChild(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
-                new TreeMap<Name, DynamicContext.VariableDependency>();
+                    new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVERAGE);
             return result;
         } else {
@@ -95,11 +79,7 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
     }
 
-    private static Item computeLocalAverage(
-            ItemRuntimePlan plan,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+    private static Item computeLocalAverage(ItemRuntimePlan plan, DynamicContext context, ExceptionMetadata metadata) {
         Item sum = null;
         long count = 0;
         try (Cursor<Item> cursor = plan.getCursor(context)) {
@@ -112,10 +92,9 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             return null;
         }
         return MultiplicativeOperationIterator.processItem(
-            sum,
-            ItemFactory.getInstance().createLongItem(count),
-            MultiplicativeExpression.MultiplicativeOperator.DIV,
-            metadata
-        );
+                sum,
+                ItemFactory.getInstance().createLongItem(count),
+                MultiplicativeExpression.MultiplicativeOperator.DIV,
+                metadata);
     }
 }

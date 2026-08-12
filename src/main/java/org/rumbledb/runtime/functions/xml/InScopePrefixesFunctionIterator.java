@@ -19,20 +19,19 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Implementation of fn:in-scope-prefixes according to
@@ -59,21 +58,14 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public InScopePrefixesFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public InScopePrefixesFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ContextOrArgumentLocalCursor.flatMapArgument(
-            this.getChild(0),
-            context,
-            this::computeInScopePrefixes,
-            getMetadata()
-        );
+                this.getChild(0), context, this::computeInScopePrefixes, getMetadata());
     }
 
     /**
@@ -105,9 +97,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
                 // An explicit undeclaration xmlns="" is not an in-scope default namespace.
                 continue;
             }
-            result.add(
-                ItemFactory.getInstance().createStringItem(q == null ? "" : q.getLocalName())
-            );
+            result.add(ItemFactory.getInstance().createStringItem(q == null ? "" : q.getLocalName()));
         }
 
         return result;

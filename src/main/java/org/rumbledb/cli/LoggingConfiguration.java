@@ -23,6 +23,7 @@ import java.util.Locale;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.spi.StandardLevel;
+
 import org.rumbledb.config.model.DebugConfig;
 import org.rumbledb.exceptions.CliException;
 
@@ -31,17 +32,15 @@ public final class LoggingConfiguration {
     private static final Level DEFAULT_APPLICATION_LEVEL = Level.WARN;
     private static final Level DEFAULT_SPARK_LEVEL = Level.OFF;
     private static final String VALID_LEVELS = String.join(
-        ", ",
-        Arrays.stream(StandardLevel.values())
-            .map(StandardLevel::name)
-            .map(level -> level.toLowerCase(Locale.ROOT))
-            .toList()
-    );
+            ", ",
+            Arrays.stream(StandardLevel.values())
+                    .map(StandardLevel::name)
+                    .map(level -> level.toLowerCase(Locale.ROOT))
+                    .toList());
 
     private static DebugConfig currentDebugConfig = null;
 
-    private LoggingConfiguration() {
-    }
+    private LoggingConfiguration() {}
 
     static void configure(DebugConfig debugConfig) {
         currentDebugConfig = debugConfig;
@@ -88,14 +87,7 @@ public final class LoggingConfiguration {
             StandardLevel.valueOf(normalizedLevel);
         } catch (IllegalArgumentException e) {
             throw new CliException(
-                    "Invalid "
-                        + optionName
-                        + " value: "
-                        + rawLevel
-                        + ". Valid values are: "
-                        + VALID_LEVELS
-                        + "."
-            );
+                    "Invalid " + optionName + " value: " + rawLevel + ". Valid values are: " + VALID_LEVELS + ".");
         }
         return Level.toLevel(normalizedLevel);
     }

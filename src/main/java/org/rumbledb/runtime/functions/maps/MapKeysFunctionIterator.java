@@ -16,20 +16,18 @@
  */
 package org.rumbledb.runtime.functions.maps;
 
-
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:keys}:
@@ -40,19 +38,14 @@ import java.util.List;
  *
  * This built-in is local execution only (consistent with map/array accessors).
  */
-public class MapKeysFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+public class MapKeysFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     private final ItemRuntimePlan mapIterator;
 
-    public MapKeysFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MapKeysFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 1) {
             throw new OurBadException("map:keys must have exactly one argument.");
@@ -63,24 +56,16 @@ public class MapKeysFunctionIterator extends ItemRuntimePlan
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
-                () -> getKeys(this.mapIterator.materialize(context)).iterator(),
-                getMetadata()
-        );
+                () -> getKeys(this.mapIterator.materialize(context)).iterator(), getMetadata());
     }
 
     private List<Item> getKeys(List<Item> maps) {
         if (maps.size() != 1) {
-            throw new UnexpectedTypeException(
-                    "map:keys expects exactly one map argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("map:keys expects exactly one map argument.", getMetadata());
         }
         Item mapItem = maps.get(0);
         if (mapItem == null || !mapItem.isMap()) {
-            throw new UnexpectedTypeException(
-                    "Type error; argument to map:keys must be a map.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("Type error; argument to map:keys must be a map.", getMetadata());
         }
 
         // MapItem already enforces distinct atomic keys (via op:same-key) during construction/merge.

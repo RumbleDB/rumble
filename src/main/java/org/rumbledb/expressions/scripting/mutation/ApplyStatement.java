@@ -1,23 +1,21 @@
 package org.rumbledb.expressions.scripting.mutation;
 
+import java.util.Collections;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.statement.Statement;
 
-import java.util.Collections;
-import java.util.List;
-
 @Getter
 public class ApplyStatement extends Statement {
     private final Expression applyExpression;
 
-    public ApplyStatement(
-            Expression applyExpression,
-            ExceptionMetadata metadata
-    ) {
+    public ApplyStatement(Expression applyExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.applyExpression = applyExpression;
     }
@@ -36,5 +34,4 @@ public class ApplyStatement extends Statement {
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         this.applyExpression.serializeToJSONiq(sb, 0);
     }
-
 }

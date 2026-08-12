@@ -36,7 +36,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-
 public class MapItem extends AbstractMapItem {
 
     @Serial
@@ -107,9 +106,12 @@ public class MapItem extends AbstractMapItem {
         }
         return new MapItem(
                 this.keys.stream().map(item -> item.copy(mutable)).toList(),
-                this.values.stream().map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList()).toList(),
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                this.values.stream()
+                        .map(item -> item.stream()
+                                .map(subitem -> subitem.copy(mutable))
+                                .toList())
+                        .toList(),
+                ExceptionMetadata.EMPTY_METADATA);
     }
 
     private void rebuildKeyStringIndex() {
@@ -320,13 +322,10 @@ public class MapItem extends AbstractMapItem {
 
     // endregion maps
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.mapItem;
     }
-
 
     @Override
     public boolean getEffectiveBooleanValue() {
@@ -485,9 +484,7 @@ public class MapItem extends AbstractMapItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -515,5 +512,4 @@ public class MapItem extends AbstractMapItem {
             }
         }
     }
-
 }

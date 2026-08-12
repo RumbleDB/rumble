@@ -20,16 +20,15 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class CodepointEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -39,10 +38,7 @@ public class CodepointEqualFunctionIterator extends AbstractAtMostOneItemRuntime
     private final ItemRuntimePlan leftIterator;
     private final ItemRuntimePlan rightIterator;
 
-    public CodepointEqualFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public CodepointEqualFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.leftIterator = arguments.get(0);
         this.rightIterator = arguments.get(1);
@@ -62,7 +58,6 @@ public class CodepointEqualFunctionIterator extends AbstractAtMostOneItemRuntime
     }
 
     private static Item evaluate(Item left, Item right) {
-        return ItemFactory.getInstance()
-            .createBooleanItem(left.getStringValue().equals(right.getStringValue()));
+        return ItemFactory.getInstance().createBooleanItem(left.getStringValue().equals(right.getStringValue()));
     }
 }

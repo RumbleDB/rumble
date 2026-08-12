@@ -1,9 +1,9 @@
 package org.rumbledb.bindings;
 
+import java.util.Objects;
+
 import lombok.NoArgsConstructor;
 import lombok.Value;
-
-import java.util.Objects;
 
 @Value
 @NoArgsConstructor(force = true)

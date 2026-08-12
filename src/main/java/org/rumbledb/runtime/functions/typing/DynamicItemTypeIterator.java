@@ -1,25 +1,21 @@
 package org.rumbledb.runtime.functions.typing;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.ItemType;
-
-import java.io.Serial;
-import java.util.List;
 
 public class DynamicItemTypeIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DynamicItemTypeIterator(
-            List<ItemRuntimePlan> children,
-            RuntimeStaticContext staticContext
-    ) {
+    public DynamicItemTypeIterator(List<ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
@@ -32,7 +28,6 @@ public class DynamicItemTypeIterator extends AbstractAtMostOneItemRuntimePlan {
         ItemType commonType = getLeastCommonSupertype(structureItems);
         return ItemFactory.getInstance().createStringItem(commonType.getIdentifierString());
     }
-
 
     private static ItemType getLeastCommonSupertype(List<Item> structureItems) {
         ItemType structureCommonType = structureItems.get(0).getDynamicType();

@@ -1,5 +1,8 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
+import java.util.*;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -8,9 +11,6 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndefinedTypeException;
-
-import java.io.Serial;
-import java.util.*;
 
 public class ItemTypeReference extends AbstractItemType {
 
@@ -42,8 +42,6 @@ public class ItemTypeReference extends AbstractItemType {
             this.resolvedItemType.resolve(context, metadata);
         }
     }
-
-
 
     @Override
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
@@ -173,7 +171,6 @@ public class ItemTypeReference extends AbstractItemType {
     public boolean hasName() {
         return true;
     }
-
 
     @Override
     public Name getName() {

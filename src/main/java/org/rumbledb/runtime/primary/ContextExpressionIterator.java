@@ -20,11 +20,15 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -33,15 +37,11 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
-
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class ContextExpressionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
@@ -53,18 +53,12 @@ public class ContextExpressionIterator extends AbstractAtMostOneItemRuntimePlan 
     }
 
     @Override
-    public Item evaluateAtMostOne(
-            DynamicContext dynamicContext
-    ) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         return getContextItem(dynamicContext);
     }
 
     private Item getContextItem(DynamicContext dynamicContext) {
-        List<Item> items = dynamicContext.getVariableValues()
-            .getLocalVariableValue(
-                Name.CONTEXT_ITEM,
-                getMetadata()
-            );
+        List<Item> items = dynamicContext.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
         if (items.isEmpty()) {
             throw new UnexpectedTypeException("The context item cannot be an empty sequence.", getMetadata());
         }
@@ -91,15 +85,13 @@ public class ContextExpressionIterator extends AbstractAtMostOneItemRuntimePlan 
         if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, Name.CONTEXT_ITEM)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        StructField field = structSchema.fields()[structSchema.fieldIndex(
-            SparkSessionManager.nonObjectJSONiqItemColumnName
-        )];
+        StructField field =
+                structSchema.fields()[structSchema.fieldIndex(SparkSessionManager.nonObjectJSONiqItemColumnName)];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
         return new NativeClauseContext(
                 nativeClauseContext,
                 "`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`",
-                new SequenceType(variableType, SequenceType.Arity.One)
-        );
+                new SequenceType(variableType, SequenceType.Arity.One));
     }
 }

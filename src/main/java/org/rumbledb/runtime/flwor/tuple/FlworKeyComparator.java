@@ -20,25 +20,24 @@
 
 package org.rumbledb.runtime.flwor.tuple;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+
 public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final List<OrderByClauseAnnotatedChildIterator> expressions;
     private final ExceptionMetadata metadata;
 
     public FlworKeyComparator(
-            List<OrderByClauseAnnotatedChildIterator> expressions,
-            ExceptionMetadata exceptionMetadata
-    ) {
+            List<OrderByClauseAnnotatedChildIterator> expressions, ExceptionMetadata exceptionMetadata) {
         this.expressions = expressions;
         this.metadata = exceptionMetadata;
     }
@@ -63,5 +62,4 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
         return result;
     }
-
 }

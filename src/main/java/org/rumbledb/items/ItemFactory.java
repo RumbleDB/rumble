@@ -9,6 +9,8 @@ import java.time.Period;
 import java.util.List;
 import java.util.Map;
 
+import org.w3c.dom.Node;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -21,7 +23,6 @@ import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.w3c.dom.Node;
 
 public class ItemFactory {
 
@@ -64,10 +65,7 @@ public class ItemFactory {
     }
 
     public Item createLanguageItem(String s) {
-        return this.createAnnotatedItem(
-            this.createStringItem(s),
-            BuiltinTypesCatalogue.languageItem
-        );
+        return this.createAnnotatedItem(this.createStringItem(s), BuiltinTypesCatalogue.languageItem);
     }
 
     public Item createUntypedAtomicItem(String s) {
@@ -253,10 +251,7 @@ public class ItemFactory {
     }
 
     public Item createNCNameItem(String s) {
-        return this.createAnnotatedItem(
-            this.createStringItem(s),
-            BuiltinTypesCatalogue.NCNameItem
-        );
+        return this.createAnnotatedItem(this.createStringItem(s), BuiltinTypesCatalogue.NCNameItem);
     }
 
     public Item createHexBinaryItem(String s) {
@@ -306,11 +301,7 @@ public class ItemFactory {
     }
 
     public Item createObjectItem(
-            List<String> keys,
-            List<Item> values,
-            ExceptionMetadata itemMetadata,
-            boolean mutable
-    ) {
+            List<String> keys, List<Item> values, ExceptionMetadata itemMetadata, boolean mutable) {
         Item result = new ObjectItem(keys, values, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
@@ -340,11 +331,7 @@ public class ItemFactory {
         return result;
     }
 
-    public Item createMapItem(
-            Item onlyKey,
-            List<Item> onlyValue,
-            boolean mutable
-    ) {
+    public Item createMapItem(Item onlyKey, List<Item> onlyValue, boolean mutable) {
         if (!mutable) {
             return new MapEntryItem(onlyKey, onlyValue);
         }
@@ -353,19 +340,12 @@ public class ItemFactory {
         return new MapItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
     }
 
-    public Item createMapItemRemovingKeys(
-            Item original,
-            List<Item> keysToRemove
-    ) {
+    public Item createMapItemRemovingKeys(Item original, List<Item> keysToRemove) {
         original = rebaseDeepMapOverlay(original);
         return new MapWithRemovedEntryItem(original, keysToRemove);
     }
 
-    public Item createMapItemAddingKey(
-            Item original,
-            Item keyToAdd,
-            List<Item> valueToAdd
-    ) {
+    public Item createMapItemAddingKey(Item original, Item keyToAdd, List<Item> valueToAdd) {
         original = rebaseDeepMapOverlay(original);
         return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
     }
@@ -385,19 +365,11 @@ public class ItemFactory {
             return original;
         }
         return createMapItem(
-            original.getItemKeys(),
-            original.getSequenceValues(),
-            ExceptionMetadata.EMPTY_METADATA,
-            false
-        );
+                original.getItemKeys(), original.getSequenceValues(), ExceptionMetadata.EMPTY_METADATA, false);
     }
 
     public Item createMapItem(
-            List<Item> keys,
-            List<List<Item>> values,
-            ExceptionMetadata itemMetadata,
-            boolean mutable
-    ) {
+            List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
         if (!mutable && keys.size() == 1) {
             Item key = keys.get(0);
             return new MapEntryItem(key, values.get(0));
@@ -432,7 +404,7 @@ public class ItemFactory {
 
     /**
      * Create a text item.
-     * 
+     *
      * @param content The string content of the text item
      * @return The text item
      */
@@ -462,7 +434,7 @@ public class ItemFactory {
 
     /**
      * Create a document item.
-     * 
+     *
      * @param children The children items of the document
      * @return The document item
      */
@@ -471,11 +443,7 @@ public class ItemFactory {
     }
 
     public Item createXmlElementNode(
-            Node elementNode,
-            List<Item> children,
-            List<Item> attributes,
-            Map<String, String> namespaceBindings
-    ) {
+            Node elementNode, List<Item> children, List<Item> attributes, Map<String, String> namespaceBindings) {
         return new ElementItem(elementNode, children, attributes, namespaceBindings);
     }
 

@@ -20,9 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -34,24 +33,16 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
-public class ForEachPairFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+public class ForEachPairFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ForEachPairLocalCursor(
-                this.sequenceIterator1,
-                this.sequenceIterator2,
-                this.actionIterator,
-                this.staticContext,
-                context
-        );
+                this.sequenceIterator1, this.sequenceIterator2, this.actionIterator, this.staticContext, context);
     }
 
     @Serial
@@ -61,10 +52,7 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan sequenceIterator2;
     private final ItemRuntimePlan actionIterator;
 
-    public ForEachPairFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ForEachPairFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("fn:for-each-pair must have exactly three arguments.");
@@ -75,23 +63,18 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
     }
 
     private static Item resolveAction(
-            ItemRuntimePlan actionPlan,
-            RuntimeStaticContext staticContext,
-            DynamicContext context
-    ) {
+            ItemRuntimePlan actionPlan, RuntimeStaticContext staticContext, DynamicContext context) {
         List<Item> functionItems = actionPlan.materialize(context);
         if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The third argument of fn:for-each-pair must be a single function item [err:XPTY0004].",
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
         Item actionFunction = functionItems.get(0);
         if (actionFunction.getIdentifier().getArity() != 2) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:for-each-pair must accept exactly two arguments [err:XPTY0004].",
-                    staticContext.getMetadata()
-            );
+                    staticContext.getMetadata());
         }
 
         return actionFunction;
@@ -99,11 +82,11 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
 
     private static RuntimeStaticContext argumentContext(RuntimeStaticContext staticContext) {
         return RuntimeStaticContext.builder()
-            .configuration(staticContext.getConfiguration())
-            .staticType(SequenceType.createSequenceType("item"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(staticContext.getMetadata())
-            .build();
+                .configuration(staticContext.getConfiguration())
+                .staticType(SequenceType.createSequenceType("item"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(staticContext.getMetadata())
+                .build();
     }
 
     private static ItemRuntimePlan buildCallback(
@@ -111,18 +94,15 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
             Item first,
             Item second,
             RuntimeStaticContext argumentContext,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         return NamedFunctions.buildFunctionItemCallIterator(
-            action,
-            staticContext,
-            ExecutionMode.LOCAL,
-            List.of(
-                new ConstantRuntimeIterator(first, argumentContext),
-                new ConstantRuntimeIterator(second, argumentContext)
-            ),
-            false
-        );
+                action,
+                staticContext,
+                ExecutionMode.LOCAL,
+                List.of(
+                        new ConstantRuntimeIterator(first, argumentContext),
+                        new ConstantRuntimeIterator(second, argumentContext)),
+                false);
     }
 
     private static final class ForEachPairLocalCursor extends AbstractLocalCursor<Item> {
@@ -144,8 +124,7 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
                 ItemRuntimePlan secondPlan,
                 ItemRuntimePlan actionPlan,
                 RuntimeStaticContext staticContext,
-                DynamicContext context
-        ) {
+                DynamicContext context) {
             super(staticContext.getMetadata());
             this.firstPlan = firstPlan;
             this.secondPlan = secondPlan;
@@ -171,12 +150,11 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan
                     return false;
                 }
                 ItemRuntimePlan callback = buildCallback(
-                    this.action,
-                    this.firstItems.get(this.pairIndex),
-                    this.secondItems.get(this.pairIndex),
-                    this.argumentContext,
-                    this.staticContext
-                );
+                        this.action,
+                        this.firstItems.get(this.pairIndex),
+                        this.secondItems.get(this.pairIndex),
+                        this.argumentContext,
+                        this.staticContext);
                 this.pairIndex++;
                 this.callbackCursor = callback.getCursor(this.context);
             }

@@ -1,14 +1,14 @@
 package org.rumbledb.expressions.control;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 public class TypeSwitchExpression extends Expression {
@@ -21,8 +21,7 @@ public class TypeSwitchExpression extends Expression {
             Expression testCondition,
             List<TypeswitchCase> cases,
             TypeswitchCase defaultCase,
-            ExceptionMetadata metadataFromContext
-    ) {
+            ExceptionMetadata metadataFromContext) {
 
         super(metadataFromContext);
         this.testCondition = testCondition;

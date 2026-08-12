@@ -20,7 +20,11 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -28,12 +32,9 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Expression representing a computed attribute constructor.
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedAttributes">XQuery 3.1, 3.9.3.2: Computed Attribute
  *      Constructors</a>
  */
@@ -48,16 +49,13 @@ public class ComputedAttributeConstructorExpression extends Expression {
 
     /**
      * Constructor for static attribute name: attribute attributeName { value }
-     * 
+     *
      * @param attributeName The static attribute name
      * @param valueExpression The value expression
      * @param metadata The exception metadata
      */
     public ComputedAttributeConstructorExpression(
-            Name attributeName,
-            Expression valueExpression,
-            ExceptionMetadata metadata
-    ) {
+            Name attributeName, Expression valueExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.attributeName = attributeName;
         this.nameExpression = null;
@@ -66,16 +64,13 @@ public class ComputedAttributeConstructorExpression extends Expression {
 
     /**
      * Constructor for dynamic attribute name: attribute { nameExpression } { value }
-     * 
+     *
      * @param nameExpression The dynamic attribute name expression
      * @param valueExpression The value expression
      * @param metadata The exception metadata
      */
     public ComputedAttributeConstructorExpression(
-            Expression nameExpression,
-            Expression valueExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression nameExpression, Expression valueExpression, ExceptionMetadata metadata) {
         super(metadata);
         if (nameExpression == null) {
             throw new OurBadException("Dynamic computed attribute constructors must have a name expression.");
@@ -87,7 +82,7 @@ public class ComputedAttributeConstructorExpression extends Expression {
 
     /**
      * Check if the attribute has a static name
-     * 
+     *
      * @return True if the attribute has a static name, false otherwise
      */
     public boolean hasStaticName() {

@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
-
 final class ParsedPresentationModifier {
 
     static final char NO_SECOND_MODIFIER = '\0';
@@ -13,32 +12,21 @@ final class ParsedPresentationModifier {
     final char secondModifier;
     final String formatSpecifier;
 
-    private ParsedPresentationModifier(
-            String firstPresentationModifier,
-            char secondModifier,
-            String formatSpecifier
-    ) {
+    private ParsedPresentationModifier(String firstPresentationModifier, char secondModifier, String formatSpecifier) {
         this.firstPresentationModifier = firstPresentationModifier;
         this.secondModifier = secondModifier;
         this.formatSpecifier = formatSpecifier;
     }
 
-    static ParsedPresentationModifier parse(
-            String presentation
-    ) {
+    static ParsedPresentationModifier parse(String presentation) {
         // A cardinal or ordinal modifier may carry a parenthesized format specifier, e.g. o(-te).
         if (presentation.endsWith(")")) {
             int open = presentation.lastIndexOf('(');
-            if (
-                open > 1
-                    && open < presentation.length() - 2
-                    && isCardinalityModifier(presentation.charAt(open - 1))
-            ) {
+            if (open > 1 && open < presentation.length() - 2 && isCardinalityModifier(presentation.charAt(open - 1))) {
                 return new ParsedPresentationModifier(
                         presentation.substring(0, open - 1),
                         presentation.charAt(open - 1),
-                        presentation.substring(open + 1, presentation.length() - 1)
-                );
+                        presentation.substring(open + 1, presentation.length() - 1));
             }
         }
 

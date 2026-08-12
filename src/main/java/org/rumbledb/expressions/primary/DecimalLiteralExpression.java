@@ -20,16 +20,16 @@
 
 package org.rumbledb.expressions.primary;
 
-import lombok.Getter;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 
 @Getter
 public class DecimalLiteralExpression extends Expression {

@@ -20,16 +20,16 @@
 
 package org.rumbledb.expressions.arithmetic;
 
+import java.util.Arrays;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class MultiplicativeExpression extends Expression {
@@ -76,8 +76,7 @@ public class MultiplicativeExpression extends Expression {
             Expression leftExpression,
             Expression rightExpression,
             MultiplicativeOperator multiplicativeOperator,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;

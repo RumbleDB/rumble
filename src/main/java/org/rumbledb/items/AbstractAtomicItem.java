@@ -17,9 +17,9 @@
 
 package org.rumbledb.items;
 
-import org.rumbledb.api.Item;
-
 import java.io.Serial;
+
+import org.rumbledb.api.Item;
 
 /**
  * Base class that gives every atomic item one Java equality and hashing contract.

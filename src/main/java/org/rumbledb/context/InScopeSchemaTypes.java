@@ -11,7 +11,6 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class InScopeSchemaTypes implements Serializable {
 
     @Serial
@@ -27,10 +26,7 @@ public class InScopeSchemaTypes implements Serializable {
         if (!type.hasName()) {
             throw new InvalidSchemaException("A top-level user-defined type must have a name.", meta);
         }
-        if (
-            BuiltinTypesCatalogue.typeExists(type.getName())
-                || this.inScopeSchemaTypes.containsKey(type.getName())
-        ) {
+        if (BuiltinTypesCatalogue.typeExists(type.getName()) || this.inScopeSchemaTypes.containsKey(type.getName())) {
             throw new InvalidSchemaException("This type is already defined: " + type.getName(), meta);
         }
         this.inScopeSchemaTypes.put(type.getName(), type);
@@ -44,9 +40,7 @@ public class InScopeSchemaTypes implements Serializable {
     }
 
     public ItemType getInScopeSchemaType(Name name) {
-        if (
-            BuiltinTypesCatalogue.typeExists(name)
-        ) {
+        if (BuiltinTypesCatalogue.typeExists(name)) {
             return BuiltinTypesCatalogue.getItemTypeByName(name);
         }
         return this.inScopeSchemaTypes.get(name);
@@ -56,14 +50,10 @@ public class InScopeSchemaTypes implements Serializable {
         return new ArrayList<ItemType>(this.inScopeSchemaTypes.values());
     }
 
-
-
     public void importModuleTypes(InScopeSchemaTypes inScopeSchemaTypes) {
         for (Name name : inScopeSchemaTypes.inScopeSchemaTypes.keySet()) {
             ItemType itemType = inScopeSchemaTypes.inScopeSchemaTypes.get(name);
             this.inScopeSchemaTypes.put(name, itemType);
         }
     }
-
-
 }

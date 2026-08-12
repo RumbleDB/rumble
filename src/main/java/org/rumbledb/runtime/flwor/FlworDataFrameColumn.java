@@ -23,12 +23,13 @@ package org.rumbledb.runtime.flwor;
 import java.io.Serial;
 import java.io.Serializable;
 
-import lombok.EqualsAndHashCode;
-
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.ItemType;
@@ -56,16 +57,14 @@ public class FlworDataFrameColumn implements Serializable {
     @Setter
     @Getter
     private String tableName;
+
     @Getter
     private Name variableName;
+
     private ColumnFormat columnFormat;
 
     public FlworDataFrameColumn(
-            String tableName,
-            Name variableName,
-            ColumnFormat columnFormat,
-            SequenceType sequenceType
-    ) {
+            String tableName, Name variableName, ColumnFormat columnFormat, SequenceType sequenceType) {
         this.tableName = tableName;
         this.variableName = variableName;
         this.columnFormat = columnFormat;
@@ -210,5 +209,4 @@ public class FlworDataFrameColumn implements Serializable {
     public boolean isAverage() {
         return this.columnFormat.equals(ColumnFormat.AVERAGE);
     }
-
 }

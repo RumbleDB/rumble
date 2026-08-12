@@ -20,17 +20,19 @@
 
 package iq.base;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.rumbledb.api.ExternalBindings;
-import org.rumbledb.config.RumbleConfiguration;
+
 import utils.annotations.AnnotationParseException;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
+import org.rumbledb.api.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AnnotationsTestsBase {

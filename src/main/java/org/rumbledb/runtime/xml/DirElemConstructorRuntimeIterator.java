@@ -20,20 +20,6 @@
 
 package org.rumbledb.runtime.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
-import org.rumbledb.exceptions.DuplicateAttributeException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.xml.ElementItem;
-import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-import org.rumbledb.expressions.xml.NamespaceDeclaration;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,15 +28,29 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
+import org.rumbledb.exceptions.DuplicateAttributeException;
+import org.rumbledb.expressions.xml.NamespaceDeclaration;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 /**
  * Runtime iterator for direct element constructors.
- * 
+ *
  * @see org.rumbledb.expressions.xml.DirElemConstructorExpression
  */
 public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Name elementName;
     private final List<ItemRuntimePlan> content;
     private final List<AttributeNodeRuntimeIterator> attributes;
@@ -61,12 +61,11 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             List<ItemRuntimePlan> content,
             List<AttributeNodeRuntimeIterator> attributes,
             List<NamespaceDeclaration> namespaceDeclarations,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.concat(attributes.stream().<ItemRuntimePlan>map(iterator -> iterator), content.stream()).toList(),
-            staticContext
-        );
+                Stream.concat(attributes.stream().<ItemRuntimePlan>map(iterator -> iterator), content.stream())
+                        .toList(),
+                staticContext);
         this.content = content;
         this.attributes = attributes;
         this.namespaceDeclarations = namespaceDeclarations;
@@ -75,8 +74,8 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize = (iterator, childContext) -> iterator
-            .materialize(childContext);
+        BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize =
+                (iterator, childContext) -> iterator.materialize(childContext);
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -103,8 +102,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                         if (item.isAttributeNode() || item.isNamespaceNode()) {
                             if (hasSeenNonAttributeNode) {
                                 throw new AttributeOrNamespaceAfterNonAttributeException(
-                                        "Attribute or namespace nodes must appear before all other nodes in element content"
-                                );
+                                        "Attribute or namespace nodes must appear before all other nodes in element content");
                             }
                             if (item.isAttributeNode()) {
                                 attributes.add(item.copy(true));
@@ -145,12 +143,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                             // non-text node encountered
                             if (textAccumulator != null) {
                                 // finalize any accumulated text content
-                                content.add(
-                                    ItemFactory.getInstance()
-                                        .createXmlTextNode(
-                                            textAccumulator.toString()
-                                        )
-                                );
+                                content.add(ItemFactory.getInstance().createXmlTextNode(textAccumulator.toString()));
                                 textAccumulator = null;
                             }
                             // add the non-text node
@@ -163,12 +156,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             // handle any remaining accumulated text at the end
             if (textAccumulator != null) {
                 hasSeenNonAttributeNode = true;
-                content.add(
-                    ItemFactory.getInstance()
-                        .createXmlTextNode(
-                            textAccumulator.toString()
-                        )
-                );
+                content.add(ItemFactory.getInstance().createXmlTextNode(textAccumulator.toString()));
             }
         }
         // process namespace declaration attributes (they create namespace nodes, not attribute nodes)
@@ -177,10 +165,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                 String prefix = declaration.getPrefix();
                 String uri = declaration.getUri();
                 NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
-                namespaces.add(
-                    ItemFactory.getInstance()
-                        .createXmlNamespaceNode(prefix, uri)
-                );
+                namespaces.add(ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri));
             }
         }
         // process regular attributes
@@ -196,12 +181,8 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         }
         validateNoDuplicateAttributes(attributes);
         // create and return the element item
-        ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
-            .createXmlElementNode(
-                this.elementName,
-                content,
-                attributes
-            );
+        ElementItem elementItem =
+                (ElementItem) ItemFactory.getInstance().createXmlElementNode(this.elementName, content, attributes);
         // Only add namespaces explicitly declared on this element
         for (Item namespace : namespaces) {
             elementItem.addOrReplaceNamespace(namespace);
@@ -217,7 +198,6 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         }
         return elementItem;
     }
-
 
     private void validateNoDuplicateAttributes(List<Item> attributes) {
         Set<Name> attributeNames = new HashSet<>();
@@ -236,5 +216,4 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             attributeNames.add(expanded);
         }
     }
-
 }

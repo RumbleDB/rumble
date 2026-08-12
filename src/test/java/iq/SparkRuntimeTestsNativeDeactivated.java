@@ -20,26 +20,22 @@
 
 package iq;
 
-import org.rumbledb.config.RumbleConfiguration;
-
 import java.io.File;
+
+import org.rumbledb.config.RumbleConfiguration;
 
 public class SparkRuntimeTestsNativeDeactivated extends RuntimeTests {
 
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(
-                runtime -> runtime.resultsSizeCap(200).materializationCap(100000).useNativeExecution(false)
-            )
-            .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
-            .build();
+                .configureRuntime(runtime ->
+                        runtime.resultsSizeCap(200).materializationCap(100000).useNativeExecution(false))
+                .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
+                .build();
     }
 
-    public static final File sparkRuntimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/runtime-spark"
-    );
+    public static final File sparkRuntimeTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/runtime-spark");
 
     @Override
     protected File testDirectory() {

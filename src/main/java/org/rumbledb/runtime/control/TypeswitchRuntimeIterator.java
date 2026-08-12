@@ -1,38 +1,35 @@
 package org.rumbledb.runtime.control;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
-
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.typing.InstanceOfIterator;
-import org.rumbledb.runtime.update.PendingUpdateList;
-import org.rumbledb.types.SequenceType;
-
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.types.SequenceType;
+
 public class TypeswitchRuntimeIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item>,
-            UpdatingRuntimePlan {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
@@ -41,18 +38,15 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
             ItemRuntimePlan test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.concat(
                 Stream.concat(
-                    Stream.of(test),
-                    cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator)
-                ),
-                Stream.of(defaultCase.getReturnIterator())
-            ).toList(),
-            staticContext
-        );
+                                Stream.concat(
+                                        Stream.of(test),
+                                        cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator)),
+                                Stream.of(defaultCase.getReturnIterator()))
+                        .toList(),
+                staticContext);
 
         this.testField = test;
         this.cases = cases;
@@ -76,8 +70,7 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
                 List<TypeswitchRuntimeIteratorCase> cases,
                 TypeswitchRuntimeIteratorCase defaultCase,
                 DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                ExceptionMetadata metadata) {
             super(metadata);
             this.testPlan = testPlan;
             this.cases = cases;
@@ -144,10 +137,8 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
     private static void bindMatch(Match match, DynamicContext context) {
         if (match.typeSwitchCase.getVariableName() != null) {
             context.getVariableValues()
-                .addVariableValue(
-                    match.typeSwitchCase.getVariableName(),
-                    Collections.singletonList(match.testValue)
-                );
+                    .addVariableValue(
+                            match.typeSwitchCase.getVariableName(), Collections.singletonList(match.testValue));
         }
     }
 
@@ -157,10 +148,8 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
                 if (testValue == null && sequenceType.isEmptySequence()) {
                     return true;
                 }
-                if (
-                    testValue != null
-                        && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), testValue)
-                ) {
+                if (testValue != null
+                        && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), testValue)) {
                     return true;
                 }
             }
@@ -189,9 +178,6 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         Match match = selectMatch(context);
         bindMatch(match, context);
-        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-            match.typeSwitchCase.getReturnIterator(),
-            context
-        );
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(match.typeSwitchCase.getReturnIterator(), context);
     }
 }

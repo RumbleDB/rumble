@@ -1,6 +1,8 @@
 package org.rumbledb.runtime.functions.typing;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
+
 import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.api.Item;
@@ -12,20 +14,15 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.List;
 
 @Log4j2
 public class FunctionNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FunctionNameFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public FunctionNameFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -36,17 +33,14 @@ public class FunctionNameFunctionIterator extends AbstractAtMostOneItemRuntimePl
     }
 
     private void validateStaticType() {
-        if (
-            !this.getChild(0)
+        if (!this.getChild(0)
                 .getRuntimeStaticContext()
                 .getStaticType()
-                .isSubtypeOf(SequenceType.createSequenceType("function"))
-        ) {
+                .isSubtypeOf(SequenceType.createSequenceType("function"))) {
             throw new UnexpectedTypeException(
                     "fn:function-name expects a function item, found "
-                        + this.getChild(0).getRuntimeStaticContext().getStaticType(),
-                    getMetadata()
-            );
+                            + this.getChild(0).getRuntimeStaticContext().getStaticType(),
+                    getMetadata());
         }
     }
 

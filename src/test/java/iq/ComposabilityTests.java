@@ -20,18 +20,13 @@
 
 package iq;
 
+import java.io.File;
 
 import iq.base.AnnotationsTestsBase;
 
-import java.io.File;
-
-
 public class ComposabilityTests extends AnnotationsTestsBase {
-    public static final File composabilityTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/composability"
-    );
+    public static final File composabilityTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/composability");
 
     @Override
     protected File testDirectory() {

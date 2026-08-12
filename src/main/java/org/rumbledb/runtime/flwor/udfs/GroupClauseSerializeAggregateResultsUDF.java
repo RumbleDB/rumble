@@ -20,20 +20,22 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
-import org.apache.spark.sql.api.java.UDF1;
-import org.rumbledb.api.Item;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import scala.collection.immutable.ArraySeq;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupClauseSerializeAggregateResultsUDF implements UDF1<ArraySeq<byte[]>, byte[]> {
+import org.apache.spark.sql.api.java.UDF1;
 
+import scala.collection.immutable.ArraySeq;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+
+public class GroupClauseSerializeAggregateResultsUDF implements UDF1<ArraySeq<byte[]>, byte[]> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final List<Item> nextResult;
     private final List<List<Item>> deserializedParams;
     private final DataFrameContext dataFrameContext;
@@ -49,19 +51,15 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<ArraySeq<by
         this.nextResult.clear();
         this.deserializedParams.clear();
         FlworDataFrameUtils.deserializeWrappedParameters(
-            wrappedParameters,
-            this.deserializedParams,
-            this.dataFrameContext.getKryo(),
-            this.dataFrameContext.getInput()
-        );
+                wrappedParameters,
+                this.deserializedParams,
+                this.dataFrameContext.getKryo(),
+                this.dataFrameContext.getInput());
 
         for (List<Item> deserializedParam : this.deserializedParams) {
             this.nextResult.addAll(deserializedParam);
         }
         return FlworDataFrameUtils.serializeItemList(
-            this.nextResult,
-            this.dataFrameContext.getKryo(),
-            this.dataFrameContext.getOutput()
-        );
+                this.nextResult, this.dataFrameContext.getKryo(), this.dataFrameContext.getOutput());
     }
 }

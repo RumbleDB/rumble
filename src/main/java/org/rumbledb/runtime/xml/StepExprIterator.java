@@ -1,6 +1,11 @@
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -16,27 +21,20 @@ import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
 
 public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan axisIterator;
     private final NodeTest nodeTest;
 
-    public StepExprIterator(
-            ItemRuntimePlan axisIterator,
-            NodeTest nodeTest,
-            RuntimeStaticContext staticContext
-    ) {
+    public StepExprIterator(ItemRuntimePlan axisIterator, NodeTest nodeTest, RuntimeStaticContext staticContext) {
         super(List.of(axisIterator), staticContext);
         this.axisIterator = axisIterator;
         this.nodeTest = nodeTest;
@@ -49,10 +47,11 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
                 context,
                 node -> {
                     Item result = nodeTestItem(node, this.nodeTest);
-                    return result == null ? List.<Item>of().iterator() : List.of(result).iterator();
+                    return result == null
+                            ? List.<Item>of().iterator()
+                            : List.of(result).iterator();
                 },
-                getMetadata()
-        );
+                getMetadata());
     }
 
     private static String nodeNameLexical(Item node) {
@@ -80,10 +79,7 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
         } else if (test instanceof DocumentTest documentTest) {
             return documentKindTest(node, documentTest);
         } else {
-            throw new UnsupportedFeatureException(
-                    "Unsupported node test: " + test,
-                    getMetadata()
-            );
+            throw new UnsupportedFeatureException("Unsupported node test: " + test, getMetadata());
         }
     }
 
@@ -179,10 +175,7 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
             return null;
         }
         if (elementTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isElementNode()
-                    && elementTest.getElementName().equals(node.nodeName())
-            ) {
+            if (node.isElementNode() && elementTest.getElementName().equals(node.nodeName())) {
                 return node;
             }
             return null;
@@ -205,10 +198,7 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
             return null;
         }
         if (attributeTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isAttributeNode()
-                    && attributeTest.getAttributeName().equals(node.nodeName())
-            ) {
+            if (node.isAttributeNode() && attributeTest.getAttributeName().equals(node.nodeName())) {
                 return node;
             }
             return null;
@@ -262,5 +252,4 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
         }
         return null;
     }
-
 }

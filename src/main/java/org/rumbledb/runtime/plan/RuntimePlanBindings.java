@@ -16,25 +16,15 @@ import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
  */
 public final class RuntimePlanBindings {
 
-    private RuntimePlanBindings() {
-    }
+    private RuntimePlanBindings() {}
 
     public static void bind(
-            ItemRuntimePlan plan,
-            DynamicContext targetContext,
-            Name variable,
-            DynamicContext executionContext
-    ) {
-        if (
-            plan.getRuntimeStaticContext().getExecutionMode().isDataFrame()
-        ) {
-            targetContext.getVariableValues()
-                .addVariableValue(variable, ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(plan, executionContext));
-        } else if (
-            plan.getRuntimeStaticContext()
-                .getExecutionMode()
-                .isRDDOrDataFrame()
-        ) {
+            ItemRuntimePlan plan, DynamicContext targetContext, Name variable, DynamicContext executionContext) {
+        if (plan.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            targetContext
+                    .getVariableValues()
+                    .addVariableValue(variable, ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(plan, executionContext));
+        } else if (plan.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             targetContext.getVariableValues().addVariableValue(variable, plan.getRDD(executionContext));
         } else {
             targetContext.getVariableValues().addVariableValue(variable, plan.materialize(executionContext));

@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,20 +30,15 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionExactlyOne;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
 
 public class ExactlyOneIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ExactlyOneIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ExactlyOneIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -52,17 +48,12 @@ public class ExactlyOneIterator extends AbstractAtMostOneItemRuntimePlan impleme
             Item value = this.getChild(0).materializeAtMostOne(dynamicContext);
             if (value == null) {
                 throw new SequenceExceptionExactlyOne(
-                        "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                        getMetadata()
-                );
-
+                        "fn:exactly-one() called with a sequence that doesn't contain exactly one item", getMetadata());
             }
             return value;
         } catch (MoreThanOneItemException e) {
             throw new SequenceExceptionExactlyOne(
-                    "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                    getMetadata()
-            );
+                    "fn:exactly-one() called with a sequence that doesn't contain exactly one item", getMetadata());
         }
     }
 

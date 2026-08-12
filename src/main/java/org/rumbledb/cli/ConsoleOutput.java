@@ -24,8 +24,7 @@ package org.rumbledb.cli;
  */
 public final class ConsoleOutput {
 
-    private ConsoleOutput() {
-    }
+    private ConsoleOutput() {}
 
     /**
      * Prints user-facing text to standard output.

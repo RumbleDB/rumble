@@ -1,20 +1,22 @@
 package org.rumbledb.items.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
 
 public class ProcessingInstructionItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private String target;
     private String content;
     private Item parent;
@@ -27,7 +29,7 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
 
     /**
      * Constructor for a processing instruction item.
-     * 
+     *
      * @param target The processing instruction target
      * @param content The processing instruction content
      */

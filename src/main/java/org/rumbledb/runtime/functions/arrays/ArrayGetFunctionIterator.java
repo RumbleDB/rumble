@@ -1,8 +1,8 @@
 package org.rumbledb.runtime.functions.arrays;
 
-
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -10,16 +10,12 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.List;
-
-public class ArrayGetFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+public class ArrayGetFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -27,10 +23,7 @@ public class ArrayGetFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan arrayIterator;
     private final ItemRuntimePlan positionIterator;
 
-    public ArrayGetFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayGetFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 2) {
             throw new OurBadException("array:get must have exactly two arguments.");
@@ -42,12 +35,9 @@ public class ArrayGetFunctionIterator extends ItemRuntimePlan
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
-                () -> getMember(
-                    this.arrayIterator.materialize(context),
-                    this.positionIterator.materialize(context)
-                ).iterator(),
-                getMetadata()
-        );
+                () -> getMember(this.arrayIterator.materialize(context), this.positionIterator.materialize(context))
+                        .iterator(),
+                getMetadata());
     }
 
     private List<Item> getMember(List<Item> arrays, List<Item> positions) {
@@ -55,31 +45,21 @@ public class ArrayGetFunctionIterator extends ItemRuntimePlan
             return List.of();
         }
         if (arrays.size() > 1) {
-            throw new UnexpectedTypeException(
-                    "array:get expects exactly one array argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("array:get expects exactly one array argument.", getMetadata());
         }
         Item arrayItem = arrays.get(0);
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:get must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:get must be an array.", getMetadata());
         }
 
         if (positions.size() != 1) {
-            throw new UnexpectedTypeException(
-                    "array:get expects exactly one position argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("array:get expects exactly one position argument.", getMetadata());
         }
         Item positionItem = positions.get(0);
         if (!positionItem.isNumeric()) {
             throw new UnexpectedTypeException(
-                    "Type error; position argument to array:get must be numeric.",
-                    getMetadata()
-            );
+                    "Type error; position argument to array:get must be numeric.", getMetadata());
         }
 
         BigInteger positionInteger;
@@ -89,17 +69,14 @@ public class ArrayGetFunctionIterator extends ItemRuntimePlan
             positionInteger = BigInteger.valueOf(positionItem.castToIntValue());
         }
 
-        if (
-            positionInteger.compareTo(BigInteger.ONE) < 0
-                || positionInteger.compareTo(BigInteger.valueOf(arrayItem.getSize())) > 0
-        ) {
+        if (positionInteger.compareTo(BigInteger.ONE) < 0
+                || positionInteger.compareTo(BigInteger.valueOf(arrayItem.getSize())) > 0) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: "
-                        + positionInteger
-                        + ", of array with length: "
-                        + arrayItem.getSize(),
-                    getMetadata()
-            );
+                            + positionInteger
+                            + ", of array with length: "
+                            + arrayItem.getSize(),
+                    getMetadata());
         }
 
         int lookup = positionInteger.intValue();

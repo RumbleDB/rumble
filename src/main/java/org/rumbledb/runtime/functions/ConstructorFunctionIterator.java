@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.List;
 
@@ -10,6 +8,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -24,10 +23,7 @@ public class ConstructorFunctionIterator extends AbstractAtMostOneItemRuntimePla
     private final SequenceType targetSequenceType;
 
     public ConstructorFunctionIterator(
-            FunctionIdentifier identifier,
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            FunctionIdentifier identifier, List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
         this.argumentIterator = arguments.get(0);
@@ -39,8 +35,9 @@ public class ConstructorFunctionIterator extends AbstractAtMostOneItemRuntimePla
         ItemRuntimePlan castPlan = new CastIterator(
                 this.argumentIterator,
                 this.targetSequenceType,
-                this.staticContext.toBuilder().staticType(this.targetSequenceType).build()
-        );
+                this.staticContext.toBuilder()
+                        .staticType(this.targetSequenceType)
+                        .build());
         return castPlan.materializeFirstOrNull(dynamicContext);
     }
 }

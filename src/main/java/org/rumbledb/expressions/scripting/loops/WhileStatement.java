@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.scripting.loops;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.statement.Statement;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 public class WhileStatement extends Statement {
@@ -43,5 +44,4 @@ public class WhileStatement extends Statement {
         this.statement.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
-
 }

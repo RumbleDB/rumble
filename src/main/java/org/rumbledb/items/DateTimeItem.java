@@ -19,11 +19,11 @@ public class DateTimeItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private OffsetDateTime value;
     private boolean hasTimeZone = true;
     private static final Pattern dateTimePattern = Pattern.compile(
-        "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
-    );
+            "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
 
     DateTimeItem(OffsetDateTime value, boolean hasTimeZone) {
         this.value = value;
@@ -62,14 +62,14 @@ public class DateTimeItem extends AbstractAtomicItem {
                 dateTimeString = dateTimeString.replace("24:00:00", "00:00:00");
                 dayIncrement = 1;
             }
-            if (
-                dateTimeString.contains("Z") || dateTimeString.contains("+") || dateTimeString.matches(".*-\\d\\d:.*")
-            ) {
+            if (dateTimeString.contains("Z")
+                    || dateTimeString.contains("+")
+                    || dateTimeString.matches(".*-\\d\\d:.*")) {
                 this.value = OffsetDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME);
                 this.hasTimeZone = true;
             } else {
                 this.value = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                    .atOffset(ZoneOffset.UTC);
+                        .atOffset(ZoneOffset.UTC);
                 this.hasTimeZone = false;
             }
             // Those operations need to be in separate lines,
@@ -80,17 +80,14 @@ public class DateTimeItem extends AbstractAtomicItem {
             throw new IllegalArgumentException("Invalid xs:dateTime: \"" + dateTimeString + "\"");
         } catch (NumberFormatException e) {
             throw new DatetimeOverflowOrUnderflow(
-                    "Invalid xs:dateTime: \"" + dateTimeString + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Invalid xs:dateTime: \"" + dateTimeString + "\"", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
     @Override
     public String getStringValue() {
         String stringValue = this.value.format(
-            this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE_TIME : DateTimeFormatter.ISO_LOCAL_DATE_TIME
-        );
+                this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE_TIME : DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         if (this.value.toString().startsWith("+")) {
             return stringValue.substring(1);
         }
@@ -101,7 +98,6 @@ public class DateTimeItem extends AbstractAtomicItem {
     public OffsetDateTime getDateTimeValue() {
         return this.value;
     }
-
 
     @Override
     public boolean hasTimeZone() {

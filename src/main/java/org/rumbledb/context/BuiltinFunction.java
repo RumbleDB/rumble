@@ -1,8 +1,8 @@
 package org.rumbledb.context;
 
 import lombok.EqualsAndHashCode;
-
 import lombok.Getter;
+
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 
@@ -32,12 +32,10 @@ public class BuiltinFunction {
             FunctionIdentifier identifier,
             FunctionSignature signature,
             Class<? extends ItemRuntimePlan> functionIteratorClass,
-            BuiltinFunctionExecutionMode builtInFunctionExecutionMode
-    ) {
+            BuiltinFunctionExecutionMode builtInFunctionExecutionMode) {
         this.identifier = identifier;
         this.signature = signature;
         this.functionIteratorClass = functionIteratorClass;
         this.builtinFunctionExecutionMode = builtInFunctionExecutionMode;
     }
-
 }

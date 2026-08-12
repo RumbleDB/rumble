@@ -20,16 +20,15 @@
 
 package org.rumbledb.expressions.primary;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
 
 @Getter
 public class StringLiteralExpression extends Expression {

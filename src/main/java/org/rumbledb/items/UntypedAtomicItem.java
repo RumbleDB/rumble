@@ -1,21 +1,23 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 @Getter
 public class UntypedAtomicItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private String value;
 
     public UntypedAtomicItem(String value) {
@@ -54,8 +56,7 @@ public class UntypedAtomicItem extends AbstractAtomicItem {
         } catch (NumberFormatException e) {
             throw new CastException(
                     "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:double.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -80,8 +81,7 @@ public class UntypedAtomicItem extends AbstractAtomicItem {
         } catch (NumberFormatException e) {
             throw new CastException(
                     "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:float.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -92,8 +92,7 @@ public class UntypedAtomicItem extends AbstractAtomicItem {
         } catch (NumberFormatException e) {
             throw new CastException(
                     "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:decimal.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -104,8 +103,7 @@ public class UntypedAtomicItem extends AbstractAtomicItem {
         } catch (NumberFormatException e) {
             throw new CastException(
                     "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:integer.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -116,8 +114,7 @@ public class UntypedAtomicItem extends AbstractAtomicItem {
         } catch (NumberFormatException e) {
             throw new CastException(
                     "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:int.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -135,8 +132,6 @@ public class UntypedAtomicItem extends AbstractAtomicItem {
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }
-
-
 
     @Override
     public ItemType getDynamicType() {

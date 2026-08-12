@@ -1,10 +1,10 @@
 package org.rumbledb.bindings;
 
-import org.rumbledb.api.Item;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import org.rumbledb.api.Item;
 
 public final class ItemSequenceBinding implements Binding {
     private static final long serialVersionUID = 1L;

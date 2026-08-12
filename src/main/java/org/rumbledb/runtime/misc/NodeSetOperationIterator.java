@@ -17,21 +17,6 @@
 
 package org.rumbledb.runtime.misc;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
-import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,17 +25,27 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class NodeSetOperationIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
+import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
+public class NodeSetOperationIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new IteratorLocalCursor<>(
-                () -> computeNodeSet(context).iterator(),
-                getMetadata()
-        );
+        return new IteratorLocalCursor<>(() -> computeNodeSet(context).iterator(), getMetadata());
     }
 
     @Serial
@@ -64,8 +59,7 @@ public class NodeSetOperationIterator extends ItemRuntimePlan
             ItemRuntimePlan leftIterator,
             ItemRuntimePlan rightIterator,
             NodeSetExpression.NodeSetOperator operator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
@@ -74,14 +68,8 @@ public class NodeSetOperationIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        JavaRDD<Item> leftNodes = buildNodeRDD(
-            this.leftIterator.getRDD(context),
-            "left"
-        );
-        JavaRDD<Item> rightNodes = buildNodeRDD(
-            this.rightIterator.getRDD(context),
-            "right"
-        );
+        JavaRDD<Item> leftNodes = buildNodeRDD(this.leftIterator.getRDD(context), "left");
+        JavaRDD<Item> rightNodes = buildNodeRDD(this.rightIterator.getRDD(context), "right");
 
         JavaRDD<Item> result;
         switch (this.operator) {
@@ -122,11 +110,7 @@ public class NodeSetOperationIterator extends ItemRuntimePlan
     /**
      * Builds an ordered set of nodes while validating that every item is an XML node with a document position.
      */
-    private Set<Item> buildNodeSet(
-            ItemRuntimePlan iterator,
-            DynamicContext context,
-            String side
-    ) {
+    private Set<Item> buildNodeSet(ItemRuntimePlan iterator, DynamicContext context, String side) {
         Set<Item> nodes = new TreeSet<>(Comparator.comparing(Item::getXmlDocumentPosition));
         for (Item item : iterator.materialize(context)) {
             validateAndGetNodePosition(item, side, getMetadata());
@@ -147,26 +131,20 @@ public class NodeSetOperationIterator extends ItemRuntimePlan
         });
     }
 
-    private static XMLDocumentPosition validateAndGetNodePosition(
-            Item item,
-            String side,
-            ExceptionMetadata metadata
-    ) {
+    private static XMLDocumentPosition validateAndGetNodePosition(Item item, String side, ExceptionMetadata metadata) {
         if (!item.isNode()) {
             throw new UnexpectedTypeException(
                     "The "
-                        + side
-                        + " operand of a node set operation must contain only nodes, got: "
-                        + item.getDynamicType(),
-                    metadata
-            );
+                            + side
+                            + " operand of a node set operation must contain only nodes, got: "
+                            + item.getDynamicType(),
+                    metadata);
         }
         XMLDocumentPosition position = item.getXmlDocumentPosition();
         if (position == null) {
             throw new UnexpectedTypeException(
                     "The " + side + " operand of a node set operation contains a node without document position.",
-                    metadata
-            );
+                    metadata);
         }
         return position;
     }

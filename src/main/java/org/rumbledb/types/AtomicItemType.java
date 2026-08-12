@@ -8,6 +8,7 @@ import java.util.Set;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
+
 import static org.rumbledb.types.BuiltinTypesCatalogue.NOTATIONItem;
 import static org.rumbledb.types.BuiltinTypesCatalogue.QNameItem;
 import static org.rumbledb.types.BuiltinTypesCatalogue.anyURIItem;
@@ -64,8 +65,7 @@ public class AtomicItemType extends AbstractItemType {
             Name name,
             Set<ConstrainingFacetTypes> allowedFacets,
             WhitespaceFacet whiteSpace,
-            List<String> lexicalSpacePatterns
-    ) {
+            List<String> lexicalSpacePatterns) {
         this.name = name;
         this.allowedFacets = allowedFacets;
         this.whiteSpace = whiteSpace;
@@ -80,8 +80,7 @@ public class AtomicItemType extends AbstractItemType {
             Boolean bounded,
             CardinalityFacetValue cardinality,
             Boolean numeric,
-            List<String> lexicalSpacePatterns
-    ) {
+            List<String> lexicalSpacePatterns) {
         this.name = name;
         this.allowedFacets = allowedFacets;
         this.whiteSpace = whiteSpace;
@@ -195,6 +194,7 @@ public class AtomicItemType extends AbstractItemType {
      * and QName sources are statically castable; numeric sources are not).
      */
     private static final int PRIM_UA = 0;
+
     private static final int PRIM_STR = 1;
     private static final int PRIM_FLT = 2;
     private static final int PRIM_DBL = 3;
@@ -222,557 +222,97 @@ public class AtomicItemType extends AbstractItemType {
     // uA str flt dbl dec int dur yMD dTD dT tim dat gYM gYr gMD gDay gMon bool b64 hxB aURI QN NOT
     private static final char[][] PRIMITIVE_CAST_MATRIX = {
         /* uA */ {
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y' },
+            'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y',
+            'Y', 'Y'
+        },
         /* str */ {
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y' },
+            'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y',
+            'Y', 'Y'
+        },
         /* flt */ {
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dbl */ {
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dec */ {
-            'M',
-            'M',
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'M', 'M', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* int */ {
-            'M',
-            'M',
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'M', 'M', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dur */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* yMD */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dTD */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dT */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* tim */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dat */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gYM */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gYr */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gMD */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'Y', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gDay */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'Y', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gMon */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* bool */ {
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* b64 */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'Y', 'N',
+            'N', 'N'
+        },
         /* hxB */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'Y', 'N',
+            'N', 'N'
+        },
         /* aURI */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y',
+            'N', 'N'
+        },
         /* QN */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'Y', 'Y'
+        },
         /* NOT */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'M',
-            'M' }
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'M', 'M'
+        }
     };
 
     private static int primitiveIndex(ItemType primitiveType) {
@@ -877,12 +417,10 @@ public class AtomicItemType extends AbstractItemType {
 
         // anything can be casted from and to a string or untypedAtomic (or from one of its supertypes),
         // including types derived by restriction from them (via the primitive type).
-        if (
-            sourcePrimitive.equals(stringItem)
+        if (sourcePrimitive.equals(stringItem)
                 || targetPrimitive.equals(stringItem)
                 || sourcePrimitive.equals(untypedAtomicItem)
-                || targetPrimitive.equals(untypedAtomicItem)
-        ) {
+                || targetPrimitive.equals(untypedAtomicItem)) {
             return true;
         }
 
@@ -916,9 +454,7 @@ public class AtomicItemType extends AbstractItemType {
     @Override
     public boolean isNumeric() {
         ItemType primitive = this.getPrimitiveType();
-        return primitive.equals(decimalItem)
-            || primitive.equals(floatItem)
-            || primitive.equals(doubleItem);
+        return primitive.equals(decimalItem) || primitive.equals(floatItem) || primitive.equals(doubleItem);
     }
 
     @Override
@@ -941,8 +477,7 @@ public class AtomicItemType extends AbstractItemType {
     public List<Item> getEnumerationFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.ENUMERATION)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the enumeration facet"
-            );
+                    this.toString() + " item type does not support the enumeration facet");
         }
         return null;
     }
@@ -951,8 +486,7 @@ public class AtomicItemType extends AbstractItemType {
     public List<String> getConstraintsFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.CONSTRAINTS)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the constraints facet"
-            );
+                    this.toString() + " item type does not support the constraints facet");
         }
         return Collections.emptyList();
     }
@@ -961,8 +495,7 @@ public class AtomicItemType extends AbstractItemType {
     public Integer getMinLengthFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINLENGTH)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the minimum length facet"
-            );
+                    this.toString() + " item type does not support the minimum length facet");
         }
         return null;
     }
@@ -979,8 +512,7 @@ public class AtomicItemType extends AbstractItemType {
     public Integer getMaxLengthFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXLENGTH)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the maximum length facet"
-            );
+                    this.toString() + " item type does not support the maximum length facet");
         }
         return null;
     }
@@ -989,8 +521,7 @@ public class AtomicItemType extends AbstractItemType {
     public Item getMinExclusiveFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINEXCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the minimum exclusive facet"
-            );
+                    this.toString() + " item type does not support the minimum exclusive facet");
         }
         return null;
     }
@@ -999,8 +530,7 @@ public class AtomicItemType extends AbstractItemType {
     public Item getMinInclusiveFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MININCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the minimum inclusive facet"
-            );
+                    this.toString() + " item type does not support the minimum inclusive facet");
         }
         return null;
     }
@@ -1009,19 +539,16 @@ public class AtomicItemType extends AbstractItemType {
     public Item getMaxExclusiveFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXEXCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the maximum exclusive facet"
-            );
+                    this.toString() + " item type does not support the maximum exclusive facet");
         }
         return null;
     }
 
     @Override
-
     public Item getMaxInclusiveFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXINCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the maximum inclusive facet"
-            );
+                    this.toString() + " item type does not support the maximum inclusive facet");
         }
         return null;
     }
@@ -1030,8 +557,7 @@ public class AtomicItemType extends AbstractItemType {
     public Integer getTotalDigitsFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.TOTALDIGITS)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the total digits facet"
-            );
+                    this.toString() + " item type does not support the total digits facet");
         }
         return null;
     }
@@ -1040,8 +566,7 @@ public class AtomicItemType extends AbstractItemType {
     public Integer getFractionDigitsFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.FRACTIONDIGITS)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the fraction digits facet"
-            );
+                    this.toString() + " item type does not support the fraction digits facet");
         }
         return null;
     }
@@ -1050,8 +575,7 @@ public class AtomicItemType extends AbstractItemType {
     public TimezoneFacet getExplicitTimezoneFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.EXPLICITTIMEZONE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the explicit timezone facet"
-            );
+                    this.toString() + " item type does not support the explicit timezone facet");
         }
         return null;
     }
@@ -1064,9 +588,7 @@ public class AtomicItemType extends AbstractItemType {
     @Override
     public List<String> getPatternFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.PATTERN)) {
-            throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the pattern facet"
-            );
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the pattern facet");
         }
         return null;
     }

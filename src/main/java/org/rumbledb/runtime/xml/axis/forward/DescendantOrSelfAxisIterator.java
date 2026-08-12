@@ -1,9 +1,9 @@
 package org.rumbledb.runtime.xml.axis.forward;
 
+import java.io.Serial;
+
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
-
-import java.io.Serial;
 
 public class DescendantOrSelfAxisIterator extends AxisIterator {
     @Serial

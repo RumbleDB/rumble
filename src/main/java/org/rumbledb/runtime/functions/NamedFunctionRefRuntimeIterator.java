@@ -20,15 +20,15 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
 
 public class NamedFunctionRefRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -37,10 +37,7 @@ public class NamedFunctionRefRuntimeIterator extends AbstractAtMostOneItemRuntim
 
     private final FunctionIdentifier functionIdentifier;
 
-    public NamedFunctionRefRuntimeIterator(
-            FunctionIdentifier functionIdentifier,
-            RuntimeStaticContext staticContext
-    ) {
+    public NamedFunctionRefRuntimeIterator(FunctionIdentifier functionIdentifier, RuntimeStaticContext staticContext) {
         super(List.of(), staticContext);
         this.functionIdentifier = functionIdentifier;
     }
@@ -48,18 +45,11 @@ public class NamedFunctionRefRuntimeIterator extends AbstractAtMostOneItemRuntim
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         Item resolved = NamedFunctionLookup.lookupOrNull(
-            this.functionIdentifier,
-            dynamicContext,
-            getConfiguration(),
-            getMetadata()
-        );
+                this.functionIdentifier, dynamicContext, getConfiguration(), getMetadata());
         if (resolved != null) {
             return resolved;
         }
         throw new UnknownFunctionCallException(
-                this.functionIdentifier.getName(),
-                this.functionIdentifier.getArity(),
-                getMetadata()
-        );
+                this.functionIdentifier.getName(), this.functionIdentifier.getArity(), getMetadata());
     }
 }

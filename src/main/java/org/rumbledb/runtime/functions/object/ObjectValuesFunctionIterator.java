@@ -20,33 +20,30 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-
 import java.io.Serial;
 import java.util.List;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 public class ObjectValuesFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
 
-    public ObjectValuesFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ObjectValuesFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
@@ -56,9 +53,10 @@ public class ObjectValuesFunctionIterator extends ItemRuntimePlan
         return new FlatMappingLocalCursor<>(
                 this.iterator,
                 context,
-                item -> item.isObject() ? item.getItemValues().iterator() : List.<Item>of().iterator(),
-                getMetadata()
-        );
+                item -> item.isObject()
+                        ? item.getItemValues().iterator()
+                        : List.<Item>of().iterator(),
+                getMetadata());
     }
 
     @Override

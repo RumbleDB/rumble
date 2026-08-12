@@ -20,15 +20,16 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,38 +37,32 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 
-import lombok.NonNull;
-import java.io.Serial;
-import java.util.List;
-
 public class SubsequenceFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
-
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan positionIterator;
     private final ItemRuntimePlan lengthIterator;
     private int startPosition;
     private int length;
     private final int optimizationThreshold = 10_000_000; // do optimization only if startPosition is above this
-                                                          // threshold
+    // threshold
 
-    public SubsequenceFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public SubsequenceFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
@@ -77,12 +72,7 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new EvaluationCursor(
-                this.sequenceIterator,
-                this.positionIterator,
-                this.lengthIterator,
-                context,
-                getMetadata()
-        );
+                this.sequenceIterator, this.positionIterator, this.lengthIterator, context, getMetadata());
     }
 
     @Override
@@ -96,9 +86,8 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
             if (this.length < 0) {
                 filteredRDD = zippedRDD.filter((input) -> input._2() >= this.startPosition - 1);
             } else {
-                filteredRDD = zippedRDD.filter(
-                    (input) -> input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length
-                );
+                filteredRDD = zippedRDD.filter((input) ->
+                        input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length);
             }
             return filteredRDD.map(x -> x._1);
         }
@@ -109,18 +98,15 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         if (this.startPosition < this.optimizationThreshold) {
             return getDataFrameOld(dynamicContext);
-        } else
-            return getDataFrameOffset(dynamicContext);
+        } else return getDataFrameOffset(dynamicContext);
     }
 
     /**
      * Old implementation of getDataFrame, it is faster for low starting positions
      */
     private HomogeneousItemDataFrame getDataFrameOld(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-            this.sequenceIterator,
-            dynamicContext
-        );
+        HomogeneousItemDataFrame df =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.sequenceIterator, dynamicContext);
         setInstanceVariables(dynamicContext);
 
         List<FlworDataFrameColumn> allColumns = df.getColumns();
@@ -130,32 +116,22 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
             df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s LIMIT %s",
-                    input,
-                    Integer.toString(this.startPosition + this.length - 1)
-                ),
-                df.getItemType()
-            );
+                    String.format(
+                            "SELECT * FROM %s LIMIT %s", input, Integer.toString(this.startPosition + this.length - 1)),
+                    df.getItemType());
         }
 
-        Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(
-            df.getDataFrame(),
-            1L,
-            SparkSessionManager.temporaryColumnName
-        );
+        Dataset<Row> ds =
+                FlworDataFrameUtils.zipWithIndex(df.getDataFrame(), 1L, SparkSessionManager.temporaryColumnName);
 
         String inputds = FlworDataFrameUtils.createTempView(ds);
         ds = ds.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
-                    selectSQL,
-                    inputds,
-                    SparkSessionManager.temporaryColumnName,
-                    Integer.toString(this.startPosition)
-                )
-            );
+                .sql(String.format(
+                        "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
+                        selectSQL,
+                        inputds,
+                        SparkSessionManager.temporaryColumnName,
+                        Integer.toString(this.startPosition)));
         return new HomogeneousItemDataFrame(ds, df.getItemType());
     }
 
@@ -164,45 +140,32 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
      * for small values
      */
     private HomogeneousItemDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-            this.sequenceIterator,
-            dynamicContext
-        );
+        HomogeneousItemDataFrame df =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.sequenceIterator, dynamicContext);
         setInstanceVariables(dynamicContext);
 
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
             df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s LIMIT %s OFFSET %s",
-                    input,
-                    Integer.toString(this.length),
-                    Integer.toString(this.startPosition - 1)
-                ),
-                df.getItemType()
-            );
+                    String.format(
+                            "SELECT * FROM %s LIMIT %s OFFSET %s",
+                            input, Integer.toString(this.length), Integer.toString(this.startPosition - 1)),
+                    df.getItemType());
         } else {
             df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s OFFSET %s",
-                    input,
-                    Integer.toString(this.startPosition - 1)
-                ),
-                df.getItemType()
-            );
+                    String.format("SELECT * FROM %s OFFSET %s", input, Integer.toString(this.startPosition - 1)),
+                    df.getItemType());
         }
         return new HomogeneousItemDataFrame(df.getDataFrame(), df.getItemType());
     }
 
     private void setInstanceVariables(DynamicContext context) {
-        Item positionItem = this.positionIterator
-            .materializeFirstOrNull(context);
+        Item positionItem = this.positionIterator.materializeFirstOrNull(context);
         this.startPosition = (int) Math.round(positionItem.getDoubleValue());
 
         this.length = -1;
         if (this.getChildren().size() == 3) {
-            Item lengthItem = this.lengthIterator
-                .materializeFirstOrNull(context);
+            Item lengthItem = this.lengthIterator.materializeFirstOrNull(context);
             this.length = (int) Math.round(lengthItem.getDoubleValue());
         }
     }
@@ -223,8 +186,7 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
                 @NonNull ItemRuntimePlan positionPlan,
                 ItemRuntimePlan lengthPlan,
                 @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
+                @NonNull ExceptionMetadata metadata) {
             super(metadata);
             this.sequencePlan = sequencePlan;
             this.positionPlan = positionPlan;
@@ -260,9 +222,7 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
 
         @Override
         protected boolean hasNextLocal() {
-            return this.currentLength != 0
-                && this.sequenceCursor != null
-                && this.sequenceCursor.hasNext();
+            return this.currentLength != 0 && this.sequenceCursor != null && this.sequenceCursor.hasNext();
         }
 
         @Override
@@ -290,10 +250,7 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
 
         private RuntimeException exhausted() {
             return new IteratorFlowException(
-                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "subsequence function",
-                    this.metadata
-            );
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "subsequence function", this.metadata);
         }
-
     }
 }

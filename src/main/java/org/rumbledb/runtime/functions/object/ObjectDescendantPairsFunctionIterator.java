@@ -20,32 +20,27 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
+public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ObjectDescendantPairsFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ObjectDescendantPairsFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -59,8 +54,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
                     getDescendantPairs(List.of(item), results);
                     return results.iterator();
                 },
-                getMetadata()
-        );
+                getMetadata());
     }
 
     private void getDescendantPairs(List<Item> items, Collection<Item> results) {
@@ -75,8 +69,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
                     List<String> keyList = Collections.singletonList(key);
                     List<Item> valueList = Collections.singletonList(value);
 
-                    Item result = ItemFactory.getInstance()
-                        .createObjectItem(keyList, valueList, getMetadata(), true);
+                    Item result = ItemFactory.getInstance().createObjectItem(keyList, valueList, getMetadata(), true);
                     results.add(result);
                     getDescendantPairs(valueList, results);
                 }

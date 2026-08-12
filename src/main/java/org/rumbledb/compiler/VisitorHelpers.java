@@ -1,12 +1,20 @@
 package org.rumbledb.compiler;
 
-import lombok.extern.log4j.Log4j2;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.io.IOUtils;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.wrapper.DescendentSequentialProperties;
 import org.rumbledb.config.CompilationConfiguration;
@@ -29,15 +37,9 @@ import org.rumbledb.parser.jsoniq.JsoniqLexer;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryLexer;
 import org.rumbledb.parser.xquery.XQueryParser;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.resources.ResolvedResource;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 @Log4j2
 public class VisitorHelpers {
@@ -53,9 +55,7 @@ public class VisitorHelpers {
     }
 
     public static RumbleConfiguration getEffectiveConfiguration(
-            Node node,
-            RumbleConfiguration.RumbleConfigurationBuilder builder
-    ) {
+            Node node, RumbleConfiguration.RumbleConfigurationBuilder builder) {
         return new EffectiveConfigurationVisitor().getEffectiveConfiguration(node, builder);
     }
 
@@ -114,14 +114,14 @@ public class VisitorHelpers {
     /**
      * Utility function to print the tree of iterators if the flag is set in the configuration. This is useful for
      * debugging purposes.
-     * 
+     *
      * @param node the root node of the tree to print
      * @param conf the configuration object
      */
     private static void debugPrintTree(Module node, RumbleConfiguration conf) {
         if (conf.debug().printIteratorTree() || conf.debug().logging()) {
             log.debug(
-                """
+                    """
                         ***************
                         Expression tree
                         ***************
@@ -130,53 +130,42 @@ public class VisitorHelpers {
 
                         {}\
                         """,
-                node.numberOfUnsetExecutionModes(),
-                node,
-                node.getStaticContext()
-            );
+                    node.numberOfUnsetExecutionModes(),
+                    node,
+                    node.getStaticContext());
         }
     }
 
     private static void debugPrintHeader(RumbleConfiguration conf, String header) {
         if (conf.debug().printIteratorTree() || conf.debug().logging()) {
             log.debug(
-                """
+                    """
                         {}
                         {}
                         {}\
                         """,
-                "*".repeat(header.length()),
-                header,
-                "*".repeat(header.length())
-            );
+                    "*".repeat(header.length()),
+                    header,
+                    "*".repeat(header.length()));
         }
     }
 
     private static URI resolveStaticBaseUri(String url) {
-        URI resolved = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            url,
-            ExceptionMetadata.EMPTY_METADATA
-        );
+        URI resolved = FileSystemUtil.resolveURIAgainstWorkingDirectory(url, ExceptionMetadata.EMPTY_METADATA);
         if (url != null && url.endsWith("/") && !resolved.toString().endsWith("/")) {
             resolved = URI.create(resolved + "/");
         }
         return resolved;
     }
 
-    private record ModuleSource(String query, URI systemId) {
-    }
+    private record ModuleSource(String query, URI systemId) {}
 
     private static ModuleSource readModuleSource(
-            URI location,
-            CompilationConfiguration compilationConfiguration,
-            ExceptionMetadata metadata
-    )
+            URI location, CompilationConfiguration compilationConfiguration, ExceptionMetadata metadata)
             throws IOException {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        try (
-            ResolvedResource resource = compilationConfiguration.resourceResolver()
-                .resolve(location, configuration, metadata)
-        ) {
+        try (ResolvedResource resource =
+                compilationConfiguration.resourceResolver().resolve(location, configuration, metadata)) {
             String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8.name());
             URI systemId = resource.getSystemId();
             if (configuration.semantics().staticBaseUri() != null) {
@@ -186,11 +175,7 @@ public class VisitorHelpers {
         }
     }
 
-    private static boolean shouldParseAsXQuery(
-            String query,
-            URI uri,
-            RumbleConfiguration configuration
-    ) {
+    private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
         if (query.contains("xquery version")) {
             return true;
         }
@@ -210,44 +195,23 @@ public class VisitorHelpers {
     public static MainModule parseMainModuleFromLocation(URI location, RumbleConfiguration configuration)
             throws IOException {
         return parseMainModuleFromLocation(
-            location,
-            new CompilationConfiguration(configuration),
-            ExternalBindings.empty()
-        );
+                location, new CompilationConfiguration(configuration), ExternalBindings.empty());
     }
 
     public static MainModule parseMainModuleFromLocation(
-            URI location,
-            RumbleConfiguration configuration,
-            ExternalBindings externalBindings
-    )
-            throws IOException {
-        return parseMainModuleFromLocation(
-            location,
-            new CompilationConfiguration(configuration),
-            externalBindings
-        );
+            URI location, RumbleConfiguration configuration, ExternalBindings externalBindings) throws IOException {
+        return parseMainModuleFromLocation(location, new CompilationConfiguration(configuration), externalBindings);
     }
 
     public static MainModule parseMainModuleFromLocation(
-            URI location,
-            CompilationConfiguration compilationConfiguration
-    )
-            throws IOException {
+            URI location, CompilationConfiguration compilationConfiguration) throws IOException {
         return parseMainModuleFromLocation(location, compilationConfiguration, ExternalBindings.empty());
     }
 
     public static MainModule parseMainModuleFromLocation(
-            URI location,
-            CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings
-    )
+            URI location, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings)
             throws IOException {
-        ModuleSource source = readModuleSource(
-            location,
-            compilationConfiguration,
-            ExceptionMetadata.EMPTY_METADATA
-        );
+        ModuleSource source = readModuleSource(location, compilationConfiguration, ExceptionMetadata.EMPTY_METADATA);
         return parseMainModule(source.query(), source.systemId(), compilationConfiguration, externalBindings);
     }
 
@@ -255,42 +219,23 @@ public class VisitorHelpers {
             URI location,
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration,
-            ExceptionMetadata metadata
-    )
+            ExceptionMetadata metadata)
             throws IOException {
         ModuleSource source = readModuleSource(location, compilationConfiguration, metadata);
-        return parseLibraryModule(
-            source.query(),
-            source.systemId(),
-            importingModuleContext,
-            compilationConfiguration
-        );
+        return parseLibraryModule(source.query(), source.systemId(), importingModuleContext, compilationConfiguration);
     }
 
     public static MainModule parseMainModuleFromQuery(
-            String query,
-            RumbleConfiguration configuration,
-            ExternalBindings externalBindings
-    ) {
-        return parseMainModuleFromQuery(
-            query,
-            new CompilationConfiguration(configuration),
-            externalBindings
-        );
+            String query, RumbleConfiguration configuration, ExternalBindings externalBindings) {
+        return parseMainModuleFromQuery(query, new CompilationConfiguration(configuration), externalBindings);
     }
 
-    public static MainModule parseMainModuleFromQuery(
-            String query,
-            CompilationConfiguration compilationConfiguration
-    ) {
+    public static MainModule parseMainModuleFromQuery(String query, CompilationConfiguration compilationConfiguration) {
         return parseMainModuleFromQuery(query, compilationConfiguration, ExternalBindings.empty());
     }
 
     public static MainModule parseMainModuleFromQuery(
-            String query,
-            CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings
-    ) {
+            String query, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         String url = ".";
         if (configuration.semantics().staticBaseUri() != null) {
@@ -301,11 +246,7 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(
-            String query,
-            URI uri,
-            RumbleConfiguration configuration,
-            ExternalBindings externalBindings
-    ) {
+            String query, URI uri, RumbleConfiguration configuration, ExternalBindings externalBindings) {
         return parseMainModule(query, uri, new CompilationConfiguration(configuration), externalBindings);
     }
 
@@ -313,8 +254,7 @@ public class VisitorHelpers {
             String query,
             URI uri,
             CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings
-    ) {
+            ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         if (shouldParseAsXQuery(query, uri, configuration)) {
             return parseXQueryMainModule(query, uri, compilationConfiguration, externalBindings);
@@ -326,8 +266,7 @@ public class VisitorHelpers {
             String query,
             URI uri,
             CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings
-    ) {
+            ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
@@ -339,13 +278,7 @@ public class VisitorHelpers {
         executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
         moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
         TranslationVisitor visitor = new TranslationVisitor(
-                moduleContext,
-                true,
-                compilationConfiguration,
-                externalBindings,
-                query,
-                jsoniqTokens
-        );
+                moduleContext, true, compilationConfiguration, externalBindings, query, jsoniqTokens);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
@@ -395,13 +328,7 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(
-                        uri.toString(),
-                        lexer.getLine(),
-                        lexer.getCharPositionInLine(),
-                        query
-                    )
-            );
+                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
             e.initCause(ex);
             throw e;
         }
@@ -411,8 +338,7 @@ public class VisitorHelpers {
             String query,
             URI uri,
             CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings
-    ) {
+            ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
@@ -424,13 +350,7 @@ public class VisitorHelpers {
         executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
         moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
-                moduleContext,
-                true,
-                compilationConfiguration,
-                externalBindings,
-                query,
-                xQueryTokens
-        );
+                moduleContext, true, compilationConfiguration, externalBindings, query, xQueryTokens);
         try {
             // TODO Handle module extras
             XQueryParser.ModuleContext main = parser.moduleAndThisIsIt().module();
@@ -454,13 +374,7 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(
-                        uri.toString(),
-                        lexer.getLine(),
-                        lexer.getCharPositionInLine(),
-                        query
-                    )
-            );
+                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
             e.initCause(ex);
             throw e;
         }
@@ -470,8 +384,7 @@ public class VisitorHelpers {
             String query,
             URI uri,
             StaticContext importingModuleContext,
-            CompilationConfiguration compilationConfiguration
-    ) {
+            CompilationConfiguration compilationConfiguration) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         if (shouldParseAsXQuery(query, uri, configuration)) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, compilationConfiguration);
@@ -483,8 +396,7 @@ public class VisitorHelpers {
             String query,
             URI uri,
             StaticContext importingModuleContext,
-            CompilationConfiguration compilationConfiguration
-    ) {
+            CompilationConfiguration compilationConfiguration) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
@@ -493,16 +405,9 @@ public class VisitorHelpers {
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
-            importingModuleContext.getUserDefinedFunctionsExecutionModes()
-        );
+                importingModuleContext.getUserDefinedFunctionsExecutionModes());
         TranslationVisitor visitor = new TranslationVisitor(
-                moduleContext,
-                false,
-                compilationConfiguration,
-                ExternalBindings.empty(),
-                query,
-                jsoniqTokens
-        );
+                moduleContext, false, compilationConfiguration, ExternalBindings.empty(), query, jsoniqTokens);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
@@ -513,13 +418,7 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(
-                        uri.toString(),
-                        lexer.getLine(),
-                        lexer.getCharPositionInLine(),
-                        query
-                    )
-            );
+                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
             e.initCause(ex);
             throw e;
         }
@@ -529,8 +428,7 @@ public class VisitorHelpers {
             String query,
             URI uri,
             StaticContext importingModuleContext,
-            CompilationConfiguration compilationConfiguration
-    ) {
+            CompilationConfiguration compilationConfiguration) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
@@ -539,16 +437,9 @@ public class VisitorHelpers {
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
-            importingModuleContext.getUserDefinedFunctionsExecutionModes()
-        );
+                importingModuleContext.getUserDefinedFunctionsExecutionModes());
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
-                moduleContext,
-                false,
-                compilationConfiguration,
-                ExternalBindings.empty(),
-                query,
-                xQueryTokens
-        );
+                moduleContext, false, compilationConfiguration, ExternalBindings.empty(), query, xQueryTokens);
         try {
             // TODO Handle module extras
             XQueryParser.ModuleContext main = parser.module();
@@ -559,23 +450,14 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(
-                        uri.toString(),
-                        lexer.getLine(),
-                        lexer.getCharPositionInLine(),
-                        query
-                    )
-            );
+                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
             e.initCause(ex);
             throw e;
         }
     }
 
     private static void populateExecutionModes(
-            Module module,
-            RumbleConfiguration conf,
-            ExternalBindings externalBindings
-    ) {
+            Module module, RumbleConfiguration conf, ExternalBindings externalBindings) {
         if (conf.debug().printIteratorTree()) {
             debugPrintTree(module, conf);
         }
@@ -587,8 +469,7 @@ public class VisitorHelpers {
             }
             if (module.numberOfUnsetExecutionModes() > 0) {
                 log.warn(
-                    "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
-                );
+                        "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report.");
             }
             return;
         }
@@ -617,13 +498,11 @@ public class VisitorHelpers {
 
             if (currentUnsetCount > prevUnsetCount) {
                 throw new OurBadException(
-                        "Unexpected program state reached while performing multi-pass over StaticContext."
-                );
+                        "Unexpected program state reached while performing multi-pass over StaticContext.");
             }
             if (currentUnsetCount == prevUnsetCount) {
                 setLocalExecutionForUnsetUserDefinedFunctions(
-                    module.getStaticContext().getUserDefinedFunctionsExecutionModes()
-                );
+                        module.getStaticContext().getUserDefinedFunctionsExecutionModes());
                 break;
             }
             prevUnsetCount = currentUnsetCount;
@@ -636,8 +515,7 @@ public class VisitorHelpers {
         }
         if (module.numberOfUnsetExecutionModes() > 0) {
             log.warn(
-                "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
-            );
+                    "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report.");
         }
     }
 
@@ -660,10 +538,7 @@ public class VisitorHelpers {
         debugPrintTree(module, conf);
     }
 
-    private static void populateSequentialClassifications(
-            MainModule mainModule,
-            RumbleConfiguration configuration
-    ) {
+    private static void populateSequentialClassifications(MainModule mainModule, RumbleConfiguration configuration) {
         debugPrintTree(mainModule, configuration);
 
         SequentialClassificationVisitor visitor = new SequentialClassificationVisitor(mainModule.getProlog());
@@ -672,11 +547,7 @@ public class VisitorHelpers {
         debugPrintTree(mainModule, configuration);
     }
 
-
-    private static void verifyComposabilityConstraints(
-            MainModule mainModule,
-            RumbleConfiguration configuration
-    ) {
+    private static void verifyComposabilityConstraints(MainModule mainModule, RumbleConfiguration configuration) {
         debugPrintTree(mainModule, configuration);
 
         ComposabilityVisitor visitor = new ComposabilityVisitor();
@@ -690,37 +561,23 @@ public class VisitorHelpers {
     }
 
     public static DynamicContext createDynamicContext(
-            Node node,
-            RumbleConfiguration configuration,
-            ExternalBindings externalBindings
-    ) {
+            Node node, RumbleConfiguration configuration, ExternalBindings externalBindings) {
         DynamicContextVisitor visitor = new DynamicContextVisitor(configuration, externalBindings);
         return visitor.visit(node, null);
     }
 
     private static void setLocalExecutionForUnsetUserDefinedFunctions(
-            UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes
-    ) {
+            UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes) {
         try {
             List<FunctionIdentifier> unsetFunctionIdentifiers = new ArrayList<>();
             unsetFunctionIdentifiers.addAll(
-                userDefinedFunctionExecutionModes
-                    .getUserDefinedFunctionIdentifiersWithUnsetExecutionModes()
-            );
-            for (
-                FunctionIdentifier functionIdentifier : unsetFunctionIdentifiers
-            ) {
-                userDefinedFunctionExecutionModes.setExecutionMode(
-                    functionIdentifier,
-                    ExecutionMode.LOCAL,
-                    true,
-                    null
-                );
+                    userDefinedFunctionExecutionModes.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes());
+            for (FunctionIdentifier functionIdentifier : unsetFunctionIdentifiers) {
+                userDefinedFunctionExecutionModes.setExecutionMode(functionIdentifier, ExecutionMode.LOCAL, true, null);
             }
         } catch (DuplicateFunctionIdentifierException e) {
             throw new OurBadException(
-                    "Unexpected program state reached while setting local execution for unset user defined functions."
-            );
+                    "Unexpected program state reached while setting local execution for unset user defined functions.");
         }
     }
 }

@@ -36,7 +36,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-
 public class MapEntryItem extends AbstractMapItem {
 
     @Serial
@@ -46,6 +45,7 @@ public class MapEntryItem extends AbstractMapItem {
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
     private final Item key;
+
     private final List<Item> value;
 
     public MapEntryItem(Item key, List<Item> value) {
@@ -65,7 +65,9 @@ public class MapEntryItem extends AbstractMapItem {
             result.setMutabilityLevel(0);
             return result;
         }
-        return new MapEntryItem(this.key.copy(mutable), this.value.stream().map(item -> item.copy(mutable)).toList());
+        return new MapEntryItem(
+                this.key.copy(mutable),
+                this.value.stream().map(item -> item.copy(mutable)).toList());
     }
 
     // region maps
@@ -176,13 +178,10 @@ public class MapEntryItem extends AbstractMapItem {
 
     // endregion maps
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.mapItem;
     }
-
 
     @Override
     public boolean getEffectiveBooleanValue() {
@@ -301,9 +300,7 @@ public class MapEntryItem extends AbstractMapItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -325,5 +322,4 @@ public class MapEntryItem extends AbstractMapItem {
     public void setCollection(Collection collection) {
         throw new OurBadException("Cannot change collection of a MapEntryItem, which is not mutable.");
     }
-
 }

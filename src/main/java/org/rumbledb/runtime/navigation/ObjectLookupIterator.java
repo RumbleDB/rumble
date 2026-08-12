@@ -20,12 +20,6 @@
 
 package org.rumbledb.runtime.navigation;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -33,15 +27,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -55,40 +51,39 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
-import org.rumbledb.spark.SparkSessionManager;
 
 @Log4j2
 public class ObjectLookupIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item>,
-            NativeQueryRuntimePlan {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
     private final ItemRuntimePlan lookupIterator;
     private Item lookupKey;
     private boolean contextLookup;
 
     public ObjectLookupIterator(
-            ItemRuntimePlan object,
-            ItemRuntimePlan lookupIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan object, ItemRuntimePlan lookupIterator, RuntimeStaticContext staticContext) {
         super(Arrays.asList(object, lookupIterator), staticContext);
         this.iterator = object;
         this.lookupIterator = lookupIterator;
@@ -99,9 +94,9 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         String key;
         if (this.lookupIterator instanceof ContextExpressionIterator) {
             key = context.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0)
-                .getStringValue();
+                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                    .get(0)
+                    .getStringValue();
         } else {
             key = requireLookupKey(this.lookupIterator.materialize(context));
         }
@@ -113,10 +108,11 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                         return List.<Item>of().iterator();
                     }
                     Item result = item.getItemByKey(key);
-                    return result == null ? List.<Item>of().iterator() : List.of(result).iterator();
+                    return result == null
+                            ? List.<Item>of().iterator()
+                            : List.of(result).iterator();
                 },
-                getMetadata()
-        );
+                getMetadata());
     }
 
     private void initLookupKey(DynamicContext context) {
@@ -128,22 +124,16 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 this.lookupKey = this.lookupIterator.materializeExactlyOne(context);
             } catch (NoItemException e) {
                 throw new InvalidSelectorException(
-                        "Invalid Lookup Key; Object lookup can't be performed with no key.",
-                        getMetadata()
-                );
+                        "Invalid Lookup Key; Object lookup can't be performed with no key.", getMetadata());
             } catch (MoreThanOneItemException e) {
                 throw new InvalidSelectorException(
-                        "Invalid Lookup Key; Object lookup can't be performed with multiple keys.",
-                        getMetadata()
-                );
+                        "Invalid Lookup Key; Object lookup can't be performed with multiple keys.", getMetadata());
             }
 
             if (this.lookupKey.isNull() || this.lookupKey.isObject() || this.lookupKey.isArray()) {
                 throw new UnexpectedTypeException(
-                        "Type error; Object selector can't be converted to a string: "
-                            + this.lookupKey.serialize(),
-                        getMetadata()
-                );
+                        "Type error; Object selector can't be converted to a string: " + this.lookupKey.serialize(),
+                        getMetadata());
             } else {
                 // convert to string
                 if (this.lookupKey.isBoolean()) {
@@ -167,9 +157,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             }
             if (!this.lookupKey.isString()) {
                 throw new UnexpectedTypeException(
-                        "Non string object lookup for " + this.lookupKey.serialize(),
-                        getMetadata()
-                );
+                        "Non string object lookup for " + this.lookupKey.serialize(), getMetadata());
             }
         }
     }
@@ -177,22 +165,16 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     private String requireLookupKey(List<Item> values) {
         if (values.isEmpty()) {
             throw new InvalidSelectorException(
-                    "Invalid Lookup Key; Object lookup can't be performed with no key.",
-                    getMetadata()
-            );
+                    "Invalid Lookup Key; Object lookup can't be performed with no key.", getMetadata());
         }
         if (values.size() > 1) {
             throw new InvalidSelectorException(
-                    "Invalid Lookup Key; Object lookup can't be performed with multiple keys.",
-                    getMetadata()
-            );
+                    "Invalid Lookup Key; Object lookup can't be performed with multiple keys.", getMetadata());
         }
         Item key = values.get(0);
         if (key.isNull() || key.isObject() || key.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; Object selector can't be converted to a string: " + key.serialize(),
-                    getMetadata()
-            );
+                    "Type error; Object selector can't be converted to a string: " + key.serialize(), getMetadata());
         }
         if (key.isBoolean()) {
             return Boolean.toString(key.getBooleanValue());
@@ -212,10 +194,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         if (key.isString()) {
             return key.getStringValue();
         }
-        throw new UnexpectedTypeException(
-                "Non string object lookup for " + key.serialize(),
-                getMetadata()
-        );
+        throw new UnexpectedTypeException("Non string object lookup for " + key.serialize(), getMetadata());
     }
 
     @Override
@@ -225,13 +204,11 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = dynamicContext.getVariableValues()
-                .getLocalVariableValue(
-                    Name.CONTEXT_ITEM,
-                    getMetadata()
-                )
-                .get(0)
-                .getStringValue();
+            key = dynamicContext
+                    .getVariableValues()
+                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                    .get(0)
+                    .getStringValue();
         } else {
             key = this.lookupKey.getStringValue();
         }
@@ -244,8 +221,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
-        Map<Name, DynamicContext.VariableDependency> keyDependencies =
-            this.lookupIterator.getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.lookupIterator.getVariableDependencies();
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
@@ -264,22 +240,14 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         // this is the schema from the left hand side.
         DataType leftSchema;
         NativeClauseContext newContext;
-        if (
-            nativeClauseContext.getClauseType().equals(FLWOR_CLAUSES.FILTER)
-                && (this.iterator instanceof ContextExpressionIterator)
-        ) {
+        if (nativeClauseContext.getClauseType().equals(FLWOR_CLAUSES.FILTER)
+                && (this.iterator instanceof ContextExpressionIterator)) {
             leftSchema = (nativeClauseContext.getResultingType() != null)
-                ? TypeMappings.getDataFrameDataTypeFromItemType(
-                    nativeClauseContext.getResultingType().getItemType(),
-                    this.staticContext
-                )
-                : outerContextSchema;
+                    ? TypeMappings.getDataFrameDataTypeFromItemType(
+                            nativeClauseContext.getResultingType().getItemType(), this.staticContext)
+                    : outerContextSchema;
             if (leftSchema instanceof StructType) {
-                newContext = new NativeClauseContext(
-                        nativeClauseContext,
-                        null,
-                        nativeClauseContext.getResultingType()
-                );
+                newContext = new NativeClauseContext(nativeClauseContext, null, nativeClauseContext.getResultingType());
             } else {
                 if (leftSchema instanceof ArrayType arrayType) {
                     leftSchema = arrayType.elementType();
@@ -287,23 +255,18 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
                         "`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`",
-                        nativeClauseContext.getResultingType()
-                );
+                        nativeClauseContext.getResultingType());
             }
         } else {
             newContext = NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
             if (newContext != NativeClauseContext.NoNativeQuery) {
                 leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(
-                    newContext.getResultingType().getItemType(),
-                    this.staticContext
-                );
+                        newContext.getResultingType().getItemType(), this.staticContext);
             } else {
                 return NativeClauseContext.NoNativeQuery;
             }
             leftSchema = newContext.getSchema();
         }
-
-
 
         // get key (escape backtick)
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
@@ -313,24 +276,19 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "You are trying to look up the value associated with the field "
-                                + key
-                                + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
-                                + "Fortunately Rumble was able to catch this. This is probably an overlook? "
-                                + "Please check your query and try again.",
+                                    + key
+                                    + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
+                                    + "Fortunately Rumble was able to catch this. This is probably an overlook? "
+                                    + "Please check your query and try again.",
                             ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
-                log.warn(
-                    "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-                );
+                log.warn("Object lookup on a DataFrame that does not have this column. Empty sequence returned.");
             }
             return NativeClauseContext.NoNativeQuery;
         }
-        if (
-            Arrays.asList(structSchema.fieldNames()).contains(key)
-                || Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)
-        ) {
+        if (Arrays.asList(structSchema.fieldNames()).contains(key)
+                || Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)) {
             if (Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)) {
                 key = sequenceKey;
             }
@@ -341,18 +299,20 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 newContext.setResultingQuery("`" + key + "`");
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
-            newContext.setResultingType(
-                new SequenceType(
-                        TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
-                        SequenceType.Arity.OneOrZero
-                )
-            );
+            newContext.setResultingType(new SequenceType(
+                    TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()), SequenceType.Arity.OneOrZero));
             newContext.setSchema(field.dataType());
-        } else if (
-            newContext.getResultingType().getItemType().isObjectItemType()
-                && (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(key)
-                    || newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey))
-        ) {
+        } else if (newContext.getResultingType().getItemType().isObjectItemType()
+                && (newContext
+                                .getResultingType()
+                                .getItemType()
+                                .getObjectKeysFacet()
+                                .contains(key)
+                        || newContext
+                                .getResultingType()
+                                .getItemType()
+                                .getObjectKeysFacet()
+                                .contains(sequenceKey))) {
             if (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey)) {
                 key = sequenceKey;
             }
@@ -362,33 +322,27 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             } else {
                 newContext.setResultingQuery("`" + key + "`");
             }
-            ItemType resultType = newContext.getResultingType()
-                .getItemType()
-                .getObjectContentFacet(key)
-                .getType();
+            ItemType resultType = newContext
+                    .getResultingType()
+                    .getItemType()
+                    .getObjectContentFacet(key)
+                    .getType();
             newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.OneOrZero));
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
-            newContext.setResultingType(
-                new SequenceType(
-                        TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
-                        SequenceType.Arity.OneOrZero
-                )
-            );
+            newContext.setResultingType(new SequenceType(
+                    TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()), SequenceType.Arity.OneOrZero));
             newContext.setSchema(field.dataType());
         } else {
             if (this.lookupIterator instanceof StringRuntimeIterator) {
-                log.warn(
-                    "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-                );
+                log.warn("Object lookup on a DataFrame that does not have this column. Empty sequence returned.");
                 if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "There is no field with the name "
-                                + key
-                                + " so that the lookup will always result in the empty sequence no matter what. "
-                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                                    + key
+                                    + " so that the lookup will always result in the empty sequence no matter what. "
+                                    + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
                             ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
             }
             return NativeClauseContext.NoNativeQuery;
@@ -398,15 +352,15 @@ public class ObjectLookupIterator extends ItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
-            .fromPlan(this.getChild(0), context);
+        HomogeneousItemDataFrame childDataFrame =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
         initLookupKey(context);
         String key;
         if (this.contextLookup) {
             key = context.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                .get(0)
-                .getStringValue();
+                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                    .get(0)
+                    .getStringValue();
         } else {
             key = this.lookupKey.getStringValue();
         }
@@ -423,61 +377,49 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 String sql;
                 if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
                     sql = String.format(
-                        "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
-                        key,
-                        SparkSessionManager.rowIdColumnName,
-                        SparkSessionManager.mutabilityLevelColumnName,
-                        SparkSessionManager.pathInColumnName,
-                        key,
-                        SparkSessionManager.pathInColumnName,
-                        SparkSessionManager.tableLocationColumnName,
-                        object
-                    );
+                            "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
+                            key,
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            key,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            object);
 
                 } else {
                     sql = String.format("SELECT `%s`.* FROM %s", key, object);
                 }
-                HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
-                    sql,
-                    type
-                );
+                HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(sql, type);
                 return result;
             } else {
                 String sql;
                 HomogeneousItemDataFrame result;
                 if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
                     sql = String.format(
-                        "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
-                        key,
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        SparkSessionManager.rowIdColumnName,
-                        SparkSessionManager.mutabilityLevelColumnName,
-                        SparkSessionManager.pathInColumnName,
-                        key,
-                        SparkSessionManager.pathInColumnName,
-                        SparkSessionManager.tableLocationColumnName,
-                        object
-                    );
-                    Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
+                            "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
+                            key,
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            key,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            object);
+                    Dataset<Row> df =
+                            childDataFrame.getDataFrame().sparkSession().sql(sql);
                     result = new HomogeneousItemDataFrame(df, type);
                 } else {
                     sql = String.format(
-                        "SELECT `%s` AS `%s` FROM %s",
-                        key,
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        object
-                    );
-                    result = childDataFrame.evaluateSQL(
-                        sql,
-                        type
-                    );
+                            "SELECT `%s` AS `%s` FROM %s",
+                            key, SparkSessionManager.nonObjectJSONiqItemColumnName, object);
+                    result = childDataFrame.evaluateSQL(sql, type);
                 }
                 return result;
             }
         }
-        log.warn(
-            "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-        );
+        log.warn("Object lookup on a DataFrame that does not have this column. Empty sequence returned.");
         HomogeneousItemDataFrame result = HomogeneousItemDataFrame.emptyDataFrame();
         return result;
     }

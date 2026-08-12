@@ -17,13 +17,14 @@
 
 package org.rumbledb.runtime.cursor;
 
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Test;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -46,9 +47,7 @@ public class RuntimePlanCursorTest {
         RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
-                ItemFactory.getInstance().createIntItem(42),
-                createStaticContext(configuration)
-        );
+                ItemFactory.getInstance().createIntItem(42), createStaticContext(configuration));
         Cursor<Item> first = prototype.getCursor(dynamicContext);
         Cursor<Item> second = prototype.getCursor(dynamicContext);
 
@@ -68,9 +67,7 @@ public class RuntimePlanCursorTest {
         RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
-                ItemFactory.getInstance().createIntItem(1),
-                createStaticContext(configuration)
-        );
+                ItemFactory.getInstance().createIntItem(1), createStaticContext(configuration));
         Cursor<Item> cursor = prototype.getCursor(dynamicContext);
 
         assertTrue(cursor.hasNext());
@@ -86,13 +83,11 @@ public class RuntimePlanCursorTest {
         RuntimeStaticContext staticContext = createStaticContext(configuration);
         RuntimePlan<Item> planWithoutLocalCapability = new RuntimePlan<>(staticContext) {};
 
-        OurBadException exception = assertThrows(
-            OurBadException.class,
-            () -> planWithoutLocalCapability.getCursor(dynamicContext)
-        );
-        assertTrue(
-            exception.getMessage().contains("does not implement any local, RDD, or DataFrame execution capability")
-        );
+        OurBadException exception =
+                assertThrows(OurBadException.class, () -> planWithoutLocalCapability.getCursor(dynamicContext));
+        assertTrue(exception
+                .getMessage()
+                .contains("does not implement any local, RDD, or DataFrame execution capability"));
     }
 
     @Test
@@ -100,9 +95,7 @@ public class RuntimePlanCursorTest {
         RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         DirectAtMostOnePlan plan = new DirectAtMostOnePlan(
-                createStaticContext(configuration),
-                ItemFactory.getInstance().createIntItem(7)
-        );
+                createStaticContext(configuration), ItemFactory.getInstance().createIntItem(7));
 
         assertEquals(7, plan.materializeFirstOrNull(dynamicContext).getIntValue());
         assertEquals(7, plan.materializeAtMostOne(dynamicContext).getIntValue());
@@ -143,8 +136,7 @@ public class RuntimePlanCursorTest {
         }
 
         @Override
-        protected void openLocal() {
-        }
+        protected void openLocal() {}
 
         @Override
         protected boolean hasNextLocal() {
@@ -163,8 +155,7 @@ public class RuntimePlanCursorTest {
     }
 
     private static final class DirectAtMostOnePlan extends RuntimePlan<Item>
-            implements
-                AtMostOneLocalRuntimePlan<Item> {
+            implements AtMostOneLocalRuntimePlan<Item> {
 
         private static final long serialVersionUID = 1L;
 
@@ -192,10 +183,10 @@ public class RuntimePlanCursorTest {
 
     private static RuntimeStaticContext createStaticContext(RumbleConfiguration configuration) {
         return RuntimeStaticContext.builder()
-            .configuration(configuration)
-            .staticType(new SequenceType(BuiltinTypesCatalogue.intItem))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(ExceptionMetadata.EMPTY_METADATA)
-            .build();
+                .configuration(configuration)
+                .staticType(new SequenceType(BuiltinTypesCatalogue.intItem))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(ExceptionMetadata.EMPTY_METADATA)
+                .build();
     }
 }

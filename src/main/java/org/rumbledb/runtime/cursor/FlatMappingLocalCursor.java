@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import lombok.NonNull;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -32,8 +33,7 @@ public final class FlatMappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
             @NonNull RuntimePlan<I> inputPlan,
             @NonNull DynamicContext context,
             @NonNull Function<? super I, ? extends Iterator<? extends O>> mapper,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull ExceptionMetadata metadata) {
         super(metadata);
         this.inputPlan = inputPlan;
         this.context = context;
@@ -50,9 +50,7 @@ public final class FlatMappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
     protected boolean hasNextLocal() {
         while (!this.currentResults.hasNext() && this.inputCursor.hasNext()) {
             this.currentResults = Objects.requireNonNull(
-                this.mapper.apply(this.inputCursor.next()),
-                "flat-map function returned a null iterator"
-            );
+                    this.mapper.apply(this.inputCursor.next()), "flat-map function returned a null iterator");
         }
         return this.currentResults.hasNext();
     }

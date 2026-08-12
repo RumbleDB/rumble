@@ -18,14 +18,14 @@
 
 package org.rumbledb.cli.commands;
 
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+
 import org.rumbledb.cli.CLIInvocation;
 import org.rumbledb.cli.arguments.InputArguments;
 import org.rumbledb.cli.arguments.OutputArguments;
 import org.rumbledb.config.model.RumbleMode;
-
-import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
 @Command(name = "run", description = "Executes a query.", mixinStandardHelpOptions = true)
 public final class Run extends BaseCommand {
@@ -37,11 +37,9 @@ public final class Run extends BaseCommand {
 
     @Override
     public CLIInvocation call() {
-        return this.invocation(
-            this.baseConfiguration(RumbleMode.RUN)
+        return this.invocation(this.baseConfiguration(RumbleMode.RUN)
                 .input(this.input.toConfig())
                 .output(this.output.toConfig())
-                .build()
-        );
+                .build());
     }
 }

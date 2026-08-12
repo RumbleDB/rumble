@@ -17,11 +17,7 @@ final class WidthModifier {
         this.maxWidth = maxWidth;
     }
 
-    static WidthModifier parse(
-            String rest,
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+    static WidthModifier parse(String rest, String pictureString, ExceptionMetadata metadata) {
         int comma = rest.lastIndexOf(',');
 
         if (comma < 0) {
@@ -33,18 +29,10 @@ final class WidthModifier {
 
         ParsedWidth width = parseWidth(widthPart, pictureString, metadata);
 
-        return new WidthModifier(
-                presentationPart,
-                width.minWidth,
-                width.maxWidth
-        );
+        return new WidthModifier(presentationPart, width.minWidth, width.maxWidth);
     }
 
-    private static ParsedWidth parseWidth(
-            String widthPart,
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+    private static ParsedWidth parseWidth(String widthPart, String pictureString, ExceptionMetadata metadata) {
         if (widthPart.isEmpty()) {
             throw incorrectSyntax(pictureString, metadata);
         }
@@ -56,20 +44,14 @@ final class WidthModifier {
         }
 
         int min = parseWidthValue(parts[0], pictureString, metadata);
-        int max = parts.length == 2
-            ? parseWidthValue(parts[1], pictureString, metadata)
-            : UNBOUNDED;
+        int max = parts.length == 2 ? parseWidthValue(parts[1], pictureString, metadata) : UNBOUNDED;
 
         validateWidth(min, max, pictureString, metadata);
 
         return new ParsedWidth(min, max);
     }
 
-    private static int parseWidthValue(
-            String value,
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+    private static int parseWidthValue(String value, String pictureString, ExceptionMetadata metadata) {
         if ("*".equals(value)) {
             return UNBOUNDED;
         }
@@ -85,12 +67,7 @@ final class WidthModifier {
         }
     }
 
-    private static void validateWidth(
-            int min,
-            int max,
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+    private static void validateWidth(int min, int max, String pictureString, ExceptionMetadata metadata) {
         if (min == 0 || max == 0) {
             throw invalidPicture(pictureString, metadata);
         }
@@ -101,23 +78,14 @@ final class WidthModifier {
     }
 
     private static IncorrectSyntaxFormatDateTimeException incorrectSyntax(
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
-        return new IncorrectSyntaxFormatDateTimeException(
-                "\"" + pictureString + "\": incorrect syntax",
-                metadata
-        );
+            String pictureString, ExceptionMetadata metadata) {
+        return new IncorrectSyntaxFormatDateTimeException("\"" + pictureString + "\": incorrect syntax", metadata);
     }
 
     private static IncorrectSyntaxFormatDateTimeException invalidPicture(
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            String pictureString, ExceptionMetadata metadata) {
         return new IncorrectSyntaxFormatDateTimeException(
-                "\"" + pictureString + "\": invalid picture string",
-                metadata
-        );
+                "\"" + pictureString + "\": invalid picture string", metadata);
     }
 
     private static final class ParsedWidth {

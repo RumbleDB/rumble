@@ -17,8 +17,9 @@
 
 package org.rumbledb.runtime.functions;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -27,10 +28,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * fn:function-lookup($name as xs:QName, $arity as xs:integer) as function(*)?
@@ -43,10 +41,7 @@ public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntime
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FunctionLookupFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public FunctionLookupFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -54,25 +49,16 @@ public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntime
     public Item evaluateAtMostOne(DynamicContext context) {
         Item nameItem = this.getChild(0).materializeFirstOrNull(context);
         if (!nameItem.isQName()) {
-            throw new UnexpectedTypeException(
-                    "function-lookup: first argument must be xs:QName",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("function-lookup: first argument must be xs:QName", getMetadata());
         }
         Name fnName = nameItem.getQNameValue();
 
         Item arityItem = this.getChild(1).materializeFirstOrNull(context);
         if (arityItem == null) {
-            throw new UnexpectedTypeException(
-                    "function-lookup: second argument must be xs:integer",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("function-lookup: second argument must be xs:integer", getMetadata());
         }
         if (!arityItem.isNumeric()) {
-            throw new UnexpectedTypeException(
-                    "function-lookup: second argument must be xs:integer",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("function-lookup: second argument must be xs:integer", getMetadata());
         }
         BigInteger big = arityItem.castToIntegerValue();
         int arity;
@@ -88,6 +74,4 @@ public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntime
         FunctionIdentifier id = new FunctionIdentifier(fnName, arity);
         return NamedFunctionLookup.lookupOrNull(id, context, getConfiguration(), getMetadata());
     }
-
-
 }

@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,11 +34,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Runtime iterator for direct processing instruction constructors.
  *
@@ -42,35 +42,30 @@ import java.util.List;
 public class DirPIConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final String target;
     private final DataFunctionIterator contentIterator;
 
     public DirPIConstructorRuntimeIterator(
-            String target,
-            DataFunctionIterator contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            String target, DataFunctionIterator contentIterator, RuntimeStaticContext staticContext) {
         super(
-            contentIterator != null ? Collections.singletonList(contentIterator) : Collections.emptyList(),
-            staticContext
-        );
+                contentIterator != null ? Collections.singletonList(contentIterator) : Collections.emptyList(),
+                staticContext);
         this.target = target;
         this.contentIterator = contentIterator;
     }
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        List<Item> materialized = this.contentIterator == null
-            ? List.of()
-            : this.contentIterator.materialize(dynamicContext);
+        List<Item> materialized =
+                this.contentIterator == null ? List.of() : this.contentIterator.materialize(dynamicContext);
         // "The resulting NCName is then used as the target property of the newly constructed processing instruction
         // node. However, a dynamic error is raised if the NCName is equal to "XML" (in any combination of upper and
         // lower case) [err:XQDY0064]."
         if (this.target != null && this.target.equalsIgnoreCase("xml")) {
             throw new InvalidProcessingInstructionTargetException(
                     "Processing instruction target must not be XML in any combination of upper and lower case.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         // "Atomization is applied to the value of the content expression, converting it to a sequence of atomic values.
         // (If the content expression is absent, the result of this step is an empty sequence.)"
@@ -85,9 +80,7 @@ public class DirPIConstructorRuntimeIterator extends AbstractAtMostOneItemRuntim
                 String value = item.getStringValue();
                 if (value.contains("?>")) {
                     throw new InvalidProcessingInstructionContentException(
-                            "Processing instruction content must not contain the string '?>'.",
-                            getMetadata()
-                    );
+                            "Processing instruction content must not contain the string '?>'.", getMetadata());
                 }
                 stringValues.add(value);
             }
@@ -98,13 +91,8 @@ public class DirPIConstructorRuntimeIterator extends AbstractAtMostOneItemRuntim
         // node."
         String content = String.join(" ", stringValues);
         content = removeLeadingWhitespace(content);
-        return ItemFactory.getInstance()
-            .createXmlProcessingInstructionNode(
-                this.target,
-                content
-            );
+        return ItemFactory.getInstance().createXmlProcessingInstructionNode(this.target, content);
     }
-
 
     private String removeLeadingWhitespace(String value) {
         int index = 0;

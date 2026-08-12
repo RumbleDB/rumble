@@ -20,37 +20,31 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 public class UnorderedFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
-
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
 
-    public UnorderedFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public UnorderedFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.iterator = this.getChild(0);
     }
@@ -68,11 +62,7 @@ public class UnorderedFunctionIterator extends ItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-            this.iterator,
-            context
-        );
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
         return df;
     }
-
 }

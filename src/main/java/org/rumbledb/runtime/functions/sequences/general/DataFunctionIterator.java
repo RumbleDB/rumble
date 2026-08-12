@@ -20,14 +20,16 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import java.io.Serial;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -35,33 +37,26 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.exceptions.OurBadException;
-
-import lombok.NonNull;
-import java.io.Serial;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 public class DataFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
-
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan sequenceIterator;
 
-    public DataFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public DataFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChildren().isEmpty() ? null : this.getChild(0);
     }
@@ -80,10 +75,8 @@ public class DataFunctionIterator extends ItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame childDF = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-            this.sequenceIterator,
-            dynamicContext
-        );
+        HomogeneousItemDataFrame childDF =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.sequenceIterator, dynamicContext);
         if (childDF.getItemType().isAtomicItemType()) {
             return childDF;
         }
@@ -108,10 +101,7 @@ public class DataFunctionIterator extends ItemRuntimePlan
         private Iterator<Item> atomizedValues;
 
         private EvaluationCursor(
-                ItemRuntimePlan sequencePlan,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
+                ItemRuntimePlan sequencePlan, @NonNull DynamicContext context, @NonNull ExceptionMetadata metadata) {
             super(metadata);
             this.sequencePlan = sequencePlan;
             this.context = context;
@@ -124,8 +114,8 @@ public class DataFunctionIterator extends ItemRuntimePlan
             if (this.sequencePlan != null) {
                 this.inputCursor = this.sequencePlan.getCursor(this.context);
             } else {
-                List<Item> contextItems = this.context.getVariableValues()
-                    .getLocalVariableValue(Name.CONTEXT_ITEM, this.metadata);
+                List<Item> contextItems =
+                        this.context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, this.metadata);
                 if (contextItems.size() != 1) {
                     throw new OurBadException("The context item is not a singleton.", this.metadata);
                 }
@@ -171,10 +161,7 @@ public class DataFunctionIterator extends ItemRuntimePlan
 
         private RuntimeException exhausted() {
             return new IteratorFlowException(
-                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " atomization iterator",
-                    this.metadata
-            );
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " atomization iterator", this.metadata);
         }
-
     }
 }

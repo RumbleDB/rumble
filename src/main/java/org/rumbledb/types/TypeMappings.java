@@ -10,6 +10,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 
@@ -71,18 +72,11 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             List<StructField> fields = new ArrayList<>();
             itemType.getObjectKeysFacet()
-                .forEach(
-                    key -> fields.add(
-                        DataTypes.createStructField(
+                    .forEach(key -> fields.add(DataTypes.createStructField(
                             key,
                             getDataFrameDataTypeFromItemType(
-                                itemType.getObjectContentFacet(key).getType(),
-                                staticContext
-                            ),
-                            !itemType.getObjectContentFacet(key).isRequired()
-                        )
-                    )
-                );
+                                    itemType.getObjectContentFacet(key).getType(), staticContext),
+                            !itemType.getObjectContentFacet(key).isRequired())));
             if (fields.size() > 0) {
                 return DataTypes.createStructType(fields);
             }
@@ -90,8 +84,7 @@ public class TypeMappings {
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
             return DataTypes.createArrayType(
-                getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet(), staticContext)
-            );
+                    getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet(), staticContext));
         }
         if (itemType.isTopmostItemType()) {
             return DataTypes.StringType;
@@ -120,11 +113,9 @@ public class TypeMappings {
                     hasStructuredType = true;
                 }
             }
-            if (
-                hasNumeric
+            if (hasNumeric
                     && !hasStructuredType
-                    && !(!staticContext.getConfiguration().semantics().laxJSONNullValidation() && hasNull)
-            ) {
+                    && !(!staticContext.getConfiguration().semantics().laxJSONNullValidation() && hasNull)) {
                 return DataTypes.DoubleType;
             }
             return DataTypes.StringType;
@@ -132,13 +123,11 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
             return DataTypes.StringType;
         }
-        throw new IllegalArgumentException(
-                "Unexpected item type found: '"
-                    + itemType
-                    + "' in namespace "
-                    + (itemType.getName() != null ? itemType.getName().getNamespace() : "null")
-                    + "."
-        );
+        throw new IllegalArgumentException("Unexpected item type found: '"
+                + itemType
+                + "' in namespace "
+                + (itemType.getName() != null ? itemType.getName().getNamespace() : "null")
+                + ".");
     }
 
     // This method is redundant with ItemTypeFactory.createItemType() and the latter should fall back to this one.

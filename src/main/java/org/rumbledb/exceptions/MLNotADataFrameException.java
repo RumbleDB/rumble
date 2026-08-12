@@ -20,9 +20,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class MLNotADataFrameException extends RumbleException {
 
@@ -30,10 +30,6 @@ public class MLNotADataFrameException extends RumbleException {
     private static final long serialVersionUID = 1L;
 
     public MLNotADataFrameException(String message, ExceptionMetadata metadata) {
-        super(
-            "Invalid Param; " + message,
-            ErrorCode.MLNotADataFrameErrorCode,
-            metadata
-        );
+        super("Invalid Param; " + message, ErrorCode.MLNotADataFrameErrorCode, metadata);
     }
 }

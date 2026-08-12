@@ -1,7 +1,8 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
+import java.io.Serial;
+import java.time.OffsetDateTime;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -10,20 +11,14 @@ import org.rumbledb.exceptions.CastException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
-
-import java.io.Serial;
-import java.time.OffsetDateTime;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 abstract class DateFormattingFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DateFormattingFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public DateFormattingFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -54,59 +49,41 @@ abstract class DateFormattingFunctionIterator extends AbstractAtMostOneItemRunti
         }
 
         FormattingContext formattingContext = FormattingContext.fromArguments(
-            language,
-            calendar,
-            place,
-            getRuntimeStaticContext().getStaticallyKnownNamespaces(),
-            getMetadata()
-        );
+                language, calendar, place, getRuntimeStaticContext().getStaticallyKnownNamespaces(), getMetadata());
 
         // Retrieves the individual temporal value used by a date-format function.
         OffsetDateTime temporalValue = getTemporalValue(valueItem);
         boolean hasExplicitTimezone = valueItem.hasTimeZone();
 
         // Apply the timezone before rendering, if set explicitly.
-        OffsetDateTime renderingValue = applyConfiguredZone(
-            temporalValue,
-            hasExplicitTimezone,
-            formattingContext
-        );
+        OffsetDateTime renderingValue = applyConfiguredZone(temporalValue, hasExplicitTimezone, formattingContext);
 
         String result = TemporalPictureFormatter.format(
-            renderingValue,
-            pictureItem.getStringValue(),
-            hasExplicitTimezone,
-            formattingContext,
-            this::supportsComponent,
-            getMetadata()
-        );
+                renderingValue,
+                pictureItem.getStringValue(),
+                hasExplicitTimezone,
+                formattingContext,
+                this::supportsComponent,
+                getMetadata());
 
         return ItemFactory.getInstance().createStringItem(result);
     }
-
 
     /**
      * Returns the String of a String item, or null if the item holds null or the item reference is null.
      * This function does not check whether the item is a String item.
      */
     private static String getOptionalString(Item item) {
-        return item != null && !item.isNull()
-            ? item.getStringValue()
-            : null;
+        return item != null && !item.isNull() ? item.getStringValue() : null;
     }
 
     static OffsetDateTime applyConfiguredZone(
-            OffsetDateTime value,
-            boolean hasExplicitTimezone,
-            FormattingContext formattingContext
-    ) {
+            OffsetDateTime value, boolean hasExplicitTimezone, FormattingContext formattingContext) {
         if (!hasExplicitTimezone || !formattingContext.shouldAdjustToPlaceTimezone()) {
             return value;
         }
 
-        return value.toInstant()
-            .atZone(formattingContext.placeZoneId)
-            .toOffsetDateTime();
+        return value.toInstant().atZone(formattingContext.placeZoneId).toOffsetDateTime();
     }
 
     // Turns a non-castable item into a CastException naming the expected type.
@@ -115,9 +92,7 @@ abstract class DateFormattingFunctionIterator extends AbstractAtMostOneItemRunti
             return extractTemporalValue(valueItem);
         } catch (UnsupportedOperationException e) {
             CastException ex = new CastException(
-                    "\"" + valueItem.serialize() + "\": not castable to type " + temporalTypeName(),
-                    getMetadata()
-            );
+                    "\"" + valueItem.serialize() + "\": not castable to type " + temporalTypeName(), getMetadata());
             ex.initCause(e);
             throw ex;
         }
@@ -130,5 +105,4 @@ abstract class DateFormattingFunctionIterator extends AbstractAtMostOneItemRunti
     protected abstract String temporalTypeName();
 
     protected abstract boolean supportsComponent(char component);
-
 }

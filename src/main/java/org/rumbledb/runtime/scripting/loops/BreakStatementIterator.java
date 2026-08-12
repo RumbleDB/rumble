@@ -1,13 +1,13 @@
 package org.rumbledb.runtime.scripting.loops;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
 
 public class BreakStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial

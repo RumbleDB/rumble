@@ -20,15 +20,16 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Expression representing a direct processing instruction constructor.
@@ -47,11 +48,7 @@ public class DirPIConstructorExpression extends Expression {
     private final String target;
     private final Expression contentExpression;
 
-    public DirPIConstructorExpression(
-            String target,
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+    public DirPIConstructorExpression(String target, Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.target = target;
         this.contentExpression = contentExpression;
@@ -87,4 +84,3 @@ public class DirPIConstructorExpression extends Expression {
         sb.append("?>\n");
     }
 }
-

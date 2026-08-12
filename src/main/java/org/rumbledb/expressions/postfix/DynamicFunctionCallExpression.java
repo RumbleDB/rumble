@@ -20,15 +20,17 @@
 
 package org.rumbledb.expressions.postfix;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 public class DynamicFunctionCallExpression extends Expression {
@@ -37,10 +39,7 @@ public class DynamicFunctionCallExpression extends Expression {
     private List<Expression> arguments;
 
     public DynamicFunctionCallExpression(
-            Expression mainExpression,
-            List<Expression> arguments,
-            ExceptionMetadata metadata
-    ) {
+            Expression mainExpression, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Main expression cannot be null in a postfix expression.");
@@ -64,7 +63,6 @@ public class DynamicFunctionCallExpression extends Expression {
      * DynamicFunctionCall is always locally evaluated as execution mode cannot be determined at static analysis phase.
      * This behavior is different from all other postfix extensions, hence no override is required.
      */
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDynamicFunctionCallExpression(this, argument);
@@ -78,13 +76,11 @@ public class DynamicFunctionCallExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(
-            " | "
+        buffer.append(" | "
                 + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
         buffer.append("\n");
         this.mainExpression.print(buffer, indent + 1);
         for (Expression arg : this.arguments) {

@@ -1,24 +1,21 @@
 package org.rumbledb.runtime.functions.random;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-
-import java.io.Serial;
-import java.util.List;
 
 public class RandomSequenceGeneratorIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public RandomSequenceGeneratorIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public RandomSequenceGeneratorIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -31,17 +28,13 @@ public class RandomSequenceGeneratorIterator extends ItemRuntimePlan implements 
         if (this.getChildren().size() == 2) {
             // Seed is present as first argument
             int seed = this.getChild(0).materializeFirstOrNull(context).castToIntValue();
-            int sequenceLength = this.getChild(1).materializeFirstOrNull(context).castToIntValue();
-            return new GeneratedRandomDoublesIterator(
-                    sequenceLength,
-                    seed
-            );
+            int sequenceLength =
+                    this.getChild(1).materializeFirstOrNull(context).castToIntValue();
+            return new GeneratedRandomDoublesIterator(sequenceLength, seed);
         } else {
-            int sequenceLength = this.getChild(0).materializeFirstOrNull(context).castToIntValue();
-            return new GeneratedRandomDoublesIterator(
-                    sequenceLength
-            );
+            int sequenceLength =
+                    this.getChild(0).materializeFirstOrNull(context).castToIntValue();
+            return new GeneratedRandomDoublesIterator(sequenceLength);
         }
     }
-
 }

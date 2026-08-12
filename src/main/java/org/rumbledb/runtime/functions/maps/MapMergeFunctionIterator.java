@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +16,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -65,12 +64,9 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private final ItemRuntimePlan mapsIterator;
     private final ItemRuntimePlan optionsIterator; // may be null for
-                                                   // arity-1
+    // arity-1
 
-    public MapMergeFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MapMergeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() == 1) {
             this.mapsIterator = arguments.get(0);
@@ -103,14 +99,11 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 // map-merge-026: second argument must not be empty -> XPTY0004.
                 throw new UnexpectedTypeException(
                         "map:merge options argument must be a single map, not the empty sequence [err:XPTY0004].",
-                        metadata
-                );
+                        metadata);
             }
             if (optionsSeq.size() != 1 || !optionsSeq.get(0).isMap()) {
                 throw new UnexpectedTypeException(
-                        "map:merge options argument must be exactly one map(*) [err:XPTY0004].",
-                        metadata
-                );
+                        "map:merge options argument must be exactly one map(*) [err:XPTY0004].", metadata);
             }
             Item optionsMap = optionsSeq.get(0);
             // $OPTIONS?duplicates, fallback to \"use-first\".
@@ -121,8 +114,7 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     // FOJS0005: invalid option value for a recognized key.
                     throw new UnexpectedTypeException(
                             "Invalid value for map:merge option duplicates (expected xs:string) [err:FOJS0005].",
-                            metadata
-                    );
+                            metadata);
                 }
                 String v = d.getStringValue();
                 if ("use-first".equals(v)) {
@@ -138,9 +130,7 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 } else {
                     // FOJS0005: invalid value for a recognized key.
                     throw new UnexpectedTypeException(
-                            "Invalid value for map:merge option duplicates: " + v + " [err:FOJS0005].",
-                            metadata
-                    );
+                            "Invalid value for map:merge option duplicates: " + v + " [err:FOJS0005].", metadata);
                 }
             }
         }
@@ -156,9 +146,7 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 Item mapItem = maps.next();
                 if (!mapItem.isMap()) {
                     throw new UnexpectedTypeException(
-                            "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].",
-                            metadata
-                    );
+                            "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].", metadata);
                 }
                 sawAnyMap = true;
                 List<Item> bKeys = mapItem.getItemKeys();
@@ -211,8 +199,7 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                         case REJECT:
                             throw new DuplicateJSONKeyException(
                                     "map:merge encountered duplicate map keys with duplicates=\"reject\" [err:FOJS0003].",
-                                    metadata
-                            );
+                                    metadata);
                         default:
                             throw new OurBadException("Unexpected duplicates policy in map:merge.");
                     }
@@ -222,8 +209,7 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
         // Empty input -> empty map.
         if (!sawAnyMap) {
-            return ItemFactory.getInstance()
-                .createObjectItemOptimized(new HashMap<>(), false);
+            return ItemFactory.getInstance().createObjectItemOptimized(new HashMap<>(), false);
         }
 
         if (allKeysString && allValuesSingletons) {
@@ -243,8 +229,10 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 finalKeyValuePairs.put(entry.key, entry.values);
             }
             return ItemFactory.getInstance()
-                .createMapItem(finalKeyValuePairs, metadata, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createMapItem(
+                            finalKeyValuePairs,
+                            metadata,
+                            this.getRuntimeStaticContext().isQuerySideEffecting());
         }
-
     }
 }

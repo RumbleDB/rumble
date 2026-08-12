@@ -72,11 +72,9 @@ public abstract class AbstractItemType implements ItemType {
         return new StructuralTypeKey(typeClass, Arrays.asList(components));
     }
 
-    private record NamedTypeKey(Name name) {
-    }
+    private record NamedTypeKey(Name name) {}
 
-    private record StructuralTypeKey(Class<? extends ItemType> typeClass, List<Object> components) {
-    }
+    private record StructuralTypeKey(Class<? extends ItemType> typeClass, List<Object> components) {}
 
     private static final class IdentityTypeKey {
         private final ItemType itemType;

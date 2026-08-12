@@ -1,7 +1,5 @@
 package org.rumbledb.runtime.functions.maps;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +13,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * W3C XPath/XQuery {@code map:put}:
@@ -35,10 +34,7 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     private final ItemRuntimePlan keyIterator;
     private final ItemRuntimePlan valueIterator;
 
-    public MapPutFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MapPutFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("map:put must have exactly three arguments.");
@@ -55,16 +51,12 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         List<Item> valueSequence = this.valueIterator.materialize(context);
         if (maps.size() != 1) {
             throw new UnexpectedTypeException(
-                    "map:put expects exactly one map argument [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "map:put expects exactly one map argument [err:XPTY0004].", getMetadata());
         }
         Item mapItem = maps.get(0);
         if (mapItem == null || !mapItem.isMap()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to map:put must be a map [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "Type error; first argument to map:put must be a map [err:XPTY0004].", getMetadata());
         }
         // 2) Atomize $key and require that it atomizes to exactly one atomic value.
         List<Item> atomized = new ArrayList<>();
@@ -73,9 +65,7 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
             throw new UnexpectedTypeException(
-                    "Map key must atomize to a single atomic value [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "Map key must atomize to a single atomic value [err:XPTY0004].", getMetadata());
         }
         Item key = atomized.get(0);
         // 3) Materialize $value as item()*
@@ -111,9 +101,10 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             }
             newKeyValuePairs.put(key, valueSequence);
             return ItemFactory.getInstance()
-                .createMapItem(newKeyValuePairs, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createMapItem(
+                            newKeyValuePairs,
+                            getMetadata(),
+                            this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
-
-
 }

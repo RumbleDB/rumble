@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class EditCollectionExpression extends Expression {
@@ -16,10 +17,7 @@ public class EditCollectionExpression extends Expression {
     private Expression contentExpression;
 
     public EditCollectionExpression(
-            Expression targetExpression,
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression targetExpression, Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         if (targetExpression == null) {
             throw new OurBadException("Tarrget must be identified for edit.");
@@ -50,5 +48,4 @@ public class EditCollectionExpression extends Expression {
         this.contentExpression.serializeToJSONiq(sb, 1);
         sb.append(" from collection\n");
     }
-
 }

@@ -1,26 +1,22 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.time.Duration;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.TemporalComponentFunctionIterator;
-
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class TimezoneFromTimeFunctionIterator extends TemporalComponentFunctionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public TimezoneFromTimeFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public TimezoneFromTimeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext, Component.TIMEZONE);
     }
 
@@ -32,5 +28,4 @@ public class TimezoneFromTimeFunctionIterator extends TemporalComponentFunctionI
         }
         return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ofMinutes(timeItem.getOffset()));
     }
-
 }

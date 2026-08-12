@@ -20,7 +20,7 @@ public interface NativeQueryRuntimePlan {
 
     static NativeClauseContext generate(RuntimePlan<?> plan, NativeClauseContext context) {
         return plan instanceof NativeQueryRuntimePlan nativePlan
-            ? nativePlan.generateNativeQuery(context)
-            : NativeClauseContext.NoNativeQuery;
+                ? nativePlan.generateNativeQuery(context)
+                : NativeClauseContext.NoNativeQuery;
     }
 }

@@ -20,11 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import lombok.Getter;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidRegexFlagException;
-import org.rumbledb.exceptions.InvalidRegexPatternException;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -33,12 +28,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import lombok.Getter;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidRegexFlagException;
+import org.rumbledb.exceptions.InvalidRegexPatternException;
+
 public final class RegexPatternUtils {
 
     private static final Pattern XML_WHITESPACE_PATTERN = Pattern.compile("[\\t\\n\\r ]+");
 
-    private RegexPatternUtils() {
-    }
+    private RegexPatternUtils() {}
 
     public static CompiledRegex compileRegex(String pattern, String flagsString, ExceptionMetadata metadata) {
         boolean quote = false;
@@ -62,10 +62,7 @@ public final class RegexPatternUtils {
                         quote = true;
                         break;
                     default:
-                        throw new InvalidRegexFlagException(
-                                "Invalid regular expression flag: " + flag,
-                                metadata
-                        );
+                        throw new InvalidRegexFlagException("Invalid regular expression flag: " + flag, metadata);
                 }
             }
         }
@@ -83,10 +80,7 @@ public final class RegexPatternUtils {
         try {
             return new CompiledRegex(Pattern.compile(pattern, flags), quote, pattern);
         } catch (PatternSyntaxException e) {
-            throw new InvalidRegexPatternException(
-                    e.getDescription(),
-                    metadata
-            );
+            throw new InvalidRegexPatternException(e.getDescription(), metadata);
         }
     }
 
@@ -116,12 +110,11 @@ public final class RegexPatternUtils {
                         end++;
                     }
                     validateBackReference(
-                        pattern.substring(i, end),
-                        pattern.substring(i + 1, end),
-                        openGroups,
-                        nextCaptureGroupNumber,
-                        metadata
-                    );
+                            pattern.substring(i, end),
+                            pattern.substring(i + 1, end),
+                            openGroups,
+                            nextCaptureGroupNumber,
+                            metadata);
                     i = end - 1;
                     previousWasAtom = true;
                     continue;
@@ -129,16 +122,12 @@ public final class RegexPatternUtils {
                 if (next == 'p' || next == 'P') {
                     if (i + 2 >= pattern.length() || pattern.charAt(i + 2) != '{') {
                         throw new InvalidRegexPatternException(
-                                "Invalid Unicode category or block escape \\" + next,
-                                metadata
-                        );
+                                "Invalid Unicode category or block escape \\" + next, metadata);
                     }
                     int end = skipUnicodeEscape(pattern, i);
                     if (pattern.charAt(end) != '}') {
                         throw new InvalidRegexPatternException(
-                                "Unterminated Unicode category or block escape",
-                                metadata
-                        );
+                                "Unterminated Unicode category or block escape", metadata);
                     }
                     i = end;
                     previousWasAtom = true;
@@ -182,9 +171,7 @@ public final class RegexPatternUtils {
             if (current == '?' || current == '*' || current == '+') {
                 if (!previousWasAtom) {
                     throw new InvalidRegexPatternException(
-                            "Quantifier '" + current + "' with no preceding atom",
-                            metadata
-                    );
+                            "Quantifier '" + current + "' with no preceding atom", metadata);
                 }
                 if (i + 1 < pattern.length() && pattern.charAt(i + 1) == '?') {
                     i++;
@@ -271,16 +258,13 @@ public final class RegexPatternUtils {
             String groupNumberText,
             Deque<GroupContext> openGroups,
             int nextCaptureGroupNumber,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (groupNumberText.isEmpty() || groupNumberText.charAt(0) == '0') {
             throw new InvalidRegexPatternException("Invalid back-reference " + token, metadata);
         }
 
-        int longestExistingPrefixLength = findLongestExistingBackReferencePrefixLength(
-            groupNumberText,
-            nextCaptureGroupNumber
-        );
+        int longestExistingPrefixLength =
+                findLongestExistingBackReferencePrefixLength(groupNumberText, nextCaptureGroupNumber);
         if (longestExistingPrefixLength == 0) {
             throw new InvalidRegexPatternException("Invalid back-reference " + token, metadata);
         }
@@ -294,9 +278,7 @@ public final class RegexPatternUtils {
     }
 
     private static int findLongestExistingBackReferencePrefixLength(
-            String groupNumberText,
-            int nextCaptureGroupNumber
-    ) {
+            String groupNumberText, int nextCaptureGroupNumber) {
         int maxExistingGroupNumber = nextCaptureGroupNumber - 1;
         int referencedGroupNumber = 0;
         int longestExistingPrefixLength = 0;
@@ -316,10 +298,10 @@ public final class RegexPatternUtils {
 
     public static boolean matchesEmptyString(Pattern pattern) {
         return hasZeroLengthMatch(pattern, "")
-            || hasZeroLengthMatch(pattern, "a")
-            || hasZeroLengthMatch(pattern, "\n")
-            || hasZeroLengthMatch(pattern, "a\nb")
-            || matchesEmptyStringWithoutLineAnchors(pattern);
+                || hasZeroLengthMatch(pattern, "a")
+                || hasZeroLengthMatch(pattern, "\n")
+                || hasZeroLengthMatch(pattern, "a\nb")
+                || matchesEmptyStringWithoutLineAnchors(pattern);
     }
 
     private static boolean hasZeroLengthMatch(Pattern pattern, String input) {
@@ -387,12 +369,10 @@ public final class RegexPatternUtils {
         int i = 0;
         while (i < pattern.length()) {
             char current = pattern.charAt(i);
-            if (
-                current == '\\'
+            if (current == '\\'
                     && i + 2 < pattern.length()
                     && (pattern.charAt(i + 1) == 'p' || pattern.charAt(i + 1) == 'P')
-                    && pattern.charAt(i + 2) == '{'
-            ) {
+                    && pattern.charAt(i + 2) == '{') {
                 int end = pattern.indexOf('}', i + 3);
                 if (end < 0) {
                     result.append(current);
@@ -432,11 +412,9 @@ public final class RegexPatternUtils {
                 i = classResult.endIndex;
                 continue;
             }
-            if (
-                Character.isHighSurrogate(current)
+            if (Character.isHighSurrogate(current)
                     && i + 1 < pattern.length()
-                    && Character.isLowSurrogate(pattern.charAt(i + 1))
-            ) {
+                    && Character.isLowSurrogate(pattern.charAt(i + 1))) {
                 int codePoint = Character.toCodePoint(current, pattern.charAt(i + 1));
                 result.append(expandLiteralCodePoint(codePoint));
                 i++;
@@ -467,12 +445,10 @@ public final class RegexPatternUtils {
                 return new ClassRewriteResult(result.toString(), index);
             }
 
-            if (
-                !firstToken
+            if (!firstToken
                     && pattern.charAt(index) == '-'
                     && index + 1 < pattern.length()
-                    && pattern.charAt(index + 1) == '['
-            ) {
+                    && pattern.charAt(index + 1) == '[') {
                 ClassRewriteResult nestedClass = rewriteCharacterClass(pattern, index + 1);
                 result.append("&&[^");
                 result.append(stripCharacterClassBrackets(nestedClass.rewrittenClass));
@@ -532,58 +508,50 @@ public final class RegexPatternUtils {
             return result.toString();
         }
         if (isAsciiUppercase(left) && isAsciiUppercase(right)) {
-            result.append(
-                new StringBuilder()
+            result.append(new StringBuilder()
                     .appendCodePoint(left)
                     .append('-')
                     .appendCodePoint(right)
                     .appendCodePoint(toAsciiLower(left))
                     .append('-')
-                    .appendCodePoint(toAsciiLower(right))
-            );
+                    .appendCodePoint(toAsciiLower(right)));
             appendSpecialCaseClosure(result, left, right);
             return result.toString();
         }
         if (isAsciiLowercase(left) && isAsciiLowercase(right)) {
-            result.append(
-                new StringBuilder()
+            result.append(new StringBuilder()
                     .appendCodePoint(left)
                     .append('-')
                     .appendCodePoint(right)
                     .appendCodePoint(toAsciiUpper(left))
                     .append('-')
-                    .appendCodePoint(toAsciiUpper(right))
-            );
+                    .appendCodePoint(toAsciiUpper(right)));
             appendSpecialCaseClosure(result, left, right);
             return result.toString();
         }
         int lowerLeft = Character.toLowerCase(left);
         int lowerRight = Character.toLowerCase(right);
         if ((lowerLeft != left || lowerRight != right) && lowerLeft <= lowerRight) {
-            result.append(
-                new StringBuilder()
+            result.append(new StringBuilder()
                     .appendCodePoint(left)
                     .append('-')
                     .appendCodePoint(right)
                     .appendCodePoint(lowerLeft)
                     .append('-')
-                    .appendCodePoint(lowerRight)
-            );
+                    .appendCodePoint(lowerRight));
             appendSpecialCaseClosure(result, left, right);
             return result.toString();
         }
         int upperLeft = Character.toUpperCase(left);
         int upperRight = Character.toUpperCase(right);
         if ((upperLeft != left || upperRight != right) && upperLeft <= upperRight) {
-            result.append(
-                new StringBuilder()
+            result.append(new StringBuilder()
                     .appendCodePoint(left)
                     .append('-')
                     .appendCodePoint(right)
                     .appendCodePoint(upperLeft)
                     .append('-')
-                    .appendCodePoint(upperRight)
-            );
+                    .appendCodePoint(upperRight));
             appendSpecialCaseClosure(result, left, right);
             return result.toString();
         }
@@ -598,10 +566,8 @@ public final class RegexPatternUtils {
         if (lower == upper) {
             return new StringBuilder().appendCodePoint(codePoint).toString();
         }
-        StringBuilder result = new StringBuilder()
-            .append('[')
-            .appendCodePoint(lower)
-            .appendCodePoint(upper);
+        StringBuilder result =
+                new StringBuilder().append('[').appendCodePoint(lower).appendCodePoint(upper);
         appendLiteralSpecialCaseClosure(result, codePoint);
         return result.append(']').toString();
     }
@@ -623,11 +589,9 @@ public final class RegexPatternUtils {
     }
 
     private static EscapedToken readEscapedToken(String pattern, int startIndex) {
-        if (
-            startIndex + 2 < pattern.length()
+        if (startIndex + 2 < pattern.length()
                 && (pattern.charAt(startIndex + 1) == 'p' || pattern.charAt(startIndex + 1) == 'P')
-                && pattern.charAt(startIndex + 2) == '{'
-        ) {
+                && pattern.charAt(startIndex + 2) == '{') {
             int endIndex = skipUnicodeEscape(pattern, startIndex);
             return new EscapedToken(pattern.substring(startIndex, endIndex + 1), endIndex);
         }
@@ -645,30 +609,15 @@ public final class RegexPatternUtils {
     }
 
     private static void appendSpecialCaseCodePoint(
-            StringBuilder result,
-            int left,
-            int right,
-            int specialCodePoint,
-            int upperEquivalent,
-            int lowerEquivalent
-    ) {
+            StringBuilder result, int left, int right, int specialCodePoint, int upperEquivalent, int lowerEquivalent) {
         if (withinRange(upperEquivalent, left, right) || withinRange(lowerEquivalent, left, right)) {
             result.appendCodePoint(specialCodePoint);
         }
     }
 
     private static void appendLiteralSpecialCaseCodePoint(
-            StringBuilder result,
-            int codePoint,
-            int specialCodePoint,
-            int upperEquivalent,
-            int lowerEquivalent
-    ) {
-        if (
-            codePoint == upperEquivalent
-                || codePoint == lowerEquivalent
-                || codePoint == specialCodePoint
-        ) {
+            StringBuilder result, int codePoint, int specialCodePoint, int upperEquivalent, int lowerEquivalent) {
+        if (codePoint == upperEquivalent || codePoint == lowerEquivalent || codePoint == specialCodePoint) {
             result.appendCodePoint(specialCodePoint);
         }
     }
@@ -678,11 +627,9 @@ public final class RegexPatternUtils {
     }
 
     private static String stripCharacterClassBrackets(String characterClass) {
-        if (
-            characterClass.length() >= 2
+        if (characterClass.length() >= 2
                 && characterClass.charAt(0) == '['
-                && characterClass.charAt(characterClass.length() - 1) == ']'
-        ) {
+                && characterClass.charAt(characterClass.length() - 1) == ']') {
             return characterClass.substring(1, characterClass.length() - 1);
         }
         return characterClass;
@@ -718,23 +665,17 @@ public final class RegexPatternUtils {
                 if (next == 'p' || next == 'P') {
                     if (index + 2 >= pattern.length() || pattern.charAt(index + 2) != '{') {
                         throw new InvalidRegexPatternException(
-                                "Invalid Unicode category or block escape \\" + next + " in character class",
-                                metadata
-                        );
+                                "Invalid Unicode category or block escape \\" + next + " in character class", metadata);
                     }
                     int end = skipUnicodeEscape(pattern, index);
                     if (pattern.charAt(end) != '}') {
                         throw new InvalidRegexPatternException(
-                                "Unterminated Unicode category or block escape in character class",
-                                metadata
-                        );
+                                "Unterminated Unicode category or block escape in character class", metadata);
                     }
                     index = end;
                 } else if (!isLegalRegexEscape(next)) {
                     throw new InvalidRegexPatternException(
-                            "Invalid regular expression escape \\" + next + " in character class",
-                            metadata
-                    );
+                            "Invalid regular expression escape \\" + next + " in character class", metadata);
                 } else {
                     index++;
                 }
@@ -745,9 +686,7 @@ public final class RegexPatternUtils {
                 int nestedEnd = skipCharacterClass(pattern, index + 1, metadata);
                 if (nestedEnd + 1 >= pattern.length() || pattern.charAt(nestedEnd + 1) != ']') {
                     throw new InvalidRegexPatternException(
-                            "Character class subtraction must be the last element of the class",
-                            metadata
-                    );
+                            "Character class subtraction must be the last element of the class", metadata);
                 }
                 return nestedEnd + 1;
             } else if (current == '[') {
@@ -789,7 +728,6 @@ public final class RegexPatternUtils {
             this.quote = quote;
             this.effectivePattern = effectivePattern;
         }
-
     }
 
     private static final class ClassRewriteResult {

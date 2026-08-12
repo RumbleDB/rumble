@@ -20,37 +20,33 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
-import lombok.NonNull;
-import java.io.Serial;
-import java.util.List;
-
-public class TailFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
-
+public class TailFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
 
-    public TailFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public TailFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.iterator = this.getChild(0);
     }
@@ -81,8 +77,7 @@ public class TailFunctionIterator extends ItemRuntimePlan
         private EvaluationCursor(
                 @NonNull ItemRuntimePlan childPlan,
                 @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
+                @NonNull ExceptionMetadata metadata) {
             super(metadata);
             this.childPlan = childPlan;
             this.context = context;
@@ -106,9 +101,7 @@ public class TailFunctionIterator extends ItemRuntimePlan
         protected Item nextLocal() {
             if (!this.childCursor.hasNext()) {
                 throw new IteratorFlowException(
-                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "tail function",
-                        this.metadata
-                );
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "tail function", this.metadata);
             }
             return this.childCursor.next();
         }
@@ -120,6 +113,5 @@ public class TailFunctionIterator extends ItemRuntimePlan
                 this.childCursor = null;
             }
         }
-
     }
 }

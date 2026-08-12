@@ -1,35 +1,34 @@
 package org.rumbledb.runtime.typing;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.Collections;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.FunctionCoercion;
-import org.rumbledb.runtime.functions.FunctionUntypedAtomicCastIterator;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.functions.FunctionCoercion;
+import org.rumbledb.runtime.functions.FunctionUntypedAtomicCastIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.io.Serial;
-import java.util.Collections;
-
 public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRuntimePlan
-        implements
-            NativeQueryRuntimePlan {
+        implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final String exceptionMessage;
     private final ItemRuntimePlan iterator;
     private final SequenceType sequenceType;
@@ -40,8 +39,7 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
             ItemRuntimePlan iterator,
             SequenceType sequenceType,
             String exceptionMessage,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         this(iterator, sequenceType, exceptionMessage, staticContext, null);
     }
 
@@ -54,34 +52,25 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext staticContext,
-            ItemType untypedAtomicTargetType
-    ) {
+            ItemType untypedAtomicTargetType) {
         super(Collections.singletonList(iterator), staticContext);
         this.exceptionMessage = exceptionMessage;
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
         this.untypedAtomicCaster = untypedAtomicTargetType == null
-            ? null
-            : new FunctionUntypedAtomicCastIterator.UntypedAtomicCaster(
-                    untypedAtomicTargetType,
-                    exceptionMessage,
-                    staticContext,
-                    getMetadata()
-            );
+                ? null
+                : new FunctionUntypedAtomicCastIterator.UntypedAtomicCaster(
+                        untypedAtomicTargetType, exceptionMessage, staticContext, getMetadata());
         if (!this.staticContext.getExecutionMode().equals(ExecutionMode.LOCAL)) {
             throw new OurBadException(
-                    "A promotion iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
-            );
+                    "A promotion iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?.");
         }
-        if (
-            !sequenceType.isEmptySequence()
+        if (!sequenceType.isEmptySequence()
                 && !sequenceType.getArity().equals(Arity.One)
-                && !sequenceType.getArity().equals(Arity.OneOrZero)
-        ) {
+                && !sequenceType.getArity().equals(Arity.OneOrZero)) {
             throw new OurBadException(
-                    "A type promotion iterator was instantiated that can only output at most one item, but the sequence type is + or *."
-            );
+                    "A type promotion iterator was instantiated that can only output at most one item, but the sequence type is + or *.");
         }
     }
 
@@ -104,19 +93,13 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
             }
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    exceptionMessage
-                        + "Expecting at most one item, but the value provided has at least two items.",
-                    staticContext.getMetadata()
-            );
+                    exceptionMessage + "Expecting at most one item, but the value provided has at least two items.",
+                    staticContext.getMetadata());
         }
-        if (
-            item == null && (sequenceType.getArity() == SequenceType.Arity.One)
-        ) {
+        if (item == null && (sequenceType.getArity() == SequenceType.Arity.One)) {
             throw new UnexpectedTypeException(
-                    exceptionMessage
-                        + "Expecting one item, but the value provided is the empty sequence.",
-                    staticContext.getMetadata()
-            );
+                    exceptionMessage + "Expecting one item, but the value provided is the empty sequence.",
+                    staticContext.getMetadata());
         }
         if (item == null) {
             return null;
@@ -130,33 +113,22 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
         return item;
     }
 
-
     private static Item checkTypePromotion(
             Item item,
             ItemType itemType,
             SequenceType sequenceType,
             String exceptionMessage,
-            RuntimeStaticContext staticContext
-    ) {
-        if (
-            item.isFunction()
+            RuntimeStaticContext staticContext) {
+        if (item.isFunction()
                 && item.getIdentifier() != null
                 && item.getIdentifier().getArity() == 0
-                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())
-        ) {
+                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())) {
             return item;
         }
-        if (
-            (item.isFunction() || item.isMap() || item.isArray())
+        if ((item.isFunction() || item.isMap() || item.isArray())
                 && itemType.isFunctionItemType()
-                && itemType.getSignature() != null
-        ) {
-            return FunctionCoercion.coerceToFunctionItem(
-                item,
-                itemType,
-                staticContext,
-                exceptionMessage
-            );
+                && itemType.getSignature() != null) {
+            return FunctionCoercion.coerceToFunctionItem(item, itemType, staticContext, exceptionMessage);
         }
         if (item.isAnyURI() && itemType.equals(BuiltinTypesCatalogue.stringItem)) {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());
@@ -172,65 +144,56 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
         }
         throw new UnexpectedTypeException(
                 exceptionMessage
-                    + item.getDynamicType().toString()
-                    + " cannot be promoted to type "
-                    + sequenceType
-                    + ".",
-                staticContext.getMetadata()
-        );
+                        + item.getDynamicType().toString()
+                        + " cannot be promoted to type "
+                        + sequenceType
+                        + ".",
+                staticContext.getMetadata());
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = NativeQueryRuntimePlan.generate(
-            this.getChild(0),
-            nativeClauseContext
-        );
+        NativeClauseContext value = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (value.equals(NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }
         if (value.getResultingType().getItemType().isSubtypeOf(this.itemType)) {
             return value;
         }
-        if (
-            this.itemType.equals(BuiltinTypesCatalogue.stringItem)
-                && value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.anyURIItem)
-        ) {
+        if (this.itemType.equals(BuiltinTypesCatalogue.stringItem)
+                && value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.anyURIItem)) {
             return new NativeClauseContext(
                     value,
                     "CAST (" + value.getResultingQuery() + " AS STRING)",
-                    new SequenceType(BuiltinTypesCatalogue.stringItem, value.getResultingType().getArity())
-            );
+                    new SequenceType(
+                            BuiltinTypesCatalogue.stringItem,
+                            value.getResultingType().getArity()));
         }
-        if (
-            this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
+        if (this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
                 && (value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
-                    || value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.decimalItem))
-        ) {
+                        || value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.decimalItem))) {
             return new NativeClauseContext(
                     value,
                     "CAST (" + value.getResultingQuery() + " AS DOUBLE)",
-                    new SequenceType(BuiltinTypesCatalogue.doubleItem, value.getResultingType().getArity())
-            );
+                    new SequenceType(
+                            BuiltinTypesCatalogue.doubleItem,
+                            value.getResultingType().getArity()));
         }
-        if (
-            this.itemType.equals(BuiltinTypesCatalogue.floatItem)
-                && value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.decimalItem)
-        ) {
+        if (this.itemType.equals(BuiltinTypesCatalogue.floatItem)
+                && value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.decimalItem)) {
             return new NativeClauseContext(
                     value,
                     "CAST (" + value.getResultingQuery() + " AS FLOAT)",
-                    new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
-            );
+                    new SequenceType(
+                            BuiltinTypesCatalogue.floatItem,
+                            value.getResultingType().getArity()));
         }
         throw new UnexpectedTypeException(
                 this.exceptionMessage
-                    + value.getResultingType().getItemType().toString()
-                    + " cannot be promoted to type "
-                    + this.sequenceType
-                    + ".",
-                getMetadata()
-        );
+                        + value.getResultingType().getItemType().toString()
+                        + " cannot be promoted to type "
+                        + this.sequenceType
+                        + ".",
+                getMetadata());
     }
-
 }

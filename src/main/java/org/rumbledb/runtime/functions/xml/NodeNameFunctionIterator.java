@@ -19,7 +19,8 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,23 +31,21 @@ import org.rumbledb.items.StringItem;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Implementation of the fn:name function according to XQuery 3.1 specification.
- * 
+ *
  * Returns the name of a node, as an xs:string that is either the zero-length string,
  * or has the lexical form of an xs:QName.
- * 
+ *
  * Function signatures:
- * 
+ *
  * <ul>
  * <li>fn:name() as xs:string</li>
  * <li>fn:name($arg as node()?) as xs:string</li>
  * </ul>
- * 
+ *
  * Rules:
  * <ul>
  * <li>If the argument is omitted, it defaults to the context item (.)</li>
@@ -55,28 +54,21 @@ import java.util.List;
  * a text node, or a namespace node having no name), the function returns the zero-length string</li>
  * <li>Otherwise, the function returns the value of the expression fn:string(fn:node-name($arg))</li>
  * </ul>
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-name">XPath Functions 3.1: fn:name</a>
  */
 public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public NodeNameFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public NodeNameFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ContextOrArgumentLocalCursor.mapFirstArgumentOrContext(
-            this.getChildren(),
-            context,
-            this::evaluate,
-            getMetadata()
-        );
+                this.getChildren(), context, this::evaluate, getMetadata());
     }
 
     private Item evaluate(Item node) {
@@ -84,10 +76,7 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
             return new StringItem("");
         }
         if (!node.isNode()) {
-            throw new UnexpectedTypeException(
-                    "The argument must be a reference to an XML node",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("The argument must be a reference to an XML node", getMetadata());
         }
         Name nodeName = node.nodeName();
         return new StringItem(nodeName == null ? "" : nodeName.toString());

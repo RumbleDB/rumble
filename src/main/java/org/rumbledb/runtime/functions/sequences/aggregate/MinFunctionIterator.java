@@ -20,14 +20,13 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -40,6 +39,7 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.spark.SparkSessionManager;
@@ -49,15 +49,12 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private static final String CODEPOINT_COLLATION =
-        "http://www.w3.org/2005/xpath-functions/collation/codepoint";
+
+    private static final String CODEPOINT_COLLATION = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
 
     private final ItemRuntimePlan iterator;
 
-    public MinFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MinFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
     }
@@ -65,33 +62,23 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            return ExtremumLocalEvaluation.min(
-                this.iterator,
-                getCollationPlan(),
-                context,
-                getMetadata()
-            );
+            return ExtremumLocalEvaluation.min(this.iterator, getCollationPlan(), context, getMetadata());
         }
         validateCollation(context);
 
         if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-            HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-                this.iterator,
-                context
-            );
+            HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
             if (df.isEmptySequence()) {
                 return null;
             }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             HomogeneousItemDataFrame minDF = df.evaluateSQL(
-                String.format(
-                    "SELECT MIN(`%s`) as `%s` FROM %s",
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    input
-                ),
-                df.getItemType()
-            );
+                    String.format(
+                            "SELECT MIN(`%s`) as `%s` FROM %s",
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            input),
+                    df.getItemType());
             return minDF.getExactlyOneItem();
         }
 
@@ -99,15 +86,11 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         if (rdd.isEmpty()) {
             return null;
         }
-        return rdd.min(
-            new ItemComparator(
-                    true,
-                    new InvalidArgumentTypeException(
-                            "Min expression input error. Input has to be non-null atomics of matching types",
-                            getMetadata()
-                    )
-            )
-        );
+        return rdd.min(new ItemComparator(
+                true,
+                new InvalidArgumentTypeException(
+                        "Min expression input error. Input has to be non-null atomics of matching types",
+                        getMetadata())));
     }
 
     private ItemRuntimePlan getCollationPlan() {
@@ -140,20 +123,17 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         if (this.getChildren().size() > 1) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext nativeChildQuery = NativeQueryRuntimePlan.generate(
-            this.getChild(0),
-            nativeClauseContext
-        );
+        NativeClauseContext nativeChildQuery = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!SequenceType.Arity.OneOrMore.isSubtypeOf(nativeChildQuery.getResultingType().getArity())) {
+        if (!SequenceType.Arity.OneOrMore.isSubtypeOf(
+                nativeChildQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
         return new NativeClauseContext(
                 nativeChildQuery,
                 "array_min(" + nativeChildQuery.getResultingQuery() + ")",
-                nativeChildQuery.getResultingType()
-        );
+                nativeChildQuery.getResultingType());
     }
 }

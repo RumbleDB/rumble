@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.typing;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -9,19 +10,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-
-import java.io.Serial;
-import java.util.List;
 
 public class ResolveQNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ResolveQNameFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ResolveQNameFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -35,17 +31,12 @@ public class ResolveQNameFunctionIterator extends AbstractAtMostOneItemRuntimePl
         Item element = this.getChild(1).materializeFirstOrNull(context);
         if (element == null || !element.isElementNode()) {
             throw new UnexpectedTypeException(
-                    "The second argument to fn:resolve-QName must be an element node",
-                    getMetadata()
-            );
+                    "The second argument to fn:resolve-QName must be an element node", getMetadata());
         }
 
         NamespaceBindingUtils.NamespaceResolver resolver = prefix -> resolvePrefix(element, prefix);
         Name resolved = NamespaceBindingUtils.parseLexicalQNameForResolveQName(
-            qnameItem.getStringValue(),
-            resolver,
-            getMetadata()
-        );
+                qnameItem.getStringValue(), resolver, getMetadata());
         return ItemFactory.getInstance().createQNameItem(resolved);
     }
 

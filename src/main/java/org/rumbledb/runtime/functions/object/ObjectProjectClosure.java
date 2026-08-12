@@ -1,20 +1,22 @@
 package org.rumbledb.runtime.functions.object;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.StringItem;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.ObjectItem;
+import org.rumbledb.items.StringItem;
+
 public class ObjectProjectClosure implements FlatMapFunction<Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final List<Item> projectionKeys;
     private final ExceptionMetadata itemMetadata;
 
@@ -44,4 +46,5 @@ public class ObjectProjectClosure implements FlatMapFunction<Item, Item> {
         results.add(new ObjectItem(keys, values, this.itemMetadata));
         return results.iterator();
     }
-};
+}
+;

@@ -1,14 +1,16 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+
 import org.apache.spark.api.java.function.Function;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-
 public class InstanceOfClosure implements Function<Item, Boolean> {
     private final ItemType itemType;
+
     @Serial
     private static final long serialVersionUID = 1L;
 

@@ -1,9 +1,5 @@
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
-
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -18,9 +14,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
-
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
@@ -28,10 +24,7 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
         try {
             arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:insert-before expects exactly one array argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("array:insert-before expects exactly one array argument.", getMetadata());
         }
         if (arrayItem == null) {
             return null;
@@ -39,9 +32,7 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:insert-before must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:insert-before must be an array.", getMetadata());
         }
 
         Item positionItem = null;
@@ -49,15 +40,11 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
             positionItem = this.positionIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "array:insert-before expects exactly one position argument.",
-                    getMetadata()
-            );
+                    "array:insert-before expects exactly one position argument.", getMetadata());
         }
         if (positionItem == null || !positionItem.isNumeric()) {
             throw new UnexpectedTypeException(
-                    "Type error; position argument to array:insert-before must be numeric.",
-                    getMetadata()
-            );
+                    "Type error; position argument to array:insert-before must be numeric.", getMetadata());
         }
 
         BigInteger positionInteger;
@@ -72,12 +59,8 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
         BigInteger max = BigInteger.valueOf((long) size).add(BigInteger.ONE);
         if (positionInteger.compareTo(min) < 0 || positionInteger.compareTo(max) > 0) {
             throw new ArrayIndexOutOfBoundsException(
-                    "Tried to insert at array index: "
-                        + positionInteger
-                        + ", of array with length: "
-                        + size,
-                    getMetadata()
-            );
+                    "Tried to insert at array index: " + positionInteger + ", of array with length: " + size,
+                    getMetadata());
         }
 
         int insertIndex = positionInteger.intValue() - 1;
@@ -96,7 +79,7 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
                 newItems.add(arrayItem.getItemAt(i));
             }
             return ItemFactory.getInstance()
-                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
         List<List<Item>> newMemberSequences = new ArrayList<>(size + 1);
         for (int i = 0; i < insertIndex; i++) {
@@ -107,7 +90,8 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
             newMemberSequences.add(arrayItem.getSequenceAt(i));
         }
         return ItemFactory.getInstance()
-            .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
+                .createSequenceArrayItem(
+                        newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     @Serial
@@ -117,10 +101,7 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
     private final ItemRuntimePlan positionIterator;
     private final ItemRuntimePlan memberIterator;
 
-    public ArrayInsertBeforeFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayInsertBeforeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("array:insert-before must have exactly three arguments.");
@@ -129,6 +110,4 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
         this.positionIterator = arguments.get(1);
         this.memberIterator = arguments.get(2);
     }
-
-
 }

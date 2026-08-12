@@ -20,23 +20,19 @@
 
 package org.rumbledb.expressions.logic;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class OrExpression extends Expression {
     private final Expression leftExpression;
     private final Expression rightExpression;
 
-    public OrExpression(
-            Expression leftExpression,
-            Expression rightExpression,
-            ExceptionMetadata metadata
-    ) {
+    public OrExpression(Expression leftExpression, Expression rightExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
@@ -73,6 +69,4 @@ public class OrExpression extends Expression {
         indentIt(sb, indent);
         sb.append(")\n");
     }
-
-
 }

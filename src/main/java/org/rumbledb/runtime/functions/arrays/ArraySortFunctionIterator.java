@@ -18,10 +18,6 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,10 +35,11 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.SortKeyComparison;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -52,17 +49,13 @@ import org.rumbledb.types.SequenceType;
  */
 public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
-
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item arrayItem;
         try {
             arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:sort expects exactly one array argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("array:sort expects exactly one array argument.", getMetadata());
         }
         if (arrayItem == null) {
             return null;
@@ -70,9 +63,7 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; first argument to array:sort must be an array.",
-                    getMetadata()
-            );
+                    "Type error; first argument to array:sort must be an array.", getMetadata());
         }
 
         String collationUri = resolveCollationUri(context);
@@ -111,10 +102,11 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 items.add(member.get(0));
             }
             return ItemFactory.getInstance()
-                .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
         return ItemFactory.getInstance()
-            .createSequenceArrayItem(sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+                .createSequenceArrayItem(
+                        sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     @Serial
@@ -124,10 +116,7 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private final ItemRuntimePlan collationIterator;
     private final ItemRuntimePlan keyIterator;
 
-    public ArraySortFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArraySortFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         int n = arguments.size();
         if (n < 1 || n > 3) {
@@ -137,7 +126,6 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         this.collationIterator = n >= 2 ? arguments.get(1) : null;
         this.keyIterator = n == 3 ? arguments.get(2) : null;
     }
-
 
     private String resolveCollationUri(DynamicContext context) {
         if (this.collationIterator == null) {
@@ -150,8 +138,7 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         if (c.size() != 1 || !c.get(0).isString()) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to array:sort must be empty sequence or a single xs:string.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return c.get(0).getStringValue();
     }
@@ -163,15 +150,11 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         List<Item> keySpec = this.keyIterator.materialize(context);
         if (keySpec.isEmpty()) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to array:sort must be exactly one item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to array:sort must be exactly one item.", getMetadata());
         }
         if (keySpec.size() != 1) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to array:sort must be exactly one item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to array:sort must be exactly one item.", getMetadata());
         }
         Item spec = keySpec.get(0);
         if (spec.isFunction()) {
@@ -187,9 +170,7 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             return (member, ctx) -> keyFromMapLookup(map, member);
         }
         throw new UnexpectedTypeException(
-                "Type error; third argument to array:sort must be a function item, map, or array.",
-                getMetadata()
-        );
+                "Type error; third argument to array:sort must be a function item, map, or array.", getMetadata());
     }
 
     /**
@@ -224,24 +205,12 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         out.addAll(item.atomizedValue());
     }
 
-    private List<Item> invokeKeyFunction(
-            FunctionItem functionItem,
-            List<Item> memberSequence,
-            DynamicContext context
-    ) {
-        ItemRuntimePlan memberIterator = createSequenceIterator(
-            memberSequence
-        );
+    private List<Item> invokeKeyFunction(FunctionItem functionItem, List<Item> memberSequence, DynamicContext context) {
+        ItemRuntimePlan memberIterator = createSequenceIterator(memberSequence);
         List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        ItemRuntimePlan call = NamedFunctions
-            .buildFunctionItemCallIterator(
-                functionItem,
-                this.staticContext,
-                ExecutionMode.LOCAL,
-                arguments,
-                false
-            );
+        ItemRuntimePlan call = NamedFunctions.buildFunctionItemCallIterator(
+                functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
         return materializeKeyIterator(call, context);
     }
 
@@ -249,31 +218,21 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         if (memberSequence.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; when the key is an array, each member must be exactly one numeric index.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         if (memberSequence.size() != 1) {
             throw new UnexpectedTypeException(
                     "Type error; when the key is an array, each member must be exactly one numeric index.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         Item indexItem = memberSequence.get(0);
         if (!indexItem.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; when the key is an array, each member must be exactly one numeric index.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        ItemRuntimePlan indexIterator = new ConstantRuntimeIterator(
-                indexItem,
-                localStaticContext()
-        );
-        ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(
-                keyArray,
-                indexIterator,
-                localStaticContext()
-        );
+        ItemRuntimePlan indexIterator = new ConstantRuntimeIterator(indexItem, localStaticContext());
+        ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(keyArray, indexIterator, localStaticContext());
         return materializeKeyIterator(lookup, context);
     }
 
@@ -282,8 +241,7 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         if (atomized.size() != 1) {
             throw new UnexpectedTypeException(
                     "Type error; map key function expects each member to atomize to a single atomic value.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         String key = atomized.get(0).getStringValue();
         Item value = mapItem.getItemByKey(key);
@@ -293,39 +251,27 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return fnDataKeySequence(Collections.singletonList(value));
     }
 
-    private List<Item> materializeIterator(
-            ItemRuntimePlan iterator,
-            DynamicContext context
-    ) {
+    private List<Item> materializeIterator(ItemRuntimePlan iterator, DynamicContext context) {
         return iterator.materialize(context);
     }
 
-    private List<Item> materializeKeyIterator(
-            ItemRuntimePlan iterator,
-            DynamicContext context
-    ) {
+    private List<Item> materializeKeyIterator(ItemRuntimePlan iterator, DynamicContext context) {
         return fnDataKeySequence(materializeIterator(iterator, context));
     }
 
     private RuntimeStaticContext localStaticContext() {
-        return getRuntimeStaticContext()
-            .toBuilder()
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+        return getRuntimeStaticContext().toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
     }
 
     private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
-            return new CommaExpressionIterator(
-                    Collections.emptyList(),
-                    localStaticContext()
-            );
+            return new CommaExpressionIterator(Collections.emptyList(), localStaticContext());
         }
-        List<ItemRuntimePlan> childIterators = new ArrayList<>(
-                items.size()
-        );
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
             childIterators.add(new ConstantRuntimeIterator(item, localStaticContext()));
         }

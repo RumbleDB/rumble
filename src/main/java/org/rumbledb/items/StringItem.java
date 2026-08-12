@@ -20,6 +20,10 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import lombok.Getter;
 
 import org.rumbledb.api.Item;
@@ -28,15 +32,12 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 @Getter
 public class StringItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private String value;
 
     public StringItem(String value) {
@@ -115,8 +116,6 @@ public class StringItem extends AbstractAtomicItem {
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }
-
-
 
     @Override
     public ItemType getDynamicType() {

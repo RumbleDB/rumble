@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.numerics.exponential;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,12 +31,10 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.List;
 
 public class PowFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
@@ -45,10 +44,7 @@ public class PowFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     private final ItemRuntimePlan baseIterator;
     private final ItemRuntimePlan exponentIterator;
 
-    public PowFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public PowFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.baseIterator = arguments.get(0);
         this.exponentIterator = arguments.get(1);
@@ -83,7 +79,7 @@ public class PowFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
             }
 
             return ItemFactory.getInstance()
-                .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
+                    .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), metadata);
         }
@@ -91,41 +87,28 @@ public class PowFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext baseQuery = NativeQueryRuntimePlan.generate(
-            this.baseIterator,
-            nativeClauseContext
-        );
+        NativeClauseContext baseQuery = NativeQueryRuntimePlan.generate(this.baseIterator, nativeClauseContext);
         if (baseQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext exponentQuery = NativeQueryRuntimePlan.generate(
-            this.exponentIterator,
-            new NativeClauseContext(baseQuery, null, null)
-        );
+        NativeClauseContext exponentQuery =
+                NativeQueryRuntimePlan.generate(this.exponentIterator, new NativeClauseContext(baseQuery, null, null));
         if (exponentQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (
-            SequenceType.Arity.OneOrMore.isSubtypeOf(baseQuery.getResultingType().getArity())
-                ||
-                SequenceType.Arity.OneOrMore.isSubtypeOf(exponentQuery.getResultingType().getArity())
-        ) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                        baseQuery.getResultingType().getArity())
+                || SequenceType.Arity.OneOrMore.isSubtypeOf(
+                        exponentQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
         SequenceType.Arity resultingArity = (baseQuery.getResultingType().getArity() == SequenceType.Arity.One
-            && exponentQuery.getResultingType().getArity() == SequenceType.Arity.One)
+                        && exponentQuery.getResultingType().getArity() == SequenceType.Arity.One)
                 ? SequenceType.Arity.One
                 : SequenceType.Arity.OneOrZero;
-        String resultingQuery = "pow( "
-            + baseQuery.getResultingQuery()
-            + ", "
-            + exponentQuery.getResultingQuery()
-            + " )";
+        String resultingQuery =
+                "pow( " + baseQuery.getResultingQuery() + ", " + exponentQuery.getResultingQuery() + " )";
         return new NativeClauseContext(
-                exponentQuery,
-                resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity)
-        );
+                exponentQuery, resultingQuery, new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity));
     }
-
 }

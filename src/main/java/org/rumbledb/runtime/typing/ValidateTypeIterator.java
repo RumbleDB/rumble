@@ -1,12 +1,5 @@
 package org.rumbledb.runtime.typing;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import lombok.extern.log4j.Log4j2;
-
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -22,13 +15,17 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
-import static org.apache.spark.sql.functions.expr;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.extern.log4j.Log4j2;
+
+import static org.apache.spark.sql.functions.expr;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -39,10 +36,15 @@ import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.MappingLocalCursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -52,11 +54,7 @@ import org.rumbledb.types.TypeMappings;
 
 @Log4j2
 public class ValidateTypeIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item>,
-            NativeQueryRuntimePlan {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -67,11 +65,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
     private final ItemValidator validator;
 
     public ValidateTypeIterator(
-            ItemRuntimePlan instance,
-            ItemType itemType,
-            boolean isValidate,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan instance, ItemType itemType, boolean isValidate, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(instance), staticContext);
         this.iterator = instance;
         this.itemType = itemType;
@@ -81,12 +75,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new MappingLocalCursor<>(
-                this.iterator,
-                context,
-                this.validator::call,
-                getMetadata()
-        );
+        return new MappingLocalCursor<>(this.iterator, context, this.validator::call, getMetadata());
     }
 
     @Override
@@ -95,32 +84,22 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             this.itemType.resolve(context, getMetadata());
         }
         if (!this.itemType.isCompatibleWithDataFrames(context.getRumbleConfiguration())) {
-            throw new OurBadException(
-                    "Cannot build a dataframe for a type not compatible with DataFrames: "
-                        + this.itemType.getIdentifierString()
-            );
+            throw new OurBadException("Cannot build a dataframe for a type not compatible with DataFrames: "
+                    + this.itemType.getIdentifierString());
         }
 
         try {
 
             if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
                 HomogeneousItemDataFrame inputDataAsDataFrame =
-                    ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-                        this.iterator,
-                        context
-                    );
+                        ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
                 ItemType actualType = inputDataAsDataFrame.getItemType();
                 if (actualType.isSubtypeOf(this.itemType)) {
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = inputDataAsDataFrame.toRDD(getMetadata());
                 return convertRDDToValidDataFrame(
-                    inputDataAsRDDOfItems,
-                    this.itemType,
-                    context,
-                    this.isValidate,
-                    this.staticContext
-                );
+                        inputDataAsRDDOfItems, this.itemType, context, this.isValidate, this.staticContext);
             }
 
             if (this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
@@ -132,9 +111,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             return convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate, this.staticContext);
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
-                    "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
-                    getMetadata()
-            );
+                    "Schema error in annotate(); " + ex.getJSONiqErrorMessage(), getMetadata());
             e.initCause(ex);
             throw e;
         }
@@ -145,72 +122,50 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             ItemType itemType,
             DynamicContext context,
             boolean isValidate,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
             throw new OurBadException(
-                    "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected."
-            );
+                    "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected.");
         }
         StructType schema = convertToDataFrameSchema(itemType, staticContext);
-        ItemValidator validator = new ItemValidator(
-                itemType,
-                isValidate,
-                staticContext,
-                ExceptionMetadata.EMPTY_METADATA
-        );
-        JavaRDD<Row> rowRDD = itemRDD.map(
-            new Function<>() {
-                @Serial
-                private static final long serialVersionUID = 1L;
+        ItemValidator validator =
+                new ItemValidator(itemType, isValidate, staticContext, ExceptionMetadata.EMPTY_METADATA);
+        JavaRDD<Row> rowRDD = itemRDD.map(new Function<>() {
+            @Serial
+            private static final long serialVersionUID = 1L;
 
-                @Override
-                public Row call(Item item) {
-                    item = validator.call(item);
-                    return convertLocalItemToRow(item, schema, context);
-                }
+            @Override
+            public Row call(Item item) {
+                item = validator.call(item);
+                return convertLocalItemToRow(item, schema, context);
             }
-        );
+        });
         return new HomogeneousItemDataFrame(
-                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
-                itemType
-        );
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema), itemType);
     }
 
-    public static HomogeneousItemDataFrame convertRDDToVariantDataFrame(
-            JavaRDD<Item> itemRDD
-    ) {
-        StructType schema = new StructType(
-                new StructField[] {
-                    DataTypes.createStructField(
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        DataTypes.StringType,
-                        false
-                    )
-                }
-        );
-        JavaRDD<Row> rowRDD = itemRDD.map(
-            new Function<>() {
-                @Serial
-                private static final long serialVersionUID = 1L;
+    public static HomogeneousItemDataFrame convertRDDToVariantDataFrame(JavaRDD<Item> itemRDD) {
+        StructType schema = new StructType(new StructField[] {
+            DataTypes.createStructField(SparkSessionManager.nonObjectJSONiqItemColumnName, DataTypes.StringType, false)
+        });
+        JavaRDD<Row> rowRDD = itemRDD.map(new Function<>() {
+            @Serial
+            private static final long serialVersionUID = 1L;
 
-                @Override
-                public Row call(Item item) {
-                    return RowFactory.create(item.serializeAsJSON());
-                }
+            @Override
+            public Row call(Item item) {
+                return RowFactory.create(item.serializeAsJSON());
             }
-        );
+        });
 
         return new HomogeneousItemDataFrame(
                 SparkSessionManager.getInstance()
-                    .getOrCreateSession()
-                    .createDataFrame(rowRDD, schema)
-                    .withColumn(
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
-                    ),
-                BuiltinTypesCatalogue.item
-        );
+                        .getOrCreateSession()
+                        .createDataFrame(rowRDD, schema)
+                        .withColumn(
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")),
+                BuiltinTypesCatalogue.item);
     }
 
     public static StructType convertToDataFrameSchema(ItemType itemType, RuntimeStaticContext staticContext) {
@@ -219,11 +174,10 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
             boolean nullable = itemType.canBeNull();
             StructField field = createStructField(
-                columnName,
-                itemType,
-                staticContext.getConfiguration().semantics().laxJSONNullValidation() && nullable,
-                staticContext
-            );
+                    columnName,
+                    itemType,
+                    staticContext.getConfiguration().semantics().laxJSONNullValidation() && nullable,
+                    staticContext);
             fields.add(field);
             return DataTypes.createStructType(fields);
         }
@@ -232,20 +186,17 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
             boolean nullable = itemType.canBeNull();
             StructField field = createStructField(
-                columnName,
-                itemType,
-                staticContext.getConfiguration().semantics().laxJSONNullValidation() && nullable,
-                staticContext
-            );
+                    columnName,
+                    itemType,
+                    staticContext.getConfiguration().semantics().laxJSONNullValidation() && nullable,
+                    staticContext);
             fields.add(field);
             return DataTypes.createStructType(fields);
         }
         if (!itemType.isObjectItemType()) {
             throw new InvalidInstanceException(
                     "Error while checking against the DataFrame schema: it is not an object, an array, or an atomic type: "
-                        + itemType
-            );
-
+                            + itemType);
         }
         List<StructField> fields = new ArrayList<>();
         try {
@@ -255,17 +206,16 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                 boolean required = fieldDescriptor.isRequired();
                 boolean nullable = columnType.canBeNull();
                 StructField field = createStructField(
-                    columnName,
-                    columnType,
-                    !required || (staticContext.getConfiguration().semantics().laxJSONNullValidation() && nullable),
-                    staticContext
-                );
+                        columnName,
+                        columnType,
+                        !required
+                                || (staticContext.getConfiguration().semantics().laxJSONNullValidation() && nullable),
+                        staticContext);
                 fields.add(field);
             }
         } catch (IllegalArgumentException ex) {
-            InvalidInstanceException e = new InvalidInstanceException(
-                    "Error while applying the schema; " + ex.getMessage()
-            );
+            InvalidInstanceException e =
+                    new InvalidInstanceException("Error while applying the schema; " + ex.getMessage());
             e.initCause(ex);
             throw e;
         }
@@ -273,11 +223,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
     }
 
     private static StructField createStructField(
-            String columnName,
-            ItemType item,
-            boolean nullable,
-            RuntimeStaticContext staticContext
-    ) {
+            String columnName, ItemType item, boolean nullable, RuntimeStaticContext staticContext) {
         DataType type = convertToDataType(item, staticContext);
         return DataTypes.createStructField(columnName, type, nullable);
     }
@@ -300,74 +246,52 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             ItemType itemType,
             DynamicContext context,
             boolean isValidate,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         if (items.isEmpty()) {
             return new HomogeneousItemDataFrame(
-                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
-                    itemType
-            );
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(), itemType);
         }
         StructType schema = convertToDataFrameSchema(itemType, staticContext);
         if (staticContext.getConfiguration().analysis().printInferredTypes()) {
             log.debug(
-                """
+                    """
                         Inferred DataFrame type:
                         {}\
                         """,
-                schema.treeString()
-            );
+                    schema.treeString());
         }
         List<Row> rows = new ArrayList<>();
-        ItemValidator validator = new ItemValidator(
-                itemType,
-                isValidate,
-                staticContext,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+        ItemValidator validator =
+                new ItemValidator(itemType, isValidate, staticContext, ExceptionMetadata.EMPTY_METADATA);
         for (Item item : items) {
             item = validator.call(item);
             Row row = convertLocalItemToRow(item, schema, context);
             rows.add(row);
         }
         return new HomogeneousItemDataFrame(
-                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema),
-                itemType
-        );
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema), itemType);
     }
 
-    public static HomogeneousItemDataFrame convertLocalItemsToVariantDataFrame(
-            List<Item> items
-    ) {
+    public static HomogeneousItemDataFrame convertLocalItemsToVariantDataFrame(List<Item> items) {
         if (items.isEmpty()) {
             return new HomogeneousItemDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
-                    BuiltinTypesCatalogue.item
-            );
+                    BuiltinTypesCatalogue.item);
         }
-        StructType schema = new StructType(
-                new StructField[] {
-                    DataTypes.createStructField(
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        DataTypes.StringType,
-                        false
-                    )
-                }
-        );
+        StructType schema = new StructType(new StructField[] {
+            DataTypes.createStructField(SparkSessionManager.nonObjectJSONiqItemColumnName, DataTypes.StringType, false)
+        });
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
             rows.add(RowFactory.create(item.serializeAsJSON()));
         }
-        Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+        Dataset<Row> dataFrame =
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
         dataFrame = dataFrame.withColumn(
-            SparkSessionManager.nonObjectJSONiqItemColumnName,
-            expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
-        );
+                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)"));
 
-        return new HomogeneousItemDataFrame(
-                dataFrame,
-                BuiltinTypesCatalogue.item
-        );
+        return new HomogeneousItemDataFrame(dataFrame, BuiltinTypesCatalogue.item);
     }
 
     private static Row convertLocalItemToRow(Item item, StructType schema, DynamicContext context) {
@@ -385,25 +309,13 @@ public class ValidateTypeIterator extends ItemRuntimePlan
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         if (fieldName.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
-            return getRowColumnFromItemUsingDataType(
-                item,
-                fieldDataType,
-                context
-            );
+            return getRowColumnFromItemUsingDataType(item, fieldDataType, context);
         }
         Item columnValueItem = item.getItemByKey(fieldName);
-        return getRowColumnFromItemUsingDataType(
-            columnValueItem,
-            fieldDataType,
-            context
-        );
+        return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType, context);
     }
 
-    private static Object getRowColumnFromItemUsingDataType(
-            Item item,
-            DataType dataType,
-            DynamicContext context
-    ) {
+    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType, DynamicContext context) {
         // Handling of missing value
         if (item == null) {
             return null;
@@ -418,8 +330,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                 return "null";
             } else {
                 throw new OurBadException(
-                        "Null value found where a non-null value of type " + dataType + " was expected."
-                );
+                        "Null value found where a non-null value of type " + dataType + " was expected.");
             }
         }
         try {
@@ -429,11 +340,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                 DataType elementType = arrayType.elementType();
                 for (int i = 0; i < arrayItems.size(); i++) {
                     Item arrayItem = item.getItemAt(i);
-                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
-                        arrayItem,
-                        elementType,
-                        context
-                    );
+                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(arrayItem, elementType, context);
                 }
                 return arrayItemsForRow;
             }
@@ -494,22 +401,16 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             // OurBadExceptions triggered by invalid use of value getters here are caused by user's schema
             throw new InvalidInstanceException(
                     "RumbleDB was not able to infer a Schema. Please select another output method such as json. "
-                        + ex.getJSONiqErrorMessage()
-            );
+                            + ex.getJSONiqErrorMessage());
         }
 
-        throw new OurBadException(
-                "Unhandled item type found while generating rows: '" + dataType + "' ."
-        );
+        throw new OurBadException("Unhandled item type found while generating rows: '" + dataType + "' .");
     }
-
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         return this.iterator.getRDD(context).map(this.validator);
     }
-
-
 
     private static final class ItemValidator implements Function<Item, Item> {
 
@@ -522,11 +423,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
         private final ExceptionMetadata metadata;
 
         private ItemValidator(
-                ItemType itemType,
-                boolean isValidate,
-                RuntimeStaticContext staticContext,
-                ExceptionMetadata metadata
-        ) {
+                ItemType itemType, boolean isValidate, RuntimeStaticContext staticContext, ExceptionMetadata metadata) {
             this.itemType = itemType;
             this.isValidate = isValidate;
             this.staticContext = staticContext;
@@ -550,29 +447,21 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                     return item;
                 }
                 try {
-                    Item castType = CastIterator.castItemToType(
-                        item,
-                        itemType,
-                        this.metadata,
-                        this.staticContext
-                    );
+                    Item castType = CastIterator.castItemToType(item, itemType, this.metadata, this.staticContext);
                     if (castType == null) {
                         throw new InvalidInstanceException(
-                                "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
-                        );
+                                "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString());
                     }
                     return castType;
                 } catch (Exception e) {
                     throw new InvalidInstanceException(
-                            "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
-                    );
+                            "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString());
                 }
             }
             if (itemType.isArrayItemType()) {
                 if (!item.isArray()) {
                     throw new InvalidInstanceException(
-                            "Expected array item for array type " + itemType.getIdentifierString()
-                    );
+                            "Expected array item for array type " + itemType.getIdentifierString());
                 }
                 List<Item> members = new ArrayList<>();
                 for (Item member : item.getItemMembers()) {
@@ -582,17 +471,15 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                 // Test of length facets
                 Integer minLength = itemType.getMinLengthFacet();
                 Integer maxLength = itemType.getMaxLengthFacet();
-                Item arrayItem = ItemFactory.getInstance()
-                    .createArrayItem(members, this.staticContext.isQuerySideEffecting());
+                Item arrayItem =
+                        ItemFactory.getInstance().createArrayItem(members, this.staticContext.isQuerySideEffecting());
                 if (minLength != null && members.size() < minLength) {
                     throw new InvalidInstanceException(
-                            "Array has " + members.size() + " members but the type requires at least " + minLength
-                    );
+                            "Array has " + members.size() + " members but the type requires at least " + minLength);
                 }
                 if (maxLength != null && members.size() > maxLength) {
                     throw new InvalidInstanceException(
-                            "Array has " + members.size() + " members but the type requires at most " + maxLength
-                    );
+                            "Array has " + members.size() + " members but the type requires at most " + maxLength);
                 }
 
                 // Test of uniqueness
@@ -613,8 +500,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                             }
                             if (!uniqueCombinations.add(combination)) {
                                 throw new InvalidInstanceException(
-                                        "Duplicate combination found for unique keys " + uniqueKeys
-                                );
+                                        "Duplicate combination found for unique keys " + uniqueKeys);
                             }
                         }
                     }
@@ -627,12 +513,10 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             }
             if (itemType.isObjectItemType()) {
                 if (!item.isObject()) {
-                    throw new InvalidInstanceException(
-                            "Expected an object item for object type "
-                                + itemType.toString()
-                                + ", but have "
-                                + item.serialize()
-                    );
+                    throw new InvalidInstanceException("Expected an object item for object type "
+                            + itemType.toString()
+                            + ", but have "
+                            + item.serialize());
                 }
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
@@ -649,16 +533,13 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                             } else if (fieldDescriptor.isRequired()) {
                                 throw new InvalidInstanceException(
                                         "Null associated with required, non-nullable key in object type "
-                                            + itemType.getIdentifierString()
-                                            + " : "
-                                            + key
-                                );
-                            } else if (
-                                !this.staticContext
+                                                + itemType.getIdentifierString()
+                                                + " : "
+                                                + key);
+                            } else if (!this.staticContext
                                     .getConfiguration()
                                     .semantics()
-                                    .laxJSONNullValidation()
-                            ) {
+                                    .laxJSONNullValidation()) {
                                 keys.add(key);
                                 values.add(validate(value, expectedType));
                             } else {
@@ -678,12 +559,10 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                         }
                     } else {
                         if (itemType.getClosedFacet()) {
-                            throw new InvalidInstanceException(
-                                    "Unexpected key in closed object type + "
-                                        + itemType.getIdentifierString()
-                                        + " : "
-                                        + key
-                            );
+                            throw new InvalidInstanceException("Unexpected key in closed object type + "
+                                    + itemType.getIdentifierString()
+                                    + " : "
+                                    + key);
                         }
                         keys.add(key);
                         values.add(item.getItemByKey(key));
@@ -698,17 +577,15 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                             values.add(defaultValue);
                         }
                         if (fieldDescriptor.isRequired()) {
-                            throw new InvalidInstanceException(
-                                    "Missing required key in object type + "
-                                        + itemType.getIdentifierString()
-                                        + " : "
-                                        + key
-                            );
+                            throw new InvalidInstanceException("Missing required key in object type + "
+                                    + itemType.getIdentifierString()
+                                    + " : "
+                                    + key);
                         }
                     }
                 }
                 Item objectItem = ItemFactory.getInstance()
-                    .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA, true);
+                        .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA, true);
                 if (itemType.getName() == null) {
                     itemType = itemType.getBaseType();
                 }
@@ -717,8 +594,7 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             if (itemType.isFunctionItemType()) {
                 if (!item.isFunction()) {
                     throw new InvalidInstanceException(
-                            "Expected function item of type " + itemType.getIdentifierString()
-                    );
+                            "Expected function item of type " + itemType.getIdentifierString());
                 }
                 return item;
             }
@@ -743,12 +619,10 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                         // try next type
                     }
                 }
-                throw new InvalidInstanceException(
-                        "Item "
-                            + item.serialize()
-                            + " does not conform to union type "
-                            + itemType.getIdentifierString()
-                );
+                throw new InvalidInstanceException("Item "
+                        + item.serialize()
+                        + " does not conform to union type "
+                        + itemType.getIdentifierString());
             }
             return item;
         }
@@ -764,9 +638,8 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                 if (copiedDocumentElement == null) {
                     throw new InvalidInstanceException(
                             "Document validation requires exactly one element child for atomic type "
-                                + itemType.getIdentifierString(),
-                            this.metadata
-                    );
+                                    + itemType.getIdentifierString(),
+                            this.metadata);
                 }
                 validatedElement = copiedDocumentElement;
             } else if (item.isElementNode()) {
@@ -776,28 +649,23 @@ public class ValidateTypeIterator extends ItemRuntimePlan
                 validatedElement = copiedRoot;
             } else {
                 throw new InvalidInstanceException(
-                        "Atomic XML validation is only supported for document and element nodes.",
-                        this.metadata
-                );
+                        "Atomic XML validation is only supported for document and element nodes.", this.metadata);
             }
 
             Item castType;
             try {
                 castType = CastIterator.castItemToType(
-                    ItemFactory.getInstance().createUntypedAtomicItem(validatedElement.getStringValue()),
-                    itemType,
-                    this.metadata,
-                    this.staticContext
-                );
+                        ItemFactory.getInstance().createUntypedAtomicItem(validatedElement.getStringValue()),
+                        itemType,
+                        this.metadata,
+                        this.staticContext);
             } catch (Exception e) {
                 throw new InvalidInstanceException(
-                        "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
-                );
+                        "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString());
             }
             if (castType == null) {
                 throw new InvalidInstanceException(
-                        "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
-                );
+                        "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString());
             }
             validatedElement.setSchemaType(itemType);
             return copiedRoot;
@@ -807,18 +675,12 @@ public class ValidateTypeIterator extends ItemRuntimePlan
             Item documentElement = getSingleElementChild(document);
             if (documentElement == null) {
                 throw new InvalidInstanceException(
-                        "Document validation requires exactly one element child for atomic type validation."
-                );
+                        "Document validation requires exactly one element child for atomic type validation.");
             }
             for (Item child : document.children()) {
-                if (
-                    !child.isElementNode()
-                        && !child.isCommentNode()
-                        && !child.isProcessingInstructionNode()
-                ) {
+                if (!child.isElementNode() && !child.isCommentNode() && !child.isProcessingInstructionNode()) {
                     throw new InvalidInstanceException(
-                            "Document validation for atomic types only supports element, comment, and processing-instruction children."
-                    );
+                            "Document validation for atomic types only supports element, comment, and processing-instruction children.");
                 }
             }
             validateAtomicElementShape(documentElement);
@@ -826,15 +688,12 @@ public class ValidateTypeIterator extends ItemRuntimePlan
 
         private static void validateAtomicElementShape(Item element) {
             if (!element.attributes().isEmpty()) {
-                throw new InvalidInstanceException(
-                        "Element validation for atomic types does not support attributes."
-                );
+                throw new InvalidInstanceException("Element validation for atomic types does not support attributes.");
             }
             for (Item child : element.children()) {
                 if (child.isElementNode()) {
                     throw new InvalidInstanceException(
-                            "Element validation for atomic types does not support nested element children."
-                    );
+                            "Element validation for atomic types does not support nested element children.");
                 }
             }
         }
@@ -874,7 +733,6 @@ public class ValidateTypeIterator extends ItemRuntimePlan
         return NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
     }
 
-
     public static ItemType inferSchemaTypeOfVariantDataFrame(Dataset<Row> df, ExceptionMetadata metadata) {
         if (df.isEmpty()) {
             return BuiltinTypesCatalogue.item;
@@ -882,28 +740,23 @@ public class ValidateTypeIterator extends ItemRuntimePlan
         df.createOrReplaceTempView("variant_table");
 
         Dataset<Row> schemaDf = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .sql(
-                String.format(
-                    "SELECT schema_of_variant_agg(`%s`) AS ddl FROM variant_table",
-                    SparkSessionManager.nonObjectJSONiqItemColumnName
-                )
-            );
+                .getOrCreateSession()
+                .sql(String.format(
+                        "SELECT schema_of_variant_agg(`%s`) AS ddl FROM variant_table",
+                        SparkSessionManager.nonObjectJSONiqItemColumnName));
         String ddl = schemaDf.collectAsList().get(0).getString(0);
 
         if (ddl.contains("VARIANT")) {
             throw new CannotInferSchemaOnNonStructuredDataException(
                     "Cannot infer fully structured schema on non-structured data. The detected schema is: " + ddl,
-                    metadata
-            );
+                    metadata);
         }
 
         ddl = ddl.replace("OBJECT<", "STRUCT<");
         ItemType type = ItemTypeFactory.createItemType(
-            DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.nonObjectJSONiqItemColumnName, ddl))
-        );
-        type = type.getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName).getType();
+                DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.nonObjectJSONiqItemColumnName, ddl)));
+        type = type.getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getType();
         return type;
     }
-
 }

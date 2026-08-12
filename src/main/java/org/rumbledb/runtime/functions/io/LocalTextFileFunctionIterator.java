@@ -18,11 +18,12 @@
  *
  */
 
-
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.*;
+import java.net.URI;
+import java.util.Iterator;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -31,24 +32,18 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import java.io.*;
-import java.net.URI;
-import java.util.Iterator;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public LocalTextFileFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public LocalTextFileFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -57,19 +52,11 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         Item path = this.getChild(0).materializeFirstOrNull(context);
         if (path == null) {
             throw new IteratorFlowException(
-                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " local-text-file function",
-                    getMetadata()
-            );
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " local-text-file function", getMetadata());
         }
         URI uri = FileSystemUtil.resolveFileSystemURI(
-            this.staticContext.getStaticURI(),
-            path.getStringValue(),
-            getMetadata()
-        );
-        InputStream input = FileSystemUtil.getDataInputStream(
-            uri,
-            getMetadata()
-        );
+                this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
+        InputStream input = FileSystemUtil.getDataInputStream(uri, getMetadata());
         return new TextLineCursor(input, getMetadata());
     }
 
@@ -78,10 +65,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         private Iterator<String> lines;
         private final ExceptionMetadata metadata;
 
-        private TextLineCursor(
-                InputStream input,
-                ExceptionMetadata metadata
-        ) {
+        private TextLineCursor(InputStream input, ExceptionMetadata metadata) {
             super(metadata);
             this.input = input;
             this.metadata = metadata;
@@ -89,7 +73,9 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
         @Override
         protected void openLocal() {
-            this.lines = new BufferedReader(new InputStreamReader(this.input)).lines().iterator();
+            this.lines = new BufferedReader(new InputStreamReader(this.input))
+                    .lines()
+                    .iterator();
         }
 
         @Override
@@ -107,14 +93,11 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
             try {
                 this.input.close();
             } catch (IOException e) {
-                CannotRetrieveResourceException exception = new CannotRetrieveResourceException(
-                        "I/O exception",
-                        this.metadata
-                );
+                CannotRetrieveResourceException exception =
+                        new CannotRetrieveResourceException("I/O exception", this.metadata);
                 exception.initCause(e);
                 throw exception;
             }
         }
     }
-
 }

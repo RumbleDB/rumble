@@ -20,14 +20,13 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
-
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class GroupByClause extends Clause {
 
@@ -92,8 +91,7 @@ public class GroupByClause extends Clause {
         int i = 0;
         for (GroupByVariableDeclaration groupby : this.variables) {
             sb.append("$" + groupby.variableName.toString());
-            if (groupby.sequenceType != null)
-                sb.append(" as " + groupby.sequenceType.toString());
+            if (groupby.sequenceType != null) sb.append(" as " + groupby.sequenceType.toString());
             if (groupby.expression != null) {
                 sb.append(" := (");
                 groupby.expression.serializeToJSONiq(sb, 0);

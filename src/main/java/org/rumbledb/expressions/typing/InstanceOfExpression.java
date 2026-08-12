@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -31,18 +32,13 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-
 @Getter
 public class InstanceOfExpression extends Expression {
 
     private Expression mainExpression;
     private SequenceType sequenceType;
 
-    public InstanceOfExpression(
-            Expression mainExpression,
-            SequenceType sequenceType,
-            ExceptionMetadata metadata
-    ) {
+    public InstanceOfExpression(Expression mainExpression, SequenceType sequenceType, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
@@ -67,12 +63,10 @@ public class InstanceOfExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(
-            " ("
+        buffer.append(" ("
                 + (this.sequenceType.toString())
                 + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
-                + ") "
-        );
+                + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
         buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
@@ -105,5 +99,4 @@ public class InstanceOfExpression extends Expression {
         indentIt(sb, indent);
         sb.append(")\n");
     }
-
 }

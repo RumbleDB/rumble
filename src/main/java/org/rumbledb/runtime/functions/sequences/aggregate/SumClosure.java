@@ -1,17 +1,19 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import java.io.Serial;
+
 import org.apache.spark.api.java.function.Function2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 
-import java.io.Serial;
-
 public class SumClosure implements Function2<Item, Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ExceptionMetadata metadata;
 
     public SumClosure(ExceptionMetadata metadata) {
@@ -24,14 +26,12 @@ public class SumClosure implements Function2<Item, Item, Item> {
         if (result == null) {
             throw new InvalidArgumentTypeException(
                     " \"+\": operation not possible with parameters of type \""
-                        + v1.getDynamicType().toString()
-                        + "\" and \""
-                        + v2.getDynamicType().toString()
-                        + "\"",
-                    this.metadata
-            );
+                            + v1.getDynamicType().toString()
+                            + "\" and \""
+                            + v2.getDynamicType().toString()
+                            + "\"",
+                    this.metadata);
         }
         return result;
     }
-
 }

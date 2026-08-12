@@ -20,7 +20,12 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,42 +35,23 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     @SuppressWarnings("unused")
-    private static final HashSet<Integer> exclusionCharacters = new HashSet<Integer>(
-            Arrays.asList(
+    private static final HashSet<Integer> exclusionCharacters = new HashSet<Integer>(Arrays.asList());
 
-            )
-    );
-
-    public EncodeForURIFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public EncodeForURIFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ContextOrArgumentLocalCursor.mapArgument(
-            this.getChild(0),
-            context,
-            this::evaluate,
-            getMetadata()
-        );
+        return ContextOrArgumentLocalCursor.mapArgument(this.getChild(0), context, this::evaluate, getMetadata());
     }
 
     private Item evaluate(Item inputItem) {
@@ -76,12 +62,12 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
         String encodedURI;
         try {
             encodedURI = URLEncoder.encode(inputItem.getStringValue(), "UTF-8")
-                .replace("+", "%20")
-                .replace("*", "%2A")
-                .replace("%7E", "~");
+                    .replace("+", "%20")
+                    .replace("*", "%2A")
+                    .replace("%7E", "~");
         } catch (UnsupportedEncodingException e) {
             throw new OurBadException(e.getMessage(), getMetadata()); // Will only get here if "UTF-8" is changed or
-                                                                      // method deprecates
+            // method deprecates
         }
 
         return ItemFactory.getInstance().createStringItem(encodedURI);

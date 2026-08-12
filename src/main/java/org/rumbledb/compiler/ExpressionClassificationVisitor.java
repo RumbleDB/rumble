@@ -71,9 +71,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         }
         if (expressionClassification.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Operand of expression is Updating when it should be Simple or Vacuous",
-                    node.getMetadata()
-            );
+                    "Operand of expression is Updating when it should be Simple or Vacuous", node.getMetadata());
         }
         expression.setExpressionClassification(expressionClassification);
         return expressionClassification;
@@ -81,23 +79,20 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitDescendants(Node node, ExpressionClassification argument) {
-        List<ExpressionClassification> expressionClassifications = node.getChildren()
-            .stream()
-            .map(child -> this.visit(child, argument))
-            .collect(Collectors.toList());
-        ExpressionClassification result = expressionClassifications.stream()
-            .anyMatch(ExpressionClassification::isUpdating)
-                ? ExpressionClassification.UPDATING
-                : ExpressionClassification.SIMPLE;
+        List<ExpressionClassification> expressionClassifications = node.getChildren().stream()
+                .map(child -> this.visit(child, argument))
+                .collect(Collectors.toList());
+        ExpressionClassification result =
+                expressionClassifications.stream().anyMatch(ExpressionClassification::isUpdating)
+                        ? ExpressionClassification.UPDATING
+                        : ExpressionClassification.SIMPLE;
 
         return result;
     }
 
     @Override
     public ExpressionClassification visitStatementsAndOptionalExpr(
-            StatementsAndOptionalExpr expression,
-            ExpressionClassification argument
-    ) {
+            StatementsAndOptionalExpr expression, ExpressionClassification argument) {
         this.visitDescendants(expression, argument);
         Expression e = expression.getExpression();
         expression.setExpressionClassification(e.getExpressionClassification());
@@ -106,9 +101,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitStatementsAndExpr(
-            StatementsAndExpr expression,
-            ExpressionClassification argument
-    ) {
+            StatementsAndExpr expression, ExpressionClassification argument) {
         this.visitDescendants(expression, argument);
         Expression e = expression.getExpression();
         expression.setExpressionClassification(e.getExpressionClassification());
@@ -117,21 +110,17 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitCommaExpression(
-            CommaExpression expression,
-            ExpressionClassification argument
-    ) {
-        List<ExpressionClassification> results = expression.getChildren()
-            .stream()
-            .map(n -> this.visit(n, argument))
-            .collect(Collectors.toList());
+            CommaExpression expression, ExpressionClassification argument) {
+        List<ExpressionClassification> results = expression.getChildren().stream()
+                .map(n -> this.visit(n, argument))
+                .collect(Collectors.toList());
         boolean anyUpdating = results.stream().anyMatch(ExpressionClassification::isUpdating);
         boolean allUpdatingOrVacuous = results.stream().allMatch(e -> e.isVacuous() || e.isUpdating());
 
         if (anyUpdating && !allUpdatingOrVacuous) {
             throw new InvalidUpdatingExpressionPositionException(
                     "All expressions in Comma separated expressions must only be Simple expressions or only be Updating/Vacuous expressions",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
 
         if (anyUpdating) {
@@ -149,14 +138,11 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitTreatExpression(
-            TreatExpression expression,
-            ExpressionClassification argument
-    ) {
+            TreatExpression expression, ExpressionClassification argument) {
         ExpressionClassification result = this.visit(expression.getMainExpression(), argument);
         expression.setExpressionClassification(result);
         return result;
     }
-
 
     // Endregion
 
@@ -164,9 +150,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitFlowrExpression(
-            FlworExpression expression,
-            ExpressionClassification argument
-    ) {
+            FlworExpression expression, ExpressionClassification argument) {
         Clause clause = expression.getReturnClause().getFirstClause();
         ExpressionClassification result = argument;
         while (clause != null) {
@@ -184,9 +168,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification result = this.visit(expression.getExpression(), argument);
         if (result.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expression in For Clause cannot be updating",
-                    expression.getMetadata()
-            );
+                    "Expression in For Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -200,9 +182,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         }
         if (result.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expressions in Window Clause cannot be updating",
-                    expression.getMetadata()
-            );
+                    "Expressions in Window Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -212,9 +192,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification result = this.visit(expression.getExpression(), argument);
         if (result.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expression in Let Clause cannot be updating",
-                    expression.getMetadata()
-            );
+                    "Expression in Let Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -224,9 +202,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification result = this.visitDescendants(expression, argument);
         if (result.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expressions in Group By Clause cannot be updating",
-                    expression.getMetadata()
-            );
+                    "Expressions in Group By Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -236,9 +212,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification result = this.visitDescendants(expression, argument);
         if (result.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expressions in Order By Clause cannot be updating",
-                    expression.getMetadata()
-            );
+                    "Expressions in Order By Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -248,9 +222,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification result = this.visitDescendants(expression, argument);
         if (result.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expression in Where Clause cannot be updating",
-                    expression.getMetadata()
-            );
+                    "Expression in Where Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -274,15 +246,11 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitConditionalExpression(
-            ConditionalExpression expression,
-            ExpressionClassification argument
-    ) {
+            ConditionalExpression expression, ExpressionClassification argument) {
         ExpressionClassification condResult = this.visit(expression.getCondition(), argument);
         if (condResult.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Condition expression in Conditional expression cannot be updating",
-                    expression.getMetadata()
-            );
+                    "Condition expression in Conditional expression cannot be updating", expression.getMetadata());
         }
 
         ExpressionClassification thenResult = this.visit(expression.getBranch(), argument);
@@ -290,13 +258,12 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
         boolean oneUpdating = thenResult.isUpdating() || elseResult.isUpdating();
         boolean bothUpdatingOrVacuous = (thenResult.isUpdating() || thenResult.isVacuous())
-            && (elseResult.isVacuous() || elseResult.isUpdating());
+                && (elseResult.isVacuous() || elseResult.isUpdating());
 
         if (oneUpdating && !bothUpdatingOrVacuous) {
             throw new InvalidUpdatingExpressionPositionException(
                     "Both branch expressions in Conditional expression must only be Simple expressions or only be Updating/Vacuous expressions",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
 
         if (oneUpdating) {
@@ -312,23 +279,17 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitSwitchExpression(
-            SwitchExpression expression,
-            ExpressionClassification argument
-    ) {
+            SwitchExpression expression, ExpressionClassification argument) {
         return super.visitSwitchExpression(expression, argument);
     }
 
     @Override
     public ExpressionClassification visitTypeSwitchExpression(
-            TypeSwitchExpression expression,
-            ExpressionClassification argument
-    ) {
+            TypeSwitchExpression expression, ExpressionClassification argument) {
         ExpressionClassification condResult = this.visit(expression.getTestCondition(), argument);
         if (condResult.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Condition expression in Type Switch expression cannot be updating",
-                    expression.getMetadata()
-            );
+                    "Condition expression in Type Switch expression cannot be updating", expression.getMetadata());
         }
 
         List<ExpressionClassification> branchResults = new ArrayList<>();
@@ -340,8 +301,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         if (anyUpdating && !branchResults.stream().allMatch(e -> e.isUpdating() || e.isVacuous())) {
             throw new InvalidUpdatingExpressionPositionException(
                     "All branch expressions in Type Switch expression must only be Simple expressions or only be Updating/Vacuous expressions",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
 
         if (anyUpdating) {
@@ -373,9 +333,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitFunctionCall(
-            FunctionCallExpression expression,
-            ExpressionClassification argument
-    ) {
+            FunctionCallExpression expression, ExpressionClassification argument) {
         ExpressionClassification currArgResult;
         for (Expression argExpr : expression.getArguments()) {
             if (argExpr == null) {
@@ -384,9 +342,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             currArgResult = this.visit(argExpr, argument);
             if (currArgResult.isUpdating()) {
                 throw new InvalidUpdatingExpressionPositionException(
-                        "Arguments to function calls cannot be updating",
-                        argExpr.getMetadata()
-                );
+                        "Arguments to function calls cannot be updating", argExpr.getMetadata());
             }
         }
         FunctionSignature funcSig;
@@ -395,9 +351,8 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         } catch (UnknownFunctionCallException e) {
             throw new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata());
         }
-        ExpressionClassification result = funcSig.isUpdating()
-            ? ExpressionClassification.UPDATING
-            : ExpressionClassification.SIMPLE;
+        ExpressionClassification result =
+                funcSig.isUpdating() ? ExpressionClassification.UPDATING : ExpressionClassification.SIMPLE;
         expression.setExpressionClassification(result);
         // TODO: Make vacuous if call to fn:error? Not present!
         return result;
@@ -405,68 +360,53 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitInlineFunctionExpr(
-            InlineFunctionExpression expression,
-            ExpressionClassification argument
-    ) {
+            InlineFunctionExpression expression, ExpressionClassification argument) {
         ExpressionClassification bodyResult = this.visit(expression.getBody(), argument);
 
         if (expression.isUpdating()) {
             if (expression.getActualReturnType() != null) {
                 throw new UpdatingFunctionHasReturnTypeException(
                         "An updating function cannot have a return type. Return type "
-                            + expression.getActualReturnType()
-                            + " is specified.",
-                        expression.getMetadata()
-                );
+                                + expression.getActualReturnType()
+                                + " is specified.",
+                        expression.getMetadata());
             }
             if (!expression.isExternal() && !(bodyResult.isUpdating() || bodyResult.isVacuous())) {
                 throw new SimpleExpressionMustBeVacuousException(
                         "Top level expression of updating function must be updating or vacuous",
-                        expression.getMetadata()
-                );
+                        expression.getMetadata());
             }
             // TODO CHECK IF EXTERNAL ERROR XUDY0019
             expression.setExpressionClassification(ExpressionClassification.UPDATING);
         } else {
             if (!expression.isExternal() && !bodyResult.isSimple()) {
                 throw new InvalidUpdatingExpressionPositionException(
-                        "Body of simple inline function must be simple",
-                        expression.getMetadata()
-                );
+                        "Body of simple inline function must be simple", expression.getMetadata());
             }
             // TODO CHECK IF EXTERNAL ERROR XUDY0018
             expression.setExpressionClassification(ExpressionClassification.SIMPLE);
         }
-
 
         return expression.getExpressionClassification();
     }
 
     // Endregion
 
-
-
     // Region Basic Updating
 
     @Override
     public ExpressionClassification visitDeleteExpression(
-            DeleteExpression expression,
-            ExpressionClassification argument
-    ) {
+            DeleteExpression expression, ExpressionClassification argument) {
         ExpressionClassification mainResult = this.visit(expression.getMainExpression(), argument);
         if (!mainResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Main expression in Delete expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Main expression in Delete expression must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification locatorResult = this.visit(expression.getLocatorExpression(), argument);
         if (!locatorResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Locator expression in Delete expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Locator expression in Delete expression must be Simple", expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
@@ -475,31 +415,23 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitRenameExpression(
-            RenameExpression expression,
-            ExpressionClassification argument
-    ) {
+            RenameExpression expression, ExpressionClassification argument) {
         ExpressionClassification mainResult = this.visit(expression.getMainExpression(), argument);
         if (!mainResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Main expression in Rename expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Main expression in Rename expression must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification locatorResult = this.visit(expression.getLocatorExpression(), argument);
         if (!locatorResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Locator expression in Rename expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Locator expression in Rename expression must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification replacerResult = this.visit(expression.getNameExpression(), argument);
         if (!replacerResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Replacer expression in Rename expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Replacer expression in Rename expression must be Simple", expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
@@ -508,31 +440,23 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitReplaceExpression(
-            ReplaceExpression expression,
-            ExpressionClassification argument
-    ) {
+            ReplaceExpression expression, ExpressionClassification argument) {
         ExpressionClassification mainResult = this.visit(expression.getMainExpression(), argument);
         if (!mainResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Main expression in Replace expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Main expression in Replace expression must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification locatorResult = this.visit(expression.getLocatorExpression(), argument);
         if (!locatorResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Locator expression in Replace expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Locator expression in Replace expression must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification replacerResult = this.visit(expression.getReplacerExpression(), argument);
         if (!replacerResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Replacer expression in Replace expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Replacer expression in Replace expression must be Simple", expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
@@ -541,32 +465,24 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitInsertExpression(
-            InsertExpression expression,
-            ExpressionClassification argument
-    ) {
+            InsertExpression expression, ExpressionClassification argument) {
         ExpressionClassification mainResult = this.visit(expression.getMainExpression(), argument);
         if (!mainResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Main expression in Insert expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Main expression in Insert expression must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification toInsertResult = this.visit(expression.getToInsertExpression(), argument);
         if (!toInsertResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "toInsert expression in Insert expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "toInsert expression in Insert expression must be Simple", expression.getMetadata());
         }
 
         if (expression.hasPositionExpression()) {
             ExpressionClassification positionResult = this.visit(expression.getPositionExpression(), argument);
             if (!positionResult.isSimple()) {
                 throw new InvalidUpdatingExpressionPositionException(
-                        "Position expression in Insert expression must be Simple",
-                        expression.getMetadata()
-                );
+                        "Position expression in Insert expression must be Simple", expression.getMetadata());
             }
         }
 
@@ -576,23 +492,17 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitAppendExpression(
-            AppendExpression expression,
-            ExpressionClassification argument
-    ) {
+            AppendExpression expression, ExpressionClassification argument) {
         ExpressionClassification arrayResult = this.visit(expression.getArrayExpression(), argument);
         if (!arrayResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Array expression in Append expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Array expression in Append expression must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification toAppendResult = this.visit(expression.getToAppendExpression(), argument);
         if (!toAppendResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "toAppend expression in Append expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "toAppend expression in Append expression must be Simple", expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
@@ -601,34 +511,26 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitTransformExpression(
-            TransformExpression expression,
-            ExpressionClassification argument
-    ) {
+            TransformExpression expression, ExpressionClassification argument) {
 
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             ExpressionClassification copyDeclResult = this.visit(copyDecl.getSourceExpression(), argument);
             if (!copyDeclResult.isSimple()) {
                 throw new InvalidUpdatingExpressionPositionException(
-                        "Source expression in Copy Declaration must be Simple",
-                        expression.getMetadata()
-                );
+                        "Source expression in Copy Declaration must be Simple", expression.getMetadata());
             }
         }
 
         ExpressionClassification modifyResult = this.visit(expression.getModifyExpression(), argument);
         if (!(modifyResult.isUpdating() || modifyResult.isVacuous())) {
             throw new SimpleExpressionMustBeVacuousException(
-                    "Modify expression must be Updating or Vacuous",
-                    expression.getMetadata()
-            );
+                    "Modify expression must be Updating or Vacuous", expression.getMetadata());
         }
 
         ExpressionClassification returnResult = this.visit(expression.getReturnExpression(), argument);
         if (!returnResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Return expression of Transform expression must be Simple",
-                    expression.getMetadata()
-            );
+                    "Return expression of Transform expression must be Simple", expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.SIMPLE);
@@ -637,23 +539,17 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitCreateCollectionExpression(
-            CreateCollectionExpression expression,
-            ExpressionClassification argument
-    ) {
+            CreateCollectionExpression expression, ExpressionClassification argument) {
         ExpressionClassification collectionResult = this.visit(expression.getCollection(), argument);
         if (!collectionResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expression for the Name of the collection to be created must be Simple",
-                    expression.getMetadata()
-            );
+                    "Expression for the Name of the collection to be created must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
         if (!contentResult.isSimple() && !contentResult.isVacuous()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Content of new collection must be Simple",
-                    expression.getMetadata()
-            );
+                    "Content of new collection must be Simple", expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
@@ -662,15 +558,11 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitDeleteIndexFromCollectionExpression(
-            DeleteIndexFromCollectionExpression expression,
-            ExpressionClassification argument
-    ) {
+            DeleteIndexFromCollectionExpression expression, ExpressionClassification argument) {
         ExpressionClassification collectionResult = this.visit(expression.getCollection(), argument);
         if (!collectionResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expression for the name of the collection must be Simple",
-                    expression.getMetadata()
-            );
+                    "Expression for the name of the collection must be Simple", expression.getMetadata());
         }
 
         if (expression.getNumDelete() != null) {
@@ -678,8 +570,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             if (!numResult.isSimple()) {
                 throw new InvalidUpdatingExpressionPositionException(
                         "Expression for the number to be deleted from the collection must be Simple",
-                        expression.getMetadata()
-                );
+                        expression.getMetadata());
             }
         }
 
@@ -689,15 +580,11 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitDeleteSearchFromCollectionExpression(
-            DeleteSearchFromCollectionExpression expression,
-            ExpressionClassification argument
-    ) {
+            DeleteSearchFromCollectionExpression expression, ExpressionClassification argument) {
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
         if (!contentResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Content of deletion must be Simple",
-                    expression.getMetadata()
-            );
+                    "Content of deletion must be Simple", expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
@@ -706,23 +593,17 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitEditCollectionExpression(
-            EditCollectionExpression expression,
-            ExpressionClassification argument
-    ) {
+            EditCollectionExpression expression, ExpressionClassification argument) {
         ExpressionClassification targetResult = this.visit(expression.getTargetExpression(), argument);
         if (!targetResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expression for the edit target must be Simple",
-                    expression.getMetadata()
-            );
+                    "Expression for the edit target must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
         if (!contentResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Content to be inserted must be Simple",
-                    expression.getMetadata()
-            );
+                    "Content to be inserted must be Simple", expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
@@ -731,32 +612,24 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitInsertIndexIntoCollectionExpression(
-            InsertIndexIntoCollectionExpression expression,
-            ExpressionClassification argument
-    ) {
+            InsertIndexIntoCollectionExpression expression, ExpressionClassification argument) {
         ExpressionClassification collectionResult = this.visit(expression.getCollection(), argument);
         if (!collectionResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expression for the Name of the collection to be created must be Simple",
-                    expression.getMetadata()
-            );
+                    "Expression for the Name of the collection to be created must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
         if (!contentResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Content to be inserted must be Simple",
-                    expression.getMetadata()
-            );
+                    "Content to be inserted must be Simple", expression.getMetadata());
         }
 
         if (expression.getPosition() != null) {
             ExpressionClassification positionResult = this.visit(expression.getPosition(), argument);
             if (!positionResult.isSimple()) {
                 throw new InvalidUpdatingExpressionPositionException(
-                        "Position of insertion must be Simple",
-                        expression.getMetadata()
-                );
+                        "Position of insertion must be Simple", expression.getMetadata());
             }
         }
 
@@ -766,23 +639,17 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitInsertSearchIntoCollectionExpression(
-            InsertSearchIntoCollectionExpression expression,
-            ExpressionClassification argument
-    ) {
+            InsertSearchIntoCollectionExpression expression, ExpressionClassification argument) {
         ExpressionClassification targetResult = this.visit(expression.getTargetExpression(), argument);
         if (!targetResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expression for insertion target must be Simple",
-                    expression.getMetadata()
-            );
+                    "Expression for insertion target must be Simple", expression.getMetadata());
         }
 
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
         if (!contentResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Content of insertion must be Simple",
-                    expression.getMetadata()
-            );
+                    "Content of insertion must be Simple", expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
@@ -791,30 +658,23 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitTruncateCollectionExpression(
-            TruncateCollectionExpression expression,
-            ExpressionClassification argument
-    ) {
+            TruncateCollectionExpression expression, ExpressionClassification argument) {
         ExpressionClassification collectionNameResult = this.visit(expression.getCollectionName(), argument);
         if (!collectionNameResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
                     "Expression for the Name of the collection to be truncated must be Simple",
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
         return ExpressionClassification.BASIC_UPDATING;
     }
 
-
     // Endregion
-
 
     @Override
     public ExpressionClassification visitVariableDeclaration(
-            VariableDeclaration expression,
-            ExpressionClassification argument
-    ) {
+            VariableDeclaration expression, ExpressionClassification argument) {
         if (expression.getExpression() == null) {
             return argument;
         }
@@ -822,16 +682,15 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification result = this.visit(expression.getExpression(), argument);
         if (!result.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Initialising expression in variable declaration must be Simple",
-                    expression.getMetadata()
-            );
+                    "Initialising expression in variable declaration must be Simple", expression.getMetadata());
         }
         return ExpressionClassification.SIMPLE;
     }
 
     @Override
     public ExpressionClassification visitBlockExpr(BlockExpression expression, ExpressionClassification argument) {
-        ExpressionClassification result = this.visit(expression.getStatementsAndExpr().getExpression(), argument);
+        ExpressionClassification result =
+                this.visit(expression.getStatementsAndExpr().getExpression(), argument);
         if (result.isUpdating()) {
             return ExpressionClassification.UPDATING;
         }
@@ -840,9 +699,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitReturnStatementClause(
-            ReturnStatementClause statementClause,
-            ExpressionClassification argument
-    ) {
+            ReturnStatementClause statementClause, ExpressionClassification argument) {
         if (statementClause.getReturnStatement() == null) {
             return argument;
         }

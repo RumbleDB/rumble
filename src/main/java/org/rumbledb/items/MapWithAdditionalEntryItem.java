@@ -32,7 +32,6 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Serial
@@ -44,6 +43,7 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
     private final Item original;
+
     private final Item additionalKey;
     private final List<Item> additionalValue;
     private final int size;
@@ -75,12 +75,12 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
         }
         return new MapItem(
                 this.getItemKeys().stream().map(item -> item.copy(mutable)).toList(),
-                this.getSequenceValues()
-                    .stream()
-                    .map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList())
-                    .toList(),
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                this.getSequenceValues().stream()
+                        .map(item -> item.stream()
+                                .map(subitem -> subitem.copy(mutable))
+                                .toList())
+                        .toList(),
+                ExceptionMetadata.EMPTY_METADATA);
     }
 
     // region maps
@@ -242,13 +242,10 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     // endregion maps
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.mapItem;
     }
-
 
     @Override
     public boolean getEffectiveBooleanValue() {
@@ -330,9 +327,7 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -349,5 +344,4 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
     public void setCollection(Collection collection) {
         throw new OurBadException("Cannot change collection of a MapEntryItem, which is not mutable.");
     }
-
 }

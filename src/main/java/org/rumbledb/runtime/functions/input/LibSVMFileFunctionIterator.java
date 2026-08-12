@@ -20,33 +20,29 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
 
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
 
 public class LibSVMFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public LibSVMFileFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public LibSVMFileFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -60,10 +56,10 @@ public class LibSVMFileFunctionIterator extends ItemRuntimePlan implements DataF
         }
         try {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .format("libsvm")
-                .load(FileSystemUtil.convertURIToStringForSpark(uri));
+                    .getOrCreateSession()
+                    .read()
+                    .format("libsvm")
+                    .load(FileSystemUtil.convertURIToStringForSpark(uri));
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {

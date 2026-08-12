@@ -20,13 +20,13 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -34,23 +34,19 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 public class ObjectProjectFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -70,8 +66,7 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
                 ItemRuntimePlan inputPlan,
                 ItemRuntimePlan keysPlan,
                 DynamicContext context,
-                ExceptionMetadata metadata
-        ) {
+                ExceptionMetadata metadata) {
             super(metadata);
             this.inputPlan = inputPlan;
             this.keysPlan = keysPlan;
@@ -109,9 +104,7 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
             List<Item> keys = this.keysPlan.materialize(this.context);
             if (keys.isEmpty()) {
                 throw new InvalidSelectorException(
-                        "Invalid Projection Key; Object projection can't be performed with zero keys: ",
-                        this.metadata
-                );
+                        "Invalid Projection Key; Object projection can't be performed with zero keys: ", this.metadata);
             }
             return keys;
         }
@@ -133,12 +126,10 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private ItemRuntimePlan iterator;
 
-    public ObjectProjectFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ObjectProjectFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
@@ -147,9 +138,7 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
         List<Item> keys = this.getChild(1).materialize(context);
         if (keys.isEmpty()) {
             throw new InvalidSelectorException(
-                    "Invalid Projection Key; Object projection can't be performed with zero keys: ",
-                    getMetadata()
-            );
+                    "Invalid Projection Key; Object projection can't be performed with zero keys: ", getMetadata());
         }
         return keys;
     }
@@ -158,17 +147,14 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         List<Item> projectionKeys = getProjectionKeys(context);
-        FlatMapFunction<Item, Item> transformation = new ObjectProjectClosure(
-                projectionKeys,
-                getMetadata()
-        );
+        FlatMapFunction<Item, Item> transformation = new ObjectProjectClosure(projectionKeys, getMetadata());
         return childRDD.flatMap(transformation);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
-            .fromPlan(this.getChild(0), context);
+        HomogeneousItemDataFrame childDataFrame =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (!childDataFrame.getItemType().isObjectItemType()) {
             return childDataFrame;
@@ -184,23 +170,13 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
         }
         if (keys.isEmpty()) {
             return childDataFrame.evaluateSQL(
-                String.format(
-                    "SELECT NULL as `%s` FROM %s",
-                    SparkSessionManager.emptyObjectJSONiqItemColumnName,
-                    object
-                ),
-                BuiltinTypesCatalogue.objectItem
-            );
+                    String.format(
+                            "SELECT NULL as `%s` FROM %s", SparkSessionManager.emptyObjectJSONiqItemColumnName, object),
+                    BuiltinTypesCatalogue.objectItem);
         }
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
         HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
-            String.format(
-                "SELECT %s FROM %s",
-                projectionVariables,
-                object
-            ),
-            BuiltinTypesCatalogue.objectItem
-        );
+                String.format("SELECT %s FROM %s", projectionVariables, object), BuiltinTypesCatalogue.objectItem);
         return result;
     }
 }

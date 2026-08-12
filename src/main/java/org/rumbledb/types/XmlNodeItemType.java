@@ -1,10 +1,10 @@
 package org.rumbledb.types;
 
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.util.Set;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing a concrete XML node item type at depth 2 in the type hierarchy.
@@ -24,8 +24,6 @@ public class XmlNodeItemType extends AbstractItemType {
     XmlNodeItemType(Name name) {
         this.name = name;
     }
-
-
 
     @Override
     public boolean hasName() {

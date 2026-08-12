@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -32,9 +33,7 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item> {
     private final List<ItemRuntimePlan> children;
 
     protected ItemRuntimePlan(
-            @NonNull List<? extends ItemRuntimePlan> children,
-            @NonNull RuntimeStaticContext staticContext
-    ) {
+            @NonNull List<? extends ItemRuntimePlan> children, @NonNull RuntimeStaticContext staticContext) {
         super(staticContext, ItemRuntimeDataFrameFactory.INSTANCE);
         this.children = new ArrayList<>(children);
     }
@@ -53,7 +52,7 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item> {
 
     public boolean isSparkJobNeeded() {
         return this.staticContext.getExecutionMode().isRDDOrDataFrame()
-            || this.children.stream().anyMatch(ItemRuntimePlan::isSparkJobNeeded);
+                || this.children.stream().anyMatch(ItemRuntimePlan::isSparkJobNeeded);
     }
 
     public void print(StringBuilder buffer, int indent) {
@@ -61,11 +60,11 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item> {
             buffer.append("  ");
         }
         buffer.append(this.getClass().getSimpleName())
-            .append(" | ")
-            .append(this.staticContext.getExecutionMode())
-            .append(" | ")
-            .append(this.staticContext.getStaticType())
-            .append('\n');
+                .append(" | ")
+                .append(this.staticContext.getExecutionMode())
+                .append(" | ")
+                .append(this.staticContext.getStaticType())
+                .append('\n');
         for (ItemRuntimePlan child : this.children) {
             child.print(buffer, indent + 1);
         }

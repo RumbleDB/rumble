@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringJoiner;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -28,11 +33,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
-import java.util.StringJoiner;
 
 /**
  * Runtime iterator for computed comment node constructors.
@@ -47,9 +47,7 @@ public class CommentNodeConstructorRuntimeIterator extends AbstractAtMostOneItem
     private final DataFunctionIterator contentIterator;
 
     public CommentNodeConstructorRuntimeIterator(
-            DataFunctionIterator contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            DataFunctionIterator contentIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
     }
@@ -77,6 +75,4 @@ public class CommentNodeConstructorRuntimeIterator extends AbstractAtMostOneItem
         }
         return commentItem;
     }
-
-
 }

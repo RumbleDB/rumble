@@ -3,14 +3,15 @@ package org.rumbledb.runtime.update.primitives;
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
+import static org.apache.spark.sql.functions.col;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-
-import static org.apache.spark.sql.functions.col;
 
 public class RenameInObjectPrimitive implements UpdatePrimitive {
 
@@ -20,19 +21,12 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
     private Collection collection;
 
     public RenameInObjectPrimitive(
-            Item targetObject,
-            Item targetName,
-            Item replacementName,
-            ExceptionMetadata metadata
-    ) {
+            Item targetObject, Item targetName, Item replacementName, ExceptionMetadata metadata) {
 
         if (targetObject.getItemByKey(targetName.getStringValue()) == null) {
             throw new CannotResolveUpdateSelectorException(
-                    "Cannot rename key that does not exist in target object",
-                    metadata
-            );
+                    "Cannot rename key that does not exist in target object", metadata);
         }
-
 
         this.target = targetObject;
         this.selector = targetName;
@@ -75,24 +69,18 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
             String fullNewPath = pathIn + this.content.getStringValue();
 
             if (!fullOldPath.contains(".") && !fullNewPath.contains(".")) {
-                String renameColumnQuery = "ALTER TABLE "
-                    + location
-                    + " RENAME COLUMN "
-                    + fullOldPath
-                    + " TO "
-                    + fullNewPath;
+                String renameColumnQuery =
+                        "ALTER TABLE " + location + " RENAME COLUMN " + fullOldPath + " TO " + fullNewPath;
                 try {
                     SparkSessionManager.getInstance().getOrCreateSession().sql(renameColumnQuery);
                     return;
                 } catch (Exception e) {
                     if (e.getMessage() != null && e.getMessage().contains("columnMapping")) {
                         SparkSessionManager.getInstance()
-                            .getOrCreateSession()
-                            .sql(
-                                "ALTER TABLE "
-                                    + location
-                                    + " SET TBLPROPERTIES ('delta.columnMapping.mode' = 'name')"
-                            );
+                                .getOrCreateSession()
+                                .sql("ALTER TABLE "
+                                        + location
+                                        + " SET TBLPROPERTIES ('delta.columnMapping.mode' = 'name')");
                         SparkSessionManager.getInstance().getOrCreateSession().sql(renameColumnQuery);
                         return;
                     }
@@ -100,22 +88,17 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
             }
 
             String type = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .sql("DESC (SELECT " + fullOldPath + " FROM " + location + ")")
-                .filter(col("col_name").equalTo(oldName))
-                .select("data_type")
-                .collectAsList()
-                .get(0)
-                .getString(0);
+                    .getOrCreateSession()
+                    .sql("DESC (SELECT " + fullOldPath + " FROM " + location + ")")
+                    .filter(col("col_name").equalTo(oldName))
+                    .select("data_type")
+                    .collectAsList()
+                    .get(0)
+                    .getString(0);
             String typedNewValue = "CAST(" + this.target.getItemByKey(oldName).getSparkSQLValue() + " AS " + type + ")";
 
-            String insertNewColumnQuery = "ALTER TABLE "
-                + location
-                + " ADD COLUMNS ("
-                + fullNewPath
-                + " "
-                + type
-                + ");";
+            String insertNewColumnQuery =
+                    "ALTER TABLE " + location + " ADD COLUMNS (" + fullNewPath + " " + type + ");";
 
             // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
             try {
@@ -170,18 +153,19 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
         long rowID = this.target.getTopLevelID();
 
         String selectColQuery = "SELECT "
-            + pathIn
-            + this.selector.getStringValue()
-            + " AS `"
-            + SparkSessionManager.nonObjectJSONiqItemColumnName
-            + "` FROM "
-            + location
-            + " WHERE `"
-            + SparkSessionManager.rowIdColumnName
-            + "` == "
-            + rowID;
+                + pathIn
+                + this.selector.getStringValue()
+                + " AS `"
+                + SparkSessionManager.nonObjectJSONiqItemColumnName
+                + "` FROM "
+                + location
+                + " WHERE `"
+                + SparkSessionManager.rowIdColumnName
+                + "` == "
+                + rowID;
 
-        Dataset<Row> colDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectColQuery);
+        Dataset<Row> colDF =
+                SparkSessionManager.getInstance().getOrCreateSession().sql(selectColQuery);
 
         // Column type is not an object
         ItemType colType = ItemTypeFactory.createItemType(colDF.schema());
@@ -189,13 +173,8 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
         String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
         String fullNewPath = pathInSchema + this.content.getStringValue();
 
-        String insertNewColumnQuery = "ALTER TABLE "
-            + location
-            + " ADD COLUMNS ("
-            + fullNewPath
-            + " "
-            + colType.getSparkSQLType()
-            + ");";
+        String insertNewColumnQuery =
+                "ALTER TABLE " + location + " ADD COLUMNS (" + fullNewPath + " " + colType.getSparkSQLType() + ");";
 
         // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
         try {

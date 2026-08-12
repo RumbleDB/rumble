@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -9,18 +10,13 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class NamespaceUriFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public NamespaceUriFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public NamespaceUriFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -38,14 +34,12 @@ public class NamespaceUriFunctionIterator extends AbstractAtMostOneItemRuntimePl
         return ItemFactory.getInstance().createAnyURIItem(namespaceUri == null ? "" : namespaceUri);
     }
 
-
     private Item getContextNode(DynamicContext context) {
         if (!this.getChildren().isEmpty()) {
             return this.getChild(0).materializeFirstOrNull(context);
         }
         return context.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-            .get(0);
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0);
     }
-
 }

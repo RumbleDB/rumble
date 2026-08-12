@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,19 +29,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringJoinFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StringJoinFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -61,8 +57,7 @@ public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan
             if (!(item.isString())) {
                 throw new UnexpectedTypeException(
                         "String item expected",
-                        this.getChild(0).getRuntimeStaticContext().getMetadata()
-                );
+                        this.getChild(0).getRuntimeStaticContext().getMetadata());
             }
             if (!first) {
                 stringBuilder.append(joinString.getStringValue());

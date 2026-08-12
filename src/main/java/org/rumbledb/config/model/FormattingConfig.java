@@ -22,19 +22,20 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import org.rumbledb.config.FormattingCalendarModeSupport;
-import org.rumbledb.config.FormattingLanguageSupport;
-import org.rumbledb.exceptions.CliException;
-import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
-import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
-
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.extern.jackson.Jacksonized;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+
+import org.rumbledb.config.FormattingCalendarModeSupport;
+import org.rumbledb.config.FormattingLanguageSupport;
+import org.rumbledb.exceptions.CliException;
+import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
+import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
 @Value
 @NoArgsConstructor(force = true)
@@ -81,19 +82,12 @@ public class FormattingConfig implements Serializable {
 
     @Builder(toBuilder = true)
     private FormattingConfig(
-            String defaultFormattingPlace,
-            String defaultFormattingCalendar,
-            String defaultFormattingLanguage
-    ) {
+            String defaultFormattingPlace, String defaultFormattingCalendar, String defaultFormattingLanguage) {
         this.defaultFormattingPlace = Objects.requireNonNullElse(defaultFormattingPlace, "UTC");
-        this.defaultFormattingCalendar = Objects.requireNonNullElse(
-            defaultFormattingCalendar,
-            FormattingCalendarModeSupport.DEFAULT
-        );
+        this.defaultFormattingCalendar =
+                Objects.requireNonNullElse(defaultFormattingCalendar, FormattingCalendarModeSupport.DEFAULT);
         this.defaultFormattingLanguage = Objects.requireNonNullElse(
-            defaultFormattingLanguage,
-            FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE
-        );
+                defaultFormattingLanguage, FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE);
     }
 
     private static String normalizeFormattingCalendar(String calendar) {
@@ -102,9 +96,7 @@ public class FormattingConfig implements Serializable {
             return normalized;
         }
 
-        throw new CliException(
-                "Invalid argument supplied for default-formatting-calendar: " + calendar
-        );
+        throw new CliException("Invalid argument supplied for default-formatting-calendar: " + calendar);
     }
 
     private static String normalizeFormattingLanguage(String language) {
@@ -113,9 +105,7 @@ public class FormattingConfig implements Serializable {
             return normalized;
         }
 
-        throw new CliException(
-                "Invalid argument supplied for default-formatting-language: " + language
-        );
+        throw new CliException("Invalid argument supplied for default-formatting-language: " + language);
     }
 
     private static String normalizeFormattingPlace(String place) {
@@ -126,9 +116,7 @@ public class FormattingConfig implements Serializable {
             java.time.ZoneId.of(place);
             return place;
         } catch (java.time.DateTimeException e) {
-            throw new CliException(
-                    "Invalid argument supplied for default-formatting-place: " + place
-            );
+            throw new CliException("Invalid argument supplied for default-formatting-place: " + place);
         }
     }
 

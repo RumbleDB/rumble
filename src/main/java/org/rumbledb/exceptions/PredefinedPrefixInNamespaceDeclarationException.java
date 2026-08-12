@@ -20,14 +20,14 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * Exception for XQST0070: It is a static error if a namespace declaration attribute attempts to do any of the
  * following:
- * 
+ *
  * <ul>
  * <li>Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace</li>
  * <li>Bind the prefix xmlns to any namespace URI</li>
@@ -49,4 +49,3 @@ public class PredefinedPrefixInNamespaceDeclarationException extends RumbleExcep
         super(message, ErrorCode.PredefinedPrefixInNamespaceDeclarationErrorCode);
     }
 }
-

@@ -20,36 +20,32 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-
 import java.io.Serial;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 public class ArrayFlattenFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item> {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     private final ItemRuntimePlan iterator;
 
-    public ArrayFlattenFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayFlattenFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
@@ -64,8 +60,7 @@ public class ArrayFlattenFunctionIterator extends ItemRuntimePlan
                     flatten(List.of(item), flattened);
                     return flattened.iterator();
                 },
-                getMetadata()
-        );
+                getMetadata());
     }
 
     private static void flatten(List<Item> items, Collection<Item> results) {
@@ -83,8 +78,6 @@ public class ArrayFlattenFunctionIterator extends ItemRuntimePlan
             }
         }
     }
-
-
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {

@@ -20,7 +20,10 @@
 
 package org.rumbledb.runtime.functions.context;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,21 +31,14 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class LastFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public LastFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public LastFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -57,10 +53,8 @@ public class LastFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<Name, DynamicContext.VariableDependency>();
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<Name, DynamicContext.VariableDependency>();
         result.put(Name.CONTEXT_COUNT, DynamicContext.VariableDependency.FULL);
         return result;
     }
-
 }

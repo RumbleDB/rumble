@@ -18,26 +18,7 @@
  *
  */
 
-
 package org.rumbledb.runtime.functions.io;
-
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.parsing.ItemParser;
-
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
-
-import org.rumbledb.exceptions.ParsingException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,15 +27,28 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public YamlDocFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public YamlDocFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -62,15 +56,9 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         Item path = this.getChild(0).materializeFirstOrNull(context);
         try {
-            URI uri = FileSystemUtil.resolveURI(
-                this.staticContext.getStaticURI(),
-                path.getStringValue(),
-                getMetadata()
-            );
-            InputStream input = FileSystemUtil.getDataInputStream(
-                uri,
-                getMetadata()
-            );
+            URI uri =
+                    FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
+            InputStream input = FileSystemUtil.getDataInputStream(uri, getMetadata());
             YAMLParser yamlParser = new YAMLFactory().createParser(new InputStreamReader(input));
             return new YamlResourceCursor(yamlParser, getMetadata());
         } catch (IOException e) {
@@ -78,18 +66,13 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
-    private static final class YamlResourceCursor
-            extends
-                AbstractLocalCursor<Item> {
+    private static final class YamlResourceCursor extends AbstractLocalCursor<Item> {
 
         private final YAMLParser parser;
         private final ExceptionMetadata metadata;
         private Item next;
 
-        private YamlResourceCursor(
-                YAMLParser parser,
-                ExceptionMetadata metadata
-        ) {
+        private YamlResourceCursor(YAMLParser parser, ExceptionMetadata metadata) {
             super(metadata);
             this.parser = parser;
             this.metadata = metadata;
@@ -114,16 +97,10 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
 
         private void advance() {
             try {
-                this.next = ItemParser.getItemFromYAML(
-                    this.parser,
-                    this.parser.nextToken(),
-                    this.metadata
-                );
+                this.next = ItemParser.getItemFromYAML(this.parser, this.parser.nextToken(), this.metadata);
             } catch (IOException e) {
                 RumbleException exception = new ParsingException(
-                        "An error happened while parsing YAML. YAML is not well-formed!",
-                        this.metadata
-                );
+                        "An error happened while parsing YAML. YAML is not well-formed!", this.metadata);
                 exception.initCause(e);
                 throw exception;
             }
@@ -140,5 +117,4 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
             }
         }
     }
-
 }

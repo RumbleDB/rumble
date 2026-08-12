@@ -1,6 +1,10 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -8,19 +12,21 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.update.primitives.Mode;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class InsertIndexIntoCollectionExpression extends Expression {
     @Getter
     private final Expression collection;
+
     @Getter
     private final Expression contentExpression;
+
     private final Expression pos;
+
     @Getter
     private final Mode mode;
+
     @Getter
     private final boolean isFirst;
+
     @Getter
     private final boolean isLast;
 
@@ -31,8 +37,7 @@ public class InsertIndexIntoCollectionExpression extends Expression {
             Mode mode,
             boolean isFirst,
             boolean isLast,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         if (collection == null) {
             throw new OurBadException("Collection must be identified for insertion.");
@@ -56,8 +61,8 @@ public class InsertIndexIntoCollectionExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return this.pos != null
-            ? Arrays.asList(this.contentExpression, this.collection, this.pos)
-            : Arrays.asList(this.contentExpression, this.collection);
+                ? Arrays.asList(this.contentExpression, this.collection, this.pos)
+                : Arrays.asList(this.contentExpression, this.collection);
     }
 
     @Override
@@ -91,5 +96,4 @@ public class InsertIndexIntoCollectionExpression extends Expression {
         sb.append(")");
         sb.append("\n");
     }
-
 }

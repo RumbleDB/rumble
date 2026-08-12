@@ -16,6 +16,9 @@
  */
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -25,9 +28,6 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
 /**
  * Placeholder body iterator for {@link org.rumbledb.items.FunctionItem}s that represent
  * a builtin named function reference ({@code fn:abs#1}). The real call path uses
@@ -35,9 +35,7 @@ import java.util.List;
  * must not be evaluated as a normal function body.
  */
 public class BuiltinNamedFunctionReferenceMarkerIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            NativeQueryRuntimePlan {
+        implements LocalRuntimePlan<Item>, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -50,5 +48,4 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends ItemRuntimePlan
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new AtMostOneLocalCursor<>(null, this.getRuntimeStaticContext().getMetadata());
     }
-
 }

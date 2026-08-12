@@ -20,9 +20,6 @@
 
 package org.rumbledb.runtime.functions;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -41,22 +39,20 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 public class FunctionItemCallIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item>,
-            UpdatingRuntimePlan {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -73,15 +69,16 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
             Item functionItem,
             List<ItemRuntimePlan> functionArguments,
             RuntimeStaticContext staticContext,
-            boolean isTailOptimization
-    ) {
+            boolean isTailOptimization) {
         super(
-            functionArguments.stream().filter(arg -> arg != null).toList(),
-            staticContext.toBuilder()
-                .isUpdating(functionItem.getSignature().isUpdating())
-                .isSequential(functionItem.getBodyIterator().getRuntimeStaticContext().isSequential())
-                .build()
-        );
+                functionArguments.stream().filter(arg -> arg != null).toList(),
+                staticContext.toBuilder()
+                        .isUpdating(functionItem.getSignature().isUpdating())
+                        .isSequential(functionItem
+                                .getBodyIterator()
+                                .getRuntimeStaticContext()
+                                .isSequential())
+                        .build());
         this.isPartialApplication = functionArguments.stream().anyMatch(arg -> arg == null);
         if (isTailOptimization) {
             this.isPartialApplication = true;
@@ -91,7 +88,6 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
         this.functionArguments = functionArguments;
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
-
     }
 
     @Override
@@ -102,8 +98,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
                 this.isPartialApplication,
                 this.isTailOptimization,
                 this.staticContext,
-                context
-        );
+                context);
     }
 
     private static final class FunctionCallLocalCursor extends AbstractLocalCursor<Item> {
@@ -121,8 +116,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
                 boolean partialApplication,
                 boolean tailOptimization,
                 RuntimeStaticContext staticContext,
-                DynamicContext context
-        ) {
+                DynamicContext context) {
             super(staticContext.getMetadata());
             this.functionItem = functionItem;
             this.functionArguments = functionArguments;
@@ -138,12 +132,11 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
             DynamicContext bodyContext;
             if (this.partialApplication) {
                 bodyPlan = generatePartiallyAppliedFunction(
-                    this.functionItem,
-                    this.functionArguments,
-                    this.tailOptimization,
-                    this.staticContext,
-                    this.context
-                );
+                        this.functionItem,
+                        this.functionArguments,
+                        this.tailOptimization,
+                        this.staticContext,
+                        this.context);
                 bodyContext = this.context;
             } else {
                 bodyPlan = this.functionItem.getBodyIterator();
@@ -176,27 +169,15 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
     }
 
     private static DynamicContext createCallContext(
-            Item functionItem,
-            List<ItemRuntimePlan> functionArguments,
-            DynamicContext context
-    ) {
+            Item functionItem, List<ItemRuntimePlan> functionArguments, DynamicContext context) {
         // A call context belongs to one invocation. Reusing it would retain parameters and function-local variables.
-        Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
-                functionItem.getLocalVariablesInClosure()
-        );
-        Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
-                functionItem.getRDDVariablesInClosure()
-        );
-        Map<Name, HomogeneousItemDataFrame> DFArgumentValues = new LinkedHashMap<>(
-                functionItem.getDFVariablesInClosure()
-        );
+        Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(functionItem.getLocalVariablesInClosure());
+        Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(functionItem.getRDDVariablesInClosure());
+        Map<Name, HomogeneousItemDataFrame> DFArgumentValues =
+                new LinkedHashMap<>(functionItem.getDFVariablesInClosure());
 
         DynamicContext callContext = new DynamicContext(
-                functionItem.getModuleDynamicContext(),
-                localArgumentValues,
-                RDDArgumentValues,
-                DFArgumentValues
-        );
+                functionItem.getModuleDynamicContext(), localArgumentValues, RDDArgumentValues, DFArgumentValues);
         populateDynamicContextWithArguments(functionItem, functionArguments, context, callContext);
         return callContext;
     }
@@ -205,27 +186,23 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
         if (this.functionItem.getParameterNames().size() != this.functionArguments.size()) {
             throw new UnexpectedTypeException(
                     "Dynamic function "
-                        + this.functionItem.getIdentifier().getName()
-                        + " invoked with incorrect number of arguments. Expected: "
-                        + this.functionItem.getParameterNames().size()
-                        + ", Found: "
-                        + this.functionArguments.size(),
-                    getMetadata()
-            );
+                            + this.functionItem.getIdentifier().getName()
+                            + " invoked with incorrect number of arguments. Expected: "
+                            + this.functionItem.getParameterNames().size()
+                            + ", Found: "
+                            + this.functionArguments.size(),
+                    getMetadata());
         }
     }
 
     private void wrapArgumentIteratorsWithTypeCheckingIterators() {
         FunctionCallArgumentConversion.wrapAccordingToSignature(
-            this.functionItem,
-            this.functionArguments,
-            getRuntimeStaticContext()
-        );
+                this.functionItem, this.functionArguments, getRuntimeStaticContext());
     }
 
     /**
      * Partial application generates a new function:
-     * 
+     *
      * <ul>
      * <li>Supplied parameters are set as NonLocalVariables</li>
      * <li>Argument placeholders form the parameters</li>
@@ -238,20 +215,14 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
             List<ItemRuntimePlan> functionArguments,
             boolean tailOptimization,
             RuntimeStaticContext staticContext,
-            DynamicContext context
-    ) {
+            DynamicContext context) {
         Name argName;
         ItemRuntimePlan argIterator;
 
-        Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
-                functionItem.getLocalVariablesInClosure()
-        );
-        Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
-                functionItem.getRDDVariablesInClosure()
-        );
-        Map<Name, HomogeneousItemDataFrame> DFArgumentValues = new LinkedHashMap<>(
-                functionItem.getDFVariablesInClosure()
-        );
+        Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(functionItem.getLocalVariablesInClosure());
+        Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(functionItem.getRDDVariablesInClosure());
+        Map<Name, HomogeneousItemDataFrame> DFArgumentValues =
+                new LinkedHashMap<>(functionItem.getDFVariablesInClosure());
 
         List<Name> partialApplicationParamNames = new ArrayList<>();
         List<SequenceType> partialApplicationParamTypes = new ArrayList<>();
@@ -262,17 +233,15 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
             if (argIterator == null) { // == ArgumentPlaceholder
                 partialApplicationParamNames.add(argName);
-                partialApplicationParamTypes.add(functionItem.getSignature().getParameterTypes().get(i));
+                partialApplicationParamTypes.add(
+                        functionItem.getSignature().getParameterTypes().get(i));
             } else {
                 if (argIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-                    DFArgumentValues.put(
-                        argName,
-                        ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-                            argIterator,
-                            context
-                        )
-                    );
-                } else if (argIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+                    DFArgumentValues.put(argName, ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(argIterator, context));
+                } else if (argIterator
+                        .getRuntimeStaticContext()
+                        .getExecutionMode()
+                        .isRDDOrDataFrame()) {
                     RDDArgumentValues.put(argName, argIterator.getRDD(context));
                 } else {
                     localArgumentValues.put(argName, argIterator.materialize(context));
@@ -285,39 +254,31 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
             functionItemName = Name.TAIL_CALL_OPTIMIZATION;
         }
         FunctionItem partiallyAppliedFunction = new FunctionItem(
-                new FunctionIdentifier(
-                        functionItemName,
-                        partialApplicationParamNames.size()
-                ),
+                new FunctionIdentifier(functionItemName, partialApplicationParamNames.size()),
                 partialApplicationParamNames,
                 new FunctionSignature(
                         partialApplicationParamTypes,
                         functionItem.getSignature().getReturnType(),
-                        functionItem.getSignature().isUpdating()
-                ),
+                        functionItem.getSignature().isUpdating()),
                 functionItem.getModuleDynamicContext(),
                 functionItem.getBodyIterator(),
                 localArgumentValues,
                 RDDArgumentValues,
-                DFArgumentValues
-        );
+                DFArgumentValues);
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
-                staticContext
-                    .toBuilder()
-                    .staticType(SequenceType.createSequenceType("function(*)"))
-                    .executionMode(ExecutionMode.LOCAL)
-                    .metadata(staticContext.getMetadata())
-                    .build()
-        );
+                staticContext.toBuilder()
+                        .staticType(SequenceType.createSequenceType("function(*)"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(staticContext.getMetadata())
+                        .build());
     }
 
     private static void populateDynamicContextWithArguments(
             Item functionItem,
             List<ItemRuntimePlan> functionArguments,
             DynamicContext context,
-            DynamicContext callContext
-    ) {
+            DynamicContext callContext) {
         Name argName;
         ItemRuntimePlan argIterator;
 
@@ -326,19 +287,13 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
             argIterator = functionArguments.get(i);
 
             if (argIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-                callContext.getVariableValues()
-                    .addVariableValue(
-                        argName,
-                        ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-                            argIterator,
-                            context
-                        )
-                    );
+                callContext
+                        .getVariableValues()
+                        .addVariableValue(argName, ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(argIterator, context));
             } else if (argIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
                 callContext.getVariableValues().addVariableValue(argName, argIterator.getRDD(context));
             } else {
-                callContext.getVariableValues()
-                    .addVariableValue(argName, argIterator.materialize(context));
+                callContext.getVariableValues().addVariableValue(argName, argIterator.materialize(context));
             }
         }
     }
@@ -347,8 +302,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         if (this.isPartialApplication) {
             throw new OurBadException(
-                    "Unexpected program state reached. Partially applied function calls must be evaluated locally."
-            );
+                    "Unexpected program state reached. Partially applied function calls must be evaluated locally.");
         }
 
         DynamicContext callContext = createCallContext(dynamicContext);
@@ -360,8 +314,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         if (this.isPartialApplication) {
             throw new OurBadException(
-                    "Unexpected program state reached. Partially applied function calls must be evaluated locally."
-            );
+                    "Unexpected program state reached. Partially applied function calls must be evaluated locally.");
         }
 
         DynamicContext callContext = createCallContext(dynamicContext);

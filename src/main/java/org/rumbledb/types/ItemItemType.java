@@ -30,8 +30,6 @@ public class ItemItemType extends AbstractItemType {
         return true;
     }
 
-
-
     @Override
     public boolean hasName() {
         return true;

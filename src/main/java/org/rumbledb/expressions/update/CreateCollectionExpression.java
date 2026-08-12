@@ -1,6 +1,10 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -9,9 +13,6 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.update.primitives.Mode;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Getter
 public class CreateCollectionExpression extends Expression {
     private Expression collection;
@@ -19,11 +20,7 @@ public class CreateCollectionExpression extends Expression {
     private Mode mode;
 
     public CreateCollectionExpression(
-            Expression collection,
-            Expression contentExpression,
-            Mode mode,
-            ExceptionMetadata metadata
-    ) {
+            Expression collection, Expression contentExpression, Mode mode, ExceptionMetadata metadata) {
         // Currently supports HIVE/DELTA/ICEBERG
         super(metadata);
         if (collection == null) {
@@ -68,5 +65,4 @@ public class CreateCollectionExpression extends Expression {
             sb.append("\n");
         }
     }
-
 }

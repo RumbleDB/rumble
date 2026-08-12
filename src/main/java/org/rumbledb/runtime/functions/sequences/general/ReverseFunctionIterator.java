@@ -20,48 +20,43 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
-import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
-
-import scala.Tuple2;
-
-import lombok.NonNull;
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
 
 @Log4j2
 public class ReverseFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item>,
-            RDDRuntimePlan<Item>,
-            DataFrameRuntimePlan<Item> {
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan sequenceIterator;
 
-    public ReverseFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public ReverseFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
     }
@@ -80,32 +75,19 @@ public class ReverseFunctionIterator extends ItemRuntimePlan
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
-            .fromPlan(this.getChild(0), context);
+        HomogeneousItemDataFrame childDataFrame =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
-        log.info(
-            String.format(
+        log.info(String.format(
                 "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
-                selectSQL,
-                selectSQL,
-                "foo",
-                viewName,
-                "foo"
-            )
-        );
+                selectSQL, selectSQL, "foo", viewName, "foo"));
         String tempName = SparkSessionManager.temporaryColumnName;
         HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
-            String.format(
-                "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
-                selectSQL,
-                selectSQL,
-                tempName,
-                viewName,
-                tempName
-            ),
-            childDataFrame.getItemType()
-        );
+                String.format(
+                        "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
+                        selectSQL, selectSQL, tempName, viewName, tempName),
+                childDataFrame.getItemType());
         return result;
     }
 
@@ -120,8 +102,7 @@ public class ReverseFunctionIterator extends ItemRuntimePlan
         private EvaluationCursor(
                 @NonNull ItemRuntimePlan sequencePlan,
                 @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata
-        ) {
+                @NonNull ExceptionMetadata metadata) {
             super(metadata);
             this.sequencePlan = sequencePlan;
             this.context = context;
@@ -148,9 +129,7 @@ public class ReverseFunctionIterator extends ItemRuntimePlan
         protected Item nextLocal() {
             if (this.currentIndex < 0) {
                 throw new IteratorFlowException(
-                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "reverse function",
-                        this.metadata
-                );
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "reverse function", this.metadata);
             }
             return this.results.get(this.currentIndex--);
         }
@@ -160,6 +139,5 @@ public class ReverseFunctionIterator extends ItemRuntimePlan
             this.results = null;
             this.currentIndex = -1;
         }
-
     }
 }

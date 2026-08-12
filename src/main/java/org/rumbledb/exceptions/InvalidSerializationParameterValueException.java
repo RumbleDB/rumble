@@ -15,18 +15,18 @@
  * limitations under the License.
  *
  * Authors: Matteo Agnoletto (EPMatt)
- * 
+ *
  */
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * Exception for SEPM0016: It is an error if a parameter value is invalid for the defined domain.
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xslt-xquery-serialization-31/#ERRSEPM0016">XSLT/XQuery Serialization 3.1, C:
  *      SEPM0016</a>
  */
@@ -36,32 +36,26 @@ public class InvalidSerializationParameterValueException extends RumbleException
     private static final long serialVersionUID = 1L;
 
     public InvalidSerializationParameterValueException(
-            String parameterName,
-            String value,
-            String expectedValue,
-            ExceptionMetadata metadata
-    ) {
+            String parameterName, String value, String expectedValue, ExceptionMetadata metadata) {
         super(
-            "The value for the serialization parameter "
-                + parameterName
-                + " must be "
-                + expectedValue
-                + ", got: "
-                + value,
-            ErrorCode.InvalidSerializationParameterValue,
-            metadata
-        );
+                "The value for the serialization parameter "
+                        + parameterName
+                        + " must be "
+                        + expectedValue
+                        + ", got: "
+                        + value,
+                ErrorCode.InvalidSerializationParameterValue,
+                metadata);
     }
 
     public InvalidSerializationParameterValueException(String parameterName, String value, String expectedValue) {
         super(
-            "The value for the serialization parameter "
-                + parameterName
-                + " must be "
-                + expectedValue
-                + ", got: "
-                + value,
-            ErrorCode.InvalidSerializationParameterValue
-        );
+                "The value for the serialization parameter "
+                        + parameterName
+                        + " must be "
+                        + expectedValue
+                        + ", got: "
+                        + value,
+                ErrorCode.InvalidSerializationParameterValue);
     }
 }

@@ -20,7 +20,8 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,21 +29,16 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-
-import java.io.Serial;
-import java.util.List;
 
 public class NumberFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public NumberFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public NumberFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
@@ -51,11 +47,7 @@ public class NumberFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return CastIterator.castItemToType(
-                items.get(0),
-                BuiltinTypesCatalogue.doubleItem,
-                getMetadata(),
-                this.staticContext
-            );
+                    items.get(0), BuiltinTypesCatalogue.doubleItem, getMetadata(), this.staticContext);
         }
 
         return castOrNaN(this.getChild(0).materializeFirstOrNull(context));
@@ -67,11 +59,7 @@ public class NumberFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         try {
             Item result = CastIterator.castItemToType(
-                anyItem,
-                BuiltinTypesCatalogue.doubleItem,
-                getMetadata(),
-                this.staticContext
-            );
+                    anyItem, BuiltinTypesCatalogue.doubleItem, getMetadata(), this.staticContext);
             if (result != null) {
                 return result;
             }

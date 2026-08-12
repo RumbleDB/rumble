@@ -20,9 +20,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * Exception for XQST0022: It is a static error if a namespace declaration attribute contains an enclosed expression.

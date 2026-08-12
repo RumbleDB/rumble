@@ -1,18 +1,17 @@
 package org.rumbledb.items.parsing;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.XMLUtils;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Collections;
-
 
 /**
  * Parser for JSON texts used by {@code fn:parse-json} and {@code fn:json-doc}.
@@ -73,8 +72,7 @@ public final class JSONParser {
             JSONParsingOptions options,
             String xmlVersion,
             boolean isJSONiq10,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (input != null && !input.isEmpty() && input.charAt(0) == '\uFEFF') {
             this.input = input.substring(1);
         } else {
@@ -93,8 +91,7 @@ public final class JSONParser {
             JSONParsingOptions options,
             String xmlVersion,
             boolean isJSONiq10,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (jsonText == null) {
             return null;
         }
@@ -110,10 +107,9 @@ public final class JSONParser {
         if (!isEnd()) {
             throw new InvalidJSONException(
                     "Extra content found after the end of the JSON value. JSON is not well-formed! [position "
-                        + this.position
-                        + "]",
-                    this.metadata
-            );
+                            + this.position
+                            + "]",
+                    this.metadata);
         }
         return result;
     }
@@ -125,8 +121,7 @@ public final class JSONParser {
         if (isEnd()) {
             throw new InvalidJSONException(
                     "Unexpected end of input while parsing JSON value. [position " + this.position + "]",
-                    this.metadata
-            );
+                    this.metadata);
         }
 
         char c = peek();
@@ -143,10 +138,9 @@ public final class JSONParser {
                 }
                 throw new InvalidJSONException(
                         "Single-quoted strings are not allowed unless option 'liberal' is true. [position "
-                            + this.position
-                            + "]",
-                        this.metadata
-                );
+                                + this.position
+                                + "]",
+                        this.metadata);
             case 't':
                 parseLiteral("true");
                 return ItemFactory.getInstance().createBooleanItem(true);
@@ -155,8 +149,7 @@ public final class JSONParser {
                 return ItemFactory.getInstance().createBooleanItem(false);
             case 'n':
                 parseLiteral("null");
-                if (this.isJSONiq10)
-                    return ItemFactory.getInstance().createNullItem();
+                if (this.isJSONiq10) return ItemFactory.getInstance().createNullItem();
                 return null;
             default:
                 if (c == '-' || isDigit(c) || (this.options.isLiberal() && c == '+')) {
@@ -164,12 +157,11 @@ public final class JSONParser {
                 }
                 throw new InvalidJSONException(
                         "Unexpected character '"
-                            + printable(c)
-                            + "' while parsing JSON value. [position "
-                            + this.position
-                            + "]",
-                        this.metadata
-                );
+                                + printable(c)
+                                + "' while parsing JSON value. [position "
+                                + this.position
+                                + "]",
+                        this.metadata);
         }
     }
 
@@ -201,8 +193,7 @@ public final class JSONParser {
             if (isEnd()) {
                 throw new InvalidJSONException(
                         "Unexpected end of input while parsing JSON object. [position " + this.position + "]",
-                        this.metadata
-                );
+                        this.metadata);
             }
 
             ParsedString key;
@@ -213,9 +204,7 @@ public final class JSONParser {
                 key = parseUnquotedKey();
             } else {
                 throw new InvalidJSONException(
-                        "Expected object key string. [position " + this.position + "]",
-                        this.metadata
-                );
+                        "Expected object key string. [position " + this.position + "]", this.metadata);
             }
 
             skipIgnorable();
@@ -235,9 +224,7 @@ public final class JSONParser {
 
                 if (JSONParsingOptions.DUPLICATES_REJECT.equals(policy)) {
                     throw new DuplicateJSONKeyException(
-                            "Duplicate key '" + key.resultValue + "' found in JSON object.",
-                            this.metadata
-                    );
+                            "Duplicate key '" + key.resultValue + "' found in JSON object.", this.metadata);
                 }
 
                 if (JSONParsingOptions.DUPLICATES_USE_LAST.equals(policy)) {
@@ -259,7 +246,6 @@ public final class JSONParser {
             }
         }
 
-
         boolean containsJAVANull = false;
         for (Item item : values) {
             if (item == null) {
@@ -277,13 +263,10 @@ public final class JSONParser {
                 newKeys.add(ItemFactory.getInstance().createStringItem(key));
             }
             for (Item value : values) {
-                if (value == null)
-                    newValues.add(Collections.emptyList());
-                else
-                    newValues.add(Collections.singletonList(value));
+                if (value == null) newValues.add(Collections.emptyList());
+                else newValues.add(Collections.singletonList(value));
             }
             return ItemFactory.getInstance().createMapItem(newKeys, newValues, this.metadata, false);
-
         }
     }
 
@@ -364,9 +347,7 @@ public final class JSONParser {
 
         if (isEnd()) {
             throw new InvalidJSONException(
-                    "Unexpected end of input while parsing number. [position " + this.position + "]",
-                    this.metadata
-            );
+                    "Unexpected end of input while parsing number. [position " + this.position + "]", this.metadata);
         }
 
         if (peek() == '0') {
@@ -374,8 +355,7 @@ public final class JSONParser {
             if (!isEnd() && isDigit(peek()) && !this.options.isLiberal()) {
                 throw new InvalidJSONException(
                         "Leading zeroes are not allowed in JSON numbers. [position " + this.position + "]",
-                        this.metadata
-                );
+                        this.metadata);
             }
             while (this.options.isLiberal() && !isEnd() && isDigit(peek())) {
                 advance();
@@ -383,9 +363,7 @@ public final class JSONParser {
         } else {
             if (!isDigit19(peek())) {
                 throw new InvalidJSONException(
-                        "Invalid number: expected digit. [position " + this.position + "]",
-                        this.metadata
-                );
+                        "Invalid number: expected digit. [position " + this.position + "]", this.metadata);
             }
             while (!isEnd() && isDigit(peek())) {
                 advance();
@@ -397,8 +375,7 @@ public final class JSONParser {
             if (isEnd() || !isDigit(peek())) {
                 throw new InvalidJSONException(
                         "Invalid number: expected digit after decimal point. [position " + this.position + "]",
-                        this.metadata
-                );
+                        this.metadata);
             }
             while (!isEnd() && isDigit(peek())) {
                 advance();
@@ -412,9 +389,7 @@ public final class JSONParser {
             }
             if (isEnd() || !isDigit(peek())) {
                 throw new InvalidJSONException(
-                        "Invalid number: expected digit in exponent. [position " + this.position + "]",
-                        this.metadata
-                );
+                        "Invalid number: expected digit in exponent. [position " + this.position + "]", this.metadata);
             }
             while (!isEnd() && isDigit(peek())) {
                 advance();
@@ -426,9 +401,7 @@ public final class JSONParser {
             return JSONLiteralParsingUtils.getItemFromJSONNumber(number, this.options.getNumberFormat());
         } catch (NumberFormatException e) {
             InvalidJSONException error = new InvalidJSONException(
-                    "Invalid number literal '" + number + "'. [position " + start + "]",
-                    this.metadata
-            );
+                    "Invalid number literal '" + number + "'. [position " + start + "]", this.metadata);
             error.initCause(e);
             throw error;
         }
@@ -472,17 +445,12 @@ public final class JSONParser {
     private ParsedString parseString() {
         if (isEnd()) {
             throw new InvalidJSONException(
-                    "Unexpected end of input while parsing string. [position " + this.position + "]",
-                    this.metadata
-            );
+                    "Unexpected end of input while parsing string. [position " + this.position + "]", this.metadata);
         }
 
         char quote = peek();
         if (quote != '"' && !(this.options.isLiberal() && quote == '\'')) {
-            throw new InvalidJSONException(
-                    "Expected string literal. [position " + this.position + "]",
-                    this.metadata
-            );
+            throw new InvalidJSONException("Expected string literal. [position " + this.position + "]", this.metadata);
         }
         advance();
 
@@ -494,18 +462,13 @@ public final class JSONParser {
 
             if (c == quote) {
                 String result = resultValue.toString();
-                return new ParsedString(
-                        result,
-                        keyComparisonValue == null ? result : keyComparisonValue.toString()
-                );
+                return new ParsedString(result, keyComparisonValue == null ? result : keyComparisonValue.toString());
             }
 
             if (c == '\\') {
                 if (isEnd()) {
                     throw new InvalidJSONException(
-                            "Unterminated escape sequence in string. [position " + this.position + "]",
-                            this.metadata
-                    );
+                            "Unterminated escape sequence in string. [position " + this.position + "]", this.metadata);
                 }
 
                 if (peek() == '\'' && this.options.isLiberal()) {
@@ -516,19 +479,15 @@ public final class JSONParser {
 
                 try {
                     JSONLiteralParsingUtils.DecodedEscape decodedEscape =
-                        JSONLiteralParsingUtils.decodeEscapeSequence(this.input, this.position - 1);
+                            JSONLiteralParsingUtils.decodeEscapeSequence(this.input, this.position - 1);
                     this.position = decodedEscape.getNextIndex();
                     keyComparisonValue = appendDecodedEscape(
-                        resultValue,
-                        keyComparisonValue,
-                        decodedEscape.getDecodedText(),
-                        decodedEscape.getRawEscape()
-                    );
+                            resultValue,
+                            keyComparisonValue,
+                            decodedEscape.getDecodedText(),
+                            decodedEscape.getRawEscape());
                 } catch (IllegalArgumentException e) {
-                    throw new InvalidJSONException(
-                            e.getMessage() + " [position " + this.position + "]",
-                            this.metadata
-                    );
+                    throw new InvalidJSONException(e.getMessage() + " [position " + this.position + "]", this.metadata);
                 }
                 continue;
             }
@@ -537,12 +496,11 @@ public final class JSONParser {
                 if (!this.options.isLiberal()) {
                     throw new InvalidJSONException(
                             "Unescaped control character U+"
-                                + hex4(c)
-                                + " is not allowed in JSON strings. [position "
-                                + this.position
-                                + "]",
-                            this.metadata
-                    );
+                                    + hex4(c)
+                                    + " is not allowed in JSON strings. [position "
+                                    + this.position
+                                    + "]",
+                            this.metadata);
                 }
             }
 
@@ -560,32 +518,19 @@ public final class JSONParser {
             }
         }
 
-        throw new InvalidJSONException(
-                "Unterminated string literal. [position " + this.position + "]",
-                this.metadata
-        );
+        throw new InvalidJSONException("Unterminated string literal. [position " + this.position + "]", this.metadata);
     }
 
     private StringBuilder appendDecodedEscape(
-            StringBuilder resultValue,
-            StringBuilder keyComparisonValue,
-            String decodedText,
-            String originalEscape
-    ) {
+            StringBuilder resultValue, StringBuilder keyComparisonValue, String decodedText, String originalEscape) {
         if (decodedText.length() == 2 && Character.isSurrogatePair(decodedText.charAt(0), decodedText.charAt(1))) {
             return handleEscapedCodePoint(
-                resultValue,
-                keyComparisonValue,
-                Character.toCodePoint(decodedText.charAt(0), decodedText.charAt(1)),
-                originalEscape
-            );
+                    resultValue,
+                    keyComparisonValue,
+                    Character.toCodePoint(decodedText.charAt(0), decodedText.charAt(1)),
+                    originalEscape);
         }
-        return handleEscapedCodePoint(
-            resultValue,
-            keyComparisonValue,
-            decodedText.charAt(0),
-            originalEscape
-        );
+        return handleEscapedCodePoint(resultValue, keyComparisonValue, decodedText.charAt(0), originalEscape);
     }
 
     /**
@@ -621,11 +566,7 @@ public final class JSONParser {
      * </ul>
      */
     private StringBuilder handleEscapedCodePoint(
-            StringBuilder resultValue,
-            StringBuilder keyComparisonValue,
-            int codePoint,
-            String originalEscape
-    ) {
+            StringBuilder resultValue, StringBuilder keyComparisonValue, int codePoint, String originalEscape) {
         if (this.options.isEscape()) {
             if (shouldEscapeInOutput(codePoint)) {
                 String escaped = normalizedEscapeForCodePoint(codePoint);
@@ -691,9 +632,7 @@ public final class JSONParser {
      * in the output when option escape=true is enabled.
      */
     private boolean shouldEscapeInOutput(int codePoint) {
-        return codePoint == '\\'
-            || XMLUtils.isControlCharacter(codePoint)
-            || !isValidXMLCodePoint(codePoint);
+        return codePoint == '\\' || XMLUtils.isControlCharacter(codePoint) || !isValidXMLCodePoint(codePoint);
     }
 
     /**
@@ -705,19 +644,16 @@ public final class JSONParser {
         if (!this.options.isLiberal()) {
             throw new InvalidJSONException(
                     "Unquoted object keys are not allowed unless option 'liberal' is true. [position "
-                        + this.position
-                        + "]",
-                    this.metadata
-            );
+                            + this.position
+                            + "]",
+                    this.metadata);
         }
 
         int start = this.position;
         char first = peek();
         if (!isIdentifierStart(first)) {
             throw new InvalidJSONException(
-                    "Invalid unquoted object key. [position " + this.position + "]",
-                    this.metadata
-            );
+                    "Invalid unquoted object key. [position " + this.position + "]", this.metadata);
         }
 
         advance();
@@ -733,9 +669,7 @@ public final class JSONParser {
         for (int i = 0; i < literal.length(); i++) {
             if (isEnd() || advance() != literal.charAt(i)) {
                 throw new InvalidJSONException(
-                        "Expected literal '" + literal + "'. [position " + this.position + "]",
-                        this.metadata
-                );
+                        "Expected literal '" + literal + "'. [position " + this.position + "]", this.metadata);
             }
         }
     }
@@ -770,15 +704,11 @@ public final class JSONParser {
                         while (true) {
                             if (isEnd()) {
                                 throw new InvalidJSONException(
-                                        "Unterminated block comment. [position " + this.position + "]",
-                                        this.metadata
-                                );
+                                        "Unterminated block comment. [position " + this.position + "]", this.metadata);
                             }
-                            if (
-                                peek() == '*'
+                            if (peek() == '*'
                                     && this.position + 1 < this.input.length()
-                                    && this.input.charAt(this.position + 1) == '/'
-                            ) {
+                                    && this.input.charAt(this.position + 1) == '/') {
                                 this.position += 2;
                                 break;
                             }
@@ -802,14 +732,13 @@ public final class JSONParser {
         if (isEnd() || peek() != expected) {
             throw new InvalidJSONException(
                     "Expected '"
-                        + expected
-                        + "', but found "
-                        + (isEnd() ? "end of input" : "'" + printable(peek()) + "'")
-                        + ". [position "
-                        + this.position
-                        + "]",
-                    this.metadata
-            );
+                            + expected
+                            + "', but found "
+                            + (isEnd() ? "end of input" : "'" + printable(peek()) + "'")
+                            + ". [position "
+                            + this.position
+                            + "]",
+                    this.metadata);
         }
         advance();
     }
@@ -831,12 +760,11 @@ public final class JSONParser {
         if (this.nestingDepth > MAX_NESTING_DEPTH) {
             throw new InvalidJSONException(
                     "JSON nesting depth exceeds the maximum supported depth of "
-                        + MAX_NESTING_DEPTH
-                        + ". [position "
-                        + this.position
-                        + "]",
-                    this.metadata
-            );
+                            + MAX_NESTING_DEPTH
+                            + ". [position "
+                            + this.position
+                            + "]",
+                    this.metadata);
         }
     }
 

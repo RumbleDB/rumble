@@ -20,12 +20,11 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-
-import java.io.Serial;
 
 public class NullItem extends AbstractAtomicItem {
 
@@ -51,8 +50,6 @@ public class NullItem extends AbstractAtomicItem {
     public boolean getEffectiveBooleanValue() {
         return false;
     }
-
-
 
     @Override
     public ItemType getDynamicType() {

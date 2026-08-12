@@ -1,6 +1,10 @@
 package org.rumbledb.expressions.xml.axis;
 
+import java.util.Collections;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
@@ -9,12 +13,10 @@ import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 
-import java.util.Collections;
-import java.util.List;
-
 public class ForwardStepExpr extends StepExpr {
     @Getter
     private final ForwardAxis forwardAxis;
+
     private final NodeTest nodeTest;
 
     public ForwardStepExpr(ForwardAxis forwardAxis, NodeTest nodeTest, ExceptionMetadata exceptionMetadata) {

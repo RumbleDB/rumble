@@ -19,7 +19,8 @@
  */
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,9 +31,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Implementation of the fn:node-name function according to XPath and XQuery Functions and Operators 3.1
@@ -46,14 +45,14 @@ import java.util.List;
  * sequence if the node does not have a name."
  *
  * Function signatures (Functions and Operators 3.1, {@code fn:node-name}):
- * 
+ *
  * <ul>
  * <li>fn:node-name() as xs:QName?</li>
  * <li>fn:node-name($arg as node()?) as xs:QName?</li>
  * </ul>
  *
  * Rules:
- * 
+ *
  * <ul>
  * <li>"If the argument is omitted, it defaults to the context item."</li>
  * <li>"If the argument is supplied and is the empty sequence, the function returns the empty sequence."</li>
@@ -61,7 +60,7 @@ import java.util.List;
  * identified by the argument. If the dm:node-name accessor returns the empty sequence, then the
  * function returns the empty sequence."</li>
  * </ul>
- * 
+ *
  * The optional {@code xs:QName} result wraps the expanded {@link Name} from {@link Item#nodeName()} in a
  * {@link org.rumbledb.items.QNameItem}; otherwise the function returns the empty sequence.
  *
@@ -72,21 +71,14 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public NodeQNameFunctionIterator(
-            List<ItemRuntimePlan> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public NodeQNameFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return ContextOrArgumentLocalCursor.mapFirstArgumentOrContext(
-            this.getChildren(),
-            context,
-            this::evaluate,
-            getMetadata()
-        );
+                this.getChildren(), context, this::evaluate, getMetadata());
     }
 
     private Item evaluate(Item node) {
@@ -94,10 +86,7 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
             return null;
         }
         if (!node.isNode()) {
-            throw new UnexpectedTypeException(
-                    "The argument must be a reference to an XML node",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("The argument must be a reference to an XML node", getMetadata());
         }
         Name nodeName = node.nodeName();
         return nodeName == null ? null : ItemFactory.getInstance().createQNameItem(nodeName);

@@ -20,25 +20,25 @@
 
 package iq;
 
-import iq.base.SparkAnnotationsTestsBase;
-import org.apache.spark.SparkConf;
-import org.rumbledb.config.RumbleConfiguration;
-
 import java.io.File;
+
+import org.apache.spark.SparkConf;
+
+import iq.base.SparkAnnotationsTestsBase;
+
+import org.rumbledb.config.RumbleConfiguration;
 
 public class BackwardsCompatibilityTests extends SparkAnnotationsTestsBase {
 
-    public static final File runtimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/backwards-compatibility"
-    );
+    public static final File runtimeTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/backwards-compatibility");
 
     @Override
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(r -> r.materializationCap(200).resultsSizeCap(0).shouldApplyUpdates(true))
-            .build();
+                .configureRuntime(
+                        r -> r.materializationCap(200).resultsSizeCap(0).shouldApplyUpdates(true))
+                .build();
     }
 
     @Override
@@ -49,6 +49,7 @@ public class BackwardsCompatibilityTests extends SparkAnnotationsTestsBase {
     @Override
     protected void configureSpark(SparkConf sparkConfiguration) {
         sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
-        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
+        sparkConfiguration.set(
+                "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
     }
 }

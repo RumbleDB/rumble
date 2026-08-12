@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.functions;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,16 +30,14 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.SequenceType;
-
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
 
 public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Name functionName;
     private final Map<Name, SequenceType> paramNameToSequenceTypes;
     final SequenceType returnType;
@@ -48,8 +48,7 @@ public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             ItemRuntimePlan bodyIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(List.of(), staticContext);
         this.functionName = functionName;
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
@@ -65,8 +64,7 @@ public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
                 this.returnType,
                 dynamicContext.getModuleContext(),
                 this.bodyIterator,
-                this.staticContext.isUpdating()
-        );
+                this.staticContext.isUpdating());
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
         return function;
     }

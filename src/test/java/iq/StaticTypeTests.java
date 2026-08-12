@@ -1,21 +1,19 @@
 package iq;
 
-import iq.base.SparkAnnotationsTestsBase;
-import org.rumbledb.config.RumbleConfiguration;
-
 import java.io.File;
+
+import iq.base.SparkAnnotationsTestsBase;
+
+import org.rumbledb.config.RumbleConfiguration;
 
 public class StaticTypeTests extends SparkAnnotationsTestsBase {
 
     protected static final RumbleConfiguration configuration = RumbleConfiguration.builder()
-        .configureAnalysis(analysis -> analysis.enableStaticTyping(true))
-        .build();
+            .configureAnalysis(analysis -> analysis.enableStaticTyping(true))
+            .build();
 
-    public static final File staticTypeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/static-typing"
-    );
+    public static final File staticTypeTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/static-typing");
 
     @Override
     public RumbleConfiguration getConfiguration() {

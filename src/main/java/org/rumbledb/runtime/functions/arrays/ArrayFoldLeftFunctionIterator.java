@@ -17,33 +17,29 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.NamedFunctions;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.types.SequenceType;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ArrayFoldLeftFunctionIterator extends ItemRuntimePlan
-        implements
-            LocalRuntimePlan<Item> {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.NamedFunctions;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.FunctionItem;
+import org.rumbledb.runtime.CommaExpressionIterator;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.types.SequenceType;
+
+public class ArrayFoldLeftFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -57,10 +53,7 @@ public class ArrayFoldLeftFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan zeroIterator;
     private final ItemRuntimePlan functionIterator;
 
-    public ArrayFoldLeftFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayFoldLeftFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("array:fold-left must have exactly three arguments.");
@@ -75,10 +68,7 @@ public class ArrayFoldLeftFunctionIterator extends ItemRuntimePlan
         try {
             arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:fold-left expects exactly one array argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("array:fold-left expects exactly one array argument.", getMetadata());
         }
         if (arrayItem == null) {
             return Collections.emptyList();
@@ -86,9 +76,7 @@ public class ArrayFoldLeftFunctionIterator extends ItemRuntimePlan
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; argument to array:fold-left must be an array.",
-                    getMetadata()
-            );
+                    "Type error; argument to array:fold-left must be an array.", getMetadata());
         }
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
@@ -98,15 +86,11 @@ public class ArrayFoldLeftFunctionIterator extends ItemRuntimePlan
         List<Item> functionItems = this.functionIterator.materialize(context);
         if (functionItems.isEmpty()) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to array:fold-left must be a function item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to array:fold-left must be a function item.", getMetadata());
         }
         if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to array:fold-left must be a single function item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to array:fold-left must be a single function item.", getMetadata());
         }
 
         FunctionItem functionItem = (FunctionItem) functionItems.get(0);
@@ -121,59 +105,45 @@ public class ArrayFoldLeftFunctionIterator extends ItemRuntimePlan
     private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+                    .configuration(getConfiguration())
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build();
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
-        List<ItemRuntimePlan> childIterators = new ArrayList<>(
-                items.size()
-        );
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+                    .configuration(getConfiguration())
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build();
             childIterators.add(new ConstantRuntimeIterator(item, childStaticContext));
         }
 
         RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
         return new CommaExpressionIterator(childIterators, staticContext);
     }
 
     private List<Item> applyFunction(
-            FunctionItem functionItem,
-            List<Item> accumulator,
-            List<Item> memberSequence,
-            DynamicContext context
-    ) {
+            FunctionItem functionItem, List<Item> accumulator, List<Item> memberSequence, DynamicContext context) {
         ItemRuntimePlan accIterator = createSequenceIterator(accumulator);
-        ItemRuntimePlan memberIterator = createSequenceIterator(
-            memberSequence
-        );
+        ItemRuntimePlan memberIterator = createSequenceIterator(memberSequence);
 
         List<ItemRuntimePlan> arguments = new ArrayList<>(2);
         arguments.add(accIterator);
         arguments.add(memberIterator);
 
-        ItemRuntimePlan functionCall = NamedFunctions
-            .buildFunctionItemCallIterator(
-                functionItem,
-                this.staticContext,
-                ExecutionMode.LOCAL,
-                arguments,
-                false
-            );
+        ItemRuntimePlan functionCall = NamedFunctions.buildFunctionItemCallIterator(
+                functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
         return functionCall.materialize(context);
     }
 }

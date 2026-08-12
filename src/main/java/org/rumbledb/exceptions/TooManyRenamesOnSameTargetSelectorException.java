@@ -1,8 +1,8 @@
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class TooManyRenamesOnSameTargetSelectorException extends RumbleException {
 
@@ -11,10 +11,8 @@ public class TooManyRenamesOnSameTargetSelectorException extends RumbleException
 
     public TooManyRenamesOnSameTargetSelectorException(String keyInfo, ExceptionMetadata metadata) {
         super(
-            "Dynamic Updating error; Too many renames on same object at key: " + keyInfo + ".",
-            ErrorCode.TooManyRenamesOnSameTargetSelectorErrorCode,
-            metadata
-        );
+                "Dynamic Updating error; Too many renames on same object at key: " + keyInfo + ".",
+                ErrorCode.TooManyRenamesOnSameTargetSelectorErrorCode,
+                metadata);
     }
-
 }

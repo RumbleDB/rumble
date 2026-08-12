@@ -20,22 +20,22 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.Function;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ObjectIntersectFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     /**
@@ -43,12 +43,10 @@ public class ObjectIntersectFunctionIterator extends AbstractAtMostOneItemRuntim
      */
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final ItemRuntimePlan iterator;
 
-    public ObjectIntersectFunctionIterator(
-            List<ItemRuntimePlan> children,
-            RuntimeStaticContext staticContext
-    ) {
+    public ObjectIntersectFunctionIterator(List<ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
         this.iterator = this.getChild(0);
     }
@@ -61,9 +59,8 @@ public class ObjectIntersectFunctionIterator extends AbstractAtMostOneItemRuntim
 
         // Enclose object values into arrays.
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure(
-                this.getRuntimeStaticContext().isQuerySideEffecting()
-        );
+        Function<Item, Item> mapTransformation =
+                new ObjectIntersectMapClosure(this.getRuntimeStaticContext().isQuerySideEffecting());
         JavaRDD<Item> mapResult = childRDD.map(mapTransformation);
 
         // Reduce input objects.
@@ -71,7 +68,6 @@ public class ObjectIntersectFunctionIterator extends AbstractAtMostOneItemRuntim
         Item result = mapResult.reduce(transformation);
 
         return result;
-
     }
 
     private Item intersect(List<Item> items) {
@@ -100,5 +96,4 @@ public class ObjectIntersectFunctionIterator extends AbstractAtMostOneItemRuntim
         }
         return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
     }
-
 }

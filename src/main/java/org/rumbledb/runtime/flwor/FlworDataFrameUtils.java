@@ -20,15 +20,6 @@
 
 package org.rumbledb.runtime.flwor;
 
-import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.count;
-import static org.apache.spark.sql.functions.first;
-import static org.apache.spark.sql.functions.lit;
-import static org.apache.spark.sql.functions.monotonically_increasing_id;
-import static org.apache.spark.sql.functions.spark_partition_id;
-import static org.apache.spark.sql.functions.sum;
-import static org.apache.spark.sql.functions.udf;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,14 +40,32 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
+import scala.collection.Iterator;
+import scala.collection.immutable.ArraySeq;
+
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.count;
+import static org.apache.spark.sql.functions.first;
+import static org.apache.spark.sql.functions.lit;
+import static org.apache.spark.sql.functions.monotonically_increasing_id;
+import static org.apache.spark.sql.functions.spark_partition_id;
+import static org.apache.spark.sql.functions.sum;
+import static org.apache.spark.sql.functions.udf;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.serializers.JavaSerializer;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SourcePosition;
 import org.rumbledb.exceptions.SourceRange;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.AnyURIItem;
 import org.rumbledb.items.ArrayItem;
@@ -90,14 +99,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.serializers.JavaSerializer;
-
-import scala.collection.immutable.ArraySeq;
-import scala.collection.Iterator;
 
 public class FlworDataFrameUtils {
 
@@ -177,9 +178,7 @@ public class FlworDataFrameUtils {
      * @param inputSchema schema specifies the columns to be used in the query
      * @return list of FLWOR columns in the schema
      */
-    public static List<FlworDataFrameColumn> getColumns(
-            StructType inputSchema
-    ) {
+    public static List<FlworDataFrameColumn> getColumns(StructType inputSchema) {
         List<FlworDataFrameColumn> result = new ArrayList<>();
         for (String s : inputSchema.fieldNames()) {
             result.add(new FlworDataFrameColumn(s, inputSchema));
@@ -192,10 +191,7 @@ public class FlworDataFrameUtils {
      * @param variable the Name fo a variable
      * @return true if the schema contains values for this variable.
      */
-    public static boolean hasColumnForVariable(
-            StructType inputSchema,
-            Name variable
-    ) {
+    public static boolean hasColumnForVariable(StructType inputSchema, Name variable) {
         if (variable.equals(Name.CONTEXT_ITEM)) {
             for (String columnName : inputSchema.fieldNames()) {
                 if (columnName.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
@@ -214,7 +210,8 @@ public class FlworDataFrameUtils {
             } else {
                 if (escapedName.equals(columnName.substring(0, pos))) {
                     return true;
-                } ;
+                }
+                ;
             }
         }
         return false;
@@ -222,15 +219,12 @@ public class FlworDataFrameUtils {
 
     /**
      * Checks if the specified variable only has a count in a DataFrame with the supplied schema.
-     * 
+     *
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
      * @return true if it only has a count, false otherwise.
      */
-    public static boolean isVariableAvailableAsCountOnly(
-            StructType inputSchema,
-            Name variable
-    ) {
+    public static boolean isVariableAvailableAsCountOnly(StructType inputSchema, Name variable) {
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
@@ -240,7 +234,8 @@ public class FlworDataFrameUtils {
             } else {
                 if (variable.getLocalName().equals(columnName.substring(0, pos))) {
                     return columnName.substring(pos).equals(".count");
-                } ;
+                }
+                ;
             }
         }
         throw new OurBadException("Variable " + variable + "not found.");
@@ -249,15 +244,12 @@ public class FlworDataFrameUtils {
     /**
      * Checks if the specified variable is available as a native sequence of items in a DataFrame with the
      * supplied schema.
-     * 
+     *
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
      * @return true if it is available as a native sequence of items, false otherwise.
      */
-    public static boolean isVariableAvailableAsNativeSequence(
-            StructType inputSchema,
-            Name variable
-    ) {
+    public static boolean isVariableAvailableAsNativeSequence(StructType inputSchema, Name variable) {
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
@@ -267,7 +259,8 @@ public class FlworDataFrameUtils {
             } else {
                 if (variable.getLocalName().equals(columnName.substring(0, pos))) {
                     return columnName.substring(pos).equals(".sequence");
-                } ;
+                }
+                ;
             }
         }
         throw new OurBadException("Variable " + variable + "not found.");
@@ -276,15 +269,12 @@ public class FlworDataFrameUtils {
     /**
      * Checks if the specified variable is available as a serialized sequence of items in a DataFrame with the
      * supplied schema.
-     * 
+     *
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
      * @return true if it is available as a serialized sequence of items, false otherwise.
      */
-    public static boolean isVariableAvailableAsSerializedSequence(
-            StructType inputSchema,
-            Name variable
-    ) {
+    public static boolean isVariableAvailableAsSerializedSequence(StructType inputSchema, Name variable) {
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
@@ -306,15 +296,12 @@ public class FlworDataFrameUtils {
 
     /**
      * If the variable is available as a single native item, returns its native SQL data type.
-     * 
+     *
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
      * @return the native SQL data type of the variable.
      */
-    public static DataType nativeTypeOfVariable(
-            StructType inputSchema,
-            Name variable
-    ) {
+    public static DataType nativeTypeOfVariable(StructType inputSchema, Name variable) {
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
@@ -330,15 +317,12 @@ public class FlworDataFrameUtils {
     /**
      * Checks if the specified variable is available as a single native item in a DataFrame with the
      * supplied schema.
-     * 
+     *
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
      * @return true if it is available as a single native item, false otherwise.
      */
-    public static boolean isVariableAvailableAsNativeItem(
-            StructType inputSchema,
-            Name variable
-    ) {
+    public static boolean isVariableAvailableAsNativeItem(StructType inputSchema, Name variable) {
         if (variable.equals(Name.CONTEXT_ITEM)) {
             for (String columnName : inputSchema.fieldNames()) {
                 if (columnName.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
@@ -369,30 +353,26 @@ public class FlworDataFrameUtils {
     /**
      * Lists the names of the columns of the schema that needed by the dependencies.
      * Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
-     * 
+     *
      * @param inputSchema schema specifies the columns to be used in the query
      * @param dependencies restriction of the results to within a specified set
      * @return list of SQL column names in the schema
      */
     public static List<FlworDataFrameColumn> getColumns(
-            StructType inputSchema,
-            Map<Name, DynamicContext.VariableDependency> dependencies
-    ) {
+            StructType inputSchema, Map<Name, DynamicContext.VariableDependency> dependencies) {
         return getColumns(inputSchema, dependencies, null, null);
     }
 
     /**
      * Lists the names of the columns of the schema that needed by the dependencies.
      * Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
-     * 
+     *
      * @param inputSchema schema specifies the columns to be used in the query
      * @param dependencies restriction of the results to within a specified set
      * @return list of SQL column names in the schema
      */
     public static List<FlworDataFrameColumn> getColumns(
-            StructType inputSchema,
-            Map.Entry<Name, DynamicContext.VariableDependency> dependencies
-    ) {
+            StructType inputSchema, Map.Entry<Name, DynamicContext.VariableDependency> dependencies) {
         List<FlworDataFrameColumn> result = new ArrayList<>();
         getColumns(inputSchema, dependencies, null, null, result);
         return result;
@@ -401,7 +381,7 @@ public class FlworDataFrameUtils {
     /**
      * Lists the names of the columns of the schema that needed by the dependencies, but except duplicates (which are
      * overriden).
-     * 
+     *
      * @param inputSchema schema specifies the type information for all input columns (included those not needed).
      * @param dependencies restriction of the results to within a specified set
      * @param variablesToRestrictTo variables whose columns must refer to.
@@ -412,8 +392,7 @@ public class FlworDataFrameUtils {
             StructType inputSchema,
             Map<Name, DynamicContext.VariableDependency> dependencies,
             List<Name> variablesToRestrictTo,
-            List<Name> variablesToExclude
-    ) {
+            List<Name> variablesToExclude) {
         List<FlworDataFrameColumn> result = new ArrayList<>();
         if (dependencies == null) {
             for (String columnName : inputSchema.fieldNames()) {
@@ -437,7 +416,7 @@ public class FlworDataFrameUtils {
     /**
      * Lists the names of the columns of the schema that needed by the dependencies, but except duplicates (which are
      * overriden).
-     * 
+     *
      * @param inputSchema schema specifies the type information for all input columns (included those not needed).
      * @param dependency the one variable dependency to look for
      * @param variablesToRestrictTo variables whose columns must refer to.
@@ -449,8 +428,7 @@ public class FlworDataFrameUtils {
             Map.Entry<Name, DynamicContext.VariableDependency> dependency,
             List<Name> variablesToRestrictTo,
             List<Name> variablesToExclude,
-            List<FlworDataFrameColumn> result
-    ) {
+            List<FlworDataFrameColumn> result) {
         Name variableName = dependency.getKey();
         Set<String> columnNames = new HashSet<>(Arrays.asList(inputSchema.fieldNames()));
         if (variablesToExclude != null && variablesToExclude.contains(variableName)) {
@@ -469,11 +447,9 @@ public class FlworDataFrameUtils {
                     result.add(new FlworDataFrameColumn(variableName, ColumnFormat.NATIVE_SEQUENCE));
                     return;
                 }
-                throw new OurBadException(
-                        "Expecting full variable dependency on "
-                            + variableName
-                            + " but column not found in the data frame."
-                );
+                throw new OurBadException("Expecting full variable dependency on "
+                        + variableName
+                        + " but column not found in the data frame.");
             }
             case COUNT: {
                 if (columnNames.contains(variableName.toString() + ".count")) {
@@ -488,11 +464,9 @@ public class FlworDataFrameUtils {
                     result.add(new FlworDataFrameColumn(variableName.toString(), inputSchema));
                     return;
                 }
-                throw new OurBadException(
-                        "Expecting count variable dependency on "
-                            + variableName
-                            + " but no appropriate column was found in the data frame."
-                );
+                throw new OurBadException("Expecting count variable dependency on "
+                        + variableName
+                        + " but no appropriate column was found in the data frame.");
             }
             case SUM: {
                 if (columnNames.contains(variableName.toString() + ".sum")) {
@@ -507,11 +481,9 @@ public class FlworDataFrameUtils {
                     result.add(new FlworDataFrameColumn(variableName.toString(), inputSchema));
                     return;
                 }
-                throw new OurBadException(
-                        "Expecting sum variable dependency on "
-                            + variableName
-                            + "but no appropriate column was found in the data frame."
-                );
+                throw new OurBadException("Expecting sum variable dependency on "
+                        + variableName
+                        + "but no appropriate column was found in the data frame.");
             }
             case MIN: {
                 if (columnNames.contains(variableName.toString() + ".min")) {
@@ -526,11 +498,9 @@ public class FlworDataFrameUtils {
                     result.add(new FlworDataFrameColumn(variableName.toString(), inputSchema));
                     return;
                 }
-                throw new OurBadException(
-                        "Expecting min variable dependency on "
-                            + variableName
-                            + "but no appropriate column was found in the data frame."
-                );
+                throw new OurBadException("Expecting min variable dependency on "
+                        + variableName
+                        + "but no appropriate column was found in the data frame.");
             }
             case MAX: {
                 if (columnNames.contains(variableName.toString() + ".max")) {
@@ -545,11 +515,9 @@ public class FlworDataFrameUtils {
                     result.add(new FlworDataFrameColumn(variableName.toString(), inputSchema));
                     return;
                 }
-                throw new OurBadException(
-                        "Expecting max variable dependency on "
-                            + variableName
-                            + "but no appropriate column was found in the data frame."
-                );
+                throw new OurBadException("Expecting max variable dependency on "
+                        + variableName
+                        + "but no appropriate column was found in the data frame.");
             }
             case AVERAGE: {
                 if (columnNames.contains(variableName.toString() + ".average")) {
@@ -564,48 +532,36 @@ public class FlworDataFrameUtils {
                     result.add(new FlworDataFrameColumn(variableName.toString(), inputSchema));
                     return;
                 }
-                throw new OurBadException(
-                        "Expecting average variable dependency on "
-                            + variableName
-                            + "but no appropriate column was found in the data frame."
-                );
+                throw new OurBadException("Expecting average variable dependency on "
+                        + variableName
+                        + "but no appropriate column was found in the data frame.");
             }
             default:
-                throw new OurBadException(
-                        "Dependency " + dependency.getValue() + " is not supported yet."
-                );
+                throw new OurBadException("Dependency " + dependency.getValue() + " is not supported yet.");
         }
     }
 
     /**
      * Prepares the parameters supplied to a UDF, as a row obtained from the specified attributes.
-     * 
+     *
      * @param columnNames the names of the columns to pass as a parameter.
      * @return The parameters expressed in SQL.
      */
-    public static String getUDFParametersFromColumns(
-            List<FlworDataFrameColumn> columnNames
-    ) {
+    public static String getUDFParametersFromColumns(List<FlworDataFrameColumn> columnNames) {
         String udfSQL = FlworDataFrameUtils.getSQLColumnProjection(columnNames, false);
 
-        return String.format(
-            "struct(%s)",
-            udfSQL
-        );
+        return String.format("struct(%s)", udfSQL);
     }
 
     /**
      * Prepares a SQL projection from the specified column names.
      * Not for use in FLWOR DataFrames! Only for native storage of sequences of objects.
-     * 
+     *
      * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getSQLProjection(
-            List<String> columnNames,
-            boolean trailingComma
-    ) {
+    public static String getSQLProjection(List<String> columnNames, boolean trailingComma) {
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
         for (String var : columnNames) {
@@ -623,15 +579,12 @@ public class FlworDataFrameUtils {
 
     /**
      * Prepares a SQL projection from the specified column names.
-     * 
+     *
      * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getSQLColumnProjection(
-            List<FlworDataFrameColumn> columnNames,
-            boolean trailingComma
-    ) {
+    public static String getSQLColumnProjection(List<FlworDataFrameColumn> columnNames, boolean trailingComma) {
         if (columnNames.isEmpty() && !trailingComma) {
             return "'' AS `" + SparkSessionManager.temporaryColumnName + "`";
         }
@@ -649,35 +602,34 @@ public class FlworDataFrameUtils {
     }
 
     public static StructField[] recursiveRename(StructType schema, boolean inverse) {
-        return Arrays.stream(schema.fields()).map(field -> {
-            String newName = inverse
-                ? field.name().replace(FlworDataFrameUtils.backtickEscape, "`")
-                : field.name().replace("`", FlworDataFrameUtils.backtickEscape);
-            if (field.dataType() instanceof StructType castedField) {
-                return new StructField(
-                        newName,
-                        new StructType(recursiveRename(castedField, inverse)),
-                        field.nullable(),
-                        field.metadata()
-                );
-            } else if (field.dataType() instanceof ArrayType castedField) {
-                if (castedField.elementType() instanceof StructType castedElementType) {
-                    return new StructField(
-                            newName,
-                            new ArrayType(
-                                    new StructType(recursiveRename(castedElementType, inverse)),
-                                    castedField.containsNull()
-                            ),
-                            field.nullable(),
-                            field.metadata()
-                    );
-                } else {
-                    return new StructField(newName, field.dataType(), field.nullable(), field.metadata());
-                }
-            } else {
-                return new StructField(newName, field.dataType(), field.nullable(), field.metadata());
-            }
-        }).toArray(StructField[]::new);
+        return Arrays.stream(schema.fields())
+                .map(field -> {
+                    String newName = inverse
+                            ? field.name().replace(FlworDataFrameUtils.backtickEscape, "`")
+                            : field.name().replace("`", FlworDataFrameUtils.backtickEscape);
+                    if (field.dataType() instanceof StructType castedField) {
+                        return new StructField(
+                                newName,
+                                new StructType(recursiveRename(castedField, inverse)),
+                                field.nullable(),
+                                field.metadata());
+                    } else if (field.dataType() instanceof ArrayType castedField) {
+                        if (castedField.elementType() instanceof StructType castedElementType) {
+                            return new StructField(
+                                    newName,
+                                    new ArrayType(
+                                            new StructType(recursiveRename(castedElementType, inverse)),
+                                            castedField.containsNull()),
+                                    field.nullable(),
+                                    field.metadata());
+                        } else {
+                            return new StructField(newName, field.dataType(), field.nullable(), field.metadata());
+                        }
+                    } else {
+                        return new StructField(newName, field.dataType(), field.nullable(), field.metadata());
+                    }
+                })
+                .toArray(StructField[]::new);
     }
 
     /**
@@ -693,7 +645,7 @@ public class FlworDataFrameUtils {
 
     /**
      * Prepares a SQL projection for use in a GROUP BY query.
-     * 
+     *
      * @param inputSchema schema specifies the type information for all input columns (included those not needed).
      * @param duplicateVariableIndex enables skipping a variable
      * @param trailingComma field to have a trailing comma
@@ -708,8 +660,7 @@ public class FlworDataFrameUtils {
             boolean trailingComma,
             String serializerUdfName,
             List<Name> groupbyVariableNames,
-            Map<Name, DynamicContext.VariableDependency> dependencies
-    ) {
+            Map<Name, DynamicContext.VariableDependency> dependencies) {
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
         for (Map.Entry<Name, DynamicContext.VariableDependency> dependency : dependencies.entrySet()) {
@@ -730,9 +681,7 @@ public class FlworDataFrameUtils {
                     queryColumnString.append(String.format("max(%s)", column));
                 } else if (column.isMin()) {
                     queryColumnString.append(String.format("min(%s)", column));
-                } else if (
-                    shouldCalculateCountGroupingColumn(dependencies, groupbyVariableNames, column)
-                ) {
+                } else if (shouldCalculateCountGroupingColumn(dependencies, groupbyVariableNames, column)) {
                     queryColumnString.append("1");
                 } else if (shouldCalculateCount(dependencies, column)) {
                     if (column.isNativeSequence()) {
@@ -760,7 +709,6 @@ public class FlworDataFrameUtils {
                 }
 
                 queryColumnString.append(String.format(" as %s", column));
-
             }
         }
         if (comma.equals("")) {
@@ -786,29 +734,19 @@ public class FlworDataFrameUtils {
     private static boolean shouldCalculateCountGroupingColumn(
             Map<Name, DynamicContext.VariableDependency> dependencies,
             List<Name> groupbyVariableNames,
-            FlworDataFrameColumn column
-    ) {
+            FlworDataFrameColumn column) {
         return dependencies.containsKey(column.getVariableName())
-            && dependencies.get(
-                column.getVariableName()
-            ) == DynamicContext.VariableDependency.COUNT
-            && groupbyVariableNames.contains(column.getVariableName());
+                && dependencies.get(column.getVariableName()) == DynamicContext.VariableDependency.COUNT
+                && groupbyVariableNames.contains(column.getVariableName());
     }
 
     private static boolean shouldCalculateCount(
-            Map<Name, DynamicContext.VariableDependency> dependencies,
-            FlworDataFrameColumn column
-    ) {
+            Map<Name, DynamicContext.VariableDependency> dependencies, FlworDataFrameColumn column) {
         return dependencies.containsKey(column.getVariableName())
-            && dependencies.get(
-                column.getVariableName()
-            ) == DynamicContext.VariableDependency.COUNT;
+                && dependencies.get(column.getVariableName()) == DynamicContext.VariableDependency.COUNT;
     }
 
-    private static boolean isProcessingGroupingColumn(
-            List<Name> groupbyVariableNames,
-            FlworDataFrameColumn column
-    ) {
+    private static boolean isProcessingGroupingColumn(List<Name> groupbyVariableNames, FlworDataFrameColumn column) {
         return groupbyVariableNames.contains(column.getVariableName());
     }
 
@@ -824,11 +762,7 @@ public class FlworDataFrameUtils {
     }
 
     public static void deserializeWrappedParameters(
-            ArraySeq<byte[]> wrappedParameters,
-            List<List<Item>> deserializedParams,
-            Kryo kryo,
-            Input input
-    ) {
+            ArraySeq<byte[]> wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
         Iterator<byte[]> iterator = wrappedParameters.iterator();
         while (iterator.hasNext()) {
             byte[] bytes = iterator.next();
@@ -843,12 +777,7 @@ public class FlworDataFrameUtils {
     }
 
     public static Row reserializeRowWithNewData(
-            Row prevRow,
-            List<Item> newColumn,
-            int duplicateColumnIndex,
-            Kryo kryo,
-            Output output
-    ) {
+            Row prevRow, List<Item> newColumn, int duplicateColumnIndex, Kryo kryo, Output output) {
         List<byte[]> newRowColumns = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < prevRow.length(); columnIndex++) {
             if (duplicateColumnIndex == columnIndex) {
@@ -893,39 +822,36 @@ public class FlworDataFrameUtils {
      * @return returns DataFrame with the added 'indexName' column containing indices
      */
     public static Dataset<Row> zipWithIndex(Dataset<Row> df, Long offset, String indexName) {
-        Dataset<Row> dfWithPartitionId = df
-            .withColumn("partition_id", spark_partition_id())
-            .withColumn("inc_id", monotonically_increasing_id());
+        Dataset<Row> dfWithPartitionId =
+                df.withColumn("partition_id", spark_partition_id()).withColumn("inc_id", monotonically_increasing_id());
 
         dfWithPartitionId.persist();
 
         Object partitionOffsetsObject = dfWithPartitionId
-            .groupBy("partition_id")
-            .agg(count(lit(1)).alias("cnt"), first("inc_id").alias("inc_id"))
-            .orderBy("partition_id")
-            .select(
-                col("partition_id"),
-                sum("cnt").over(Window.orderBy("partition_id"))
-                    .minus(col("cnt"))
-                    .minus(col("inc_id"))
-                    .plus(lit(offset).alias("cnt"))
-            )
-            .collect();
+                .groupBy("partition_id")
+                .agg(count(lit(1)).alias("cnt"), first("inc_id").alias("inc_id"))
+                .orderBy("partition_id")
+                .select(
+                        col("partition_id"),
+                        sum("cnt")
+                                .over(Window.orderBy("partition_id"))
+                                .minus(col("cnt"))
+                                .minus(col("inc_id"))
+                                .plus(lit(offset).alias("cnt")))
+                .collect();
         Row[] partitionOffsetsArray = ((Row[]) partitionOffsetsObject);
         Map<Integer, Long> partitionOffsets = new HashMap<>();
         for (Row row : partitionOffsetsArray) {
             partitionOffsets.put(row.getInt(0), row.getLong(1));
         }
 
-        UserDefinedFunction getPartitionOffset = udf(
-            (partitionId) -> partitionOffsets.get(partitionId),
-            DataTypes.LongType
-        );
+        UserDefinedFunction getPartitionOffset =
+                udf((partitionId) -> partitionOffsets.get(partitionId), DataTypes.LongType);
 
         return dfWithPartitionId
-            .withColumn("partition_offset", getPartitionOffset.apply(col("partition_id")))
-            .withColumn(indexName, col("partition_offset").plus(col("inc_id")))
-            .drop("partition_id", "partition_offset", "inc_id");
+                .withColumn("partition_offset", getPartitionOffset.apply(col("partition_id")))
+                .withColumn(indexName, col("partition_offset").plus(col("inc_id")))
+                .drop("partition_id", "partition_offset", "inc_id");
     }
 
     public static StructType schemaUnion(StructType leftSchema, StructType rightSchema) {

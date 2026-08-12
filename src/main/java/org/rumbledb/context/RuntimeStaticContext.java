@@ -11,6 +11,7 @@ import java.util.Set;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -37,8 +38,7 @@ public class RuntimeStaticContext implements Serializable {
      * Runtime configuration associated with this context, which is used for error reporting and to
      * determine limits such as the materialization cap; the returned configuration is never {@code null}
      */
-    @NonNull
-    private final RumbleConfiguration configuration;
+    @NonNull private final RumbleConfiguration configuration;
 
     private final SequenceType staticType;
 
@@ -46,14 +46,12 @@ public class RuntimeStaticContext implements Serializable {
      * Execution mode in which expressions in this context should be evaluated; the returned execution mode
      * is never {@code null}
      */
-    @NonNull
-    private final ExecutionMode executionMode;
+    @NonNull private final ExecutionMode executionMode;
 
     /**
      * Metadata associated with this context, which is used for error reporting.
      */
-    @NonNull
-    private final ExceptionMetadata metadata;
+    @NonNull private final ExceptionMetadata metadata;
 
     @Builder.Default
     private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
@@ -105,14 +103,24 @@ public class RuntimeStaticContext implements Serializable {
         sb.append("  staticType: ").append(this.staticType).append("\n");
         sb.append("  executionMode: ").append(this.executionMode).append("\n");
         sb.append("  metadata: ").append(this.metadata).append("\n");
-        sb.append("  staticallyKnownNamespaces: ").append(this.staticallyKnownNamespaces).append("\n");
-        sb.append("  staticallyKnownCollations: ").append(this.staticallyKnownCollations).append("\n");
+        sb.append("  staticallyKnownNamespaces: ")
+                .append(this.staticallyKnownNamespaces)
+                .append("\n");
+        sb.append("  staticallyKnownCollations: ")
+                .append(this.staticallyKnownCollations)
+                .append("\n");
         sb.append("  defaultCollation: ").append(this.defaultCollation).append("\n");
-        sb.append("  copyNamespacesPreserve: ").append(this.copyNamespacesPreserve).append("\n");
-        sb.append("  copyNamespacesInherit: ").append(this.copyNamespacesInherit).append("\n");
+        sb.append("  copyNamespacesPreserve: ")
+                .append(this.copyNamespacesPreserve)
+                .append("\n");
+        sb.append("  copyNamespacesInherit: ")
+                .append(this.copyNamespacesInherit)
+                .append("\n");
         sb.append("  decimalFormats: ").append(this.decimalFormats).append("\n");
         sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
-        sb.append("  serializationParameters: ").append(this.serializationParameters).append("\n");
+        sb.append("  serializationParameters: ")
+                .append(this.serializationParameters)
+                .append("\n");
         sb.append("  isQuerySideEffecting: ").append(this.isQuerySideEffecting).append("\n");
         sb.append("  isUpdating: ").append(this.isUpdating).append("\n");
         sb.append("  isSequential: ").append(this.isSequential).append("\n");
@@ -124,8 +132,7 @@ public class RuntimeStaticContext implements Serializable {
      * Lombok generates the body of this class.
      * Without this declaration, Javadoc generation will return error because it cannot find symbol
      */
-    public static class RuntimeStaticContextBuilder {
-    }
+    public static class RuntimeStaticContextBuilder {}
 
     /**
      * Returns a builder seeded with the settings that originate in a {@link StaticContext}.
@@ -135,25 +142,25 @@ public class RuntimeStaticContext implements Serializable {
      */
     public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
         return builder()
-            .staticURI(staticContext.getStaticBaseURI())
-            .staticURIString(staticContext.getStaticBaseUriString())
-            .queryLanguage(staticContext.getQueryLanguage())
-            .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
-            .staticallyKnownCollations(new LinkedHashSet<>(staticContext.getStaticallyKnownCollations()))
-            .serializationParameters(staticContext.getSerializationParameters())
-            .defaultCollation(staticContext.getDefaultCollation())
-            .defaultDecimalFormat(staticContext.getDefaultDecimalFormat())
-            .decimalFormats(staticContext.getDecimalFormats())
-            .isQuerySideEffecting(staticContext.isQuerySideEffecting())
-            .copyNamespacesPreserve(staticContext.isCopyNamespacesPreserve())
-            .copyNamespacesInherit(staticContext.isCopyNamespacesInherit());
+                .staticURI(staticContext.getStaticBaseURI())
+                .staticURIString(staticContext.getStaticBaseUriString())
+                .queryLanguage(staticContext.getQueryLanguage())
+                .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
+                .staticallyKnownCollations(new LinkedHashSet<>(staticContext.getStaticallyKnownCollations()))
+                .serializationParameters(staticContext.getSerializationParameters())
+                .defaultCollation(staticContext.getDefaultCollation())
+                .defaultDecimalFormat(staticContext.getDefaultDecimalFormat())
+                .decimalFormats(staticContext.getDecimalFormats())
+                .isQuerySideEffecting(staticContext.isQuerySideEffecting())
+                .copyNamespacesPreserve(staticContext.isCopyNamespacesPreserve())
+                .copyNamespacesInherit(staticContext.isCopyNamespacesInherit());
     }
 
     /**
      * Returns the static type of expressions in this context, or {@code null} if no static type is defined for this
      * context. Note that clauses do not have static types, so calling this method on a context associated with a clause
      * will throw an exception.
-     * 
+     *
      * @return the static type of expressions in this context, or {@code null} if no static type is defined for this
      *         context; note that clauses do not have static types, so calling this method on a context associated with
      *         a clause will throw an exception

@@ -1,10 +1,9 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
 import java.io.Serial;
 import java.time.Duration;
+import java.time.ZoneOffset;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -12,19 +11,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidTimezoneException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.time.ZoneOffset;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class AdjustDateTimeToTimezone extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public AdjustDateTimeToTimezone(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public AdjustDateTimeToTimezone(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -41,11 +35,11 @@ public class AdjustDateTimeToTimezone extends AbstractAtMostOneItemRuntimePlan {
         Item timezone = this.getChildren().size() == 2 ? this.getChild(1).materializeFirstOrNull(context) : null;
         if (timezone == null && this.getChildren().size() == 1) {
             return ItemFactory.getInstance()
-                .createDateTimeItem(timeItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
+                    .createDateTimeItem(timeItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
         }
         if (timezone == null) {
             return ItemFactory.getInstance()
-                .createDateTimeItem(timeItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.UTC), false);
+                    .createDateTimeItem(timeItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.UTC), false);
         } else {
             if (checkTimeZoneArgument(timezone)) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
@@ -56,16 +50,15 @@ public class AdjustDateTimeToTimezone extends AbstractAtMostOneItemRuntimePlan {
 
             if (timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
-                    .createDateTimeItem(
-                        timeItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
-                        true
-                    );
+                        .createDateTimeItem(
+                                timeItem.getDateTimeValue()
+                                        .withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                                true);
             }
             return ItemFactory.getInstance()
-                .createDateTimeItem(
-                    timeItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
-                    true
-                );
+                    .createDateTimeItem(
+                            timeItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                            true);
         }
     }
 

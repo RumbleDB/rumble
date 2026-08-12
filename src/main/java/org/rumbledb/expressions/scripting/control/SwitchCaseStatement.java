@@ -1,10 +1,11 @@
 package org.rumbledb.expressions.scripting.control;
 
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.scripting.statement.Statement;
-
-import java.util.List;
 
 /**
  * Helper class that organizes children statements of a switch statement.
@@ -20,5 +21,4 @@ public class SwitchCaseStatement {
         this.conditionExpressions = conditionExpressions;
         this.returnStatement = returnStatement;
     }
-
 }

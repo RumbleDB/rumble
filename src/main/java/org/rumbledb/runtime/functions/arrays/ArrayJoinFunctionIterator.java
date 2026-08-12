@@ -17,9 +17,9 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
-
-
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,10 +28,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * F&amp;O 3.1 array:join — concatenates the members of a sequence of arrays in order into one array.
@@ -43,17 +40,13 @@ public class ArrayJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     private final ItemRuntimePlan arraysIterator;
 
-    public ArrayJoinFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayJoinFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 1) {
             throw new OurBadException("array:join must have exactly one argument.");
         }
         this.arraysIterator = arguments.get(0);
     }
-
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
@@ -62,9 +55,7 @@ public class ArrayJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         for (Item arrayItem : arrays) {
             if (!arrayItem.isArray()) {
                 throw new UnexpectedTypeException(
-                        "Type error; array:join expects a sequence of arrays.",
-                        getMetadata()
-                );
+                        "Type error; array:join expects a sequence of arrays.", getMetadata());
             }
             int n = arrayItem.getSize();
             for (int i = 0; i < n; i++) {
@@ -74,6 +65,4 @@ public class ArrayJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         // when joining, we always create a sequence array for now
         return ItemFactory.getInstance().createSequenceArrayItem(joined, false);
     }
-
-
 }

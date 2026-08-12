@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import lombok.NonNull;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
@@ -25,19 +26,14 @@ public final class IteratorLocalCursor<T> extends AbstractLocalCursor<T> {
     private Iterator<? extends T> iterator;
 
     public IteratorLocalCursor(
-            @NonNull Supplier<? extends Iterator<? extends T>> iteratorFactory,
-            @NonNull ExceptionMetadata metadata
-    ) {
+            @NonNull Supplier<? extends Iterator<? extends T>> iteratorFactory, @NonNull ExceptionMetadata metadata) {
         super(metadata);
         this.iteratorFactory = iteratorFactory;
     }
 
     @Override
     protected void openLocal() {
-        this.iterator = Objects.requireNonNull(
-            this.iteratorFactory.get(),
-            "iterator factory returned null"
-        );
+        this.iterator = Objects.requireNonNull(this.iteratorFactory.get(), "iterator factory returned null");
     }
 
     @Override

@@ -20,7 +20,10 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import java.io.Serial;
+import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,22 +32,15 @@ import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.xml.XMLUtils;
-
-import java.io.Serial;
-import java.util.List;
-import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 
 public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public CodepointsToStringFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public CodepointsToStringFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
@@ -55,17 +51,11 @@ public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRun
 
         try (Cursor<Item> cursor = argumentIterator.getCursor(context)) {
             return ItemFactory.getInstance()
-                .createStringItem(
-                    buildStringFromCodepoints(cursor::hasNext, cursor::next, xmlVersion)
-                );
+                    .createStringItem(buildStringFromCodepoints(cursor::hasNext, cursor::next, xmlVersion));
         }
     }
 
-    private String buildStringFromCodepoints(
-            BooleanSupplier hasNext,
-            Supplier<Item> next,
-            String xmlVersion
-    ) {
+    private String buildStringFromCodepoints(BooleanSupplier hasNext, Supplier<Item> next, String xmlVersion) {
         StringBuilder result = new StringBuilder();
         while (hasNext.getAsBoolean()) {
             Item item = next.get();
@@ -73,8 +63,7 @@ public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRun
             if (!XMLUtils.isValidXmlCharacter(codepoint, xmlVersion)) {
                 throw new CodepointNotValidException(
                         "Non-XML-conformant codepoint: " + item.getIntegerValue(),
-                        this.getChild(0).getRuntimeStaticContext().getMetadata()
-                );
+                        this.getChild(0).getRuntimeStaticContext().getMetadata());
             }
             result.appendCodePoint(codepoint);
         }
@@ -90,8 +79,7 @@ public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRun
         } catch (ArithmeticException e) {
             CodepointNotValidException ex = new CodepointNotValidException(
                     "Non-XML-conformant codepoint: " + item.getIntegerValue(),
-                    this.getChild(0).getRuntimeStaticContext().getMetadata()
-            );
+                    this.getChild(0).getRuntimeStaticContext().getMetadata());
             ex.initCause(e);
             throw ex;
         }
