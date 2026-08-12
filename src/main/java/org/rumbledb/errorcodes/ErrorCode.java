@@ -193,6 +193,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DuplicateSchemaImportErrorCode = registerBuiltIn("XQST0058");
     public static final ErrorCode MoreThanOneCopyNamespacesDeclarationErrorCode = registerBuiltIn("XQST0055");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
+    public static final ErrorCode SchemaImportErrorCode = ModuleNotFoundErrorCode;
     public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
