@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.w3c.dom.Node;
@@ -176,6 +177,20 @@ public final class NamespaceBindingUtils {
             }
             return StaticContext.getBuiltinNamespaceBinding(prefix);
         };
+    }
+
+    /** Resolves prefixes against an element node's in-scope namespaces. */
+    public static NamespaceResolver namespaceResolver(Item element) {
+        if (element == null || !element.isElementNode()) {
+            return builtinNamespaceResolver();
+        }
+        Map<String, String> inScopeNamespaces = new HashMap<>();
+        for (Item namespace : element.namespaceNodes()) {
+            Name namespaceName = namespace.nodeName();
+            String prefix = namespaceName == null ? "" : namespaceName.getLocalName();
+            inScopeNamespaces.put(prefix, namespace.getStringValue());
+        }
+        return inScopeNamespaces::get;
     }
 
     /**
