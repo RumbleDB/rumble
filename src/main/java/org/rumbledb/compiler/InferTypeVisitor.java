@@ -23,6 +23,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -2547,7 +2548,30 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitValidateExpression(ValidateExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
-        expression.setStaticSequenceType(expression.getMainExpression().getStaticSequenceType());
+        if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
+            Name typeName = expression.getTypeName();
+            if (!Name.XS_NS.equals(typeName.getNamespace()) || !BuiltinTypesCatalogue.typeExists(typeName)) {
+                throw new SemanticException(
+                        "The type " + typeName + " is not defined in the in-scope schema types.",
+                        ErrorCode.ValidateTypeNotFoundErrorCode,
+                        expression.getMetadata());
+            }
+            ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
+            if (!targetType.isAtomicItemType()
+                    || targetType.equals(BuiltinTypesCatalogue.atomicItem)
+                    || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
+                throw new UnsupportedFeatureException(
+                        "This first validate type implementation only supports concrete built-in XML Schema atomic types.",
+                        expression.getMetadata());
+            }
+        }
+        ItemType sourceItemType =
+                expression.getMainExpression().getStaticSequenceType().getItemType();
+        ItemType resultItemType = sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)
+                        || sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
+                ? sourceItemType
+                : BuiltinTypesCatalogue.nodeItem;
+        expression.setStaticSequenceType(new SequenceType(resultItemType, SequenceType.Arity.One));
         return argument;
     }
 
