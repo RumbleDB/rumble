@@ -215,8 +215,8 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> sequenceCursor;
-        private int startPosition;
-        private int currentLength;
+        private long startPosition;
+        private long currentLength;
 
         private EvaluationCursor(
                 @NonNull ItemRuntimePlan sequencePlan,
@@ -236,12 +236,12 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
         @Override
         protected void openLocal() {
             Item positionItem = this.positionPlan.materializeFirstOrNull(this.context);
-            this.startPosition = (int) Math.round(positionItem.getDoubleValue());
+            this.startPosition = Math.round(positionItem.getDoubleValue());
 
             this.currentLength = -1;
             if (this.lengthPlan != null) {
                 Item lengthItem = this.lengthPlan.materializeFirstOrNull(this.context);
-                this.currentLength = (int) Math.round(lengthItem.getDoubleValue());
+                this.currentLength = Math.round(lengthItem.getDoubleValue());
             }
             if (this.startPosition <= 0 && this.currentLength != -1) {
                 this.currentLength += this.startPosition - 1;
@@ -251,7 +251,7 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
             }
 
             this.sequenceCursor = this.sequencePlan.getCursor(this.context);
-            int currentPosition = 1;
+            long currentPosition = 1;
             while (currentPosition < this.startPosition && this.sequenceCursor.hasNext()) {
                 this.sequenceCursor.next();
                 currentPosition++;
