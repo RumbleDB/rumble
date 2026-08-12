@@ -24,7 +24,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
@@ -102,7 +101,7 @@ final class ExtremumLocalEvaluation {
                 if (candidate.isUntypedAtomic()) {
                     candidate = ItemFactory.getInstance().createDoubleItem(candidate.castToDoubleValue());
                 }
-                ensureSupported(candidate);
+                ensureSupported(candidate, kind, metadata);
                 sawDouble |= candidate.isDouble();
                 sawFloat |= candidate.isFloat();
                 sawString |= candidate.isString();
@@ -160,7 +159,7 @@ final class ExtremumLocalEvaluation {
         }
     }
 
-    private static void ensureSupported(Item item) {
+    private static void ensureSupported(Item item, Kind kind, ExceptionMetadata metadata) {
         ItemType type = item.getDynamicType();
         if (
             item.isNumeric()
@@ -172,10 +171,15 @@ final class ExtremumLocalEvaluation {
                 || type.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
                 || type.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
                 || type.equals(BuiltinTypesCatalogue.timeItem)
+                || type.equals(BuiltinTypesCatalogue.hexBinaryItem)
+                || type.equals(BuiltinTypesCatalogue.base64BinaryItem)
         ) {
             return;
         }
-        throw new OurBadException("Inconsistent state in state iteration");
+        throw new InvalidArgumentTypeException(
+                functionName(kind) + " expression input error. Input has to be non-null atomics of matching types",
+                metadata
+        );
     }
 
     private static String functionName(Kind kind) {
