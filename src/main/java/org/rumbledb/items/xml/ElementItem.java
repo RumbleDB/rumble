@@ -15,8 +15,8 @@ import lombok.Setter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.TypedValueUnavailableException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -32,6 +32,7 @@ public class ElementItem extends AbstractNodeItem {
     private String stringValue;
     private Item parent;
     private ItemType typeAnnotation;
+    private NodeTypedValue nodeTypedValue;
 
     @Setter
     private boolean inheritNamespacesFromParent;
@@ -47,6 +48,7 @@ public class ElementItem extends AbstractNodeItem {
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
         this.inheritNamespacesFromParent = true;
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
@@ -65,6 +67,7 @@ public class ElementItem extends AbstractNodeItem {
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
         this.inheritNamespacesFromParent = true;
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
@@ -98,6 +101,7 @@ public class ElementItem extends AbstractNodeItem {
         ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
         copy.namespaces = copiedNamespaces;
         copy.typeAnnotation = this.typeAnnotation;
+        copy.nodeTypedValue = this.nodeTypedValue;
         copy.inheritNamespacesFromParent = this.inheritNamespacesFromParent;
         return copy;
     }
@@ -335,9 +339,6 @@ public class ElementItem extends AbstractNodeItem {
      *
      * "For an Element Node, dm:type-name returns the name of the dynamic type of the element
      * node, or the empty sequence if the node is untyped."
-     *
-     * RumbleDB does not currently support schema-validated element types, so the dynamic
-     * type-name is not available and this method returns null to represent the empty sequence.
      */
     @Override
     public List<Item> typeName() {
@@ -352,10 +353,6 @@ public class ElementItem extends AbstractNodeItem {
      *
      * "For an Element Node, dm:typed-value returns the typed value of the element node as a
      * sequence of zero or more atomic values."
-     *
-     * This implementation delegates to atomizedValue(), which currently computes a
-     * best-effort typed value by concatenating the atomized values of the element's
-     * children in document order.
      */
     @Override
     public List<Item> typedValue() {
@@ -364,7 +361,28 @@ public class ElementItem extends AbstractNodeItem {
 
     @Override
     public void setSchemaType(ItemType typeAnnotation) {
+        if (typeAnnotation == null) {
+            clearSchemaType();
+            return;
+        }
         this.typeAnnotation = typeAnnotation;
+        this.nodeTypedValue = NodeTypedValue.unavailable();
+    }
+
+    @Override
+    public void setSchemaType(ItemType typeAnnotation, List<Item> typedValue) {
+        if (typeAnnotation == null) {
+            throw new IllegalArgumentException("A schema type annotation cannot be null.");
+        }
+        NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
+        this.typeAnnotation = typeAnnotation;
+        this.nodeTypedValue = newTypedValue;
+    }
+
+    @Override
+    public void clearSchemaType() {
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
     }
 
     @Override
@@ -440,13 +458,13 @@ public class ElementItem extends AbstractNodeItem {
 
     @Override
     public List<Item> atomizedValue() {
-        if (this.typeAnnotation != null) {
-            Item typedValue = CastIterator.castItemToType(
-                    ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                    this.typeAnnotation,
-                    ExceptionMetadata.EMPTY_METADATA,
-                    NamespaceBindingUtils.namespaceResolver(this));
-            return Collections.singletonList(typedValue);
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.AVAILABLE) {
+            return this.nodeTypedValue.getItems();
+        }
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.UNAVAILABLE) {
+            throw new TypedValueUnavailableException(
+                    "The typed value is not available for element " + this.dmNodeName + ".",
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
         // For element nodes, typed-value is based on the element's string value, which is the
