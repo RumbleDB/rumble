@@ -1,0 +1,147 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.rumbledb.xml.schema;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.apache.xerces.xs.XSObjectList;
+import org.apache.xerces.xs.XSSimpleTypeDefinition;
+import org.apache.xerces.xs.XSTypeDefinition;
+
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
+/** Maps Xerces simple types to the generalized atomic types used by XQuery. */
+final class XmlSchemaSimpleTypeMapper {
+
+    private final XercesBuiltinAtomicTypeMapper builtinTypeMapper;
+    private final Map<XSTypeDefinition, Optional<ItemType>> mappedTypes;
+    private final Set<XSTypeDefinition> typesBeingMapped;
+
+    XmlSchemaSimpleTypeMapper() {
+        this.builtinTypeMapper = new XercesBuiltinAtomicTypeMapper();
+        this.mappedTypes = new IdentityHashMap<>();
+        this.typesBeingMapped = Collections.newSetFromMap(new IdentityHashMap<>());
+    }
+
+    Optional<ItemType> mapGeneralizedAtomicType(XSTypeDefinition schemaType) {
+        if (schemaType == null) {
+            return Optional.empty();
+        }
+        Optional<ItemType> cached = this.mappedTypes.get(schemaType);
+        if (cached != null) {
+            return cached;
+        }
+        if (!this.typesBeingMapped.add(schemaType)) {
+            throw new OurBadException("Xerces returned a cyclic XML Schema simple type hierarchy.");
+        }
+
+        Optional<ItemType> result;
+        try {
+            result = createGeneralizedAtomicType(schemaType);
+        } finally {
+            this.typesBeingMapped.remove(schemaType);
+        }
+        this.mappedTypes.put(schemaType, result);
+        return result;
+    }
+
+    Optional<ItemType> getListItemType(XSTypeDefinition schemaType) {
+        if (!(schemaType instanceof XSSimpleTypeDefinition simpleType)
+                || simpleType.getVariety() != XSSimpleTypeDefinition.VARIETY_LIST) {
+            return Optional.empty();
+        }
+        return mapGeneralizedAtomicType(simpleType.getItemType());
+    }
+
+    private Optional<ItemType> createGeneralizedAtomicType(XSTypeDefinition schemaType) {
+        Optional<ItemType> builtinType = this.builtinTypeMapper.map(schemaType);
+        if (builtinType.isPresent()) {
+            return builtinType;
+        }
+        if (!(schemaType instanceof XSSimpleTypeDefinition simpleType)) {
+            return Optional.empty();
+        }
+
+        Name name = declaredNameOf(simpleType);
+        if (simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_ATOMIC) {
+            return mapGeneralizedAtomicType(simpleType.getBaseType())
+                    .map(baseType -> ItemTypeFactory.createXmlSchemaAtomicType(name, baseType));
+        }
+        if (simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION && isPureUnion(simpleType)) {
+            return mapUnionMembers(simpleType.getMemberTypes())
+                    .map(memberTypes -> ItemTypeFactory.createXmlSchemaUnionType(name, memberTypes));
+        }
+        return Optional.empty();
+    }
+
+    private Optional<List<ItemType>> mapUnionMembers(XSObjectList schemaMemberTypes) {
+        Set<ItemType> memberTypes = new LinkedHashSet<>();
+        for (int index = 0; index < schemaMemberTypes.getLength(); index++) {
+            Optional<ItemType> memberType = mapGeneralizedAtomicType((XSTypeDefinition) schemaMemberTypes.item(index));
+            if (memberType.isEmpty()) {
+                return Optional.empty();
+            }
+            ItemType mappedMember = memberType.get();
+            if (mappedMember.isUnionType()) {
+                // XQuery defines membership of a pure union transitively.
+                memberTypes.addAll(mappedMember.getTypes());
+            } else {
+                memberTypes.add(mappedMember);
+            }
+        }
+        return Optional.of(new ArrayList<>(memberTypes));
+    }
+
+    private static boolean isPureUnion(XSSimpleTypeDefinition unionType) {
+        // Xerces reports the fixed whitespace facet on a direct union even though it is not a restriction.
+        short constrainingFacets = (short) (unionType.getDefinedFacets() & ~XSSimpleTypeDefinition.FACET_WHITESPACE);
+        if (constrainingFacets != XSSimpleTypeDefinition.FACET_NONE) {
+            return false;
+        }
+        XSObjectList memberTypes = unionType.getMemberTypes();
+        for (int index = 0; index < memberTypes.getLength(); index++) {
+            if (!(memberTypes.item(index) instanceof XSSimpleTypeDefinition memberType)
+                    || memberType.getVariety() == XSSimpleTypeDefinition.VARIETY_LIST
+                    || (memberType.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION && !isPureUnion(memberType))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Name declaredNameOf(XSTypeDefinition schemaType) {
+        if (schemaType.getAnonymous() || schemaType.getName() == null) {
+            return null;
+        }
+        return new Name(emptyToNull(schemaType.getNamespace()), null, schemaType.getName());
+    }
+
+    private static String emptyToNull(String value) {
+        return value == null || value.isEmpty() ? null : value;
+    }
+}

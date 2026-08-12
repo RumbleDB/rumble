@@ -25,6 +25,7 @@ import java.util.Optional;
 import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamedMap;
+import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 
 import org.rumbledb.context.Name;
@@ -35,11 +36,11 @@ import org.rumbledb.types.ItemType;
 public final class XmlSchemaCatalog {
 
     private final XSModel schemaModel;
-    private final XmlSchemaAtomicTypeMapper atomicTypeMapper;
+    private final XmlSchemaSimpleTypeMapper simpleTypeMapper;
 
     XmlSchemaCatalog(XSModel schemaModel) {
         this.schemaModel = Objects.requireNonNull(schemaModel, "schemaModel must not be null");
-        this.atomicTypeMapper = new XmlSchemaAtomicTypeMapper();
+        this.simpleTypeMapper = new XmlSchemaSimpleTypeMapper();
     }
 
     public Optional<XSTypeDefinition> getTypeDefinition(Name name) {
@@ -52,13 +53,13 @@ public final class XmlSchemaCatalog {
         return this.schemaModel.getNamespaces().contains(emptyToNull(namespace));
     }
 
-    public List<ItemType> getNamedAtomicItemTypes() {
+    public List<ItemType> getNamedGeneralizedAtomicItemTypes() {
         XSNamedMap schemaTypes = this.schemaModel.getComponents(XSConstants.TYPE_DEFINITION);
         List<ItemType> result = new ArrayList<>();
         for (int index = 0; index < schemaTypes.getLength(); index++) {
             XSTypeDefinition schemaType = (XSTypeDefinition) schemaTypes.item(index);
-            this.atomicTypeMapper
-                    .map(schemaType)
+            this.simpleTypeMapper
+                    .mapGeneralizedAtomicType(schemaType)
                     .filter(ItemType::hasName)
                     .filter(type -> !BuiltinTypesCatalogue.typeExists(type.getName()))
                     .ifPresent(result::add);
@@ -67,7 +68,19 @@ public final class XmlSchemaCatalog {
     }
 
     Optional<ItemType> getAtomicItemType(XSTypeDefinition schemaType) {
-        return this.atomicTypeMapper.map(schemaType);
+        if (!(schemaType instanceof XSSimpleTypeDefinition simpleType)
+                || simpleType.getVariety() != XSSimpleTypeDefinition.VARIETY_ATOMIC) {
+            return Optional.empty();
+        }
+        return this.simpleTypeMapper.mapGeneralizedAtomicType(schemaType);
+    }
+
+    Optional<ItemType> getGeneralizedAtomicItemType(XSTypeDefinition schemaType) {
+        return this.simpleTypeMapper.mapGeneralizedAtomicType(schemaType);
+    }
+
+    Optional<ItemType> getListItemType(XSTypeDefinition schemaType) {
+        return this.simpleTypeMapper.getListItemType(schemaType);
     }
 
     XSModel getSchemaModel() {

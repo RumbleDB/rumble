@@ -20,6 +20,7 @@ package org.rumbledb.xml.schema;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
@@ -84,7 +85,7 @@ public class XmlSchemaCatalogLoaderTest {
     }
 
     @Test
-    public void registersNamedAtomicRestrictionsWithTheirTypeHierarchy(@TempDir Path directory) throws Exception {
+    public void registersGeneralizedAtomicTypesAndKeepsListsAsSchemaMetadata(@TempDir Path directory) throws Exception {
         Files.writeString(
                 directory.resolve("types.xsd"),
                 schema(
@@ -104,22 +105,32 @@ public class XmlSchemaCatalogLoaderTest {
                         <xs:simpleType name="CodeOrInteger">
                           <xs:union memberTypes="t:Code xs:integer"/>
                         </xs:simpleType>
+                        <xs:simpleType name="RestrictedCodeOrInteger">
+                          <xs:restriction base="t:CodeOrInteger">
+                            <xs:enumeration value="A"/>
+                          </xs:restriction>
+                        </xs:simpleType>
                         <xs:complexType name="Record"/>
                         """));
 
         MainModule module = compile(
-                "import schema namespace t = \"urn:test\" at \"types.xsd\"; 1 instance of t:RestrictedCode",
+                "import schema namespace t = \"urn:test\" at \"types.xsd\"; 1 instance of t:CodeOrInteger",
                 directory.resolve("query.xq").toUri(),
                 new ResourceResolver());
 
         InScopeSchemaTypes inScopeTypes = module.getStaticContext().getInScopeSchemaTypes();
         Name codeName = new Name(NAMESPACE, "t", "Code");
         Name restrictedCodeName = new Name(NAMESPACE, "t", "RestrictedCode");
+        Name codesName = new Name(NAMESPACE, "t", "Codes");
+        Name unionName = new Name(NAMESPACE, "t", "CodeOrInteger");
         ItemType code = inScopeTypes.getInScopeSchemaType(codeName);
         ItemType restrictedCode = inScopeTypes.getInScopeSchemaType(restrictedCodeName);
+        ItemType union = inScopeTypes.getInScopeSchemaType(unionName);
         XmlSchemaCatalog catalog = module.getStaticContext().getXmlSchemaCatalog();
         XSTypeDefinition restrictedCodeDefinition =
                 catalog.getTypeDefinition(restrictedCodeName).orElseThrow();
+        XSTypeDefinition codesDefinition = catalog.getTypeDefinition(codesName).orElseThrow();
+        XSTypeDefinition unionDefinition = catalog.getTypeDefinition(unionName).orElseThrow();
 
         Assertions.assertEquals(BuiltinTypesCatalogue.stringItem, code.getBaseType());
         Assertions.assertEquals(code, restrictedCode.getBaseType());
@@ -129,8 +140,16 @@ public class XmlSchemaCatalogLoaderTest {
                 catalog.getAtomicItemType(restrictedCodeDefinition).orElseThrow());
         Assertions.assertTrue(restrictedCode.isSubtypeOf(code));
         Assertions.assertTrue(restrictedCode.isSubtypeOf(BuiltinTypesCatalogue.stringItem));
-        Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "Codes")));
-        Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "CodeOrInteger")));
+        Assertions.assertTrue(union.isUnionType());
+        Assertions.assertEquals(List.of(code, BuiltinTypesCatalogue.integerItem), union.getTypes());
+        Assertions.assertTrue(code.isSubtypeOf(union));
+        Assertions.assertTrue(union.isSubtypeOf(BuiltinTypesCatalogue.atomicItem));
+        Assertions.assertSame(
+                union, catalog.getGeneralizedAtomicItemType(unionDefinition).orElseThrow());
+        Assertions.assertSame(code, catalog.getListItemType(codesDefinition).orElseThrow());
+        Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(codesName));
+        Assertions.assertFalse(
+                inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "RestrictedCodeOrInteger")));
         Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "Record")));
     }
 
