@@ -33,10 +33,13 @@ public class ElementItem extends AbstractNodeItem {
     private Item parent;
     private XmlSchemaTypeAnnotation typeAnnotation;
     private NodeTypedValue nodeTypedValue;
+    private Boolean schemaNilled;
+    private boolean id;
+    private boolean idRefs;
 
     @Setter
     private boolean inheritNamespacesFromParent;
-    // TODO: add base-uri, is-id, is-idrefs
+    // TODO: add base-uri
     private XMLDocumentPosition documentPos;
 
     /**
@@ -49,6 +52,7 @@ public class ElementItem extends AbstractNodeItem {
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
+        this.schemaNilled = null;
         this.inheritNamespacesFromParent = true;
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
@@ -68,6 +72,7 @@ public class ElementItem extends AbstractNodeItem {
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
+        this.schemaNilled = null;
         this.inheritNamespacesFromParent = true;
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
@@ -102,6 +107,9 @@ public class ElementItem extends AbstractNodeItem {
         copy.namespaces = copiedNamespaces;
         copy.typeAnnotation = this.typeAnnotation;
         copy.nodeTypedValue = this.nodeTypedValue;
+        copy.schemaNilled = this.schemaNilled;
+        copy.id = this.id;
+        copy.idRefs = this.idRefs;
         copy.inheritNamespacesFromParent = this.inheritNamespacesFromParent;
         return copy;
     }
@@ -282,7 +290,7 @@ public class ElementItem extends AbstractNodeItem {
      */
     @Override
     public boolean isId() {
-        return false;
+        return this.id;
     }
 
     /**
@@ -292,7 +300,7 @@ public class ElementItem extends AbstractNodeItem {
      */
     @Override
     public boolean isIdrefs() {
-        return false;
+        return this.idRefs;
     }
 
     /**
@@ -301,12 +309,14 @@ public class ElementItem extends AbstractNodeItem {
      * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
      * not nilled, or the empty sequence if the concept of nilled does not apply."
      *
-     * RumbleDB does not currently support XML Schema nilled elements, so this implementation
-     * returns the empty sequence.
+     * Untyped elements return the empty sequence. Schema-validated elements return the boolean
+     * value supplied by the PSVI.
      */
     @Override
     public List<Item> nilled() {
-        return Collections.emptyList();
+        return this.schemaNilled == null
+                ? Collections.emptyList()
+                : Collections.singletonList(ItemFactory.getInstance().createBooleanItem(this.schemaNilled));
     }
 
     @Override
@@ -367,6 +377,9 @@ public class ElementItem extends AbstractNodeItem {
         }
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = NodeTypedValue.unavailable();
+        this.schemaNilled = false;
+        this.id = false;
+        this.idRefs = false;
     }
 
     @Override
@@ -377,17 +390,37 @@ public class ElementItem extends AbstractNodeItem {
         NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = newTypedValue;
+        this.schemaNilled = false;
+        this.id = false;
+        this.idRefs = false;
     }
 
     @Override
     public void clearSchemaType() {
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
+        this.schemaNilled = null;
+        this.id = false;
+        this.idRefs = false;
     }
 
     @Override
     public XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
         return this.typeAnnotation;
+    }
+
+    @Override
+    public void setXmlSchemaNilled(boolean nilled) {
+        if (this.typeAnnotation == null) {
+            throw new IllegalStateException("An untyped element does not have a nilled property.");
+        }
+        this.schemaNilled = nilled;
+    }
+
+    @Override
+    public void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        this.id = id;
+        this.idRefs = idRefs;
     }
 
     @Override

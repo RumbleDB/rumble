@@ -753,6 +753,16 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public void setXmlSchemaNilled(boolean nilled) {
+        this.itemToAnnotate.setXmlSchemaNilled(nilled);
+    }
+
+    @Override
+    public void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        this.itemToAnnotate.setXmlSchemaIdentityProperties(id, idRefs);
+    }
+
+    @Override
     public List<Item> unparsedEntityPublicId(String name) {
         return this.itemToAnnotate.unparsedEntityPublicId(name);
     }

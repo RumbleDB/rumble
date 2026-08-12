@@ -1655,6 +1655,16 @@ public interface Item extends Serializable {
         return null;
     }
 
+    /** Records the nilled property supplied by XML Schema validation. */
+    default void setXmlSchemaNilled(boolean nilled) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /** Records the ID and IDREF properties supplied by XML Schema validation. */
+    default void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
     /**
      * Get the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
      * uniqueness
