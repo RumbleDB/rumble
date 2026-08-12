@@ -20,8 +20,10 @@
 
 package org.rumbledb.types;
 
+import lombok.extern.log4j.Log4j2;
 import lombok.Getter;
-import org.apache.log4j.LogManager;
+import lombok.EqualsAndHashCode;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -36,8 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import lombok.EqualsAndHashCode;
-
+@Log4j2
 @Getter
 @EqualsAndHashCode
 public class SequenceType implements Serializable {
@@ -56,21 +57,19 @@ public class SequenceType implements Serializable {
         this.itemType = itemType;
         this.arity = arity;
         if (this.itemType == null) {
-            LogManager.getLogger("SequenceType")
-                .warn(
-                    "Missing item type in incomplete sequence type "
-                        + this.arity
-                        + ", defaulting to item. Please let us know as we would like to look into this!"
-                );
+            log.warn(
+                "Missing item type in incomplete sequence type "
+                    + this.arity
+                    + ", defaulting to item. Please let us know as we would like to look into this!"
+            );
             this.itemType = BuiltinTypesCatalogue.item;
         }
         if (this.arity == null) {
-            LogManager.getLogger("SequenceType")
-                .warn(
-                    "Missing arity in incomplete sequence type "
-                        + this.itemType
-                        + ", defaulting to *. Please let us know as we would like to look into this!"
-                );
+            log.warn(
+                "Missing arity in incomplete sequence type "
+                    + this.itemType
+                    + ", defaulting to *. Please let us know as we would like to look into this!"
+            );
             this.arity = Arity.ZeroOrMore;
         }
     }
