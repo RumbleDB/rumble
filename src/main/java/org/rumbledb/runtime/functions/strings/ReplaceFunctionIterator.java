@@ -20,38 +20,38 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public ReplaceFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
-        Item patternStringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
+        Item patternStringItem = this.getChild(1).materializeFirstOrNull(context);
 
         if (patternStringItem == null) {
             return null;
@@ -59,8 +59,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         String pattern = patternStringItem.getStringValue();
         String flags = null;
         if (this.getChildren().size() == 4) {
-            Item flagsItem = this.getChild(3)
-                .materializeFirstItemOrNull(context);
+            Item flagsItem = this.getChild(3).materializeFirstOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }
@@ -73,8 +72,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        Item replacementStringItem = this.getChild(2)
-            .materializeFirstItemOrNull(context);
+        Item replacementStringItem = this.getChild(2).materializeFirstOrNull(context);
         String replacement = replacementStringItem.getStringValue();
         if (compiledRegex.isQuote()) {
             replacement = Matcher.quoteReplacement(replacement);
@@ -96,6 +94,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
 
     }
+
 
     private static boolean checkReplacementStringForValidity(String repl) {
         int i = 0;

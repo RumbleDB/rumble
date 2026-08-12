@@ -20,6 +20,7 @@
 
 package org.rumbledb.cli;
 
+import org.apache.spark.sql.SaveMode;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -121,7 +122,7 @@ public class JsoniqQueryExecutor {
                 this.configuration.runtime().resultsSizeCap()
             );
 
-            Serializer serializer = sequence.write().mode(org.apache.spark.sql.SaveMode.ErrorIfExists).getSerializer();
+            Serializer serializer = sequence.write().mode(SaveMode.ErrorIfExists).getSerializer();
 
             List<String> lines = outputList.stream()
                 .map(serializer::serialize)

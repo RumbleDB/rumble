@@ -47,7 +47,7 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item> {
         return this.children;
     }
 
-    protected final SequenceType getStaticType() {
+    public final SequenceType getStaticType() {
         return this.staticContext.getStaticType();
     }
 

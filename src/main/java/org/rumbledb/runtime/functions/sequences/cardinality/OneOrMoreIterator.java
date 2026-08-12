@@ -20,28 +20,39 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.SequenceExceptionOneOrMore;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.Objects;
 
-public class OneOrMoreIterator extends HybridRuntimeIterator {
+public class OneOrMoreIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private Item nextResult;
+    private final ItemRuntimePlan iterator;
 
     public OneOrMoreIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -49,7 +60,12 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.iterator, context, getMetadata());
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         if (!childRDD.isEmpty()) {
             return childRDD;
@@ -61,13 +77,9 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         if (childDataFrame.isEmptySequence()) {
             throw new SequenceExceptionOneOrMore(
                     "fn:one-or-more() called with a sequence containing less than 1 item",
@@ -77,52 +89,54 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
         return childDataFrame;
     }
 
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        if (!this.iterator.hasNext()) {
-            throw new SequenceExceptionOneOrMore(
-                    "fn:one-or-more() called with a sequence containing less than 1 item",
-                    getMetadata()
-            );
-        }
-        setNextResult();
-    }
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
+        private final ItemRuntimePlan childPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> childCursor;
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
-                getMetadata()
-        );
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        if (this.iterator.hasNext()) {
-            this.nextResult = this.iterator.next();
+        private EvaluationCursor(ItemRuntimePlan childPlan, DynamicContext context, ExceptionMetadata metadata) {
+            super(metadata);
+            this.childPlan = Objects.requireNonNull(childPlan, "child plan cannot be null");
+            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
+            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
         }
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
+        @Override
+        protected void openLocal() {
+            this.childCursor = this.childPlan.getCursor(this.context);
+            if (!this.childCursor.hasNext()) {
+                throw new SequenceExceptionOneOrMore(
+                        "fn:one-or-more() called with a sequence containing less than 1 item",
+                        this.metadata
+                );
+            }
         }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.childCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!this.childCursor.hasNext()) {
+                throw new IteratorFlowException(
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
+                        this.metadata
+                );
+            }
+            return this.childCursor.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+        }
+
     }
 }

@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -27,9 +29,10 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -39,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
     /**
      *
      */
@@ -47,16 +50,15 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public CountFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
-
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator iterator = this.getChild(0);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        ItemRuntimePlan iterator = this.getChild(0);
 
         // the count($x) case is treated separately because we can short-circuit the
         // count, e.g., if it comes from the group-by aggregation of a non-grouping
@@ -75,49 +77,43 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item computeCount(
-            RuntimeIterator iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        if (iterator.isDataFrame()) {
+        if (iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             return computeDataFrame(
                 iterator,
                 context,
                 metadata
             );
-        } else if (iterator.isRDDOrDataFrame()) {
+        } else if (iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return computeRDD(
                 iterator,
                 context,
                 metadata
             );
         } else {
-            return computeLocally(
+            return computeLocalCount(
                 iterator,
-                context,
-                metadata
+                context
             );
         }
     }
 
-    private static Item computeLocally(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
-        iterator.open(context);
+    private static Item computeLocalCount(ItemRuntimePlan plan, DynamicContext context) {
         long result = 0;
-
-        while (iterator.hasNext()) {
-            iterator.next();
-            result += 1;
+        try (Cursor<Item> cursor = plan.getCursor(context)) {
+            while (cursor.hasNext()) {
+                cursor.next();
+                result++;
+            }
         }
-        iterator.close();
         return ItemFactory.getInstance().createLongItem(result);
     }
 
     private static Item computeRDD(
-            RuntimeIterator iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -130,11 +126,11 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item computeDataFrame(
-            RuntimeIterator iterator,
+            ItemRuntimePlan iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        long count = iterator.getDataFrame(context).count();
+        long count = iterator.getDataFrame(context).toRDD(metadata).count();
         if (count > (long) Integer.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
         } else {
@@ -156,7 +152,10 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             if (nativeChildQuery.getResultingQuery().trim().startsWith("explode")) {
                 return new NativeClauseContext(

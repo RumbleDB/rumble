@@ -25,13 +25,16 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
 
 import com.google.gson.stream.JsonReader;
 
@@ -42,34 +45,51 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
+public class JsonLinesFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    final RuntimeIterator iterator;
-    BufferedReader reader;
-    Item path;
-    Item nextItem;
+    private final ItemRuntimePlan iterator;
 
     public JsonLinesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
-        this.reader = null;
-        this.nextItem = null;
-        this.path = null;
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        Item path = this.iterator.materializeFirstOrNull(context);
+        URI uri = FileSystemUtil.resolveFileSystemURI(
+            this.staticContext.getStaticURI(),
+            path.getStringValue(),
+            getMetadata()
+        );
+        InputStream input = FileSystemUtil.getDataInputStream(
+            uri,
+            getMetadata()
+        );
+        return new JsonLinesCursor(
+                input,
+                path.getStringValue(),
+                getMetadata(),
+                this.getRuntimeStaticContext().isQuerySideEffecting()
+        );
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 
         int partitions = -1;
         if (this.getChildren().size() > 1) {
-            partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
+            partitions = this.getChild(1).materializeFirstOrNull(context).getIntValue();
         }
 
         JavaRDD<String> strings;
@@ -125,81 +145,81 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
         );
     }
 
-    protected void init() {
-        try {
-            URI uri = FileSystemUtil.resolveFileSystemURI(
-                this.staticContext.getStaticURI(),
-                this.path.getStringValue(),
-                getMetadata()
-            );
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                getMetadata()
-            );
-            this.reader = new BufferedReader(new InputStreamReader(is));
-            fetchNext();
-        } catch (IteratorFlowException e) {
-            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+    private static final class JsonLinesCursor extends AbstractLocalCursor<Item> {
+        private final InputStream input;
+        private final String path;
+        private final ExceptionMetadata metadata;
+        private final boolean querySideEffecting;
+        private Item next;
+        private BufferedReader reader;
+
+        private JsonLinesCursor(
+                InputStream input,
+                String path,
+                ExceptionMetadata metadata,
+                boolean querySideEffecting
+        ) {
+            super(metadata);
+            this.input = input;
+            this.path = path;
+            this.metadata = metadata;
+            this.querySideEffecting = querySideEffecting;
         }
-    }
 
-    @Override
-    protected void openLocal() {
-        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        init();
-    }
-
-    @Override
-    protected void closeLocal() {
-        try {
-            this.reader.close();
-        } catch (IOException e) {
-            handleException(e);
+        @Override
+        protected void openLocal() {
+            this.reader = new BufferedReader(new InputStreamReader(this.input));
+            this.advance();
         }
-        this.reader = null;
-        this.nextItem = null;
-    }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        Item result = this.nextItem;
-        fetchNext();
-        return result;
-    }
-
-    public void fetchNext() {
-        try {
-            String line = this.reader.readLine();
-            this.hasNext = (line != null);
-            if (this.hasNext) {
-                JsonReader object = new JsonReader(new StringReader(line));
-                this.nextItem = ItemParser.getItemFromObject(
-                    object,
-                    true,
-                    JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
-                    getMetadata(),
-                    this.getRuntimeStaticContext().isQuerySideEffecting()
-                );
+        private void advance() {
+            try {
+                String line = this.reader.readLine();
+                this.next = line == null
+                    ? null
+                    : ItemParser.getItemFromObject(
+                        new JsonReader(new StringReader(line)),
+                        true,
+                        JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
+                        this.metadata,
+                        this.querySideEffecting
+                    );
+            } catch (IOException exception) {
+                throw this.resourceError(exception);
             }
-        } catch (IOException e) {
-            handleException(e);
         }
-    }
 
-    public void handleException(IOException e) {
-        RumbleException rumbleException = new CannotRetrieveResourceException(
-                "I/O error while accessing file: "
-                    + this.path.getStringValue()
-                    + " Cause: "
-                    + e.getMessage(),
-                getMetadata()
-        );
-        rumbleException.initCause(e);
-        throw rumbleException;
+        @Override
+        protected boolean hasNextLocal() {
+            return this.next != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            Item result = this.next;
+            this.advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            try {
+                this.reader.close();
+            } catch (IOException exception) {
+                throw this.resourceError(exception);
+            }
+        }
+
+        private RumbleException resourceError(IOException exception) {
+            RumbleException result = new CannotRetrieveResourceException(
+                    "I/O error while accessing file: "
+                        + this.path
+                        + " Cause: "
+                        + exception.getMessage(),
+                    this.metadata
+            );
+            result.initCause(exception);
+            return result;
+        }
     }
 }

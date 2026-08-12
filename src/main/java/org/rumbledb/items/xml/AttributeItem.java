@@ -2,6 +2,7 @@ package org.rumbledb.items.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
@@ -164,7 +165,7 @@ public class AttributeItem extends AbstractNodeItem {
             Item typedValue = CastIterator.castItemToType(
                 ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
                 this.typeAnnotation,
-                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
+                ExceptionMetadata.EMPTY_METADATA
             );
             return Collections.singletonList(typedValue);
         }

@@ -7,6 +7,7 @@
 
 package org.rumbledb.runtime.dataframe;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.Serial;
@@ -17,6 +18,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
@@ -36,7 +38,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
     }
 
     @Override
-    public RuntimeDataFrame<Item> fromList(
+    public HomogeneousItemDataFrame fromList(
             List<Item> items,
             DynamicContext context,
             RuntimeStaticContext staticContext
@@ -56,7 +58,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
     }
 
     @Override
-    public RuntimeDataFrame<Item> fromRDD(
+    public HomogeneousItemDataFrame fromRDD(
             JavaRDD<Item> rdd,
             DynamicContext context,
             RuntimeStaticContext staticContext
@@ -70,5 +72,16 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
             );
         }
         return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
+    }
+
+    public HomogeneousItemDataFrame fromPlan(ItemRuntimePlan plan, DynamicContext context) {
+        RuntimeDataFrame<Item> dataFrame = plan.getDataFrame(context);
+        if (dataFrame instanceof HomogeneousItemDataFrame homogeneousDataFrame) {
+            return homogeneousDataFrame;
+        }
+        throw new OurBadException(
+                "Expected an item plan to produce a homogeneous item DataFrame.",
+                plan.getRuntimeStaticContext().getMetadata()
+        );
     }
 }

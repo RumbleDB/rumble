@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,14 +31,14 @@ import org.rumbledb.exceptions.InvalidProcessingInstructionTargetException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
@@ -44,7 +46,7 @@ import java.util.regex.Pattern;
  *
  * @see org.rumbledb.expressions.xml.ComputedPIConstructorExpression
  */
-public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
@@ -71,29 +73,23 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
             DataFunctionIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(nameIterator, contentIterator), staticContext);
+        super(
+            List.of(nameIterator, contentIterator),
+            staticContext
+        );
         this.staticTarget = null;
         this.nameIterator = nameIterator;
         this.contentIterator = contentIterator;
     }
 
-    private static List<RuntimeIterator> createChildList(RuntimeIterator... iterators) {
-        List<RuntimeIterator> children = new ArrayList<>();
-        for (RuntimeIterator iterator : iterators) {
-            if (iterator != null) {
-                children.add(iterator);
-            }
-        }
-        return children;
-    }
-
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
         String target;
         if (this.staticTarget != null) {
             target = this.staticTarget;
         } else {
-            List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
+            List<Item> atomizedNameItems = materialize.apply(this.nameIterator);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic"
@@ -117,18 +113,15 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
             }
             target = nameString;
         }
-
         if (target != null && target.equalsIgnoreCase("xml")) {
             throw new InvalidProcessingInstructionTargetException(
                     "Processing instruction target must not be XML in any combination of upper and lower case.",
                     getMetadata()
             );
         }
-
         List<Item> materialized = this.contentIterator != null
-            ? this.contentIterator.materialize(dynamicContext)
+            ? materialize.apply(this.contentIterator)
             : Collections.emptyList();
-
         List<String> stringValues = new ArrayList<>();
         if (materialized.isEmpty()) {
             stringValues.add("");
@@ -144,11 +137,8 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
                 stringValues.add(value);
             }
         }
-
         String content = String.join(" ", stringValues);
         content = removeLeadingWhitespace(content);
-
-        this.hasNext = false;
         Item processingInstructionItem = ItemFactory.getInstance()
             .createXmlProcessingInstructionNode(
                 target,
@@ -160,6 +150,7 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
         }
         return processingInstructionItem;
     }
+
 
     private boolean isValidNCName(String value) {
         return value != null && NCNAME_PATTERN.matcher(value).matches();

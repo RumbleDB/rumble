@@ -26,4 +26,5 @@ public class GeneratedRandomIntegersIterator extends GeneratedRandomsIterator {
     public boolean hasNext() {
         return this.iterator.hasNext();
     }
+
 }

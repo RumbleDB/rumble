@@ -25,19 +25,19 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 
 import java.io.Serial;
+import java.util.List;
 
-public class EmptySequenceIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class EmptySequenceIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public EmptySequenceIterator(RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         return null;
     }
 }

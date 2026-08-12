@@ -20,17 +20,19 @@
 
 package org.rumbledb.runtime.functions.input;
 
+
 import org.apache.spark.SparkException;
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import org.rumbledb.spark.SparkSessionManager;
 
@@ -38,24 +40,22 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterator {
+public class StructuredJsonLinesFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public StructuredJsonLinesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator urlIterator = this.getChild(0);
-        urlIterator.open(context);
-        String url = urlIterator.next().getStringValue();
-        urlIterator.close();
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        ItemRuntimePlan urlIterator = this.getChild(0);
+        String url = urlIterator.materializeFirstOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());

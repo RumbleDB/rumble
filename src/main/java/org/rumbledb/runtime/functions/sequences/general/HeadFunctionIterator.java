@@ -20,37 +20,37 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class HeadFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public HeadFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        if (this.getChild(0).isRDDOrDataFrame()) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        if (this.getChild(0).getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
             if (i.isEmpty()) {
                 return null;
             }
             return i.get(0);
         }
-        return this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+        return this.getChild(0).materializeFirstOrNull(dynamicContext);
     }
 }

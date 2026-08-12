@@ -10,8 +10,10 @@ import org.rumbledb.exceptions.UnsupportedCollationException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -50,13 +52,13 @@ public final class CollationResolver {
      */
     public static byte[] collationKeyBytes(String value, String collationUri, ExceptionMetadata metadata) {
         if (collationUri == null || CollationCatalogue.CODEPOINT_COLLATION.equals(collationUri)) {
-            return value.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            return value.getBytes(StandardCharsets.UTF_8);
         }
         if (CollationCatalogue.HTML_ASCII_CASE_INSENSITIVE_COLLATION.equals(collationUri)) {
-            return asciiLowerCase(value).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            return asciiLowerCase(value).getBytes(StandardCharsets.UTF_8);
         }
         if (CollationCatalogue.FOTS_CASEBLIND_COLLATION.equals(collationUri)) {
-            return value.toLowerCase(java.util.Locale.ROOT).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            return value.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.UTF_8);
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
             return buildICUCollator(collationUri, metadata).getCollationKey(value).toByteArray();

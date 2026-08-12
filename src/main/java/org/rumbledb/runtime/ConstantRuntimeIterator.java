@@ -25,8 +25,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 
 import java.io.Serial;
+import java.util.List;
 
-public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ConstantRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -36,7 +37,7 @@ public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             Item item,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
         this.item = item;
     }
 
@@ -46,7 +47,7 @@ public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return this.item;
     }
 }

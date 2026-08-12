@@ -17,14 +17,16 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -36,18 +38,21 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-function-lookup">XPath and XQuery Functions and
  *      Operators 3.1</a>
  */
-public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FunctionLookupFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public FunctionLookupFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item nameItem = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item nameItem = this.getChild(0).materializeFirstOrNull(context);
         if (!nameItem.isQName()) {
             throw new UnexpectedTypeException(
                     "function-lookup: first argument must be xs:QName",
@@ -56,7 +61,7 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
         }
         Name fnName = nameItem.getQNameValue();
 
-        Item arityItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item arityItem = this.getChild(1).materializeFirstOrNull(context);
         if (arityItem == null) {
             throw new UnexpectedTypeException(
                     "function-lookup: second argument must be xs:integer",
@@ -83,4 +88,6 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
         FunctionIdentifier id = new FunctionIdentifier(fnName, arity);
         return NamedFunctionLookup.lookupOrNull(id, context, getConfiguration(), getMetadata());
     }
+
+
 }

@@ -25,11 +25,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
+import java.util.List;
 
-public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class NamedFunctionRefRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -40,12 +41,12 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
             FunctionIdentifier functionIdentifier,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
         this.functionIdentifier = functionIdentifier;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         Item resolved = NamedFunctionLookup.lookupOrNull(
             this.functionIdentifier,
             dynamicContext,

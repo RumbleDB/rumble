@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -8,8 +10,7 @@ import org.rumbledb.exceptions.InvalidXmlDocumentException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -25,22 +26,22 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ParseXMLFragmentFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ParseXMLFragmentFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     private static final String WRAPPER_ELEMENT_NAME = "rumble-parse-xml-fragment-wrapper";
 
     public ParseXMLFragmentFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item arg = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item arg = this.getChild(0).materializeFirstOrNull(context);
         if (arg == null) {
             return null;
         }

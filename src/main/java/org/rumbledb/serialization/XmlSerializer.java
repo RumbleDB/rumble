@@ -9,6 +9,7 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.xml.NamespaceItem;
 
 import java.io.Serial;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
@@ -16,8 +17,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
-public class XmlSerializer implements Serializer, java.io.Serializable {
+public class XmlSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -394,7 +396,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         return false;
     }
 
-    protected boolean matchesExpandedQNameEntry(java.util.Set<String> entries, Item element) {
+    protected boolean matchesExpandedQNameEntry(Set<String> entries, Item element) {
         if (entries == null || entries.isEmpty() || element == null || element.nodeName() == null) {
             return false;
         }

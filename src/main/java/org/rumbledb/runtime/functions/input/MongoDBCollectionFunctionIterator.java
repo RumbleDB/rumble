@@ -20,41 +20,46 @@
 
 package org.rumbledb.runtime.functions.input;
 
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+
+
 import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.List;
 
-public class MongoDBCollectionFunctionIterator extends DataFrameRuntimeIterator {
+public class MongoDBCollectionFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public MongoDBCollectionFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
 
-        String uri = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
-        String collection = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+        String uri = this.getChild(0).materializeFirstOrNull(context).getStringValue();
+        String collection = this.getChild(1).materializeFirstOrNull(context).getStringValue();
 
         int partitions = -1;
         if (this.getChildren().size() > 2) {
-            partitions = this.getChild(2).materializeFirstItemOrNull(context).getIntValue();
+            partitions = this.getChild(2).materializeFirstOrNull(context).getIntValue();
         }
 
         try {

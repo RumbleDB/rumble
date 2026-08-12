@@ -18,31 +18,30 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.SortKeyComparison;
 import org.rumbledb.types.SequenceType;
 
@@ -51,53 +50,22 @@ import org.rumbledb.types.SequenceType;
  * {@code array:sort($array)}, {@code array:sort($array, $collation?)},
  * {@code array:sort($array, $collation?, $key)}.
  */
-public class ArraySortFunctionIterator extends HybridRuntimeIterator {
+public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator collationIterator;
-    private final RuntimeIterator keyIterator;
-
-    private Item resultItem;
-    private boolean hasProducedResult;
-
-    public ArraySortFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        int n = arguments.size();
-        if (n < 1 || n > 3) {
-            throw new OurBadException("array:sort expects 1, 2, or 3 arguments.");
-        }
-        this.arrayIterator = arguments.get(0);
-        this.collationIterator = n >= 2 ? arguments.get(1) : null;
-        this.keyIterator = n == 3 ? arguments.get(2) : null;
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
 
     @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item arrayItem;
         try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:sort expects exactly one array argument.",
                     getMetadata()
             );
+        }
+        if (arrayItem == null) {
+            return null;
         }
 
         if (!arrayItem.isArray()) {
@@ -142,13 +110,34 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : sortedMembers) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        return ItemFactory.getInstance()
+            .createSequenceArrayItem(sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan collationIterator;
+    private final ItemRuntimePlan keyIterator;
+
+    public ArraySortFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        int n = arguments.size();
+        if (n < 1 || n > 3) {
+            throw new OurBadException("array:sort expects 1, 2, or 3 arguments.");
+        }
+        this.arrayIterator = arguments.get(0);
+        this.collationIterator = n >= 2 ? arguments.get(1) : null;
+        this.keyIterator = n == 3 ? arguments.get(2) : null;
+    }
+
 
     private String resolveCollationUri(DynamicContext context) {
         if (this.collationIterator == null) {
@@ -240,16 +229,19 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             List<Item> memberSequence,
             DynamicContext context
     ) {
-        RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
-        List<RuntimeIterator> arguments = new ArrayList<>(1);
-        arguments.add(memberIterator);
-        RuntimeIterator call = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
+        ItemRuntimePlan memberIterator = createSequenceIterator(
+            memberSequence
         );
+        List<ItemRuntimePlan> arguments = new ArrayList<>(1);
+        arguments.add(memberIterator);
+        ItemRuntimePlan call = NamedFunctions
+            .buildFunctionItemCallIterator(
+                functionItem,
+                this.staticContext,
+                ExecutionMode.LOCAL,
+                arguments,
+                false
+            );
         return materializeKeyIterator(call, context);
     }
 
@@ -273,7 +265,10 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        RuntimeIterator indexIterator = new ConstantRuntimeIterator(indexItem, localStaticContext());
+        ItemRuntimePlan indexIterator = new ConstantRuntimeIterator(
+                indexItem,
+                localStaticContext()
+        );
         ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(
                 keyArray,
                 indexIterator,
@@ -298,20 +293,17 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         return fnDataKeySequence(Collections.singletonList(value));
     }
 
-    private List<Item> materializeIterator(RuntimeIterator iterator, DynamicContext context) {
-        iterator.open(context);
-        try {
-            List<Item> out = new ArrayList<>();
-            while (iterator.hasNext()) {
-                out.add(iterator.next());
-            }
-            return out;
-        } finally {
-            iterator.close();
-        }
+    private List<Item> materializeIterator(
+            ItemRuntimePlan iterator,
+            DynamicContext context
+    ) {
+        return iterator.materialize(context);
     }
 
-    private List<Item> materializeKeyIterator(RuntimeIterator iterator, DynamicContext context) {
+    private List<Item> materializeKeyIterator(
+            ItemRuntimePlan iterator,
+            DynamicContext context
+    ) {
         return fnDataKeySequence(materializeIterator(iterator, context));
     }
 
@@ -324,63 +316,20 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             .build();
     }
 
-    private RuntimeIterator createSequenceIterator(List<Item> items) {
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             return new CommaExpressionIterator(
                     Collections.emptyList(),
                     localStaticContext()
             );
         }
-        List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(
+                items.size()
+        );
         for (Item item : items) {
             childIterators.add(new ConstantRuntimeIterator(item, localStaticContext()));
         }
         return new CommaExpressionIterator(childIterators, localStaticContext());
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        if (this.collationIterator != null && this.collationIterator.isOpen()) {
-            this.collationIterator.close();
-        }
-        if (this.keyIterator != null && this.keyIterator.isOpen()) {
-            this.keyIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException("array:sort is currently supported only in local execution mode.");
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("array:sort is currently supported only in local execution mode.");
     }
 
     @FunctionalInterface

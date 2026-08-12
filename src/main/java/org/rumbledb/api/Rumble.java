@@ -1,11 +1,12 @@
 package org.rumbledb.api;
 
+
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 
 import java.io.IOException;
@@ -130,7 +131,7 @@ public class Rumble {
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
      * @param location the JSONiq main module location.
-     * @throws java.io.IOException if there was an issue reading a module.
+     * @throws IOException if there was an issue reading a module.
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(URI location) throws IOException {
@@ -180,12 +181,12 @@ public class Rumble {
             effectiveConfiguration,
             bindings
         );
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
+        ItemRuntimePlan plan = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             effectiveConfiguration
         );
 
-        return new SequenceOfItems(iterator, dynamicContext, effectiveConfiguration);
+        return new SequenceOfItems(plan, dynamicContext, effectiveConfiguration);
     }
 
     /**
@@ -193,7 +194,7 @@ public class Rumble {
      * declared in the static context.
      *
      * @param location the JSONiq main module location.
-     * @throws java.io.IOException if there was an issue reading a module.
+     * @throws IOException if there was an issue reading a module.
      * @return the serialized query result.
      */
     public String runQueryToString(URI location) throws IOException {

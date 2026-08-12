@@ -692,7 +692,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
      * <p>
      * <strong>Prefix resolution (any prefixed QName):</strong> the prefix is always resolved with
      * {@link #resolvePrefixForDirConstructor}, which consults {@link #dirElemNamespaceFrames} from innermost to
-     * outermost, then falls back to {@link org.rumbledb.context.StaticContext#resolveNamespace(String)} on the module
+     * outermost, then falls back to {@link StaticContext#resolveNamespace(String)} on the module
      * context. So prefixed names can use namespace bindings established by {@code xmlns} / {@code xmlns:prefix} on an
      * enclosing direct element constructor, in source order, as well as prolog and imported bindings.
      * <p>
