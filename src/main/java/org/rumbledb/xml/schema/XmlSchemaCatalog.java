@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.xml.validation.Schema;
 
 import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSModel;
@@ -39,11 +40,13 @@ import org.rumbledb.types.ItemType;
 public final class XmlSchemaCatalog {
 
     private final XSModel schemaModel;
+    private final Schema validationSchema;
     private final XmlSchemaTypeMapper typeMapper;
     private final XercesTypedValueConverter typedValueConverter;
 
-    XmlSchemaCatalog(XSModel schemaModel) {
+    XmlSchemaCatalog(XSModel schemaModel, Schema validationSchema) {
         this.schemaModel = Objects.requireNonNull(schemaModel, "schemaModel must not be null");
+        this.validationSchema = Objects.requireNonNull(validationSchema, "validationSchema must not be null");
         this.typeMapper = new XmlSchemaTypeMapper();
         this.typedValueConverter = new XercesTypedValueConverter(this.typeMapper);
     }
@@ -98,6 +101,10 @@ public final class XmlSchemaCatalog {
 
     XSModel getSchemaModel() {
         return this.schemaModel;
+    }
+
+    Schema getValidationSchema() {
+        return this.validationSchema;
     }
 
     private static String emptyToNull(String value) {

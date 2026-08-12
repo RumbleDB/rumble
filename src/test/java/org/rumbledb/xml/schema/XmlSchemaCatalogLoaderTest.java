@@ -22,12 +22,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.xml.validation.ValidatorHandler;
 
+import org.apache.xerces.xs.PSVIProvider;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.xml.sax.Attributes;
+import org.xml.sax.helpers.AttributesImpl;
+import org.xml.sax.helpers.DefaultHandler;
 
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.VisitorHelpers;
@@ -174,6 +180,50 @@ public class XmlSchemaCatalogLoaderTest {
         Assertions.assertFalse(
                 inScopeTypes.checkInScopeSchemaTypeExists(new Name(NAMESPACE, "t", "RestrictedCodeOrInteger")));
         Assertions.assertFalse(inScopeTypes.checkInScopeSchemaTypeExists(recordName));
+    }
+
+    @Test
+    public void validationAndTypeLookupShareTheSameSchemaGrammar(@TempDir Path directory) throws Exception {
+        Files.writeString(
+                directory.resolve("types.xsd"),
+                schema(
+                        NAMESPACE,
+                        """
+                        <xs:simpleType name="Count">
+                          <xs:restriction base="xs:integer"/>
+                        </xs:simpleType>
+                        <xs:element name="value" type="t:Count"/>
+                        """));
+
+        MainModule module = compile(
+                "import schema namespace t = \"urn:test\" at \"types.xsd\"; 1",
+                directory.resolve("query.xq").toUri(),
+                new ResourceResolver());
+        XmlSchemaCatalog catalog = module.getStaticContext().getXmlSchemaCatalog();
+        XSTypeDefinition catalogType =
+                catalog.getTypeDefinition(new Name(NAMESPACE, "t", "Count")).orElseThrow();
+
+        ValidatorHandler validator = catalog.getValidationSchema().newValidatorHandler();
+        PSVIProvider psviProvider = Assertions.assertInstanceOf(PSVIProvider.class, validator);
+        AtomicReference<XSTypeDefinition> validatedType = new AtomicReference<>();
+        validator.setContentHandler(new DefaultHandler() {
+            @Override
+            public void endElement(String uri, String localName, String qualifiedName) {
+                validatedType.set(psviProvider.getElementPSVI().getTypeDefinition());
+            }
+        });
+
+        Attributes attributes = new AttributesImpl();
+        char[] value = "42".toCharArray();
+        validator.startDocument();
+        validator.startPrefixMapping("t", NAMESPACE);
+        validator.startElement(NAMESPACE, "value", "t:value", attributes);
+        validator.characters(value, 0, value.length);
+        validator.endElement(NAMESPACE, "value", "t:value");
+        validator.endPrefixMapping("t");
+        validator.endDocument();
+
+        Assertions.assertSame(catalogType, validatedType.get());
     }
 
     @Test
