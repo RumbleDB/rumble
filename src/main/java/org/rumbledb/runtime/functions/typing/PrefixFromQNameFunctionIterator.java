@@ -25,10 +25,7 @@ public class PrefixFromQNameFunctionIterator extends AbstractAtMostOneItemRuntim
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private static Item evaluate(Item item) {
+        Item item = this.getChild(0).materializeFirstOrNull(context);
         QNameItem qnameItem = (QNameItem) item;
         if (qnameItem == null) {
             return null;
@@ -36,7 +33,8 @@ public class PrefixFromQNameFunctionIterator extends AbstractAtMostOneItemRuntim
         String prefix = qnameItem.getQNameValue().getPrefix();
         if (prefix == null)
             return null;
-
         return ItemFactory.getInstance().createNCNameItem(prefix);
     }
+
+
 }

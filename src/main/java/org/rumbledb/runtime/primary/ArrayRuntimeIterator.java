@@ -77,10 +77,7 @@ public class ArrayRuntimeIterator extends AbstractAtMostOneItemRuntimePlan imple
     public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        return evaluate(index -> this.getChild(index).materialize(dynamicContext));
-    }
-
-    private Item evaluate(IntFunction<List<Item>> materializeChild) {
+        IntFunction<List<Item>> materializeChild = index -> this.getChild(index).materialize(dynamicContext);
         if (isEffectiveFixedSlotsArrayConstructor()) {
             boolean allSingleton = true;
             List<List<Item>> memberSequences = new ArrayList<>();
@@ -109,6 +106,7 @@ public class ArrayRuntimeIterator extends AbstractAtMostOneItemRuntimePlan imple
         }
         return ItemFactory.getInstance().createArrayItem(result, this.mutable);
     }
+
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {

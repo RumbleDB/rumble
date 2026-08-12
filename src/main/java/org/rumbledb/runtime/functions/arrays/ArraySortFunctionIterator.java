@@ -55,31 +55,6 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeResult(context);
-    }
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final ItemRuntimePlan arrayIterator;
-    private final ItemRuntimePlan collationIterator;
-    private final ItemRuntimePlan keyIterator;
-
-    public ArraySortFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        int n = arguments.size();
-        if (n < 1 || n > 3) {
-            throw new OurBadException("array:sort expects 1, 2, or 3 arguments.");
-        }
-        this.arrayIterator = arguments.get(0);
-        this.collationIterator = n >= 2 ? arguments.get(1) : null;
-        this.keyIterator = n == 3 ? arguments.get(2) : null;
-    }
-
-    private Item computeResult(DynamicContext context) {
         Item arrayItem;
         try {
             arrayItem = this.arrayIterator.materializeAtMostOne(context);
@@ -141,6 +116,28 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return ItemFactory.getInstance()
             .createSequenceArrayItem(sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan collationIterator;
+    private final ItemRuntimePlan keyIterator;
+
+    public ArraySortFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        int n = arguments.size();
+        if (n < 1 || n > 3) {
+            throw new OurBadException("array:sort expects 1, 2, or 3 arguments.");
+        }
+        this.arrayIterator = arguments.get(0);
+        this.collationIterator = n >= 2 ? arguments.get(1) : null;
+        this.keyIterator = n == 3 ? arguments.get(2) : null;
+    }
+
 
     private String resolveCollationUri(DynamicContext context) {
         if (this.collationIterator == null) {

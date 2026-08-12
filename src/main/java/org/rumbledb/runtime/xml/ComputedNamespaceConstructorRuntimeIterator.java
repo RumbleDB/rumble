@@ -94,13 +94,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createNamespace(iterator -> iterator.materialize(dynamicContext), dynamicContext);
-    }
-
-    private Item createNamespace(
-            Function<ItemRuntimePlan, List<Item>> materialize,
-            DynamicContext dynamicContext
-    ) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
         // Spec: "A computed namespace constructor creates a new namespace node, with its own node identity."
         // Spec: "The parent of the newly created namespace node is empty."
         // Spec: "By itself, a computed namespace constructor has no effect on in-scope namespaces, but if an element
@@ -109,7 +103,6 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         String prefix = resolvePrefix(materialize);
         String uri = resolveUri(materialize);
         validateNamespaceBinding(prefix, uri);
-
         Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri);
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
@@ -117,6 +110,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         }
         return namespaceItem;
     }
+
 
     private String resolvePrefix(Function<ItemRuntimePlan, List<Item>> materialize) {
         // Spec: "If the constructor specifies a Prefix, it is used as the prefix for the namespace node."

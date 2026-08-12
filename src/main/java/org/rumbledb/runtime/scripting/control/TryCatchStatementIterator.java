@@ -39,13 +39,7 @@ public class TryCatchStatementIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return execute(context, ItemRuntimePlan::materialize);
-    }
-
-    private Item execute(
-            DynamicContext context,
-            BiConsumer<ItemRuntimePlan, DynamicContext> materialize
-    ) {
+        BiConsumer<ItemRuntimePlan, DynamicContext> materialize = ItemRuntimePlan::materialize;
         try {
             DynamicContext childContext = new DynamicContext(context);
             materialize.accept(this.tryStatementIterator, childContext);
@@ -72,6 +66,7 @@ public class TryCatchStatementIterator extends AbstractAtMostOneItemRuntimePlan 
         }
         return null;
     }
+
 
     private ItemRuntimePlan findMatchingCatch(RumbleException exception) {
         for (Map.Entry<CatchPattern, ? extends ItemRuntimePlan> entry : this.catchStatements.entrySet()) {

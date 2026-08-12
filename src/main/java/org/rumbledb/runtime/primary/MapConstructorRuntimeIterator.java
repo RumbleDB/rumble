@@ -86,10 +86,7 @@ public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimeP
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return evaluate(iterator -> iterator.materialize(dynamicContext));
-    }
-
-    private Item evaluate(Function<ItemRuntimePlan, List<Item>> materialize) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
         List<Item> mapKeys = new ArrayList<>();
         List<List<Item>> valueSequences = new ArrayList<>();
         boolean allKeysString = true;
@@ -124,6 +121,7 @@ public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimeP
                 );
         }
     }
+
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {

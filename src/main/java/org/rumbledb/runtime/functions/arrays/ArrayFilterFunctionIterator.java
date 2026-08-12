@@ -49,28 +49,6 @@ public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePla
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeResult(context);
-    }
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final ItemRuntimePlan arrayIterator;
-    private final ItemRuntimePlan predicateIterator;
-
-    public ArrayFilterFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        if (arguments.size() != 2) {
-            throw new OurBadException("array:filter must have exactly two arguments.");
-        }
-        this.arrayIterator = arguments.get(0);
-        this.predicateIterator = arguments.get(1);
-    }
-
-    private Item computeResult(DynamicContext context) {
         Item arrayItem = null;
         try {
             arrayItem = this.arrayIterator.materializeAtMostOne(context);
@@ -129,6 +107,25 @@ public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePla
         return ItemFactory.getInstance()
             .createSequenceArrayItem(kept, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan predicateIterator;
+
+    public ArrayFilterFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        if (arguments.size() != 2) {
+            throw new OurBadException("array:filter must have exactly two arguments.");
+        }
+        this.arrayIterator = arguments.get(0);
+        this.predicateIterator = arguments.get(1);
+    }
+
 
     private boolean predicateHoldsForCallableItem(
             Item predicate,

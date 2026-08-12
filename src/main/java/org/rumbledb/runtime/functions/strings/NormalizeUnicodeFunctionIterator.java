@@ -136,10 +136,6 @@ public class NormalizeUnicodeFunctionIterator extends AbstractAtMostOneItemRunti
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         boolean fullyNormalized = false;
         Normalizer.Form normalizationForm = Normalizer.Form.NFC;
         Item inputItem = this.getChild(0).materializeFirstOrNull(context);
@@ -181,5 +177,6 @@ public class NormalizeUnicodeFunctionIterator extends AbstractAtMostOneItemRunti
         String normalizedString = Normalizer.normalize(input, normalizationForm);
         return ItemFactory.getInstance().createStringItem(normalizedString);
     }
+
 
 }

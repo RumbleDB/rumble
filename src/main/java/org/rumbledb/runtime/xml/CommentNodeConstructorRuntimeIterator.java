@@ -56,26 +56,20 @@ public class CommentNodeConstructorRuntimeIterator extends AbstractAtMostOneItem
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createComment(this.contentIterator.materialize(dynamicContext), dynamicContext);
-    }
-
-    private Item createComment(List<Item> materialized, DynamicContext dynamicContext) {
+        List<Item> materialized = this.contentIterator.materialize(dynamicContext);
         if (materialized.isEmpty()) {
             return null;
         }
-
         StringJoiner joiner = new StringJoiner(" ");
         for (Item item : materialized) {
             joiner.add(item.getStringValue());
         }
         String commentContent = joiner.toString();
-
         // Spec guard: "If the resulting string contains two adjacent hyphens or ends with a hyphen,
         // a dynamic error is raised [err:XQDY0072]." (XQuery 3.1 §3.9.3.5)
         if (commentContent.contains("--") || commentContent.endsWith("-")) {
             throw new InvalidCommentContentException(commentContent, getMetadata());
         }
-
         Item commentItem = ItemFactory.getInstance().createXmlCommentNode(commentContent);
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
@@ -83,4 +77,6 @@ public class CommentNodeConstructorRuntimeIterator extends AbstractAtMostOneItem
         }
         return commentItem;
     }
+
+
 }

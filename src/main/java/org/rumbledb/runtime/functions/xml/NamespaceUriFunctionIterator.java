@@ -26,21 +26,18 @@ public class NamespaceUriFunctionIterator extends AbstractAtMostOneItemRuntimePl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(getContextNode(context));
-    }
-
-    private Item evaluate(Item node) {
+        Item node = getContextNode(context);
         if (node == null) {
             return ItemFactory.getInstance().createAnyURIItem("");
         }
         if (!node.isNode()) {
             throw new UnexpectedTypeException("The argument must be a reference to an XML node", getMetadata());
         }
-
         Name nodeName = node.nodeName();
         String namespaceUri = nodeName == null ? "" : nodeName.getNamespace();
         return ItemFactory.getInstance().createAnyURIItem(namespaceUri == null ? "" : namespaceUri);
     }
+
 
     private Item getContextNode(DynamicContext context) {
         if (!this.getChildren().isEmpty()) {

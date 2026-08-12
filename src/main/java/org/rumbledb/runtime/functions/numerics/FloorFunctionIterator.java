@@ -52,10 +52,7 @@ public class FloorFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private Item evaluate(Item value) {
+        Item value = this.getChild(0).materializeFirstOrNull(context);
         if (value == null) {
             return null;
         }
@@ -71,7 +68,6 @@ public class FloorFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
         ) {
             return value;
         }
-
         if (value.isInt()) {
             return ItemFactory.getInstance().createIntItem(value.getIntValue());
         }
@@ -103,6 +99,7 @@ public class FloorFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
                 getMetadata()
         );
     }
+
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {

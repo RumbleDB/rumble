@@ -27,10 +27,7 @@ public class FunctionArityFunctionIterator extends AbstractAtMostOneItemRuntimeP
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private Item evaluate(Item function) {
+        Item function = this.getChild(0).materializeFirstOrNull(context);
         if (function == null || !function.isFunction()) {
             throw new UnexpectedTypeException(
                     "The argument of fn:function-arity must be a single function item [err:XPTY0004].",
@@ -38,7 +35,8 @@ public class FunctionArityFunctionIterator extends AbstractAtMostOneItemRuntimeP
             );
         }
         FunctionItem functionItem = (FunctionItem) function;
-
         return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(functionItem.getParameterNames().size()));
     }
+
+
 }

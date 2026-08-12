@@ -59,7 +59,14 @@ public class ArrayTailFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return tailArgument(this.arrayIterator.materialize(context));
+        List<Item> items = this.arrayIterator.materialize(context);
+        if (items.size() > 1) {
+            throw new UnexpectedTypeException(
+                    "array:tail expects exactly one array argument.",
+                    getMetadata()
+            );
+        }
+        return tail(items.isEmpty() ? null : items.get(0));
     }
 
     private Item tail(Item arrayItem) {
@@ -99,13 +106,5 @@ public class ArrayTailFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         }
     }
 
-    private Item tailArgument(List<Item> items) {
-        if (items.size() > 1) {
-            throw new UnexpectedTypeException(
-                    "array:tail expects exactly one array argument.",
-                    getMetadata()
-            );
-        }
-        return tail(items.isEmpty() ? null : items.get(0));
-    }
+
 }

@@ -29,10 +29,6 @@ abstract class DateFormattingFunctionIterator extends AbstractAtMostOneItemRunti
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item valueItem = this.getChild(0).materializeFirstOrNull(context);
         Item pictureItem = this.getChild(1).materializeFirstOrNull(context);
         Item languageItem = this.getChildren().size() > 2 ? this.getChild(2).materializeFirstOrNull(context) : null;
@@ -87,6 +83,7 @@ abstract class DateFormattingFunctionIterator extends AbstractAtMostOneItemRunti
 
         return ItemFactory.getInstance().createStringItem(result);
     }
+
 
     /**
      * Returns the String of a String item, or null if the item holds null or the item reference is null.

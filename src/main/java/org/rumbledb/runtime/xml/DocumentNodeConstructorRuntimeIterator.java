@@ -70,16 +70,8 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createDocument(
-            (iterator, childContext) -> iterator.materialize(childContext),
-            dynamicContext
-        );
-    }
-
-    private Item createDocument(
-            BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize,
-            DynamicContext dynamicContext
-    ) {
+        BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize = (iterator, childContext) -> iterator
+            .materialize(childContext);
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -90,7 +82,6 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
             // A top-level iterator is already set - use the provided context
             contextToUse = dynamicContext;
         }
-
         // Process content expression according to specification,
         // The content expression of a document node constructor is processed in exactly the same way
         // as an enclosed expression in the content of a direct element constructor, as described in
@@ -101,25 +92,22 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
                 ? List.of()
                 : materialize.apply(this.contentIterator, contextToUse)
         );
-
         // Create and return the document node item
         Item documentItem = ItemFactory.getInstance()
             .createXmlDocumentNode(
                 processedContent
             );
-
         // Set the parent of the child nodes to the document node
         documentItem.addParentToDescendants();
-
         // Set XML document position if this is the top-level runtime iterator
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             // This is the top-level runtime iterator - set XML document positions recursively
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             documentItem.setXmlDocumentPosition(documentPath, 0);
         }
-
         return documentItem;
     }
+
 
     /**
      * Processes the content expression of the document node constructor.

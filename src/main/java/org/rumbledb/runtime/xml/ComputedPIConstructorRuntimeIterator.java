@@ -84,16 +84,7 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createProcessingInstruction(
-            iterator -> iterator.materialize(dynamicContext),
-            dynamicContext
-        );
-    }
-
-    private Item createProcessingInstruction(
-            Function<ItemRuntimePlan, List<Item>> materialize,
-            DynamicContext dynamicContext
-    ) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
         String target;
         if (this.staticTarget != null) {
             target = this.staticTarget;
@@ -122,18 +113,15 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
             }
             target = nameString;
         }
-
         if (target != null && target.equalsIgnoreCase("xml")) {
             throw new InvalidProcessingInstructionTargetException(
                     "Processing instruction target must not be XML in any combination of upper and lower case.",
                     getMetadata()
             );
         }
-
         List<Item> materialized = this.contentIterator != null
             ? materialize.apply(this.contentIterator)
             : Collections.emptyList();
-
         List<String> stringValues = new ArrayList<>();
         if (materialized.isEmpty()) {
             stringValues.add("");
@@ -149,10 +137,8 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
                 stringValues.add(value);
             }
         }
-
         String content = String.join(" ", stringValues);
         content = removeLeadingWhitespace(content);
-
         Item processingInstructionItem = ItemFactory.getInstance()
             .createXmlProcessingInstructionNode(
                 target,
@@ -164,6 +150,7 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
         }
         return processingInstructionItem;
     }
+
 
     private boolean isValidNCName(String value) {
         return value != null && NCNAME_PATTERN.matcher(value).matches();

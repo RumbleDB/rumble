@@ -27,10 +27,6 @@ public class SubstringBeforeFunctionIterator extends AbstractAtMostOneItemRuntim
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         Item substringItem = this.getChild(1).materializeFirstOrNull(context);
         if (this.getChildren().size() == 3) {
@@ -60,5 +56,6 @@ public class SubstringBeforeFunctionIterator extends AbstractAtMostOneItemRuntim
                         )
                 );
     }
+
 
 }

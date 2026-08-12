@@ -52,10 +52,6 @@ public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntime
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item nameItem = this.getChild(0).materializeFirstOrNull(context);
         if (!nameItem.isQName()) {
             throw new UnexpectedTypeException(
@@ -92,4 +88,6 @@ public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntime
         FunctionIdentifier id = new FunctionIdentifier(fnName, arity);
         return NamedFunctionLookup.lookupOrNull(id, context, getConfiguration(), getMetadata());
     }
+
+
 }

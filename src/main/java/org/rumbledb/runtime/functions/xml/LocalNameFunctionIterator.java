@@ -26,10 +26,7 @@ public class LocalNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(getContextNode(context));
-    }
-
-    private Item evaluate(Item node) {
+        Item node = getContextNode(context);
         if (node == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
@@ -42,6 +39,7 @@ public class LocalNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         }
         return ItemFactory.getInstance().createStringItem(nodeName.getLocalName());
     }
+
 
     private Item getContextNode(DynamicContext context) {
         if (!this.getChildren().isEmpty()) {

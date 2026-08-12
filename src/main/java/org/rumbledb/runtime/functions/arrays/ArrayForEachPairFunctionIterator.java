@@ -50,30 +50,6 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeResult(context);
-    }
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final ItemRuntimePlan arrayIterator1;
-    private final ItemRuntimePlan arrayIterator2;
-    private final ItemRuntimePlan functionIterator;
-
-    public ArrayForEachPairFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        if (arguments.size() != 3) {
-            throw new OurBadException("array:for-each-pair must have exactly three arguments.");
-        }
-        this.arrayIterator1 = arguments.get(0);
-        this.arrayIterator2 = arguments.get(1);
-        this.functionIterator = arguments.get(2);
-    }
-
-    private Item computeResult(DynamicContext context) {
         Item arrayItem1;
         try {
             arrayItem1 = this.arrayIterator1.materializeAtMostOne(context);
@@ -156,6 +132,27 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
         return ItemFactory.getInstance()
             .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan arrayIterator1;
+    private final ItemRuntimePlan arrayIterator2;
+    private final ItemRuntimePlan functionIterator;
+
+    public ArrayForEachPairFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        if (arguments.size() != 3) {
+            throw new OurBadException("array:for-each-pair must have exactly three arguments.");
+        }
+        this.arrayIterator1 = arguments.get(0);
+        this.arrayIterator2 = arguments.get(1);
+        this.functionIterator = arguments.get(2);
+    }
+
 
     private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {

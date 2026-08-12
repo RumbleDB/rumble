@@ -50,10 +50,6 @@ public class ParseJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstOrNull(context) : null;
         if (stringItem == null) {
@@ -89,4 +85,6 @@ public class ParseJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             getMetadata()
         );
     }
+
+
 }

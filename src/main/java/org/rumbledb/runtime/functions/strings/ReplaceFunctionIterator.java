@@ -50,10 +50,6 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         Item patternStringItem = this.getChild(1).materializeFirstOrNull(context);
 
@@ -98,6 +94,7 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
 
     }
+
 
     private static boolean checkReplacementStringForValidity(String repl) {
         int i = 0;

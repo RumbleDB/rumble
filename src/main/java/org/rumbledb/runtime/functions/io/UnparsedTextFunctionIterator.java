@@ -46,10 +46,6 @@ public class UnparsedTextFunctionIterator extends AbstractAtMostOneItemRuntimePl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item hrefItem = this.getChild(0).materializeFirstOrNull(context);
         if (hrefItem == null) {
             return null;
@@ -69,4 +65,6 @@ public class UnparsedTextFunctionIterator extends AbstractAtMostOneItemRuntimePl
         );
         return ItemFactory.getInstance().createStringItem(result);
     }
+
+
 }

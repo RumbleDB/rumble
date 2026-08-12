@@ -58,18 +58,13 @@ public class AttributeNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createAttribute(iterator -> iterator.materialize(dynamicContext));
-    }
-
-    private Item createAttribute(Function<ItemRuntimePlan, List<Item>> materialize) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
         StringBuilder sb = new StringBuilder();
         // follow the spec as defined in https://www.w3.org/TR/xquery-31/#id-attributes
         // 2. Each enclosed expression is converted to a string as follows:
         for (DataFunctionIterator atomizedValueIterator : this.atomizedValues) {
-
             // 2.a Atomization is applied to each enclosed expression, converting it to a sequence of atomic values.
             List<Item> atomizedItems = materialize.apply(atomizedValueIterator);
-
             // 2.b If the result of atomization is an empty sequence, the result is the zero-length string.
             if (atomizedItems.isEmpty()) {
                 // Empty atomization result contributes nothing to the final string
@@ -87,11 +82,9 @@ public class AttributeNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePl
                 }
             }
         }
-
         // 3. Adjacent strings resulting from the above steps are concatenated with no intervening blanks.
         // The resulting string becomes the string-value property of the attribute node.
         // this is performed by using the same StringBuilder for all the attribute components
-
         // Create and return the attribute
         return ItemFactory.getInstance()
             .createXmlAttributeNode(
@@ -99,4 +92,6 @@ public class AttributeNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePl
                 sb.toString()
             );
     }
+
+
 }

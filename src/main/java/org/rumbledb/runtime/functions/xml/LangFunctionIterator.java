@@ -27,10 +27,6 @@ public class LangFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item testlangItem = this.getChild(0).materializeFirstOrNull(context);
         String testlang = testlangItem == null ? "" : testlangItem.getStringValue();
 
@@ -56,6 +52,7 @@ public class LangFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         return ItemFactory.getInstance().createBooleanItem(false);
     }
+
 
     private static boolean matchesLanguage(String lang, String testlang) {
         if (lang.equalsIgnoreCase(testlang)) {

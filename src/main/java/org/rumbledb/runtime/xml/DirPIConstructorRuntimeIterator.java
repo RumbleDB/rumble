@@ -60,14 +60,9 @@ public class DirPIConstructorRuntimeIterator extends AbstractAtMostOneItemRuntim
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createProcessingInstruction(
-            this.contentIterator == null
-                ? List.of()
-                : this.contentIterator.materialize(dynamicContext)
-        );
-    }
-
-    private Item createProcessingInstruction(List<Item> materialized) {
+        List<Item> materialized = this.contentIterator == null
+            ? List.of()
+            : this.contentIterator.materialize(dynamicContext);
         // "The resulting NCName is then used as the target property of the newly constructed processing instruction
         // node. However, a dynamic error is raised if the NCName is equal to "XML" (in any combination of upper and
         // lower case) [err:XQDY0064]."
@@ -77,7 +72,6 @@ public class DirPIConstructorRuntimeIterator extends AbstractAtMostOneItemRuntim
                     getMetadata()
             );
         }
-
         // "Atomization is applied to the value of the content expression, converting it to a sequence of atomic values.
         // (If the content expression is absent, the result of this step is an empty sequence.)"
         // "If the result of atomization is an empty sequence, it is replaced by a zero-length string. Otherwise, each
@@ -98,20 +92,19 @@ public class DirPIConstructorRuntimeIterator extends AbstractAtMostOneItemRuntim
                 stringValues.add(value);
             }
         }
-
         // "The individual strings resulting from the previous step are merged into a single string by concatenating
         // them with a single space character between each pair. Leading whitespace is removed from the resulting
         // string. The resulting string then becomes the content property of the constructed processing instruction
         // node."
         String content = String.join(" ", stringValues);
         content = removeLeadingWhitespace(content);
-
         return ItemFactory.getInstance()
             .createXmlProcessingInstructionNode(
                 this.target,
                 content
             );
     }
+
 
     private String removeLeadingWhitespace(String value) {
         int index = 0;

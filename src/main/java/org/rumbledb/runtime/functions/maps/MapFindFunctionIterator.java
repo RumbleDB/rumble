@@ -43,28 +43,6 @@ public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeResult(context);
-    }
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final ItemRuntimePlan inputIterator;
-    private final ItemRuntimePlan keyIterator;
-
-    public MapFindFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        if (arguments.size() != 2) {
-            throw new OurBadException("map:find must have exactly two arguments.");
-        }
-        this.inputIterator = arguments.get(0);
-        this.keyIterator = arguments.get(1);
-    }
-
-    private Item computeResult(DynamicContext context) {
         Item keyItem = null;
         try {
             keyItem = this.keyIterator.materializeAtMostOne(context);
@@ -87,6 +65,25 @@ public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         return ItemFactory.getInstance()
             .createSequenceArrayItem(foundMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan inputIterator;
+    private final ItemRuntimePlan keyIterator;
+
+    public MapFindFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        if (arguments.size() != 2) {
+            throw new OurBadException("map:find must have exactly two arguments.");
+        }
+        this.inputIterator = arguments.get(0);
+        this.keyIterator = arguments.get(1);
+    }
+
 
     private void scanItems(List<Item> items, Item lookupKey, List<List<Item>> foundMembers) {
         for (Item item : items) {

@@ -26,10 +26,7 @@ public class IRIToURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private Item evaluate(Item inputItem) {
+        Item inputItem = this.getChild(0).materializeFirstOrNull(context);
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
@@ -39,9 +36,9 @@ public class IRIToURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     getMetadata()
             );
         }
-
         return ItemFactory.getInstance().createStringItem(encodeIri(inputItem.getStringValue()));
     }
+
 
     private static String encodeIri(String value) {
         StringBuilder result = new StringBuilder(value.length());

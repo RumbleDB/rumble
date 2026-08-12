@@ -24,30 +24,6 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeResult(context);
-    }
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final ItemRuntimePlan arrayIterator;
-    private final ItemRuntimePlan positionIterator;
-    private final ItemRuntimePlan memberIterator;
-
-    public ArrayInsertBeforeFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        if (arguments.size() != 3) {
-            throw new OurBadException("array:insert-before must have exactly three arguments.");
-        }
-        this.arrayIterator = arguments.get(0);
-        this.positionIterator = arguments.get(1);
-        this.memberIterator = arguments.get(2);
-    }
-
-    private Item computeResult(DynamicContext context) {
         Item arrayItem = null;
         try {
             arrayItem = this.arrayIterator.materializeAtMostOne(context);
@@ -133,4 +109,26 @@ public class ArrayInsertBeforeFunctionIterator extends AbstractAtMostOneItemRunt
         return ItemFactory.getInstance()
             .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan positionIterator;
+    private final ItemRuntimePlan memberIterator;
+
+    public ArrayInsertBeforeFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        if (arguments.size() != 3) {
+            throw new OurBadException("array:insert-before must have exactly three arguments.");
+        }
+        this.arrayIterator = arguments.get(0);
+        this.positionIterator = arguments.get(1);
+        this.memberIterator = arguments.get(2);
+    }
+
+
 }

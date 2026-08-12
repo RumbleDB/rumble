@@ -149,7 +149,7 @@ public abstract class TupleRuntimePlan
     /**
      * Returns the limit on how deep the evaluation occurs.
      * If it is 0, the clause ignores its child (this is for join purposes).
-     * 
+     *
      * @return The evaluation depth limit. -1 if none.
      */
     public int getEvaluationDepthLimit() {
@@ -159,7 +159,7 @@ public abstract class TupleRuntimePlan
     /**
      * Sets the limit on how deep the evaluation occurs.
      * 0 to stop here.
-     * 
+     *
      * @param limit the limit to set. Must be between 0 and getHeight(), inclusive.
      */
     public void setEvaluationDepthLimit(int limit) {
@@ -193,7 +193,7 @@ public abstract class TupleRuntimePlan
     /**
      * Tells whether it is possible to set the limit on how deep the evaluation occurs.
      * 0 to stop here.
-     * 
+     *
      * @param limit the limit to set. Must be between 0 and getHeight(), inclusive.
      */
     public boolean canSetEvaluationDepthLimit(int limit) {

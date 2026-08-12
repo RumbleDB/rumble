@@ -40,10 +40,6 @@ public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimeP
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         ItemFactory factory = ItemFactory.getInstance();
 
         Item inputItem = this.getChild(0).materializeFirstOrNull(context);
@@ -96,6 +92,7 @@ public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimeP
         root.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
         return root;
     }
+
 
     private Item createMatchElement(ItemFactory factory, String input, Matcher matcher, boolean quotedPattern) {
         int matchStart = matcher.start();

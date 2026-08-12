@@ -36,14 +36,11 @@ public class ConstructorFunctionIterator extends AbstractAtMostOneItemRuntimePla
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createCastIterator().materializeFirstOrNull(dynamicContext);
-    }
-
-    private ItemRuntimePlan createCastIterator() {
-        return new CastIterator(
+        ItemRuntimePlan castPlan = new CastIterator(
                 this.argumentIterator,
                 this.targetSequenceType,
                 this.staticContext.toBuilder().staticType(this.targetSequenceType).build()
         );
+        return castPlan.materializeFirstOrNull(dynamicContext);
     }
 }

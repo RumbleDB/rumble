@@ -60,15 +60,11 @@ public class TextNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRun
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createTextNode(this.contentIterator.materialize(dynamicContext), dynamicContext);
-    }
-
-    private Item createTextNode(List<Item> materialized, DynamicContext dynamicContext) {
+        List<Item> materialized = this.contentIterator.materialize(dynamicContext);
         // Process content
         StringBuilder textContent = new StringBuilder();
         // processing of the content expression according to the spec
         // see https://www.w3.org/TR/xquery-31/#id-textConstructors
-
         // 1. Atomization is applied to the value of the content expression,
         // converting it to a sequence of atomic values.
         // 2. If the result of atomization is an empty sequence, no text node is constructed.
@@ -85,7 +81,6 @@ public class TextNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRun
         }
         // remove the last space
         textContent.deleteCharAt(textContent.length() - 1);
-
         // Create and return the text node item
         Item textItem = ItemFactory.getInstance()
             .createXmlTextNode(
@@ -97,4 +92,6 @@ public class TextNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRun
         }
         return textItem;
     }
+
+
 }

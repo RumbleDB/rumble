@@ -52,10 +52,7 @@ public class CeilingFunctionIterator extends AbstractAtMostOneItemRuntimePlan im
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private Item evaluate(Item value) {
+        Item value = this.getChild(0).materializeFirstOrNull(context);
         if (value == null) {
             return null;
         }
@@ -71,7 +68,6 @@ public class CeilingFunctionIterator extends AbstractAtMostOneItemRuntimePlan im
         ) {
             return value;
         }
-
         if (value.isInt()) {
             return ItemFactory.getInstance().createIntItem(value.getIntValue());
         }
@@ -102,8 +98,8 @@ public class CeilingFunctionIterator extends AbstractAtMostOneItemRuntimePlan im
                 "Unexpected value in ceiling(): " + value.getDynamicType(),
                 getMetadata()
         );
-
     }
+
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {

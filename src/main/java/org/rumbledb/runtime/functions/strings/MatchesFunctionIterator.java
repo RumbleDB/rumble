@@ -47,10 +47,6 @@ public class MatchesFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item regexpItem = this.getChild(1).materializeFirstOrNull(context);
         Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         if (stringItem == null) {
@@ -70,4 +66,6 @@ public class MatchesFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         boolean result = matcher.find();
         return ItemFactory.getInstance().createBooleanItem(result);
     }
+
+
 }

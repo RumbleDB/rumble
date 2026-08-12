@@ -28,10 +28,6 @@ public class ResolveURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item relative = this.getChild(0).materializeFirstOrNull(context);
         if (relative == null) {
             return null;
@@ -56,6 +52,7 @@ public class ResolveURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan
 
         return ItemFactory.getInstance().createAnyURIItem(stringURI);
     }
+
 
     private URI parseURI(String uri) {
         try {

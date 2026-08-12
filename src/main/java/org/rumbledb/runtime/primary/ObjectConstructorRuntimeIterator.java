@@ -81,10 +81,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return evaluate(iterator -> iterator.materialize(dynamicContext));
-    }
-
-    private Item evaluate(Function<ItemRuntimePlan, List<Item>> materialize) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
         List<Item> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();
         if (this.isMergedObject) {
@@ -97,9 +94,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
             }
             return ItemFactory.getInstance()
                 .createObjectItem(keys, values, getMetadata(), this.mutable);
-
         } else {
-
             for (ItemRuntimePlan valueIterator : this.values) {
                 List<Item> currentResults = materialize.apply(valueIterator);
                 // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
@@ -114,7 +109,6 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
                     values.add(ItemFactory.getInstance().createNullItem());
                 }
             }
-
             for (ItemRuntimePlan keyIterator : this.keys) {
                 List<Item> keyItems = materialize.apply(keyIterator);
                 if (keyItems.isEmpty()) {
@@ -139,6 +133,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
                 .createObjectItem(keys, values, getMetadata(), this.mutable);
         }
     }
+
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {

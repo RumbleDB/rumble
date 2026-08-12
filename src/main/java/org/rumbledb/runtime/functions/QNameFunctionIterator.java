@@ -52,10 +52,6 @@ public class QNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item uriItem = this.getChild(0).materializeFirstOrNull(context);
         String uriString = uriItem == null ? null : uriItem.getStringValue();
 
@@ -71,4 +67,6 @@ public class QNameFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         Name expanded = NamespaceBindingUtils.parseFnQName(uriString, lexicalString, getMetadata());
         return ItemFactory.getInstance().createQNameItem(expanded);
     }
+
+
 }

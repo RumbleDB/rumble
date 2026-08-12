@@ -50,14 +50,9 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            this.mapIterator.materialize(context),
-            this.keyIterator.materialize(context),
-            this.valueIterator.materialize(context)
-        );
-    }
-
-    private Item evaluate(List<Item> maps, List<Item> rawKey, List<Item> valueSequence) {
+        List<Item> maps = this.mapIterator.materialize(context);
+        List<Item> rawKey = this.keyIterator.materialize(context);
+        List<Item> valueSequence = this.valueIterator.materialize(context);
         if (maps.size() != 1) {
             throw new UnexpectedTypeException(
                     "map:put expects exactly one map argument [err:XPTY0004].",
@@ -71,13 +66,11 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     getMetadata()
             );
         }
-
         // 2) Atomize $key and require that it atomizes to exactly one atomic value.
         List<Item> atomized = new ArrayList<>();
         for (Item it : rawKey) {
             atomized.addAll(it.atomizedValue());
         }
-
         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
             throw new UnexpectedTypeException(
                     "Map key must atomize to a single atomic value [err:XPTY0004].",
@@ -85,7 +78,6 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             );
         }
         Item key = atomized.get(0);
-
         // 3) Materialize $value as item()*
         if (mapItem.getMutabilityLevel() == -1) {
             return ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence);
@@ -118,9 +110,10 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 newKeyValuePairs.put(existingKey, mapItem.getSequenceByKey(existingKey));
             }
             newKeyValuePairs.put(key, valueSequence);
-
             return ItemFactory.getInstance()
                 .createMapItem(newKeyValuePairs, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
+
+
 }

@@ -35,7 +35,8 @@ public class ReturnStatementClauseIterator extends AbstractAtMostOneItemRuntimeP
         setInputAndOutputTupleVariableDependencies();
     }
 
-    private Item executeLocally(DynamicContext context) {
+    @Override
+    public Item evaluateAtMostOne(DynamicContext context) {
         DynamicContext tupleContext = new DynamicContext(context);
         try (Cursor<FlworTuple> tuples = this.clauseIterator.createNativeCursor(context)) {
             while (tuples.hasNext()) {
@@ -67,11 +68,6 @@ public class ReturnStatementClauseIterator extends AbstractAtMostOneItemRuntimeP
             }
         }
         this.clauseIterator.setInputAndOutputTupleVariableDependencies(projection);
-    }
-
-    @Override
-    public Item evaluateAtMostOne(DynamicContext context) {
-        return executeLocally(context);
     }
 
 }

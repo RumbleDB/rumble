@@ -24,14 +24,13 @@ public class EnvironmentVariableFunctionIterator extends AbstractAtMostOneItemRu
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private static Item evaluate(Item nameItem) {
+        Item nameItem = this.getChild(0).materializeFirstOrNull(context);
         String value = System.getenv(nameItem.getStringValue());
         if (value == null) {
             return null;
         }
         return ItemFactory.getInstance().createStringItem(value);
     }
+
+
 }

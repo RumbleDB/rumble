@@ -50,10 +50,7 @@ public class AbsFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(dynamicContext));
-    }
-
-    private Item evaluate(Item value) {
+        Item value = this.getChild(0).materializeFirstOrNull(dynamicContext);
         if (value == null) {
             return null;
         }
@@ -81,6 +78,7 @@ public class AbsFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         }
         throw new OurBadException("Numeric value expected in abs()");
     }
+
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {

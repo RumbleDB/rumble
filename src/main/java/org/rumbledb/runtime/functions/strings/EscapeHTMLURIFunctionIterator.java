@@ -25,10 +25,7 @@ public class EscapeHTMLURIFunctionIterator extends AbstractAtMostOneItemRuntimeP
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private static Item evaluate(Item item) {
+        Item item = this.getChild(0).materializeFirstOrNull(context);
         if (item == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
@@ -46,6 +43,7 @@ public class EscapeHTMLURIFunctionIterator extends AbstractAtMostOneItemRuntimeP
         }
         return ItemFactory.getInstance().createStringItem(result.toString());
     }
+
 
     private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
 

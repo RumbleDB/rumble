@@ -28,18 +28,9 @@ public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return raiseError(
-            context,
-            this.getChildren().size() == 3
-                ? () -> this.getChild(2).materialize(context)
-                : List::of
-        );
-    }
-
-    private Item raiseError(
-            DynamicContext context,
-            Supplier<List<Item>> errorValue
-    ) {
+        Supplier<List<Item>> errorValue = this.getChildren().size() == 3
+            ? () -> this.getChild(2).materialize(context)
+            : List::of;
         if (this.getChildren().isEmpty()) {
             // No argument case.
             throw new RumbleException(
@@ -48,7 +39,6 @@ public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
                     this.getRuntimeStaticContext().getMetadata()
             );
         }
-
         Item errorCodeItem = this.getChild(0).materializeFirstOrNull(context);
         if (errorCodeItem == null) {
             throw new RumbleException(
@@ -58,7 +48,6 @@ public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
             );
         }
         Name errorCode = errorCodeItem.getQNameValue();
-
         if (this.getChildren().size() == 1) {
             // Error code argument case.
             throw new RumbleException(
@@ -67,7 +56,6 @@ public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
                     this.getRuntimeStaticContext().getMetadata()
             );
         }
-
         String description = this.getChild(1).materializeFirstOrNull(context).getStringValue();
         if (this.getChildren().size() == 2) {
             // Error code and description arguments case.
@@ -86,4 +74,6 @@ public class ThrowErrorIterator extends AbstractAtMostOneItemRuntimePlan {
             );
         }
     }
+
+
 }

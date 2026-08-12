@@ -29,11 +29,9 @@ public class RandomNumberGeneratorIterator extends AbstractAtMostOneItemRuntimeP
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return generate();
-    }
-
-    private static Item generate() {
         Random random = new Random();
         return ItemFactory.getInstance().createDoubleItem(random.nextDouble());
     }
+
+
 }

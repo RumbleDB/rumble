@@ -26,10 +26,6 @@ public class NamespaceUriForPrefixFunctionIterator extends AbstractAtMostOneItem
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item prefixItem = this.getChild(0).materializeFirstOrNull(context);
         String prefix = prefixItem == null ? "" : prefixItem.getStringValue();
         Item element = this.getChild(1).materializeFirstOrNull(context);
@@ -42,4 +38,6 @@ public class NamespaceUriForPrefixFunctionIterator extends AbstractAtMostOneItem
         }
         return null;
     }
+
+
 }

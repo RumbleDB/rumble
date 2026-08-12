@@ -57,13 +57,11 @@ public class TextNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createTextNode();
-    }
-
-    private Item createTextNode() {
         return ItemFactory.getInstance()
             .createXmlTextNode(
                 this.content
             );
     }
+
+
 }

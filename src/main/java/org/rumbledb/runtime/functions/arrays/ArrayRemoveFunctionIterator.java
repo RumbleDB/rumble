@@ -64,13 +64,8 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return remove(
-            this.arrayIterator.materialize(context),
-            this.positionsIterator.materialize(context)
-        );
-    }
-
-    private Item remove(List<Item> arrays, List<Item> positionItems) {
+        List<Item> arrays = this.arrayIterator.materialize(context);
+        List<Item> positionItems = this.positionsIterator.materialize(context);
         if (arrays.size() != 1) {
             throw new UnexpectedTypeException(
                     "array:remove expects exactly one array as the first argument.",
@@ -84,16 +79,13 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
                     getMetadata()
             );
         }
-
         int size = arrayItem.getSize();
         if (positionItems.isEmpty()) {
             return arrayItem;
         }
-
         Set<BigInteger> positionsToRemove = new HashSet<>();
         BigInteger min = BigInteger.ONE;
         BigInteger max = BigInteger.valueOf(size);
-
         for (Item p : positionItems) {
             if (!p.isNumeric()) {
                 throw new UnexpectedTypeException(
@@ -110,7 +102,6 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
             }
             positionsToRemove.add(pos);
         }
-
         if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> keptMembers = new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
@@ -135,4 +126,6 @@ public class ArrayRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePla
                 .createSequenceArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
+
+
 }

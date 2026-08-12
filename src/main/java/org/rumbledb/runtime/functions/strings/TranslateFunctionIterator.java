@@ -48,10 +48,6 @@ public class TranslateFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item inputItem = this.getChild(0).materializeFirstOrNull(context);
         Item mapStringItem = this.getChild(1).materializeFirstOrNull(context);
         Item transStringItem = this.getChild(2).materializeFirstOrNull(context);
@@ -92,5 +88,6 @@ public class TranslateFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
         return ItemFactory.getInstance().createStringItem(output.toString());
     }
+
 
 }

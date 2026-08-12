@@ -40,16 +40,10 @@ public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
     public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        return evaluate(this.child, this.sequenceType, this.staticContext, getMetadata(), dynamicContext);
-    }
-
-    private static Item evaluate(
-            ItemRuntimePlan child,
-            SequenceType sequenceType,
-            RuntimeStaticContext staticContext,
-            ExceptionMetadata metadata,
-            DynamicContext dynamicContext
-    ) {
+        ItemRuntimePlan child = this.child;
+        SequenceType sequenceType = this.sequenceType;
+        RuntimeStaticContext staticContext = this.staticContext;
+        ExceptionMetadata metadata = getMetadata();
         if (!sequenceType.isResolved()) {
             sequenceType.resolve(dynamicContext, metadata);
         }
@@ -75,12 +69,10 @@ public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
         } catch (MoreThanOneItemException e) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-
         if (item == null) {
             return ItemFactory.getInstance()
                 .createBooleanItem(sequenceType.getArity().equals(Arity.OneOrZero));
         }
-
         checkInvalidCastable(item, metadata, sequenceType.getItemType());
         try {
             Item res = CastIterator.castItemToType(
@@ -95,8 +87,8 @@ public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
             return ItemFactory.getInstance()
                 .createBooleanItem(false);
         }
-
     }
+
 
     static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {
         // the target type cannot be xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType

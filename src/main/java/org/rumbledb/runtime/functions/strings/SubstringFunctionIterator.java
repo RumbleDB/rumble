@@ -47,10 +47,6 @@ public class SubstringFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         String result;
         Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         if (stringItem == null) {
@@ -90,6 +86,7 @@ public class SubstringFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
         return ItemFactory.getInstance().createStringItem(result);
     }
+
 
     private double sanitizeEndIndex(Item stringItem, Item endIndexItem, int startIndex) {
         // char indexing starts from 1 in JSONiq

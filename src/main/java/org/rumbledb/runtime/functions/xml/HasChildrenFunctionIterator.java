@@ -26,10 +26,7 @@ public class HasChildrenFunctionIterator extends AbstractAtMostOneItemRuntimePla
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(getContextNode(context));
-    }
-
-    private Item evaluate(Item node) {
+        Item node = getContextNode(context);
         if (node == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
@@ -38,6 +35,7 @@ public class HasChildrenFunctionIterator extends AbstractAtMostOneItemRuntimePla
         }
         return ItemFactory.getInstance().createBooleanItem(!node.children().isEmpty());
     }
+
 
     private Item getContextNode(DynamicContext context) {
         if (!this.getChildren().isEmpty()) {

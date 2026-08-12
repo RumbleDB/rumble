@@ -31,28 +31,6 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeResult(context);
-    }
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final ItemRuntimePlan mapIterator;
-    private final ItemRuntimePlan keysIterator;
-
-    public MapRemoveFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        if (arguments.size() != 2) {
-            throw new OurBadException("map:remove must have exactly two arguments.");
-        }
-        this.mapIterator = arguments.get(0);
-        this.keysIterator = arguments.get(1);
-    }
-
-    private Item computeResult(DynamicContext context) {
         Item mapItem = null;
         try {
             mapItem = this.mapIterator.materializeAtMostOne(context);
@@ -136,6 +114,25 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return ItemFactory.getInstance()
             .createMapItem(newKeyValuePairs, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
     }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan mapIterator;
+    private final ItemRuntimePlan keysIterator;
+
+    public MapRemoveFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        if (arguments.size() != 2) {
+            throw new OurBadException("map:remove must have exactly two arguments.");
+        }
+        this.mapIterator = arguments.get(0);
+        this.keysIterator = arguments.get(1);
+    }
+
 
     private static boolean shouldRemoveKey(Item mapKey, List<Item> keysToRemove) {
         for (Item keyToRemove : keysToRemove) {

@@ -25,30 +25,6 @@ public class ArraySubarrayFunctionIterator extends AbstractAtMostOneItemRuntimeP
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeResult(context);
-    }
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final ItemRuntimePlan arrayIterator;
-    private final ItemRuntimePlan startIterator;
-    private final ItemRuntimePlan lengthIterator;
-
-    public ArraySubarrayFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        if (arguments.size() != 2 && arguments.size() != 3) {
-            throw new OurBadException("array:subarray must have either two or three arguments.");
-        }
-        this.arrayIterator = arguments.get(0);
-        this.startIterator = arguments.get(1);
-        this.lengthIterator = arguments.size() == 3 ? arguments.get(2) : null;
-    }
-
-    private Item computeResult(DynamicContext context) {
         Item arrayItem = null;
         try {
             arrayItem = this.arrayIterator.materializeAtMostOne(context);
@@ -127,6 +103,27 @@ public class ArraySubarrayFunctionIterator extends AbstractAtMostOneItemRuntimeP
         return ItemFactory.getInstance()
             .createSequenceArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan startIterator;
+    private final ItemRuntimePlan lengthIterator;
+
+    public ArraySubarrayFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        if (arguments.size() != 2 && arguments.size() != 3) {
+            throw new OurBadException("array:subarray must have either two or three arguments.");
+        }
+        this.arrayIterator = arguments.get(0);
+        this.startIterator = arguments.get(1);
+        this.lengthIterator = arguments.size() == 3 ? arguments.get(2) : null;
+    }
+
 
     private BigInteger materializeIntegerArgument(
             DynamicContext context,

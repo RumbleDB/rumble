@@ -21,10 +21,6 @@ public class PathRootRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return findRoot(dynamicContext);
-    }
-
-    private Item findRoot(DynamicContext dynamicContext) {
         Item node = dynamicContext.getVariableValues()
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
             .get(0);
@@ -48,4 +44,6 @@ public class PathRootRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         return current;
     }
+
+
 }

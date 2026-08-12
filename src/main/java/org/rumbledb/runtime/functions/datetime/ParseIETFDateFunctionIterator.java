@@ -128,10 +128,7 @@ public class ParseIETFDateFunctionIterator extends AbstractAtMostOneItemRuntimeP
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private Item evaluate(Item inputItem) {
+        Item inputItem = this.getChild(0).materializeFirstOrNull(context);
         String lexicalValue = inputItem.getStringValue();
         try {
             ParsedDateTime parsedValue = parseIetfDate(lexicalValue);
@@ -144,6 +141,7 @@ public class ParseIETFDateFunctionIterator extends AbstractAtMostOneItemRuntimeP
             );
         }
     }
+
 
     private static ParsedDateTime parseIetfDate(String input) {
         Matcher dateSpecMatcher = DATE_SPEC_PATTERN.matcher(input);

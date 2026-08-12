@@ -63,20 +63,10 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeSum(
-            zeroElement(context),
-            this.getChild(0),
-            context,
-            getMetadata()
-        );
-    }
-
-    private Item zeroElement(DynamicContext context) {
-        if (this.getChildren().size() > 1) {
-            return this.getChild(1).materializeFirstOrNull(context);
-        } else {
-            return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
-        }
+        Item zeroElement = this.getChildren().size() > 1
+            ? this.getChild(1).materializeFirstOrNull(context)
+            : ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+        return computeSum(zeroElement, this.getChild(0), context, getMetadata());
     }
 
     public static Item computeSum(
@@ -108,6 +98,7 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
             );
         }
     }
+
 
     private static Item computeLocalSum(
             Item zeroElement,

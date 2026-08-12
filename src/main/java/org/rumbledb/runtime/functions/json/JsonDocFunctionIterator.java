@@ -40,10 +40,6 @@ public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         Item pathItem = this.getChild(0).materializeFirstOrNull(context);
         Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstOrNull(context) : null;
         if (pathItem == null) {
@@ -87,6 +83,7 @@ public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             getMetadata()
         );
     }
+
 
     private static URI resolveJsonDocURI(String href, URI staticBaseUri, ExceptionMetadata metadata) {
         try {

@@ -62,15 +62,9 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
     public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        return evaluate(this.child, this.sequenceType, getMetadata(), dynamicContext);
-    }
-
-    private static Item evaluate(
-            ItemRuntimePlan child,
-            SequenceType sequenceType,
-            ExceptionMetadata metadata,
-            DynamicContext dynamicContext
-    ) {
+        ItemRuntimePlan child = this.child;
+        SequenceType sequenceType = this.sequenceType;
+        ExceptionMetadata metadata = getMetadata();
         if (!sequenceType.isResolved()) {
             sequenceType.resolve(dynamicContext, metadata);
         }
@@ -83,19 +77,17 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
             if (isInvalidArity(childDF.take(2).size(), sequenceType)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
-
             ItemType itemType = childDF.getItemType();
             return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(sequenceType.getItemType()));
         }
         JavaRDD<Item> childRDD = child.getRDD(dynamicContext);
-
         if (isInvalidArity(childRDD.take(2).size(), sequenceType)) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-
         JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(sequenceType.getItemType()));
         return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
     }
+
 
     private static Item evaluateLocal(
             ItemRuntimePlan child,

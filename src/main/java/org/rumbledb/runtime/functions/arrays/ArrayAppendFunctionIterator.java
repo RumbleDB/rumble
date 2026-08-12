@@ -59,10 +59,21 @@ public class ArrayAppendFunctionIterator extends AbstractAtMostOneItemRuntimePla
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return createResult(
-            requireArray(this.arrayIterator.materialize(context)),
-            this.appendageIterator.materialize(context)
-        );
+        Item arrayItem = requireArray(this.arrayIterator.materialize(context));
+        List<Item> appendage = this.appendageIterator.materialize(context);
+        if (arrayItem.isArrayOfItems() && appendage.size() == 1) {
+            List<Item> newItems = new ArrayList<>(arrayItem.getSize() + 1);
+            newItems.addAll(arrayItem.getItemMembers());
+            newItems.add(appendage.get(0));
+            return ItemFactory.getInstance()
+                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
+        } else {
+            List<List<Item>> newMemberSequences = new ArrayList<>(arrayItem.getSize() + 1);
+            newMemberSequences.addAll(arrayItem.getSequenceMembers());
+            newMemberSequences.add(appendage);
+            return ItemFactory.getInstance()
+                .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
+        }
     }
 
     private Item requireArray(List<Item> items) {
@@ -82,19 +93,5 @@ public class ArrayAppendFunctionIterator extends AbstractAtMostOneItemRuntimePla
         return arrayItem;
     }
 
-    private Item createResult(Item arrayItem, List<Item> appendage) {
-        if (arrayItem.isArrayOfItems() && appendage.size() == 1) {
-            List<Item> newItems = new ArrayList<>(arrayItem.getSize() + 1);
-            newItems.addAll(arrayItem.getItemMembers());
-            newItems.add(appendage.get(0));
-            return ItemFactory.getInstance()
-                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            List<List<Item>> newMemberSequences = new ArrayList<>(arrayItem.getSize() + 1);
-            newMemberSequences.addAll(arrayItem.getSequenceMembers());
-            newMemberSequences.add(appendage);
-            return ItemFactory.getInstance()
-                .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
-        }
-    }
+
 }

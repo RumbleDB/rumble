@@ -57,10 +57,7 @@ public class ArrayJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return createResult(this.arraysIterator.materialize(context));
-    }
-
-    private Item createResult(List<Item> arrays) {
+        List<Item> arrays = this.arraysIterator.materialize(context);
         List<List<Item>> joined = new ArrayList<>();
         for (Item arrayItem : arrays) {
             if (!arrayItem.isArray()) {
@@ -77,4 +74,6 @@ public class ArrayJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         // when joining, we always create a sequence array for now
         return ItemFactory.getInstance().createSequenceArrayItem(joined, false);
     }
+
+
 }

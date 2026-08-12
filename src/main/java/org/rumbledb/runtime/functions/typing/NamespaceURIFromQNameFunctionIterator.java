@@ -26,10 +26,7 @@ public class NamespaceURIFromQNameFunctionIterator extends AbstractAtMostOneItem
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private static Item evaluate(Item item) {
+        Item item = this.getChild(0).materializeFirstOrNull(context);
         QNameItem qnameItem = (QNameItem) item;
         if (qnameItem == null) {
             return null;
@@ -38,4 +35,6 @@ public class NamespaceURIFromQNameFunctionIterator extends AbstractAtMostOneItem
         String namespace = qname.getNamespace();
         return ItemFactory.getInstance().createAnyURIItem(namespace == null ? "" : namespace);
     }
+
+
 }

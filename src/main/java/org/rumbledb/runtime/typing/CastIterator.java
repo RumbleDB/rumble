@@ -50,16 +50,10 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
     public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        return evaluate(this.child, this.sequenceType, this.staticContext, getMetadata(), dynamicContext);
-    }
-
-    private static Item evaluate(
-            ItemRuntimePlan child,
-            SequenceType sequenceType,
-            RuntimeStaticContext staticContext,
-            ExceptionMetadata metadata,
-            DynamicContext dynamicContext
-    ) {
+        ItemRuntimePlan child = this.child;
+        SequenceType sequenceType = this.sequenceType;
+        RuntimeStaticContext staticContext = this.staticContext;
+        ExceptionMetadata metadata = getMetadata();
         if (!sequenceType.isResolved()) {
             sequenceType.resolve(dynamicContext, metadata);
         }
@@ -79,7 +73,6 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                     metadata
             );
         }
-
         // the target type cannot be xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType
         // TODO: add support for xs:anySimpleType
         if (targetItemType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
@@ -88,7 +81,6 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         if (targetItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             throw new CastableException("Invalid target type for cast expression: xs:anyAtomicType", metadata);
         }
-
         Item item;
         try {
             item = child.materializeAtMostOne(dynamicContext);
@@ -124,6 +116,8 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         }
         return result;
     }
+
+
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
         return castItemToType(item, targetType, metadata, NamespaceBindingUtils.builtinNamespaceResolver());

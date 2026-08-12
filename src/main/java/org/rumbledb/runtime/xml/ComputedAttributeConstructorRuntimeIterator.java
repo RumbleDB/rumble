@@ -94,13 +94,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createAttribute(iterator -> iterator.materialize(dynamicContext), dynamicContext);
-    }
-
-    private Item createAttribute(
-            Function<ItemRuntimePlan, List<Item>> materialize,
-            DynamicContext dynamicContext
-    ) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
         Item attributeName;
         if (this.staticAttributeName != null) {
             attributeName = ItemFactory.getInstance()
@@ -109,7 +103,6 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
             // Dynamic attribute name - evaluate the name expression
             // processing of the name expression according to
             // https://www.w3.org/TR/xquery-31/#id-computedAttributes
-
             // 1. Atomization is applied to the result of the name expression. If the result of
             // atomization is not a single atomic value of type xs:QName, xs:string, or
             // xs:untypedAtomic, a type error is raised [err:XPTY0004].
@@ -127,7 +120,6 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
                         getMetadata()
                 );
             }
-
             if (atomizedNameItem.isQName()) {
                 // 2. If the atomized value of the name expression is of type xs:QName:
                 // a. If the expanded QName returned by the atomized name expression has a namespace URI
@@ -168,20 +160,16 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
                 );
             }
         }
-
         NamespaceBindingUtils.validateConstructedAttributeName(attributeName.getQNameValue(), getMetadata());
-
         // Process content expression according to XQuery 3.1 spec
         // https://www.w3.org/TR/xquery-31/#id-computedAttributes
         StringBuilder contentExpressionBuilder = new StringBuilder();
-
         if (this.contentExpression != null) {
             // 1: Atomization is applied to the result of the content expression,
             // converting it to a sequence of atomic values. (If the content expression
             // is absent, the result of this step is an empty sequence.)
             // Note: contentExpression is already an AtomizationIterator
             List<Item> atomizedContentItems = materialize.apply(this.contentExpression);
-
             // 2: If the result of atomization is an empty sequence, the value of
             // the attribute is the zero-length string. Otherwise, each atomic value in
             // the atomized sequence is cast into a string.
@@ -190,7 +178,6 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
                 for (Item item : atomizedContentItems) {
                     stringValues.add(item.getStringValue());
                 }
-
                 // 3: The individual strings resulting from the previous step are
                 // merged into a single string by concatenating them with a single space
                 // character between each pair.
@@ -198,23 +185,18 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
             }
             // If empty sequence, contentExpressionBuilder remains empty (zero-length string)
         }
-
         String attributeValue = contentExpressionBuilder.toString();
-
         // 5: If the attribute name is xml:id, then xml:id processing is performed
         if (isXmlIdAttribute(attributeName.getQNameValue())) {
             attributeValue = attributeValue.replaceAll("\\s+", " ").trim();
         }
-
         // 6: If the attribute name is xml:id, the is-id property of the resulting attribute node is set to true;
         // otherwise the is-id property is set to false. The is-idrefs property of the attribute node is unconditionally
         // set to false.
         // Note: we currently do not support is-id and is-idrefs properties
-
         // 7: If the attribute name is xml:space and the attribute value is other
         // than preserve or default, a dynamic error MAY be raised [err:XQDY0092].
         // Note: this is a MAY, so we are not mandated to raise an error here
-
         // Create and return the attribute item
         // 4: The parent property of the attribute node is set to empty.
         Item attributeItem = ItemFactory.getInstance()
@@ -228,6 +210,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
         }
         return attributeItem;
     }
+
 
     private static boolean isXmlIdAttribute(Name attributeName) {
         return attributeName != null

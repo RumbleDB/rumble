@@ -28,10 +28,7 @@ public class DocAvailableFunctionIterator extends AbstractAtMostOneItemRuntimePl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstOrNull(context));
-    }
-
-    private Item evaluate(Item uriItem) {
+        Item uriItem = this.getChild(0).materializeFirstOrNull(context);
         if (uriItem == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
@@ -50,4 +47,6 @@ public class DocAvailableFunctionIterator extends AbstractAtMostOneItemRuntimePl
             return ItemFactory.getInstance().createBooleanItem(false);
         }
     }
+
+
 }

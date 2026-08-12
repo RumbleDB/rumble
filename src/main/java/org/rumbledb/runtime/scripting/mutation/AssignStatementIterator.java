@@ -30,10 +30,7 @@ public class AssignStatementIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return assign(this.assignExpression.materialize(context), context);
-    }
-
-    private Item assign(List<Item> exprItems, DynamicContext context) {
+        List<Item> exprItems = this.assignExpression.materialize(context);
         context.getVariableValues()
             .changeVariableValue(
                 this.variableName,
@@ -41,4 +38,6 @@ public class AssignStatementIterator extends AbstractAtMostOneItemRuntimePlan {
             );
         return null;
     }
+
+
 }

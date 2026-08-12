@@ -87,26 +87,12 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            this.iterator,
-            this.sequenceType,
-            this.itemType,
-            this.exceptionMessage,
-            getRuntimeStaticContext(),
-            this.untypedAtomicCaster,
-            context
-        );
-    }
-
-    private static Item evaluate(
-            ItemRuntimePlan iterator,
-            SequenceType sequenceType,
-            ItemType itemType,
-            String exceptionMessage,
-            RuntimeStaticContext staticContext,
-            FunctionUntypedAtomicCastIterator.UntypedAtomicCaster untypedAtomicCaster,
-            DynamicContext context
-    ) {
+        ItemRuntimePlan iterator = this.iterator;
+        SequenceType sequenceType = this.sequenceType;
+        ItemType itemType = this.itemType;
+        String exceptionMessage = this.exceptionMessage;
+        RuntimeStaticContext staticContext = getRuntimeStaticContext();
+        FunctionUntypedAtomicCastIterator.UntypedAtomicCaster untypedAtomicCaster = this.untypedAtomicCaster;
         if (!sequenceType.isResolved()) {
             sequenceType.resolve(context, staticContext.getMetadata());
         }
@@ -122,7 +108,6 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
                         + "Expecting at most one item, but the value provided has at least two items.",
                     staticContext.getMetadata()
             );
-
         }
         if (
             item == null && (sequenceType.getArity() == SequenceType.Arity.One)
@@ -136,16 +121,15 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
         if (item == null) {
             return null;
         }
-
         if (untypedAtomicCaster != null) {
             item = untypedAtomicCaster.call(item);
         }
-
         if (!InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
             item = checkTypePromotion(item, itemType, sequenceType, exceptionMessage, staticContext);
         }
         return item;
     }
+
 
     private static Item checkTypePromotion(
             Item item,

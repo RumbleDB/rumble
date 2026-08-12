@@ -55,7 +55,14 @@ public class ArrayReverseFunctionIterator extends AbstractAtMostOneItemRuntimePl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return reverseArgument(this.arrayIterator.materialize(context));
+        List<Item> items = this.arrayIterator.materialize(context);
+        if (items.size() > 1) {
+            throw new UnexpectedTypeException(
+                    "array:reverse expects exactly one array argument.",
+                    getMetadata()
+            );
+        }
+        return reverse(items.isEmpty() ? null : items.get(0));
     }
 
     private Item reverse(Item arrayItem) {
@@ -84,13 +91,5 @@ public class ArrayReverseFunctionIterator extends AbstractAtMostOneItemRuntimePl
         }
     }
 
-    private Item reverseArgument(List<Item> items) {
-        if (items.size() > 1) {
-            throw new UnexpectedTypeException(
-                    "array:reverse expects exactly one array argument.",
-                    getMetadata()
-            );
-        }
-        return reverse(items.isEmpty() ? null : items.get(0));
-    }
+
 }

@@ -26,10 +26,6 @@ public class ContainsTokenFunctionIterator extends AbstractAtMostOneItemRuntimeP
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         String token = getNormalizedToken(context);
         if (token.isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
@@ -38,6 +34,7 @@ public class ContainsTokenFunctionIterator extends AbstractAtMostOneItemRuntimeP
         Comparator<String> comparator = resolveComparator(context);
         return ItemFactory.getInstance().createBooleanItem(cursorContainsToken(context, token, comparator));
     }
+
 
     private Comparator<String> resolveComparator(DynamicContext context) {
         if (this.getChildren().size() < 3) {

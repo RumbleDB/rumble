@@ -45,7 +45,74 @@ public class ArrayPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeResult(context);
+        Item arrayItem = null;
+        try {
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "array:put expects exactly one array as the first argument.",
+                    getMetadata()
+            );
+        }
+        if (arrayItem == null || !arrayItem.isArray()) {
+            throw new UnexpectedTypeException(
+                    "Type error; first argument to array:put must be an array.",
+                    getMetadata()
+            );
+        }
+        Item positionItem = null;
+        try {
+            positionItem = this.positionIterator.materializeAtMostOne(context);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "array:put expects exactly one position argument.",
+                    getMetadata()
+            );
+        }
+        if (positionItem == null || !positionItem.isNumeric()) {
+            throw new UnexpectedTypeException(
+                    "Type error; position argument to array:put must be numeric.",
+                    getMetadata()
+            );
+        }
+        BigInteger positionInteger;
+        if (positionItem.isInteger()) {
+            positionInteger = positionItem.castToIntegerValue();
+        } else {
+            positionInteger = BigInteger.valueOf(positionItem.castToIntValue());
+        }
+        int size = arrayItem.getSize();
+        BigInteger min = BigInteger.ONE;
+        BigInteger max = BigInteger.valueOf((long) size);
+        if (positionInteger.compareTo(min) < 0 || positionInteger.compareTo(max) > 0) {
+            throw new ArrayIndexOutOfBoundsException(
+                    "array:put position out of bounds: "
+                        + positionInteger
+                        + ", array length: "
+                        + size,
+                    getMetadata()
+            );
+        }
+        int replaceIndex = positionInteger.intValue() - 1;
+        List<Item> memberSequence = this.memberIterator.materialize(context);
+        if (arrayItem.isArrayOfItems() && memberSequence.size() == 1) {
+            List<Item> newItems = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                if (i == replaceIndex) {
+                    newItems.add(memberSequence.get(0));
+                } else {
+                    newItems.add(arrayItem.getItemAt(i));
+                }
+            }
+            return ItemFactory.getInstance()
+                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
+        }
+        List<List<Item>> newMemberSequences = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            newMemberSequences.add(i == replaceIndex ? memberSequence : arrayItem.getSequenceAt(i));
+        }
+        return ItemFactory.getInstance()
+            .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     @Serial
@@ -68,79 +135,5 @@ public class ArrayPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         this.memberIterator = arguments.get(2);
     }
 
-    private Item computeResult(DynamicContext context) {
-        Item arrayItem = null;
-        try {
-            arrayItem = this.arrayIterator.materializeAtMostOne(context);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:put expects exactly one array as the first argument.",
-                    getMetadata()
-            );
-        }
-        if (arrayItem == null || !arrayItem.isArray()) {
-            throw new UnexpectedTypeException(
-                    "Type error; first argument to array:put must be an array.",
-                    getMetadata()
-            );
-        }
 
-        Item positionItem = null;
-        try {
-            positionItem = this.positionIterator.materializeAtMostOne(context);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:put expects exactly one position argument.",
-                    getMetadata()
-            );
-        }
-        if (positionItem == null || !positionItem.isNumeric()) {
-            throw new UnexpectedTypeException(
-                    "Type error; position argument to array:put must be numeric.",
-                    getMetadata()
-            );
-        }
-
-        BigInteger positionInteger;
-        if (positionItem.isInteger()) {
-            positionInteger = positionItem.castToIntegerValue();
-        } else {
-            positionInteger = BigInteger.valueOf(positionItem.castToIntValue());
-        }
-
-        int size = arrayItem.getSize();
-        BigInteger min = BigInteger.ONE;
-        BigInteger max = BigInteger.valueOf((long) size);
-        if (positionInteger.compareTo(min) < 0 || positionInteger.compareTo(max) > 0) {
-            throw new ArrayIndexOutOfBoundsException(
-                    "array:put position out of bounds: "
-                        + positionInteger
-                        + ", array length: "
-                        + size,
-                    getMetadata()
-            );
-        }
-
-        int replaceIndex = positionInteger.intValue() - 1;
-        List<Item> memberSequence = this.memberIterator.materialize(context);
-
-        if (arrayItem.isArrayOfItems() && memberSequence.size() == 1) {
-            List<Item> newItems = new ArrayList<>(size);
-            for (int i = 0; i < size; i++) {
-                if (i == replaceIndex) {
-                    newItems.add(memberSequence.get(0));
-                } else {
-                    newItems.add(arrayItem.getItemAt(i));
-                }
-            }
-            return ItemFactory.getInstance()
-                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
-        }
-        List<List<Item>> newMemberSequences = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            newMemberSequences.add(i == replaceIndex ? memberSequence : arrayItem.getSequenceAt(i));
-        }
-        return ItemFactory.getInstance()
-            .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
-    }
 }

@@ -46,10 +46,6 @@ public class ConcatFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         StringBuilder builder = new StringBuilder();
         for (int index = 0; index < this.getChildren().size(); index++) {
             Item item = this.getChild(index).materializeFirstOrNull(context);
@@ -63,5 +59,6 @@ public class ConcatFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         return ItemFactory.getInstance().createStringItem(builder.toString());
     }
+
 
 }

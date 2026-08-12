@@ -24,10 +24,7 @@ public class IsNullIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materialize(context));
-    }
-
-    private Item evaluate(List<Item> items) {
+        List<Item> items = this.getChild(0).materialize(context);
         if (items.isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
@@ -36,4 +33,6 @@ public class IsNullIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         return ItemFactory.getInstance().createBooleanItem(items.get(0).isNull());
     }
+
+
 }

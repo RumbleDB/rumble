@@ -25,19 +25,14 @@ public class DynamicItemTypeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0), context);
-    }
-
-    private static Item evaluate(
-            ItemRuntimePlan argumentPlan,
-            DynamicContext context
-    ) {
+        ItemRuntimePlan argumentPlan = this.getChild(0);
         List<Item> argument = argumentPlan.materialize(context);
         ItemType itemType = argument.get(0).getDynamicType();
         List<Item> structureItems = getStructureItems(argument, itemType);
         ItemType commonType = getLeastCommonSupertype(structureItems);
         return ItemFactory.getInstance().createStringItem(commonType.getIdentifierString());
     }
+
 
     private static ItemType getLeastCommonSupertype(List<Item> structureItems) {
         ItemType structureCommonType = structureItems.get(0).getDynamicType();

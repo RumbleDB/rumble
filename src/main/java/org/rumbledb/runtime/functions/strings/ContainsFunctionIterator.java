@@ -47,10 +47,6 @@ public class ContainsFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         if (this.getChildren().size() == 3) {
             String collation = this.getChild(2).materializeFirstOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
@@ -72,5 +68,6 @@ public class ContainsFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             );
         return ItemFactory.getInstance().createBooleanItem(result);
     }
+
 
 }

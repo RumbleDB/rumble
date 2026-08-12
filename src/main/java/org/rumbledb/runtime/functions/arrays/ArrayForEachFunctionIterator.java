@@ -49,28 +49,6 @@ public class ArrayForEachFunctionIterator extends AbstractAtMostOneItemRuntimePl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return computeResult(context);
-    }
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final ItemRuntimePlan arrayIterator;
-    private final ItemRuntimePlan functionIterator;
-
-    public ArrayForEachFunctionIterator(
-            List<ItemRuntimePlan> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        if (arguments.size() != 2) {
-            throw new OurBadException("array:for-each must have exactly two arguments.");
-        }
-        this.arrayIterator = arguments.get(0);
-        this.functionIterator = arguments.get(1);
-    }
-
-    private Item computeResult(DynamicContext context) {
         Item arrayItem = null;
         try {
             arrayItem = this.arrayIterator.materializeAtMostOne(context);
@@ -129,6 +107,25 @@ public class ArrayForEachFunctionIterator extends AbstractAtMostOneItemRuntimePl
         return ItemFactory.getInstance()
             .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan functionIterator;
+
+    public ArrayForEachFunctionIterator(
+            List<ItemRuntimePlan> arguments,
+            RuntimeStaticContext staticContext
+    ) {
+        super(arguments, staticContext);
+        if (arguments.size() != 2) {
+            throw new OurBadException("array:for-each must have exactly two arguments.");
+        }
+        this.arrayIterator = arguments.get(0);
+        this.functionIterator = arguments.get(1);
+    }
+
 
     private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {

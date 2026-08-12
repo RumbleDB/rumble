@@ -48,10 +48,6 @@ public class CompareFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(context);
-    }
-
-    private Item evaluate(DynamicContext context) {
         String collation = this.getChildren().size() == 3
             ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
             : getRuntimeStaticContext().getDefaultCollation();
@@ -70,4 +66,6 @@ public class CompareFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         );
         return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(result));
     }
+
+
 }

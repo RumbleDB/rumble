@@ -47,12 +47,10 @@ public class DirectCommentConstructorRuntimeIterator extends AbstractAtMostOneIt
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createComment();
-    }
-
-    private Item createComment() {
         // The DirCommentContents of a comment must not contain two consecutive hyphens
         // or end with a hyphen. These rules are syntactically enforced by the grammar.
         return ItemFactory.getInstance().createXmlCommentNode(this.content);
     }
+
+
 }
