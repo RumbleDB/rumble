@@ -92,6 +92,8 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
+import org.rumbledb.expressions.module.SchemaImport.BindingKind;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -137,7 +139,8 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
+import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
@@ -355,8 +358,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitProlog(XQueryParser.PrologContext ctx) {
         List<LibraryModule> libraryModules = new ArrayList<>();
+        List<SchemaImport> schemaImports = new ArrayList<>();
         List<OptionDeclaration> optionDeclarations = new ArrayList<>();
         Set<String> namespaces = new HashSet<>();
+        Set<String> schemaNamespaces = new HashSet<>();
         PrologPhase1Flags phase1 = new PrologPhase1Flags();
         for (int ci = 0; ci < ctx.getChildCount(); ci++) {
             ParseTree child = ctx.getChild(ci);
@@ -372,8 +377,18 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 processNamespaceDecl(namespaceDeclContext);
             } else if (child instanceof SetterContext setterContext) {
                 processPrologPhase1Setter(setterContext, phase1);
-            } else if (child instanceof XQueryParser.SchemaImportContext) {
-                // Not supported yet; previously skipped as well.
+            } else if (child instanceof XQueryParser.SchemaImportContext schemaImportContext) {
+                SchemaImport schemaImport = translateSchemaImport(schemaImportContext);
+                if (!schemaNamespaces.add(schemaImport.getTargetNamespace())) {
+                    throw new SemanticException(
+                            "The schema namespace "
+                                    + schemaImport.getTargetNamespace()
+                                    + " is imported more than once.",
+                            ErrorCode.DuplicateSchemaImportErrorCode,
+                            createMetadataFromContext(schemaImportContext));
+                }
+                bindSchemaImportNamespace(schemaImport);
+                schemaImports.add(schemaImport);
             } else if (child instanceof XQueryParser.ModuleImportContext namespace) {
                 LibraryModule libraryModule = this.processModuleImport(namespace);
                 libraryModules.add(libraryModule);
@@ -445,10 +460,55 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (LibraryModule libraryModule : libraryModules) {
             prolog.addImportedModule(libraryModule);
         }
+        for (SchemaImport schemaImport : schemaImports) {
+            prolog.addSchemaImport(schemaImport);
+        }
         for (OptionDeclaration optionDeclaration : optionDeclarations) {
             prolog.addDeclaration(optionDeclaration);
         }
         return prolog;
+    }
+
+    private SchemaImport translateSchemaImport(XQueryParser.SchemaImportContext ctx) {
+        String targetNamespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.nsURI));
+        BindingKind bindingKind = BindingKind.NONE;
+        String prefix = null;
+        if (ctx.schemaPrefix() != null) {
+            if (ctx.schemaPrefix().ncName() != null) {
+                bindingKind = BindingKind.PREFIX;
+                prefix = ctx.schemaPrefix().ncName().getText();
+            } else {
+                bindingKind = BindingKind.DEFAULT_ELEMENT_NAMESPACE;
+            }
+        }
+        List<String> locationHints = ctx.locations.stream()
+                .map(this::processURILiteral)
+                .map(URILiteralUtils::normalizeAsAnyURI)
+                .collect(Collectors.toList());
+        return new SchemaImport(targetNamespace, bindingKind, prefix, locationHints, createMetadataFromContext(ctx));
+    }
+
+    private void bindSchemaImportNamespace(SchemaImport schemaImport) {
+        if (schemaImport.getBindingKind() == BindingKind.NONE) {
+            return;
+        }
+        String namespace = schemaImport.getTargetNamespace();
+        if (schemaImport.getBindingKind() == BindingKind.DEFAULT_ELEMENT_NAMESPACE) {
+            bindNamespace("", namespace, schemaImport.getMetadata());
+            return;
+        }
+        String prefix = schemaImport.getPrefix();
+        if (namespace.isEmpty()) {
+            throw new SemanticException(
+                    "A schema import cannot bind a prefix to a zero-length target namespace.",
+                    ErrorCode.SchemaImportWithoutTargetNamespaceErrorCode,
+                    schemaImport.getMetadata());
+        }
+        if (prefix.equals("xml") || prefix.equals("xmlns")) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Schema import prefix " + prefix + " is reserved.", schemaImport.getMetadata());
+        }
+        bindNamespace(prefix, namespace, schemaImport.getMetadata());
     }
 
     @Override
@@ -1485,10 +1545,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitValidateExpr(XQueryParser.ValidateExprContext ctx) {
-        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
-        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
-        return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
-        // TODO: this is not implemented in XQuery. Throw an unsupported feature exception.
+        Expression mainExpression = (Expression) this.visitExpr(ctx.expr());
+        ValidationMode validationMode = ValidationMode.STRICT;
+        Name typeName = null;
+        if (ctx.validationMode() != null && ctx.validationMode().KW_LAX() != null) {
+            validationMode = ValidationMode.LAX;
+        } else if (ctx.KW_TYPE() != null) {
+            validationMode = ValidationMode.TYPE;
+            typeName = parseEqName(ctx.typeName().eqName(), false, true, false, false);
+        }
+        return new ValidateExpression(mainExpression, validationMode, typeName, createMetadataFromContext(ctx));
     }
     // endregion
 
