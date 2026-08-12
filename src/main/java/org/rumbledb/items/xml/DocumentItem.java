@@ -21,7 +21,7 @@ public class DocumentItem extends AbstractNodeItem {
     private List<Item> children;
     private XMLDocumentPosition documentPos;
     private Item documentElement;
-    // TODO: add base-uri, document-uri, typed-value
+    // TODO: add base-uri, document-uri
 
     public DocumentItem(Node documentNode, List<Item> children) {
         this.stringValue = documentNode.getTextContent();
@@ -277,9 +277,6 @@ public class DocumentItem extends AbstractNodeItem {
 
     @Override
     public List<Item> atomizedValue() {
-        if (this.documentElement != null) {
-            return this.documentElement.typedValue();
-        }
         return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 

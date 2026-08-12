@@ -93,6 +93,7 @@ import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.NodeTypedValue;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
@@ -153,6 +154,8 @@ public class FlworDataFrameUtils {
         kryo.register(DocumentItem.class);
         kryo.register(ElementItem.class);
         kryo.register(AttributeItem.class);
+        kryo.register(NodeTypedValue.class);
+        kryo.register(NodeTypedValue.State.class);
         kryo.register(CommentItem.class);
         kryo.register(TextItem.class);
     }

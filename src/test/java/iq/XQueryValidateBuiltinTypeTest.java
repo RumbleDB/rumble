@@ -64,6 +64,8 @@ public class XQueryValidateBuiltinTypeTest {
         assertTrue("let $input := <value>42</value> "
                 + "let $validated := validate type xs:integer { $input } "
                 + "return $validated instance of element() and not($input is $validated)");
+        assertTrue(
+                "data(validate type xs:integer { document { <value>42</value> } }) " + "instance of xs:untypedAtomic");
     }
 
     @Test

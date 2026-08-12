@@ -1623,7 +1623,28 @@ public interface Item extends Serializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * Sets an element node's schema type annotation when its typed value is unavailable. Supplying {@code null}
+     * clears a node's schema annotation. Schema-typed attributes must use {@link #setSchemaType(ItemType, List)}.
+     *
+     * @param typeAnnotation the schema type annotation, or {@code null} to restore untyped behavior
+     */
     default void setSchemaType(ItemType typeAnnotation) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Sets a node's schema type annotation together with its XDM typed value.
+     *
+     * @param typeAnnotation the schema type annotation
+     * @param typedValue the typed value, including an empty list for a valid empty typed value
+     */
+    default void setSchemaType(ItemType typeAnnotation, List<Item> typedValue) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /** Removes a node's schema annotation and restores its untyped typed-value behavior. */
+    default void clearSchemaType() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
