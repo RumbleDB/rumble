@@ -56,7 +56,7 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.spark.SparkSessionManager;
 
 @Log4j2
@@ -181,7 +181,7 @@ public class SimpleMapExpressionIterator extends ItemRuntimePlan
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             JavaRDD<Item> rdd = createNativeRDD(context);
             JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));
-            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(
+            StructType schema = JSONiqValidateIterator.convertToDataFrameSchema(
                     getStaticType().getItemType(), this.staticContext);
             schema.printTreeString();
             Dataset<Row> result =
