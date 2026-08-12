@@ -24,10 +24,14 @@ jobs:
         with:
           script: |
             const workflowId = 'run-qt3.yml';
-            const branch = context.eventName === 'pull_request'
+            const isPullRequest = context.eventName === 'pull_request';
+            const defaultBranch = context.payload.repository.default_branch;
+            const branch = isPullRequest
               ? context.payload.pull_request.base.ref
               : context.ref.replace('refs/heads/', '');
-            const event = 'push';
+            const event = !isPullRequest || branch === defaultBranch
+              ? 'push'
+              : 'pull_request';
 
             const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
               owner: context.repo.owner,
@@ -74,8 +78,8 @@ jobs:
             const baselineRunId = baselineRun ? String(baselineRun.id) : '';
             core.info(
               baselineRunId
-                ? `Using baseline run ${baselineRunId} from branch ${branch}.`
-                : `No successful baseline run with unexpired QT3 artifacts found for branch ${branch}.`
+                ? `Using baseline run ${baselineRunId} from ${event} on branch ${branch}.`
+                : `No successful ${event} baseline run with unexpired QT3 artifacts found for branch ${branch}.`
             );
             core.setOutput('baseline_run_id', baselineRunId);
 
