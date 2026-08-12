@@ -43,6 +43,7 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 public class StaticContext {
 
@@ -52,6 +53,7 @@ public class StaticContext {
     private Map<String, String> staticallyKnownNamespaces;
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private InScopeSchemaTypes inScopeSchemaTypes;
+    private XmlSchemaCatalog xmlSchemaCatalog;
 
     @Setter
     private String queryLanguage;
@@ -674,6 +676,20 @@ public class StaticContext {
             return this.parent.getInScopeSchemaTypes();
         }
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
+    }
+
+    public XmlSchemaCatalog getXmlSchemaCatalog() {
+        if (this.xmlSchemaCatalog != null) {
+            return this.xmlSchemaCatalog;
+        }
+        return this.parent == null ? null : this.parent.getXmlSchemaCatalog();
+    }
+
+    public void setXmlSchemaCatalog(XmlSchemaCatalog xmlSchemaCatalog) {
+        if (this.parent != null) {
+            throw new OurBadException("An XML Schema catalog can only be set on a module context.");
+        }
+        this.xmlSchemaCatalog = xmlSchemaCatalog;
     }
 
     public boolean getIsAssignable(Name name) {
