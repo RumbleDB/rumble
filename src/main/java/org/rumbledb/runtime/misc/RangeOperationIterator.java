@@ -205,6 +205,12 @@ public class RangeOperationIterator extends ItemRuntimePlan
                 this.hasNext = false;
                 return;
             }
+            if (left.isUntypedAtomic()) {
+                left = ItemFactory.getInstance().createIntegerItem(left.castToIntegerValue());
+            }
+            if (right.isUntypedAtomic()) {
+                right = ItemFactory.getInstance().createIntegerItem(right.castToIntegerValue());
+            }
             if (!left.isInteger() || !right.isInteger()) {
                 throw new UnexpectedTypeException(
                         "Range expression must have integer input, but instead received "
