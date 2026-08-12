@@ -44,16 +44,12 @@ public final class BuiltinFunctionExecutionModes {
             return ExecutionMode.RDD;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME) {
-            return dataFrameIfConfigurationAllows(configuration);
+            return configuration.runtime().useDataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
-            if (firstMode.isDataFrame()) {
-                return dataFrameIfConfigurationAllows(configuration);
-            }
-            if (firstMode.isRDDOrDataFrame()) {
-                return ExecutionMode.RDD;
-            }
-            return ExecutionMode.LOCAL;
+            return firstMode.isDataFrame()
+                ? configuration.runtime().useDataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD
+                : firstMode.isRDDOrDataFrame() ? ExecutionMode.RDD : ExecutionMode.LOCAL;
         }
         if (
             functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
@@ -66,12 +62,5 @@ public final class BuiltinFunctionExecutionModes {
         throw new OurBadException(
                 "Unhandled functionExecutionMode detected while extracting execution mode for built-in function."
         );
-    }
-
-    public static ExecutionMode dataFrameIfConfigurationAllows(RumbleConfiguration configuration) {
-        if (configuration.runtime().useDataFrameExecution()) {
-            return ExecutionMode.DATAFRAME;
-        }
-        return ExecutionMode.RDD;
     }
 }

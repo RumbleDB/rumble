@@ -20,13 +20,20 @@
 
 package org.rumbledb.exceptions;
 
+import lombok.Value;
+import lombok.experimental.Accessors;
+
 import java.io.Serial;
 import java.io.Serializable;
 
-public record SourceRange(SourcePosition start, SourcePosition end) implements Serializable {
-
+@Value
+@Accessors(fluent = true)
+public class SourceRange implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
+
+    SourcePosition start;
+    SourcePosition end;
 
     public static SourceRange point(int line, int column) {
         SourcePosition position = new SourcePosition(line, column);

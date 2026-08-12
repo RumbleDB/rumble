@@ -1,18 +1,23 @@
 package org.rumbledb.runtime.functions;
 
 import lombok.Getter;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
@@ -23,7 +28,12 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
+public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item>,
+            DataFrameRuntimePlan<Item>,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -33,8 +43,6 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     private final List<Name> parameterNames;
     private final SequenceType expectedReturnType;
     private final String exceptionMessage;
-    private RuntimeIterator delegate;
-    private Item nextResult;
 
     public FunctionCoercionRuntimeIterator(
             Item callableItem,
@@ -43,65 +51,39 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
             String exceptionMessage,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
         this.callableItem = callableItem;
         this.parameterNames = parameterNames;
         this.expectedReturnType = expectedReturnType;
         this.exceptionMessage = exceptionMessage;
     }
 
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return this.getPlan(context).getCursor(context);
+    }
+
     public ExecutionMode getWrappedCallableExecutionMode() {
-        if (!this.callableItem.isFunction()) {
+        return getWrappedCallableExecutionMode(this.callableItem);
+    }
+
+    private static ExecutionMode getWrappedCallableExecutionMode(Item callableItem) {
+        if (!callableItem.isFunction()) {
             return ExecutionMode.LOCAL;
         }
-        return this.callableItem.getBodyIterator().getHighestExecutionMode();
+        return callableItem.getBodyIterator().getRuntimeStaticContext().getExecutionMode();
     }
 
-    @Override
-    protected void openLocal() {
-        this.delegate = buildDelegate(this.currentDynamicContextForLocalExecution);
-        this.delegate.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.nextResult;
-        setNextResult();
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.delegate != null && this.delegate.isOpen()) {
-            this.delegate.close();
-        }
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-        if (this.delegate.hasNext()) {
-            this.nextResult = this.delegate.next();
-        }
-        this.hasNext = this.nextResult != null;
-    }
-
-    private RuntimeIterator buildDelegate(DynamicContext context) {
-        List<RuntimeIterator> arguments = new ArrayList<>(this.parameterNames.size());
+    private ItemRuntimePlan getPlan(DynamicContext context) {
+        List<ItemRuntimePlan> arguments = new ArrayList<>(
+                this.parameterNames.size()
+        );
         for (Name parameterName : this.parameterNames) {
-            arguments.add(buildArgumentIterator(parameterName, context));
+            arguments.add(buildArgumentIterator(parameterName, context, this.staticContext));
         }
 
-        ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode();
-        RuntimeStaticContext callStaticContext = getRuntimeStaticContext()
+        ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode(this.callableItem);
+        RuntimeStaticContext callStaticContext = this.staticContext
             .toBuilder()
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(wrappedCallableExecutionMode)
@@ -116,16 +98,17 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
         if (!this.callableItem.isFunction()) {
             throw new OurBadException(
                     "Function coercion can only wrap functions, maps, or arrays.",
-                    getMetadata()
+                    this.staticContext.getMetadata()
             );
         }
-        RuntimeIterator callIterator = NamedFunctions.buildFunctionItemCallIterator(
-            this.callableItem,
-            callStaticContext,
-            wrappedCallableExecutionMode,
-            arguments,
-            false
-        );
+        ItemRuntimePlan callIterator = NamedFunctions
+            .buildFunctionItemCallIterator(
+                this.callableItem,
+                callStaticContext,
+                wrappedCallableExecutionMode,
+                arguments,
+                false
+            );
         return FunctionCallArgumentConversion.wrapForFunctionConversion(
             callIterator,
             this.expectedReturnType,
@@ -134,16 +117,25 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
         );
     }
 
-    private RuntimeIterator buildArgumentIterator(Name parameterName, DynamicContext context) {
+    private static ItemRuntimePlan buildArgumentIterator(
+            Name parameterName,
+            DynamicContext context,
+            RuntimeStaticContext staticContext
+    ) {
         ExecutionMode parameterExecutionMode = ExecutionMode.LOCAL;
         if (context.getVariableValues().contains(parameterName)) {
-            if (context.getVariableValues().isDataFrame(parameterName, getMetadata())) {
+            if (
+                context.getVariableValues()
+                    .isDataFrame(parameterName, staticContext.getMetadata())
+            ) {
                 parameterExecutionMode = ExecutionMode.DATAFRAME;
-            } else if (context.getVariableValues().isRDD(parameterName, getMetadata())) {
+            } else if (
+                context.getVariableValues().isRDD(parameterName, staticContext.getMetadata())
+            ) {
                 parameterExecutionMode = ExecutionMode.RDD;
             }
         }
-        RuntimeStaticContext parameterStaticContext = getRuntimeStaticContext()
+        RuntimeStaticContext parameterStaticContext = staticContext
             .toBuilder()
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(parameterExecutionMode)
@@ -152,20 +144,15 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator call = buildDelegate(context);
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        ItemRuntimePlan call = this.getPlan(context);
         return call.getRDD(context);
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        RuntimeIterator call = buildDelegate(dynamicContext);
-        return call.getDataFrame(dynamicContext);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
+        ItemRuntimePlan call = this.getPlan(dynamicContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
     }
 
     @Override

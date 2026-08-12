@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
@@ -10,9 +12,9 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -28,15 +30,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-
-public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
+public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
+    private final ItemRuntimePlan child;
     private final SequenceType sequenceType;
 
     public CastIterator(
-            RuntimeIterator child,
+            ItemRuntimePlan child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -46,13 +47,17 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
+    public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(dynamicContext, getMetadata());
+        ItemRuntimePlan child = this.child;
+        SequenceType sequenceType = this.sequenceType;
+        RuntimeStaticContext staticContext = this.staticContext;
+        ExceptionMetadata metadata = getMetadata();
+        if (!sequenceType.isResolved()) {
+            sequenceType.resolve(dynamicContext, metadata);
         }
-        ItemType targetItemType = this.sequenceType.getItemType();
+        ItemType targetItemType = sequenceType.getItemType();
         // XPath 3.1 cast target must be a generalized atomic type: either an atomic type or
         // a pure union type (union whose members are all atomic). See XPath F&O 3.1 §19.3.5
         // Casting to union types; XPath 3.1 §2.5.4 SequenceType (SingleType uses SimpleTypeName).
@@ -63,56 +68,56 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!validCastTarget) {
             throw new UnknownCastTypeException(
                     "The type "
-                        + this.sequenceType.getItemType().getIdentifierString()
+                        + sequenceType.getItemType().getIdentifierString()
                         + " is not atomic. Cast can only be used with atomic types.",
-                    getMetadata()
+                    metadata
             );
         }
-
         // the target type cannot be xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType
         // TODO: add support for xs:anySimpleType
         if (targetItemType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
-            throw new CastableException("Invalid target type for cast expression: xs:NOTATION", getMetadata());
+            throw new CastableException("Invalid target type for cast expression: xs:NOTATION", metadata);
         }
         if (targetItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
-            throw new CastableException("Invalid target type for cast expression: xs:anyAtomicType", getMetadata());
+            throw new CastableException("Invalid target type for cast expression: xs:anyAtomicType", metadata);
         }
-
         Item item;
         try {
-            item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
+            item = child.materializeAtMostOne(dynamicContext);
             if (item != null && !item.getDynamicType().isResolved()) {
-                item.getDynamicType().resolve(dynamicContext, getMetadata());
+                item.getDynamicType().resolve(dynamicContext, metadata);
             }
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     " Sequence of more than one item can not be treated as type "
-                        + this.sequenceType.toString(),
-                    getMetadata()
+                        + sequenceType.toString(),
+                    metadata
             );
         }
         if (
-            item == null && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero
+            item == null && !sequenceType.isEmptySequence() && sequenceType.getArity() != Arity.OneOrZero
         ) {
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",
-                    getMetadata()
+                    metadata
             );
         }
         if (item == null) {
             return null;
         }
-        Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata(), this.staticContext);
+        Item result = castItemToType(item, sequenceType.getItemType(), metadata, staticContext);
         if (result == null) {
             String message = String.format(
                 "\"%s\": this literal is not castable to type %s.",
                 item.serialize(),
-                this.sequenceType.getItemType()
+                sequenceType.getItemType()
             );
-            throw new CastException(message, getMetadata());
+            throw new CastException(message, metadata);
         }
         return result;
     }
+
+
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
         return castItemToType(item, targetType, metadata, NamespaceBindingUtils.builtinNamespaceResolver());
@@ -839,7 +844,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
      */
     private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
         ItemType primitive = targetType.getCastingPrimitiveType();
-        java.util.List<String> patterns = primitive.getLexicalSpacePatterns();
+        List<String> patterns = primitive.getLexicalSpacePatterns();
         String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null) {
@@ -1208,7 +1213,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = this.child.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(
+            this.child,
+            nativeClauseContext
+        );
         if (childQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

@@ -1,30 +1,31 @@
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class EscapeHTMLURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public EscapeHTMLURIFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item item = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item item = this.getChild(0).materializeFirstOrNull(context);
         if (item == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
@@ -42,6 +43,7 @@ public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
         }
         return ItemFactory.getInstance().createStringItem(result.toString());
     }
+
 
     private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
 

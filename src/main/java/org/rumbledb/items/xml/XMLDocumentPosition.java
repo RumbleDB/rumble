@@ -26,20 +26,22 @@ import java.io.Serializable;
 import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 
 /**
  * The `XMLDocumentPosition` class represents the position of an item within an XML document.
  * It provides information about the document's path and the item's position within the document.
  * This class is used to ensure the uniqueness and ordering of items across XML documents.
  */
-@Getter
 @EqualsAndHashCode
 public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private String path;
     private int docPosition;
+
+    // needed for kryo
+    public XMLDocumentPosition() {
+    }
 
     public XMLDocumentPosition(String path, int docPosition) {
         this.path = path;
@@ -48,6 +50,16 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
 
     public static String generateConstructedTreePath() {
         return "constructed:" + UUID.randomUUID();
+    }
+
+
+
+    public String getPath() {
+        return this.path;
+    }
+
+    public int getDocPosition() {
+        return this.docPosition;
     }
 
     @Override

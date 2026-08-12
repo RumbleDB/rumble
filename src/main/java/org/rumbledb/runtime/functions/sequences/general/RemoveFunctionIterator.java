@@ -25,27 +25,33 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
-public class RemoveFunctionIterator extends HybridRuntimeIterator {
+public class RemoveFunctionIterator extends ItemRuntimePlan
+        implements
+            LocalRuntimePlan<Item>,
+            RDDRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator positionIterator;
-    private Item nextResult;
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan positionIterator;
     private int removePosition; // position to remove the item
-    private int currentPosition; // current position
 
 
     public RemoveFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<ItemRuntimePlan> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -54,7 +60,12 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.sequenceIterator, this.positionIterator, context, getMetadata());
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         init(context);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
 
@@ -63,62 +74,76 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
         return filteredRDD.map((item) -> item._1);
     }
 
-    @Override
-    protected void openLocal() {
-        init(this.currentDynamicContextForLocalExecution);
-        this.currentPosition = 1;
 
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "remove function", getMetadata());
-    }
 
     private void init(DynamicContext context) {
-        Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
+        Item positionItem = this.positionIterator.materializeFirstOrNull(context);
         this.removePosition = positionItem.getIntValue();
     }
 
-    public void setNextResult() {
-        this.nextResult = null;
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        if (this.sequenceIterator.hasNext()) {
-            if (this.currentPosition == this.removePosition) {
-                this.sequenceIterator.next(); // skip item to be removed
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan positionPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> sequenceCursor;
+        private int removePosition;
+        private int currentPosition;
+
+        private EvaluationCursor(
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan positionPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.positionPlan = positionPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            Item positionItem = this.positionPlan.materializeFirstOrNull(this.context);
+            this.removePosition = positionItem.getIntValue();
+            this.currentPosition = 1;
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            if (this.currentPosition == this.removePosition && this.sequenceCursor.hasNext()) {
+                this.sequenceCursor.next();
                 this.currentPosition++;
-                if (this.sequenceIterator.hasNext()) {
-                    this.nextResult = this.sequenceIterator.next();
-                    this.currentPosition++;
-                }
-            } else {
-                this.nextResult = this.sequenceIterator.next();
-                this.currentPosition++;
+            }
+            return this.sequenceCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw exhausted();
+            }
+            this.currentPosition++;
+            return this.sequenceCursor.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
             }
         }
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.sequenceIterator.close();
-        } else {
-            this.hasNext = true;
+        private RuntimeException exhausted() {
+            return new IteratorFlowException(
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "remove function",
+                    this.metadata
+            );
         }
+
     }
 }

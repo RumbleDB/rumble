@@ -20,23 +20,26 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntFunction;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ArrayRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -47,7 +50,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
      * Curly array constructor: single child whose items become singleton members.
      */
     public ArrayRuntimeIterator(
-            RuntimeIterator arrayItems,
+            ItemRuntimePlan arrayItems,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -60,7 +63,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
      * Square array constructor: each child iterator produces one member (possibly a sequence).
      */
     public ArrayRuntimeIterator(
-            List<RuntimeIterator> memberIterators,
+            List<? extends ItemRuntimePlan> memberIterators,
             boolean isFixedSlotsArrayConstructor,
             RuntimeStaticContext staticContext,
             boolean mutable
@@ -71,14 +74,15 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
+    public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
+        IntFunction<List<Item>> materializeChild = index -> this.getChild(index).materialize(dynamicContext);
         if (isEffectiveFixedSlotsArrayConstructor()) {
             boolean allSingleton = true;
             List<List<Item>> memberSequences = new ArrayList<>();
-            for (RuntimeIterator child : this.getChildren()) {
-                List<Item> member = child.materialize(dynamicContext);
+            for (int i = 0; i < this.getChildren().size(); i++) {
+                List<Item> member = materializeChild.apply(i);
                 if (allSingleton && member.size() != 1) {
                     allSingleton = false;
                 }
@@ -97,11 +101,12 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         List<Item> result = new ArrayList<>();
-        for (RuntimeIterator child : this.getChildren()) {
-            result.addAll(child.materialize(dynamicContext));
+        for (int i = 0; i < this.getChildren().size(); i++) {
+            result.addAll(materializeChild.apply(i));
         }
         return ItemFactory.getInstance().createArrayItem(result, this.mutable);
     }
+
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
@@ -109,7 +114,10 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         if (this.getChildren().size() == 1) {
-            NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+            NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(
+                this.getChild(0),
+                nativeClauseContext
+            );
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }

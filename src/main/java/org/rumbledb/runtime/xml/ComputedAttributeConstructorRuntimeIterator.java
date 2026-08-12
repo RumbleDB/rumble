@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -29,21 +31,21 @@ import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Runtime iterator for computed attribute constructors.
  * 
  * @see org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression
  */
-public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -81,24 +83,18 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             DataFunctionIterator contentExpression,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(nameIterator, contentExpression), staticContext);
+        super(
+            List.of(nameIterator, contentExpression),
+            staticContext
+        );
         this.staticAttributeName = null;
         this.nameIterator = nameIterator;
         this.contentExpression = contentExpression;
     }
 
-    private static List<RuntimeIterator> createChildList(RuntimeIterator... iterators) {
-        List<RuntimeIterator> children = new ArrayList<>();
-        for (RuntimeIterator iterator : iterators) {
-            if (iterator != null) {
-                children.add(iterator);
-            }
-        }
-        return children;
-    }
-
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
         Item attributeName;
         if (this.staticAttributeName != null) {
             attributeName = ItemFactory.getInstance()
@@ -107,11 +103,10 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             // Dynamic attribute name - evaluate the name expression
             // processing of the name expression according to
             // https://www.w3.org/TR/xquery-31/#id-computedAttributes
-
             // 1. Atomization is applied to the result of the name expression. If the result of
             // atomization is not a single atomic value of type xs:QName, xs:string, or
             // xs:untypedAtomic, a type error is raised [err:XPTY0004].
-            List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
+            List<Item> atomizedNameItems = materialize.apply(this.nameIterator);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
@@ -125,7 +120,6 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
                         getMetadata()
                 );
             }
-
             if (atomizedNameItem.isQName()) {
                 // 2. If the atomized value of the name expression is of type xs:QName:
                 // a. If the expanded QName returned by the atomized name expression has a namespace URI
@@ -166,20 +160,16 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
                 );
             }
         }
-
         NamespaceBindingUtils.validateConstructedAttributeName(attributeName.getQNameValue(), getMetadata());
-
         // Process content expression according to XQuery 3.1 spec
         // https://www.w3.org/TR/xquery-31/#id-computedAttributes
         StringBuilder contentExpressionBuilder = new StringBuilder();
-
         if (this.contentExpression != null) {
             // 1: Atomization is applied to the result of the content expression,
             // converting it to a sequence of atomic values. (If the content expression
             // is absent, the result of this step is an empty sequence.)
             // Note: contentExpression is already an AtomizationIterator
-            List<Item> atomizedContentItems = this.contentExpression.materialize(dynamicContext);
-
+            List<Item> atomizedContentItems = materialize.apply(this.contentExpression);
             // 2: If the result of atomization is an empty sequence, the value of
             // the attribute is the zero-length string. Otherwise, each atomic value in
             // the atomized sequence is cast into a string.
@@ -188,7 +178,6 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
                 for (Item item : atomizedContentItems) {
                     stringValues.add(item.getStringValue());
                 }
-
                 // 3: The individual strings resulting from the previous step are
                 // merged into a single string by concatenating them with a single space
                 // character between each pair.
@@ -196,26 +185,20 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             }
             // If empty sequence, contentExpressionBuilder remains empty (zero-length string)
         }
-
         String attributeValue = contentExpressionBuilder.toString();
-
         // 5: If the attribute name is xml:id, then xml:id processing is performed
         if (isXmlIdAttribute(attributeName.getQNameValue())) {
             attributeValue = attributeValue.replaceAll("\\s+", " ").trim();
         }
-
         // 6: If the attribute name is xml:id, the is-id property of the resulting attribute node is set to true;
         // otherwise the is-id property is set to false. The is-idrefs property of the attribute node is unconditionally
         // set to false.
         // Note: we currently do not support is-id and is-idrefs properties
-
         // 7: If the attribute name is xml:space and the attribute value is other
         // than preserve or default, a dynamic error MAY be raised [err:XQDY0092].
         // Note: this is a MAY, so we are not mandated to raise an error here
-
         // Create and return the attribute item
         // 4: The parent property of the attribute node is set to empty.
-        this.hasNext = false;
         Item attributeItem = ItemFactory.getInstance()
             .createXmlAttributeNode(
                 attributeName.getQNameValue(),
@@ -227,6 +210,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
         }
         return attributeItem;
     }
+
 
     private static boolean isXmlIdAttribute(Name attributeName) {
         return attributeName != null

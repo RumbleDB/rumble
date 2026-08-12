@@ -24,7 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -34,7 +34,7 @@ import java.util.Collections;
  *
  * @see org.rumbledb.expressions.xml.DirectCommentConstructorExpression
  */
-public class DirectCommentConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DirectCommentConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -46,11 +46,11 @@ public class DirectCommentConstructorRuntimeIterator extends AtMostOneItemLocalR
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         // The DirCommentContents of a comment must not contain two consecutive hyphens
         // or end with a hyphen. These rules are syntactically enforced by the grammar.
-        this.hasNext = false;
         return ItemFactory.getInstance().createXmlCommentNode(this.content);
     }
-}
 
+
+}

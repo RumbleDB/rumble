@@ -1,31 +1,32 @@
 package org.rumbledb.runtime.functions.durations.components;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.TemporalComponentFunctionIterator;
 
 import java.io.Serial;
 import java.util.List;
 
-public class MonthsFromDurationFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MonthsFromDurationFunctionIterator extends TemporalComponentFunctionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public MonthsFromDurationFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
-        super(arguments, staticContext);
+        super(arguments, staticContext, Component.MONTH);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item durationItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+            .materializeFirstOrNull(context);
         if (durationItem == null) {
             return null;
         }

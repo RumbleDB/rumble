@@ -1,5 +1,7 @@
 package org.rumbledb.spark.ml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import lombok.extern.log4j.Log4j2;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
@@ -19,8 +21,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
@@ -38,9 +39,8 @@ import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 @Log4j2
-public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ApplyEstimatorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -48,38 +48,37 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     @Getter
     private final Estimator<?> estimator;
 
-    private RuntimeDataFrame<Item> inputDataset;
-    private Item paramMapItem;
-
     public ApplyEstimatorRuntimeIterator(
             String estimatorShortName,
             Estimator<?> estimator,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
         this.estimatorShortName = estimatorShortName;
         this.estimator = estimator;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
+    public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
-        this.inputDataset = getInputDataset(dynamicContext);
-        this.paramMapItem = getParamMapItem(dynamicContext);
+        EstimatorInputs inputs = new EstimatorInputs(
+                getInputDataset(dynamicContext),
+                getParamMapItem(dynamicContext)
+        );
 
-        processSpecialParamsForVectorization();
+        processSpecialParamsForVectorization(inputs);
 
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
             this.estimatorShortName,
             this.estimator,
-            this.paramMapItem,
+            inputs.paramMapItem,
             getMetadata()
         );
 
         Transformer fittedModel;
         try {
-            fittedModel = this.estimator.fit(this.inputDataset.getDataFrame(), paramMap);
+            fittedModel = this.estimator.fit(inputs.inputDataset.getDataFrame(), paramMap);
         } catch (IllegalArgumentException | NoSuchElementException e) {
             String message = e.getMessage();
             if (message == null) {
@@ -245,7 +244,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         return paramMapItemList.get(0);
     }
 
-    private void processSpecialParamsForVectorization() {
+    private void processSpecialParamsForVectorization(EstimatorInputs inputs) {
         // update input dataset and paramMapItem based on the needs of special params
         for (String specialParamName : RumbleMLCatalog.specialParamsThatMayReferToAColumnOfVectors) {
             boolean estimatorExpectsSpecialParam = RumbleMLCatalog.getEstimatorParams(
@@ -269,14 +268,14 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                 continue;
             }
 
-            String[] paramValue = calculateParamValue(specialParamName);
-            if (!isVectorizationNeededForParam(specialParamName, paramValue)) {
+            String[] paramValue = calculateParamValue(inputs, specialParamName);
+            if (!isVectorizationNeededForParam(inputs, specialParamName, paramValue)) {
                 continue;
             }
 
             String columnNameForVectorizationResult = RumbleMLCatalog.getUUIDOfOfSpecialParam(specialParamName);
-            this.inputDataset = RumbleMLUtils.createDataFrameContainingVectorizedColumn(
-                this.inputDataset,
+            inputs.inputDataset = RumbleMLUtils.createDataFrameContainingVectorizedColumn(
+                inputs.inputDataset,
                 specialParamName,
                 paramValue,
                 columnNameForVectorizationResult,
@@ -287,11 +286,11 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         }
     }
 
-    private String[] calculateParamValue(String specialParamName) {
-        Item paramValueItem = this.paramMapItem.getItemByKey(specialParamName);
+    private String[] calculateParamValue(EstimatorInputs inputs, String specialParamName) {
+        Item paramValueItem = inputs.paramMapItem.getItemByKey(specialParamName);
         if (paramValueItem != null) {
             // remove this param from the map to prevent processing the param again
-            this.paramMapItem = RumbleMLUtils.removeParameter(this.paramMapItem, specialParamName, getMetadata());
+            inputs.paramMapItem = RumbleMLUtils.removeParameter(inputs.paramMapItem, specialParamName, getMetadata());
 
             return (String[]) RumbleMLUtils.convertParamItemToJava(
                 specialParamName,
@@ -317,8 +316,12 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         return new String[] { defaultSparkMLParamValue };
     }
 
-    private boolean isVectorizationNeededForParam(String specialParamName, String[] paramValue) {
-        StructType schema = this.inputDataset.getDataFrame().schema();
+    private boolean isVectorizationNeededForParam(
+            EstimatorInputs inputs,
+            String specialParamName,
+            String[] paramValue
+    ) {
+        StructType schema = inputs.inputDataset.getDataFrame().schema();
         if (paramValue.length == 1) {
             String columnName = paramValue[0];
             DataType columnType;
@@ -353,7 +356,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private Item generateTransformerFunctionItem(Transformer fittedModel, DynamicContext dynamicContext) {
-        RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
+        ItemRuntimePlan bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
                 this.staticContext.toBuilder()
@@ -392,5 +395,15 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                 new DynamicContext(dynamicContext.getRumbleConfiguration()),
                 bodyIterator
         );
+    }
+
+    private static final class EstimatorInputs {
+        private RuntimeDataFrame<Item> inputDataset;
+        private Item paramMapItem;
+
+        private EstimatorInputs(RuntimeDataFrame<Item> inputDataset, Item paramMapItem) {
+            this.inputDataset = inputDataset;
+            this.paramMapItem = paramMapItem;
+        }
     }
 }

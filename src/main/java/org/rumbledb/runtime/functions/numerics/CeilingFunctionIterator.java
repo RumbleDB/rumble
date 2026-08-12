@@ -20,14 +20,16 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -36,22 +38,21 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class CeilingFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public CeilingFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item value = this.getChild(0).materializeFirstOrNull(context);
         if (value == null) {
             return null;
         }
@@ -67,7 +68,6 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         ) {
             return value;
         }
-
         if (value.isInt()) {
             return ItemFactory.getInstance().createIntItem(value.getIntValue());
         }
@@ -98,12 +98,15 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 "Unexpected value in ceiling(): " + value.getDynamicType(),
                 getMetadata()
         );
-
     }
+
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext value = NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -124,6 +127,5 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
         );
     }
-
 
 }

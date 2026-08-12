@@ -1,11 +1,12 @@
 package org.rumbledb.runtime.functions.io;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -14,20 +15,20 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DocAvailableFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public DocAvailableFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<ItemRuntimePlan> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item uriItem = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item uriItem = this.getChild(0).materializeFirstOrNull(context);
         if (uriItem == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
@@ -46,4 +47,6 @@ public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeItera
             return ItemFactory.getInstance().createBooleanItem(false);
         }
     }
+
+
 }

@@ -1,13 +1,12 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
@@ -24,21 +23,24 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
-public class CreateCollectionIterator extends HybridRuntimeIterator {
+public class CreateCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator targetIterator;
-    private final RuntimeIterator contentIterator;
+    private final ItemRuntimePlan targetIterator;
+    private final ItemRuntimePlan contentIterator;
     private final Mode mode;
 
     public CreateCollectionIterator(
-            RuntimeIterator targetIterator,
-            RuntimeIterator contentIterator,
+            ItemRuntimePlan targetIterator,
+            ItemRuntimePlan contentIterator,
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
+        super(
+            Arrays.asList(targetIterator, contentIterator),
+            staticContext.toBuilder().isUpdating(true).build()
+        );
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.mode = mode;
@@ -46,47 +48,20 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
-    }
-
-    @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        // TODO: Ascertain this
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        // TODO: Check for this
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
         Item targetItem = null;
         try {
-            targetItem = this.targetIterator.materializeExactlyOneItem(context);
+            targetItem = this.targetIterator.materializeExactlyOne(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a string, but more than one item was provided.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a string, but no item was provided.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -94,7 +69,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             throw new InvalidUpdateTargetException(
                     "Expecting collection name as a String, but it was: "
                         + targetItem.getDynamicType().getIdentifierString(),
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -113,7 +88,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         Collection collection = new Collection(mode, logicalPath);
         Dataset<Row> contentDF = null;
         try {
-            contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
+            contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
         } catch (CannotInferSchemaOnNonStructuredDataException e) {
             e.setMetadata(getMetadata());
             throw e;
@@ -123,7 +98,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up = factory.createCreateCollectionPrimitive(
             collection,
             contentDF,
-            this.getMetadata()
+            this.getRuntimeStaticContext().getMetadata()
         );
 
         pul.addUpdatePrimitive(up);

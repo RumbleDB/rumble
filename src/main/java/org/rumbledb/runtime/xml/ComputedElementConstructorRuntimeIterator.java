@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -32,8 +34,7 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.Set;
 
 /**
@@ -48,13 +50,13 @@ import java.util.Set;
  * 
  * @see org.rumbledb.expressions.xml.ComputedElementConstructorExpression
  */
-public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private final Name staticElementName;
     private final DataFunctionIterator nameIterator;
-    private final RuntimeIterator contentIterator;
+    private final ItemRuntimePlan contentIterator;
 
     /**
      * Constructor for static element name: element elementName { content }
@@ -65,7 +67,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
      */
     public ComputedElementConstructorRuntimeIterator(
             Name staticElementName,
-            RuntimeIterator contentIterator,
+            ItemRuntimePlan contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(contentIterator), staticContext);
@@ -83,27 +85,22 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
      */
     public ComputedElementConstructorRuntimeIterator(
             DataFunctionIterator nameIterator,
-            RuntimeIterator contentIterator,
+            ItemRuntimePlan contentIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(nameIterator, contentIterator), staticContext);
+        super(
+            List.of(nameIterator, contentIterator),
+            staticContext
+        );
         this.staticElementName = null;
         this.nameIterator = nameIterator;
         this.contentIterator = contentIterator;
     }
 
-    private static List<RuntimeIterator> createChildList(RuntimeIterator... iterators) {
-        List<RuntimeIterator> children = new ArrayList<>();
-        for (RuntimeIterator iterator : iterators) {
-            if (iterator != null) {
-                children.add(iterator);
-            }
-        }
-        return children;
-    }
-
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize = (iterator, childContext) -> iterator
+            .materialize(childContext);
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -114,7 +111,6 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             // A top-level iterator is already set - use the provided context
             contextToUse = dynamicContext;
         }
-
         // Determine the element name (expanded QName), then validate [err:XQDY0096] before content processing.
         // https://www.w3.org/TR/xquery-31/#id-computedElements
         Item elementName;
@@ -125,7 +121,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             // 1. Atomization is applied to the value of the name expression. If the result of atomization is not a
             // single atomic value of type xs:QName, xs:string, or xs:untypedAtomic, a type error is raised
             // [err:XPTY0004].
-            List<Item> atomizedNameItems = this.nameIterator.materialize(contextToUse);
+            List<Item> atomizedNameItems = materialize.apply(this.nameIterator, contextToUse);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
@@ -139,7 +135,6 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
                         getMetadata()
                 );
             }
-
             if (atomizedNameItem.isQName()) {
                 // 2. If the atomized value of the name expression is of type xs:QName, that expanded QName is used as
                 // the
@@ -184,37 +179,35 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         // - Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace.
         // - Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
         NamespaceBindingUtils.validateConstructedNodeName(elementName.getQNameValue(), getMetadata());
-
         // Process content expression according to XQuery 3.1 specification
-        ProcessedContent processedContent = processContentExpression(contextToUse);
-
+        ProcessedContent processedContent = processContentExpression(
+            this.contentIterator == null
+                ? List.of()
+                : materialize.apply(this.contentIterator, contextToUse)
+        );
         // Create and return the element item
-        this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
                 elementName.getQNameValue(),
                 processedContent.children,
                 processedContent.attributes
             );
-
         // Only add namespaces explicitly declared on this element
         for (Item namespace : processedContent.namespaces) {
             elementItem.addOrReplaceNamespace(namespace);
         }
-
         // Set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
         NamespaceFixupUtils.applyNamespaceFixup(elementItem);
-
         // Set XML document position if this is the top-level runtime iterator
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             // This is the top-level runtime iterator - set XML document positions recursively
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             elementItem.setXmlDocumentPosition(documentPath, 0);
         }
-
         return elementItem;
     }
+
 
     /**
      * Processes the content expression according to the XQuery 3.1 specification.
@@ -222,19 +215,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
      * Processing of the computed element constructor proceeds as follows:
      * 4. The properties of the newly constructed element node are determined as described in the specification.
      */
-    private ProcessedContent processContentExpression(DynamicContext dynamicContext) {
-        List<Item> rawContentSequence = new ArrayList<>();
-
-        // Collect all content items
-        if (this.contentIterator != null) {
-            this.contentIterator.open(dynamicContext);
-            while (this.contentIterator.hasNext()) {
-                Item item = this.contentIterator.next();
-                rawContentSequence.add(item);
-            }
-            this.contentIterator.close();
-        }
-
+    private ProcessedContent processContentExpression(List<Item> rawContentSequence) {
         // 1. If the content sequence contains a document node, the document node is replaced in the content
         // sequence by its children.
         List<Item> expandedContentSequence = expandDocumentNodes(rawContentSequence);

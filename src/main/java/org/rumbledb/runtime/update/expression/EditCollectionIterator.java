@@ -1,13 +1,12 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -19,71 +18,47 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import java.io.Serial;
 import java.util.Arrays;
 
-public class EditCollectionIterator extends HybridRuntimeIterator {
+public class EditCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator targetIterator;
-    private final RuntimeIterator contentIterator;
+    private final ItemRuntimePlan targetIterator;
+    private final ItemRuntimePlan contentIterator;
 
     public EditCollectionIterator(
-            RuntimeIterator targetIterator,
-            RuntimeIterator contentIterator,
+            ItemRuntimePlan targetIterator,
+            ItemRuntimePlan contentIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
+        super(
+            Arrays.asList(targetIterator, contentIterator),
+            staticContext.toBuilder().isUpdating(true).build()
+        );
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
 
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
-    }
-
-    @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        // TODO: Ascertain this
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        // TODO: Check for this
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         Item targetItem = null;
         try {
-            targetItem = this.targetIterator.materializeExactlyOneItem(context);
+            targetItem = this.targetIterator.materializeExactlyOne(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "More than one target item cannot be Edited.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
                     "One target item must be provided for Edit.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
         Dataset<Row> contentDF = null;
         try {
-            contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
+            contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
         } catch (CannotInferSchemaOnNonStructuredDataException e) {
             e.setMetadata(getMetadata());
             throw e;
@@ -94,13 +69,17 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
         if (contentCount != 1) {
             throw new InvalidUpdateTargetException(
                     "Exactly one content must be specified for edit, but " + contentCount + " found",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-        UpdatePrimitive up = factory.createEditTuplePrimitive(targetItem, contentDF, this.getMetadata());
+        UpdatePrimitive up = factory.createEditTuplePrimitive(
+            targetItem,
+            contentDF,
+            this.getRuntimeStaticContext().getMetadata()
+        );
         pul.addUpdatePrimitive(up);
         return pul;
     }

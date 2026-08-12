@@ -20,7 +20,6 @@
 
 package org.rumbledb.context;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -29,7 +28,8 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.api.Item;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
@@ -65,14 +65,12 @@ public class NamedFunctions implements Serializable {
     }
 
     /**
-     * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()} (same as
-     * {@link org.rumbledb.runtime.RuntimeIterator#getHighestExecutionMode()} for iterators constructed with that
-     * context).
+     * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()}.
      */
-    public RuntimeIterator getUserDefinedFunctionCallIterator(
+    public ItemRuntimePlan getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
             RuntimeStaticContext callerRuntimeContext,
-            List<RuntimeIterator> arguments,
+            List<? extends ItemRuntimePlan> arguments,
             boolean isTailOptimization
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
@@ -96,13 +94,14 @@ public class NamedFunctions implements Serializable {
      * Builds a dynamic function-item call using configuration and metadata from {@code callerRuntimeContext} and the
      * callee's {@code executionModeForFunctionCall}
      */
-    public static RuntimeIterator buildFunctionItemCallIterator(
+    public static ItemRuntimePlan buildFunctionItemCallIterator(
             Item functionItem,
             RuntimeStaticContext callerRuntimeContext,
             ExecutionMode executionModeForFunctionCall,
-            List<RuntimeIterator> arguments,
+            List<? extends ItemRuntimePlan> inputArguments,
             boolean isTailOptimization
     ) {
+        List<ItemRuntimePlan> arguments = new ArrayList<>(inputArguments);
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
         boolean isPartialApplication = arguments.stream().anyMatch(a -> a == null);
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
@@ -121,7 +120,7 @@ public class NamedFunctions implements Serializable {
             );
             sequenceType = new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
         }
-        SequenceType innerSequenceType = functionItem.getBodyIterator().getStaticType();
+        SequenceType innerSequenceType = functionItem.getBodyIterator().getRuntimeStaticContext().getStaticType();
         RuntimeStaticContext outerStaticContext = callerRuntimeContext
             .toBuilder()
             .staticType(sequenceType)
@@ -132,7 +131,7 @@ public class NamedFunctions implements Serializable {
             .staticType(innerSequenceType)
             .executionMode(executionModeForFunctionCall)
             .build();
-        RuntimeIterator functionCallIterator;
+        ItemRuntimePlan functionCallIterator;
         if (functionItem.isBuiltinFunction()) {
             if (arguments.stream().anyMatch(a -> a == null)) {
                 throw new UnsupportedFeatureException(
@@ -215,12 +214,13 @@ public class NamedFunctions implements Serializable {
         return functionItem.copyForLookup();
     }
 
-    public static RuntimeIterator getBuiltInFunctionIterator(
+    public static ItemRuntimePlan getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
-            List<RuntimeIterator> arguments,
+            List<? extends ItemRuntimePlan> inputArguments,
             RuntimeStaticContext callerStaticContext,
             boolean argumentsAlreadyCoerced
     ) {
+        List<ItemRuntimePlan> arguments = new ArrayList<>(inputArguments);
         RumbleConfiguration conf = callerStaticContext.getConfiguration();
         ExceptionMetadata metadata = callerStaticContext.getMetadata();
         boolean checkReturnTypesOfBuiltinFunctions = conf.analysis().checkReturnTypeOfBuiltinFunctions();
@@ -243,39 +243,42 @@ public class NamedFunctions implements Serializable {
                     if (conversionIsIdentity(arguments.get(i).getStaticType(), sequenceType)) {
                         continue;
                     }
+
+                    ExecutionMode executionMode = arguments.get(i).getRuntimeStaticContext().getExecutionMode();
+                    if (FunctionCallArgumentConversion.isAtMostOne(sequenceType)) {
+                        executionMode = ExecutionMode.LOCAL;
+                    }
+
                     RuntimeStaticContext argStaticContext = callerStaticContext
                         .toBuilder()
                         .staticType(sequenceType)
-                        .executionMode(arguments.get(i).getHighestExecutionMode())
-                        .metadata(arguments.get(i).getMetadata())
+                        .executionMode(executionMode)
+                        .metadata(arguments.get(i).getRuntimeStaticContext().getMetadata())
                         .build();
-                    RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
-                        arguments.get(i),
-                        sequenceType,
-                        "Invalid argument for function " + identifier.getName() + ". ",
-                        argStaticContext
-                    );
-                    if (
-                        sequenceType.isEmptySequence()
-                            || sequenceType.getArity().equals(Arity.One)
-                            || sequenceType.getArity().equals(Arity.OneOrZero)
-                    ) {
+                    String exceptionMessage = "Invalid argument for function " + identifier.getName() + ". ";
+                    if (FunctionCallArgumentConversion.isAtMostOne(sequenceType)) {
                         arguments.set(
                             i,
-                            new AtMostOneItemTypePromotionIterator(
-                                    argumentIterator,
-                                    sequenceType,
-                                    "Invalid argument for function " + identifier.getName() + ". ",
-                                    argStaticContext
+                            FunctionCallArgumentConversion.wrapAtMostOneForFunctionConversion(
+                                arguments.get(i),
+                                sequenceType,
+                                exceptionMessage,
+                                argStaticContext
                             )
                         );
                     } else {
+                        ItemRuntimePlan argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
+                            arguments.get(i),
+                            sequenceType,
+                            exceptionMessage,
+                            argStaticContext
+                        );
                         arguments.set(
                             i,
                             new TypePromotionIterator(
                                     argumentIterator,
                                     sequenceType,
-                                    "Invalid argument for function " + identifier.getName() + ". ",
+                                    exceptionMessage,
                                     argStaticContext
                             )
                         );
@@ -301,10 +304,10 @@ public class NamedFunctions implements Serializable {
                 .build();
         }
 
-        RuntimeIterator functionCallIterator;
+        ItemRuntimePlan functionCallIterator;
         try {
             if (builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
-                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                Constructor<? extends ItemRuntimePlan> constructor = builtinFunction.getFunctionIteratorClass()
                     .getConstructor(FunctionIdentifier.class, List.class, RuntimeStaticContext.class);
                 functionCallIterator = constructor.newInstance(
                     builtinFunction.getIdentifier(),
@@ -312,7 +315,7 @@ public class NamedFunctions implements Serializable {
                     delegateContext
                 );
             } else {
-                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                Constructor<? extends ItemRuntimePlan> constructor = builtinFunction.getFunctionIteratorClass()
                     .getConstructor(List.class, RuntimeStaticContext.class);
                 functionCallIterator = constructor.newInstance(arguments, delegateContext);
             }
@@ -335,8 +338,8 @@ public class NamedFunctions implements Serializable {
         RuntimeStaticContext returnCheckContext = callerStaticContext
             .toBuilder()
             .staticType(catalogueReturnType)
-            .executionMode(functionCallIterator.getHighestExecutionMode())
-            .metadata(functionCallIterator.getMetadata())
+            .executionMode(functionCallIterator.getRuntimeStaticContext().getExecutionMode())
+            .metadata(functionCallIterator.getRuntimeStaticContext().getMetadata())
             .build();
         if (
             catalogueReturnType.isEmptySequence()
