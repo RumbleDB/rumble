@@ -37,7 +37,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.ExecutionMode;
@@ -268,6 +267,8 @@ import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan> {
 
@@ -1485,14 +1486,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
     @Override
     public ItemRuntimePlan visitValidateExpression(ValidateExpression expression, ItemRuntimePlan argument) {
-        if (expression.getValidationMode() != ValidateExpression.ValidationMode.TYPE) {
-            throw new UnsupportedFeatureException(
-                    "Strict and lax XML Schema validation are not executable yet.", expression.getMetadata());
-        }
         ItemRuntimePlan operand = this.visit(expression.getMainExpression(), argument);
+        XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+        if (schemaCatalog == null && expression.getValidationMode() != ValidateExpression.ValidationMode.TYPE) {
+            schemaCatalog = XmlSchemaCatalogLoader.loadBuiltInCatalog();
+        }
         return new XQueryValidateIterator(
                 operand,
-                BuiltinTypesCatalogue.getItemTypeByName(expression.getTypeName()),
+                expression.getValidationMode(),
+                expression.getTypeName(),
+                schemaCatalog,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 

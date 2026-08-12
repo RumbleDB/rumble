@@ -165,6 +165,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /**
  * This visitor infers a static SequenceType for each expression in the query
@@ -2550,19 +2551,26 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, expression.getStaticContext());
         if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
             Name typeName = expression.getTypeName();
-            if (!Name.XS_NS.equals(typeName.getNamespace()) || !BuiltinTypesCatalogue.typeExists(typeName)) {
+            boolean builtInType =
+                    Name.XS_NS.equals(typeName.getNamespace()) && BuiltinTypesCatalogue.typeExists(typeName);
+            XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+            boolean importedType = schemaCatalog != null
+                    && schemaCatalog.getTypeDefinition(typeName).isPresent();
+            if (!builtInType && !importedType) {
                 throw new SemanticException(
                         "The type " + typeName + " is not defined in the in-scope schema types.",
                         ErrorCode.ValidateTypeNotFoundErrorCode,
                         expression.getMetadata());
             }
-            ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
-            if (!targetType.isAtomicItemType()
-                    || targetType.equals(BuiltinTypesCatalogue.atomicItem)
-                    || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
-                throw new UnsupportedFeatureException(
-                        "This first validate type implementation only supports concrete built-in XML Schema atomic types.",
-                        expression.getMetadata());
+            if (builtInType) {
+                ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
+                if (!targetType.isAtomicItemType()
+                        || targetType.equals(BuiltinTypesCatalogue.atomicItem)
+                        || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
+                    throw new UnsupportedFeatureException(
+                            "Validate type currently supports concrete built-in XML Schema atomic types.",
+                            expression.getMetadata());
+                }
             }
         }
         ItemType sourceItemType =
