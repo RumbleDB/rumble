@@ -391,8 +391,7 @@ public class DerivedAtomicItemType extends AbstractItemType {
 
     @Override
     public String toString() {
-        // TODO : Consider added facets restriction and base type
-        return this.name.toString();
+        return getIdentifierString();
     }
 
     @Override
