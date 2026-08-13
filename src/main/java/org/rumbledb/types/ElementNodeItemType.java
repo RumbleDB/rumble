@@ -6,10 +6,15 @@ import java.util.Set;
 import lombok.Getter;
 
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.UndefinedTypeException;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /**
- * Class representing element() and element(QName) item types.
+ * Class representing element(), element(QName), and schema-typed element item types.
  *
  * Wildcard element() is represented with no node-name restriction.
  * element(QName) is represented with a concrete node-name restriction.
@@ -24,9 +29,20 @@ public class ElementNodeItemType extends AbstractItemType {
     @Getter
     private Name nodeName;
 
+    @Getter
+    private Name typeName;
+
+    @Getter
+    private boolean nillable;
+
+    private boolean resolved;
+
     public ElementNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("element");
         this.nodeName = null;
+        this.typeName = null;
+        this.nillable = false;
+        this.resolved = true;
     }
 
     public ElementNodeItemType(Name nodeName) {
@@ -35,6 +51,20 @@ public class ElementNodeItemType extends AbstractItemType {
         }
         this.catalogueName = null;
         this.nodeName = nodeName;
+        this.typeName = null;
+        this.nillable = false;
+        this.resolved = true;
+    }
+
+    public ElementNodeItemType(Name nodeName, Name typeName, boolean nillable) {
+        if (typeName == null) {
+            throw new IllegalArgumentException("Element schema type name cannot be null.");
+        }
+        this.catalogueName = null;
+        this.nodeName = nodeName;
+        this.typeName = typeName;
+        this.nillable = nillable;
+        this.resolved = false;
     }
 
     private boolean isWildcardElement() {
@@ -43,7 +73,8 @@ public class ElementNodeItemType extends AbstractItemType {
 
     @Override
     protected Object equalityKey() {
-        return structuralTypeKey(ElementNodeItemType.class, this.catalogueName, this.nodeName);
+        return structuralTypeKey(
+                ElementNodeItemType.class, this.catalogueName, this.nodeName, this.typeName, this.nillable);
     }
 
     @Override
@@ -81,10 +112,13 @@ public class ElementNodeItemType extends AbstractItemType {
         if (!(superType instanceof ElementNodeItemType other)) {
             return false;
         }
-        if (other.isWildcardElement()) {
+        if (other.nodeName != null && (this.nodeName == null || !this.nodeName.equals(other.nodeName))) {
+            return false;
+        }
+        if (other.typeName == null) {
             return true;
         }
-        return this.nodeName != null && this.nodeName.equals(other.nodeName);
+        return this.typeName != null && this.typeName.equals(other.typeName) && (!this.nillable || other.nillable);
     }
 
     @Override
@@ -127,15 +161,55 @@ public class ElementNodeItemType extends AbstractItemType {
 
     @Override
     public String toString() {
-        if (isWildcardElement()) {
+        if (isWildcardElement() && this.typeName == null) {
             return this.catalogueName.toString();
         }
-        return "element(" + this.nodeName + ")";
+        String name = this.nodeName == null ? "*" : this.nodeName.toString();
+        if (this.typeName == null) {
+            return "element(" + name + ")";
+        }
+        return "element(" + name + ", " + this.typeName + (this.nillable ? "?" : "") + ")";
     }
 
     @Override
     public boolean isResolved() {
-        return true;
+        return this.resolved;
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (this.resolved) {
+            return;
+        }
+        this.typeName = ItemTypeReference.renameAtomic(context, this.typeName);
+        XmlSchemaCatalog catalog = context.getXmlSchemaCatalog();
+        if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(this.typeName)
+                && !isBuiltInElementSchemaType(this.typeName)
+                && (catalog == null || catalog.getTypeDefinition(this.typeName).isEmpty())) {
+            throw new UndefinedTypeException("Type undefined: " + this.typeName, metadata);
+        }
+        this.resolved = true;
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (this.resolved) {
+            return;
+        }
+        if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(this.typeName)
+                && !isBuiltInElementSchemaType(this.typeName)) {
+            throw new UndefinedTypeException("Type undefined: " + this.typeName, metadata);
+        }
+        this.resolved = true;
+    }
+
+    private static boolean isBuiltInElementSchemaType(Name name) {
+        if (!Name.XS_NS.equals(name.getNamespace())) {
+            return false;
+        }
+        return name.getLocalName().equals("anyType")
+                || name.getLocalName().equals("anySimpleType")
+                || name.getLocalName().equals("untyped");
     }
 
     @Override

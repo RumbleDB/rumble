@@ -6,7 +6,10 @@ import java.util.Set;
 import lombok.Getter;
 
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * Class representing document-node() and document-node(element(...)) item types.
@@ -139,7 +142,21 @@ public class DocumentNodeItemType extends AbstractItemType {
 
     @Override
     public boolean isResolved() {
-        return true;
+        return this.elementTestType == null || this.elementTestType.isResolved();
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (this.elementTestType != null && !this.elementTestType.isResolved()) {
+            this.elementTestType.resolve(context, metadata);
+        }
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (this.elementTestType != null && !this.elementTestType.isResolved()) {
+            this.elementTestType.resolve(context, metadata);
+        }
     }
 
     @Override

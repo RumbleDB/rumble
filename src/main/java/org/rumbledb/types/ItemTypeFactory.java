@@ -573,6 +573,21 @@ public class ItemTypeFactory {
     }
 
     /**
+     * Schema-typed XQuery element node type element(N, T) or element(*, T), optionally allowing nilled elements.
+     *
+     * @param nodeName node QName restriction, or null for a wildcard
+     * @param typeName schema type annotation restriction
+     * @param nillable whether a nilled element may match
+     * @return schema-typed element node type
+     */
+    public static ItemType elementNodeItemType(Name nodeName, Name typeName, boolean nillable) {
+        if (typeName == null) {
+            throw new OurBadException("Element schema type name cannot be null.");
+        }
+        return new ElementNodeItemType(nodeName, typeName, nillable);
+    }
+
+    /**
      * Wildcard XQuery attribute node type attribute().
      *
      * @return wildcard attribute node type
