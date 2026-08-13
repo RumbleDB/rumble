@@ -100,7 +100,8 @@ final class XmlSchemaTypeMapper {
             return Optional.empty();
         }
 
-        Name name = declaredNameOf(simpleType);
+        Name declaredName = declaredNameOf(simpleType);
+        Name name = declaredName == null ? mapTypeAnnotation(simpleType).name() : declaredName;
         if (simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_ATOMIC) {
             return mapGeneralizedAtomicType(simpleType.getBaseType())
                     .map(baseType -> ItemTypeFactory.createXmlSchemaAtomicType(name, baseType));
