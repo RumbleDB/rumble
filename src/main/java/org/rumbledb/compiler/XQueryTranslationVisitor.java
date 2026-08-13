@@ -535,6 +535,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         boolean emptyOrderSet;
         boolean boundarySpaceSet;
         boolean copyNamespacesSet;
+        boolean constructionModeSet;
         boolean defaultCollationSet;
         boolean baseURISet;
         boolean defaultFunctionNamespaceDeclared;
@@ -562,6 +563,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     setterContext.copyNamespacesDecl().preserveMode().KW_PRESERVE() != null,
                     setterContext.copyNamespacesDecl().inheritMode().KW_INHERIT() != null);
             flags.copyNamespacesSet = true;
+            return;
+        }
+        if (setterContext.constructionDecl() != null) {
+            if (flags.constructionModeSet) {
+                throw new MoreThanOneConstructionDeclarationException(
+                        "The construction mode was already set.",
+                        createMetadataFromContext(setterContext.constructionDecl()));
+            }
+            this.moduleContext.setConstructionModePreserve(
+                    setterContext.constructionDecl().type.getType() == XQueryParser.KW_PRESERVE);
+            flags.constructionModeSet = true;
             return;
         }
         if (setterContext.emptyOrderDecl() != null) {

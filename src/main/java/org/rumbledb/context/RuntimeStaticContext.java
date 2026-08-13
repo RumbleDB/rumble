@@ -89,6 +89,9 @@ public class RuntimeStaticContext implements Serializable {
     private final boolean copyNamespacesInherit = true;
 
     @Builder.Default
+    private final boolean constructionModePreserve = true;
+
+    @Builder.Default
     private final boolean isUpdating = false;
 
     @Builder.Default
@@ -115,6 +118,9 @@ public class RuntimeStaticContext implements Serializable {
                 .append("\n");
         sb.append("  copyNamespacesInherit: ")
                 .append(this.copyNamespacesInherit)
+                .append("\n");
+        sb.append("  constructionModePreserve: ")
+                .append(this.constructionModePreserve)
                 .append("\n");
         sb.append("  decimalFormats: ").append(this.decimalFormats).append("\n");
         sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
@@ -153,7 +159,8 @@ public class RuntimeStaticContext implements Serializable {
                 .decimalFormats(staticContext.getDecimalFormats())
                 .isQuerySideEffecting(staticContext.isQuerySideEffecting())
                 .copyNamespacesPreserve(staticContext.isCopyNamespacesPreserve())
-                .copyNamespacesInherit(staticContext.isCopyNamespacesInherit());
+                .copyNamespacesInherit(staticContext.isCopyNamespacesInherit())
+                .constructionModePreserve(staticContext.isConstructionModePreserve());
     }
 
     /**
