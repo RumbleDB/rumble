@@ -38,6 +38,8 @@ import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.DocumentNodeItemType;
+import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
@@ -129,6 +131,44 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType instanceof DocumentNodeItemType documentType) {
+            if (!itemToMatch.isDocumentNode()) {
+                return false;
+            }
+            if (documentType.getElementTestType() == null) {
+                return true;
+            }
+            Item documentElement = null;
+            for (Item child : itemToMatch.children()) {
+                if (!child.isElementNode()) {
+                    continue;
+                }
+                if (documentElement != null) {
+                    return false;
+                }
+                documentElement = child;
+            }
+            return documentElement != null && doesItemTypeMatchItem(documentType.getElementTestType(), documentElement);
+        }
+        if (itemType instanceof ElementNodeItemType elementType) {
+            if (!itemToMatch.isElementNode()) {
+                return false;
+            }
+            if (elementType.getNodeName() != null && !elementType.getNodeName().equals(itemToMatch.nodeName())) {
+                return false;
+            }
+            if (elementType.getTypeName() == null) {
+                return true;
+            }
+            if (itemToMatch.getSchemaTypeAnnotation() == null
+                    || !itemToMatch.getSchemaTypeAnnotation().isDerivedFrom(elementType.getTypeName())) {
+                return false;
+            }
+            List<Item> nilled = itemToMatch.nilled();
+            return elementType.isNillable()
+                    || nilled.isEmpty()
+                    || !nilled.get(0).getBooleanValue();
+        }
         if (itemType instanceof AttributeNodeItemType attributeType) {
             if (!itemToMatch.isAttributeNode()) {
                 return false;

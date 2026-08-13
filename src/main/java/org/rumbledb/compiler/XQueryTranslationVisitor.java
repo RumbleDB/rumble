@@ -2352,20 +2352,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private ElementNodeItemType getElementTestAsItemType(XQueryParser.ElementTestContext elementTestContext) {
-        if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
-            throw new UnsupportedFeatureException(
-                    "Typed or nillable element item tests are not supported yet",
-                    createMetadataFromContext(elementTestContext));
-        }
+        Name typeName = elementTestContext.typeName() == null
+                ? null
+                : parseEqName(elementTestContext.typeName().eqName(), false, true, false, false);
+        boolean nillable = elementTestContext.optional != null;
         if (elementTestContext.elementNameOrWildcard() == null) {
             return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
         }
         if (elementTestContext.elementNameOrWildcard().elementName() == null) {
-            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
+            return typeName == null
+                    ? (ElementNodeItemType) BuiltinTypesCatalogue.elementNode
+                    : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(null, typeName, nillable);
         }
         Name elementName = parseEqName(
-                elementTestContext.elementNameOrWildcard().elementName().eqName(), false, false, false, false);
-        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
+                elementTestContext.elementNameOrWildcard().elementName().eqName(), false, false, false, true);
+        return typeName == null
+                ? (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName)
+                : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName, typeName, nillable);
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
