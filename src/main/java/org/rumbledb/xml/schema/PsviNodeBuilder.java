@@ -36,6 +36,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 /** Builds a new schema-annotated XDM tree from Xerces's SAX and PSVI callbacks. */
@@ -141,6 +142,7 @@ final class PsviNodeBuilder extends DefaultHandler {
             throw new OurBadException("Element validation produced an invalid result tree.");
         }
         this.result.addParentToDescendants();
+        this.result.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
     }
 
     private List<Item> createAttributes(
