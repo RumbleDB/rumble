@@ -1190,7 +1190,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         String queryLanguage = expression.getStaticContext().getQueryLanguage();
 
         ItemRuntimePlan runtimeIterator = null;
-        if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
+        XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+        if (!expression.isPartialApplication()
+                && arity == 1
+                && schemaCatalog != null
+                && schemaCatalog.isImportedSimpleType(fnName)) {
+            runtimeIterator = new XmlSchemaCastIterator(
+                    arguments.get(0),
+                    fnName,
+                    true,
+                    schemaCatalog,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
+        } else if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                     identifier,
                     arguments,

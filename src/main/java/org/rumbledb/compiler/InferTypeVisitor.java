@@ -606,6 +606,24 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return signature;
     }
 
+    private FunctionSignature getImportedSimpleTypeConstructorSignature(
+            FunctionCallExpression expression, StaticContext staticContext) {
+        if (expression.isPartialApplication() || expression.getArguments().size() != 1) {
+            return null;
+        }
+        XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
+        Name typeName = expression.getFunctionName();
+        if (schemaCatalog == null || !schemaCatalog.isImportedSimpleType(typeName)) {
+            return null;
+        }
+
+        SequenceType returnType = schemaCatalog.getSimpleTypeCastResultType(typeName);
+        if (returnType.getArity() == SequenceType.Arity.One) {
+            returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.OneOrZero);
+        }
+        return new FunctionSignature(List.of(SequenceType.createSequenceType("anyAtomicType?")), returnType);
+    }
+
     @Override
     public StaticContext visitNamedFunctionRef(NamedFunctionReferenceExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
@@ -831,9 +849,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
         }
-        FunctionSignature signature = null;
+        FunctionSignature signature = getImportedSimpleTypeConstructorSignature(expression, argument);
         try {
-            signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
+            if (signature == null) {
+                signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
+            }
         } catch (UnknownFunctionCallException e) {
             throw new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata());
         }
