@@ -6,10 +6,15 @@ import java.util.Set;
 import lombok.Getter;
 
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.UndefinedTypeException;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /**
- * Class representing attribute() and attribute(QName) item types.
+ * Class representing attribute(), attribute(QName), and schema-typed attribute item types.
  *
  * Wildcard attribute() is represented with no node-name restriction.
  * attribute(QName) is represented with a concrete node-name restriction.
@@ -24,9 +29,16 @@ public class AttributeNodeItemType extends AbstractItemType {
     @Getter
     private Name nodeName;
 
+    @Getter
+    private Name typeName;
+
+    private boolean resolved;
+
     public AttributeNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("attribute");
         this.nodeName = null;
+        this.typeName = null;
+        this.resolved = true;
     }
 
     public AttributeNodeItemType(Name nodeName) {
@@ -35,6 +47,18 @@ public class AttributeNodeItemType extends AbstractItemType {
         }
         this.catalogueName = null;
         this.nodeName = nodeName;
+        this.typeName = null;
+        this.resolved = true;
+    }
+
+    public AttributeNodeItemType(Name nodeName, Name typeName) {
+        if (typeName == null) {
+            throw new IllegalArgumentException("Attribute schema type name cannot be null.");
+        }
+        this.catalogueName = null;
+        this.nodeName = nodeName;
+        this.typeName = typeName;
+        this.resolved = false;
     }
 
     private boolean isWildcardAttribute() {
@@ -43,7 +67,7 @@ public class AttributeNodeItemType extends AbstractItemType {
 
     @Override
     protected Object equalityKey() {
-        return structuralTypeKey(AttributeNodeItemType.class, this.catalogueName, this.nodeName);
+        return structuralTypeKey(AttributeNodeItemType.class, this.catalogueName, this.nodeName, this.typeName);
     }
 
     @Override
@@ -81,10 +105,10 @@ public class AttributeNodeItemType extends AbstractItemType {
         if (!(superType instanceof AttributeNodeItemType other)) {
             return false;
         }
-        if (other.isWildcardAttribute()) {
-            return true;
+        if (other.nodeName != null && (this.nodeName == null || !this.nodeName.equals(other.nodeName))) {
+            return false;
         }
-        return this.nodeName != null && this.nodeName.equals(other.nodeName);
+        return other.typeName == null || (this.typeName != null && this.typeName.equals(other.typeName));
     }
 
     @Override
@@ -127,15 +151,41 @@ public class AttributeNodeItemType extends AbstractItemType {
 
     @Override
     public String toString() {
-        if (isWildcardAttribute()) {
+        if (isWildcardAttribute() && this.typeName == null) {
             return this.catalogueName.toString();
         }
-        return "attribute(" + this.nodeName + ")";
+        String name = this.nodeName == null ? "*" : this.nodeName.toString();
+        return this.typeName == null ? "attribute(" + name + ")" : "attribute(" + name + ", " + this.typeName + ")";
     }
 
     @Override
     public boolean isResolved() {
-        return true;
+        return this.resolved;
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (this.resolved) {
+            return;
+        }
+        this.typeName = ItemTypeReference.renameAtomic(context, this.typeName);
+        XmlSchemaCatalog catalog = context.getXmlSchemaCatalog();
+        if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(this.typeName)
+                && (catalog == null || !catalog.isImportedSimpleType(this.typeName))) {
+            throw new UndefinedTypeException("Type undefined: " + this.typeName, metadata);
+        }
+        this.resolved = true;
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (this.resolved) {
+            return;
+        }
+        if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(this.typeName)) {
+            throw new UndefinedTypeException("Type undefined: " + this.typeName, metadata);
+        }
+        this.resolved = true;
     }
 
     @Override
