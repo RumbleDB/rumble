@@ -27,9 +27,11 @@ import java.util.Set;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 
 final class NamespaceFixupUtils {
 
@@ -37,11 +39,57 @@ final class NamespaceFixupUtils {
 
     static Item copyNodeForConstructor(Item item, RuntimeStaticContext staticContext) {
         Item copy = item.copy(true);
-        if (!item.isElementNode()) {
-            return copy;
+        if (item.isElementNode()) {
+            configureCopiedElementNamespaces((ElementItem) item, (ElementItem) copy, staticContext, true);
         }
-        configureCopiedElementNamespaces((ElementItem) item, (ElementItem) copy, staticContext, true);
+        if (!staticContext.isConstructionModePreserve()) {
+            stripTypeAnnotations(copy);
+        }
         return copy;
+    }
+
+    static Item copyAttributeForConstructor(Item attribute, RuntimeStaticContext staticContext) {
+        Item copy = attribute.copy(true);
+        if (!staticContext.isConstructionModePreserve()) {
+            annotateUntypedAttribute(copy);
+        }
+        return copy;
+    }
+
+    static void annotateNewElement(Item element, RuntimeStaticContext staticContext) {
+        XmlSchemaTypeAnnotation annotation = staticContext.isConstructionModePreserve()
+                ? XmlSchemaTypeAnnotation.anyType()
+                : XmlSchemaTypeAnnotation.untyped();
+        element.setSchemaType(
+                annotation, List.of(ItemFactory.getInstance().createUntypedAtomicItem(element.getStringValue())));
+    }
+
+    static void annotateNewAttribute(Item attribute) {
+        annotateUntypedAttribute(attribute);
+    }
+
+    private static void stripTypeAnnotations(Item node) {
+        if (node.isElementNode()) {
+            node.setSchemaType(
+                    XmlSchemaTypeAnnotation.untyped(),
+                    List.of(ItemFactory.getInstance().createUntypedAtomicItem(node.getStringValue())));
+            for (Item attribute : node.attributes()) {
+                annotateUntypedAttribute(attribute);
+            }
+            for (Item child : node.children()) {
+                if (child.isElementNode()) {
+                    stripTypeAnnotations(child);
+                }
+            }
+        } else if (node.isAttributeNode()) {
+            annotateUntypedAttribute(node);
+        }
+    }
+
+    private static void annotateUntypedAttribute(Item attribute) {
+        attribute.setSchemaType(
+                XmlSchemaTypeAnnotation.untypedAtomic(),
+                List.of(ItemFactory.getInstance().createUntypedAtomicItem(attribute.getStringValue())));
     }
 
     static void applyNamespaceFixup(ElementItem element) {

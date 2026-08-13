@@ -171,6 +171,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
                 .createXmlElementNode(
                         elementName.getQNameValue(), processedContent.children, processedContent.attributes);
+        NamespaceFixupUtils.annotateNewElement(elementItem, this.staticContext);
         // Only add namespaces explicitly declared on this element
         for (Item namespace : processedContent.namespaces) {
             elementItem.addOrReplaceNamespace(namespace);
@@ -209,7 +210,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
 
         for (Item item : expandedContentSequence) {
             if (item.isAttributeNode()) {
-                attributes.add(item.copy(true));
+                attributes.add(NamespaceFixupUtils.copyAttributeForConstructor(item, this.staticContext));
             } else if (item.isNamespaceNode()) {
                 namespaces.add(item.copy(true));
             } else if (item.isNode()) {

@@ -186,6 +186,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
         // 4: The parent property of the attribute node is set to empty.
         Item attributeItem =
                 ItemFactory.getInstance().createXmlAttributeNode(attributeName.getQNameValue(), attributeValue);
+        NamespaceFixupUtils.annotateNewAttribute(attributeItem);
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             attributeItem.setXmlDocumentPosition(documentPath, 0);

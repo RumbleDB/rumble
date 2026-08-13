@@ -83,6 +83,8 @@ public class AttributeNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePl
         // The resulting string becomes the string-value property of the attribute node.
         // this is performed by using the same StringBuilder for all the attribute components
         // Create and return the attribute
-        return ItemFactory.getInstance().createXmlAttributeNode(this.attributeName, sb.toString());
+        Item attribute = ItemFactory.getInstance().createXmlAttributeNode(this.attributeName, sb.toString());
+        NamespaceFixupUtils.annotateNewAttribute(attribute);
+        return attribute;
     }
 }
