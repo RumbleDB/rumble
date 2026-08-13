@@ -1193,7 +1193,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
         if (!expression.isPartialApplication()
                 && schemaCatalog != null
-                && schemaCatalog.isImportedSimpleTypeConstructor(identifier)) {
+                && schemaCatalog.isSimpleTypeConstructor(identifier)) {
             runtimeIterator = new XmlSchemaCastIterator(
                     arguments.get(0),
                     fnName,
@@ -1530,7 +1530,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Name targetTypeName = expression.getSequenceType().getItemType().hasName()
                 ? expression.getSequenceType().getItemType().getName()
                 : null;
-        if (schemaCatalog != null && schemaCatalog.isImportedSimpleType(targetTypeName)) {
+        if (schemaCatalog != null && schemaCatalog.isSimpleTypeCastTarget(targetTypeName)) {
             return new XmlSchemaCastableIterator(
                     childExpression,
                     targetTypeName,
@@ -1553,7 +1553,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Name targetTypeName = expression.getSequenceType().getItemType().hasName()
                 ? expression.getSequenceType().getItemType().getName()
                 : null;
-        if (schemaCatalog != null && schemaCatalog.isImportedSimpleType(targetTypeName)) {
+        if (schemaCatalog != null && schemaCatalog.isSimpleTypeCastTarget(targetTypeName)) {
             return new XmlSchemaCastIterator(
                     childExpression,
                     targetTypeName,

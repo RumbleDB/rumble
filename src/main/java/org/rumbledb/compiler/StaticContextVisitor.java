@@ -485,7 +485,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        if (!isImportedSimpleType(expression.getSequenceType(), argument)) {
+        if (!isSimpleTypeCastTarget(expression.getSequenceType(), argument)) {
             expression.getSequenceType().resolve(argument, expression.getMetadata());
         }
         return argument;
@@ -494,18 +494,18 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        if (!isImportedSimpleType(expression.getSequenceType(), argument)) {
+        if (!isSimpleTypeCastTarget(expression.getSequenceType(), argument)) {
             expression.getSequenceType().resolve(argument, expression.getMetadata());
         }
         return argument;
     }
 
-    private static boolean isImportedSimpleType(SequenceType sequenceType, StaticContext staticContext) {
+    private static boolean isSimpleTypeCastTarget(SequenceType sequenceType, StaticContext staticContext) {
         // An XSD list is legal as a SingleType cast target, but it is deliberately not an XDM ItemType
         // and therefore cannot be resolved through InScopeSchemaTypes.
         ItemType itemType = sequenceType.getItemType();
         XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
-        return itemType.hasName() && schemaCatalog != null && schemaCatalog.isImportedSimpleType(itemType.getName());
+        return itemType.hasName() && schemaCatalog != null && schemaCatalog.isSimpleTypeCastTarget(itemType.getName());
     }
 
     @Override

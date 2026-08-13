@@ -238,7 +238,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
         boolean isSchemaConstructor = !expression.isPartialApplication()
                 && schemaCatalog != null
-                && schemaCatalog.isImportedSimpleTypeConstructor(identifier);
+                && schemaCatalog.isSimpleTypeConstructor(identifier);
         if (!BuiltinFunctionCatalogue.exists(identifier, queryLanguage) && !isSchemaConstructor) {
             List<ExecutionMode> modes = new ArrayList<>();
             for (Expression parameter : expression.getArguments()) {

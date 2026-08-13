@@ -328,7 +328,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             signature = function.getSignature();
         } else {
             XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
-            if (schemaCatalog != null && schemaCatalog.isImportedSimpleTypeConstructor(identifier)) {
+            if (schemaCatalog != null && schemaCatalog.isSimpleTypeConstructor(identifier)) {
                 signature = schemaCatalog.getSimpleTypeConstructorSignature(identifier);
             } else {
                 signature = staticContext.getFunctionSignature(identifier);

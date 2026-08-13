@@ -119,13 +119,28 @@ public final class XmlSchemaCatalog {
                 .isPresent();
     }
 
-    public boolean isImportedSimpleTypeConstructor(FunctionIdentifier identifier) {
-        return identifier != null && identifier.getArity() == 1 && isImportedSimpleType(identifier.getName());
+    /** Whether a type uses the Xerces cast path instead of Rumble's atomic item-type path. */
+    public boolean isSimpleTypeCastTarget(Name name) {
+        if (isImportedSimpleType(name)) {
+            return true;
+        }
+        if (name == null || !Name.XS_NS.equals(name.getNamespace())) {
+            return false;
+        }
+        return getTypeDefinition(name)
+                .filter(XSSimpleTypeDefinition.class::isInstance)
+                .map(XSSimpleTypeDefinition.class::cast)
+                .filter(type -> type.getVariety() == XSSimpleTypeDefinition.VARIETY_LIST)
+                .isPresent();
+    }
+
+    public boolean isSimpleTypeConstructor(FunctionIdentifier identifier) {
+        return identifier != null && identifier.getArity() == 1 && isSimpleTypeCastTarget(identifier.getName());
     }
 
     public FunctionSignature getSimpleTypeConstructorSignature(FunctionIdentifier identifier) {
-        if (!isImportedSimpleTypeConstructor(identifier)) {
-            throw new OurBadException("The function name does not identify an imported XML Schema constructor.");
+        if (!isSimpleTypeConstructor(identifier)) {
+            throw new OurBadException("The function name does not identify an XML Schema constructor.");
         }
         SequenceType returnType = getSimpleTypeCastResultType(identifier.getName());
         if (returnType.getArity() == SequenceType.Arity.One) {
@@ -140,7 +155,7 @@ public final class XmlSchemaCatalog {
      * cardinality describe the list's typed-value sequence.
      */
     public SequenceType getSimpleTypeCastResultType(Name name) {
-        XSSimpleTypeDefinition schemaType = importedSimpleType(name);
+        XSSimpleTypeDefinition schemaType = simpleTypeCastTarget(name);
         if (mayProduceMultipleValues(schemaType)) {
             ItemType itemType = this.typeMapper.getListItemType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
             return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
@@ -153,7 +168,7 @@ public final class XmlSchemaCatalog {
     /** Casts one atomized value with the matching definition from this catalog. */
     public List<Item> castSimpleType(
             Name name, Item item, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
-        return this.simpleTypeCaster.cast(name, importedSimpleType(name), item, namespaceResolver, metadata);
+        return this.simpleTypeCaster.cast(name, simpleTypeCastTarget(name), item, namespaceResolver, metadata);
     }
 
     public List<ItemType> getNamedGeneralizedAtomicItemTypes() {
@@ -202,9 +217,9 @@ public final class XmlSchemaCatalog {
         return this.validationSchema;
     }
 
-    private XSSimpleTypeDefinition importedSimpleType(Name name) {
-        if (!isImportedSimpleType(name)) {
-            throw new OurBadException("The type " + name + " is not an imported XML Schema simple type.");
+    private XSSimpleTypeDefinition simpleTypeCastTarget(Name name) {
+        if (!isSimpleTypeCastTarget(name)) {
+            throw new OurBadException("The type " + name + " is not an XML Schema cast target.");
         }
         return (XSSimpleTypeDefinition) getTypeDefinition(name).orElseThrow();
     }

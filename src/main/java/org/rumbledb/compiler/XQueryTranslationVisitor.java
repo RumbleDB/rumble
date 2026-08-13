@@ -472,13 +472,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (OptionDeclaration optionDeclaration : optionDeclarations) {
             prolog.addDeclaration(optionDeclaration);
         }
-        XmlSchemaCatalogLoader.load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
-                .ifPresent(catalog -> {
-                    this.moduleContext.setXmlSchemaCatalog(catalog);
-                    for (ItemType itemType : catalog.getNamedGeneralizedAtomicItemTypes()) {
-                        this.moduleContext.getInScopeSchemaTypes().addInScopeSchemaType(itemType, prolog.getMetadata());
-                    }
-                });
+        XmlSchemaCatalog catalog = XmlSchemaCatalogLoader
+                .load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
+                .orElseGet(XmlSchemaCatalogLoader::loadBuiltInCatalog);
+        this.moduleContext.setXmlSchemaCatalog(catalog);
+        for (ItemType itemType : catalog.getNamedGeneralizedAtomicItemTypes()) {
+            this.moduleContext.getInScopeSchemaTypes().addInScopeSchemaType(itemType, prolog.getMetadata());
+        }
         return prolog;
     }
 

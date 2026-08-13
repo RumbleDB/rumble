@@ -613,7 +613,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
         if (schemaCatalog == null
-                || !schemaCatalog.isImportedSimpleTypeConstructor(expression.getFunctionIdentifier())) {
+                || !schemaCatalog.isSimpleTypeConstructor(expression.getFunctionIdentifier())) {
             return null;
         }
         return schemaCatalog.getSimpleTypeConstructorSignature(expression.getFunctionIdentifier());
@@ -917,7 +917,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        XmlSchemaCatalog schemaCatalog = importedSimpleTypeCatalog(expression.getSequenceType(), argument);
+        XmlSchemaCatalog schemaCatalog = simpleTypeCastCatalog(expression.getSequenceType(), argument);
         if (schemaCatalog != null) {
             checkImportedSimpleTypeCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
@@ -950,7 +950,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        XmlSchemaCatalog schemaCatalog = importedSimpleTypeCatalog(expression.getSequenceType(), argument);
+        XmlSchemaCatalog schemaCatalog = simpleTypeCastCatalog(expression.getSequenceType(), argument);
         if (schemaCatalog != null) {
             SequenceType expressionType = expression.getMainExpression().getStaticSequenceType();
             checkImportedSimpleTypeCastOperand(expressionType, expression);
@@ -1038,10 +1038,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private XmlSchemaCatalog importedSimpleTypeCatalog(SequenceType sequenceType, StaticContext staticContext) {
+    private XmlSchemaCatalog simpleTypeCastCatalog(SequenceType sequenceType, StaticContext staticContext) {
         ItemType itemType = sequenceType.getItemType();
         XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
-        return itemType.hasName() && schemaCatalog != null && schemaCatalog.isImportedSimpleType(itemType.getName())
+        return itemType.hasName() && schemaCatalog != null && schemaCatalog.isSimpleTypeCastTarget(itemType.getName())
                 ? schemaCatalog
                 : null;
     }
