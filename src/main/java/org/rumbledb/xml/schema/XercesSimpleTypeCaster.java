@@ -28,6 +28,7 @@ import org.apache.xerces.impl.dv.ValidationContext;
 import org.apache.xerces.impl.dv.XSSimpleType;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
+import org.apache.xerces.xs.XSTypeDefinition;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -88,6 +89,15 @@ final class XercesSimpleTypeCaster {
             Item item,
             NamespaceResolver namespaceResolver,
             ExceptionMetadata metadata) {
+        if (item.isString() || item.isUntypedAtomic()) {
+            return validate(
+                    typeName,
+                    schemaType,
+                    item.getStringValue(),
+                    item,
+                    new SimpleTypeValidationContext(namespaceResolver),
+                    metadata);
+        }
         ItemType itemType = this.typeMapper
                 .mapGeneralizedAtomicType(schemaType)
                 .filter(ItemType::isAtomicItemType)
@@ -132,8 +142,14 @@ final class XercesSimpleTypeCaster {
             ItemType memberItemType =
                     this.typeMapper.mapGeneralizedAtomicType(memberType).orElse(null);
             if (memberItemType != null && item.getDynamicType().isSubtypeOf(memberItemType)) {
-                validateOnly(typeName, schemaType, item, item, namespaceResolver, metadata);
-                return List.of(item);
+                try {
+                    ValidationContext memberContext = validationContext(item, namespaceResolver);
+                    ValidatedInfo memberValue = validatedCanonicalValue(memberType, item, memberContext);
+                    schemaType.validate(memberContext, memberValue);
+                    return List.of(item);
+                } catch (InvalidDatatypeValueException exception) {
+                    throw castException(typeName, item, metadata);
+                }
             }
         }
 
@@ -155,11 +171,10 @@ final class XercesSimpleTypeCaster {
             }
 
             try {
-                String lexicalValue = lexicalValue(converted);
                 ValidationContext convertedContext = validationContext(converted, namespaceResolver);
-                validateValue(memberType, lexicalValue, convertedContext);
+                ValidatedInfo memberValue = validatedCanonicalValue(memberType, converted, convertedContext);
                 // Validate restrictions declared on the union, while retaining the selected member's value.
-                validateValue(schemaType, lexicalValue, convertedContext);
+                schemaType.validate(convertedContext, memberValue);
                 return List.of(converted);
             } catch (InvalidDatatypeValueException exception) {
                 // Try the next atomic member.
@@ -193,13 +208,39 @@ final class XercesSimpleTypeCaster {
             NamespaceResolver namespaceResolver,
             ExceptionMetadata metadata) {
         try {
-            validateValue(schemaType, lexicalValue(value), validationContext(value, namespaceResolver));
+            ValidationContext validationContext = validationContext(value, namespaceResolver);
+            validatedCanonicalValue(schemaType, value, validationContext);
         } catch (InvalidDatatypeValueException exception) {
             if ("UndeclaredPrefix".equals(exception.getKey())) {
                 throw new NoNamespaceFoundForPrefixException(exception.getMessage(), metadata);
             }
             throw castException(typeName, sourceItem, metadata);
         }
+    }
+
+    private static ValidatedInfo validatedCanonicalValue(
+            XSSimpleType schemaType, Item value, ValidationContext validationContext)
+            throws InvalidDatatypeValueException {
+        ValidatedInfo schemaValue = validateValue(builtInBaseType(schemaType), lexicalValue(value), validationContext);
+        // F&O casting applies pattern facets to the canonical lexical representation of the converted value.
+        schemaValue.normalizedValue = schemaValue.getActualValue().toString();
+        schemaType.validate(validationContext, schemaValue);
+        return schemaValue;
+    }
+
+    private static XSSimpleType builtInBaseType(XSSimpleType schemaType) {
+        XSTypeDefinition current = schemaType;
+        while (current != null && !Name.XS_NS.equals(current.getNamespace())) {
+            XSTypeDefinition baseType = current.getBaseType();
+            if (baseType == current) {
+                break;
+            }
+            current = baseType;
+        }
+        if (!(current instanceof XSSimpleType builtInType)) {
+            throw new OurBadException("An imported atomic type has no built-in XML Schema base type.");
+        }
+        return builtInType;
     }
 
     private static String lexicalValue(Item value) {
