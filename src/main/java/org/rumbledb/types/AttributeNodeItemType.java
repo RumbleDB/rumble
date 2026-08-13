@@ -52,13 +52,17 @@ public class AttributeNodeItemType extends AbstractItemType {
     }
 
     public AttributeNodeItemType(Name nodeName, Name typeName) {
+        this(nodeName, typeName, false);
+    }
+
+    AttributeNodeItemType(Name nodeName, Name typeName, boolean resolved) {
         if (typeName == null) {
             throw new IllegalArgumentException("Attribute schema type name cannot be null.");
         }
         this.catalogueName = null;
         this.nodeName = nodeName;
         this.typeName = typeName;
-        this.resolved = false;
+        this.resolved = resolved;
     }
 
     private boolean isWildcardAttribute() {

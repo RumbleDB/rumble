@@ -57,6 +57,10 @@ public class ElementNodeItemType extends AbstractItemType {
     }
 
     public ElementNodeItemType(Name nodeName, Name typeName, boolean nillable) {
+        this(nodeName, typeName, nillable, false);
+    }
+
+    ElementNodeItemType(Name nodeName, Name typeName, boolean nillable, boolean resolved) {
         if (typeName == null) {
             throw new IllegalArgumentException("Element schema type name cannot be null.");
         }
@@ -64,7 +68,7 @@ public class ElementNodeItemType extends AbstractItemType {
         this.nodeName = nodeName;
         this.typeName = typeName;
         this.nillable = nillable;
-        this.resolved = false;
+        this.resolved = resolved;
     }
 
     private boolean isWildcardElement() {
