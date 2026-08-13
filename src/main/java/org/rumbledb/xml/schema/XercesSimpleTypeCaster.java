@@ -143,9 +143,9 @@ final class XercesSimpleTypeCaster {
                     this.typeMapper.mapGeneralizedAtomicType(memberType).orElse(null);
             if (memberItemType != null && item.getDynamicType().isSubtypeOf(memberItemType)) {
                 try {
-                    ValidationContext memberContext = validationContext(item, namespaceResolver);
+                    SimpleTypeValidationContext memberContext = validationContext(item, namespaceResolver);
                     ValidatedInfo memberValue = validatedCanonicalValue(memberType, item, memberContext);
-                    schemaType.validate(memberContext, memberValue);
+                    schemaType.validate(memberContext.forFacetCheckingOnly(), memberValue);
                     return List.of(item);
                 } catch (InvalidDatatypeValueException exception) {
                     throw castException(typeName, item, metadata);
@@ -171,10 +171,10 @@ final class XercesSimpleTypeCaster {
             }
 
             try {
-                ValidationContext convertedContext = validationContext(converted, namespaceResolver);
+                SimpleTypeValidationContext convertedContext = validationContext(converted, namespaceResolver);
                 ValidatedInfo memberValue = validatedCanonicalValue(memberType, converted, convertedContext);
                 // Validate restrictions declared on the union, while retaining the selected member's value.
-                schemaType.validate(convertedContext, memberValue);
+                schemaType.validate(convertedContext.forFacetCheckingOnly(), memberValue);
                 return List.of(converted);
             } catch (InvalidDatatypeValueException exception) {
                 // Try the next atomic member.
@@ -208,7 +208,7 @@ final class XercesSimpleTypeCaster {
             NamespaceResolver namespaceResolver,
             ExceptionMetadata metadata) {
         try {
-            ValidationContext validationContext = validationContext(value, namespaceResolver);
+            SimpleTypeValidationContext validationContext = validationContext(value, namespaceResolver);
             validatedCanonicalValue(schemaType, value, validationContext);
         } catch (InvalidDatatypeValueException exception) {
             if ("UndeclaredPrefix".equals(exception.getKey())) {
@@ -219,12 +219,13 @@ final class XercesSimpleTypeCaster {
     }
 
     private static ValidatedInfo validatedCanonicalValue(
-            XSSimpleType schemaType, Item value, ValidationContext validationContext)
+            XSSimpleType schemaType, Item value, SimpleTypeValidationContext validationContext)
             throws InvalidDatatypeValueException {
         ValidatedInfo schemaValue = validateValue(builtInBaseType(schemaType), lexicalValue(value), validationContext);
         // F&O casting applies pattern facets to the canonical lexical representation of the converted value.
         schemaValue.normalizedValue = schemaValue.getActualValue().toString();
-        schemaType.validate(validationContext, schemaValue);
+        // The built-in base already checked Xerces's ID/IDREF/ENTITY rules for this actual value.
+        schemaType.validate(validationContext.forFacetCheckingOnly(), schemaValue);
         return schemaValue;
     }
 
@@ -252,7 +253,7 @@ final class XercesSimpleTypeCaster {
         return prefix == null || prefix.isEmpty() ? name.getLocalName() : prefix + ":" + name.getLocalName();
     }
 
-    private static ValidationContext validationContext(Item value, NamespaceResolver namespaceResolver) {
+    private static SimpleTypeValidationContext validationContext(Item value, NamespaceResolver namespaceResolver) {
         if (!value.isQName()) {
             return new SimpleTypeValidationContext(namespaceResolver);
         }
@@ -289,9 +290,19 @@ final class XercesSimpleTypeCaster {
     private static final class SimpleTypeValidationContext implements ValidationContext {
 
         private final NamespaceResolver namespaceResolver;
+        private final boolean extraChecking;
 
         private SimpleTypeValidationContext(NamespaceResolver namespaceResolver) {
+            this(namespaceResolver, true);
+        }
+
+        private SimpleTypeValidationContext(NamespaceResolver namespaceResolver, boolean extraChecking) {
             this.namespaceResolver = namespaceResolver;
+            this.extraChecking = extraChecking;
+        }
+
+        private SimpleTypeValidationContext forFacetCheckingOnly() {
+            return this.extraChecking ? new SimpleTypeValidationContext(this.namespaceResolver, false) : this;
         }
 
         @Override
@@ -301,7 +312,7 @@ final class XercesSimpleTypeCaster {
 
         @Override
         public boolean needExtraChecking() {
-            return true;
+            return this.extraChecking;
         }
 
         @Override
