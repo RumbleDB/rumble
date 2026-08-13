@@ -2451,16 +2451,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         if (kindTestContext.attributeTest() != null) {
             JsoniqParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
-            if (attributeTestContext.typeName() != null) {
-                throw new UnsupportedFeatureException(
-                        "Typed attribute item tests are not supported yet",
-                        createMetadataFromContext(attributeTestContext));
-            }
+            Name typeName = attributeTestContext.typeName() == null
+                    ? null
+                    : parseEqName(attributeTestContext.typeName().eqName(), false, true, false, false);
             if (attributeTestContext.attributeNameOrWildcard() == null) {
                 return BuiltinTypesCatalogue.attributeNode;
             }
             if (attributeTestContext.attributeNameOrWildcard().attributeName() == null) {
-                return BuiltinTypesCatalogue.attributeNode;
+                return typeName == null
+                        ? BuiltinTypesCatalogue.attributeNode
+                        : ItemTypeFactory.attributeNodeItemType(null, typeName);
             }
             Name attributeName = parseEqName(
                     attributeTestContext
@@ -2471,7 +2471,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     false,
                     false,
                     false);
-            return ItemTypeFactory.attributeNodeItemType(attributeName);
+            return typeName == null
+                    ? ItemTypeFactory.attributeNodeItemType(attributeName)
+                    : ItemTypeFactory.attributeNodeItemType(attributeName, typeName);
         }
         if (kindTestContext.commentTest() != null) {
             return BuiltinTypesCatalogue.commentNode;
