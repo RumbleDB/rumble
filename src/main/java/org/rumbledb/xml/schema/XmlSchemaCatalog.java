@@ -23,7 +23,9 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.xml.validation.Schema;
 
+import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSConstants;
+import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSObjectList;
@@ -37,8 +39,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
+import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SchemaElementNodeItemType;
 import org.rumbledb.types.SequenceType;
 
 /** The Xerces XML Schema component model available to one XQuery module. */
@@ -62,6 +68,39 @@ public final class XmlSchemaCatalog {
         Objects.requireNonNull(name, "name must not be null");
         return Optional.ofNullable(
                 this.schemaModel.getTypeDefinition(name.getLocalName(), emptyToNull(name.getNamespace())));
+    }
+
+    /** Resolves a global attribute declaration to its XDM node-test type. */
+    public Optional<AttributeNodeItemType> getSchemaAttributeItemType(Name name) {
+        Objects.requireNonNull(name, "name must not be null");
+        XSAttributeDeclaration declaration =
+                this.schemaModel.getAttributeDeclaration(name.getLocalName(), emptyToNull(name.getNamespace()));
+        if (declaration == null) {
+            return Optional.empty();
+        }
+        Name declarationName = componentName(declaration.getNamespace(), declaration.getName());
+        Name typeName = getTypeAnnotation(declaration.getTypeDefinition()).name();
+        return Optional.of(ItemTypeFactory.resolvedAttributeNodeItemType(declarationName, typeName));
+    }
+
+    /**
+     * Resolves a global element declaration and all declarations that are validly substitutable for it.
+     */
+    public Optional<SchemaElementNodeItemType> getSchemaElementItemType(Name name) {
+        Objects.requireNonNull(name, "name must not be null");
+        XSElementDeclaration head =
+                this.schemaModel.getElementDeclaration(name.getLocalName(), emptyToNull(name.getNamespace()));
+        if (head == null) {
+            return Optional.empty();
+        }
+
+        List<ElementNodeItemType> alternatives = new ArrayList<>();
+        addElementAlternative(alternatives, head);
+        XSObjectList substitutionGroup = this.schemaModel.getSubstitutionGroup(head);
+        for (int index = 0; index < substitutionGroup.getLength(); index++) {
+            addElementAlternative(alternatives, (XSElementDeclaration) substitutionGroup.item(index));
+        }
+        return Optional.of(new SchemaElementNodeItemType(name, alternatives));
     }
 
     public boolean containsNamespace(String namespace) {
@@ -172,5 +211,20 @@ public final class XmlSchemaCatalog {
 
     private static String emptyToNull(String value) {
         return value == null || value.isEmpty() ? null : value;
+    }
+
+    private void addElementAlternative(List<ElementNodeItemType> alternatives, XSElementDeclaration declaration) {
+        if (declaration.getAbstract()) {
+            return;
+        }
+        Name declarationName = componentName(declaration.getNamespace(), declaration.getName());
+        Name typeName = getTypeAnnotation(declaration.getTypeDefinition()).name();
+        alternatives.add(
+                ItemTypeFactory.resolvedElementNodeItemType(declarationName, typeName, declaration.getNillable()));
+    }
+
+    private static Name componentName(String namespace, String localName) {
+        String normalizedNamespace = emptyToNull(namespace);
+        return new Name(normalizedNamespace, Name.XS_NS.equals(normalizedNamespace) ? "xs" : null, localName);
     }
 }
