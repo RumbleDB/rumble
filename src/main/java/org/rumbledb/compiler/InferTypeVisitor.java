@@ -612,8 +612,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return null;
         }
         XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
-        if (schemaCatalog == null
-                || !schemaCatalog.isSimpleTypeConstructor(expression.getFunctionIdentifier())) {
+        if (schemaCatalog == null || !schemaCatalog.isSimpleTypeConstructor(expression.getFunctionIdentifier())) {
             return null;
         }
         return schemaCatalog.getSimpleTypeConstructorSignature(expression.getFunctionIdentifier());

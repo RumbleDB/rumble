@@ -578,8 +578,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         for (OptionDeclaration optionDeclaration : optionDeclarations) {
             prolog.addDeclaration(optionDeclaration);
         }
-        XmlSchemaCatalog catalog = XmlSchemaCatalogLoader
-                .load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
+        XmlSchemaCatalog catalog = XmlSchemaCatalogLoader.load(
+                        schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
                 .orElseGet(XmlSchemaCatalogLoader::loadBuiltInCatalog);
         this.moduleContext.setXmlSchemaCatalog(catalog);
         for (ItemType itemType : catalog.getNamedGeneralizedAtomicItemTypes()) {
