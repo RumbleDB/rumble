@@ -36,6 +36,7 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -128,6 +129,20 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType instanceof AttributeNodeItemType attributeType) {
+            if (!itemToMatch.isAttributeNode()) {
+                return false;
+            }
+            if (attributeType.getNodeName() != null
+                    && !attributeType.getNodeName().equals(itemToMatch.nodeName())) {
+                return false;
+            }
+            if (attributeType.getTypeName() == null) {
+                return true;
+            }
+            return itemToMatch.getSchemaTypeAnnotation() != null
+                    && itemToMatch.getSchemaTypeAnnotation().isDerivedFrom(attributeType.getTypeName());
+        }
         if (itemToMatch.isMap()) {
             if (itemToMatch.getSize() == 0) {
                 // empty map: matches
