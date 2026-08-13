@@ -89,6 +89,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -484,15 +485,25 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        if (!isImportedSimpleType(expression.getSequenceType(), argument)) {
+            expression.getSequenceType().resolve(argument, expression.getMetadata());
+        }
         return argument;
     }
 
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        if (!isImportedSimpleType(expression.getSequenceType(), argument)) {
+            expression.getSequenceType().resolve(argument, expression.getMetadata());
+        }
         return argument;
+    }
+
+    private static boolean isImportedSimpleType(SequenceType sequenceType, StaticContext staticContext) {
+        ItemType itemType = sequenceType.getItemType();
+        XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
+        return itemType.hasName() && schemaCatalog != null && schemaCatalog.isImportedSimpleType(itemType.getName());
     }
 
     @Override
