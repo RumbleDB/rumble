@@ -587,6 +587,11 @@ public class ItemTypeFactory {
         return new ElementNodeItemType(nodeName, typeName, nillable);
     }
 
+    /** Creates one already-resolved alternative of a schema-element declaration test. */
+    public static ElementNodeItemType resolvedElementNodeItemType(Name nodeName, Name typeName, boolean nillable) {
+        return new ElementNodeItemType(nodeName, typeName, nillable, true);
+    }
+
     /**
      * Wildcard XQuery attribute node type attribute().
      *
@@ -621,6 +626,11 @@ public class ItemTypeFactory {
             throw new OurBadException("Attribute schema type name cannot be null.");
         }
         return new AttributeNodeItemType(nodeName, typeName);
+    }
+
+    /** Creates the already-resolved item type of a global schema attribute declaration. */
+    public static AttributeNodeItemType resolvedAttributeNodeItemType(Name nodeName, Name typeName) {
+        return new AttributeNodeItemType(nodeName, typeName, true);
     }
 
     /**
