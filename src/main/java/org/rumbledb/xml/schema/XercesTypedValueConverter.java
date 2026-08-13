@@ -60,8 +60,7 @@ final class XercesTypedValueConverter {
             case XSSimpleTypeDefinition.VARIETY_ATOMIC -> List.of(
                     convertAtomicValue(normalizedValue(schemaValue), schemaValue.getActualValue(), schemaType));
             case XSSimpleTypeDefinition.VARIETY_LIST -> convertListValue(schemaValue, schemaType);
-            case XSSimpleTypeDefinition.VARIETY_UNION -> List.of(convertAtomicValue(
-                    normalizedValue(schemaValue), schemaValue.getActualValue(), selectedUnionMember(schemaValue)));
+            case XSSimpleTypeDefinition.VARIETY_UNION -> convertUnionValue(schemaValue);
             default -> throw new OurBadException("Xerces returned an unknown XML Schema simple type variety.");
         };
     }
@@ -95,6 +94,16 @@ final class XercesTypedValueConverter {
             result.add(convertAtomicValue(lexicalItems[index], actualValues.get(index), atomicType));
         }
         return List.copyOf(result);
+    }
+
+    private List<Item> convertUnionValue(XSValue schemaValue) {
+        XSSimpleTypeDefinition memberType = selectedUnionMember(schemaValue);
+        return switch (memberType.getVariety()) {
+            case XSSimpleTypeDefinition.VARIETY_ATOMIC -> List.of(
+                    convertAtomicValue(normalizedValue(schemaValue), schemaValue.getActualValue(), memberType));
+            case XSSimpleTypeDefinition.VARIETY_LIST -> convertListValue(schemaValue, memberType);
+            default -> throw new OurBadException("Xerces selected an unsupported XML Schema union member type.");
+        };
     }
 
     private Item convertAtomicValue(String lexicalValue, Object actualValue, XSSimpleTypeDefinition schemaType) {

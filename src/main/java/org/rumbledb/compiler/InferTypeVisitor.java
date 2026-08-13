@@ -900,6 +900,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        XmlSchemaCatalog schemaCatalog = importedSimpleTypeCatalog(expression.getSequenceType(), argument);
+        if (schemaCatalog != null) {
+            checkImportedSimpleTypeCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
+            return argument;
+        }
         ItemType itemType = expression.getSequenceType().getItemType();
         if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             throwStaticTypeException(
@@ -926,6 +932,35 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+
+        XmlSchemaCatalog schemaCatalog = importedSimpleTypeCatalog(expression.getSequenceType(), argument);
+        if (schemaCatalog != null) {
+            SequenceType expressionType = expression.getMainExpression().getStaticSequenceType();
+            checkImportedSimpleTypeCastOperand(expressionType, expression);
+            if (expressionType.isEmptySequence()) {
+                if (expression.getSequenceType().getArity() != SequenceType.Arity.OneOrZero) {
+                    throwStaticTypeException(
+                            "Empty sequence cannot be cast to a non-optional XML Schema simple type.",
+                            expression.getMetadata());
+                }
+                expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.Zero));
+                return argument;
+            }
+            if (!expressionType.isAritySubtypeOf(expression.getSequenceType().getArity())) {
+                throwStaticTypeException(
+                        "A cast expression operand must contain at most one item.", expression.getMetadata());
+            }
+
+            SequenceType resultType = schemaCatalog.getSimpleTypeCastResultType(
+                    expression.getSequenceType().getItemType().getName());
+            if (resultType.getArity() == SequenceType.Arity.One
+                    && expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero
+                    && expressionType.getArity() != SequenceType.Arity.One) {
+                resultType = new SequenceType(resultType.getItemType(), SequenceType.Arity.OneOrZero);
+            }
+            expression.setStaticSequenceType(resultType);
+            return argument;
+        }
 
         // check at static time for casting errors (note cast only allows for normal or ? arity)
         SequenceType expressionSequenceType = expression.getMainExpression().getStaticSequenceType();
@@ -984,6 +1019,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         expression.setStaticSequenceType(castedSequenceType);
         return argument;
+    }
+
+    private XmlSchemaCatalog importedSimpleTypeCatalog(SequenceType sequenceType, StaticContext staticContext) {
+        ItemType itemType = sequenceType.getItemType();
+        XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
+        return itemType.hasName() && schemaCatalog != null && schemaCatalog.isImportedSimpleType(itemType.getName())
+                ? schemaCatalog
+                : null;
+    }
+
+    private void checkImportedSimpleTypeCastOperand(SequenceType operandType, Expression expression) {
+        basicChecks(operandType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        if (!operandType.isEmptySequence()
+                && !operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+            throwStaticTypeException(
+                    "An XML Schema cast operand must be atomic after atomization, found " + operandType,
+                    operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
+                            ? ErrorCode.NonAtomicElementErrorCode
+                            : ErrorCode.AtomizationError,
+                    expression.getMetadata());
+        }
     }
 
     @Override
