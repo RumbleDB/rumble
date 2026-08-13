@@ -73,7 +73,7 @@ final class XercesSimpleTypeCaster {
         SimpleTypeValidationContext validationContext = new SimpleTypeValidationContext(namespaceResolver);
         return switch (schemaType.getVariety()) {
             case XSSimpleTypeDefinition.VARIETY_ATOMIC -> castAtomic(
-                    typeName, xercesType, item, namespaceResolver, validationContext, metadata);
+                    typeName, xercesType, item, namespaceResolver, metadata);
             case XSSimpleTypeDefinition.VARIETY_LIST -> castList(
                     typeName, xercesType, item, validationContext, metadata);
             case XSSimpleTypeDefinition.VARIETY_UNION -> castUnion(
@@ -87,7 +87,6 @@ final class XercesSimpleTypeCaster {
             XSSimpleType schemaType,
             Item item,
             NamespaceResolver namespaceResolver,
-            ValidationContext validationContext,
             ExceptionMetadata metadata) {
         ItemType itemType = this.typeMapper
                 .mapGeneralizedAtomicType(schemaType)
@@ -97,7 +96,8 @@ final class XercesSimpleTypeCaster {
         if (converted == null) {
             throw castException(typeName, item, metadata);
         }
-        return validate(typeName, schemaType, converted.getStringValue(), item, validationContext, metadata);
+        validateOnly(typeName, schemaType, converted, item, namespaceResolver, metadata);
+        return List.of(converted);
     }
 
     private List<Item> castList(
@@ -126,6 +126,18 @@ final class XercesSimpleTypeCaster {
 
         List<XSSimpleType> atomicMemberTypes = new ArrayList<>();
         collectAtomicMemberTypes(schemaType, atomicMemberTypes);
+
+        // F&O 3.1 union rule 2: preserve a value that is already an instance of a member type.
+        for (XSSimpleType memberType : atomicMemberTypes) {
+            ItemType memberItemType =
+                    this.typeMapper.mapGeneralizedAtomicType(memberType).orElse(null);
+            if (memberItemType != null && item.getDynamicType().isSubtypeOf(memberItemType)) {
+                validateOnly(typeName, schemaType, item, item, namespaceResolver, metadata);
+                return List.of(item);
+            }
+        }
+
+        // F&O 3.1 union rule 3: try castable atomic members in declaration order.
         for (XSSimpleType memberType : atomicMemberTypes) {
             ItemType itemType =
                     this.typeMapper.mapGeneralizedAtomicType(memberType).orElse(null);
@@ -143,10 +155,12 @@ final class XercesSimpleTypeCaster {
             }
 
             try {
-                ValidatedInfo memberValue = validateValue(memberType, converted.getStringValue(), validationContext);
+                String lexicalValue = lexicalValue(converted);
+                ValidationContext convertedContext = validationContext(converted, namespaceResolver);
+                validateValue(memberType, lexicalValue, convertedContext);
                 // Validate restrictions declared on the union, while retaining the selected member's value.
-                validateValue(schemaType, converted.getStringValue(), validationContext);
-                return this.typedValueConverter.convert(memberValue);
+                validateValue(schemaType, lexicalValue, convertedContext);
+                return List.of(converted);
             } catch (InvalidDatatypeValueException exception) {
                 // Try the next atomic member.
             }
@@ -169,6 +183,42 @@ final class XercesSimpleTypeCaster {
             }
             throw castException(typeName, sourceItem, metadata);
         }
+    }
+
+    private static void validateOnly(
+            Name typeName,
+            XSSimpleType schemaType,
+            Item value,
+            Item sourceItem,
+            NamespaceResolver namespaceResolver,
+            ExceptionMetadata metadata) {
+        try {
+            validateValue(schemaType, lexicalValue(value), validationContext(value, namespaceResolver));
+        } catch (InvalidDatatypeValueException exception) {
+            if ("UndeclaredPrefix".equals(exception.getKey())) {
+                throw new NoNamespaceFoundForPrefixException(exception.getMessage(), metadata);
+            }
+            throw castException(typeName, sourceItem, metadata);
+        }
+    }
+
+    private static String lexicalValue(Item value) {
+        if (!value.isQName()) {
+            return value.getStringValue();
+        }
+        Name name = value.getQNameValue();
+        String prefix = name.getPrefix();
+        return prefix == null || prefix.isEmpty() ? name.getLocalName() : prefix + ":" + name.getLocalName();
+    }
+
+    private static ValidationContext validationContext(Item value, NamespaceResolver namespaceResolver) {
+        if (!value.isQName()) {
+            return new SimpleTypeValidationContext(namespaceResolver);
+        }
+        Name name = value.getQNameValue();
+        String qNamePrefix = name.getPrefix() == null ? "" : name.getPrefix();
+        return new SimpleTypeValidationContext(
+                prefix -> qNamePrefix.equals(prefix) ? name.getNamespace() : namespaceResolver.resolvePrefix(prefix));
     }
 
     private static ValidatedInfo validateValue(
