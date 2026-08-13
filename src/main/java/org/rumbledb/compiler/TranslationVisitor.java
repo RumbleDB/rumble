@@ -92,6 +92,8 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
+import org.rumbledb.expressions.module.SchemaImport.BindingKind;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
@@ -200,6 +202,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -446,6 +449,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     "Setters are not supported yet, except for empty sequence ordering and default collations.",
                     createMetadataFromContext(setterContext));
         }
+        List<SchemaImport> schemaImports = new ArrayList<>();
+        Set<String> schemaNamespaces = new HashSet<>();
+        for (JsoniqParser.SchemaImportContext schemaImportContext : ctx.schemaImport()) {
+            SchemaImport schemaImport = translateSchemaImport(schemaImportContext);
+            if (!schemaNamespaces.add(schemaImport.getTargetNamespace())) {
+                throw new SemanticException(
+                        "The schema namespace " + schemaImport.getTargetNamespace() + " is imported more than once.",
+                        ErrorCode.DuplicateSchemaImportErrorCode,
+                        createMetadataFromContext(schemaImportContext));
+            }
+            bindSchemaImportNamespace(schemaImport);
+            schemaImports.add(schemaImport);
+        }
         List<LibraryModule> libraryModules = new ArrayList<>();
         Set<String> namespaces = new HashSet<>();
         for (JsoniqParser.ModuleImportContext namespace : ctx.moduleImport()) {
@@ -539,10 +555,62 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         for (LibraryModule libraryModule : libraryModules) {
             prolog.addImportedModule(libraryModule);
         }
+        for (SchemaImport schemaImport : schemaImports) {
+            prolog.addSchemaImport(schemaImport);
+        }
         for (OptionDeclaration optionDeclaration : optionDeclarations) {
             prolog.addDeclaration(optionDeclaration);
         }
+        XmlSchemaCatalogLoader.load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
+                .ifPresent(catalog -> {
+                    this.moduleContext.setXmlSchemaCatalog(catalog);
+                    for (ItemType itemType : catalog.getNamedGeneralizedAtomicItemTypes()) {
+                        this.moduleContext.getInScopeSchemaTypes().addInScopeSchemaType(itemType, prolog.getMetadata());
+                    }
+                });
         return prolog;
+    }
+
+    private SchemaImport translateSchemaImport(JsoniqParser.SchemaImportContext ctx) {
+        String targetNamespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.nsURI));
+        BindingKind bindingKind = BindingKind.NONE;
+        String prefix = null;
+        if (ctx.schemaPrefix() != null) {
+            if (ctx.schemaPrefix().ncName() != null) {
+                bindingKind = BindingKind.PREFIX;
+                prefix = ctx.schemaPrefix().ncName().getText();
+            } else {
+                bindingKind = BindingKind.DEFAULT_ELEMENT_NAMESPACE;
+            }
+        }
+        List<String> locationHints = ctx.locations.stream()
+                .map(this::processURILiteral)
+                .map(URILiteralUtils::normalizeAsAnyURI)
+                .collect(Collectors.toList());
+        return new SchemaImport(targetNamespace, bindingKind, prefix, locationHints, createMetadataFromContext(ctx));
+    }
+
+    private void bindSchemaImportNamespace(SchemaImport schemaImport) {
+        if (schemaImport.getBindingKind() == BindingKind.NONE) {
+            return;
+        }
+        String namespace = schemaImport.getTargetNamespace();
+        if (schemaImport.getBindingKind() == BindingKind.DEFAULT_ELEMENT_NAMESPACE) {
+            bindNamespace("", namespace, schemaImport.getMetadata());
+            return;
+        }
+        String prefix = schemaImport.getPrefix();
+        if (namespace.isEmpty()) {
+            throw new SemanticException(
+                    "A schema import cannot bind a prefix to a zero-length target namespace.",
+                    ErrorCode.SchemaImportWithoutTargetNamespaceErrorCode,
+                    schemaImport.getMetadata());
+        }
+        if (prefix.equals("xml") || prefix.equals("xmlns")) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Schema import prefix " + prefix + " is reserved.", schemaImport.getMetadata());
+        }
+        bindNamespace(prefix, namespace, schemaImport.getMetadata());
     }
 
     @Override
