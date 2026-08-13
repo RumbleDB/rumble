@@ -595,6 +595,20 @@ public class ItemTypeFactory {
     }
 
     /**
+     * Schema-typed XQuery attribute node type attribute(N, T) or attribute(*, T).
+     *
+     * @param nodeName node QName restriction, or null for a wildcard
+     * @param typeName schema type annotation restriction
+     * @return schema-typed attribute node type
+     */
+    public static ItemType attributeNodeItemType(Name nodeName, Name typeName) {
+        if (typeName == null) {
+            throw new OurBadException("Attribute schema type name cannot be null.");
+        }
+        return new AttributeNodeItemType(nodeName, typeName);
+    }
+
+    /**
      * Wildcard XQuery document node type document-node().
      *
      * @return wildcard document node type
