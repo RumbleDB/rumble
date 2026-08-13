@@ -224,8 +224,8 @@ final class XercesSimpleTypeCaster {
         ValidatedInfo schemaValue = validateValue(builtInBaseType(schemaType), lexicalValue(value), validationContext);
         // F&O casting applies pattern facets to the canonical lexical representation of the converted value.
         schemaValue.normalizedValue = schemaValue.getActualValue().toString();
-        // The built-in base already checked Xerces's ID/IDREF/ENTITY rules for this actual value.
-        schemaType.validate(validationContext.forFacetCheckingOnly(), schemaValue);
+        // Preserve the base type's actual value for facet comparison.
+        schemaType.validate(schemaValue.getActualValue(), validationContext.forFacetCheckingOnly(), schemaValue);
         return schemaValue;
     }
 
