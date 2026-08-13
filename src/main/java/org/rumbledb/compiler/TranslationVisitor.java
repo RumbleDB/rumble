@@ -136,12 +136,7 @@ import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.CastableExpression;
-import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.typing.IsStaticallyExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.typing.*;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
@@ -1565,9 +1560,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
-        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
-        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
-        return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
+        Expression mainExpression = (Expression) this.visitExpr(ctx.expr());
+        ValidateExpression.ValidationMode validationMode = ValidateExpression.ValidationMode.STRICT;
+        Name typeName = null;
+        if (ctx.validationMode() != null && ctx.validationMode().KW_LAX() != null) {
+            validationMode = ValidateExpression.ValidationMode.LAX;
+        } else if (ctx.KW_TYPE() != null) {
+            validationMode = ValidateExpression.ValidationMode.TYPE;
+            typeName = parseEqName(ctx.typeName().eqName(), false, true, false, false);
+        }
+        return new ValidateExpression(mainExpression, validationMode, typeName, createMetadataFromContext(ctx));
     }
     // endregion
 
