@@ -102,6 +102,9 @@ public final class AtomicValueComparison {
         if (item.isQName()) {
             return item.getQNameValue().hashCode();
         }
+        if (item.isNotation()) {
+            return item.getNotationValue().hashCode();
+        }
         return 0;
     }
 }

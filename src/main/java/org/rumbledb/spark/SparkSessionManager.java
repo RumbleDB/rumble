@@ -56,6 +56,7 @@ import org.rumbledb.items.HexBinaryItem;
 import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.NullItem;
+import org.rumbledb.items.NotationItem;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.QNameItem;
 import org.rumbledb.items.StringItem;
@@ -224,6 +225,7 @@ public class SparkSessionManager {
                 IntegerItem.class,
                 IntItem.class,
                 NullItem.class,
+                NotationItem.class,
                 QNameItem.class,
                 StringItem.class,
                 TimeItem.class,

@@ -245,22 +245,26 @@ final class XercesSimpleTypeCaster {
     }
 
     private static String lexicalValue(Item value) {
-        if (!value.isQName()) {
+        if (!value.isQName() && !value.isNotation()) {
             return value.getStringValue();
         }
-        Name name = value.getQNameValue();
+        Name name = qualifiedNameValue(value);
         String prefix = name.getPrefix();
         return prefix == null || prefix.isEmpty() ? name.getLocalName() : prefix + ":" + name.getLocalName();
     }
 
     private static SimpleTypeValidationContext validationContext(Item value, NamespaceResolver namespaceResolver) {
-        if (!value.isQName()) {
+        if (!value.isQName() && !value.isNotation()) {
             return new SimpleTypeValidationContext(namespaceResolver);
         }
-        Name name = value.getQNameValue();
+        Name name = qualifiedNameValue(value);
         String qNamePrefix = name.getPrefix() == null ? "" : name.getPrefix();
         return new SimpleTypeValidationContext(
                 prefix -> qNamePrefix.equals(prefix) ? name.getNamespace() : namespaceResolver.resolvePrefix(prefix));
+    }
+
+    private static Name qualifiedNameValue(Item value) {
+        return value.isQName() ? value.getQNameValue() : value.getNotationValue();
     }
 
     private static ValidatedInfo validateValue(

@@ -115,13 +115,14 @@ final class XercesTypedValueConverter {
             throw new OurBadException("xs:anyAtomicType cannot label a concrete typed value.");
         }
         short primitiveKind = schemaType.getPrimitiveType().getBuiltInKind();
-        if (primitiveKind == XSConstants.NOTATION_DT) {
-            throw new OurBadException("xs:NOTATION values do not have a Rumble item representation yet.");
+        Item result;
+        if (primitiveKind == XSConstants.QNAME_DT) {
+            result = convertQualifiedName(actualValue, false);
+        } else if (primitiveKind == XSConstants.NOTATION_DT) {
+            result = convertQualifiedName(actualValue, true);
+        } else {
+            result = convertLexicalValue(lexicalValue, itemType);
         }
-
-        Item result = primitiveKind == XSConstants.QNAME_DT
-                ? convertQName(actualValue)
-                : convertLexicalValue(lexicalValue, itemType);
         if (!result.getDynamicType().equals(itemType)) {
             result = ItemFactory.getInstance().createAnnotatedItem(result, itemType);
         }
@@ -139,14 +140,17 @@ final class XercesTypedValueConverter {
         return result;
     }
 
-    private static Item convertQName(Object actualValue) {
+    private static Item convertQualifiedName(Object actualValue, boolean notation) {
         if (!(actualValue instanceof XSQName qNameValue)) {
             throw new OurBadException("Xerces did not provide an expanded QName value.");
         }
         var qName = qNameValue.getXNIQName();
         String namespace = emptyToNull(qName.uri);
         String prefix = emptyToNull(qName.prefix);
-        return ItemFactory.getInstance().createQNameItem(new Name(namespace, prefix, qName.localpart));
+        Name name = new Name(namespace, prefix, qName.localpart);
+        return notation
+            ? ItemFactory.getInstance().createNotationItem(name)
+            : ItemFactory.getInstance().createQNameItem(name);
     }
 
     private static XSSimpleTypeDefinition selectedUnionMember(XSValue schemaValue) {
