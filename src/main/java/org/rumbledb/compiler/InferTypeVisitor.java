@@ -153,6 +153,8 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaAttributeTest;
+import org.rumbledb.expressions.xml.node_test.SchemaElementTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -3086,11 +3088,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     ? ItemTypeFactory.processingInstructionNodeItemType(piTest.getTargetName())
                     : BuiltinTypesCatalogue.processingInstructionNode;
         }
+        if (nodeTest instanceof SchemaAttributeTest schemaAttributeTest) {
+            return schemaAttributeTest.getItemType();
+        }
+        if (nodeTest instanceof SchemaElementTest schemaElementTest) {
+            return schemaElementTest.getItemType();
+        }
         if (nodeTest instanceof DocumentTest documentTest) {
             if (documentTest.isEmptyCheck()) {
                 return BuiltinTypesCatalogue.documentNode;
             }
             NodeTest innerTest = documentTest.getNodeTest();
+            if (innerTest instanceof SchemaElementTest schemaElementTest) {
+                return ItemTypeFactory.documentNodeItemType(schemaElementTest.getItemType());
+            }
             if (innerTest instanceof ElementTest elementTest && elementTest.isNameWithoutTypeCheck()) {
                 return ItemTypeFactory.documentNodeItemType(
                         ItemTypeFactory.elementNodeItemType(elementTest.getElementName()));
@@ -3177,6 +3188,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (nodeTest instanceof DocumentTest) {
             return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
+        }
+        if (nodeTest instanceof SchemaAttributeTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode);
+        }
+        if (nodeTest instanceof SchemaElementTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode);
         }
         if (nodeTest instanceof AttributeTest attributeTest) {
             if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)) {
