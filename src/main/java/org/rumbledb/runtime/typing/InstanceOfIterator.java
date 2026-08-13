@@ -42,6 +42,7 @@ import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SchemaElementNodeItemType;
 import org.rumbledb.types.SequenceType;
 
 public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -131,6 +132,14 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType instanceof SchemaElementNodeItemType schemaElementType) {
+            for (ItemType alternative : schemaElementType.getAlternatives()) {
+                if (doesItemTypeMatchItem(alternative, itemToMatch)) {
+                    return true;
+                }
+            }
+            return false;
+        }
         if (itemType instanceof DocumentNodeItemType documentType) {
             if (!itemToMatch.isDocumentNode()) {
                 return false;
