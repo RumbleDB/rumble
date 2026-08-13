@@ -65,6 +65,7 @@ public class StaticContext {
     private boolean boundarySpacePreserve;
     private boolean copyNamespacesPreserve;
     private boolean copyNamespacesInherit;
+    private boolean constructionModePreserve;
     private SerializationParameters serializationParameters;
     private Set<String> explicitSerializationParameterNames;
     private boolean isQuerySideEffecting;
@@ -121,6 +122,7 @@ public class StaticContext {
         this.boundarySpacePreserve = false;
         this.copyNamespacesPreserve = true;
         this.copyNamespacesInherit = true;
+        this.constructionModePreserve = true;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
@@ -543,6 +545,13 @@ public class StaticContext {
         this.copyNamespacesInherit = inherit;
     }
 
+    public void setConstructionModePreserve(boolean preserve) {
+        if (this.parent != null) {
+            throw new OurBadException("Construction mode can only be set in the root static context.");
+        }
+        this.constructionModePreserve = preserve;
+    }
+
     /**
      * Default function namespace URI for unprefixed function names (XQuery prolog). Root/module context only.
      */
@@ -589,6 +598,13 @@ public class StaticContext {
             return this.parent.isCopyNamespacesInherit();
         }
         return this.copyNamespacesInherit;
+    }
+
+    public boolean isConstructionModePreserve() {
+        if (this.parent != null) {
+            return this.parent.isConstructionModePreserve();
+        }
+        return this.constructionModePreserve;
     }
 
     public boolean isStaticallyKnownCollation(String uri) {

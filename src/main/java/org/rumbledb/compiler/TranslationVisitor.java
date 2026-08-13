@@ -384,6 +384,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         boolean emptyOrderSet = false;
         boolean boundarySpaceSet = false;
         boolean copyNamespacesSet = false;
+        boolean constructionModeSet = false;
         boolean defaultCollationSet = false;
         boolean baseURISet = false;
         for (SetterContext setterContext : setters) {
@@ -408,6 +409,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         setterContext.copyNamespacesDecl().preserveMode().KW_PRESERVE() != null,
                         setterContext.copyNamespacesDecl().inheritMode().KW_INHERIT() != null);
                 copyNamespacesSet = true;
+                continue;
+            }
+            if (setterContext.constructionDecl() != null) {
+                if (constructionModeSet) {
+                    throw new MoreThanOneConstructionDeclarationException(
+                            "The construction mode was already set.",
+                            createMetadataFromContext(setterContext.constructionDecl()));
+                }
+                this.moduleContext.setConstructionModePreserve(
+                        setterContext.constructionDecl().type.getType() == JsoniqParser.KW_PRESERVE);
+                constructionModeSet = true;
                 continue;
             }
             if (setterContext.emptyOrderDecl() != null) {
