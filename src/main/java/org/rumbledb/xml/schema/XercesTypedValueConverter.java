@@ -149,8 +149,8 @@ final class XercesTypedValueConverter {
         String prefix = emptyToNull(qName.prefix);
         Name name = new Name(namespace, prefix, qName.localpart);
         return notation
-            ? ItemFactory.getInstance().createNotationItem(name)
-            : ItemFactory.getInstance().createQNameItem(name);
+                ? ItemFactory.getInstance().createNotationItem(name)
+                : ItemFactory.getInstance().createQNameItem(name);
     }
 
     private static XSSimpleTypeDefinition selectedUnionMember(XSValue schemaValue) {
