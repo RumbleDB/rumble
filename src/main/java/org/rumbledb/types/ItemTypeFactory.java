@@ -37,7 +37,7 @@ public class ItemTypeFactory {
      * Creates Rumble's nominal representation of an atomic type declared in an XML Schema.
      * Xerces remains responsible for validating the type's constraining facets.
      *
-     * @param name the global schema type's expanded name, or null for an anonymous member type
+     * @param name the global schema type's expanded name, or its implementation-defined name when anonymous
      * @param baseType the Rumble representation of its XSD base type
      * @return the corresponding atomic item type
      */

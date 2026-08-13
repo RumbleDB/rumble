@@ -45,9 +45,7 @@ public final class NotationItem extends AbstractAtomicItem {
     @Override
     public String getStringValue() {
         String prefix = this.name.getPrefix();
-        return prefix == null || prefix.isEmpty()
-            ? this.name.getLocalName()
-            : prefix + ":" + this.name.getLocalName();
+        return prefix == null || prefix.isEmpty() ? this.name.getLocalName() : prefix + ":" + this.name.getLocalName();
     }
 
     @Override
