@@ -34,6 +34,7 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import org.apache.xerces.xs.XSValue;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -42,6 +43,7 @@ import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
 import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SchemaElementNodeItemType;
@@ -115,6 +117,21 @@ public final class XmlSchemaCatalog {
         return getTypeDefinition(name)
                 .filter(XSSimpleTypeDefinition.class::isInstance)
                 .isPresent();
+    }
+
+    public boolean isImportedSimpleTypeConstructor(FunctionIdentifier identifier) {
+        return identifier != null && identifier.getArity() == 1 && isImportedSimpleType(identifier.getName());
+    }
+
+    public FunctionSignature getSimpleTypeConstructorSignature(FunctionIdentifier identifier) {
+        if (!isImportedSimpleTypeConstructor(identifier)) {
+            throw new OurBadException("The function name does not identify an imported XML Schema constructor.");
+        }
+        SequenceType returnType = getSimpleTypeCastResultType(identifier.getName());
+        if (returnType.getArity() == SequenceType.Arity.One) {
+            returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.OneOrZero);
+        }
+        return new FunctionSignature(List.of(SequenceType.createSequenceType("anyAtomicType?")), returnType);
     }
 
     /**

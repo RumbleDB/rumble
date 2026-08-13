@@ -94,6 +94,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -234,7 +235,11 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, expression.getStaticContext());
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
         String queryLanguage = expression.getStaticContext().getQueryLanguage();
-        if (!BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
+        XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+        boolean isSchemaConstructor = !expression.isPartialApplication()
+                && schemaCatalog != null
+                && schemaCatalog.isImportedSimpleTypeConstructor(identifier);
+        if (!BuiltinFunctionCatalogue.exists(identifier, queryLanguage) && !isSchemaConstructor) {
             List<ExecutionMode> modes = new ArrayList<>();
             for (Expression parameter : expression.getArguments()) {
                 if (parameter == null) {
@@ -250,7 +255,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     .getUserDefinedFunctionsExecutionModes()
                     .setParameterExecutionMode(identifier, modes, expression.getMetadata());
         }
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
+        if (isSchemaConstructor) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        } else if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
             BuiltinFunction builtinFunction =
                     BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier(), queryLanguage);
             expression.setHighestExecutionMode(BuiltinFunctionExecutionModes.resolve(

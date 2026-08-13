@@ -612,16 +612,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return null;
         }
         XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
-        Name typeName = expression.getFunctionName();
-        if (schemaCatalog == null || !schemaCatalog.isImportedSimpleType(typeName)) {
+        if (schemaCatalog == null
+                || !schemaCatalog.isImportedSimpleTypeConstructor(expression.getFunctionIdentifier())) {
             return null;
         }
-
-        SequenceType returnType = schemaCatalog.getSimpleTypeCastResultType(typeName);
-        if (returnType.getArity() == SequenceType.Arity.One) {
-            returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.OneOrZero);
-        }
-        return new FunctionSignature(List.of(SequenceType.createSequenceType("anyAtomicType?")), returnType);
+        return schemaCatalog.getSimpleTypeConstructorSignature(expression.getFunctionIdentifier());
     }
 
     @Override

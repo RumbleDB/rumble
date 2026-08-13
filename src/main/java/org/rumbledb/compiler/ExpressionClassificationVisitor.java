@@ -54,6 +54,7 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 public class ExpressionClassificationVisitor extends AbstractNodeVisitor<ExpressionClassification> {
 
@@ -326,7 +327,12 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         if (function != null) {
             signature = function.getSignature();
         } else {
-            signature = staticContext.getFunctionSignature(identifier);
+            XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
+            if (schemaCatalog != null && schemaCatalog.isImportedSimpleTypeConstructor(identifier)) {
+                signature = schemaCatalog.getSimpleTypeConstructorSignature(identifier);
+            } else {
+                signature = staticContext.getFunctionSignature(identifier);
+            }
         }
         return signature;
     }

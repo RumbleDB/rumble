@@ -1192,9 +1192,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         ItemRuntimePlan runtimeIterator = null;
         XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
         if (!expression.isPartialApplication()
-                && arity == 1
                 && schemaCatalog != null
-                && schemaCatalog.isImportedSimpleType(fnName)) {
+                && schemaCatalog.isImportedSimpleTypeConstructor(identifier)) {
             runtimeIterator = new XmlSchemaCastIterator(
                     arguments.get(0),
                     fnName,
