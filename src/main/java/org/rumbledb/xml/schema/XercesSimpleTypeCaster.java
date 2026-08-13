@@ -348,12 +348,13 @@ final class XercesSimpleTypeCaster {
 
         @Override
         public String getSymbol(String symbol) {
-            return symbol;
+            return symbol.intern();
         }
 
         @Override
         public String getURI(String prefix) {
-            return this.namespaceResolver.resolvePrefix(prefix);
+            String namespace = this.namespaceResolver.resolvePrefix(prefix);
+            return namespace == null ? null : namespace.intern();
         }
 
         @Override
