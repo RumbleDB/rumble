@@ -20,12 +20,16 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaAttributeTest;
+import org.rumbledb.expressions.xml.node_test.SchemaElementTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
+import org.rumbledb.types.ItemType;
 
 public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
@@ -70,6 +74,10 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
             return piKindTest(node, piTest);
         } else if (test instanceof NamespaceNodeTest) {
             return namespaceNodeKindTest(node);
+        } else if (test instanceof SchemaAttributeTest schemaAttributeTest) {
+            return schemaKindTest(node, schemaAttributeTest.getItemType());
+        } else if (test instanceof SchemaElementTest schemaElementTest) {
+            return schemaKindTest(node, schemaElementTest.getItemType());
         } else if (test instanceof AttributeTest attributeTest) {
             return attributeKindTest(node, attributeTest);
         } else if (test instanceof ElementTest elementTest) {
@@ -81,6 +89,10 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
         } else {
             throw new UnsupportedFeatureException("Unsupported node test: " + test, getMetadata());
         }
+    }
+
+    private Item schemaKindTest(Item node, ItemType itemType) {
+        return InstanceOfIterator.doesItemTypeMatchItem(itemType, node) ? node : null;
     }
 
     private Item documentKindTest(Item node, DocumentTest documentTest) {
