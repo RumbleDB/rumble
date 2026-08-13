@@ -105,7 +105,8 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                                         "Attribute or namespace nodes must appear before all other nodes in element content");
                             }
                             if (item.isAttributeNode()) {
-                                attributes.add(item.copy(true));
+                                attributes.add(
+                                        NamespaceFixupUtils.copyAttributeForConstructor(item, this.staticContext));
                             } else {
                                 namespaces.add(item.copy(true));
                             }
@@ -174,7 +175,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                 for (Item item : materialize.apply(iterator, contextToUse)) {
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {
-                        attributes.add(item.copy(true));
+                        attributes.add(NamespaceFixupUtils.copyAttributeForConstructor(item, this.staticContext));
                     }
                 }
             }
@@ -183,6 +184,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         // create and return the element item
         ElementItem elementItem =
                 (ElementItem) ItemFactory.getInstance().createXmlElementNode(this.elementName, content, attributes);
+        NamespaceFixupUtils.annotateNewElement(elementItem, this.staticContext);
         // Only add namespaces explicitly declared on this element
         for (Item namespace : namespaces) {
             elementItem.addOrReplaceNamespace(namespace);

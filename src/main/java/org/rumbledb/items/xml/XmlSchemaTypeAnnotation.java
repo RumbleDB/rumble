@@ -27,6 +27,7 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 /** The XML Schema type assigned to an element or attribute node. */
@@ -36,6 +37,13 @@ public class XmlSchemaTypeAnnotation implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    private static final XmlSchemaTypeAnnotation ANY_TYPE =
+            new XmlSchemaTypeAnnotation(xsName("anyType"), List.of(xsName("anyType")));
+    private static final XmlSchemaTypeAnnotation UNTYPED =
+            new XmlSchemaTypeAnnotation(xsName("untyped"), List.of(xsName("untyped"), xsName("anyType")));
+    private static final XmlSchemaTypeAnnotation UNTYPED_ATOMIC =
+            forAtomicItemType(BuiltinTypesCatalogue.untypedAtomicItem);
 
     Name name;
     List<Name> typeHierarchy;
@@ -51,6 +59,18 @@ public class XmlSchemaTypeAnnotation implements Serializable {
 
     public boolean isDerivedFrom(Name typeName) {
         return this.typeHierarchy.contains(typeName);
+    }
+
+    public static XmlSchemaTypeAnnotation anyType() {
+        return ANY_TYPE;
+    }
+
+    public static XmlSchemaTypeAnnotation untyped() {
+        return UNTYPED;
+    }
+
+    public static XmlSchemaTypeAnnotation untypedAtomic() {
+        return UNTYPED_ATOMIC;
     }
 
     /** Creates an annotation for the built-in atomic validation path. */
