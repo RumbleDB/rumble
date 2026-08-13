@@ -28,11 +28,11 @@ final class XmlSchemaCastSupport {
             while (cursor.hasNext() && result.size() < 2) {
                 Item item = cursor.next();
                 if (item.isAtomic()) {
-                    result.add(item);
+                    addAtomizedItem(result, item, context, metadata);
                 } else {
                     try {
                         for (Item atomizedItem : item.atomizedValue()) {
-                            result.add(atomizedItem);
+                            addAtomizedItem(result, atomizedItem, context, metadata);
                             if (result.size() == 2) {
                                 break;
                             }
@@ -47,5 +47,13 @@ final class XmlSchemaCastSupport {
             }
         }
         return result;
+    }
+
+    private static void addAtomizedItem(
+            List<Item> result, Item item, DynamicContext context, ExceptionMetadata metadata) {
+        if (!item.getDynamicType().isResolved()) {
+            item.getDynamicType().resolve(context, metadata);
+        }
+        result.add(item);
     }
 }

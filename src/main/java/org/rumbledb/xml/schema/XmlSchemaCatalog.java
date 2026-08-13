@@ -26,6 +26,7 @@ import javax.xml.validation.Schema;
 import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamedMap;
+import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.apache.xerces.xs.XSValue;
@@ -84,16 +85,13 @@ public final class XmlSchemaCatalog {
      */
     public SequenceType getSimpleTypeCastResultType(Name name) {
         XSSimpleTypeDefinition schemaType = importedSimpleType(name);
-        if (schemaType.getVariety() == XSSimpleTypeDefinition.VARIETY_LIST) {
+        if (mayProduceMultipleValues(schemaType)) {
             ItemType itemType = this.typeMapper.getListItemType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
             return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
         }
         ItemType itemType =
                 this.typeMapper.mapGeneralizedAtomicType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
-        SequenceType.Arity arity = itemType.equals(BuiltinTypesCatalogue.atomicItem)
-                ? SequenceType.Arity.ZeroOrMore
-                : SequenceType.Arity.One;
-        return new SequenceType(itemType, arity);
+        return new SequenceType(itemType, SequenceType.Arity.One);
     }
 
     /** Casts one atomized value with the matching definition from this catalog. */
@@ -153,6 +151,23 @@ public final class XmlSchemaCatalog {
             throw new OurBadException("The type " + name + " is not an imported XML Schema simple type.");
         }
         return (XSSimpleTypeDefinition) getTypeDefinition(name).orElseThrow();
+    }
+
+    private static boolean mayProduceMultipleValues(XSSimpleTypeDefinition schemaType) {
+        if (schemaType.getVariety() == XSSimpleTypeDefinition.VARIETY_LIST) {
+            return true;
+        }
+        if (schemaType.getVariety() != XSSimpleTypeDefinition.VARIETY_UNION) {
+            return false;
+        }
+        XSObjectList memberTypes = schemaType.getMemberTypes();
+        for (int index = 0; index < memberTypes.getLength(); index++) {
+            if (memberTypes.item(index) instanceof XSSimpleTypeDefinition memberType
+                    && mayProduceMultipleValues(memberType)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String emptyToNull(String value) {
