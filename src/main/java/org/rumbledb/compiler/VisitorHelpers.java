@@ -398,21 +398,14 @@ public class VisitorHelpers {
      * this method also populates static contexts and infers expression types.
      */
     public static LibraryModule parseLibraryModuleFromQueryWithStaticContextAndInference(
-            String query,
-            URI uri,
-            RumbleConfiguration configuration
-    ) {
+            String query, URI uri, RumbleConfiguration configuration) {
         StaticContext importingModuleContext = new StaticContext(uri, configuration);
         UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
         executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
         importingModuleContext.setUserDefinedFunctionsExecutionModes(executionModes);
 
-        LibraryModule libraryModule = parseLibraryModule(
-            query,
-            uri,
-            importingModuleContext,
-            new CompilationConfiguration(configuration)
-        );
+        LibraryModule libraryModule =
+                parseLibraryModule(query, uri, importingModuleContext, new CompilationConfiguration(configuration));
         populateStaticContext(libraryModule, configuration);
         inferTypes(libraryModule, configuration);
         return libraryModule;
