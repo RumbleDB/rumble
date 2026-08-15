@@ -95,7 +95,7 @@ public final class DateNames {
 
         return padToMinimumWidth(name, min);
     }
-    
+
     private static String fitName(String full, int min, int max) {
         return fitName(full, null, null, min, max);
     }

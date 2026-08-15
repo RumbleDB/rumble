@@ -115,7 +115,7 @@ public final class AnnotationTestExecutor {
     }
 
     private static AnnotationProcessor.TestAnnotation readAnnotation(String path) throws IOException {
-       try (Reader annotationReader = new FileReader(path, StandardCharsets.UTF_8)) {
+        try (Reader annotationReader = new FileReader(path, StandardCharsets.UTF_8)) {
             return AnnotationProcessor.readAnnotation(annotationReader);
         } catch (AnnotationParseException exception) {
             throw new AssertionError("Could not parse test annotation for " + path, exception);
