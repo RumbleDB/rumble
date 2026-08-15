@@ -87,9 +87,9 @@ public final class DateNames {
         String name = wide;
 
         if (max >= 0 && name.length() > max) {
-            name = shorterFormWithin(max, abbr, narrow);
+            name = conventionalAbbreviation(min, max, abbr, narrow);
             if (name == null) {
-                name = wide.substring(0, max);
+                name = truncateToCodePoints(wide, max);
             }
         }
 
@@ -100,13 +100,22 @@ public final class DateNames {
         return fitName(full, null, null, min, max);
     }
 
-    private static String shorterFormWithin(int max, String... candidates) {
+    // The minimum matters, not just the maximum: German abbreviations carry a period ("Jan.", "Mo."), so for
+    // [MN,3-3] no conventional form fits and the full name is truncated instead, giving "Jan" rather than "J".
+    private static String conventionalAbbreviation(int min, int max, String... candidates) {
         for (String candidate : candidates) {
-            if (candidate != null && !candidate.isEmpty() && candidate.length() <= max) {
+            if (candidate != null && !candidate.isEmpty() && candidate.length() <= max && candidate.length() >= min) {
                 return candidate;
             }
         }
         return null;
+    }
+
+    private static String truncateToCodePoints(String name, int max) {
+        if (name.length() <= max) {
+            return name;
+        }
+        return name.substring(0, name.offsetByCodePoints(0, Math.min(max, name.codePointCount(0, name.length()))));
     }
 
     private static String padToMinimumWidth(String name, int min) {
