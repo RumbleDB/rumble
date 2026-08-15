@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 
-
 public class CountClause extends Clause {
     private final Name variableName;
 
@@ -70,5 +69,4 @@ public class CountClause extends Clause {
         indentIt(sb, indent);
         sb.append("count $" + this.variableName);
     }
-
 }

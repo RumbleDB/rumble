@@ -3,7 +3,6 @@ package org.rumbledb.runtime.update.expression;
 import java.io.Serial;
 import java.util.Arrays;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -14,59 +13,32 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
-public class RenameExpressionIterator extends HybridRuntimeIterator {
+public class RenameExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator mainIterator;
-    private final RuntimeIterator locatorIterator;
-    private final RuntimeIterator nameIterator;
+
+    private final ItemRuntimePlan mainIterator;
+    private final ItemRuntimePlan locatorIterator;
+    private final ItemRuntimePlan nameIterator;
 
     public RenameExpressionIterator(
-            RuntimeIterator mainIterator,
-            RuntimeIterator locatorIterator,
-            RuntimeIterator nameIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan mainIterator,
+            ItemRuntimePlan locatorIterator,
+            ItemRuntimePlan nameIterator,
+            RuntimeStaticContext staticContext) {
         super(
-            Arrays.asList(mainIterator, locatorIterator, nameIterator),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+                Arrays.asList(mainIterator, locatorIterator, nameIterator),
+                staticContext.toBuilder().isUpdating(true).build());
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.nameIterator = nameIterator;
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
-    }
-
-    @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
     }
 
     @Override
@@ -77,11 +49,13 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
         Item content;
 
         try {
-            target = this.mainIterator.materializeExactlyOneItem(context);
-            locator = this.locatorIterator.materializeExactlyOneItem(context);
-            content = this.nameIterator.materializeExactlyOneItem(context);
+            target = this.mainIterator.materializeExactlyOne(context);
+            locator = this.locatorIterator.materializeExactlyOne(context);
+            content = this.nameIterator.materializeExactlyOne(context);
         } catch (NoItemException e) {
-            throw new UpdateTargetIsEmptySeqException("Target of rename expression is empty", this.getMetadata());
+            throw new UpdateTargetIsEmptySeqException(
+                    "Target of rename expression is empty",
+                    this.getRuntimeStaticContext().getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }
@@ -92,24 +66,24 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
             if (!locator.isString()) {
                 throw new CannotCastUpdateSelectorException(
                         "Rename expression selection cannot be cast to String type",
-                        this.getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
             if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+                throw new ModifiesImmutableValueException(
+                        "Attempt to modify immutable target",
+                        this.getRuntimeStaticContext().getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
-                        this.getMetadata()
-                );
+                        this.getRuntimeStaticContext().getMetadata());
             }
-            up = factory.createRenameInObjectPrimitive(target, locator, content, this.getMetadata());
+            up = factory.createRenameInObjectPrimitive(
+                    target, locator, content, this.getRuntimeStaticContext().getMetadata());
         } else {
             throw new InvalidUpdateTargetException(
                     "Rename expression target must be a single object",
-                    this.getMetadata()
-            );
+                    this.getRuntimeStaticContext().getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

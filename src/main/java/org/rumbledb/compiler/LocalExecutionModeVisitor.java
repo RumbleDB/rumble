@@ -31,8 +31,7 @@ import org.rumbledb.expressions.Node;
  */
 public class LocalExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    LocalExecutionModeVisitor(RumbleConfiguration configuration) {
-    }
+    LocalExecutionModeVisitor(RumbleConfiguration configuration) {}
 
     @Override
     protected StaticContext defaultAction(Node node, StaticContext argument) {

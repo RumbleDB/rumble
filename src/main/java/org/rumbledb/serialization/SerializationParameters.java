@@ -17,10 +17,6 @@
 
 package org.rumbledb.serialization;
 
-
-import lombok.Getter;
-import lombok.Setter;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -28,11 +24,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Default serialization parameters stored in the XQuery static context.
  *
  * Specification references:
- * 
+ *
  * <ul>
  * <li>XQuery 3.1 Static Context Components — default serialization parameters (link:
  * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
@@ -81,7 +80,9 @@ public class SerializationParameters implements Serializable {
     private boolean omitXmlDeclaration;
 
     public enum Standalone {
-        YES, NO, OMIT
+        YES,
+        NO,
+        OMIT
     }
 
     /**
@@ -215,7 +216,12 @@ public class SerializationParameters implements Serializable {
     private boolean allowDuplicateNames;
 
     public enum JsonNodeOutputMethod {
-        UNSPECIFIED, JSON, XML, XHTML, HTML, TEXT
+        UNSPECIFIED,
+        JSON,
+        XML,
+        XHTML,
+        HTML,
+        TEXT
     }
 
     /**
@@ -339,10 +345,9 @@ public class SerializationParameters implements Serializable {
         return this.allowDuplicateNames;
     }
 
-
     /**
      * Returns a copy of the SerializationParameters instance.
-     * 
+     *
      * @param parameters the SerializationParameters instance to copy
      * @return a copy of the SerializationParameters instance
      */

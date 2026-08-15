@@ -20,17 +20,6 @@
 
 package org.rumbledb.context;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.*;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-
-import org.rumbledb.runtime.flwor.tuple.FlworTuple;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serial;
@@ -41,10 +30,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.spark.api.java.JavaRDD;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.*;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+import org.rumbledb.runtime.plan.RuntimePlanConversions;
+
 public class VariableValues implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Map<Name, List<Item>> localVariableValues;
     private final Map<Name, Item> localVariableCounts;
     private final Map<Name, JavaRDD<Item>> rddVariableValues;
@@ -81,8 +82,7 @@ public class VariableValues implements Serializable {
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
             Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues,
-            GlobalVariables globalVariables
-    ) {
+            GlobalVariables globalVariables) {
         if (parent == null) {
             throw new OurBadException("Variable values defined with null parent");
         }
@@ -130,8 +130,8 @@ public class VariableValues implements Serializable {
 
     public boolean contains(Name varName) {
         boolean localContains = this.localVariableValues.containsKey(varName)
-            || this.rddVariableValues.containsKey(varName)
-            || this.dataFrameVariableValues.containsKey(varName);
+                || this.rddVariableValues.containsKey(varName)
+                || this.dataFrameVariableValues.containsKey(varName);
         if (localContains) {
             return true;
         }
@@ -143,21 +143,14 @@ public class VariableValues implements Serializable {
 
     public boolean isRDD(Name varName, ExceptionMetadata metadata) {
         if (!contains(varName)) {
-            throw new OurBadException(
-                    "Runtime error retrieving variable " + varName + " value.",
-                    metadata
-            );
+            throw new OurBadException("Runtime error retrieving variable " + varName + " value.", metadata);
         }
-        return this.rddVariableValues.containsKey(varName)
-            || this.dataFrameVariableValues.containsKey(varName);
+        return this.rddVariableValues.containsKey(varName) || this.dataFrameVariableValues.containsKey(varName);
     }
 
     public boolean isDataFrame(Name varName, ExceptionMetadata metadata) {
         if (!contains(varName)) {
-            throw new OurBadException(
-                    "Runtime error retrieving variable " + varName + " value.",
-                    metadata
-            );
+            throw new OurBadException("Runtime error retrieving variable " + varName + " value.", metadata);
         }
         return this.dataFrameVariableValues.containsKey(varName);
     }
@@ -185,10 +178,7 @@ public class VariableValues implements Serializable {
         }
         if (this.localVariableValues.containsKey(varName)) {
             // Referencing an uninitialized local variable is illegal
-            throw new RumbleException(
-                    "Runtime error retrieving variable " + varName + " value",
-                    metadata
-            );
+            throw new RumbleException("Runtime error retrieving variable " + varName + " value", metadata);
         }
 
         if (this.rddVariableValues.containsKey(varName)) {
@@ -196,7 +186,8 @@ public class VariableValues implements Serializable {
                 throw new JobWithinAJobException(metadata);
             }
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
-            return HybridRuntimeIterator.collectRDDwithLimit(rdd, this.configuration, metadata);
+            return RuntimePlanConversions.collectRDDWithLimit(
+                    rdd, this.configuration.runtime().materializationCap(), metadata);
         }
 
         if (this.dataFrameVariableValues.containsKey(varName)) {
@@ -204,11 +195,8 @@ public class VariableValues implements Serializable {
                 throw new JobWithinAJobException(metadata);
             }
             HomogeneousItemDataFrame df = this.getDataFrameVariableValue(varName, metadata);
-            return HybridRuntimeIterator.collectRDDwithLimit(
-                df.toRDD(metadata),
-                this.configuration,
-                metadata
-            );
+            return RuntimePlanConversions.collectRDDWithLimit(
+                    df.toRDD(metadata), this.configuration.runtime().materializationCap(), metadata);
         }
 
         if (this.parent != null) {
@@ -217,27 +205,20 @@ public class VariableValues implements Serializable {
 
         if (this.localVariableCounts.containsKey(varName)) {
             throw new OurBadException(
-                    "Runtime error retrieving variable " + varName + " value: only count available.",
-                    metadata
-            );
+                    "Runtime error retrieving variable " + varName + " value: only count available.", metadata);
         }
 
-        if (
-            varName.equals(Name.CONTEXT_ITEM)
+        if (varName.equals(Name.CONTEXT_ITEM)
                 || varName.equals(Name.CONTEXT_COUNT)
-                || varName.equals(Name.CONTEXT_POSITION)
-        ) {
+                || varName.equals(Name.CONTEXT_POSITION)) {
             throw new AbsentPartOfDynamicContextException(
-                    "\"" + varName + "\" accessed, but the context item is absent",
-                    metadata
-            );
+                    "\"" + varName + "\" accessed, but the context item is absent", metadata);
         }
 
         throw new RumbleException(
                 "Runtime error retrieving variable " + varName + " value",
                 ErrorCode.UndeclaredVariableErrorCode,
-                metadata
-        );
+                metadata);
     }
 
     public JavaRDD<Item> getRDDVariableValue(Name varName, ExceptionMetadata metadata) {
@@ -260,10 +241,7 @@ public class VariableValues implements Serializable {
             return this.parent.getRDDVariableValue(varName, metadata);
         }
 
-        throw new OurBadException(
-                "Runtime error retrieving variable " + varName + " value",
-                metadata
-        );
+        throw new OurBadException("Runtime error retrieving variable " + varName + " value", metadata);
     }
 
     public HomogeneousItemDataFrame getDataFrameVariableValue(Name varName, ExceptionMetadata metadata) {
@@ -278,10 +256,7 @@ public class VariableValues implements Serializable {
             return this.parent.getDataFrameVariableValue(varName, metadata);
         }
 
-        throw new OurBadException(
-                "Runtime error retrieving variable " + varName + " value",
-                metadata
-        );
+        throw new OurBadException("Runtime error retrieving variable " + varName + " value", metadata);
     }
 
     public Item getVariableCount(Name varName, ExceptionMetadata metadata) {
@@ -293,16 +268,18 @@ public class VariableValues implements Serializable {
                 throw new JobWithinAJobException(metadata);
             }
             return ItemFactory.getInstance()
-                .createLongItem(this.dataFrameVariableValues.get(varName).count());
+                    .createLongItem(this.dataFrameVariableValues.get(varName).count());
         }
         if (this.rddVariableValues.containsKey(varName)) {
             if (this.nestedQuery) {
                 throw new JobWithinAJobException(metadata);
             }
-            return ItemFactory.getInstance().createLongItem(this.rddVariableValues.get(varName).count());
+            return ItemFactory.getInstance()
+                    .createLongItem(this.rddVariableValues.get(varName).count());
         }
         if (this.localVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntItem(this.localVariableValues.get(varName).size());
+            return ItemFactory.getInstance()
+                    .createIntItem(this.localVariableValues.get(varName).size());
         }
         if (this.parent != null) {
             return this.parent.getVariableCount(varName, metadata);
@@ -315,7 +292,6 @@ public class VariableValues implements Serializable {
         this.localVariableCounts.remove(varName);
         this.rddVariableValues.remove(varName);
         this.dataFrameVariableValues.remove(varName);
-
     }
 
     public void removeAllVariables() {
@@ -325,13 +301,11 @@ public class VariableValues implements Serializable {
         this.dataFrameVariableValues.clear();
     }
 
-
     @Serial
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
         this.nestedQuery = true;
     }
-
 
     public Item getPosition() {
         if (this.localVariableValues.containsKey(Name.CONTEXT_POSITION)) {
@@ -371,9 +345,9 @@ public class VariableValues implements Serializable {
             sb.append("    " + name + " (" + this.localVariableValues.get(name).size() + " items)\n");
             if (this.localVariableValues.get(name).size() == 1) {
                 sb.append("      " + this.localVariableValues.get(name).get(0).serialize() + "\n");
-                sb.append(
-                    "      Mutability level: " + this.localVariableValues.get(name).get(0).getMutabilityLevel() + "\n"
-                );
+                sb.append("      Mutability level: "
+                        + this.localVariableValues.get(name).get(0).getMutabilityLevel()
+                        + "\n");
             }
         }
         sb.append("  Counts:\n");
@@ -428,8 +402,8 @@ public class VariableValues implements Serializable {
 
     public boolean containsLocally(VariableValues variableValues, Name varName) {
         return variableValues.localVariableValues.containsKey(varName)
-            || variableValues.rddVariableValues.containsKey(varName)
-            || variableValues.dataFrameVariableValues.containsKey(varName);
+                || variableValues.rddVariableValues.containsKey(varName)
+                || variableValues.dataFrameVariableValues.containsKey(varName);
     }
 
     public void changeVariableValue(Name varName, List<Item> value) {

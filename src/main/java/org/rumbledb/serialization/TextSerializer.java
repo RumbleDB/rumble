@@ -1,5 +1,9 @@
 package org.rumbledb.serialization;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -7,9 +11,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 
-import java.io.Serial;
-
-public class TextSerializer implements Serializer, java.io.Serializable {
+public class TextSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -37,8 +39,7 @@ public class TextSerializer implements Serializer, java.io.Serializable {
             throw new RumbleException(
                     "Top-level attribute and namespace nodes cannot be serialized with the text method.",
                     ErrorCode.FunctionsNonSerializable,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         if (item.isAtomic() || item.isTextNode() || item.isCommentNode() || item.isProcessingInstructionNode()) {
             sb.append(item.getStringValue());
@@ -56,14 +57,13 @@ public class TextSerializer implements Serializer, java.io.Serializable {
             throw new RumbleException(
                     "Serialization method text does not support arrays or maps.",
                     new ErrorCode(new Name(Name.ERROR_NS, "err", "SENR0001")),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
     private void appendArrayMembers(Item array, StringBuilder sb, String indent) {
         boolean first = true;
-        for (java.util.List<Item> memberSequence : array.getSequenceMembers()) {
+        for (List<Item> memberSequence : array.getSequenceMembers()) {
             for (Item member : memberSequence) {
                 if (!first) {
                     sb.append(" ");

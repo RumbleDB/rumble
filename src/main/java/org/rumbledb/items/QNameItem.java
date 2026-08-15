@@ -21,7 +21,6 @@ package org.rumbledb.items;
 import java.io.Serial;
 import java.util.Objects;
 
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -55,8 +54,6 @@ public class QNameItem extends AbstractAtomicItem {
     public Object getVariantValue() {
         return this.name;
     }
-
-
 
     @Override
     public boolean isQName() {

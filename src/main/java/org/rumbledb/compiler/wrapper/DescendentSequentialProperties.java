@@ -12,10 +12,7 @@ public class DescendentSequentialProperties {
     }
 
     public DescendentSequentialProperties(
-            boolean hasNonExitSequentialStatement,
-            boolean hasInterruptStatement,
-            boolean hasExitStatement
-    ) {
+            boolean hasNonExitSequentialStatement, boolean hasInterruptStatement, boolean hasExitStatement) {
         this.hasInterruptStatement = hasInterruptStatement;
         this.hasNonExitSequentialStatement = hasNonExitSequentialStatement;
         this.hasExitStatement = hasExitStatement;

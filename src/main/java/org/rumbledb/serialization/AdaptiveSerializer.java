@@ -1,6 +1,11 @@
 package org.rumbledb.serialization;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -9,13 +14,10 @@ import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-import java.util.List;
-
 /**
  * Serializer for the W3C adaptive output method.
  */
-public class AdaptiveSerializer implements Serializer, java.io.Serializable {
+public class AdaptiveSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -162,10 +164,7 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
         }
         if (item.isDateTime()) {
             appendTypedAtomic(
-                type.equals(BuiltinTypesCatalogue.dateTimeStampItem) ? "xs:dateTime" : "xs:dateTime",
-                item,
-                sb
-            );
+                    type.equals(BuiltinTypesCatalogue.dateTimeStampItem) ? "xs:dateTime" : "xs:dateTime", item, sb);
             return;
         }
         if (item.isDate()) {
@@ -184,13 +183,7 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
             appendTypedAtomic(type.getName().toString(), item, sb);
             return;
         }
-        if (
-            item.isGYearMonth()
-                || item.isGYear()
-                || item.isGMonthDay()
-                || item.isGDay()
-                || item.isGMonth()
-        ) {
+        if (item.isGYearMonth() || item.isGYear() || item.isGMonthDay() || item.isGDay() || item.isGMonth()) {
             appendTypedAtomic(type.getName().toString(), item, sb);
             return;
         }
@@ -206,8 +199,8 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
     private boolean isAdaptiveQuotedLiteralType(Item item) {
         ItemType type = item.getDynamicType();
         return item.isUntypedAtomic()
-            || type.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
-            || type.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem);
+                || type.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+                || type.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem);
     }
 
     private String serializeDouble(Item item) {

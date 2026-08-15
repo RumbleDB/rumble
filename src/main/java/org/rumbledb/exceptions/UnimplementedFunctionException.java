@@ -1,9 +1,9 @@
 package org.rumbledb.exceptions;
 
+import java.io.Serial;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
-
-import java.io.Serial;
 
 public class UnimplementedFunctionException extends RumbleException {
 
@@ -12,9 +12,8 @@ public class UnimplementedFunctionException extends RumbleException {
 
     public UnimplementedFunctionException(String functionName, ExceptionMetadata metadata) {
         super(
-            "Unimplemented function: " + functionName,
-            new ErrorCode(new Name(null, null, functionName + "_unimplemented")),
-            metadata
-        );
+                "Unimplemented function: " + functionName,
+                new ErrorCode(new Name(null, null, functionName + "_unimplemented")),
+                metadata);
     }
 }

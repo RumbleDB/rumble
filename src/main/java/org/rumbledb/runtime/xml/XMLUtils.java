@@ -1,13 +1,12 @@
 package org.rumbledb.runtime.xml;
 
 public final class XMLUtils {
-    private XMLUtils() {
-    }
+    private XMLUtils() {}
 
     public static boolean isValidXmlCharacter(int codepoint, String xmlVersion) {
         boolean inCharRange = (0 <= codepoint && codepoint <= 0xD7FF)
-            || (0xE000 <= codepoint && codepoint <= 0xFFFD)
-            || (0x10000 <= codepoint && codepoint <= 0x10FFFF);
+                || (0xE000 <= codepoint && codepoint <= 0xFFFD)
+                || (0x10000 <= codepoint && codepoint <= 0x10FFFF);
         if (!inCharRange) {
             return false;
         }
@@ -25,7 +24,6 @@ public final class XMLUtils {
     }
 
     public static boolean isControlCharacter(int codepoint) {
-        return (codepoint >= 0x00 && codepoint <= 0x1F)
-            || (codepoint >= 0x7F && codepoint <= 0x9F);
+        return (codepoint >= 0x00 && codepoint <= 0x1F) || (codepoint >= 0x7F && codepoint <= 0x9F);
     }
 }

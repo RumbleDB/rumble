@@ -20,38 +20,42 @@
 
 package org.rumbledb.runtime.functions.numerics.trigonometric;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
-public class CoshFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class CoshFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public CoshFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    private final ItemRuntimePlan argument;
+
+    public CoshFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
+        this.argument = arguments.get(0);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Item value = this.argument.materializeFirstOrNull(dynamicContext);
         if (value == null) {
             return null;
         }
+        return evaluate(value);
+    }
+
+    private static Item evaluate(Item value) {
         double dvalue = value.getDoubleValue();
         if (Double.isNaN(dvalue) || Double.isInfinite(dvalue)) {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
@@ -61,22 +65,20 @@ public class CoshFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(this.argument, nativeClauseContext);
         if (childQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childQuery.getResultingType().getArity())) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                childQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "COSH( "
-            + childQuery.getResultingQuery()
-            + " )";
+        String resultingQuery = "COSH( " + childQuery.getResultingQuery() + " )";
         return new NativeClauseContext(
                 childQuery,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.doubleItem,
+                        childQuery.getResultingType().getArity()));
     }
-
-
 }

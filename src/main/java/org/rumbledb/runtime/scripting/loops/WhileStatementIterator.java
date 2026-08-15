@@ -1,38 +1,34 @@
 package org.rumbledb.runtime.scripting.loops;
 
+import java.io.Serial;
+import java.util.Arrays;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.exceptions.ContinueStatementException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.Arrays;
-
-public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+public class WhileStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator testConditionIterator;
-    private final RuntimeIterator bodyIterator;
+
+    private final ItemRuntimePlan testConditionIterator;
+    private final ItemRuntimePlan bodyIterator;
 
     public WhileStatementIterator(
-            RuntimeIterator testConditionIterator,
-            RuntimeIterator bodyIterator,
-            RuntimeStaticContext staticContext
-    ) {
-        super(
-            Arrays.asList(testConditionIterator, bodyIterator),
-            staticContext
-        );
+            ItemRuntimePlan testConditionIterator, ItemRuntimePlan bodyIterator, RuntimeStaticContext staticContext) {
+        super(Arrays.asList(testConditionIterator, bodyIterator), staticContext);
         this.testConditionIterator = testConditionIterator;
         this.bodyIterator = bodyIterator;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        while (this.testConditionIterator.getEffectiveBooleanValue(context)) {
+    public Item evaluateAtMostOne(DynamicContext context) {
+        while (EffectiveBooleanValue.evaluate(this.testConditionIterator, context)) {
             try {
                 DynamicContext childContext = new DynamicContext(context);
                 this.bodyIterator.materialize(childContext);

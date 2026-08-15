@@ -20,9 +20,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class UnrecognizedRumbleMLClassReferenceException extends RumbleException {
 
@@ -30,10 +30,6 @@ public class UnrecognizedRumbleMLClassReferenceException extends RumbleException
     private static final long serialVersionUID = 1L;
 
     public UnrecognizedRumbleMLClassReferenceException(String message, ExceptionMetadata metadata) {
-        super(
-            message,
-            ErrorCode.UnrecognizedRumbleMLClassReferenceErrorCode,
-            metadata
-        );
+        super(message, ErrorCode.UnrecognizedRumbleMLClassReferenceErrorCode, metadata);
     }
 }

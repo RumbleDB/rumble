@@ -21,12 +21,7 @@ class ResolvedNumber {
     public final boolean isNegative;
 
     private ResolvedNumber(
-            String type,
-            BigDecimal decimalValue,
-            Double doubleValue,
-            Float floatValue,
-            boolean isNegative
-    ) {
+            String type, BigDecimal decimalValue, Double doubleValue, Float floatValue, boolean isNegative) {
         this.type = type;
         this.decimalValue = decimalValue;
         this.doubleValue = doubleValue;
@@ -37,65 +32,35 @@ class ResolvedNumber {
     // Factory methods
 
     public static ResolvedNumber fromInteger(BigDecimal value, boolean isNegative) {
-        return new ResolvedNumber(
-                INTEGER,
-                value,
-                null,
-                null,
-                isNegative
-        );
+        return new ResolvedNumber(INTEGER, value, null, null, isNegative);
     }
 
     public static ResolvedNumber fromDecimal(BigDecimal value, boolean isNegative) {
-        return new ResolvedNumber(
-                DECIMAL,
-                value,
-                null,
-                null,
-                isNegative
-        );
+        return new ResolvedNumber(DECIMAL, value, null, null, isNegative);
     }
 
     public static ResolvedNumber fromDouble(double value, boolean isNegative) {
-        return new ResolvedNumber(
-                DOUBLE,
-                BigDecimal.valueOf(value),
-                value,
-                null,
-                isNegative
-        );
+        return new ResolvedNumber(DOUBLE, BigDecimal.valueOf(value), value, null, isNegative);
     }
 
     public static ResolvedNumber fromFloat(float value, boolean isNegative) {
-        return new ResolvedNumber(
-                FLOAT,
-                BigDecimal.valueOf(value),
-                null,
-                value,
-                isNegative
-        );
+        return new ResolvedNumber(FLOAT, BigDecimal.valueOf(value), null, value, isNegative);
     }
 
     @Override
     public String toString() {
         return "ResolvedNumber{"
-            +
-            "type='"
-            + this.type
-            + '\''
-            +
-            ", decimalValue="
-            + this.decimalValue
-            +
-            ", doubleValue="
-            + this.doubleValue
-            +
-            ", floatValue="
-            + this.floatValue
-            +
-            ", isNegative="
-            + this.isNegative
-            +
-            '}';
+                + "type='"
+                + this.type
+                + '\''
+                + ", decimalValue="
+                + this.decimalValue
+                + ", doubleValue="
+                + this.doubleValue
+                + ", floatValue="
+                + this.floatValue
+                + ", isNegative="
+                + this.isNegative
+                + '}';
     }
 }

@@ -1,5 +1,15 @@
 package org.rumbledb.runtime.functions.input;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.EnumSet;
+import java.util.List;
+
 import org.apache.hadoop.HadoopIllegalArgumentException;
 import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -12,20 +22,11 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.EnumSet;
-import java.util.List;
 
 public class FileSystemUtil {
     public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
@@ -38,10 +39,7 @@ public class FileSystemUtil {
 
     private static URI resolve(URI base, String url, ExceptionMetadata metadata, boolean fileSystemPath) {
         if (!base.isAbsolute()) {
-            throw new OurBadException(
-                    "The base URI is not absolute!",
-                    metadata
-            );
+            throw new OurBadException("The base URI is not absolute!", metadata);
         }
         try {
             URI relativeURI = fileSystemPath ? parseFileSystemURI(url) : parseURI(url);
@@ -57,9 +55,7 @@ public class FileSystemUtil {
             return resolvedURI;
         } catch (Exception e) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
-                    "Malformed URI: " + url + " Cause: " + e.getMessage(),
-                    metadata
-            );
+                    "Malformed URI: " + url + " Cause: " + e.getMessage(), metadata);
             rumbleException.initCause(e);
             throw rumbleException;
         }
@@ -93,10 +89,7 @@ public class FileSystemUtil {
         return path.toString();
     }
 
-    public static URI resolveURIAgainstWorkingDirectory(
-            String url,
-            ExceptionMetadata metadata
-    ) {
+    public static URI resolveURIAgainstWorkingDirectory(String url, ExceptionMetadata metadata) {
         // TODO: conf is not used here, maybe we can remove it from the signature of this method and all its callers.
         try {
             Path workingDirectory = FileContext.getFileContext().getWorkingDirectory();
@@ -109,15 +102,10 @@ public class FileSystemUtil {
             URI relativeURI = relativePath.toUri();
             return virtualURI.resolve(relativeURI);
         } catch (UnsupportedFileSystemException e) {
-            throw new CannotRetrieveResourceException(
-                    "The default file system is not supported!",
-                    metadata
-            );
+            throw new CannotRetrieveResourceException("The default file system is not supported!", metadata);
         } catch (Exception e) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
-                    "Malformed URI: " + url + " Cause: " + e.getMessage(),
-                    metadata
-            );
+                    "Malformed URI: " + url + " Cause: " + e.getMessage(), metadata);
             rumbleException.initCause(e);
             throw rumbleException;
         }
@@ -145,9 +133,7 @@ public class FileSystemUtil {
             Path path = new Path(locator);
             if (!fileContext.util().exists(path)) {
                 throw new CannotRetrieveResourceException(
-                        "Cannot delete file that does not exist: " + locator,
-                        metadata
-                );
+                        "Cannot delete file that does not exist: " + locator, metadata);
             }
             return fileContext.delete(path, true);
         } catch (Exception e) {
@@ -156,10 +142,7 @@ public class FileSystemUtil {
         }
     }
 
-    public static InputStream getDataInputStream(
-            URI locator,
-            ExceptionMetadata metadata
-    ) {
+    public static InputStream getDataInputStream(URI locator, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
         if (locator.getScheme().equals("http") || locator.getScheme().equals("https")) {
             return getDataInputStreamHTML(locator, metadata);
@@ -177,10 +160,7 @@ public class FileSystemUtil {
         }
     }
 
-    public static InputStream getDataInputStreamHTML(
-            URI locator,
-            ExceptionMetadata metadata
-    ) {
+    public static InputStream getDataInputStreamHTML(URI locator, ExceptionMetadata metadata) {
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(locator);
         try {
@@ -191,9 +171,7 @@ public class FileSystemUtil {
                 return entity.getContent();
             }
             throw new CannotRetrieveResourceException(
-                    "Unsuccessful status code: " + statusCode + " while requesting " + locator,
-                    metadata
-            );
+                    "Unsuccessful status code: " + statusCode + " while requesting " + locator, metadata);
         } catch (ClientProtocolException e) {
             handleException(e, locator, metadata);
         } catch (IOException e) {
@@ -221,19 +199,13 @@ public class FileSystemUtil {
         }
     }
 
-    public static void write(
-            URI locator,
-            List<String> content,
-            ExceptionMetadata metadata
-    ) {
+    public static void write(URI locator, List<String> content, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
-            FSDataOutputStream outputStream = fileContext.create(
-                path,
-                EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE)
-            );
+            FSDataOutputStream outputStream =
+                    fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE));
             for (String s : content) {
                 outputStream.writeBytes(s);
                 outputStream.writeBytes("\n");
@@ -244,20 +216,14 @@ public class FileSystemUtil {
         }
     }
 
-    public static void append(
-            URI locator,
-            List<String> content,
-            ExceptionMetadata metadata
-    ) {
+    public static void append(URI locator, List<String> content, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
 
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
-            FSDataOutputStream outputStream = fileContext.create(
-                path,
-                EnumSet.of(CreateFlag.CREATE, CreateFlag.APPEND)
-            );
+            FSDataOutputStream outputStream =
+                    fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.APPEND));
             for (String s : content) {
                 outputStream.writeBytes(s);
                 outputStream.writeBytes("\n");
@@ -273,10 +239,7 @@ public class FileSystemUtil {
             throw new OurBadException("Unresolved uri passed to append()");
         }
         if (locator.toString().contains("*")) {
-            throw new CannotRetrieveResourceException(
-                    "Path cannot contain *!",
-                    metadata
-            );
+            throw new CannotRetrieveResourceException("Path cannot contain *!", metadata);
         }
     }
 
@@ -284,21 +247,19 @@ public class FileSystemUtil {
         if (e instanceof UnsupportedFileSystemException) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
                     "No file system is configured for scheme " + locator.getScheme() + "! Cause: " + e.getMessage(),
-                    metadata
-            );
+                    metadata);
             rumbleException.initCause(e);
             throw rumbleException;
         }
         if (e instanceof IOException) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
                     "I/O error while accessing the "
-                        + locator.getScheme()
-                        + " filesystem. File: "
-                        + locator
-                        + " Cause: "
-                        + e.getMessage(),
-                    metadata
-            );
+                            + locator.getScheme()
+                            + " filesystem. File: "
+                            + locator
+                            + " Cause: "
+                            + e.getMessage(),
+                    metadata);
             rumbleException.initCause(e);
             throw rumbleException;
         }
@@ -312,9 +273,7 @@ public class FileSystemUtil {
         }
         if (e instanceof HadoopIllegalArgumentException) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
-                    "Illegal argument. File: " + locator + " Cause: " + e.getMessage(),
-                    metadata
-            );
+                    "Illegal argument. File: " + locator + " Cause: " + e.getMessage(), metadata);
             rumbleException.initCause(e);
             throw rumbleException;
         }

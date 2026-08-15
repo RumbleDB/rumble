@@ -20,35 +20,35 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 // for now unused since we always use SimpleMapExpressionClosureZipped
 // can be used if the zipping with position is not needed as optimization, similar to PredicateIterator
 public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
 
-
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator rightIterator;
+
+    private final ItemRuntimePlan rightIterator;
     private final DynamicContext dynamicContext;
 
-    public SimpleMapExpressionClosure(RuntimeIterator rightIterator, DynamicContext dynamicContext) {
+    public SimpleMapExpressionClosure(ItemRuntimePlan rightIterator, DynamicContext dynamicContext) {
         this.rightIterator = rightIterator;
         if (this.rightIterator.isSparkJobNeeded()) {
             throw new JobWithinAJobException(
                     "The expression in this simple map requires parallel execution, but the simple map is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.rightIterator.getMetadata()
-            );
+                    this.rightIterator.getRuntimeStaticContext().getMetadata());
         }
         this.dynamicContext = new DynamicContext(dynamicContext);
     }

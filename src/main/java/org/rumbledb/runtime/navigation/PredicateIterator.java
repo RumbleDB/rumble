@@ -20,7 +20,11 @@
 
 package org.rumbledb.runtime.navigation;
 
-import lombok.extern.log4j.Log4j2;
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.*;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -28,18 +32,22 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.extern.log4j.Log4j2;
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -47,182 +55,195 @@ import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.TypeMappings;
-import scala.Tuple2;
-
-import java.io.Serial;
-import java.math.BigInteger;
-import java.math.BigDecimal;
-import java.util.*;
-
 
 @Log4j2
-public class PredicateIterator extends HybridRuntimeIterator {
+public class PredicateIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new PredicateLocalCursor(this.iterator, this.filter, this.isBooleanOnlyFilter, context, getMetadata());
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private final RuntimeIterator filter;
-    private Item nextResult;
-    private long position;
-    private boolean mustMaintainPosition;
-    private DynamicContext filterDynamicContext;
+
+    private final ItemRuntimePlan iterator;
+    private final ItemRuntimePlan filter;
     private final boolean isBooleanOnlyFilter;
 
-
     public PredicateIterator(
-            RuntimeIterator sequence,
-            RuntimeIterator filterExpression,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan sequence, ItemRuntimePlan filterExpression, RuntimeStaticContext staticContext) {
         super(Arrays.asList(sequence, filterExpression), staticContext);
         this.iterator = sequence;
         this.filter = filterExpression;
-        this.filterDynamicContext = null;
         this.isBooleanOnlyFilter = isBooleanOnlyFilter();
     }
 
-    public RuntimeIterator sequenceIterator() {
+    public ItemRuntimePlan sequenceIterator() {
         return this.iterator;
     }
 
-    public RuntimeIterator predicateIterator() {
+    public ItemRuntimePlan predicateIterator() {
         return this.filter;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext == true) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
     }
 
     private boolean isBooleanOnlyFilter() {
         return !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_POSITION)
-            && !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)
-            && (this.filter instanceof BooleanRuntimeIterator
-                || this.filter instanceof AndOperationIterator
-                || this.filter instanceof OrOperationIterator
-                || this.filter instanceof NotOperationIterator
-                || this.filter instanceof ComparisonIterator);
+                && !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)
+                && (this.filter instanceof BooleanRuntimeIterator
+                        || this.filter instanceof AndOperationIterator
+                        || this.filter instanceof OrOperationIterator
+                        || this.filter instanceof NotOperationIterator
+                        || this.filter instanceof ComparisonIterator);
     }
 
-    @Override
-    protected void openLocal() {
-        if (this.getChildren().size() < 2) {
-            throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
+    private static final class PredicateLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final ItemRuntimePlan inputPlan;
+        private final ItemRuntimePlan filterPlan;
+        private final boolean booleanOnlyFilter;
+        private final DynamicContext context;
+        private DynamicContext filterContext;
+        private Cursor<Item> inputCursor;
+        private Item nextResult;
+        private long position;
+
+        private PredicateLocalCursor(
+                ItemRuntimePlan inputPlan,
+                ItemRuntimePlan filterPlan,
+                boolean booleanOnlyFilter,
+                DynamicContext context,
+                ExceptionMetadata metadata) {
+            super(metadata);
+            this.inputPlan = inputPlan;
+            this.filterPlan = filterPlan;
+            this.booleanOnlyFilter = booleanOnlyFilter;
+            this.context = context;
         }
-        this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
-            setLast();
-        }
-        if (!this.isBooleanOnlyFilter) {
+
+        @Override
+        protected void openLocal() {
+            this.filterContext = new DynamicContext(this.context);
+            if (this.filterPlan.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
+                this.filterContext.getVariableValues().setLast(countInput());
+            }
             this.position = 0;
-            this.mustMaintainPosition = true;
+            this.inputCursor = this.inputPlan.getCursor(this.context);
+            advance();
         }
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
 
-    private void setLast() {
-        long last = 0;
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        while (this.iterator.hasNext()) {
-            this.iterator.next();
-            ++last;
-        }
-        this.iterator.close();
-        this.filterDynamicContext.getVariableValues().setLast(last);
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            List<Item> currentItems = new ArrayList<>();
-            currentItems.add(item);
-            this.filterDynamicContext.getVariableValues()
-                .addVariableValue(
-                    Name.CONTEXT_ITEM,
-                    currentItems
-                );
-            if (this.mustMaintainPosition) {
-                this.filterDynamicContext.getVariableValues().setPosition(++this.position);
-            }
-
-            Item fil = null;
-            try {
-                fil = this.filter.materializeAtMostOneItemOrNull(this.filterDynamicContext);
-            } catch (MoreThanOneItemException e) {
-                throw new InvalidArgumentTypeException(
-                        "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
-                        this.filter.getMetadata()
-                );
-            }
-            // if filter is an integer, it is used to return the element(s) with the index equal to the given integer
-            if (fil != null && fil.isNumeric()) {
-                BigDecimal numericValue;
-                if (fil.isInt() || fil.isInteger()) {
-                    numericValue = new BigDecimal(fil.getIntegerValue());
-                } else if (fil.isDecimal()) {
-                    numericValue = fil.getDecimalValue();
-                } else if (fil.isDouble()) {
-                    double value = fil.getDoubleValue();
-                    if (Double.isNaN(value) || Double.isInfinite(value)) {
-                        continue;
-                    }
-                    numericValue = BigDecimal.valueOf(value);
-                } else if (fil.isFloat()) {
-                    float value = fil.getFloatValue();
-                    if (Float.isNaN(value) || Float.isInfinite(value)) {
-                        continue;
-                    }
-                    numericValue = new BigDecimal(Float.toString(value));
-                } else {
-                    continue;
+        private long countInput() {
+            long count = 0;
+            try (Cursor<Item> cursor = this.inputPlan.getCursor(this.context)) {
+                while (cursor.hasNext()) {
+                    cursor.next();
+                    count++;
                 }
-                if (
-                    numericValue.stripTrailingZeros().scale() <= 0
-                        && numericValue.toBigIntegerExact().equals(BigInteger.valueOf(this.position))
-                ) {
+            }
+            return count;
+        }
+
+        private void advance() {
+            this.nextResult = null;
+            while (this.inputCursor.hasNext()) {
+                Item item = this.inputCursor.next();
+                this.position++;
+                this.filterContext
+                        .getVariableValues()
+                        .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(item));
+                if (!this.booleanOnlyFilter) {
+                    this.filterContext.getVariableValues().setPosition(this.position);
+                }
+                Item filterResult;
+                try {
+                    filterResult = this.filterPlan.materializeAtMostOne(this.filterContext);
+                } catch (MoreThanOneItemException e) {
+                    throw new InvalidArgumentTypeException(
+                            "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
+                            this.filterPlan.getRuntimeStaticContext().getMetadata());
+                }
+                if (matches(filterResult)) {
                     this.nextResult = item;
                     break;
                 }
-            } else if (fil != null && fil.getEffectiveBooleanValue()) {
-                this.nextResult = item;
-                break;
             }
+            this.filterContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
         }
-        this.filterDynamicContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
+        private boolean matches(Item filterResult) {
+            if (filterResult == null) {
+                return false;
+            }
+            if (!filterResult.isNumeric()) {
+                return filterResult.getEffectiveBooleanValue();
+            }
+            BigDecimal numericValue;
+            if (filterResult.isInt() || filterResult.isInteger()) {
+                numericValue = new BigDecimal(filterResult.getIntegerValue());
+            } else if (filterResult.isDecimal()) {
+                numericValue = filterResult.getDecimalValue();
+            } else if (filterResult.isDouble()) {
+                double value = filterResult.getDoubleValue();
+                if (Double.isNaN(value) || Double.isInfinite(value)) {
+                    return false;
+                }
+                numericValue = BigDecimal.valueOf(value);
+            } else if (filterResult.isFloat()) {
+                float value = filterResult.getFloatValue();
+                if (Float.isNaN(value) || Float.isInfinite(value)) {
+                    return false;
+                }
+                numericValue = new BigDecimal(Float.toString(value));
+            } else {
+                return false;
+            }
+            return numericValue.stripTrailingZeros().scale() <= 0
+                    && numericValue.toBigIntegerExact().equals(BigInteger.valueOf(this.position));
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextResult != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.nextResult == null) {
+                throw invalidState("No more predicate results are available.");
+            }
+            Item result = this.nextResult;
+            advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.inputCursor != null) {
+                this.inputCursor.close();
+            }
+            if (this.filterContext != null) {
+                this.filterContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
+            }
+            this.inputCursor = null;
+            this.filterContext = null;
+            this.nextResult = null;
         }
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = this.getChild(0);
-        RuntimeIterator filter = this.getChild(1);
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
+        ItemRuntimePlan iterator = this.iterator;
+        ItemRuntimePlan filter = this.filter;
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
         if (this.isBooleanOnlyFilter) {
             Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
@@ -234,127 +255,77 @@ public class PredicateIterator extends HybridRuntimeIterator {
             if (filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
                 last = childRDD.count();
             }
-            Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(
-                    filter,
-                    dynamicContext,
-                    last
-            );
+            Function<Tuple2<Item, Long>, Boolean> transformation =
+                    new PredicateClosureZipped(filter, dynamicContext, last);
             JavaPairRDD<Item, Long> resultRDD = zippedChildRDD.filter(transformation);
             return resultRDD.keys();
         }
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
-        RuntimeIterator filter = this.getChild(1);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
+        ItemRuntimePlan filter = this.filter;
         NativeClauseContext nativeClauseContext = new NativeClauseContext(
-                FLWOR_CLAUSES.FILTER,
-                childDataFrame.getDataFrame().schema(),
-                context
-        );
+                FLWOR_CLAUSES.FILTER, childDataFrame.getDataFrame().schema(), context);
         NativeClauseContext nativeQuery = NativeClauseContext.NoNativeQuery;
         if (getConfiguration().runtime().useNativeExecution()) {
-            nativeQuery = filter.generateNativeQuery(nativeClauseContext);
+            nativeQuery = NativeQueryRuntimePlan.generate(filter, nativeClauseContext);
         }
         if (nativeQuery == NativeClauseContext.NoNativeQuery || !this.isBooleanOnlyFilter) {
             if (this.isBooleanOnlyFilter) {
                 String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
                 List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
-                    childDataFrame.getDataFrame().schema(),
-                    null,
-                    null,
-                    null
-                );
+                        childDataFrame.getDataFrame().schema(), null, null, null);
 
-                childDataFrame.getDataFrame()
-                    .sparkSession()
-                    .udf()
-                    .register(
-                        "predicate",
-                        new PredicateUDF(filter, context, getMetadata(), childDataFrame.getItemType()),
-                        DataTypes.BooleanType
-                    );
+                childDataFrame
+                        .getDataFrame()
+                        .sparkSession()
+                        .udf()
+                        .register(
+                                "predicate",
+                                new PredicateUDF(filter, context, getMetadata(), childDataFrame.getItemType()),
+                                DataTypes.BooleanType);
                 String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
                 return childDataFrame.evaluateSQL(
-                    String.format(
-                        "SELECT * FROM %s WHERE predicate(%s) = 'true'",
-                        left,
-                        UDFParameters
-                    ),
-                    childDataFrame.getItemType()
-                );
+                        String.format("SELECT * FROM %s WHERE predicate(%s) = 'true'", left, UDFParameters),
+                        childDataFrame.getItemType());
             } else {
-                Dataset<Row> zippedChildDataFrame = FlworDataFrameUtils.zipWithIndex(
-                    childDataFrame,
-                    1L
-                );
+                Dataset<Row> zippedChildDataFrame = FlworDataFrameUtils.zipWithIndex(childDataFrame, 1L);
                 String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame);
-                List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
-                    zippedChildDataFrame.schema(),
-                    null,
-                    null,
-                    null
-                );
+                List<FlworDataFrameColumn> UDFcolumns =
+                        FlworDataFrameUtils.getColumns(zippedChildDataFrame.schema(), null, null, null);
                 List<FlworDataFrameColumn> originalcolumns = FlworDataFrameUtils.getColumns(
-                    childDataFrame.getDataFrame().schema(),
-                    null,
-                    null,
-                    null
-                );
+                        childDataFrame.getDataFrame().schema(), null, null, null);
 
                 long contextSize = childDataFrame.getDataFrame().count();
-                childDataFrame.getDataFrame()
-                    .sparkSession()
-                    .udf()
-                    .register(
-                        "predicate",
-                        new PredicateWithZipUDF(
-                                filter,
-                                context,
-                                getMetadata(),
-                                childDataFrame.getItemType(),
-                                contextSize
-                        ),
-                        DataTypes.BooleanType
-                    );
+                childDataFrame
+                        .getDataFrame()
+                        .sparkSession()
+                        .udf()
+                        .register(
+                                "predicate",
+                                new PredicateWithZipUDF(
+                                        filter, context, getMetadata(), childDataFrame.getItemType(), contextSize),
+                                DataTypes.BooleanType);
                 String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
                 String projection = FlworDataFrameUtils.getSQLColumnProjection(originalcolumns, false);
                 return childDataFrame.evaluateSQL(
-                    String.format(
-                        "SELECT %s FROM %s WHERE predicate(%s) = 'true'",
-                        projection,
-                        left,
-                        UDFParameters
-                    ),
-                    childDataFrame.getItemType()
-                );
+                        String.format(
+                                "SELECT %s FROM %s WHERE predicate(%s) = 'true'", projection, left, UDFParameters),
+                        childDataFrame.getItemType());
             }
         }
-        log.info(
-            "Rumble was able to optimize a predicate to a native SQL query."
-        );
+        log.info("Rumble was able to optimize a predicate to a native SQL query.");
         String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         return childDataFrame.evaluateSQL(
-            String.format(
-                "SELECT * FROM %s WHERE %s",
-                left,
-                nativeQuery.getResultingQuery()
-            ),
-            childDataFrame.getItemType()
-        );
-
+                String.format("SELECT * FROM %s WHERE %s", left, nativeQuery.getResultingQuery()),
+                childDataFrame.getItemType());
     }
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<Name, DynamicContext.VariableDependency>();
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.filter.getVariableDependencies());
         result.remove(Name.CONTEXT_ITEM);
         result.putAll(this.iterator.getVariableDependencies());
@@ -366,48 +337,39 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (!(this.iterator instanceof ArrayUnboxingIterator arrayUnboxingIterator)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext arrayReferenceQuery = arrayUnboxingIterator.generateArrayReferenceQuery(
-            nativeClauseContext
-        );
+        NativeClauseContext arrayReferenceQuery =
+                arrayUnboxingIterator.generateArrayReferenceQuery(nativeClauseContext);
         if (arrayReferenceQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        arrayReferenceQuery.setSchema(
-            ((StructType) arrayReferenceQuery.getSchema()).add(
-                SparkSessionManager.nonObjectJSONiqItemColumnName,
-                TypeMappings.getDataFrameDataTypeFromItemType(
-                    arrayReferenceQuery.getResultingType().getItemType().getArrayContentFacet(),
-                    this.staticContext
-                )
-            )
-        );
+        arrayReferenceQuery.setSchema(((StructType) arrayReferenceQuery.getSchema())
+                .add(
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        TypeMappings.getDataFrameDataTypeFromItemType(
+                                arrayReferenceQuery
+                                        .getResultingType()
+                                        .getItemType()
+                                        .getArrayContentFacet(),
+                                this.staticContext)));
         FLWOR_CLAUSES previousType = arrayReferenceQuery.getClauseType();
         arrayReferenceQuery.setClauseType(FLWOR_CLAUSES.FILTER);
-        NativeClauseContext filterQuery = this.filter.generateNativeQuery(arrayReferenceQuery);
-        if (
-            filterQuery == NativeClauseContext.NoNativeQuery
-                || filterQuery.getResultingType().getItemType() != BuiltinTypesCatalogue.booleanItem
-        ) {
+        NativeClauseContext filterQuery = NativeQueryRuntimePlan.generate(this.filter, arrayReferenceQuery);
+        if (filterQuery == NativeClauseContext.NoNativeQuery
+                || filterQuery.getResultingType().getItemType() != BuiltinTypesCatalogue.booleanItem) {
             return NativeClauseContext.NoNativeQuery;
         }
         arrayReferenceQuery.setClauseType(previousType);
-        if (
-            filterQuery != NativeClauseContext.NoNativeQuery
-        ) {
+        if (filterQuery != NativeClauseContext.NoNativeQuery) {
             String resultingQuery = " explode ( filter ( "
-                + arrayReferenceQuery.getResultingQuery()
-                + ", "
-                + "`"
-                + SparkSessionManager.nonObjectJSONiqItemColumnName
-                + "`"
-                + " -> "
-                + filterQuery.getResultingQuery()
-                + " ) ) ";
-            return new NativeClauseContext(
-                    filterQuery,
-                    resultingQuery,
-                    arrayReferenceQuery.getResultingType()
-            );
+                    + arrayReferenceQuery.getResultingQuery()
+                    + ", "
+                    + "`"
+                    + SparkSessionManager.nonObjectJSONiqItemColumnName
+                    + "`"
+                    + " -> "
+                    + filterQuery.getResultingQuery()
+                    + " ) ) ";
+            return new NativeClauseContext(filterQuery, resultingQuery, arrayReferenceQuery.getResultingType());
         }
         return NativeClauseContext.NoNativeQuery;
     }

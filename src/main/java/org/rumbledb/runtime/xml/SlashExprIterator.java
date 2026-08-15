@@ -20,60 +20,58 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.*;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import scala.Tuple2;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-import java.io.Serial;
-import java.util.*;
+public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
-public class SlashExprIterator extends HybridRuntimeIterator {
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> computeLocalResults(context).iterator(), getMetadata());
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
-        Item::getXmlDocumentPosition,
-        Comparator.nullsLast(Comparator.naturalOrder())
-    );
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
-    private List<Item> results = null;
-    private int nextResultCounter = 0;
-    private Item nextResult;
 
+    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR =
+            Comparator.comparing(Item::getXmlDocumentPosition, Comparator.nullsLast(Comparator.naturalOrder()));
+    private ItemRuntimePlan leftIterator;
+    private ItemRuntimePlan rightIterator;
 
     public SlashExprIterator(
-            RuntimeIterator sequence,
-            RuntimeIterator stepIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan sequence, ItemRuntimePlan stepIterator, RuntimeStaticContext staticContext) {
         super(Arrays.asList(sequence, stepIterator), staticContext);
         this.leftIterator = sequence;
         this.rightIterator = stepIterator;
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.leftIterator.getRDD(dynamicContext);
         JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
         long count = childRDD.count();
 
         // apply right iterator, usually a step
-        FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SlashExprClosureZipped(
-                this.rightIterator,
-                dynamicContext,
-                count
-        );
+        FlatMapFunction<Tuple2<Item, Long>, Item> transformation =
+                new SlashExprClosureZipped(this.rightIterator, dynamicContext, count);
         JavaRDD<Item> result = zippedChildRDD.flatMap(transformation);
 
         boolean allNodes;
@@ -81,18 +79,21 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         if (this.rightIterator instanceof StepExprIterator) {
             allNodes = true;
         } else {
-            if (result.isEmpty())
-                return result;
+            if (result.isEmpty()) return result;
             allNodes = result.map(Item::isNode).reduce(Boolean::logicalAnd);
             allNonNodes = !result.map(Item::isNode).reduce(Boolean::logicalOr);
         }
 
         if (allNodes) {
-            if (this.getConfiguration().optimization().optimizeSteps()) {
-                if (
-                    this.getConfiguration().optimization().optimizeStepsExperimental()
-                        && this.getConfiguration().optimization().optimizeParentPointers()
-                ) {
+            if (this.getRuntimeStaticContext().getConfiguration().optimization().optimizeSteps()) {
+                if (this.getRuntimeStaticContext()
+                                .getConfiguration()
+                                .optimization()
+                                .optimizeStepsExperimental()
+                        && this.getRuntimeStaticContext()
+                                .getConfiguration()
+                                .optimization()
+                                .optimizeParentPointers()) {
                     // skip sorting and uniqueness if not needed
                     // use optimizeParent as approximation for now, this is not verified
                     return result;
@@ -102,19 +103,17 @@ public class SlashExprIterator extends HybridRuntimeIterator {
                 // stable
 
                 // group by document
-                JavaPairRDD<Object, Iterable<Item>> res = result.groupBy(
-                    (Function<Item, Object>) item -> item.getXmlDocumentPosition().getPath()
-                );
+                JavaPairRDD<Object, Iterable<Item>> res = result.groupBy((Function<Item, Object>)
+                        item -> item.getXmlDocumentPosition().getPath());
                 // sort and uniqueness per document
-                JavaRDD<Iterator<Item>> r2 = res.map(
-                    (Function<Tuple2<Object, Iterable<Item>>, Iterator<Item>>) tuple -> {
-                        ArrayList<Item> l = new ArrayList<>();
-                        tuple._2().iterator().forEachRemaining(l::add);
-                        l = new ArrayList<>(new HashSet<>(l));
-                        l.sort(DOCUMENT_ORDER_COMPARATOR);
-                        return l.iterator();
-                    }
-                );
+                JavaRDD<Iterator<Item>> r2 =
+                        res.map((Function<Tuple2<Object, Iterable<Item>>, Iterator<Item>>) tuple -> {
+                            ArrayList<Item> l = new ArrayList<>();
+                            tuple._2().iterator().forEachRemaining(l::add);
+                            l = new ArrayList<>(new HashSet<>(l));
+                            l.sort(DOCUMENT_ORDER_COMPARATOR);
+                            return l.iterator();
+                        });
                 // put all documents together again
                 return r2.flatMap((FlatMapFunction<Iterator<Item>, Item>) it -> it);
             } else {
@@ -127,87 +126,40 @@ public class SlashExprIterator extends HybridRuntimeIterator {
             return result;
         } else {
             throw new NodeAndNonNodeException(
-                    "A mix of nodes and non-nodes was encountered as a result of a step expression.",
-                    getMetadata()
-            );
+                    "A mix of nodes and non-nodes was encountered as a result of a step expression.", getMetadata());
         }
-
-
     }
 
-    @Override
-    public void openLocal() {
-        setNextResult();
-    }
-
-    @Override
-    public void closeLocal() {
-        this.hasNext = false;
-        this.results = null;
-        this.nextResult = null;
-        this.nextResultCounter = 0;
-        this.leftIterator.close();
-        this.rightIterator.close();
-    }
-
-    @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item nextResult = this.nextResult;
-            setNextResult();
-            return nextResult;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in Slash Expression",
-                getMetadata()
-        );
-    }
-
-    private void setNextResult() {
-        if (this.results == null) {
-            List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
-            this.results = new ArrayList<>();
-            long last = left.size();
-            long position = 0;
-            for (Item currentItem : left) {
-                DynamicContext currentContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-                currentContext.getVariableValues()
+    private List<Item> computeLocalResults(DynamicContext context) {
+        List<Item> left = this.leftIterator.materialize(context);
+        List<Item> localResults = new ArrayList<>();
+        long last = left.size();
+        long position = 0;
+        for (Item currentItem : left) {
+            DynamicContext currentContext = new DynamicContext(context);
+            currentContext
+                    .getVariableValues()
                     .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
-                currentContext.getVariableValues().setPosition(++position);
-                currentContext.getVariableValues().setLast(last);
-                this.results.addAll(this.rightIterator.materialize(currentContext));
-            }
-            boolean allNodes = true;
-            boolean allNonNodes = true;
-            for (Item current : this.results) {
-                if (current.isNode()) {
-                    allNonNodes = false;
-                } else {
-                    allNodes = false;
-                }
-            }
-
-            if (allNodes) {
-                // take unique
-                this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
-                // Sort values in document order.
-                this.results.sort(DOCUMENT_ORDER_COMPARATOR);
-            } else if (!allNonNodes) {
-                throw new NodeAndNonNodeException(
-                        "A mix of nodes and non-nodes was encountered as a result of a step expression.",
-                        getMetadata()
-                );
+            currentContext.getVariableValues().setPosition(++position);
+            currentContext.getVariableValues().setLast(last);
+            localResults.addAll(this.rightIterator.materialize(currentContext));
+        }
+        boolean allNodes = true;
+        boolean allNonNodes = true;
+        for (Item current : localResults) {
+            if (current.isNode()) {
+                allNonNodes = false;
+            } else {
+                allNodes = false;
             }
         }
-        if (this.nextResultCounter < this.results.size()) {
-            this.nextResult = this.results.get(this.nextResultCounter++);
-        } else {
-            this.hasNext = false;
+        if (allNodes) {
+            localResults = new ArrayList<>(new LinkedHashSet<>(localResults));
+            localResults.sort(DOCUMENT_ORDER_COMPARATOR);
+        } else if (!allNonNodes) {
+            throw new NodeAndNonNodeException(
+                    "A mix of nodes and non-nodes was encountered as a result of a step expression.", getMetadata());
         }
+        return localResults;
     }
 }

@@ -20,12 +20,11 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
 
-public class SemanticException extends RumbleException {
+import org.rumbledb.errorcodes.ErrorCode;
 
+public class SemanticException extends RumbleException {
 
     @Serial
     private static final long serialVersionUID = 1L;

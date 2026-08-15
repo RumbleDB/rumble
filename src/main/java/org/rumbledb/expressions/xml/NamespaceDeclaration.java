@@ -23,6 +23,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**

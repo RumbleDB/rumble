@@ -10,9 +10,9 @@
  */
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * FOTY0014: no string value for maps, arrays, or function items (e.g. {@code fn:string}).
@@ -24,7 +24,7 @@ public class FunctionItemStringValueException extends RumbleException {
 
     /** Message used when {@code getStringValue()} is invoked on a map, array, or function item. */
     public static final String DEFAULT_MESSAGE =
-        "A string value cannot be extracted from a map, array, or function item.";
+            "A string value cannot be extracted from a map, array, or function item.";
 
     public FunctionItemStringValueException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.FunctionItemStringValueErrorCode, metadata);

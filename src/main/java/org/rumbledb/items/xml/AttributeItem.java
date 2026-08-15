@@ -1,21 +1,24 @@
 package org.rumbledb.items.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
 
 public class AttributeItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
@@ -52,8 +55,6 @@ public class AttributeItem extends AbstractNodeItem {
     public XMLDocumentPosition getXmlDocumentPosition() {
         return this.documentPos;
     }
-
-
 
     @Override
     public Name nodeName() {
@@ -162,10 +163,9 @@ public class AttributeItem extends AbstractNodeItem {
     public List<Item> atomizedValue() {
         if (this.typeAnnotation != null) {
             Item typedValue = CastIterator.castItemToType(
-                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
-                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
-            );
+                    ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
+                    this.typeAnnotation,
+                    ExceptionMetadata.EMPTY_METADATA);
             return Collections.singletonList(typedValue);
         }
         return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
@@ -234,9 +234,7 @@ public class AttributeItem extends AbstractNodeItem {
         if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
-        );
+        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName()));
     }
 
     @Override

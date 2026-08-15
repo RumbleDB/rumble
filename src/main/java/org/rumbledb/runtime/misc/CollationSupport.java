@@ -1,17 +1,5 @@
 package org.rumbledb.runtime.misc;
 
-import com.ibm.icu.text.Collator;
-import com.ibm.icu.text.RuleBasedCollator;
-import com.ibm.icu.text.StringSearch;
-import com.ibm.icu.util.ULocale;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.CollationCatalogue;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.UnsupportedCollationException;
-import org.rumbledb.items.ItemFactory;
-
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.StringCharacterIterator;
@@ -21,12 +9,24 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.text.RuleBasedCollator;
+import com.ibm.icu.text.StringSearch;
+import com.ibm.icu.util.ULocale;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.CollationCatalogue;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.UnsupportedCollationException;
+import org.rumbledb.items.ItemFactory;
+
 public final class CollationSupport {
 
     private static final ConcurrentHashMap<String, RuleBasedCollator> UCA_COLLATOR_CACHE = new ConcurrentHashMap<>();
 
-    private CollationSupport() {
-    }
+    private CollationSupport() {}
 
     public static String resolveCollation(String explicitCollationUri, RuntimeStaticContext staticContext) {
         if (explicitCollationUri != null) {
@@ -56,14 +56,12 @@ public final class CollationSupport {
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
             byte[] sortKeyBytes = getUcaCollator(collationUri, metadata)
-                .getCollationKey(item.getStringValue())
-                .toByteArray();
+                    .getCollationKey(item.getStringValue())
+                    .toByteArray();
             return ItemFactory.getInstance().createHexBinaryItem(HexFormat.of().formatHex(sortKeyBytes));
         }
         return ItemFactory.getInstance()
-            .createStringItem(
-                CollationCatalogue.normalizeString(item.getStringValue(), collationUri)
-            );
+                .createStringItem(CollationCatalogue.normalizeString(item.getStringValue(), collationUri));
     }
 
     public static int compareStrings(String left, String right, String collationUri, ExceptionMetadata metadata) {
@@ -75,7 +73,7 @@ public final class CollationSupport {
             return getUcaCollator(collationUri, metadata).compare(left, right);
         }
         return CollationCatalogue.normalizeString(left, collationUri)
-            .compareTo(CollationCatalogue.normalizeString(right, collationUri));
+                .compareTo(CollationCatalogue.normalizeString(right, collationUri));
     }
 
     /**
@@ -109,15 +107,13 @@ public final class CollationSupport {
             return stringSearch.first() == 0;
         }
         return CollationCatalogue.normalizeString(value, collationUri)
-            .startsWith(CollationCatalogue.normalizeString(prefix, collationUri));
+                .startsWith(CollationCatalogue.normalizeString(prefix, collationUri));
     }
 
     private static RuleBasedCollator getUcaCollator(String collationUri, ExceptionMetadata metadata) {
         try {
-            RuleBasedCollator prototype = UCA_COLLATOR_CACHE.computeIfAbsent(
-                collationUri,
-                uri -> buildUcaCollator(uri, metadata)
-            );
+            RuleBasedCollator prototype =
+                    UCA_COLLATOR_CACHE.computeIfAbsent(collationUri, uri -> buildUcaCollator(uri, metadata));
             return prototype.cloneAsThawed();
         } catch (RuntimeException e) {
             if (e instanceof UnsupportedCollationException) {
@@ -129,9 +125,7 @@ public final class CollationSupport {
 
     private static RuleBasedCollator buildUcaCollator(String collationUri, ExceptionMetadata metadata) {
         UcaParameters parameters = parseUcaParameters(collationUri, metadata);
-        ULocale locale = parameters.languageTag == null
-            ? ULocale.ROOT
-            : ULocale.forLanguageTag(parameters.languageTag);
+        ULocale locale = parameters.languageTag == null ? ULocale.ROOT : ULocale.forLanguageTag(parameters.languageTag);
         Collator collator = Collator.getInstance(locale);
         if (!(collator instanceof RuleBasedCollator ruleBasedCollator)) {
             throw new UnsupportedCollationException("Wrong collation parameter", metadata);
@@ -139,10 +133,7 @@ public final class CollationSupport {
 
         ruleBasedCollator.setStrength(parameters.strength);
         ruleBasedCollator.setDecomposition(
-            parameters.normalization
-                ? Collator.CANONICAL_DECOMPOSITION
-                : Collator.NO_DECOMPOSITION
-        );
+                parameters.normalization ? Collator.CANONICAL_DECOMPOSITION : Collator.NO_DECOMPOSITION);
         ruleBasedCollator.setCaseLevel(parameters.caseLevel);
         if (parameters.backwards != null) {
             ruleBasedCollator.setFrenchCollation(parameters.backwards);
@@ -170,9 +161,8 @@ public final class CollationSupport {
                 queryParameters.put(decodeQueryComponent(part), "");
             } else {
                 queryParameters.put(
-                    decodeQueryComponent(part.substring(0, separator)),
-                    decodeQueryComponent(part.substring(separator + 1))
-                );
+                        decodeQueryComponent(part.substring(0, separator)),
+                        decodeQueryComponent(part.substring(separator + 1)));
             }
         }
 

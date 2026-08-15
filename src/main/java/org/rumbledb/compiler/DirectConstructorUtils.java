@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
@@ -69,12 +70,8 @@ final class DirectConstructorUtils {
             if (this.text == null) {
                 return;
             }
-            this.expressions.add(
-                new AttributeNodeContentExpression(
-                        this.text.toString(),
-                        this.metadataFactory.apply(this.firstTextTree, this.lastTextTree)
-                )
-            );
+            this.expressions.add(new AttributeNodeContentExpression(
+                    this.text.toString(), this.metadataFactory.apply(this.firstTextTree, this.lastTextTree)));
             this.text = null;
             this.firstTextTree = null;
             this.lastTextTree = null;
@@ -111,9 +108,8 @@ final class DirectConstructorUtils {
                 }
                 ensureText(textExpression.getMetadata());
                 this.text.append(value);
-                this.boundaryWhitespaceOnly = this.boundaryWhitespaceOnly
-                    && textExpression.isBoundaryWhitespace()
-                    && isWhitespaceOnly(value);
+                this.boundaryWhitespaceOnly =
+                        this.boundaryWhitespaceOnly && textExpression.isBoundaryWhitespace() && isWhitespaceOnly(value);
                 return;
             }
             flushText();
@@ -139,10 +135,7 @@ final class DirectConstructorUtils {
             if (this.text == null) {
                 return;
             }
-            if (
-                this.text.length() > 0
-                    && (this.preserveBoundarySpace || !this.boundaryWhitespaceOnly)
-            ) {
+            if (this.text.length() > 0 && (this.preserveBoundarySpace || !this.boundaryWhitespaceOnly)) {
                 this.expressions.add(new TextNodeExpression(this.text.toString(), this.firstTextMetadata));
             }
             this.text = null;
@@ -173,8 +166,7 @@ final class DirectConstructorUtils {
             boolean allowEnclosedExpressions,
             Function<ParseTree, ExceptionMetadata> metadataFactory,
             BiFunction<ParseTree, ParseTree, ExceptionMetadata> rangeMetadataFactory,
-            BiFunction<ParserRuleContext, Boolean, List<Expression>> contentProcessor
-    ) {
+            BiFunction<ParserRuleContext, Boolean, List<Expression>> contentProcessor) {
         AttributeValueBuilder result = new AttributeValueBuilder(rangeMetadataFactory);
         Token previousToken = ctx.getStart();
         String delimiter = previousToken.getText();
@@ -188,24 +180,14 @@ final class DirectConstructorUtils {
             String childText = child.getText();
             if (childText.startsWith("&") && childText.endsWith(";")) {
                 result.append(
-                    new AttributeNodeContentExpression(
-                            StringEscapeUtils.unescapeXml(childText),
-                            metadataFactory.apply(child)
-                    ),
-                    child
-                );
+                        new AttributeNodeContentExpression(
+                                StringEscapeUtils.unescapeXml(childText), metadataFactory.apply(child)),
+                        child);
             } else if (childText.equals(escapeSequence)) {
-                result.append(
-                    new AttributeNodeContentExpression(delimiter, metadataFactory.apply(child)),
-                    child
-                );
+                result.append(new AttributeNodeContentExpression(delimiter, metadataFactory.apply(child)), child);
             } else {
-                for (
-                    Expression expression : contentProcessor.apply(
-                        (ParserRuleContext) child,
-                        allowEnclosedExpressions
-                    )
-                ) {
+                for (Expression expression :
+                        contentProcessor.apply((ParserRuleContext) child, allowEnclosedExpressions)) {
                     result.append(expression, child);
                 }
             }
@@ -251,25 +233,20 @@ final class DirectConstructorUtils {
             Token firstContentToken,
             List<T> children,
             boolean preserveBoundarySpace,
-            Function<T, Expression> contentProcessor
-    ) {
+            Function<T, Expression> contentProcessor) {
         ElementContentBuilder result = new ElementContentBuilder(preserveBoundarySpace);
         Token previousToken = firstContentToken;
 
         for (T child : children) {
             Expression expression = contentProcessor.apply(child);
             result.appendHiddenText(
-                getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-                expression.getMetadata()
-            );
+                    getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()), expression.getMetadata());
             result.append(expression);
             previousToken = child.getStop();
         }
 
         result.appendHiddenText(
-            getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-            ExceptionMetadata.EMPTY_METADATA
-        );
+                getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()), ExceptionMetadata.EMPTY_METADATA);
         return result.finish();
     }
 
@@ -307,16 +284,10 @@ final class DirectConstructorUtils {
      * @param tree parse-tree node used to locate a validation error
      * @param metadataFactory creates error metadata for the supplied node
      */
-    static void validateLiteral(
-            String source,
-            ParseTree tree,
-            Function<ParseTree, ExceptionMetadata> metadataFactory
-    ) {
+    static void validateLiteral(String source, ParseTree tree, Function<ParseTree, ExceptionMetadata> metadataFactory) {
         if (source.indexOf('<') >= 0) {
             throw new ParsingException(
-                    "A direct attribute value must not contain a literal '<' character.",
-                    metadataFactory.apply(tree)
-            );
+                    "A direct attribute value must not contain a literal '<' character.", metadataFactory.apply(tree));
         }
     }
 
@@ -326,8 +297,7 @@ final class DirectConstructorUtils {
             AttributeValueBuilder result,
             Token previousToken,
             ParseTree tree,
-            Function<ParseTree, ExceptionMetadata> metadataFactory
-    ) {
+            Function<ParseTree, ExceptionMetadata> metadataFactory) {
         String hiddenText = getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
         validateLiteral(hiddenText, tree, metadataFactory);
         result.appendText(hiddenText, tree);
@@ -341,6 +311,7 @@ final class DirectConstructorUtils {
         if (tree instanceof TerminalNode terminalNode) {
             return terminalNode.getSymbol();
         }
-        throw new IllegalArgumentException("Cannot get stop token from parse tree: " + tree.getClass().getName());
+        throw new IllegalArgumentException(
+                "Cannot get stop token from parse tree: " + tree.getClass().getName());
     }
 }

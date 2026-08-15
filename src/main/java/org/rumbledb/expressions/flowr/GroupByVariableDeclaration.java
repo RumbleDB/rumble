@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 import lombok.Getter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
@@ -29,18 +30,17 @@ public class GroupByVariableDeclaration {
 
     @Getter
     protected Name variableName;
+
     @Getter
     protected Expression expression;
+
     protected SequenceType sequenceType;
+
     @Getter
     protected String collationURI;
 
     public GroupByVariableDeclaration(
-            Name variableName,
-            SequenceType sequenceType,
-            Expression expression,
-            String collationURI
-    ) {
+            Name variableName, SequenceType sequenceType, Expression expression, String collationURI) {
         if (variableName == null) {
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
         }
@@ -53,5 +53,4 @@ public class GroupByVariableDeclaration {
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
-
 }

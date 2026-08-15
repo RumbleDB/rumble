@@ -20,125 +20,66 @@
 
 package org.rumbledb.runtime;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
-
-import org.rumbledb.runtime.update.PendingUpdateList;
-import org.rumbledb.spark.SparkSessionManager;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CommaExpressionIterator extends HybridRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.ConcatLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
+public class CommaExpressionIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, UpdatingRuntimePlan, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator currentChild;
-    private Item nextResult;
-    private int childIndex;
 
-    public CommaExpressionIterator(
-            List<RuntimeIterator> childIterators,
-            RuntimeStaticContext staticContext
-    ) {
+    public CommaExpressionIterator(List<? extends ItemRuntimePlan> childIterators, RuntimeStaticContext staticContext) {
         super(childIterators, staticContext);
     }
 
     @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Comma expression", getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new ConcatLocalCursor<>(getChildren(), context, getMetadata());
     }
 
-    private void startLocal() {
-        this.childIndex = 0;
-
-        if (this.getChildren().size() >= 1) {
-            this.currentChild = this.getChild(this.childIndex);
-            this.currentChild.open(this.currentDynamicContextForLocalExecution);
-        } else {
-            this.currentChild = null;
-        }
-
-        setNextResult();
-    }
-
-    @Override
-    public void openLocal() {
-        startLocal();
-    }
-
-    public void setNextResult() {
-        if (this.currentChild == null) {
-            this.hasNext = false;
-            return;
-        }
-
-        this.nextResult = null;
-
-        while (this.nextResult == null) {
-            if (this.currentChild.hasNext()) {
-                this.nextResult = this.currentChild.next();
-            } else {
-                this.currentChild.close();
-                if (++this.childIndex == this.getChildren().size()) {
-                    this.currentChild = null;
-                    break;
-                }
-                this.currentChild = this.getChild(this.childIndex);
-                this.currentChild.open(this.currentDynamicContextForLocalExecution);
-            }
-        }
-
-        this.hasNext = this.nextResult != null;
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.currentChild != null) {
-            this.currentChild.close();
-        }
-    }
-
-    public List<RuntimeIterator> getOperands() {
+    public List<ItemRuntimePlan> getOperands() {
         // This method is currently used in SequenceLookupIterator and ObjectConstructorRuntimeIterator
         // Because getChildren is protected and not visible from there
         return getChildren();
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty()) {
-            this.childIndex = 0;
-            this.currentChild = this.getChild(this.childIndex);
+            int childIndex = 0;
+            ItemRuntimePlan currentChild = this.getChild(childIndex);
 
-            JavaRDD<Item> childRDD = this.currentChild.getRDD(dynamicContext);
-            this.childIndex++;
+            JavaRDD<Item> childRDD = currentChild.getRDD(dynamicContext);
+            childIndex++;
 
-            while (this.childIndex < this.getChildren().size()) {
-                this.currentChild = this.getChild(this.childIndex);
-                JavaRDD<Item> nextChildRDD = this.currentChild.getRDD(dynamicContext);
+            while (childIndex < this.getChildren().size()) {
+                currentChild = this.getChild(childIndex);
+                JavaRDD<Item> nextChildRDD = currentChild.getRDD(dynamicContext);
                 childRDD = childRDD.union(nextChildRDD);
-                this.childIndex++;
+                childIndex++;
             }
             return childRDD;
         } else {
@@ -150,8 +91,8 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         List<NativeClauseContext> childClauses = new ArrayList<>();
-        for (RuntimeIterator iterator : this.getChildren()) {
-            NativeClauseContext childContext = iterator.generateNativeQuery(nativeClauseContext);
+        for (ItemRuntimePlan iterator : this.getChildren()) {
+            NativeClauseContext childContext = NativeQueryRuntimePlan.generate(iterator, nativeClauseContext);
             if (childContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -159,80 +100,74 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
             nativeClauseContext = new NativeClauseContext(childContext, null, null);
         }
         ItemType resultType;
-        if (
-            childClauses.stream()
-                .allMatch(childClause -> childClause.getResultingType().getItemType().isObjectItemType())
-        ) {
+        if (childClauses.stream()
+                .allMatch(childClause ->
+                        childClause.getResultingType().getItemType().isObjectItemType())) {
             // all keys and types must be equal
             resultType = childClauses.stream()
-                .map(childClause -> childClause.getResultingType().getItemType())
-                .reduce(
-                    (a, b) -> (a.isObjectItemType()
-                        && a.getObjectKeysFacet().size() == b.getObjectKeysFacet().size()
-                        && a.getObjectKeysFacet()
-                            .stream()
-                            .allMatch(
-                                key -> b.getObjectKeysFacet().contains(key)
-                                    && a.getObjectContentFacet(key)
-                                        .getType()
-                                        .equals(b.getObjectContentFacet(key).getType())
-                            ))
-                                ? a
-                                : BuiltinTypesCatalogue.item
-                )
-                .orElse(BuiltinTypesCatalogue.item);
+                    .map(childClause -> childClause.getResultingType().getItemType())
+                    .reduce((a, b) -> (a.isObjectItemType()
+                                    && a.getObjectKeysFacet().size()
+                                            == b.getObjectKeysFacet().size()
+                                    && a.getObjectKeysFacet().stream()
+                                            .allMatch(key ->
+                                                    b.getObjectKeysFacet().contains(key)
+                                                            && a.getObjectContentFacet(key)
+                                                                    .getType()
+                                                                    .equals(b.getObjectContentFacet(key)
+                                                                            .getType())))
+                            ? a
+                            : BuiltinTypesCatalogue.item)
+                    .orElse(BuiltinTypesCatalogue.item);
         } else {
             resultType = childClauses.stream()
-                .map(childClause -> childClause.getResultingType().getItemType())
-                .reduce((a, b) -> a.equals(b) ? a : BuiltinTypesCatalogue.item)
-                .orElse(BuiltinTypesCatalogue.item);
+                    .map(childClause -> childClause.getResultingType().getItemType())
+                    .reduce((a, b) -> a.equals(b) ? a : BuiltinTypesCatalogue.item)
+                    .orElse(BuiltinTypesCatalogue.item);
         }
         if (BuiltinTypesCatalogue.item.equals(resultType)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingString;
         // if a child is already a sequence, use concat to merge the sequences
-        if (
-            childClauses.stream()
-                .anyMatch(child -> SequenceType.Arity.OneOrMore.isSubtypeOf(child.getResultingType().getArity()))
-        ) {
+        if (childClauses.stream()
+                .anyMatch(child -> SequenceType.Arity.OneOrMore.isSubtypeOf(
+                        child.getResultingType().getArity()))) {
             resultingString = childClauses.stream()
-                .map(
-                    child -> (SequenceType.Arity.OneOrMore.isSubtypeOf(child.getResultingType().getArity()))
-                        ? child.getResultingQuery()
-                        : "array(" + child.getResultingQuery() + ")"
-                )
-                .collect(Collectors.joining(","));
+                    .map(child -> (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                                    child.getResultingType().getArity()))
+                            ? child.getResultingQuery()
+                            : "array(" + child.getResultingQuery() + ")")
+                    .collect(Collectors.joining(","));
             resultingString = String.format("concat(%s)", resultingString);
         } else {
             resultingString = String.format(
-                "array(%s)",
-                childClauses.stream()
-                    .map(NativeClauseContext::getResultingQuery)
-                    .collect(Collectors.joining(","))
-            );
+                    "array(%s)",
+                    childClauses.stream()
+                            .map(NativeClauseContext::getResultingQuery)
+                            .collect(Collectors.joining(",")));
         }
         // if there is a OneOrZero, null values have to be filtered out
         SequenceType.Arity resultingArity = childClauses.stream()
-            .anyMatch(childClause -> childClause.getResultingType().getArity() == SequenceType.Arity.OneOrZero)
+                        .anyMatch(childClause ->
+                                childClause.getResultingType().getArity() == SequenceType.Arity.OneOrZero)
                 ? SequenceType.Arity.ZeroOrMore
                 : SequenceType.Arity.OneOrMore;
         return new NativeClauseContext(
-                nativeClauseContext,
-                resultingString,
-                new SequenceType(resultType, resultingArity)
-        );
+                nativeClauseContext, resultingString, new SequenceType(resultType, resultingArity));
     }
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (!isUpdating()) {
+        if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
 
         PendingUpdateList pul = new PendingUpdateList();
-        for (RuntimeIterator child : this.getChildren()) {
-            pul.mergeUpdates(child.getPendingUpdateList(context), this.getMetadata());
+        for (ItemRuntimePlan child : this.getChildren()) {
+            pul.mergeUpdates(
+                    UpdatingRuntimePlan.get(child, context),
+                    this.getRuntimeStaticContext().getMetadata());
         }
         return pul;
     }

@@ -20,38 +20,36 @@
 
 package org.rumbledb.runtime.functions.input;
 
-import org.apache.spark.sql.AnalysisException;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
-import org.rumbledb.spark.SparkSessionManager;
-
 import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
+import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
+
+public class ParquetFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ParquetFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ParquetFileFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
 
-        String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
+        String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
 
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
@@ -59,13 +57,13 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
         }
         int partitions = -1;
         if (this.getChildren().size() > 1) {
-            partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
+            partitions = this.getChild(1).materializeFirstOrNull(context).getIntValue();
         }
         try {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .parquet(FileSystemUtil.convertURIToStringForSpark(uri));
+                    .getOrCreateSession()
+                    .read()
+                    .parquet(FileSystemUtil.convertURIToStringForSpark(uri));
             if (partitions != -1) {
                 dataFrame = dataFrame.repartition(partitions);
             }

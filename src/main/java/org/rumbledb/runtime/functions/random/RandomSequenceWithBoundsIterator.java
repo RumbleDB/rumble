@@ -1,60 +1,43 @@
 package org.rumbledb.runtime.functions.random;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
 import java.util.List;
 
-public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
+public class RandomSequenceWithBoundsIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item low;
-    private Item high;
-    private int size;
-    private Item type;
-    private GeneratedRandomsIterator generatedRandomsIterator;
 
-    public RandomSequenceWithBoundsIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public RandomSequenceWithBoundsIterator(List<ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        this.low = this.getChild(0).materializeFirstItemOrNull(context);
-        this.high = this.getChild(1).materializeFirstItemOrNull(context);
-        this.size = this.getChild(2).materializeFirstItemOrNull(context).castToIntValue();
-        this.type = this.getChild(3).materializeFirstItemOrNull(context);
-        this.generatedRandomsIterator = createRandomNumberStream();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> createRandomNumberStream(context), getMetadata());
     }
 
-    private GeneratedRandomsIterator createRandomNumberStream() {
-        if (this.type.getStringValue().equals("integer")) {
-            return new GeneratedRandomIntegersIterator(
-                    this.size,
-                    this.low.castToIntValue(),
-                    this.high.castToIntValue()
-            );
+    private GeneratedRandomsIterator createRandomNumberStream(DynamicContext context) {
+        return createRandomNumberStream(
+                this.getChild(0).materializeFirstOrNull(context),
+                this.getChild(1).materializeFirstOrNull(context),
+                this.getChild(2).materializeFirstOrNull(context).castToIntValue(),
+                this.getChild(3).materializeFirstOrNull(context));
+    }
+
+    private GeneratedRandomsIterator createRandomNumberStream(Item low, Item high, int size, Item type) {
+        if (type.getStringValue().equals("integer")) {
+            return new GeneratedRandomIntegersIterator(size, low.castToIntValue(), high.castToIntValue());
         } else {
             // Generate doubles otherwise
-            return new GeneratedRandomDoublesIterator(
-                    this.size,
-                    this.low.castToDoubleValue(),
-                    this.high.castToDoubleValue()
-            );
+            return new GeneratedRandomDoublesIterator(size, low.castToDoubleValue(), high.castToDoubleValue());
         }
-    }
-
-    @Override
-    public Item next() {
-        return this.generatedRandomsIterator.getNextRandom();
-    }
-
-    @Override
-    public boolean hasNext() {
-        return this.generatedRandomsIterator.hasNext();
     }
 }

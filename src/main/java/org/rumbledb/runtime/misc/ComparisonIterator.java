@@ -21,12 +21,14 @@
 package org.rumbledb.runtime.misc;
 
 import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.*;
+import java.util.Arrays;
 
-import lombok.Getter;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -38,14 +40,12 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Arrays;
 
 /**
  * This class performs value or general comparison of two items.
@@ -53,164 +53,135 @@ import java.util.Arrays;
  * The existential quantification logic for general comparison is not handled in this iterator, but in the
  * ComparisonVisitor.
  */
-public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item left;
-    private Item right;
-    @Getter
-    private final ComparisonExpression.ComparisonOperator comparisonOperator;
-    @Getter
-    private final RuntimeIterator leftIterator;
-    @Getter
-    private final RuntimeIterator rightIterator;
 
+    private final ComparisonExpression.ComparisonOperator comparisonOperator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
     public ComparisonIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightIterator,
             ComparisonExpression.ComparisonOperator comparisonOperator,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
         this.comparisonOperator = comparisonOperator;
     }
 
+    public ComparisonExpression.ComparisonOperator getComparisonOperator() {
+        return this.comparisonOperator;
+    }
+
     public boolean isValueEquality() {
         return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ)
-            || this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.GC_EQ);
+                || this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.GC_EQ);
+    }
+
+    public ItemRuntimePlan getLeftIterator() {
+        return this.leftIterator;
+    }
+
+    public ItemRuntimePlan getRightIterator() {
+        return this.rightIterator;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         // if EMPTY SEQUENCE - eg. () or ((),())
         // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
+        Item left;
         try {
-            this.left = this.leftIterator.materializeAtMostOneItemOrNull(
-                dynamicContext
-            );
+            left = this.leftIterator.materializeAtMostOne(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        if (this.left == null) {
+        if (left == null) {
             return null;
         }
 
+        Item right;
         try {
-            this.right = this.rightIterator.materializeAtMostOneItemOrNull(
-                dynamicContext
-            );
+            right = this.rightIterator.materializeAtMostOne(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        if (this.right == null) {
+        if (right == null) {
             return null;
         }
+        return applyComparison(
+                left, right, this.comparisonOperator, getRuntimeStaticContext().getDefaultCollation(), getMetadata());
+    }
 
-        if (this.left.isArray() || this.right.isArray()) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. Comparison can't be performed on array type",
-                    getMetadata()
-            );
-        } else if (this.left.isObject() || this.right.isObject()) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. Comparison can't be performed on object type",
-                    getMetadata()
-            );
-        } else if (this.left.isFunction() || this.right.isFunction()) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. Comparison can't be performed on function type",
-                    getMetadata()
-            );
+    private static Item applyComparison(
+            Item left, Item right, ComparisonOperator operator, String activeCollation, ExceptionMetadata metadata) {
+        if (left.isArray() || right.isArray()) {
+            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", metadata);
+        } else if (left.isObject() || right.isObject()) {
+            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", metadata);
+        } else if (left.isFunction() || right.isFunction()) {
+            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on function type", metadata);
         }
 
-        if (this.comparisonOperator.isValueComparison()) {
-            if (this.left.isUntypedAtomic()) {
-                this.left = ItemFactory.getInstance().createStringItem(this.left.getStringValue());
+        if (operator.isValueComparison()) {
+            if (left.isUntypedAtomic()) {
+                left = ItemFactory.getInstance().createStringItem(left.getStringValue());
             }
-            if (this.right.isUntypedAtomic()) {
-                this.right = ItemFactory.getInstance().createStringItem(this.right.getStringValue());
+            if (right.isUntypedAtomic()) {
+                right = ItemFactory.getInstance().createStringItem(right.getStringValue());
             }
         }
         // otherwise they will be cast to match each other in compareItems, and that method will throw if they are not
         // atomic.
 
-        if (!this.left.isAtomic()) {
-            throw new IteratorFlowException("Invalid comparison expression", getMetadata());
+        if (!left.isAtomic()) {
+            throw new IteratorFlowException("Invalid comparison expression", metadata);
         }
 
-        String activeCollation = getRuntimeStaticContext().getDefaultCollation();
-        if (
-            !Name.DEFAULT_COLLATION_NS.equals(activeCollation)
-                && CollationSupport.isStringCollationType(this.left)
-                && CollationSupport.isStringCollationType(this.right)
-        ) {
+        if (!Name.DEFAULT_COLLATION_NS.equals(activeCollation)
+                && CollationSupport.isStringCollationType(left)
+                && CollationSupport.isStringCollationType(right)) {
             int comparison = CollationSupport.compareStrings(
-                this.left.getStringValue(),
-                this.right.getStringValue(),
-                activeCollation,
-                getMetadata()
-            );
-            return comparisonResultToBooleanItem(
-                comparison,
-                this.comparisonOperator,
-                getMetadata()
-            );
+                    left.getStringValue(), right.getStringValue(), activeCollation, metadata);
+            return comparisonResultToBooleanItem(comparison, operator, metadata);
         }
 
-        long comparison = compareItems(this.left, this.right, this.comparisonOperator, getMetadata());
+        long comparison = compareItems(left, right, operator, metadata);
         if (comparison == Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
-                        + this.comparisonOperator
-                        + "\": operation not possible with parameters of type \""
-                        + this.left.getDynamicType().toString()
-                        + "\" and \""
-                        + this.right.getDynamicType().toString()
-                        + "\"",
-                    getMetadata()
-            );
+                            + operator
+                            + "\": operation not possible with parameters of type \""
+                            + left.getDynamicType().toString()
+                            + "\" and \""
+                            + right.getDynamicType().toString()
+                            + "\"",
+                    metadata);
         }
         // NaN never compares successfully.
-        if ((this.left.isFloat() || this.left.isDouble()) && this.left.isNaN()) {
-            return ItemFactory
-                .getInstance()
-                .createBooleanItem(
-                    ComparisonOperator.getValueComparisonFromComparison(this.comparisonOperator)
-                        .equals(ComparisonOperator.VC_NE)
-                );
+        if ((left.isFloat() || left.isDouble()) && left.isNaN()) {
+            return ItemFactory.getInstance()
+                    .createBooleanItem(ComparisonOperator.getValueComparisonFromComparison(operator)
+                            .equals(ComparisonOperator.VC_NE));
         }
-        if ((this.right.isFloat() || this.right.isDouble()) && this.right.isNaN()) {
-            return ItemFactory
-                .getInstance()
-                .createBooleanItem(
-                    ComparisonOperator.getValueComparisonFromComparison(this.comparisonOperator)
-                        .equals(ComparisonOperator.VC_NE)
-                );
+        if ((right.isFloat() || right.isDouble()) && right.isNaN()) {
+            return ItemFactory.getInstance()
+                    .createBooleanItem(ComparisonOperator.getValueComparisonFromComparison(operator)
+                            .equals(ComparisonOperator.VC_NE));
         }
-        return comparisonResultToBooleanItem(
-            (int) comparison,
-            this.comparisonOperator,
-            getMetadata()
-        );
+        return comparisonResultToBooleanItem((int) comparison, operator, metadata);
     }
 
     public static long compareItems(
-            Item left,
-            Item right,
-            ComparisonOperator comparisonOperator,
-            ExceptionMetadata ignoredMetadata
-    ) {
+            Item left, Item right, ComparisonOperator comparisonOperator, ExceptionMetadata ignoredMetadata) {
         if (left.isUntypedAtomic() && right.isUntypedAtomic()) {
             left = ItemFactory.getInstance().createStringItem(left.getStringValue());
             right = ItemFactory.getInstance().createStringItem(right.getStringValue());
@@ -229,10 +200,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!left.isNull() && right.isNull()) {
             return 1;
         }
-        if (
-            left.isInt()
-                && right.isInt()
-        ) {
+        if (left.isInt() && right.isInt()) {
             return processInt(left.getIntValue(), right.getIntValue());
         }
 
@@ -380,10 +348,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         return Long.MIN_VALUE;
     }
 
-    private static int processDouble(
-            double l,
-            double r
-    ) {
+    private static int processDouble(double l, double r) {
         // Positive and negative zero compare equal
         // Each consumer should make sure to override if necessary.
         if (l == 0d && r == 0d) {
@@ -396,10 +361,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static Item castUntypedAtomicToMatch(Item untyped, Item other, ExceptionMetadata metadata) {
         if (!other.isAtomic()) {
-            throw new OurBadException(
-                    "Expected atomic item when casting xs:untypedAtomic in comparison.",
-                    metadata
-            );
+            throw new OurBadException("Expected atomic item when casting xs:untypedAtomic in comparison.", metadata);
         }
         if (other.isUntypedAtomic() || other.isString()) {
             return ItemFactory.getInstance().createStringItem(untyped.getStringValue());
@@ -452,11 +414,10 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
         throw new CastException(
                 "Cannot cast xs:untypedAtomic value \""
-                    + untyped.getStringValue()
-                    + "\" to match type "
-                    + other.getDynamicType(),
-                metadata
-        );
+                        + untyped.getStringValue()
+                        + "\" to match type "
+                        + other.getDynamicType(),
+                metadata);
     }
 
     private static Item castUntypedAtomicToBoolean(Item item, ExceptionMetadata metadata) {
@@ -470,16 +431,10 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
 
-        throw new CastException(
-                "Cannot cast \"" + item.getStringValue() + "\" to xs:boolean",
-                metadata
-        );
+        throw new CastException("Cannot cast \"" + item.getStringValue() + "\" to xs:boolean", metadata);
     }
 
-    private static int processFloat(
-            float l,
-            float r
-    ) {
+    private static int processFloat(float l, float r) {
         // Positive and negative zero compare equal
         // Each consumer should make sure to override if necessary.
         if (l == 0f && r == 0f) {
@@ -490,31 +445,19 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         return Float.compare(l, r);
     }
 
-    private static int processDecimal(
-            BigDecimal l,
-            BigDecimal r
-    ) {
+    private static int processDecimal(BigDecimal l, BigDecimal r) {
         return l.compareTo(r);
     }
 
-    private static int processInteger(
-            BigInteger l,
-            BigInteger r
-    ) {
+    private static int processInteger(BigInteger l, BigInteger r) {
         return l.compareTo(r);
     }
 
-    private static int processInt(
-            int l,
-            int r
-    ) {
+    private static int processInt(int l, int r) {
         return Integer.compare(l, r);
     }
 
-    private static int processDuration(
-            Duration l,
-            Duration r
-    ) {
+    private static int processDuration(Duration l, Duration r) {
         return l.compareTo(r);
     }
 
@@ -522,10 +465,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
      * Two durations are equal iff their months component and their
      * day-time (seconds) component are both equal
      */
-    private static int processMixedDuration(
-            Item left,
-            Item right
-    ) {
+    private static int processMixedDuration(Item left, Item right) {
         long leftMonths = left.getPeriodValue().toTotalMonths();
         long rightMonths = right.getPeriodValue().toTotalMonths();
         if (leftMonths != rightMonths) {
@@ -536,54 +476,34 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         return leftDayTime.compareTo(rightDayTime);
     }
 
-    private static int processPeriod(
-            Period l,
-            Period r
-    ) {
+    private static int processPeriod(Period l, Period r) {
         LocalDate baseDate = LocalDate.of(2000, 1, 1);
         return baseDate.plus(l).compareTo(baseDate.plus(r));
     }
 
-    private static int processDateTime(
-            Item left,
-            Item right
-    ) {
+    private static int processDateTime(Item left, Item right) {
         OffsetDateTime l = left.getDateTimeValue();
         OffsetDateTime r = right.getDateTimeValue();
         return l.toInstant().compareTo(r.toInstant());
     }
 
-    private static int processTime(
-            Item left,
-            Item right
-    ) {
+    private static int processTime(Item left, Item right) {
         OffsetTime l = left.getTimeValue();
         OffsetTime r = right.getTimeValue();
         return l.atDate(LocalDate.of(1970, 1, 1))
-            .toInstant()
-            .compareTo(
-                r.atDate(LocalDate.of(1970, 1, 1)).toInstant()
-            );
+                .toInstant()
+                .compareTo(r.atDate(LocalDate.of(1970, 1, 1)).toInstant());
     }
 
-    private static int processBoolean(
-            Boolean l,
-            Boolean r
-    ) {
+    private static int processBoolean(Boolean l, Boolean r) {
         return Boolean.compare(l, r);
     }
 
-    private static int processString(
-            String l,
-            String r
-    ) {
+    private static int processString(String l, String r) {
         return CollationSupport.compareByCodePoint(l, r);
     }
 
-    private static int processBytes(
-            byte[] l,
-            byte[] r
-    ) {
+    private static int processBytes(byte[] l, byte[] r) {
         int i = 0;
         while (true) {
             if (i == l.length && i == r.length) {
@@ -604,10 +524,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item comparisonResultToBooleanItem(
-            int comparison,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
+            int comparison, ComparisonExpression.ComparisonOperator comparisonOperator, ExceptionMetadata metadata) {
         // Subclasses should override this method to perform additional typechecks,
         // and then invoke it on super.
         switch (comparisonOperator) {
@@ -642,31 +559,30 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.comparisonOperator.isValueComparison()) {
-            NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+            NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(this.leftIterator, nativeClauseContext);
             if (leftResult == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
-                new NativeClauseContext(leftResult, null, null)
-            );
+            NativeClauseContext rightResult = NativeQueryRuntimePlan.generate(
+                    this.rightIterator, new NativeClauseContext(leftResult, null, null));
             if (rightResult == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-            if (
-                SequenceType.Arity.OneOrMore.isSubtypeOf(leftResult.getResultingType().getArity())
-                    ||
-                    SequenceType.Arity.OneOrMore.isSubtypeOf(rightResult.getResultingType().getArity())
-            ) {
+            if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                            leftResult.getResultingType().getArity())
+                    || SequenceType.Arity.OneOrMore.isSubtypeOf(
+                            rightResult.getResultingType().getArity())) {
                 return NativeClauseContext.NoNativeQuery;
             }
             // TODO: once done type system do proper comparison
-            if (
-                !(leftResult.getResultingType() != null
-                    && rightResult.getResultingType() != null
-                    && leftResult.getResultingType().getItemType().isNumeric()
-                    && rightResult.getResultingType().getItemType().isNumeric()
-                    || leftResult.getResultingType().getItemType().equals(rightResult.getResultingType().getItemType()))
-            ) {
+            if (!(leftResult.getResultingType() != null
+                            && rightResult.getResultingType() != null
+                            && leftResult.getResultingType().getItemType().isNumeric()
+                            && rightResult.getResultingType().getItemType().isNumeric()
+                    || leftResult
+                            .getResultingType()
+                            .getItemType()
+                            .equals(rightResult.getResultingType().getItemType()))) {
                 return NativeClauseContext.NoNativeQuery;
             }
 
@@ -694,15 +610,12 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                     return NativeClauseContext.NoNativeQuery;
             }
             SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
-                && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
                     ? SequenceType.Arity.One
                     : SequenceType.Arity.OneOrZero;
             String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
             return new NativeClauseContext(
-                    rightResult,
-                    query,
-                    new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
-            );
+                    rightResult, query, new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity));
         }
         return NativeClauseContext.NoNativeQuery;
     }

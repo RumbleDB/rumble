@@ -32,8 +32,7 @@ import org.rumbledb.items.FunctionItemFactory;
  */
 public final class NamedFunctionLookup {
 
-    private NamedFunctionLookup() {
-    }
+    private NamedFunctionLookup() {}
 
     /**
      * @return a {@link FunctionItem} bound to the current dynamic context, or {@code null} if none exists
@@ -42,25 +41,17 @@ public final class NamedFunctionLookup {
             FunctionIdentifier identifier,
             DynamicContext dynamicContext,
             RumbleConfiguration configuration,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (dynamicContext.getNamedFunctions().checkUserDefinedFunctionExists(identifier)) {
             FunctionItem result = dynamicContext.getNamedFunctions().getUserDefinedFunction(identifier);
             result.populateClosureFromDynamicContext(dynamicContext, metadata);
             return result;
         }
         BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
-            identifier,
-            configuration.semantics().queryLanguage()
-        );
+                identifier, configuration.semantics().queryLanguage());
         if (builtin != null) {
             FunctionItem result = FunctionItemFactory.createBuiltinNamedReference(
-                builtin.getIdentifier(),
-                dynamicContext.getModuleContext(),
-                configuration,
-                metadata,
-                builtin
-            );
+                    builtin.getIdentifier(), dynamicContext.getModuleContext(), configuration, metadata, builtin);
             result.populateClosureFromDynamicContext(dynamicContext, metadata);
             return result;
         }

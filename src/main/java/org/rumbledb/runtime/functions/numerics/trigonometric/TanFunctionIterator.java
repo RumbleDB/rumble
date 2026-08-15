@@ -20,63 +20,65 @@
 
 package org.rumbledb.runtime.functions.numerics.trigonometric;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
-public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class TanFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public TanFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    private final ItemRuntimePlan argument;
+
+    public TanFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
+        this.argument = arguments.get(0);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item value = this.argument.materializeFirstOrNull(context);
         if (value == null) {
             return null;
         }
+        return evaluate(value);
+    }
+
+    private static Item evaluate(Item value) {
         double dvalue = value.getDoubleValue();
         if (Double.isNaN(dvalue) || Double.isInfinite(dvalue)) {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
         return ItemFactory.getInstance().createDoubleItem(Math.tan(dvalue));
-
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(this.argument, nativeClauseContext);
         if (childQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childQuery.getResultingType().getArity())) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                childQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "TAN( "
-            + childQuery.getResultingQuery()
-            + " )";
+        String resultingQuery = "TAN( " + childQuery.getResultingQuery() + " )";
         return new NativeClauseContext(
                 childQuery,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
-        );
+                new SequenceType(
+                        BuiltinTypesCatalogue.doubleItem,
+                        childQuery.getResultingType().getArity()));
     }
-
 }

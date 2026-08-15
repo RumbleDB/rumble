@@ -20,29 +20,28 @@
 
 package iq;
 
-import iq.base.SparkAnnotationsTestsBase;
-import iq.base.TestFileDiscovery;
-import org.apache.spark.SparkConf;
-import org.rumbledb.config.RumbleConfiguration;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.spark.SparkConf;
+
+import iq.base.SparkAnnotationsTestsBase;
+import iq.base.TestFileDiscovery;
+
+import org.rumbledb.config.RumbleConfiguration;
+
 public class XQueryTests extends SparkAnnotationsTestsBase {
 
-    public static final File runtimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/xquery-parser"
-    );
+    public static final File runtimeTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/xquery-parser");
 
     @Override
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(runtime -> runtime.shouldApplyUpdates(true))
-            .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
-            .build();
+                .configureRuntime(runtime -> runtime.shouldApplyUpdates(true))
+                .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+                .build();
     }
 
     @Override
@@ -58,6 +57,7 @@ public class XQueryTests extends SparkAnnotationsTestsBase {
     @Override
     protected void configureSpark(SparkConf sparkConfiguration) {
         sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
-        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
+        sparkConfiguration.set(
+                "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
     }
 }

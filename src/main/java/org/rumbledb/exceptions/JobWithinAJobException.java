@@ -20,9 +20,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class JobWithinAJobException extends RumbleException {
 
@@ -35,9 +35,8 @@ public class JobWithinAJobException extends RumbleException {
 
     public JobWithinAJobException(ExceptionMetadata metadata) {
         super(
-            "RumbleDB did not manage to execute your query in parallel, because an expression executed in parallel attempts to manipulate a big sequence. Please try to rewrite it, or open an issue on GitHub if you would like us to investigate and improve RumbleDB to support it, or need advice.",
-            ErrorCode.JobWithinAJobErrorCode,
-            metadata
-        );
+                "RumbleDB did not manage to execute your query in parallel, because an expression executed in parallel attempts to manipulate a big sequence. Please try to rewrite it, or open an issue on GitHub if you would like us to investigate and improve RumbleDB to support it, or need advice.",
+                ErrorCode.JobWithinAJobErrorCode,
+                metadata);
     }
 }

@@ -1,0 +1,192 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.rumbledb.runtime.cursor;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
+
+public class RuntimePlanCursorTest {
+
+    @Test
+    public void cursorsCreatedFromOnePrototypeExecuteIndependently() {
+        RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
+        DynamicContext dynamicContext = new DynamicContext(configuration);
+        RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
+                ItemFactory.getInstance().createIntItem(42), createStaticContext(configuration));
+        Cursor<Item> first = prototype.getCursor(dynamicContext);
+        Cursor<Item> second = prototype.getCursor(dynamicContext);
+
+        try {
+            assertEquals(42, first.next().getIntValue());
+            assertEquals(42, second.next().getIntValue());
+            assertFalse(first.hasNext());
+            assertFalse(second.hasNext());
+        } finally {
+            first.close();
+            second.close();
+        }
+    }
+
+    @Test
+    public void cursorOpensOnFirstReadAndCloseIsIdempotent() {
+        RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
+        DynamicContext dynamicContext = new DynamicContext(configuration);
+        RuntimePlan<Item> prototype = new ConstantRuntimeIterator(
+                ItemFactory.getInstance().createIntItem(1), createStaticContext(configuration));
+        Cursor<Item> cursor = prototype.getCursor(dynamicContext);
+
+        assertTrue(cursor.hasNext());
+        cursor.close();
+        assertDoesNotThrow(cursor::close);
+        assertThrows(IteratorFlowException.class, cursor::hasNext);
+    }
+
+    @Test
+    public void localExecutionRequiresTheLocalCapability() {
+        RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
+        DynamicContext dynamicContext = new DynamicContext(configuration);
+        RuntimeStaticContext staticContext = createStaticContext(configuration);
+        RuntimePlan<Item> planWithoutLocalCapability = new RuntimePlan<>(staticContext) {};
+
+        OurBadException exception =
+                assertThrows(OurBadException.class, () -> planWithoutLocalCapability.getCursor(dynamicContext));
+        assertTrue(exception
+                .getMessage()
+                .contains("does not implement any local, RDD, or DataFrame execution capability"));
+    }
+
+    @Test
+    public void atMostOneMaterializationDoesNotCreateACursor() throws Exception {
+        RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
+        DynamicContext dynamicContext = new DynamicContext(configuration);
+        DirectAtMostOnePlan plan = new DirectAtMostOnePlan(
+                createStaticContext(configuration), ItemFactory.getInstance().createIntItem(7));
+
+        assertEquals(7, plan.materializeFirstOrNull(dynamicContext).getIntValue());
+        assertEquals(7, plan.materializeAtMostOne(dynamicContext).getIntValue());
+        assertEquals(1, plan.materialize(dynamicContext).size());
+        assertTrue(plan.materializeAtMost(dynamicContext, 0).isEmpty());
+        assertEquals(3, plan.evaluationCount);
+        assertEquals(0, plan.cursorCreationCount);
+    }
+
+    @Test
+    public void cursorClosesAfterReadFailure() {
+        FailingCursor cursor = new FailingCursor();
+
+        assertThrows(IllegalStateException.class, cursor::hasNext);
+        assertEquals(1, cursor.closeCount);
+        assertThrows(IteratorFlowException.class, cursor::hasNext);
+        assertEquals(1, cursor.closeCount);
+
+        cursor.close();
+    }
+
+    @Test
+    public void iteratorCursorRejectsNullFactoryResult() {
+        Cursor<Item> cursor = new IteratorLocalCursor<>(() -> null, ExceptionMetadata.EMPTY_METADATA);
+
+        assertThrows(NullPointerException.class, cursor::hasNext);
+        assertThrows(IteratorFlowException.class, cursor::hasNext);
+
+        cursor.close();
+    }
+
+    private static final class FailingCursor extends AbstractLocalCursor<Item> {
+
+        private int closeCount;
+
+        private FailingCursor() {
+            super(ExceptionMetadata.EMPTY_METADATA);
+        }
+
+        @Override
+        protected void openLocal() {}
+
+        @Override
+        protected boolean hasNextLocal() {
+            throw new IllegalStateException("evaluation failed");
+        }
+
+        @Override
+        protected Item nextLocal() {
+            throw new IllegalStateException("evaluation failed");
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.closeCount++;
+        }
+    }
+
+    private static final class DirectAtMostOnePlan extends RuntimePlan<Item>
+            implements AtMostOneLocalRuntimePlan<Item> {
+
+        private static final long serialVersionUID = 1L;
+
+        private final Item result;
+        private int evaluationCount;
+        private int cursorCreationCount;
+
+        private DirectAtMostOnePlan(RuntimeStaticContext staticContext, Item result) {
+            super(staticContext);
+            this.result = result;
+        }
+
+        @Override
+        public Cursor<Item> createNativeCursor(DynamicContext context) {
+            this.cursorCreationCount++;
+            return new AtMostOneLocalCursor<>(this.evaluateAtMostOne(context), this.getMetadata());
+        }
+
+        @Override
+        public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+            this.evaluationCount++;
+            return this.result;
+        }
+    }
+
+    private static RuntimeStaticContext createStaticContext(RumbleConfiguration configuration) {
+        return RuntimeStaticContext.builder()
+                .configuration(configuration)
+                .staticType(new SequenceType(BuiltinTypesCatalogue.intItem))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(ExceptionMetadata.EMPTY_METADATA)
+                .build();
+    }
+}

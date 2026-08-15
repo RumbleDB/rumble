@@ -24,9 +24,7 @@ public class MLCoercionWrappedFunctionTests extends MLTests {
 
     private static final File coercionWrappedFunctionTest = new File(
             System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/RumbleML/RumbleML/EstimatorTests/MLEstimator-CoercionWrappedTransformer1.jq"
-    );
+                    + "/src/test/resources/test_files/RumbleML/RumbleML/EstimatorTests/MLEstimator-CoercionWrappedTransformer1.jq");
 
     @Override
     protected List<File> testFiles() {

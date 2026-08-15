@@ -8,8 +8,7 @@ public final class RumbleConfigurationBuilder {
     }
 
     protected RumbleConfigurationBuilder(
-            org.rumbledb.config.RumbleConfiguration.RumbleConfigurationBuilder internalBuilder
-    ) {
+            org.rumbledb.config.RumbleConfiguration.RumbleConfigurationBuilder internalBuilder) {
         this.internalBuilder = internalBuilder;
     }
 

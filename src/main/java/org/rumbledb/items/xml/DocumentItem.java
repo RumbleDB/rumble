@@ -1,20 +1,22 @@
 package org.rumbledb.items.xml;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.w3c.dom.Node;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
 public class DocumentItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private String stringValue;
     private List<Item> children;
     private XMLDocumentPosition documentPos;
@@ -30,7 +32,7 @@ public class DocumentItem extends AbstractNodeItem {
     /**
      * Constructor for creating a document node with children items.
      * Used by document node constructors when no actual DOM node is available.
-     * 
+     *
      * @param children the child nodes of the document
      */
     public DocumentItem(List<Item> children) {
@@ -82,8 +84,7 @@ public class DocumentItem extends AbstractNodeItem {
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         current++;
-        for (Item child : this.children)
-            current = child.setXmlDocumentPosition(path, current);
+        for (Item child : this.children) current = child.setXmlDocumentPosition(path, current);
         return current;
     }
 
@@ -99,8 +100,6 @@ public class DocumentItem extends AbstractNodeItem {
             child.addParentToDescendants();
         });
     }
-
-
 
     @Override
     public List<Item> children() {

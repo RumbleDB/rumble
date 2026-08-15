@@ -1,13 +1,14 @@
 package org.rumbledb.expressions.scripting.declaration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.statement.Statement;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 public class CommaVariableDeclStatement extends Statement {
@@ -35,5 +36,4 @@ public class CommaVariableDeclStatement extends Statement {
             variableDeclStatement.serializeToJSONiq(sb, 0);
         }
     }
-
 }

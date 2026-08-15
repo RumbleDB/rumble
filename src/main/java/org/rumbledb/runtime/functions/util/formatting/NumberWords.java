@@ -1,10 +1,5 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
-import com.ibm.icu.number.LocalizedNumberFormatter;
-import com.ibm.icu.number.NumberFormatter;
-import com.ibm.icu.text.RuleBasedNumberFormat;
-import com.ibm.icu.util.ULocale;
-
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,20 +12,23 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.EqualsAndHashCode;
 
+import com.ibm.icu.number.LocalizedNumberFormatter;
+import com.ibm.icu.number.NumberFormatter;
+import com.ibm.icu.text.RuleBasedNumberFormat;
+import com.ibm.icu.util.ULocale;
+
 public final class NumberWords {
     // For plain ordinal word formatting (`Ww;o`) RumbleDB selects the ICU masculine ordinal rule set when available,
     // with a small set of aliases for ICU's abbreviated rule-set names. This is implementation-defined behavior
     // permitted by F&O 3.1 and matches the specification's example outputs.
     private static final String DEFAULT_ORDINAL_WORD_RULE_SET = "%spellout-ordinal-masculine";
 
-    private static final ThreadLocal<Map<RuleFormatKey, CachedRuleFormat>> RULE_FORMAT_CACHE = ThreadLocal.withInitial(
-        HashMap::new
-    );
+    private static final ThreadLocal<Map<RuleFormatKey, CachedRuleFormat>> RULE_FORMAT_CACHE =
+            ThreadLocal.withInitial(HashMap::new);
 
     private static final Map<ULocale, LocalizedNumberFormatter> GROUPING_FORMATTER_CACHE = new ConcurrentHashMap<>();
 
-    private NumberWords() {
-    }
+    private NumberWords() {}
 
     public static String cardinal(long value, ULocale locale, String requestedRuleSet) {
         CachedRuleFormat f = ruleFormat(locale, RuleBasedNumberFormat.SPELLOUT);
@@ -85,21 +83,16 @@ public final class NumberWords {
 
     private static LocalizedNumberFormatter groupingFormatter(ULocale locale) {
         return GROUPING_FORMATTER_CACHE.computeIfAbsent(
-            locale,
-            l -> NumberFormatter.withLocale(l).grouping(NumberFormatter.GroupingStrategy.AUTO)
-        );
+                locale, l -> NumberFormatter.withLocale(l).grouping(NumberFormatter.GroupingStrategy.AUTO));
     }
 
     private static CachedRuleFormat ruleFormat(ULocale locale, int ruleType) {
         Map<RuleFormatKey, CachedRuleFormat> cache = RULE_FORMAT_CACHE.get();
-        return cache.computeIfAbsent(
-            new RuleFormatKey(locale, ruleType),
-            key -> {
-                RuleBasedNumberFormat f = new RuleBasedNumberFormat(key.locale, key.ruleType);
-                List<String> ruleSetNames = Arrays.asList(f.getRuleSetNames());
-                return new CachedRuleFormat(f, ruleSetNames, new HashSet<>(ruleSetNames));
-            }
-        );
+        return cache.computeIfAbsent(new RuleFormatKey(locale, ruleType), key -> {
+            RuleBasedNumberFormat f = new RuleBasedNumberFormat(key.locale, key.ruleType);
+            List<String> ruleSetNames = Arrays.asList(f.getRuleSetNames());
+            return new CachedRuleFormat(f, ruleSetNames, new HashSet<>(ruleSetNames));
+        });
     }
 
     private static final class CachedRuleFormat {
@@ -108,10 +101,7 @@ public final class NumberWords {
         private final Set<String> ruleSetNames;
 
         private CachedRuleFormat(
-                RuleBasedNumberFormat format,
-                List<String> ruleSetNamesInOrder,
-                Set<String> ruleSetNames
-        ) {
+                RuleBasedNumberFormat format, List<String> ruleSetNamesInOrder, Set<String> ruleSetNames) {
             this.format = format;
             this.ruleSetNamesInOrder = ruleSetNamesInOrder;
             this.ruleSetNames = ruleSetNames;
@@ -127,14 +117,9 @@ public final class NumberWords {
             this.locale = locale;
             this.ruleType = ruleType;
         }
-
     }
 
-    private static String formatWithRequestedRuleSet(
-            long value,
-            CachedRuleFormat f,
-            String requestedRuleSet
-    ) {
+    private static String formatWithRequestedRuleSet(long value, CachedRuleFormat f, String requestedRuleSet) {
         if (requestedRuleSet == null || !requestedRuleSet.startsWith("%")) {
             return null;
         }
@@ -171,11 +156,7 @@ public final class NumberWords {
         return ruleSet.substring(0, ruleSet.length() - oldSuffix.length()) + newSuffix;
     }
 
-    private static String ordinalWordWithSuffix(
-            long value,
-            CachedRuleFormat f,
-            String requestedSuffix
-    ) {
+    private static String ordinalWordWithSuffix(long value, CachedRuleFormat f, String requestedSuffix) {
         for (String ruleSet : f.ruleSetNamesInOrder) {
             if (!ruleSet.contains("spellout-ordinal")) {
                 continue;
@@ -223,10 +204,7 @@ public final class NumberWords {
         for (String ruleSet : f.ruleSetNamesInOrder) {
             String lowerCaseRuleSet = ruleSet.toLowerCase(Locale.ROOT);
 
-            if (
-                lowerCaseRuleSet.contains("spellout-ordinal")
-                    && lowerCaseRuleSet.contains(text)
-            ) {
+            if (lowerCaseRuleSet.contains("spellout-ordinal") && lowerCaseRuleSet.contains(text)) {
                 return ruleSet;
             }
         }
@@ -261,9 +239,7 @@ public final class NumberWords {
             return null;
         }
 
-        String suffix = requestedRuleSet.startsWith("-")
-            ? requestedRuleSet.substring(1)
-            : requestedRuleSet;
+        String suffix = requestedRuleSet.startsWith("-") ? requestedRuleSet.substring(1) : requestedRuleSet;
 
         return suffix.isEmpty() ? null : suffix.toLowerCase(Locale.ROOT);
     }

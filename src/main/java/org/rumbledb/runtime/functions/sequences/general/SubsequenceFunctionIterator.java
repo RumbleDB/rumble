@@ -20,54 +20,63 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.Serial;
-import java.util.List;
-
-public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
-
+public class SubsequenceFunctionIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator positionIterator;
-    private RuntimeIterator lengthIterator;
-    private Item nextResult;
+
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan positionIterator;
+    private final ItemRuntimePlan lengthIterator;
     private int startPosition;
-    private int currentLength;
     private int length;
     private final int optimizationThreshold = 10_000_000; // do optimization only if startPosition is above this
-                                                          // threshold
+    // threshold
 
-    public SubsequenceFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public SubsequenceFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
-        if (this.getChildren().size() == 3) {
-            this.lengthIterator = this.getChild(2);
-        }
+        this.lengthIterator = this.getChildren().size() == 3 ? this.getChild(2) : null;
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
+                this.sequenceIterator, this.positionIterator, this.lengthIterator, context, getMetadata());
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         setInstanceVariables(context);
 
@@ -77,9 +86,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             if (this.length < 0) {
                 filteredRDD = zippedRDD.filter((input) -> input._2() >= this.startPosition - 1);
             } else {
-                filteredRDD = zippedRDD.filter(
-                    (input) -> input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length
-                );
+                filteredRDD = zippedRDD.filter((input) ->
+                        input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length);
             }
             return filteredRDD.map(x -> x._1);
         }
@@ -87,23 +95,18 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         if (this.startPosition < this.optimizationThreshold) {
             return getDataFrameOld(dynamicContext);
-        } else
-            return getDataFrameOffset(dynamicContext);
+        } else return getDataFrameOffset(dynamicContext);
     }
 
     /**
      * Old implementation of getDataFrame, it is faster for low starting positions
      */
     private HomogeneousItemDataFrame getDataFrameOld(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.sequenceIterator, dynamicContext);
         setInstanceVariables(dynamicContext);
 
         List<FlworDataFrameColumn> allColumns = df.getColumns();
@@ -113,32 +116,22 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
             df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s LIMIT %s",
-                    input,
-                    Integer.toString(this.startPosition + this.length - 1)
-                ),
-                df.getItemType()
-            );
+                    String.format(
+                            "SELECT * FROM %s LIMIT %s", input, Integer.toString(this.startPosition + this.length - 1)),
+                    df.getItemType());
         }
 
-        Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(
-            df.getDataFrame(),
-            1L,
-            SparkSessionManager.temporaryColumnName
-        );
+        Dataset<Row> ds =
+                FlworDataFrameUtils.zipWithIndex(df.getDataFrame(), 1L, SparkSessionManager.temporaryColumnName);
 
         String inputds = FlworDataFrameUtils.createTempView(ds);
         ds = ds.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
-                    selectSQL,
-                    inputds,
-                    SparkSessionManager.temporaryColumnName,
-                    Integer.toString(this.startPosition)
-                )
-            );
+                .sql(String.format(
+                        "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
+                        selectSQL,
+                        inputds,
+                        SparkSessionManager.temporaryColumnName,
+                        Integer.toString(this.startPosition)));
         return new HomogeneousItemDataFrame(ds, df.getItemType());
     }
 
@@ -147,134 +140,117 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
      * for small values
      */
     private HomogeneousItemDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.sequenceIterator, dynamicContext);
         setInstanceVariables(dynamicContext);
 
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
             df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s LIMIT %s OFFSET %s",
-                    input,
-                    Integer.toString(this.length),
-                    Integer.toString(this.startPosition - 1)
-                ),
-                df.getItemType()
-            );
+                    String.format(
+                            "SELECT * FROM %s LIMIT %s OFFSET %s",
+                            input, Integer.toString(this.length), Integer.toString(this.startPosition - 1)),
+                    df.getItemType());
         } else {
             df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s OFFSET %s",
-                    input,
-                    Integer.toString(this.startPosition - 1)
-                ),
-                df.getItemType()
-            );
+                    String.format("SELECT * FROM %s OFFSET %s", input, Integer.toString(this.startPosition - 1)),
+                    df.getItemType());
         }
         return new HomogeneousItemDataFrame(df.getDataFrame(), df.getItemType());
     }
 
-    @Override
-    protected void openLocal() {
-        setInstanceVariables(this.currentDynamicContextForLocalExecution);
-        initializeLocal();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", getMetadata());
-    }
-
-    private void initializeLocal() {
-        int currentPosition = 1; // JSONiq indices start from 1
-
-        this.currentLength = this.length;
-        if (this.startPosition <= 0 && this.currentLength != -1) {
-            this.currentLength += this.startPosition - 1;
-        }
-        // if length is 0, just return empty sequence
-        if (this.currentLength == 0) {
-            this.hasNext = false;
-            return;
-        } else {
-            if (!this.sequenceIterator.isOpen()) {
-                this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-            }
-
-            // find the start of the subsequence
-            while (this.sequenceIterator.hasNext()) {
-                if (currentPosition < this.startPosition) {
-                    this.sequenceIterator.next(); // skip item
-                } else {
-                    this.nextResult = this.sequenceIterator.next();
-                    // if length is specified, decrement it
-                    if (this.currentLength != -1) {
-                        this.currentLength--;
-                    }
-                    break;
-                }
-                currentPosition++;
-            }
-        }
-
-        // if startPosition overshoots, return empty sequence
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
     private void setInstanceVariables(DynamicContext context) {
-        Item positionItem = this.positionIterator
-            .materializeFirstItemOrNull(context);
+        Item positionItem = this.positionIterator.materializeFirstOrNull(context);
         this.startPosition = (int) Math.round(positionItem.getDoubleValue());
 
         this.length = -1;
         if (this.getChildren().size() == 3) {
-            Item lengthItem = this.lengthIterator
-                .materializeFirstItemOrNull(context);
+            Item lengthItem = this.lengthIterator.materializeFirstOrNull(context);
             this.length = (int) Math.round(lengthItem.getDoubleValue());
         }
     }
 
-    private void setNextResult() {
-        this.nextResult = null;
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        if (this.currentLength != 0) {
-            if (this.sequenceIterator.hasNext()) {
-                if (this.currentLength > 0) { // take length many items -> decrement the value for each item until 0
-                    this.nextResult = this.sequenceIterator.next();
-                    this.currentLength--;
-                } else if (this.currentLength == -1) { // length not specified -> take all items until the end
-                    this.nextResult = this.sequenceIterator.next();
-                } else {
-                    throw new OurBadException(
-                            "Unexpected length value found."
-                    );
-                }
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan positionPlan;
+        private final ItemRuntimePlan lengthPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> sequenceCursor;
+        private long startPosition;
+        private long currentLength;
+
+        private EvaluationCursor(
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan positionPlan,
+                ItemRuntimePlan lengthPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.positionPlan = positionPlan;
+            this.lengthPlan = lengthPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            Item positionItem = this.positionPlan.materializeFirstOrNull(this.context);
+            this.startPosition = Math.round(positionItem.getDoubleValue());
+
+            this.currentLength = -1;
+            if (this.lengthPlan != null) {
+                Item lengthItem = this.lengthPlan.materializeFirstOrNull(this.context);
+                this.currentLength = Math.round(lengthItem.getDoubleValue());
+            }
+            if (this.startPosition <= 0 && this.currentLength != -1) {
+                this.currentLength += this.startPosition - 1;
+            }
+            if (this.currentLength == 0) {
+                return;
+            }
+
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
+            long currentPosition = 1;
+            while (currentPosition < this.startPosition && this.sequenceCursor.hasNext()) {
+                this.sequenceCursor.next();
+                currentPosition++;
             }
         }
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
+        @Override
+        protected boolean hasNextLocal() {
+            return this.currentLength != 0 && this.sequenceCursor != null && this.sequenceCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw exhausted();
+            }
+            if (this.currentLength < -1) {
+                throw new OurBadException("Unexpected length value found.");
+            }
+            Item result = this.sequenceCursor.next();
+            if (this.currentLength > 0) {
+                this.currentLength--;
+            }
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+        }
+
+        private RuntimeException exhausted() {
+            return new IteratorFlowException(
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "subsequence function", this.metadata);
         }
     }
 }

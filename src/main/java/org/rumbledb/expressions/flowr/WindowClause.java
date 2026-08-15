@@ -1,11 +1,12 @@
 package org.rumbledb.expressions.flowr;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-import java.io.Serializable;
 
 import lombok.Getter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -24,27 +25,24 @@ public class WindowClause extends Clause {
      * Record used to keep track of variables binding of a window condition
      *
      * All of these variables are optional (can be null)
-     * 
+     *
      * @param currentItem item that starts / ends the window
      * @param position position of the current item in the binding sequence
      * @param previousItem item that precedes the current item in the binding sequence
      * @param nextItem item that follows the current item in the binding sequence
      */
-    public record WindowVars(
-            Name currentItem,
-            Name position,
-            Name previousItem,
-            Name nextItem) implements Serializable {
+    public record WindowVars(Name currentItem, Name position, Name previousItem, Name nextItem)
+            implements Serializable {
         public List<Name> names() {
             return Stream.of(this.currentItem, this.position, this.previousItem, this.nextItem)
-                .filter(name -> name != null)
-                .toList();
+                    .filter(name -> name != null)
+                    .toList();
         }
     }
 
     /**
      * Record to keep the start or end condition of a window clause
-     * 
+     *
      * @param variables Variables bound to the condition (for example, {@code $start} in
      *        {@code start at $s when fn:true()}
      * @param expression boolean expression that triggers the start / end of window
@@ -53,18 +51,22 @@ public class WindowClause extends Clause {
      *        specified, then no window is generated; otherwise, the end item is set to the last item in the binding
      *        sequence and a window is generated.
      */
-    public record WindowCondition(WindowVars variables, Expression expression, boolean only) {
-    }
+    public record WindowCondition(WindowVars variables, Expression expression, boolean only) {}
 
     @Getter
     private final WindowType windowType;
+
     @Getter
     private final Name windowVariable;
+
     private final SequenceType sequenceType;
+
     @Getter
     private final Expression expression;
+
     @Getter
     private final WindowCondition startCondition;
+
     @Getter
     private final WindowCondition endCondition;
 
@@ -75,8 +77,7 @@ public class WindowClause extends Clause {
             Expression expression,
             WindowCondition startCondition,
             WindowCondition endCondition,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.WINDOW, metadata);
         this.windowType = windowType;
         this.windowVariable = windowVariable;

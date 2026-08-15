@@ -1,19 +1,21 @@
 package org.rumbledb.serialization;
 
 import java.io.Serial;
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.items.xml.NamespaceItem;
 
-public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable {
+public class XmlJsonHybridSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.serialization.SerializationParameters params;
+    private final SerializationParameters params;
 
     public XmlJsonHybridSerializer(SerializationParameters params) {
         this.params = params;
@@ -102,7 +104,10 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
                     firstTime = false;
                 }
                 Item value = item.getItemByKey(key);
-                sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
+                sb.append("\"")
+                        .append(StringEscapeUtils.escapeJson(key))
+                        .append("\"")
+                        .append(" : ");
                 if (this.params.getIndent()) {
                     serialize(value, sb, indent + "  ", false);
                 } else {

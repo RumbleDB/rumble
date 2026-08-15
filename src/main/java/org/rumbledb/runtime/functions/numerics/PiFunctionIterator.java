@@ -20,33 +20,31 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
-public class PiFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class PiFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public PiFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public PiFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return ItemFactory.getInstance().createDoubleItem(Math.PI);
     }
 
@@ -55,7 +53,6 @@ public class PiFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 "CAST (" + Math.PI + " AS DOUBLE)",
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One)
-        );
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One));
     }
 }

@@ -1,5 +1,11 @@
 package org.rumbledb.runtime.functions.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -7,30 +13,21 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Predicate;
-
-public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class PathFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
     private static final String ROOT_PREFIX = "Q{http://www.w3.org/2005/xpath-functions}root()";
 
-    public PathFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public PathFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item node = getContextNode(context);
         if (node == null) {
             return null;
@@ -66,10 +63,7 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (node.isElementNode()) {
             Name name = node.nodeName();
             int position = positionAmong(
-                node,
-                parent,
-                candidate -> candidate.isElementNode() && sameName(candidate.nodeName(), name)
-            );
+                    node, parent, candidate -> candidate.isElementNode() && sameName(candidate.nodeName(), name));
             return "/Q{" + namespaceOrEmpty(name) + "}" + name.getLocalName() + "[" + position + "]";
         }
         if (node.isAttributeNode()) {
@@ -90,11 +84,10 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (node.isProcessingInstructionNode()) {
             String target = node.nodeName().getLocalName();
             int position = positionAmong(
-                node,
-                parent,
-                candidate -> candidate.isProcessingInstructionNode()
-                    && candidate.nodeName().getLocalName().equals(target)
-            );
+                    node,
+                    parent,
+                    candidate -> candidate.isProcessingInstructionNode()
+                            && candidate.nodeName().getLocalName().equals(target));
             return "/processing-instruction(" + target + ")[" + position + "]";
         }
         if (node.isNamespaceNode()) {
@@ -131,7 +124,8 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static boolean sameName(Name a, Name b) {
-        return namespaceOrEmpty(a).equals(namespaceOrEmpty(b)) && a.getLocalName().equals(b.getLocalName());
+        return namespaceOrEmpty(a).equals(namespaceOrEmpty(b))
+                && a.getLocalName().equals(b.getLocalName());
     }
 
     private static String namespaceOrEmpty(Name name) {
@@ -140,10 +134,10 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private Item getContextNode(DynamicContext context) {
         if (this.getChildren().size() == 1) {
-            return this.getChild(0).materializeFirstItemOrNull(context);
+            return this.getChild(0).materializeFirstOrNull(context);
         }
         return context.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-            .get(0);
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0);
     }
 }

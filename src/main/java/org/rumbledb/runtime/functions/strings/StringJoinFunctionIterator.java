@@ -20,42 +20,44 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringJoinFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StringJoinFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item joinString = ItemFactory.getInstance().createStringItem("");
         if (this.getChildren().size() > 1) {
-            joinString = this.getChild(1).materializeFirstItemOrNull(context);
+            joinString = this.getChild(1).materializeFirstOrNull(context);
         }
         List<Item> strings = this.getChild(0).materialize(context);
+        return join(strings, joinString);
+    }
 
+    private Item join(List<Item> strings, Item joinString) {
         StringBuilder stringBuilder = new StringBuilder();
         boolean first = true;
         for (Item item : strings) {
             if (!(item.isString())) {
-                throw new UnexpectedTypeException("String item expected", this.getChild(0).getMetadata());
+                throw new UnexpectedTypeException(
+                        "String item expected",
+                        this.getChild(0).getRuntimeStaticContext().getMetadata());
             }
             if (!first) {
                 stringBuilder.append(joinString.getStringValue());
@@ -66,6 +68,4 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
         return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
     }
-
-
 }

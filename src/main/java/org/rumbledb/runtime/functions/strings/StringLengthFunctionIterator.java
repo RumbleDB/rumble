@@ -20,41 +20,40 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-
-public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class StringLengthFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringLengthFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StringLengthFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            return ItemFactory.getInstance().createIntItem(codePointLength(items.get(0).getStringValue()));
+            return evaluate(items.get(0));
         }
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        return evaluate(this.getChild(0).materializeFirstOrNull(context));
+    }
 
+    private static Item evaluate(Item stringItem) {
         if (stringItem == null) {
             return ItemFactory.getInstance().createIntItem(0);
         }
@@ -71,7 +70,7 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
         if (this.getChildren().size() == 0) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -79,7 +78,6 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
         return new NativeClauseContext(
                 childContext,
                 resultString,
-                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-        );
+                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
     }
 }

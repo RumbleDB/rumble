@@ -20,68 +20,56 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import java.io.Serial;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     @SuppressWarnings("unused")
-    private static final HashSet<Integer> exclusionCharacters = new HashSet<Integer>(
-            Arrays.asList(
+    private static final HashSet<Integer> exclusionCharacters = new HashSet<Integer>(Arrays.asList());
 
-            )
-    );
-
-    public EncodeForURIFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public EncodeForURIFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item inputItem = this.getChild(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.mapArgument(this.getChild(0), context, this::evaluate, getMetadata());
+    }
 
-            if (inputItem == null) {
-                return ItemFactory.getInstance().createStringItem("");
-            }
+    private Item evaluate(Item inputItem) {
+        if (inputItem == null) {
+            return ItemFactory.getInstance().createStringItem("");
+        }
 
-            String encodedURI;
-            try {
-                encodedURI = URLEncoder.encode(inputItem.getStringValue(), "UTF-8")
+        String encodedURI;
+        try {
+            encodedURI = URLEncoder.encode(inputItem.getStringValue(), "UTF-8")
                     .replace("+", "%20")
                     .replace("*", "%2A")
                     .replace("%7E", "~");
-            } catch (UnsupportedEncodingException e) {
-                throw new OurBadException(e.getMessage(), getMetadata()); // Will only get here if "UTF-8" is changed or
-                                                                          // method deprecates
-            }
+        } catch (UnsupportedEncodingException e) {
+            throw new OurBadException(e.getMessage(), getMetadata()); // Will only get here if "UTF-8" is changed or
+            // method deprecates
+        }
 
-            return ItemFactory.getInstance().createStringItem(encodedURI);
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " translate function",
-                    getMetadata()
-            );
+        return ItemFactory.getInstance().createStringItem(encodedURI);
     }
 }

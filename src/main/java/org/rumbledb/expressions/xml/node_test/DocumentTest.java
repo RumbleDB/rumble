@@ -1,9 +1,8 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import java.io.Serial;
 
 import lombok.Getter;
-
-import java.io.Serial;
 
 @Getter
 public class DocumentTest implements NodeTest {
@@ -29,6 +28,4 @@ public class DocumentTest implements NodeTest {
     public boolean isEmptyCheck() {
         return this.nodeTest == null;
     }
-
-
 }

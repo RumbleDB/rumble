@@ -20,6 +20,21 @@
 
 package org.rumbledb.compiler;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+
+import org.rumbledb.api.Item;
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.bindings.FileBinding;
@@ -27,9 +42,6 @@ import org.rumbledb.bindings.InputFormat;
 import org.rumbledb.bindings.ItemSequenceBinding;
 import org.rumbledb.bindings.LexicalBinding;
 import org.rumbledb.bindings.StandardInputBinding;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -51,26 +63,15 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanBindings;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 
 /**
  * Dynamic context visitor. Populates the dynamic context to evaluate the main expression.
@@ -112,7 +113,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (!expression.getReturnType().isResolved()) {
             expression.getReturnType().resolve(argument, expression.getMetadata());
         }
-        RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+        ItemRuntimePlan bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
         List<Item> functionInList = bodyIterator.materialize(argument);
         if (functionInList.size() != 1) {
             throw new OurBadException("A function declaration should produce exactly one function");
@@ -133,7 +134,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     // for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
     // Expression child = copyDecl.getSourceExpression();
     // this.visit(child, argument);
-    // RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
+    // ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
     // iterator.bindToVariableInDynamicContext(argument, copyDecl.getVariableName(), argument);
     // }
     //
@@ -151,8 +152,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is not external: we use the expression.
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
-            RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            iterator.bindToVariableInDynamicContext(argument, name, argument);
+            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }
 
@@ -161,64 +162,41 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (items != null) {
             if (variableDeclaration.getSequenceType().isEmptySequence() && items.size() > 0) {
                 throw new UnexpectedTypeException(
-                        "External variable values does not match sequence type ().",
-                        variableDeclaration.getMetadata()
-                );
+                        "External variable values does not match sequence type ().", variableDeclaration.getMetadata());
             }
-            if (
-                !variableDeclaration.getSequenceType().isEmptySequence()
+            if (!variableDeclaration.getSequenceType().isEmptySequence()
                     && variableDeclaration.getSequenceType().getArity() == Arity.One
-                    && items.size() != 1
-            ) {
+                    && items.size() != 1) {
                 throw new UnexpectedTypeException(
-                        "External variable values does not match sequence arity 1.",
-                        variableDeclaration.getMetadata()
-                );
+                        "External variable values does not match sequence arity 1.", variableDeclaration.getMetadata());
             }
-            if (
-                !variableDeclaration.getSequenceType().isEmptySequence()
+            if (!variableDeclaration.getSequenceType().isEmptySequence()
                     && variableDeclaration.getSequenceType().getArity() == Arity.OneOrZero
-                    && items.size() > 1
-            ) {
+                    && items.size() > 1) {
                 throw new UnexpectedTypeException(
-                        "External variable values does not match sequence arity ?.",
-                        variableDeclaration.getMetadata()
-                );
+                        "External variable values does not match sequence arity ?.", variableDeclaration.getMetadata());
             }
-            if (
-                !variableDeclaration.getSequenceType().isEmptySequence()
+            if (!variableDeclaration.getSequenceType().isEmptySequence()
                     && variableDeclaration.getSequenceType().getArity() == Arity.OneOrMore
-                    && items.size() == 0
-            ) {
+                    && items.size() == 0) {
                 throw new UnexpectedTypeException(
-                        "External variable values does not match sequence arity +.",
-                        variableDeclaration.getMetadata()
-                );
+                        "External variable values does not match sequence arity +.", variableDeclaration.getMetadata());
             }
             for (Item item : items) {
-                if (
-                    variableDeclaration.getSequenceType().isEmptySequence()
+                if (variableDeclaration.getSequenceType().isEmptySequence()
                         || !InstanceOfIterator.doesItemTypeMatchItem(
-                            variableDeclaration.getSequenceType().getItemType(),
-                            item
-                        )
-                ) {
+                                variableDeclaration.getSequenceType().getItemType(), item)) {
                     throw new UnexpectedTypeException(
                             "External variable value ("
-                                + item
-                                + ") does not match the expected type ("
-                                + variableDeclaration.getSequenceType()
-                                + ").",
-                            variableDeclaration.getMetadata()
-                    );
+                                    + item
+                                    + ") does not match the expected type ("
+                                    + variableDeclaration.getSequenceType()
+                                    + ").",
+                            variableDeclaration.getMetadata());
                 }
             }
 
-            argument.getVariableValues()
-                .addVariableValue(
-                    name,
-                    items
-                );
+            argument.getVariableValues().addVariableValue(name, items);
             return argument;
         }
 
@@ -231,60 +209,41 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (value != null) {
             SequenceType sequenceType = variableDeclaration.getSequenceType();
             Item item = null;
-            if (
-                !sequenceType.equals(SequenceType.createSequenceType("()"))
-                    && sequenceType.getItemType().equals(BuiltinTypesCatalogue.anyURIItem)
-            ) {
-                URI resolvedURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                    value,
-                    ExceptionMetadata.EMPTY_METADATA
-                );
+            if (!sequenceType.equals(SequenceType.createSequenceType("()"))
+                    && sequenceType.getItemType().equals(BuiltinTypesCatalogue.anyURIItem)) {
+                URI resolvedURI =
+                        FileSystemUtil.resolveURIAgainstWorkingDirectory(value, ExceptionMetadata.EMPTY_METADATA);
                 item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
             } else {
                 item = ItemFactory.getInstance().createStringItem(value);
                 ItemType itemType = variableDeclaration.getSequenceType().getItemType();
-                if (
-                    !InstanceOfIterator.doesItemTypeMatchItem(
-                        itemType,
-                        item
-                    )
-                ) {
+                if (!InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                     Item castItem = CastIterator.castItemToType(item, itemType, variableDeclaration.getMetadata());
                     if (castItem == null) {
                         throw new UnexpectedTypeException(
                                 "External variable value ("
-                                    + item.serialize()
-                                    + ") does not match the expected type ("
-                                    + variableDeclaration.getSequenceType()
-                                    + ").",
-                                variableDeclaration.getMetadata()
-                        );
+                                        + item.serialize()
+                                        + ") does not match the expected type ("
+                                        + variableDeclaration.getSequenceType()
+                                        + ").",
+                                variableDeclaration.getMetadata());
                     }
                     item = castItem;
                 }
             }
             items.add(item);
-            if (
-                variableDeclaration.getSequenceType().isEmptySequence()
+            if (variableDeclaration.getSequenceType().isEmptySequence()
                     || !InstanceOfIterator.doesItemTypeMatchItem(
-                        variableDeclaration.getSequenceType().getItemType(),
-                        item
-                    )
-            ) {
+                            variableDeclaration.getSequenceType().getItemType(), item)) {
                 throw new UnexpectedTypeException(
                         "External variable value ("
-                            + item.serialize()
-                            + ") does not match the expected type ("
-                            + variableDeclaration.getSequenceType()
-                            + ").",
-                        variableDeclaration.getMetadata()
-                );
+                                + item.serialize()
+                                + ") does not match the expected type ("
+                                + variableDeclaration.getSequenceType()
+                                + ").",
+                        variableDeclaration.getMetadata());
             }
-            argument.getVariableValues()
-                .addVariableValue(
-                    name,
-                    items
-                );
+            argument.getVariableValues().addVariableValue(name, items);
             return argument;
         }
 
@@ -292,8 +251,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         Dataset<Row> df = this.getDataFrameBinding(name);
         if (df != null) {
             HomogeneousItemDataFrame jdf = new HomogeneousItemDataFrame(df);
-            argument.getVariableValues()
-                .addVariableValue(name, jdf);
+            argument.getVariableValues().addVariableValue(name, jdf);
             return argument;
         }
 
@@ -317,45 +275,34 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                     default:
                         throw new AbsentPartOfDynamicContextException(
                                 "Unrecognized input format: "
-                                    + this.getInputFormat(Name.CONTEXT_ITEM)
-                                    + ". Expecting text or json.",
-                                variableDeclaration.getMetadata()
-                        );
+                                        + this.getInputFormat(Name.CONTEXT_ITEM)
+                                        + ". Expecting text or json.",
+                                variableDeclaration.getMetadata());
                 }
-                argument.getVariableValues()
-                    .addVariableValue(
-                        name,
-                        items
-                    );
+                argument.getVariableValues().addVariableValue(name, items);
                 return argument;
             } catch (IOException e) {
                 throw new AbsentPartOfDynamicContextException(
-                        "Could not read context item from standard input!",
-                        variableDeclaration.getMetadata()
-                );
+                        "Could not read context item from standard input!", variableDeclaration.getMetadata());
             } catch (ParsingException ex) {
                 RuntimeException e = new ParsingException(
                         "The text read from the standard input is not a well-formed JSON value!",
-                        variableDeclaration.getMetadata()
-                );
+                        variableDeclaration.getMetadata());
                 e.initCause(ex);
                 throw e;
             }
         }
 
-
         // Variable is external and we do not have any supplied value: we fall back to expression, if any.
         Expression expression = variableDeclaration.getExpression();
         if (expression != null) {
-            RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            iterator.bindToVariableInDynamicContext(argument, name, argument);
+            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }
 
         throw new AbsentPartOfDynamicContextException(
-                "External variable value is not provided!",
-                variableDeclaration.getMetadata()
-        );
+                "External variable value is not provided!", variableDeclaration.getMetadata());
     }
 
     @Override
@@ -374,13 +321,11 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
         }
         argument.getVariableValues()
-            .importModuleValues(
-                this.importedModuleContexts.get(module.getNamespace()).getVariableValues()
-            );
+                .importModuleValues(
+                        this.importedModuleContexts.get(module.getNamespace()).getVariableValues());
         argument.getInScopeSchemaTypes()
-            .importModuleTypes(
-                this.importedModuleContexts.get(module.getNamespace()).getInScopeSchemaTypes()
-            );
+                .importModuleTypes(
+                        this.importedModuleContexts.get(module.getNamespace()).getInScopeSchemaTypes());
         return argument;
     }
 
@@ -395,50 +340,48 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     private Item parseJSONItem(String value, ExceptionMetadata metadata) {
         return ItemParser.getItemFromJSONString(
-            value,
-            JSONParsingOptions.defaultInstance(true),
-            this.configuration.semantics().xmlVersion(),
-            true,
-            metadata
-        );
+                value,
+                JSONParsingOptions.defaultInstance(true),
+                this.configuration.semantics().xmlVersion(),
+                true,
+                metadata);
     }
 
     private List<Item> getItemsBinding(Name name) {
-        return this.externalBindings.get(name, ItemSequenceBinding.class)
-            .map(ItemSequenceBinding::getItems)
-            .orElse(null);
+        return this.externalBindings
+                .get(name, ItemSequenceBinding.class)
+                .map(ItemSequenceBinding::getItems)
+                .orElse(null);
     }
 
     private String getLexicalValueBinding(Name name) {
-        return this.externalBindings.get(name, LexicalBinding.class)
-            .map(LexicalBinding::getValue)
-            .orElse(null);
+        return this.externalBindings
+                .get(name, LexicalBinding.class)
+                .map(LexicalBinding::getValue)
+                .orElse(null);
     }
 
     private Dataset<Row> getDataFrameBinding(Name name) {
-        return this.externalBindings.get(name, DataFrameBinding.class)
-            .map(DataFrameBinding::getDataFrame)
-            .orElse(null);
+        return this.externalBindings
+                .get(name, DataFrameBinding.class)
+                .map(DataFrameBinding::getDataFrame)
+                .orElse(null);
     }
 
     private String getFileValueBinding(Name name, ExceptionMetadata metadata) {
-        FileBinding fileBinding = this.externalBindings.get(name, FileBinding.class).orElse(null);
+        FileBinding fileBinding =
+                this.externalBindings.get(name, FileBinding.class).orElse(null);
         if (fileBinding == null) {
             return null;
         }
         try {
-            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                fileBinding.getLocation(),
-                metadata
-            );
+            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(fileBinding.getLocation(), metadata);
             try (InputStream inputStream = FileSystemUtil.getDataInputStream(uri, metadata)) {
                 return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             }
         } catch (IOException e) {
             throw new AbsentPartOfDynamicContextException(
-                    "Could not read external variable value from file.",
-                    metadata
-            );
+                    "Could not read external variable value from file.", metadata);
         }
     }
 
@@ -448,11 +391,15 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     private String getInputFormat(Name name) {
         if (this.externalBindings.get(name, StandardInputBinding.class).isPresent()) {
-            InputFormat format = this.externalBindings.get(name, StandardInputBinding.class).get().getFormat();
+            InputFormat format = this.externalBindings
+                    .get(name, StandardInputBinding.class)
+                    .get()
+                    .getFormat();
             return format.name().toLowerCase();
         }
         if (this.externalBindings.get(name, FileBinding.class).isPresent()) {
-            InputFormat format = this.externalBindings.get(name, FileBinding.class).get().getFormat();
+            InputFormat format =
+                    this.externalBindings.get(name, FileBinding.class).get().getFormat();
             return format.name().toLowerCase();
         }
         return InputFormat.JSON.name().toLowerCase();

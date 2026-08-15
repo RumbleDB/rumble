@@ -18,10 +18,7 @@
   ~ Authors: Stefan Irimescu, Can Berker Cikis
   ~
   -->
-
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.rumbledb</groupId>
@@ -31,6 +28,48 @@
     <name>RumbleDB</name>
     <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>
     <url>http://rumbledb.org/</url>
+
+    <organization>
+        <name>com.github.rumbledb</name>
+        <url>https://github.com/RumbleDB</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>https://github.com/RumbleDB/rumble/blob/master/LICENSE.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>wscsprint3r</name>
+        </developer>
+        <developer>
+            <name>ghislainfourny</name>
+        </developer>
+        <developer>
+            <name>CanBerker</name>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/RumbleDB/rumble.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:RumbleDB/rumble.git</developerConnection>
+        <url>https://github.com/RumbleDB/rumble</url>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
     <properties>
         <encoding>UTF-8</encoding>
         <antlr4.version>4.13.2</antlr4.version>
@@ -38,340 +77,6 @@
         <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
         <lombok.version>1.18.46</lombok.version>
     </properties>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.build.directory}/generated-sources/antlr4</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.15.0</version>
-                <configuration>
-                    <source>17</source>
-                    <target>17</target>
-                </configuration>
-                <executions>
-                    <!-- We skip the default compilation -->
-                    <execution>
-                        <id>default-compile</id>
-                        <configuration>
-                            <skipMain>true</skipMain>
-                        </configuration>
-                    </execution>
-
-                    <!-- 
-                        Compile ANTLR-generated sources without processing
-                        If we don't do this, since parser and lexer classes are very large, Lombok will throw a
-                    StackOverflowError when processing them, and the build will fail.
-                    -->
-                    <execution>
-                        <id>compile-generated-sources</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <proc>none</proc>
-                            <compileSourceRoots>
-                                <compileSourceRoot>${project.build.directory}/generated-sources/antlr4</compileSourceRoot>
-                            </compileSourceRoots>
-                        </configuration>
-                    </execution>
-
-                    <!-- Compile main sources using the normal configuration -->
-                    <execution>
-                        <id>compile-main-sources</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <compilerId>eclipse</compilerId>
-                            <compileSourceRoots>
-                                <compileSourceRoot>${project.basedir}/src/main/java</compileSourceRoot>
-                            </compileSourceRoots>
-                            <!-- Holy grail of eclipse configuration: https://stackoverflow.com/a/49599478/10707488 -->
-                            <compilerArgs>
-                                <arg>-properties</arg>
-                                <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
-                            </compilerArgs>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>default-testCompile</id>
-                        <configuration>
-                            <compilerId>eclipse</compilerId>
-                            <compilerArgs>
-                                <arg>-properties</arg>
-                                <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
-                            </compilerArgs>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.plexus</groupId>
-                        <artifactId>plexus-compiler-eclipse</artifactId>
-                        <version>2.16.2</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.eclipse.jdt</groupId>
-                        <artifactId>ecj</artifactId>
-                        <version>3.45.0</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.projectlombok</groupId>
-                        <artifactId>lombok</artifactId>
-                        <version>${lombok.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.5.0</version>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.8.0</version><!--$NO-MVN-MAN-VER$-->
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <mainClass>org.rumbledb.cli.Main</mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.4.0</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.12.0</version>
-                <configuration>
-                    <excludePackageNames>sparksoniq.*:sparksoniq</excludePackageNames>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>3.2.8</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <gpgArguments>
-                        <arg>--pinentry-mode</arg>
-                        <arg>loopback</arg>
-                    </gpgArguments>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.1.4</version>
-                <executions>
-                    <execution>
-                        <id>default-deploy</id>
-                        <phase>deploy</phase>
-                        <goals>
-                            <goal>deploy</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <localCheckout>true</localCheckout>
-                    <pushChanges>false</pushChanges>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.scm</groupId>
-                        <artifactId>maven-scm-provider-gitexe</artifactId>
-                        <version>2.2.1</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>com.diffplug.spotless</groupId>
-                <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.7.0</version>
-                <configuration>
-                    <java>
-                        <includes>
-                            <!-- include all java files in "java" folders under "src" -->
-                            <include>src/**/java/**/*.java</include>
-                        </includes>
-                        <eclipse>
-                            <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
-                        </eclipse>
-                        <removeUnusedImports/>
-                    </java>
-                    <antlr4>
-                        <includes>
-                            <include>src/main/java/org/rumbledb/parser/*/*.g4</include>
-                        </includes>
-
-                        <antlr4Formatter />
-                    </antlr4>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-maven-plugin</artifactId>
-                <version>${antlr4.version}</version>
-                <executions>
-                    <execution>
-                        <id>generate-jsoniq-antlr-sources</id>
-                        <goals>
-                            <goal>antlr4</goal>
-                        </goals>
-                        <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/jsoniq</sourceDirectory>
-                            <includes>
-                                <include>*.g4</include>
-                            </includes>
-                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/jsoniq</outputDirectory>
-                            <listener>false</listener>
-                            <visitor>true</visitor>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>generate-xquery-antlr-sources</id>
-                        <goals>
-                            <goal>antlr4</goal>
-                        </goals>
-                        <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/xquery</sourceDirectory>
-                            <includes>
-                                <include>*.g4</include>
-                            </includes>
-                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/xquery</outputDirectory>
-                            <listener>false</listener>
-                            <visitor>true</visitor>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.6</version>
-                <configuration>
-                    <enableOutErrElements>${surefire.enableOutErrElements}</enableOutErrElements>
-                    <!-- arguments needed for unit tests to work with Java 17
-                    https://stackoverflow.com/questions/72724816/running-unit-tests-with-spark-3-3-0-on-java-17-fails-with-illegalaccesserror-cl -->
-                    <argLine>
-                        --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
-                        --add-opens=java.base/java.net=ALL-UNNAMED
-                        --add-opens=java.base/java.nio=ALL-UNNAMED
-                        --add-opens=java.base/java.util=ALL-UNNAMED
-                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
-                        --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
-                        --add-opens java.base/java.net=ALL-UNNAMED
-                    </argLine>
-                    <statelessTestsetReporter
-                        implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
-                        <disable>false</disable>
-                        <version>3.0.2</version>
-                        <usePhrasedFileName>false</usePhrasedFileName>
-                        <usePhrasedTestSuiteClassName>true</usePhrasedTestSuiteClassName>
-                        <usePhrasedTestCaseClassName>true</usePhrasedTestCaseClassName>
-                        <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
-                    </statelessTestsetReporter>
-                    <consoleOutputReporter
-                        implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5ConsoleOutputReporter">
-                        <disable>false</disable>
-                        <encoding>UTF-8</encoding>
-                        <usePhrasedFileName>false</usePhrasedFileName>
-                    </consoleOutputReporter>
-                    <statelessTestsetInfoReporter
-                        implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoReporter">
-                        <disable>false</disable>
-                        <usePhrasedFileName>false</usePhrasedFileName>
-                        <usePhrasedClassNameInRunning>true</usePhrasedClassNameInRunning>
-                        <usePhrasedClassNameInTestCaseSummary>true</usePhrasedClassNameInTestCaseSummary>
-                    </statelessTestsetInfoReporter>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.10.0</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <publishingServerId>ossrh</publishingServerId>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
     <dependencies>
         <dependency>
@@ -466,7 +171,7 @@
             <artifactId>httpclient</artifactId>
             <version>4.5.13</version>
         </dependency>
-	      <!--<dependency>
+        <!--<dependency>
 	          <groupId>edu.vanderbilt.accre</groupId>
 	          <artifactId>laurelin</artifactId>
       	    <version>1.0.1</version>
@@ -507,7 +212,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.11</version>
+            <version>42.7.12</version>
         </dependency>
         <dependency>
             <groupId>org.mongodb.spark</groupId>
@@ -533,51 +238,356 @@
         </dependency>
     </dependencies>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
-            </url>
-        </repository>
-    </distributionManagement>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/antlr4</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-compiler-eclipse</artifactId>
+                        <version>2.16.2</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.eclipse.jdt</groupId>
+                        <artifactId>ecj</artifactId>
+                        <version>3.45.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok</artifactId>
+                        <version>${lombok.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <!-- We skip the default compilation -->
+                    <execution>
+                        <id>default-compile</id>
+                        <configuration>
+                            <skipMain>true</skipMain>
+                        </configuration>
+                    </execution>
 
-    <organization>
-        <name>com.github.rumbledb</name>
-        <url>https://github.com/RumbleDB</url>
-    </organization>
+                    <!-- 
+                        Compile ANTLR-generated sources without processing
+                        If we don't do this, since parser and lexer classes are very large, Lombok will throw a
+                    StackOverflowError when processing them, and the build will fail.
+                    -->
+                    <execution>
+                        <id>compile-generated-sources</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <proc>none</proc>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.build.directory}/generated-sources/antlr4</compileSourceRoot>
+                            </compileSourceRoots>
+                        </configuration>
+                    </execution>
 
-    <licenses>
-        <license>
-            <name>Apache License 2.0</name>
-            <url>https://github.com/RumbleDB/rumble/blob/master/LICENSE.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+                    <!-- Compile main sources using the normal configuration -->
+                    <execution>
+                        <id>compile-main-sources</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <compilerId>eclipse</compilerId>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/main/java</compileSourceRoot>
+                            </compileSourceRoots>
+                            <!-- Holy grail of eclipse configuration: https://stackoverflow.com/a/49599478/10707488 -->
+                            <compilerArgs>
+                                <arg>-properties</arg>
+                                <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <configuration>
+                            <compilerId>eclipse</compilerId>
+                            <compilerArgs>
+                                <arg>-properties</arg>
+                                <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.8.0</version>
+                <!--$NO-MVN-MAN-VER$-->
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>org.rumbledb.cli.Main</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.12.0</version>
+                <configuration>
+                    <excludePackageNames>sparksoniq.*:sparksoniq</excludePackageNames>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.2.8</version>
+                <configuration>
+                    <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                    </gpgArguments>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <phase>verify</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.4</version>
+                <executions>
+                    <execution>
+                        <id>default-deploy</id>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                        <phase>deploy</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <localCheckout>true</localCheckout>
+                    <pushChanges>false</pushChanges>
+                    <mavenExecutorId>forked-path</mavenExecutorId>
+                    <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.scm</groupId>
+                        <artifactId>maven-scm-provider-gitexe</artifactId>
+                        <version>2.2.1</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>3.7.0</version>
+                <configuration>
+                    <pom>
+                        <sortPom>
+                            <nrOfIndentSpace>4</nrOfIndentSpace>
+                        </sortPom>
+                    </pom>
 
-    <scm>
-        <url>https://github.com/RumbleDB/rumble</url>
-        <connection>
-            scm:git:git://github.com/RumbleDB/rumble.git
-        </connection>
-        <developerConnection>
-            scm:git:ssh://git@github.com:RumbleDB/rumble.git
-        </developerConnection>
-    </scm>
+                    <java>
+                        <includes>
+                            <!-- include all java files in "java" folders under "src" -->
+                            <include>src/**/java/**/*.java</include>
+                        </includes>
+                        <eclipse>
+                            <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
+                        </eclipse>
 
-    <developers>
-        <developer>
-            <name>wscsprint3r</name>
-        </developer>
-        <developer>
-            <name>ghislainfourny</name>
-        </developer>
-        <developer>
-            <name>CanBerker</name>
-        </developer>
-    </developers>
+                        <palantirJavaFormat>
+                            <version>2.39.0</version>
+                            <style>PALANTIR</style>
+                        </palantirJavaFormat>
+
+                        <importOrder>
+                            <order>java|javax,org,,\#,com,org.rumbledb,,\#org.rumbledb</order>
+                            <semanticSort>true</semanticSort>
+                        </importOrder>
+
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
+                    </java>
+                    <antlr4>
+                        <includes>
+                            <include>src/main/java/org/rumbledb/parser/*/*.g4</include>
+                        </includes>
+
+                        <antlr4Formatter/>
+                    </antlr4>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>${antlr4.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-jsoniq-antlr-sources</id>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/jsoniq</sourceDirectory>
+                            <includes>
+                                <include>*.g4</include>
+                            </includes>
+                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/jsoniq</outputDirectory>
+                            <listener>false</listener>
+                            <visitor>true</visitor>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-xquery-antlr-sources</id>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/xquery</sourceDirectory>
+                            <includes>
+                                <include>*.g4</include>
+                            </includes>
+                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/xquery</outputDirectory>
+                            <listener>false</listener>
+                            <visitor>true</visitor>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.6</version>
+                <configuration>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <enableOutErrElements>${surefire.enableOutErrElements}</enableOutErrElements>
+                    <!-- arguments needed for unit tests to work with Java 17
+                    https://stackoverflow.com/questions/72724816/running-unit-tests-with-spark-3-3-0-on-java-17-fails-with-illegalaccesserror-cl -->
+                    <argLine>--add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+                        --add-opens=java.base/java.net=ALL-UNNAMED
+                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                        --add-opens=java.base/java.util=ALL-UNNAMED
+                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                        --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
+                        --add-opens java.base/java.net=ALL-UNNAMED</argLine>
+                    <statelessTestsetReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                        <disable>false</disable>
+                        <version>3.0.2</version>
+                        <usePhrasedFileName>false</usePhrasedFileName>
+                        <usePhrasedTestSuiteClassName>true</usePhrasedTestSuiteClassName>
+                        <usePhrasedTestCaseClassName>true</usePhrasedTestCaseClassName>
+                        <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                    </statelessTestsetReporter>
+                    <consoleOutputReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5ConsoleOutputReporter">
+                        <disable>false</disable>
+                        <encoding>UTF-8</encoding>
+                        <usePhrasedFileName>false</usePhrasedFileName>
+                    </consoleOutputReporter>
+                    <statelessTestsetInfoReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoReporter">
+                        <disable>false</disable>
+                        <usePhrasedFileName>false</usePhrasedFileName>
+                        <usePhrasedClassNameInRunning>true</usePhrasedClassNameInRunning>
+                        <usePhrasedClassNameInTestCaseSummary>true</usePhrasedClassNameInTestCaseSummary>
+                    </statelessTestsetInfoReporter>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.10.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>ossrh</publishingServerId>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

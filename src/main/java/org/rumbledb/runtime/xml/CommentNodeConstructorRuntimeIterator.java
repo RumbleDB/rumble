@@ -20,26 +20,26 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringJoiner;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidCommentContentException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
-import java.util.StringJoiner;
 
 /**
  * Runtime iterator for computed comment node constructors.
  *
  * @see org.rumbledb.expressions.xml.CommentNodeConstructorExpression
  */
-public class CommentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class CommentNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -47,33 +47,27 @@ public class CommentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRun
     private final DataFunctionIterator contentIterator;
 
     public CommentNodeConstructorRuntimeIterator(
-            DataFunctionIterator contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            DataFunctionIterator contentIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         List<Item> materialized = this.contentIterator.materialize(dynamicContext);
         if (materialized.isEmpty()) {
             return null;
         }
-
         StringJoiner joiner = new StringJoiner(" ");
         for (Item item : materialized) {
             joiner.add(item.getStringValue());
         }
         String commentContent = joiner.toString();
-
         // Spec guard: "If the resulting string contains two adjacent hyphens or ends with a hyphen,
         // a dynamic error is raised [err:XQDY0072]." (XQuery 3.1 §3.9.3.5)
         if (commentContent.contains("--") || commentContent.endsWith("-")) {
             throw new InvalidCommentContentException(commentContent, getMetadata());
         }
-
-        this.hasNext = false;
         Item commentItem = ItemFactory.getInstance().createXmlCommentNode(commentContent);
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();

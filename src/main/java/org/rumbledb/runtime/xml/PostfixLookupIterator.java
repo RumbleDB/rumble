@@ -20,179 +20,191 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
-import java.io.Serial;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
 /**
  * Postfix lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
  * per XPath and XQuery Functions 3.1.
  */
-public class PostfixLookupIterator extends HybridRuntimeIterator {
+public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new LookupLocalCursor(
+                this.iterator, this.lookupIterator, this.wildcard, context, getRuntimeStaticContext());
+    }
+
+    private static final class LookupLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final ItemRuntimePlan inputPlan;
+        private final ItemRuntimePlan lookupPlan;
+        private final boolean wildcard;
+        private final DynamicContext context;
+        private final RuntimeStaticContext staticContext;
+        private Cursor<Item> inputCursor;
+        private List<Item> keys;
+        private Iterator<Item> currentResults;
+
+        private LookupLocalCursor(
+                ItemRuntimePlan inputPlan,
+                ItemRuntimePlan lookupPlan,
+                boolean wildcard,
+                DynamicContext context,
+                RuntimeStaticContext staticContext) {
+            super(staticContext.getMetadata());
+            this.inputPlan = inputPlan;
+            this.lookupPlan = lookupPlan;
+            this.wildcard = wildcard;
+            this.context = context;
+            this.staticContext = staticContext;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.keys = this.wildcard ? List.of() : this.lookupPlan.materialize(this.context);
+            this.inputCursor = this.inputPlan.getCursor(this.context);
+            this.currentResults = Collections.emptyIterator();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            while (!this.currentResults.hasNext() && this.inputCursor.hasNext()) {
+                this.currentResults = lookupLocally(
+                                this.inputCursor.next(), this.keys, this.wildcard, this.staticContext)
+                        .iterator();
+            }
+            return this.currentResults.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw invalidState("No more values are available.");
+            }
+            return this.currentResults.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.inputCursor != null) {
+                this.inputCursor.close();
+                this.inputCursor = null;
+            }
+            this.keys = null;
+            this.currentResults = null;
+        }
+    }
+
+    private static List<Item> lookupLocally(
+            Item item, List<Item> keys, boolean wildcard, RuntimeStaticContext staticContext) {
+        List<Item> results = new ArrayList<>();
+        if (item.isMap()) {
+            if (wildcard) {
+                if (item.isObject()) {
+                    results.addAll(item.getItemValues());
+                } else {
+                    for (List<Item> valueSequence : item.getSequenceValues()) {
+                        results.addAll(valueSequence);
+                    }
+                }
+                return results;
+            }
+            for (Item rawKey : keys) {
+                List<Item> atomized = rawKey.atomizedValue();
+                if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
+                    throw new UnexpectedTypeException(
+                            "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
+                            staticContext.getMetadata());
+                }
+                Item key = atomized.get(0);
+                if (item.isObject()) {
+                    Item value = item.getItemByKey(key);
+                    if (value != null) {
+                        results.add(value);
+                    }
+                } else {
+                    List<Item> valueSequence = item.getSequenceByKey(key);
+                    if (valueSequence != null) {
+                        results.addAll(valueSequence);
+                    }
+                }
+            }
+            return results;
+        }
+        if (item.isArray()) {
+            if (wildcard) {
+                if (item.isArrayOfItems()) {
+                    results.addAll(item.getItemMembers());
+                } else {
+                    for (List<Item> member : item.getSequenceMembers()) {
+                        results.addAll(member);
+                    }
+                }
+                return results;
+            }
+            for (Item key : keys) {
+                if (key.isString()) {
+                    throw new UnexpectedTypeException(
+                            "Type error; Lookup with String on Arrays is not possible", staticContext.getMetadata());
+                }
+                if (key.isNumeric()) {
+                    int index = key.castToIntValue() - 1;
+                    if (item.isArrayOfItems()) {
+                        results.add(item.getItemAt(index));
+                    } else {
+                        results.addAll(item.getSequenceAt(index));
+                    }
+                }
+            }
+            return results;
+        }
+        throw new UnexpectedTypeException(
+                "Type error; Lookup is only possible on Maps and Arrays, "
+                        + item.getDynamicType()
+                        + " detected instead",
+                staticContext.getMetadata());
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private final RuntimeIterator lookupIterator;
-    private List<Item> lookupKeys;
-    private final Queue<Item> nextResult;
-    private final boolean wildcard;
+
+    private final ItemRuntimePlan iterator;
+    private final ItemRuntimePlan lookupIterator;
+    private boolean wildcard;
 
     public PostfixLookupIterator(
-            RuntimeIterator object,
-            RuntimeIterator lookupIterator,
-            RuntimeStaticContext staticContext
-    ) {
-        super(
-            Stream.of(object, lookupIterator).filter(Objects::nonNull).collect(Collectors.toList()),
-            staticContext
-        );
+            ItemRuntimePlan object, ItemRuntimePlan lookupIterator, RuntimeStaticContext staticContext) {
+        super(Stream.of(object, lookupIterator).filter(Objects::nonNull).collect(Collectors.toList()), staticContext);
         this.iterator = object;
-        this.nextResult = new LinkedList<>();
         this.lookupIterator = lookupIterator;
         this.wildcard = this.lookupIterator == null;
     }
 
-    private void initLookupKey(DynamicContext context) {
-        if (this.wildcard)
-            return;
-        this.lookupKeys = this.lookupIterator.materialize(context);
-    }
-
     @Override
-    public void openLocal() {
-        initLookupKey(this.currentDynamicContextForLocalExecution);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult.poll();
-            setNextResult();
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
-    }
-
-    public void setNextResult() {
-        if (!this.nextResult.isEmpty())
-            return;
-
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isMap()) {
-                if (this.wildcard) {
-                    if (item.isObject()) {
-                        this.nextResult.addAll(item.getItemValues());
-                    } else {
-                        for (List<Item> valueSequence : item.getSequenceValues()) {
-                            this.nextResult.addAll(valueSequence);
-                        }
-                    }
-                } else {
-                    for (Item rawKey : this.lookupKeys) {
-                        List<Item> atomized = rawKey.atomizedValue();
-                        if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
-                            throw new UnexpectedTypeException(
-                                    "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
-                                    getMetadata()
-                            );
-                        }
-                        Item key = atomized.get(0);
-                        if (item.isObject()) {
-                            Item value = item.getItemByKey(key);
-                            if (value != null) {
-                                this.nextResult.add(value);
-                            }
-                        } else {
-                            List<Item> valueSequence = item.getSequenceByKey(key);
-                            if (valueSequence != null && !valueSequence.isEmpty()) {
-                                this.nextResult.addAll(valueSequence);
-                            }
-                        }
-                    }
-                }
-            } else if (item.isArray()) {
-                if (this.wildcard) {
-                    if (item.isArrayOfItems()) {
-                        this.nextResult.addAll(item.getItemMembers());
-                    } else {
-                        for (List<Item> member : item.getSequenceMembers()) {
-                            this.nextResult.addAll(member);
-                        }
-                    }
-                } else {
-                    for (Item key : this.lookupKeys) {
-                        if (key.isString()) {
-                            throw new UnexpectedTypeException(
-                                    "Type error; Lookup with String on Arrays is not possible",
-                                    getMetadata()
-                            );
-                        }
-                        if (key.isNumeric()) {
-                            int idx = key.castToIntValue() - 1;
-                            if (item.isArrayOfItems()) {
-                                this.nextResult.add(item.getItemAt(idx));
-                            } else {
-                                this.nextResult.addAll(item.getSequenceAt(idx));
-                            }
-                        }
-                    }
-                }
-
-            } else {
-                throw new UnexpectedTypeException(
-                        "Type error; Lookup is only possible on Maps and Arrays, "
-                            + item.getDynamicType().toString()
-                            + " detected instead",
-                        getMetadata()
-                );
-            }
-        }
-
-        if (this.nextResult.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
-        initLookupKey(dynamicContext);
-        List<Item> keys = this.lookupKeys;
-        FlatMapFunction<Item, Item> transformation = new PostfixLookupClosure(
-                keys,
-                this.wildcard,
-                getMetadata()
-        );
+        List<Item> keys = this.wildcard ? List.of() : this.lookupIterator.materialize(dynamicContext);
+        FlatMapFunction<Item, Item> transformation = new PostfixLookupClosure(keys, this.wildcard, getMetadata());
         return childRDD.flatMap(transformation);
     }
 }

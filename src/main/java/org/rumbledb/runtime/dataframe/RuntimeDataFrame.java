@@ -13,6 +13,7 @@ import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**

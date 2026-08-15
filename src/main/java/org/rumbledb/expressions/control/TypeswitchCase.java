@@ -1,13 +1,13 @@
 package org.rumbledb.expressions.control;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This is a helper class that organizes the children expressions of a typeswitch expression.
@@ -21,23 +21,15 @@ public class TypeswitchCase {
     private final List<SequenceType> union;
     private final Expression returnExpression;
 
-    public TypeswitchCase(
-            Name variableName,
-            List<SequenceType> union,
-            Expression returnExpression
-    ) {
+    public TypeswitchCase(Name variableName, List<SequenceType> union, Expression returnExpression) {
         this.variableName = variableName;
         this.union = new ArrayList<>(union);
         this.returnExpression = returnExpression;
     }
 
-    public TypeswitchCase(
-            Name variableName,
-            Expression returnExpression
-    ) {
+    public TypeswitchCase(Name variableName, Expression returnExpression) {
         this.variableName = variableName;
         this.union = null;
         this.returnExpression = returnExpression;
     }
-
 }

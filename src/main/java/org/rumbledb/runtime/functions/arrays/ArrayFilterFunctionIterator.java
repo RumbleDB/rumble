@@ -22,79 +22,40 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.SequenceType;
 
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code array:filter}:
  * {@code array:filter($array as array(*), $predicate as function(item()*) as xs:boolean) as array(*)}.
  */
-public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator predicateIterator;
-    private Item resultItem;
-    private boolean hasProducedResult;
-
-    public ArrayFilterFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-        if (arguments.size() != 2) {
-            throw new OurBadException("array:filter must have exactly two arguments.");
-        }
-        this.arrayIterator = arguments.get(0);
-        this.predicateIterator = arguments.get(1);
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
+public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        Item arrayItem;
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item arrayItem = null;
         try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:filter expects exactly one array argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("array:filter expects exactly one array argument.", getMetadata());
         }
-
+        if (arrayItem == null) {
+            return null;
+        }
         if (!arrayItem.isArray()) {
-            throw new UnexpectedTypeException(
-                    "Type error; argument to array:filter must be an array.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("Type error; argument to array:filter must be an array.", getMetadata());
         }
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
@@ -102,15 +63,11 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         List<Item> predicateItems = this.predicateIterator.materialize(context);
         if (predicateItems.isEmpty()) {
             throw new UnexpectedTypeException(
-                    "Type error; second argument to array:filter must be exactly one item.",
-                    getMetadata()
-            );
+                    "Type error; second argument to array:filter must be exactly one item.", getMetadata());
         }
         if (predicateItems.size() != 1) {
             throw new UnexpectedTypeException(
-                    "Type error; second argument to array:filter must be exactly one item.",
-                    getMetadata()
-            );
+                    "Type error; second argument to array:filter must be exactly one item.", getMetadata());
         }
 
         Item predicate = predicateItems.get(0);
@@ -130,33 +87,40 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : kept) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
-                .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(kept, this.getRuntimeStaticContext().isQuerySideEffecting());
+            return ItemFactory.getInstance()
+                    .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        return ItemFactory.getInstance()
+                .createSequenceArrayItem(kept, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
-    private boolean predicateHoldsForCallableItem(
-            Item predicate,
-            List<Item> memberSequence,
-            DynamicContext context
-    ) {
-        RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan predicateIterator;
+
+    public ArrayFilterFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
+        if (arguments.size() != 2) {
+            throw new OurBadException("array:filter must have exactly two arguments.");
+        }
+        this.arrayIterator = arguments.get(0);
+        this.predicateIterator = arguments.get(1);
+    }
+
+    private boolean predicateHoldsForCallableItem(Item predicate, List<Item> memberSequence, DynamicContext context) {
+        ItemRuntimePlan memberIterator = createSequenceIterator(memberSequence);
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
-        List<RuntimeIterator> arguments = new ArrayList<>(1);
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
+        List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        RuntimeIterator functionCall = new DynamicFunctionCallIterator(
-                new ConstantRuntimeIterator(predicate, functionItemContext),
-                arguments,
-                functionItemContext
-        );
+        ItemRuntimePlan functionCall = new DynamicFunctionCallIterator(
+                new ConstantRuntimeIterator(predicate, functionItemContext), arguments, functionItemContext);
         List<Item> result = functionCall.materialize(context);
         return booleanValueFromFilterResult(result);
     }
@@ -164,102 +128,44 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
     private boolean booleanValueFromFilterResult(List<Item> items) {
         if (items.size() != 1) {
             throw new UnexpectedTypeException(
-                    "Type error; array:filter predicate must return exactly one xs:boolean value.",
-                    getMetadata()
-            );
+                    "Type error; array:filter predicate must return exactly one xs:boolean value.", getMetadata());
         }
         Item value = items.get(0);
         if (!value.isBoolean()) {
             throw new UnexpectedTypeException(
-                    "Type error; array:filter predicate must return exactly one xs:boolean value.",
-                    getMetadata()
-            );
+                    "Type error; array:filter predicate must return exactly one xs:boolean value.", getMetadata());
         }
         return value.getBooleanValue();
     }
 
-    private RuntimeIterator createSequenceIterator(List<Item> items) {
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
-            return new CommaExpressionIterator(
-                    Collections.emptyList(),
-                    staticContext
-            );
+                    .configuration(getConfiguration())
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build();
+            return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
-        List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
-            childIterators.add(
-                new ConstantRuntimeIterator(
-                        item,
-                        childStaticContext
-                )
-            );
+                    .configuration(getConfiguration())
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build();
+            childIterators.add(new ConstantRuntimeIterator(item, childStaticContext));
         }
 
         RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
         return new CommaExpressionIterator(childIterators, staticContext);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        if (this.predicateIterator.isOpen()) {
-            this.predicateIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:filter is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:filter is currently supported only in local execution mode."
-        );
     }
 }

@@ -24,16 +24,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * Expression representing text content within XML attribute values.
  * This is distinct from other type of expressions as it exists specifically
  * in the context of computed XML attribute nodes and has different semantics.
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedAttributes">XQuery 3.1, 3.9.3.2: Computed Attribute
  *      Constructors</a>
  */

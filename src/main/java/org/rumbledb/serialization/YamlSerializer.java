@@ -1,22 +1,25 @@
 package org.rumbledb.serialization;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.Serial;
-
-public class YamlSerializer implements Serializer, java.io.Serializable {
+public class YamlSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     @SuppressWarnings("unused")
-    private final org.rumbledb.serialization.SerializationParameters params;
+    private final SerializationParameters params;
 
     public YamlSerializer(SerializationParameters params) {
         this.params = params;
@@ -82,7 +85,7 @@ public class YamlSerializer implements Serializer, java.io.Serializable {
     }
 
     private void appendMapValue(Item mapItem, Item key, YAMLGenerator yamlGenerator) throws IOException {
-        java.util.List<Item> sequence = mapItem.getSequenceByKey(key);
+        List<Item> sequence = mapItem.getSequenceByKey(key);
         if (sequence == null || sequence.isEmpty()) {
             yamlGenerator.writeStartArray();
             yamlGenerator.writeEndArray();

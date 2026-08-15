@@ -20,31 +20,33 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final DataFrameContext dataFrameContext;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
@@ -60,13 +62,11 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
     private static final int nullOrderIndex = 2; // null is the smallest value except empty sequence(default)
     private static final int valueOrderIndex = 3; // values are larger than null and empty sequence(default)
 
-
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
             Map<Integer, Name> sortingKeyTypes,
-            List<FlworDataFrameColumn> columns
-    ) {
+            List<FlworDataFrameColumn> columns) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.expressionsWithIterator = expressionsWithIterator;
         this.sortingKeyTypes = sortingKeyTypes;
@@ -81,30 +81,26 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
         this.results.clear();
 
         for (int expressionIndex = 0; expressionIndex < this.expressionsWithIterator.size(); expressionIndex++) {
-            OrderByClauseAnnotatedChildIterator expressionWithIterator = this.expressionsWithIterator.get(
-                expressionIndex
-            );
+            OrderByClauseAnnotatedChildIterator expressionWithIterator =
+                    this.expressionsWithIterator.get(expressionIndex);
 
             // apply expression in the dynamic context
-            RuntimeIterator iterator = expressionWithIterator.getIterator();
-            iterator.open(this.dataFrameContext.getContext());
-            if (!iterator.hasNext()) {
+            ItemRuntimePlan iterator = expressionWithIterator.getIterator();
+            List<Item> items = iterator.materialize(this.dataFrameContext.getContext());
+            if (items.isEmpty()) {
                 if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.GREATEST) {
                     this.results.add(emptySequenceOrderIndexLast);
                 } else {
                     this.results.add(emptySequenceOrderIndexFirst);
                 }
                 this.results.add(null); // placeholder for valueColumn(2nd column)
-                iterator.close();
                 continue;
             }
-            while (iterator.hasNext()) {
-                Item nextItem = iterator.next();
+            for (Item nextItem : items) {
                 List<Item> atomized = nextItem.atomizedValue();
                 if (atomized.size() > 1) {
                     throw new OurBadException(
-                            "Invalid sort key: order by expression must atomize to at most one item."
-                    );
+                            "Invalid sort key: order by expression must atomize to at most one item.");
                 }
                 if (atomized.isEmpty()) {
                     if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.GREATEST) {
@@ -116,22 +112,19 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                     continue;
                 }
                 nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(
-                    atomized.get(0),
-                    CollationSupport.resolveCollation(
-                        expressionWithIterator.getUri(),
-                        expressionWithIterator.getIterator().getRuntimeStaticContext()
-                    ),
-                    expressionWithIterator.getIterator().getMetadata()
-                );
+                        atomized.get(0),
+                        CollationSupport.resolveCollation(
+                                expressionWithIterator.getUri(),
+                                expressionWithIterator.getIterator().getRuntimeStaticContext()),
+                        expressionWithIterator
+                                .getIterator()
+                                .getRuntimeStaticContext()
+                                .getMetadata());
                 createColumnsForItem(nextItem, expressionIndex);
             }
-            iterator.close();
-
         }
         return RowFactory.create(this.results.toArray());
     }
-
-
 
     private void createColumnsForItem(Item nextItem, int expressionIndex) {
         if (nextItem instanceof NullItem) {
@@ -162,32 +155,24 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                     this.results.add(nextItem.getBinaryValue());
                 } else if (typeName.equals(BuiltinTypesCatalogue.hexBinaryItem.getName())) {
                     this.results.add(nextItem.getBinaryValue());
-                } else if (
-                    typeName.equals(BuiltinTypesCatalogue.durationItem.getName())
+                } else if (typeName.equals(BuiltinTypesCatalogue.durationItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.dayTimeDurationItem.getName())
-                        || typeName.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
-                ) {
+                        || typeName.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())) {
                     this.results.add(nextItem.getEpochMillis());
-                } else if (
-                    typeName.equals(BuiltinTypesCatalogue.dateTimeItem.getName())
-                        || typeName.equals(BuiltinTypesCatalogue.dateItem.getName())
-                ) {
+                } else if (typeName.equals(BuiltinTypesCatalogue.dateTimeItem.getName())
+                        || typeName.equals(BuiltinTypesCatalogue.dateItem.getName())) {
                     this.results.add(nextItem.getEpochMillis());
                 } else if (typeName.equals(BuiltinTypesCatalogue.timeItem.getName())) {
                     this.results.add(nextItem.getEpochMillis());
                 } else {
-                    throw new OurBadException(
-                            "Unexpected ordering type found while creating columns."
-                    );
+                    throw new OurBadException("Unexpected ordering type found while creating columns.");
                 }
             } catch (RuntimeException e) {
-                throw new OurBadException(
-                        "Invalid sort key: cannot compare item of type "
-                            + typeName
-                            + " with item of type "
-                            + nextItem.getDynamicType().toString()
-                            + "."
-                );
+                throw new OurBadException("Invalid sort key: cannot compare item of type "
+                        + typeName
+                        + " with item of type "
+                        + nextItem.getDynamicType().toString()
+                        + ".");
             }
         }
     }

@@ -1,17 +1,17 @@
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.Collections;
-
-public class PathRootRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class PathRootRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -20,16 +20,16 @@ public class PathRootRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item node = dynamicContext.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-            .get(0);
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Item node = dynamicContext
+                .getVariableValues()
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0);
         if (!node.isNode()) {
             throw new UnexpectedStaticTypeException(
                     "Leading slash path expressions require the context item to be a node [err:XPDY0050].",
                     ErrorCode.DynamicTypeTreatErrorCode,
-                    getMetadata()
-            );
+                    getMetadata());
         }
         Item current = node;
         while (current.parent() != null) {
@@ -39,8 +39,7 @@ public class PathRootRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             throw new UnexpectedStaticTypeException(
                     "Leading slash path expressions require the root of the context item to be a document node [err:XPDY0050].",
                     ErrorCode.DynamicTypeTreatErrorCode,
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return current;
     }

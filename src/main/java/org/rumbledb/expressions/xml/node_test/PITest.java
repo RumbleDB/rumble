@@ -1,11 +1,12 @@
 package org.rumbledb.expressions.xml.node_test;
 
-import lombok.NoArgsConstructor;
-import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.Serial;
 import java.util.Objects;
+
+import org.apache.commons.lang3.StringUtils;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * XQuery 3.1 Section 2.5.5 - SequenceType Matching
@@ -19,6 +20,7 @@ import java.util.Objects;
 public class PITest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final String targetName;
 
     /**
@@ -46,6 +48,4 @@ public class PITest implements NodeTest {
         sb.append(")");
         return sb.toString();
     }
-
-
 }

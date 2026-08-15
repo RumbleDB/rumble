@@ -27,66 +27,62 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class OrOperationIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
     public OrOperationIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan leftIterator, ItemRuntimePlan rightIterator, RuntimeStaticContext staticContext) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        boolean leftEffectiveBooleanValue = this.leftIterator.getEffectiveBooleanValue(dynamicContext);
-        boolean rightEffectiveBooleanValue = this.rightIterator.getEffectiveBooleanValue(dynamicContext);
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        boolean leftEffectiveBooleanValue = EffectiveBooleanValue.evaluate(this.leftIterator, dynamicContext);
+        boolean rightEffectiveBooleanValue = EffectiveBooleanValue.evaluate(this.rightIterator, dynamicContext);
 
         return ItemFactory.getInstance().createBooleanItem((leftEffectiveBooleanValue || rightEffectiveBooleanValue));
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(this.leftIterator, nativeClauseContext);
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
-            new NativeClauseContext(leftResult, null, null)
-        );
+        NativeClauseContext rightResult =
+                NativeQueryRuntimePlan.generate(this.rightIterator, new NativeClauseContext(leftResult, null, null));
         if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (
-            SequenceType.Arity.OneOrMore.isSubtypeOf(leftResult.getResultingType().getArity())
-                ||
-                SequenceType.Arity.OneOrMore.isSubtypeOf(rightResult.getResultingType().getArity())
-        ) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                        leftResult.getResultingType().getArity())
+                || SequenceType.Arity.OneOrMore.isSubtypeOf(
+                        rightResult.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
         SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
-            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                        && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
                 ? SequenceType.Arity.One
                 : SequenceType.Arity.OneOrZero;
         String resultingQuery = "( " + leftResult.getResultingQuery() + " OR " + rightResult.getResultingQuery() + " )";
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
-        );
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity));
     }
 }

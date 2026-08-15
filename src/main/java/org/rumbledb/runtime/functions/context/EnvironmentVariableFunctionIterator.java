@@ -1,29 +1,26 @@
 package org.rumbledb.runtime.functions.context;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class EnvironmentVariableFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class EnvironmentVariableFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public EnvironmentVariableFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public EnvironmentVariableFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item nameItem = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item nameItem = this.getChild(0).materializeFirstOrNull(context);
         String value = System.getenv(nameItem.getStringValue());
         if (value == null) {
             return null;

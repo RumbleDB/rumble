@@ -20,10 +20,10 @@
 
 package org.rumbledb.exceptions;
 
+import java.io.Serial;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
-
-import java.io.Serial;
 
 public class VariableAlreadyExistsException extends RumbleException {
 
@@ -31,10 +31,6 @@ public class VariableAlreadyExistsException extends RumbleException {
     private static final long serialVersionUID = 1L;
 
     public VariableAlreadyExistsException(Name name, ExceptionMetadata metadata) {
-        super(
-            "Variable name already exists: " + name,
-            ErrorCode.VariableAlreadyExists,
-            metadata
-        );
+        super("Variable name already exists: " + name, ErrorCode.VariableAlreadyExists, metadata);
     }
 }

@@ -1,27 +1,25 @@
 package org.rumbledb.items;
 
-
 import java.io.Serial;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class gMonthDayItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private boolean hasTimeZone;
     private static final Pattern gMonthDayRegex = Pattern.compile(
-        "--(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
-    );
+            "--(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
     private Month month;
     private int day;
     private ZoneOffset offset;
@@ -88,8 +86,6 @@ public class gMonthDayItem extends AbstractAtomicItem {
         return this.hasTimeZone;
     }
 
-
-
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.gMonthDayItem;
@@ -108,14 +104,6 @@ public class gMonthDayItem extends AbstractAtomicItem {
     @Override
     public OffsetDateTime getDateTimeValue() {
         return OffsetDateTime.of(
-            0,
-            this.month.getValue(),
-            this.day,
-            0,
-            0,
-            0,
-            0,
-            this.hasTimeZone ? this.offset : ZoneOffset.UTC
-        );
+                0, this.month.getValue(), this.day, 0, 0, 0, 0, this.hasTimeZone ? this.offset : ZoneOffset.UTC);
     }
 }

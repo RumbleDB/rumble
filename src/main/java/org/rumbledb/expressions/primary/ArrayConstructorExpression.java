@@ -20,15 +20,15 @@
 
 package org.rumbledb.expressions.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
-
 
 @Getter
 public class ArrayConstructorExpression extends Expression {
@@ -63,10 +63,7 @@ public class ArrayConstructorExpression extends Expression {
      * Each expression becomes a separate member whose result (possibly a sequence) is preserved.
      */
     public ArrayConstructorExpression(
-            List<Expression> memberExpressions,
-            boolean isFixedSlotsArrayConstructor,
-            ExceptionMetadata metadata
-    ) {
+            List<Expression> memberExpressions, boolean isFixedSlotsArrayConstructor, ExceptionMetadata metadata) {
         super(metadata);
         this.expression = null;
         this.memberExpressions = memberExpressions;
@@ -107,10 +104,8 @@ public class ArrayConstructorExpression extends Expression {
         }
     }
 
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitArrayConstructor(this, argument);
     }
-
 }

@@ -17,46 +17,43 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.NamedFunctions;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.types.SequenceType;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.NamedFunctions;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.FunctionItem;
+import org.rumbledb.runtime.CommaExpressionIterator;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.types.SequenceType;
+
+public class ArrayFoldRightFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> computeResult(context).iterator(), getMetadata());
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator zeroIterator;
-    private final RuntimeIterator functionIterator;
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan zeroIterator;
+    private final ItemRuntimePlan functionIterator;
 
-    private List<Item> resultSequence;
-    private int resultIndex;
-
-    public ArrayFoldRightFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ArrayFoldRightFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         if (arguments.size() != 3) {
             throw new OurBadException("array:fold-right must have exactly three arguments.");
@@ -64,36 +61,22 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
         this.arrayIterator = arguments.get(0);
         this.zeroIterator = arguments.get(1);
         this.functionIterator = arguments.get(2);
-        this.resultSequence = null;
-        this.resultIndex = 0;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.resultIndex = 0;
-        this.hasNext = this.resultSequence != null && !this.resultSequence.isEmpty();
-    }
-
-    private void initializeResult(DynamicContext context) {
+    private List<Item> computeResult(DynamicContext context) {
         Item arrayItem;
         try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultSequence = null;
-            return;
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:fold-right expects exactly one array argument.",
-                    getMetadata()
-            );
+            throw new UnexpectedTypeException("array:fold-right expects exactly one array argument.", getMetadata());
+        }
+        if (arrayItem == null) {
+            return Collections.emptyList();
         }
 
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
-                    "Type error; argument to array:fold-right must be an array.",
-                    getMetadata()
-            );
+                    "Type error; argument to array:fold-right must be an array.", getMetadata());
         }
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
@@ -103,15 +86,11 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
         List<Item> functionItems = this.functionIterator.materialize(context);
         if (functionItems.isEmpty()) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to array:fold-right must be a function item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to array:fold-right must be a function item.", getMetadata());
         }
         if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to array:fold-right must be a single function item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to array:fold-right must be a single function item.", getMetadata());
         }
 
         FunctionItem functionItem = (FunctionItem) functionItems.get(0);
@@ -121,102 +100,51 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
             accumulator = applyFunction(functionItem, memberSequence, accumulator, context);
         }
 
-        this.resultSequence = accumulator;
+        return accumulator;
     }
 
-    private RuntimeIterator createSequenceIterator(List<Item> items) {
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+                    .configuration(getConfiguration())
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build();
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
-        List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
-                .configuration(getConfiguration())
-                .staticType(SequenceType.createSequenceType("item*"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(getMetadata())
-                .build();
+                    .configuration(getConfiguration())
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build();
             childIterators.add(new ConstantRuntimeIterator(item, childStaticContext));
         }
 
         RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
         return new CommaExpressionIterator(childIterators, staticContext);
     }
 
     private List<Item> applyFunction(
-            FunctionItem functionItem,
-            List<Item> memberSequence,
-            List<Item> accumulator,
-            DynamicContext context
-    ) {
-        RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
-        RuntimeIterator accIterator = createSequenceIterator(accumulator);
+            FunctionItem functionItem, List<Item> memberSequence, List<Item> accumulator, DynamicContext context) {
+        ItemRuntimePlan memberIterator = createSequenceIterator(memberSequence);
+        ItemRuntimePlan accIterator = createSequenceIterator(accumulator);
 
-        List<RuntimeIterator> arguments = new ArrayList<>(2);
+        List<ItemRuntimePlan> arguments = new ArrayList<>(2);
         arguments.add(memberIterator);
         arguments.add(accIterator);
 
-        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
-        );
+        ItemRuntimePlan functionCall = NamedFunctions.buildFunctionItemCallIterator(
+                functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
         return functionCall.materialize(context);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.resultSequence.get(this.resultIndex++);
-        if (this.resultIndex >= this.resultSequence.size()) {
-            this.hasNext = false;
-        }
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.resultSequence = null;
-        this.resultIndex = 0;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:fold-right is currently supported only in local execution mode."
-        );
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException(
-                "array:fold-right is currently supported only in local execution mode."
-        );
     }
 }

@@ -70,8 +70,8 @@ import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
-import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -143,8 +143,9 @@ import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
-import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -153,11 +154,10 @@ import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.EmptySequenceIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.arithmetics.UnaryOperationIterator;
@@ -188,14 +188,15 @@ import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.misc.NodeComparisonRuntimeIterator;
-import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.runtime.misc.NodeSetOperationIterator;
+import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.runtime.misc.StringConcatIterator;
 import org.rumbledb.runtime.navigation.ArrayLookupIterator;
 import org.rumbledb.runtime.navigation.ArrayUnboxingIterator;
 import org.rumbledb.runtime.navigation.ObjectLookupIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.navigation.SequenceLookupIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
@@ -251,8 +252,8 @@ import org.rumbledb.runtime.xml.ComputedNamespaceConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
-import org.rumbledb.runtime.xml.DocumentNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirectCommentConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DocumentNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.PathRootRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
@@ -265,7 +266,7 @@ import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
+public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan> {
 
     private final VisitorConfig visitorConfig;
     private final RumbleConfiguration config;
@@ -276,13 +277,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visit(Node node, RuntimeIterator argument) {
+    public ItemRuntimePlan visit(Node node, ItemRuntimePlan argument) {
         return node.accept(this, argument);
     }
 
     @Override
-    public RuntimeIterator visitDescendants(Node node, RuntimeIterator argument) {
-        RuntimeIterator result = argument;
+    public ItemRuntimePlan visitDescendants(Node node, ItemRuntimePlan argument) {
+        ItemRuntimePlan result = argument;
         for (Node child : node.getChildren()) {
             result = visit(child, argument);
         }
@@ -290,123 +291,103 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitProlog(Prolog expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitProlog(Prolog expression, ItemRuntimePlan argument) {
         return argument;
     }
 
     @Override
-    public RuntimeIterator visitCommaExpression(CommaExpression expression, RuntimeIterator argument) {
-        List<RuntimeIterator> result = new ArrayList<>();
+    public ItemRuntimePlan visitCommaExpression(CommaExpression expression, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> result = new ArrayList<>();
         for (Expression childExpr : expression.getExpressions()) {
             result.add(this.visit(childExpr, argument));
         }
         if (result.size() == 1) {
             return result.get(0);
         } else {
-            RuntimeIterator runtimeIterator = new CommaExpressionIterator(
-                    result,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+            ItemRuntimePlan runtimeIterator = new CommaExpressionIterator(
+                    result, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
             return runtimeIterator;
         }
     }
 
     // region module
+
     @Override
-    public RuntimeIterator visitMainModule(MainModule expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitMainModule(MainModule expression, ItemRuntimePlan argument) {
         return super.visitMainModule(expression, argument);
     }
     // endregion
 
     // region FLOWR
     @Override
-    public RuntimeIterator visitFlowrExpression(FlworExpression expression, RuntimeIterator argument) {
-        RuntimeTupleIterator previous = this.visitFlowrClause(
-            expression.getReturnClause().getPreviousClause(),
-            argument
-        );
+    public ItemRuntimePlan visitFlowrExpression(FlworExpression expression, ItemRuntimePlan argument) {
+        TupleRuntimePlan previous =
+                this.visitFlowrClause(expression.getReturnClause().getPreviousClause(), argument);
         ReturnClause returnClause = expression.getReturnClause();
-        RuntimeIterator runtimeIterator = new ReturnClauseIterator(
+        ItemRuntimePlan runtimeIterator = new ReturnClauseIterator(
                 previous,
-                this.visit(
-                    returnClause.getReturnExpr(),
-                    argument
-                ),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    .toBuilder()
-                    .executionMode(returnClause.getHighestExecutionMode(this.visitorConfig))
-                    .metadata(returnClause.getMetadata())
-                    .build()
-        );
+                this.visit(returnClause.getReturnExpr(), argument),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig).toBuilder()
+                        .executionMode(returnClause.getHighestExecutionMode(this.visitorConfig))
+                        .metadata(returnClause.getMetadata())
+                        .build());
         return runtimeIterator;
     }
 
-    private RuntimeTupleIterator visitFlowrClause(
-            Clause clause,
-            RuntimeIterator argument
-    ) {
-        RuntimeTupleIterator previousIterator = null;
+    private TupleRuntimePlan visitFlowrClause(Clause clause, ItemRuntimePlan argument) {
+        TupleRuntimePlan previousIterator = null;
         if (clause.getPreviousClause() != null) {
             previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
         }
         if (clause instanceof ForClause forClause) {
-            RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
+            ItemRuntimePlan assignmentIterator = this.visit(forClause.getExpression(), argument);
             return new ForClauseIterator(
                     previousIterator,
                     forClause.getVariableName(),
                     forClause.getPositionalVariableName(),
                     forClause.isAllowEmpty(),
                     assignmentIterator,
-                    forClause.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    forClause.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else if (clause instanceof LetClause letClause) {
-            RuntimeIterator assignmentIterator = this.visit(letClause.getExpression(), argument);
+            ItemRuntimePlan assignmentIterator = this.visit(letClause.getExpression(), argument);
             return new LetClauseIterator(
                     previousIterator,
                     letClause.getVariableName(),
                     letClause.getStaticType(),
                     assignmentIterator,
-                    letClause.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    letClause.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else if (clause instanceof WindowClause windowClause) {
-            RuntimeIterator sourceIterator = this.visit(windowClause.getExpression(), argument);
-            RuntimeIterator startIterator = this.visit(windowClause.getStartCondition().expression(), argument);
-            RuntimeIterator endIterator = windowClause.getEndCondition() == null
-                ? null
-                : this.visit(windowClause.getEndCondition().expression(), argument);
+            ItemRuntimePlan sourceIterator = this.visit(windowClause.getExpression(), argument);
+            ItemRuntimePlan startIterator =
+                    this.visit(windowClause.getStartCondition().expression(), argument);
+            ItemRuntimePlan endIterator = windowClause.getEndCondition() == null
+                    ? null
+                    : this.visit(windowClause.getEndCondition().expression(), argument);
             return new WindowClauseIterator(
                     previousIterator,
                     windowClause,
                     sourceIterator,
                     startIterator,
                     endIterator,
-                    windowClause.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    windowClause.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else if (clause instanceof GroupByClause groupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
             for (GroupByVariableDeclaration var : groupByClause.getGroupVariables()) {
                 Expression groupByExpression = var.getExpression();
-                RuntimeIterator groupByExpressionIterator = null;
+                ItemRuntimePlan groupByExpressionIterator = null;
                 if (groupByExpression != null) {
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
                 }
 
                 Name variableName = var.getVariableName();
 
-                groupingExpressions.add(
-                    new GroupByClauseSparkIteratorExpression(
-                            groupByExpressionIterator,
-                            variableName,
-                            var.getCollationURI(),
-                            var.getActualSequenceType()
-                    )
-                );
+                groupingExpressions.add(new GroupByClauseSparkIteratorExpression(
+                        groupByExpressionIterator, variableName, var.getCollationURI(), var.getActualSequenceType()));
             }
             return new GroupByClauseIterator(
                     previousIterator,
                     groupingExpressions,
-                    clause.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    clause.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else if (clause instanceof OrderByClause orderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
             for (OrderByClauseSortingKey orderExpr : orderByClause.getSortingKeys()) {
@@ -418,43 +399,35 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         emptyOrder = OrderByClauseSortingKey.EMPTY_ORDER.GREATEST;
                     }
                 }
-                expressionsWithIterator.add(
-                    new OrderByClauseAnnotatedChildIterator(
-                            this.visit(orderExpr.getExpression(), argument),
-                            orderExpr.isAscending(),
-                            orderExpr.getUri(),
-                            emptyOrder
-                    )
-                );
+                expressionsWithIterator.add(new OrderByClauseAnnotatedChildIterator(
+                        this.visit(orderExpr.getExpression(), argument),
+                        orderExpr.isAscending(),
+                        orderExpr.getUri(),
+                        emptyOrder));
             }
             return new OrderByClauseIterator(
                     previousIterator,
                     expressionsWithIterator,
                     orderByClause.isStable(),
-                    clause.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    clause.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else if (clause instanceof WhereClause whereClause) {
             return new WhereClauseIterator(
                     previousIterator,
                     this.visit(whereClause.getWhereExpression(), argument),
-                    clause.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    clause.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else if (clause instanceof CountClause countClause) {
             return new CountClauseIterator(
                     previousIterator,
                     countClause.getCountVariableName(),
-                    clause.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    clause.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
         throw new OurBadException("Clause unrecognized.");
     }
 
     @Override
-    public RuntimeIterator visitVariableReference(VariableReferenceExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new VariableReferenceIterator(
-                expression.getVariableName(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitVariableReference(VariableReferenceExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new VariableReferenceIterator(
+                expression.getVariableName(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         return runtimeIterator;
     }
     // endregion
@@ -462,206 +435,182 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     // region updating
 
     @Override
-    public RuntimeIterator visitDeleteExpression(DeleteExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitDeleteExpression(DeleteExpression expression, ItemRuntimePlan argument) {
 
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator lookupIterator = this.visit(expression.getLocatorExpression(), argument);
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan lookupIterator = this.visit(expression.getLocatorExpression(), argument);
 
-        RuntimeIterator runtimeIterator = new DeleteExpressionIterator(
-                mainIterator,
-                lookupIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        ItemRuntimePlan runtimeIterator = new DeleteExpressionIterator(
+                mainIterator, lookupIterator, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitRenameExpression(RenameExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitRenameExpression(RenameExpression expression, ItemRuntimePlan argument) {
 
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator lookupIterator = this.visit(expression.getLocatorExpression(), argument);
-        RuntimeIterator nameIterator = this.visit(expression.getNameExpression(), argument);
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan lookupIterator = this.visit(expression.getLocatorExpression(), argument);
+        ItemRuntimePlan nameIterator = this.visit(expression.getNameExpression(), argument);
 
-        RuntimeIterator runtimeIterator = new RenameExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new RenameExpressionIterator(
                 mainIterator,
                 lookupIterator,
                 nameIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitReplaceExpression(ReplaceExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitReplaceExpression(ReplaceExpression expression, ItemRuntimePlan argument) {
 
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator lookupIterator = this.visit(expression.getLocatorExpression(), argument);
-        RuntimeIterator replacerIterator = this.visit(expression.getReplacerExpression(), argument);
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan lookupIterator = this.visit(expression.getLocatorExpression(), argument);
+        ItemRuntimePlan replacerIterator = this.visit(expression.getReplacerExpression(), argument);
 
-        RuntimeIterator runtimeIterator = new ReplaceExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new ReplaceExpressionIterator(
                 mainIterator,
                 lookupIterator,
                 replacerIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitInsertExpression(InsertExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitInsertExpression(InsertExpression expression, ItemRuntimePlan argument) {
 
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator toInsertIterator = this.visit(expression.getToInsertExpression(), argument);
-        RuntimeIterator positionIterator = expression.hasPositionExpression()
-            ? this.visit(expression.getPositionExpression(), argument)
-            : null;
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan toInsertIterator = this.visit(expression.getToInsertExpression(), argument);
+        ItemRuntimePlan positionIterator =
+                expression.hasPositionExpression() ? this.visit(expression.getPositionExpression(), argument) : null;
 
-        RuntimeIterator runtimeIterator = new InsertExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new InsertExpressionIterator(
                 mainIterator,
                 toInsertIterator,
                 positionIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitAppendExpression(AppendExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitAppendExpression(AppendExpression expression, ItemRuntimePlan argument) {
 
-        RuntimeIterator arrayIterator = this.visit(expression.getArrayExpression(), argument);
-        RuntimeIterator toAppendIterator = this.visit(expression.getToAppendExpression(), argument);
+        ItemRuntimePlan arrayIterator = this.visit(expression.getArrayExpression(), argument);
+        ItemRuntimePlan toAppendIterator = this.visit(expression.getToAppendExpression(), argument);
 
-        RuntimeIterator runtimeIterator = new AppendExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new AppendExpressionIterator(
                 arrayIterator,
                 toAppendIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitTransformExpression(TransformExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitTransformExpression(TransformExpression expression, ItemRuntimePlan argument) {
 
-        // List<RuntimeIterator> copyDeclIterators = new ArrayList<>();
-        Map<Name, RuntimeIterator> copyDeclMap = new HashMap<>();
+        // List<ItemRuntimePlan> copyDeclIterators = new ArrayList<>();
+        Map<Name, ItemRuntimePlan> copyDeclMap = new HashMap<>();
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             copyDeclMap.put(copyDecl.getVariableName(), this.visit(copyDecl.getSourceExpression(), argument));
         }
-        RuntimeIterator modifyIterator = this.visit(expression.getModifyExpression(), argument);
-        RuntimeIterator returnIterator = this.visit(expression.getReturnExpression(), argument);
+        ItemRuntimePlan modifyIterator = this.visit(expression.getModifyExpression(), argument);
+        ItemRuntimePlan returnIterator = this.visit(expression.getReturnExpression(), argument);
 
-        RuntimeIterator runtimeIterator = new TransformExpressionIterator(
+        ItemRuntimePlan runtimeIterator = new TransformExpressionIterator(
                 copyDeclMap,
                 modifyIterator,
                 returnIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                 expression.getMutabilityLevel(),
-                expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
-        );
+                expression.isInSequentialBlock()
+                        || expression.getStaticContext().isQuerySideEffecting());
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitCreateCollectionExpression(
-            CreateCollectionExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
-        RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
+    public ItemRuntimePlan visitCreateCollectionExpression(
+            CreateCollectionExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan targetIterator = this.visit(expression.getCollection(), argument);
         Mode mode = expression.getMode();
 
-        RuntimeIterator runtimeIterator = new CreateCollectionIterator(
+        ItemRuntimePlan runtimeIterator = new CreateCollectionIterator(
                 targetIterator,
                 contentIterator,
                 mode,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitDeleteIndexFromCollectionExpression(
-            DeleteIndexFromCollectionExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
+    public ItemRuntimePlan visitDeleteIndexFromCollectionExpression(
+            DeleteIndexFromCollectionExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan targetIterator = this.visit(expression.getCollection(), argument);
         Mode mode = expression.getMode();
         boolean isFirst = expression.isFirst();
 
-        RuntimeIterator runtimeIterator = null;
+        ItemRuntimePlan runtimeIterator = null;
         if (expression.getNumDelete() != null) {
-            RuntimeIterator numDelete = this.visit(expression.getNumDelete(), argument);
+            ItemRuntimePlan numDelete = this.visit(expression.getNumDelete(), argument);
             runtimeIterator = new DeleteIndexFromCollectionIterator(
                     targetIterator,
                     numDelete,
                     isFirst,
                     mode,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else {
             runtimeIterator = new DeleteIndexFromCollectionIterator(
                     targetIterator,
                     isFirst,
                     mode,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitDeleteSearchFromCollectionExpression(
-            DeleteSearchFromCollectionExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
-        RuntimeIterator runtimeIterator = new DeleteSearchFromCollectionIterator(
-                contentIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitDeleteSearchFromCollectionExpression(
+            DeleteSearchFromCollectionExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new DeleteSearchFromCollectionIterator(
+                contentIterator, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitEditCollectionExpression(
-            EditCollectionExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator targetIterator = this.visit(expression.getTargetExpression(), argument);
-        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
+    public ItemRuntimePlan visitEditCollectionExpression(
+            EditCollectionExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan targetIterator = this.visit(expression.getTargetExpression(), argument);
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
 
-        RuntimeIterator runtimeIterator = new EditCollectionIterator(
+        ItemRuntimePlan runtimeIterator = new EditCollectionIterator(
                 targetIterator,
                 contentIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitInsertIndexIntoCollectionExpression(
-            InsertIndexIntoCollectionExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
-        RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
+    public ItemRuntimePlan visitInsertIndexIntoCollectionExpression(
+            InsertIndexIntoCollectionExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
+        ItemRuntimePlan targetIterator = this.visit(expression.getCollection(), argument);
         Mode mode = expression.getMode();
         boolean isFirst = expression.isFirst();
         boolean isLast = expression.isLast();
 
-        RuntimeIterator runtimeIterator = null;
+        ItemRuntimePlan runtimeIterator = null;
         if (expression.getPosition() != null) {
-            RuntimeIterator pos = this.visit(expression.getPosition(), argument);
+            ItemRuntimePlan pos = this.visit(expression.getPosition(), argument);
             runtimeIterator = new InsertIndexIntoCollectionIterator(
                     targetIterator,
                     contentIterator,
@@ -669,8 +618,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     mode,
                     isFirst,
                     isLast,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else {
             runtimeIterator = new InsertIndexIntoCollectionIterator(
                     targetIterator,
@@ -678,44 +626,35 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     mode,
                     isFirst,
                     isLast,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitInsertSearchIntoCollectionExpression(
-            InsertSearchIntoCollectionExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator targetIterator = this.visit(expression.getTargetExpression(), argument);
-        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
+    public ItemRuntimePlan visitInsertSearchIntoCollectionExpression(
+            InsertSearchIntoCollectionExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan targetIterator = this.visit(expression.getTargetExpression(), argument);
+        ItemRuntimePlan contentIterator = this.visit(expression.getContentExpression(), argument);
         boolean isBefore = expression.isBefore();
 
-        RuntimeIterator runtimeIterator = new InsertSearchIntoCollectionIterator(
+        ItemRuntimePlan runtimeIterator = new InsertSearchIntoCollectionIterator(
                 targetIterator,
                 contentIterator,
                 isBefore,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitTruncateCollectionExpression(
-            TruncateCollectionExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator targetIterator = this.visit(expression.getCollectionName(), argument);
+    public ItemRuntimePlan visitTruncateCollectionExpression(
+            TruncateCollectionExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan targetIterator = this.visit(expression.getCollectionName(), argument);
         Mode mode = expression.getMode();
-        RuntimeIterator runtimeIterator = new TruncateCollectionIterator(
-                targetIterator,
-                mode,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        ItemRuntimePlan runtimeIterator = new TruncateCollectionIterator(
+                targetIterator, mode, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
@@ -724,15 +663,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     // region primary
     @Override
-    public RuntimeIterator visitFilterExpression(FilterExpression expression, RuntimeIterator argument) {
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+    public ItemRuntimePlan visitFilterExpression(FilterExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
         Expression predicateExpression = expression.getPredicateExpression();
 
         // if we have a int in the predicate we can optimize to a SequenceLookupIterator
         if (predicateExpression instanceof IntegerLiteralExpression integerLiteral) {
             String lexicalValue = integerLiteral.getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
-                int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
+                int n = ItemFactory.getInstance()
+                        .createIntegerItem(lexicalValue)
+                        .getIntValue();
                 return getSequenceLookupIterator(expression, mainIterator, n);
             }
         }
@@ -746,33 +687,24 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             // if decimal has digits to the right of the decimal point, return empty sequence according to spec
             if (decimalLiteral.getValue().stripTrailingZeros().scale() > 0) {
                 return new EmptySequenceIterator(
-                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                );
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig));
             }
         }
 
-        if (
-            predicateExpression instanceof ComparisonExpression comparisonExpression
-                && comparisonExpression.getComparisonOperator()
-                    .toString()
-                    .equals("eq")
-        ) {
+        if (predicateExpression instanceof ComparisonExpression comparisonExpression
+                && comparisonExpression.getComparisonOperator().toString().equals("eq")) {
             Node left = comparisonExpression.getChildren().get(0);
             Node right = comparisonExpression.getChildren().get(1);
 
             Node intLiteral = null;
-            if (
-                left instanceof FunctionCallExpression functionCall
-                    && functionCall.getFunctionName().getLocalName().equals("position")
-            ) {
+            if (left instanceof FunctionCallExpression functionCall
+                    && functionCall.getFunctionName().getLocalName().equals("position")) {
                 if (right instanceof IntegerLiteralExpression) {
                     intLiteral = right;
                 }
             }
-            if (
-                right instanceof FunctionCallExpression functionCall
-                    && functionCall.getFunctionName().getLocalName().equals("position")
-            ) {
+            if (right instanceof FunctionCallExpression functionCall
+                    && functionCall.getFunctionName().getLocalName().equals("position")) {
                 if (left instanceof IntegerLiteralExpression) {
                     intLiteral = left;
                 }
@@ -780,103 +712,80 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             if (intLiteral != null) {
                 String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
                 if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
-                    int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
+                    int n = ItemFactory.getInstance()
+                            .createIntegerItem(lexicalValue)
+                            .getIntValue();
                     return getSequenceLookupIterator(expression, mainIterator, n);
                 }
             }
         }
 
         // fallback for alll other cases
-        RuntimeIterator filterIterator = this.visit(predicateExpression, argument);
-        RuntimeIterator runtimeIterator = new PredicateIterator(
-                mainIterator,
-                filterIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        ItemRuntimePlan filterIterator = this.visit(predicateExpression, argument);
+        ItemRuntimePlan runtimeIterator = new PredicateIterator(
+                mainIterator, filterIterator, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
-    private RuntimeIterator getSequenceLookupIterator(
-            FilterExpression expression,
-            RuntimeIterator mainIterator,
-            int n
-    ) {
-        RuntimeIterator iterator = new SequenceLookupIterator(
-                mainIterator,
-                n,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    private ItemRuntimePlan getSequenceLookupIterator(
+            FilterExpression expression, ItemRuntimePlan mainIterator, int n) {
+        ItemRuntimePlan iterator = new SequenceLookupIterator(
+                mainIterator, n, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return iterator;
     }
 
     @Override
-    public RuntimeIterator visitArrayLookupExpression(ArrayLookupExpression expression, RuntimeIterator argument) {
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator lookupIterator = this.visit(expression.getLookupExpression(), argument);
-        RuntimeIterator runtimeIterator = new ArrayLookupIterator(
-                mainIterator,
-                lookupIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitArrayLookupExpression(ArrayLookupExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan lookupIterator = this.visit(expression.getLookupExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new ArrayLookupIterator(
+                mainIterator, lookupIterator, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitObjectLookupExpression(ObjectLookupExpression expression, RuntimeIterator argument) {
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator lookupIterator = this.visit(expression.getLookupExpression(), argument);
-        RuntimeIterator runtimeIterator = new ObjectLookupIterator(
-                mainIterator,
-                lookupIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitObjectLookupExpression(ObjectLookupExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan lookupIterator = this.visit(expression.getLookupExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new ObjectLookupIterator(
+                mainIterator, lookupIterator, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitPostfixLookupExpression(PostfixLookupExpression expression, RuntimeIterator argument) {
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+    public ItemRuntimePlan visitPostfixLookupExpression(PostfixLookupExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
         Expression lookup = expression.getLookupExpression(); // null if wildcard
-        RuntimeIterator lookupIterator = (lookup == null)
-            ? null
-            : this.visit(expression.getLookupExpression(), argument);
+        ItemRuntimePlan lookupIterator =
+                (lookup == null) ? null : this.visit(expression.getLookupExpression(), argument);
         RuntimeStaticContext staticContextForRuntime =
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig);
-        RuntimeIterator runtimeIterator = new PostfixLookupIterator(
-                mainIterator,
-                lookupIterator,
-                staticContextForRuntime
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig);
+        ItemRuntimePlan runtimeIterator =
+                new PostfixLookupIterator(mainIterator, lookupIterator, staticContextForRuntime);
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitUnaryLookupExpression(UnaryLookupExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitUnaryLookupExpression(UnaryLookupExpression expression, ItemRuntimePlan argument) {
         Expression lookup = expression.getLookupExpression(); // null if wildcard
-        RuntimeIterator lookupIterator = (lookup == null)
-            ? null
-            : this.visit(expression.getLookupExpression(), argument);
+        ItemRuntimePlan lookupIterator =
+                (lookup == null) ? null : this.visit(expression.getLookupExpression(), argument);
         RuntimeStaticContext staticContextForRuntime =
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig);
-        RuntimeIterator runtimeIterator = new UnaryLookupIterator(
-                lookupIterator,
-                staticContextForRuntime
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig);
+        ItemRuntimePlan runtimeIterator = new UnaryLookupIterator(lookupIterator, staticContextForRuntime);
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitDynamicFunctionCallExpression(
-            DynamicFunctionCallExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        List<RuntimeIterator> arguments = new ArrayList<>();
+    public ItemRuntimePlan visitDynamicFunctionCallExpression(
+            DynamicFunctionCallExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        List<ItemRuntimePlan> arguments = new ArrayList<>();
         for (Expression arg : expression.getArguments()) {
             if (arg == null) { // check ArgumentPlaceholder
                 arguments.add(null);
@@ -884,33 +793,28 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 arguments.add(this.visit(arg, argument));
             }
         }
-        RuntimeIterator runtimeIterator = new DynamicFunctionCallIterator(
-                mainIterator,
-                arguments,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        ItemRuntimePlan runtimeIterator = new DynamicFunctionCallIterator(
+                mainIterator, arguments, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitArrayUnboxingExpression(ArrayUnboxingExpression expression, RuntimeIterator argument) {
-        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator runtimeIterator = new ArrayUnboxingIterator(
-                mainIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitArrayUnboxingExpression(ArrayUnboxingExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan mainIterator = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new ArrayUnboxingIterator(
+                mainIterator, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitArrayConstructor(ArrayConstructorExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator;
+    public ItemRuntimePlan visitArrayConstructor(ArrayConstructorExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator;
         if (expression.isFixedSlotsArrayConstructor()) {
-            List<RuntimeIterator> memberIterators = new ArrayList<>();
+            List<ItemRuntimePlan> memberIterators = new ArrayList<>();
             if (expression.getMemberExpressions() != null) {
-                for (org.rumbledb.expressions.Expression memberExpr : expression.getMemberExpressions()) {
+                for (Expression memberExpr : expression.getMemberExpressions()) {
                     memberIterators.add(this.visit(memberExpr, argument));
                 }
             }
@@ -918,427 +822,359 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     memberIterators,
                     true,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
-            );
+                    expression.isInSequentialBlock()
+                            || expression.getStaticContext().isQuerySideEffecting());
         } else {
-            RuntimeIterator result = null;
+            ItemRuntimePlan result = null;
             if (expression.getExpression() != null) {
                 result = this.visit(expression.getExpression(), argument);
             }
             runtimeIterator = new ArrayRuntimeIterator(
                     result,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
-            );
+                    expression.isInSequentialBlock()
+                            || expression.getStaticContext().isQuerySideEffecting());
         }
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitObjectConstructor(ObjectConstructorExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator;
+    public ItemRuntimePlan visitObjectConstructor(ObjectConstructorExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator;
         if (expression.isMergedConstructor()) {
             runtimeIterator = new ObjectConstructorRuntimeIterator(
-                    expression.getChildren()
-                        .stream()
-                        .map(arg -> this.visit(arg, argument))
-                        .collect(Collectors.toList()),
+                    expression.getChildren().stream()
+                            .map(arg -> this.visit(arg, argument))
+                            .collect(Collectors.toList()),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
-            );
+                    expression.isInSequentialBlock()
+                            || expression.getStaticContext().isQuerySideEffecting());
 
             return runtimeIterator;
         } else {
-            List<RuntimeIterator> keys = expression.getKeys()
-                .stream()
-                .map(arg -> this.visit(arg, argument))
-                .collect(Collectors.toList());
-            List<RuntimeIterator> values = expression.getValues()
-                .stream()
-                .map(arg -> this.visit(arg, argument))
-                .collect(Collectors.toList());
+            List<ItemRuntimePlan> keys = expression.getKeys().stream()
+                    .map(arg -> this.visit(arg, argument))
+                    .collect(Collectors.toList());
+            List<ItemRuntimePlan> values = expression.getValues().stream()
+                    .map(arg -> this.visit(arg, argument))
+                    .collect(Collectors.toList());
             runtimeIterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
-            );
+                    expression.isInSequentialBlock()
+                            || expression.getStaticContext().isQuerySideEffecting());
 
             return runtimeIterator;
         }
     }
 
     @Override
-    public RuntimeIterator visitMapConstructor(MapConstructorExpression expression, RuntimeIterator argument) {
-        List<RuntimeIterator> keys = expression.getKeys()
-            .stream()
-            .map(arg -> this.visit(arg, argument))
-            .collect(Collectors.toList());
-        List<RuntimeIterator> values = expression.getValues()
-            .stream()
-            .map(arg -> this.visit(arg, argument))
-            .collect(Collectors.toList());
-        List<SequenceType> keyTypes = expression.getKeys()
-            .stream()
-            .map(arg -> arg.getStaticSequenceType())
-            .filter(
-                arg -> !arg.getArity().equals(SequenceType.Arity.One)
-                    || !arg.getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem)
-            )
-            .collect(Collectors.toList());
-        List<SequenceType> valueTypes = expression.getValues()
-            .stream()
-            .map(arg -> arg.getStaticSequenceType())
-            .filter(
-                arg -> !arg.getArity().equals(SequenceType.Arity.One)
-            )
-            .collect(Collectors.toList());
+    public ItemRuntimePlan visitMapConstructor(MapConstructorExpression expression, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> keys = expression.getKeys().stream()
+                .map(arg -> this.visit(arg, argument))
+                .collect(Collectors.toList());
+        List<ItemRuntimePlan> values = expression.getValues().stream()
+                .map(arg -> this.visit(arg, argument))
+                .collect(Collectors.toList());
+        List<SequenceType> keyTypes = expression.getKeys().stream()
+                .map(arg -> arg.getStaticSequenceType())
+                .filter(arg -> !arg.getArity().equals(SequenceType.Arity.One)
+                        || !arg.getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem))
+                .collect(Collectors.toList());
+        List<SequenceType> valueTypes = expression.getValues().stream()
+                .map(arg -> arg.getStaticSequenceType())
+                .filter(arg -> !arg.getArity().equals(SequenceType.Arity.One))
+                .collect(Collectors.toList());
         if (keyTypes.isEmpty() && valueTypes.isEmpty()) {
-            RuntimeIterator runtimeIterator = new ObjectConstructorRuntimeIterator(
+            ItemRuntimePlan runtimeIterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
-            );
+                    expression.isInSequentialBlock()
+                            || expression.getStaticContext().isQuerySideEffecting());
 
             return runtimeIterator;
         }
-        RuntimeIterator runtimeIterator = new MapConstructorRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new MapConstructorRuntimeIterator(
                 keys,
                 values,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
-        );
+                expression.isInSequentialBlock()
+                        || expression.getStaticContext().isQuerySideEffecting());
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitDirElemConstructor(DirElemConstructorExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new DirElemConstructorRuntimeIterator(
+    public ItemRuntimePlan visitDirElemConstructor(DirElemConstructorExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new DirElemConstructorRuntimeIterator(
                 expression.getNodeName(),
-                expression.getContent()
-                    .stream()
-                    .map(arg -> this.visit(arg, argument))
-                    .collect(Collectors.toList()),
-                expression.getAttributes()
-                    .stream()
-                    .map(arg -> (AttributeNodeRuntimeIterator) this.visit(arg, argument))
-                    .collect(Collectors.toList()),
+                expression.getContent().stream()
+                        .map(arg -> this.visit(arg, argument))
+                        .collect(Collectors.toList()),
+                expression.getAttributes().stream()
+                        .map(arg -> (AttributeNodeRuntimeIterator) this.visit(arg, argument))
+                        .collect(Collectors.toList()),
                 expression.getNamespaceDeclarations(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitDirPIConstructor(DirPIConstructorExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitDirPIConstructor(DirPIConstructorExpression expression, ItemRuntimePlan argument) {
         Expression contentExpression = expression.getContentExpression();
         DataFunctionIterator contentIterator = null;
         if (contentExpression != null) {
-            RuntimeIterator contentExpressionIterator = this.visit(contentExpression, argument);
+            ItemRuntimePlan contentExpressionIterator = this.visit(contentExpression, argument);
             contentIterator = new DataFunctionIterator(
                     Collections.singletonList(contentExpressionIterator),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
-        RuntimeIterator runtimeIterator = new DirPIConstructorRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new DirPIConstructorRuntimeIterator(
                 expression.getTarget(),
                 contentIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitComputedElementConstructor(
-            ComputedElementConstructorExpression expression,
-            RuntimeIterator argument
-    ) {
+    public ItemRuntimePlan visitComputedElementConstructor(
+            ComputedElementConstructorExpression expression, ItemRuntimePlan argument) {
         Expression contentExpression = expression.getContentExpression();
-        RuntimeIterator contentIterator = contentExpression != null ? this.visit(contentExpression, argument) : null;
+        ItemRuntimePlan contentIterator = contentExpression != null ? this.visit(contentExpression, argument) : null;
 
-        RuntimeIterator runtimeIterator;
+        ItemRuntimePlan runtimeIterator;
         if (expression.hasStaticName()) {
             // Static element name: element elementName { content }
             runtimeIterator = new ComputedElementConstructorRuntimeIterator(
                     expression.getElementName(),
                     contentIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else {
             // Dynamic element name: element { nameExpression } { content }
-            RuntimeIterator nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
+            ItemRuntimePlan nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
             DataFunctionIterator nameIterator = new DataFunctionIterator(
                     Collections.singletonList(nameExpressionIterator),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
             runtimeIterator = new ComputedElementConstructorRuntimeIterator(
                     nameIterator,
                     contentIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitDocumentNodeConstructor(
-            DocumentNodeConstructorExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator contentIterator = expression.getContentExpression() != null
-            ? this.visit(expression.getContentExpression(), argument)
-            : null;
-        RuntimeIterator runtimeIterator = new DocumentNodeConstructorRuntimeIterator(
-                contentIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitDocumentNodeConstructor(
+            DocumentNodeConstructorExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan contentIterator = expression.getContentExpression() != null
+                ? this.visit(expression.getContentExpression(), argument)
+                : null;
+        ItemRuntimePlan runtimeIterator = new DocumentNodeConstructorRuntimeIterator(
+                contentIterator, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitComputedPIConstructor(
-            ComputedPIConstructorExpression expression,
-            RuntimeIterator argument
-    ) {
+    public ItemRuntimePlan visitComputedPIConstructor(
+            ComputedPIConstructorExpression expression, ItemRuntimePlan argument) {
         DataFunctionIterator contentIterator = null;
         if (expression.getContentExpression() != null) {
-            RuntimeIterator contentExpressionIterator = this.visit(expression.getContentExpression(), argument);
+            ItemRuntimePlan contentExpressionIterator = this.visit(expression.getContentExpression(), argument);
             contentIterator = new DataFunctionIterator(
                     Collections.singletonList(contentExpressionIterator),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
-        RuntimeIterator runtimeIterator;
+        ItemRuntimePlan runtimeIterator;
         if (expression.hasStaticTarget()) {
             runtimeIterator = new ComputedPIConstructorRuntimeIterator(
                     expression.getTarget(),
                     contentIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else {
-            RuntimeIterator nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
+            ItemRuntimePlan nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
             DataFunctionIterator nameIterator = new DataFunctionIterator(
                     Collections.singletonList(nameExpressionIterator),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
             runtimeIterator = new ComputedPIConstructorRuntimeIterator(
                     nameIterator,
                     contentIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitComputedNamespaceConstructor(
-            ComputedNamespaceConstructorExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator uriExpressionIterator = this.visit(expression.getUriExpression(), argument);
+    public ItemRuntimePlan visitComputedNamespaceConstructor(
+            ComputedNamespaceConstructorExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan uriExpressionIterator = this.visit(expression.getUriExpression(), argument);
         DataFunctionIterator uriIterator = new DataFunctionIterator(
                 Collections.singletonList(uriExpressionIterator),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
-        RuntimeIterator runtimeIterator;
+        ItemRuntimePlan runtimeIterator;
         if (expression.hasStaticPrefix()) {
             runtimeIterator = new ComputedNamespaceConstructorRuntimeIterator(
                     expression.getPrefix(),
                     uriIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else {
-            RuntimeIterator prefixExpressionIterator = this.visit(expression.getPrefixExpression(), argument);
+            ItemRuntimePlan prefixExpressionIterator = this.visit(expression.getPrefixExpression(), argument);
             DataFunctionIterator prefixIterator = new DataFunctionIterator(
                     Collections.singletonList(prefixExpressionIterator),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
             runtimeIterator = new ComputedNamespaceConstructorRuntimeIterator(
                     prefixIterator,
                     uriIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitComputedAttributeConstructor(
-            ComputedAttributeConstructorExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator runtimeIterator;
+    public ItemRuntimePlan visitComputedAttributeConstructor(
+            ComputedAttributeConstructorExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator;
         // create atomized iterator for the content expression
-        RuntimeIterator contentExpressionIterator = this.visit(expression.getValueExpression(), argument);
+        ItemRuntimePlan contentExpressionIterator = this.visit(expression.getValueExpression(), argument);
         DataFunctionIterator atomizedContentIterator = new DataFunctionIterator(
                 Collections.singletonList(contentExpressionIterator),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         if (expression.hasStaticName()) {
             // Static attribute name: attribute attributeName { content }
             runtimeIterator = new ComputedAttributeConstructorRuntimeIterator(
                     expression.getAttributeName(),
                     atomizedContentIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else {
             // Dynamic attribute name: attribute { nameExpression } { content }
             // create atomized iterator for the name expression
-            RuntimeIterator nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
+            ItemRuntimePlan nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
             DataFunctionIterator atomizedNameIterator = new DataFunctionIterator(
                     Collections.singletonList(nameExpressionIterator),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
             runtimeIterator = new ComputedAttributeConstructorRuntimeIterator(
                     atomizedNameIterator,
                     atomizedContentIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitCommentNodeConstructor(
-            CommentNodeConstructorExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
+    public ItemRuntimePlan visitCommentNodeConstructor(
+            CommentNodeConstructorExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan contentIterator = visit(expression.getContentExpression(), argument);
         CommentNodeConstructorRuntimeIterator result = new CommentNodeConstructorRuntimeIterator(
                 new DataFunctionIterator(
                         Collections.singletonList(contentIterator),
-                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                ),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return result;
     }
 
     @Override
-    public RuntimeIterator visitDirectCommentConstructor(
-            DirectCommentConstructorExpression expression,
-            RuntimeIterator argument
-    ) {
+    public ItemRuntimePlan visitDirectCommentConstructor(
+            DirectCommentConstructorExpression expression, ItemRuntimePlan argument) {
         DirectCommentConstructorRuntimeIterator result = new DirectCommentConstructorRuntimeIterator(
-                expression.getContent(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getContent(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return result;
     }
 
     @Override
-    public RuntimeIterator visitTextNodeConstructor(
-            TextNodeConstructorExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
+    public ItemRuntimePlan visitTextNodeConstructor(
+            TextNodeConstructorExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan contentIterator = visit(expression.getContentExpression(), argument);
 
         TextNodeConstructorRuntimeIterator result = new TextNodeConstructorRuntimeIterator(
                 new DataFunctionIterator(
                         Collections.singletonList(contentIterator),
-                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                ),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return result;
     }
 
     @Override
-    public RuntimeIterator visitTextNode(TextNodeExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new TextNodeRuntimeIterator(
-                expression.getContent(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitTextNode(TextNodeExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new TextNodeRuntimeIterator(
+                expression.getContent(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitAttributeNode(AttributeNodeExpression expression, RuntimeIterator argument) {
-        List<DataFunctionIterator> atomizedValues = expression.getValue()
-            .stream()
-            .map(
-                arg -> new DataFunctionIterator(
+    public ItemRuntimePlan visitAttributeNode(AttributeNodeExpression expression, ItemRuntimePlan argument) {
+        List<DataFunctionIterator> atomizedValues = expression.getValue().stream()
+                .map(arg -> new DataFunctionIterator(
                         Collections.singletonList(this.visit(arg, argument)),
-                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                )
-            )
-            .collect(Collectors.toList());
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)))
+                .collect(Collectors.toList());
 
-        RuntimeIterator runtimeIterator = new AttributeNodeRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new AttributeNodeRuntimeIterator(
                 expression.getNodeName(),
                 atomizedValues,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitAttributeNodeContent(
-            AttributeNodeContentExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator runtimeIterator = new AttributeNodeContentRuntimeIterator(
-                expression.getContent(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitAttributeNodeContent(
+            AttributeNodeContentExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new AttributeNodeContentRuntimeIterator(
+                expression.getContent(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitContextExpr(ContextItemExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new ContextExpressionIterator(
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitContextExpr(ContextItemExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator =
+                new ContextExpressionIterator(expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitInlineFunctionExpr(InlineFunctionExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitInlineFunctionExpr(InlineFunctionExpression expression, ItemRuntimePlan argument) {
         Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
-        RuntimeIterator bodyIterator = this.visit(expression.getBody(), argument);
-        RuntimeIterator runtimeIterator = new FunctionRuntimeIterator(
+        ItemRuntimePlan bodyIterator = this.visit(expression.getBody(), argument);
+        ItemRuntimePlan runtimeIterator = new FunctionRuntimeIterator(
                 expression.getName(),
                 paramNameToSequenceTypes,
                 returnType,
                 bodyIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitFunctionCall(FunctionCallExpression expression, RuntimeIterator argument) {
-        List<RuntimeIterator> arguments = new ArrayList<>();
+    public ItemRuntimePlan visitFunctionCall(FunctionCallExpression expression, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> arguments = new ArrayList<>();
         for (Expression arg : expression.getArguments()) {
             if (arg == null) {
                 arguments.add(null);
             } else {
-                RuntimeIterator argumentIterator = this.visit(arg, argument);
+                ItemRuntimePlan argumentIterator = this.visit(arg, argument);
                 arguments.add(argumentIterator);
             }
         }
@@ -1347,38 +1183,32 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
         String queryLanguage = expression.getStaticContext().getQueryLanguage();
 
-        RuntimeIterator runtimeIterator = null;
+        ItemRuntimePlan runtimeIterator = null;
         if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
-                identifier,
-                arguments,
-                // Note: passing the static context of the function call expression makes
-                // all builtin functions static-context-dependent.
-                // This might be worth a more fine-grained adjustment later.
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                false
-            );
+                    identifier,
+                    arguments,
+                    // Note: passing the static context of the function call expression makes
+                    // all builtin functions static-context-dependent.
+                    // This might be worth a more fine-grained adjustment later.
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    false);
         } else {
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(
                     identifier,
                     arguments,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                    expression.isTailCallOptimization()
-            );
+                    expression.isTailCallOptimization());
         }
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitNamedFunctionRef(
-            NamedFunctionReferenceExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator runtimeIterator = new NamedFunctionRefRuntimeIterator(
-                expression.getIdentifier(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitNamedFunctionRef(
+            NamedFunctionReferenceExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new NamedFunctionRefRuntimeIterator(
+                expression.getIdentifier(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
@@ -1386,60 +1216,49 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     // region literal
     @Override
-    public RuntimeIterator visitInteger(IntegerLiteralExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new IntegerRuntimeIterator(
-                expression.getLexicalValue(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitInteger(IntegerLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new IntegerRuntimeIterator(
+                expression.getLexicalValue(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitString(StringLiteralExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new StringRuntimeIterator(
-                expression.getValue(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitString(StringLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new StringRuntimeIterator(
+                expression.getValue(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitDouble(DoubleLiteralExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new DoubleRuntimeIterator(
-                expression.getValue(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitDouble(DoubleLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new DoubleRuntimeIterator(
+                expression.getValue(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitDecimal(DecimalLiteralExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new DecimalRuntimeIterator(
-                expression.getValue(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitDecimal(DecimalLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new DecimalRuntimeIterator(
+                expression.getValue(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitNull(NullLiteralExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new NullRuntimeIterator(
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitNull(NullLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator =
+                new NullRuntimeIterator(expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitBoolean(BooleanLiteralExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new BooleanRuntimeIterator(
-                expression.getValue(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitBoolean(BooleanLiteralExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new BooleanRuntimeIterator(
+                expression.getValue(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
@@ -1447,313 +1266,250 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     // region operational
     @Override
-    public RuntimeIterator visitAdditiveExpr(AdditiveExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitAdditiveExpr(AdditiveExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimeIterator left = this.visit(
-            leftExpression,
-            argument
-        );
-        RuntimeIterator right = this.visit(
-            rightExpression,
-            argument
-        );
+        ItemRuntimePlan left = this.visit(leftExpression, argument);
+        ItemRuntimePlan right = this.visit(rightExpression, argument);
         if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
             left = new DataFunctionIterator(
                     Collections.singletonList(left),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
         if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
             right = new DataFunctionIterator(
                     Collections.singletonList(right),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
-        RuntimeIterator runtimeIterator = new AdditiveOperationIterator(
+        ItemRuntimePlan runtimeIterator = new AdditiveOperationIterator(
                 left,
                 right,
                 expression.isMinus(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitMultiplicativeExpr(MultiplicativeExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitMultiplicativeExpr(MultiplicativeExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimeIterator left = this.visit(
-            leftExpression,
-            argument
-        );
-        RuntimeIterator right = this.visit(
-            rightExpression,
-            argument
-        );
+        ItemRuntimePlan left = this.visit(leftExpression, argument);
+        ItemRuntimePlan right = this.visit(rightExpression, argument);
         if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
             left = new DataFunctionIterator(
                     Collections.singletonList(left),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
         if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
             right = new DataFunctionIterator(
                     Collections.singletonList(right),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
-        RuntimeIterator runtimeIterator = new MultiplicativeOperationIterator(
+        ItemRuntimePlan runtimeIterator = new MultiplicativeOperationIterator(
                 left,
                 right,
                 expression.getMultiplicativeOperator(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitSimpleMapExpr(SimpleMapExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitSimpleMapExpr(SimpleMapExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimeIterator left = this.visit(
-            leftExpression,
-            argument
-        );
-        RuntimeIterator right = this.visit(
-            rightExpression,
-            argument
-        );
+        ItemRuntimePlan left = this.visit(leftExpression, argument);
+        ItemRuntimePlan right = this.visit(rightExpression, argument);
 
-        RuntimeIterator runtimeIterator = new SimpleMapExpressionIterator(
-                left,
-                right,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        ItemRuntimePlan runtimeIterator = new SimpleMapExpressionIterator(
+                left, right, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitAndExpr(AndExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitAndExpr(AndExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimeIterator left = this.visit(
-            leftExpression,
-            argument
-        );
-        RuntimeIterator right = this.visit(
-            rightExpression,
-            argument
-        );
+        ItemRuntimePlan left = this.visit(leftExpression, argument);
+        ItemRuntimePlan right = this.visit(rightExpression, argument);
 
-        RuntimeIterator runtimeIterator = new AndOperationIterator(
-                left,
-                right,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        ItemRuntimePlan runtimeIterator = new AndOperationIterator(
+                left, right, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitOrExpr(OrExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitOrExpr(OrExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
-        RuntimeIterator left = this.visit(
-            leftExpression,
-            argument
-        );
-        RuntimeIterator right = this.visit(
-            rightExpression,
-            argument
-        );
+        ItemRuntimePlan left = this.visit(leftExpression, argument);
+        ItemRuntimePlan right = this.visit(rightExpression, argument);
 
-        RuntimeIterator runtimeIterator = new OrOperationIterator(
-                left,
-                right,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        ItemRuntimePlan runtimeIterator = new OrOperationIterator(
+                left, right, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitNotExpr(NotExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new NotOperationIterator(
+    public ItemRuntimePlan visitNotExpr(NotExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator = new NotOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitUnaryExpr(UnaryExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitUnaryExpr(UnaryExpression expression, ItemRuntimePlan argument) {
         // compute +- final result
-        RuntimeIterator runtimeIterator = new UnaryOperationIterator(
+        ItemRuntimePlan runtimeIterator = new UnaryOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
                 expression.isNegated(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitRangeExpr(RangeExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
-        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
-        RuntimeIterator runtimeIterator = new RangeOperationIterator(
-                left,
-                right,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitRangeExpr(RangeExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan left = this.visit(expression.getChildren().get(0), argument);
+        ItemRuntimePlan right = this.visit(expression.getChildren().get(1), argument);
+        ItemRuntimePlan runtimeIterator = new RangeOperationIterator(
+                left, right, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitNodeSetExpr(NodeSetExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getLeftExpression(), argument);
-        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
-        RuntimeIterator runtimeIterator = new NodeSetOperationIterator(
+    public ItemRuntimePlan visitNodeSetExpr(NodeSetExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan left = this.visit(expression.getLeftExpression(), argument);
+        ItemRuntimePlan right = this.visit(expression.getRightExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new NodeSetOperationIterator(
                 left,
                 right,
                 expression.getOperator(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitComparisonExpr(ComparisonExpression expression, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
 
-        RuntimeIterator left = this.visit(leftExpression, argument);
-        RuntimeIterator right = this.visit(rightExpression, argument);
+        ItemRuntimePlan left = this.visit(leftExpression, argument);
+        ItemRuntimePlan right = this.visit(rightExpression, argument);
         if (!(leftExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
             // Atomic comparison operators require atomized operands. If the operands are not atomic, we need to wrap
             // them in a DataFunctionIterator to atomize them.
             left = new DataFunctionIterator(
                     Collections.singletonList(left),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
         if (!(rightExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
             right = new DataFunctionIterator(
                     Collections.singletonList(right),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
-        RuntimeIterator runtimeIterator = new ComparisonIterator(
+        ItemRuntimePlan runtimeIterator = new ComparisonIterator(
                 left,
                 right,
                 expression.getComparisonOperator(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitNodeComparisonExpr(NodeComparisonExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getLeftExpression(), argument);
-        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
-        RuntimeIterator runtimeIterator = new NodeComparisonRuntimeIterator(
+    public ItemRuntimePlan visitNodeComparisonExpr(NodeComparisonExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan left = this.visit(expression.getLeftExpression(), argument);
+        ItemRuntimePlan right = this.visit(expression.getRightExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new NodeComparisonRuntimeIterator(
                 left,
                 right,
                 expression.getOperator(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitStringConcatExpr(StringConcatExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
-        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
-        RuntimeIterator runtimeIterator = new StringConcatIterator(
-                left,
-                right,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitStringConcatExpr(StringConcatExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan left = this.visit(expression.getChildren().get(0), argument);
+        ItemRuntimePlan right = this.visit(expression.getChildren().get(1), argument);
+        ItemRuntimePlan runtimeIterator = new StringConcatIterator(
+                left, right, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitInstanceOfExpression(InstanceOfExpression expression, RuntimeIterator argument) {
-        RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator runtimeIterator = new InstanceOfIterator(
+    public ItemRuntimePlan visitInstanceOfExpression(InstanceOfExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new InstanceOfIterator(
                 childExpression,
                 expression.getSequenceType(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitValidateTypeExpression(ValidateTypeExpression expression, RuntimeIterator argument) {
-        RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator runtimeIterator = new ValidateTypeIterator(
+    public ItemRuntimePlan visitValidateTypeExpression(ValidateTypeExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new ValidateTypeIterator(
                 childExpression,
                 expression.getSequenceType().getItemType(),
                 expression.isValidate(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
-        RuntimeIterator resultIterator = new TreatIterator(
+        ItemRuntimePlan resultIterator = new TreatIterator(
                 runtimeIterator,
-                new SequenceType(BuiltinTypesCatalogue.item, expression.getSequenceType().getArity()),
+                new SequenceType(
+                        BuiltinTypesCatalogue.item, expression.getSequenceType().getArity()),
                 ErrorCode.InvalidInstance,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return resultIterator;
     }
 
     @Override
-    public RuntimeIterator visitTreatExpression(TreatExpression expression, RuntimeIterator argument) {
-        RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator runtimeIterator = new TreatIterator(
+    public ItemRuntimePlan visitTreatExpression(TreatExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new TreatIterator(
                 childExpression,
                 expression.getSequenceType(),
                 expression.errorCodeThatShouldBeThrown(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitCastableExpression(CastableExpression expression, RuntimeIterator argument) {
-        RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator runtimeIterator = new CastableIterator(
+    public ItemRuntimePlan visitCastableExpression(CastableExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new CastableIterator(
                 childExpression,
                 expression.getSequenceType(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitCastExpression(CastExpression expression, RuntimeIterator argument) {
-        RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator runtimeIterator = new CastIterator(
+    public ItemRuntimePlan visitCastExpression(CastExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
+        ItemRuntimePlan runtimeIterator = new CastIterator(
                 childExpression,
                 expression.getSequenceType(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
@@ -1761,285 +1517,241 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     // region control
     @Override
-    public RuntimeIterator visitConditionalExpression(ConditionalExpression expression, RuntimeIterator argument) {
-        RuntimeIterator conditionIterator = this.visit(expression.getCondition(), argument);
-        RuntimeIterator thenIterator = this.visit(expression.getBranch(), argument);
-        RuntimeIterator elseIterator = this.visit(expression.getElseBranch(), argument);
-        RuntimeIterator runtimeIterator = null;
-        if (
-            thenIterator instanceof AtMostOneItemLocalRuntimeIterator
-                &&
-                elseIterator instanceof AtMostOneItemLocalRuntimeIterator
-        ) {
+    public ItemRuntimePlan visitConditionalExpression(ConditionalExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan conditionIterator = this.visit(expression.getCondition(), argument);
+        ItemRuntimePlan thenIterator = this.visit(expression.getBranch(), argument);
+        ItemRuntimePlan elseIterator = this.visit(expression.getElseBranch(), argument);
+        ItemRuntimePlan runtimeIterator = null;
+        if (thenIterator instanceof AbstractAtMostOneItemRuntimePlan
+                && elseIterator instanceof AbstractAtMostOneItemRuntimePlan) {
             runtimeIterator = new AtMostOneItemIfRuntimeIterator(
                     conditionIterator,
                     thenIterator,
                     elseIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else {
             runtimeIterator = new IfRuntimeIterator(
                     conditionIterator,
                     thenIterator,
                     elseIterator,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitSwitchExpression(SwitchExpression expression, RuntimeIterator argument) {
-        Map<RuntimeIterator, RuntimeIterator> cases = new LinkedHashMap<>();
+    public ItemRuntimePlan visitSwitchExpression(SwitchExpression expression, ItemRuntimePlan argument) {
+        Map<ItemRuntimePlan, ItemRuntimePlan> cases = new LinkedHashMap<>();
         for (SwitchCase caseExpression : expression.getCases()) {
-            RuntimeIterator caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
+            ItemRuntimePlan caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
             for (Expression conditionExpr : caseExpression.getConditionExpressions()) {
-                RuntimeIterator condition = this.visit(conditionExpr, argument);
+                ItemRuntimePlan condition = this.visit(conditionExpr, argument);
                 cases.put(condition, caseExpr);
             }
         }
-        RuntimeIterator runtimeIterator = new SwitchRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new SwitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 this.visit(expression.getDefaultExpression(), argument),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
     // endregion
 
     @Override
-    public RuntimeIterator visitTypeSwitchExpression(TypeSwitchExpression expression, RuntimeIterator argument) {
+    public ItemRuntimePlan visitTypeSwitchExpression(TypeSwitchExpression expression, ItemRuntimePlan argument) {
         List<TypeswitchRuntimeIteratorCase> cases = new ArrayList<>();
         for (TypeswitchCase caseExpression : expression.getCases()) {
-            cases.add(
-                new TypeswitchRuntimeIteratorCase(
-                        caseExpression.getVariableName(),
-                        caseExpression.getUnion(),
-                        this.visit(caseExpression.getReturnExpression(), argument)
-                )
-            );
+            cases.add(new TypeswitchRuntimeIteratorCase(
+                    caseExpression.getVariableName(),
+                    caseExpression.getUnion(),
+                    this.visit(caseExpression.getReturnExpression(), argument)));
         }
 
         TypeswitchRuntimeIteratorCase defaultCase = new TypeswitchRuntimeIteratorCase(
                 expression.getDefaultCase().getVariableName(),
-                this.visit(expression.getDefaultCase().getReturnExpression(), argument)
-        );
+                this.visit(expression.getDefaultCase().getReturnExpression(), argument));
 
-        RuntimeIterator runtimeIterator = new TypeswitchRuntimeIterator(
+        ItemRuntimePlan runtimeIterator = new TypeswitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 defaultCase,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitTryCatchExpression(TryCatchExpression expression, RuntimeIterator argument) {
-        Map<CatchPattern, RuntimeIterator> cases = new LinkedHashMap<>();
+    public ItemRuntimePlan visitTryCatchExpression(TryCatchExpression expression, ItemRuntimePlan argument) {
+        Map<CatchPattern, ItemRuntimePlan> cases = new LinkedHashMap<>();
         for (CatchPattern pattern : expression.getCatchPatterns()) {
-            cases.put(
-                pattern,
-                this.visit(expression.getExpressionCatching(pattern), argument)
-            );
+            cases.put(pattern, this.visit(expression.getExpressionCatching(pattern), argument));
         }
         return new TryCatchRuntimeIterator(
                 this.visit(expression.getTryExpression(), argument),
                 cases,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitWhileStatement(WhileStatement statement, RuntimeIterator argument) {
-        RuntimeIterator testConditionIterator = this.visit(statement.getTestCondition(), argument);
-        RuntimeIterator statementIterator = this.visit(statement.getStatement(), argument);
+    public ItemRuntimePlan visitWhileStatement(WhileStatement statement, ItemRuntimePlan argument) {
+        ItemRuntimePlan testConditionIterator = this.visit(statement.getTestCondition(), argument);
+        ItemRuntimePlan statementIterator = this.visit(statement.getStatement(), argument);
         return new WhileStatementIterator(
                 testConditionIterator,
                 statementIterator,
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitVariableDeclStatement(VariableDeclStatement statement, RuntimeIterator argument) {
+    public ItemRuntimePlan visitVariableDeclStatement(VariableDeclStatement statement, ItemRuntimePlan argument) {
         Name varName = statement.getVariableName();
-        List<RuntimeIterator> exprIterator = null;
+        List<ItemRuntimePlan> exprIterator = Collections.emptyList();
         if (statement.getVariableExpression() != null) {
             exprIterator = Collections.singletonList(this.visit(statement.getVariableExpression(), argument));
         }
         return new VariableDeclStatementIterator(
-                varName,
-                exprIterator,
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                varName, exprIterator, statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitCommaVariableDeclStatement(
-            CommaVariableDeclStatement statement,
-            RuntimeIterator argument
-    ) {
-        List<RuntimeIterator> children = new ArrayList<>();
+    public ItemRuntimePlan visitCommaVariableDeclStatement(
+            CommaVariableDeclStatement statement, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> children = new ArrayList<>();
         for (VariableDeclStatement varDecl : statement.getVariables()) {
             children.add(this.visit(varDecl, argument));
         }
         return new CommaVariableDeclStatementIterator(
-                children,
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                children, statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitAssignStatement(AssignStatement statement, RuntimeIterator argument) {
+    public ItemRuntimePlan visitAssignStatement(AssignStatement statement, ItemRuntimePlan argument) {
         return new AssignStatementIterator(
                 this.visit(statement.getAssignExpression(), argument),
                 statement.getName(),
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitApplyStatement(ApplyStatement statement, RuntimeIterator argument) {
+    public ItemRuntimePlan visitApplyStatement(ApplyStatement statement, ItemRuntimePlan argument) {
         return new ApplyStatementIterator(
                 this.visit(statement.getApplyExpression(), argument),
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitBreakStatement(BreakStatement statement, RuntimeIterator argument) {
+    public ItemRuntimePlan visitBreakStatement(BreakStatement statement, ItemRuntimePlan argument) {
         return new BreakStatementIterator(statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitContinueStatement(ContinueStatement statement, RuntimeIterator argument) {
+    public ItemRuntimePlan visitContinueStatement(ContinueStatement statement, ItemRuntimePlan argument) {
         return new ContinueStatementIterator(statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitExitStatement(ExitStatement statement, RuntimeIterator argument) {
+    public ItemRuntimePlan visitExitStatement(ExitStatement statement, ItemRuntimePlan argument) {
         return new ExitStatementIterator(
                 this.visit(statement.getExitExpression(), argument),
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    .toBuilder()
-                    .isSequential(true)
-                    .build()
-        );
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig).toBuilder()
+                        .isSequential(true)
+                        .build());
     }
 
     @Override
-    public RuntimeIterator visitTryCatchStatement(TryCatchStatement statement, RuntimeIterator argument) {
-        Map<CatchPattern, RuntimeIterator> cases = new LinkedHashMap<>();
+    public ItemRuntimePlan visitTryCatchStatement(TryCatchStatement statement, ItemRuntimePlan argument) {
+        Map<CatchPattern, ItemRuntimePlan> cases = new LinkedHashMap<>();
         for (CatchPattern pattern : statement.getCatchPatterns()) {
-            cases.put(
-                pattern,
-                this.visit(statement.getBlockStatementCatching(pattern), argument)
-            );
+            cases.put(pattern, this.visit(statement.getBlockStatementCatching(pattern), argument));
         }
         return new TryCatchStatementIterator(
                 this.visit(statement.getTryStatement(), argument),
                 cases,
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitBlockStatement(BlockStatement statement, RuntimeIterator argument) {
-        List<RuntimeIterator> result = new ArrayList<>();
+    public ItemRuntimePlan visitBlockStatement(BlockStatement statement, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> result = new ArrayList<>();
         for (Statement stmt : statement.getBlockStatements()) {
-            RuntimeIterator childIterator = this.visit(stmt, argument);
+            ItemRuntimePlan childIterator = this.visit(stmt, argument);
             if (childIterator != null) {
                 result.add(childIterator);
             }
         }
         return new StatementsOnlyIterator(
-                result,
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                result, statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitSwitchStatement(SwitchStatement statement, RuntimeIterator argument) {
-        Map<RuntimeIterator, RuntimeIterator> cases = new LinkedHashMap<>();
+    public ItemRuntimePlan visitSwitchStatement(SwitchStatement statement, ItemRuntimePlan argument) {
+        Map<ItemRuntimePlan, ItemRuntimePlan> cases = new LinkedHashMap<>();
         for (SwitchCaseStatement caseExpression : statement.getCases()) {
-            RuntimeIterator caseExpr = this.visit(caseExpression.getReturnStatement(), argument);
+            ItemRuntimePlan caseExpr = this.visit(caseExpression.getReturnStatement(), argument);
             for (Expression conditionExpr : caseExpression.getConditionExpressions()) {
-                RuntimeIterator condition = this.visit(conditionExpr, argument);
+                ItemRuntimePlan condition = this.visit(conditionExpr, argument);
                 cases.put(condition, caseExpr);
             }
         }
-        RuntimeIterator runtimeIterator = new SwitchStatementIterator(
+        ItemRuntimePlan runtimeIterator = new SwitchStatementIterator(
                 this.visit(statement.getTestCondition(), argument),
                 cases,
                 this.visit(statement.getDefaultStatement(), argument),
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitTypeSwitchStatement(TypeSwitchStatement statement, RuntimeIterator argument) {
+    public ItemRuntimePlan visitTypeSwitchStatement(TypeSwitchStatement statement, ItemRuntimePlan argument) {
         List<TypeswitchRuntimeIteratorCase> cases = new ArrayList<>();
         for (TypeSwitchStatementCase caseExpression : statement.getCases()) {
-            cases.add(
-                new TypeswitchRuntimeIteratorCase(
-                        caseExpression.getVariableName(),
-                        caseExpression.getUnion(),
-                        this.visit(caseExpression.getReturnStatement(), argument)
-                )
-            );
+            cases.add(new TypeswitchRuntimeIteratorCase(
+                    caseExpression.getVariableName(),
+                    caseExpression.getUnion(),
+                    this.visit(caseExpression.getReturnStatement(), argument)));
         }
 
         TypeswitchRuntimeIteratorCase defaultCase = new TypeswitchRuntimeIteratorCase(
                 statement.getDefaultCase().getVariableName(),
-                this.visit(statement.getDefaultCase().getReturnStatement(), argument)
-        );
+                this.visit(statement.getDefaultCase().getReturnStatement(), argument));
 
-        RuntimeIterator runtimeIterator = new TypeSwitchStatementIterator(
+        ItemRuntimePlan runtimeIterator = new TypeSwitchStatementIterator(
                 this.visit(statement.getTestCondition(), argument),
                 cases,
                 defaultCase,
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, RuntimeIterator argument) {
-        List<RuntimeIterator> result = new ArrayList<>();
+    public ItemRuntimePlan visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> result = new ArrayList<>();
         for (Statement statement : statementsAndExpr.getStatements()) {
-            RuntimeIterator childIterator = this.visit(statement, argument);
+            ItemRuntimePlan childIterator = this.visit(statement, argument);
             if (childIterator != null) {
                 result.add(childIterator);
             }
         }
-        RuntimeIterator exprIterator = this.visit(statementsAndExpr.getExpression(), argument);
+        ItemRuntimePlan exprIterator = this.visit(statementsAndExpr.getExpression(), argument);
         // if (result.isEmpty()) {
         // return exprIterator;
         // }
         return new StatementsWithExprIterator(
-                result,
-                exprIterator,
-                statementsAndExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                result, exprIterator, statementsAndExpr.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitStatementsAndOptionalExpr(
-            StatementsAndOptionalExpr statementsAndOptionalExpr,
-            RuntimeIterator argument
-    ) {
-        List<RuntimeIterator> result = new ArrayList<>();
-        RuntimeIterator exprIterator = null;
+    public ItemRuntimePlan visitStatementsAndOptionalExpr(
+            StatementsAndOptionalExpr statementsAndOptionalExpr, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> result = new ArrayList<>();
+        ItemRuntimePlan exprIterator = null;
         for (Statement statement : statementsAndOptionalExpr.getStatements()) {
-            RuntimeIterator childIterator = this.visit(statement, argument);
+            ItemRuntimePlan childIterator = this.visit(statement, argument);
             if (childIterator != null) {
                 result.add(childIterator);
             }
@@ -2054,90 +1766,66 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             return new StatementsWithExprIterator(
                     result,
                     exprIterator,
-                    statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
-
+                    statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
         return new StatementsOnlyIterator(
-                result,
-                statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                result, statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitProgram(Program program, RuntimeIterator argument) {
+    public ItemRuntimePlan visitProgram(Program program, ItemRuntimePlan argument) {
         if (program.isSequential() || program.isUpdating()) {
             program.getStatementsAndOptionalExpr().getStaticContext().setIsQuerySideEffecting(true);
         }
         return new ProgramIterator(
                 this.visit(program.getStatementsAndOptionalExpr(), argument),
-                program.getStatementsAndOptionalExpr().getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                program.getStatementsAndOptionalExpr().getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
-    public RuntimeIterator visitConditionalStatement(ConditionalStatement statement, RuntimeIterator argument) {
-        RuntimeIterator conditionIterator = this.visit(statement.getCondition(), argument);
-        RuntimeIterator thenIterator = this.visit(statement.getBranch(), argument);
-        RuntimeIterator elseIterator = this.visit(statement.getElseBranch(), argument);
-        List<RuntimeIterator> result = new ArrayList<>();
+    public ItemRuntimePlan visitConditionalStatement(ConditionalStatement statement, ItemRuntimePlan argument) {
+        ItemRuntimePlan conditionIterator = this.visit(statement.getCondition(), argument);
+        ItemRuntimePlan thenIterator = this.visit(statement.getBranch(), argument);
+        ItemRuntimePlan elseIterator = this.visit(statement.getElseBranch(), argument);
+        List<ItemRuntimePlan> result = new ArrayList<>();
         result.add(conditionIterator);
         result.add(thenIterator);
         result.add(elseIterator);
-        RuntimeIterator runtimeIterator = new ConditionalStatementIterator(
-                result,
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
-
+        ItemRuntimePlan runtimeIterator = new ConditionalStatementIterator(
+                result, statement.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitFlowrStatement(FlowrStatement statement, RuntimeIterator argument) {
-        RuntimeTupleIterator previous = this.visitFlowrClause(
-            statement.getReturnStatementClause().getPreviousClause(),
-            argument
-        );
+    public ItemRuntimePlan visitFlowrStatement(FlowrStatement statement, ItemRuntimePlan argument) {
+        TupleRuntimePlan previous =
+                this.visitFlowrClause(statement.getReturnStatementClause().getPreviousClause(), argument);
         ReturnStatementClause returnClause = statement.getReturnStatementClause();
-        RuntimeIterator runtimeIterator = new ReturnStatementClauseIterator(
+        ItemRuntimePlan runtimeIterator = new ReturnStatementClauseIterator(
                 previous,
-                this.visit(
-                    returnClause.getReturnStatement(),
-                    argument
-                ),
-                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+                this.visit(returnClause.getReturnStatement(), argument),
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitSlashExpr(SlashExpr slashExpr, RuntimeIterator argument) {
+    public ItemRuntimePlan visitSlashExpr(SlashExpr slashExpr, ItemRuntimePlan argument) {
         Expression leftExpression = (Expression) slashExpr.getChildren().get(0);
         Expression rightExpression = (Expression) slashExpr.getChildren().get(1);
-        RuntimeIterator left = this.visit(
-            leftExpression,
-            argument
-        );
+        ItemRuntimePlan left = this.visit(leftExpression, argument);
         if (!isStaticallyGuaranteedNodeSequence(leftExpression)) {
             left = new TreatIterator(
                     left,
                     new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore),
                     ErrorCode.UnexpectedNode,
-                    slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
+                    slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig));
         }
-        RuntimeIterator right = this.visit(
-            rightExpression,
-            argument
-        );
+        ItemRuntimePlan right = this.visit(rightExpression, argument);
 
-        RuntimeIterator runtimeIterator = new SlashExprIterator(
-                left,
-                right,
-                slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        ItemRuntimePlan runtimeIterator = new SlashExprIterator(
+                left, right, slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
@@ -2145,45 +1833,37 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     private boolean isStaticallyGuaranteedNodeSequence(Expression expression) {
         SequenceType staticType = expression.getStaticSequenceType();
         return staticType != null
-            && staticType.isSubtypeOf(new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore));
+                && staticType.isSubtypeOf(
+                        new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore));
     }
 
     @Override
-    public RuntimeIterator visitStepExpr(StepExpr stepExpr, RuntimeIterator argument) {
+    public ItemRuntimePlan visitStepExpr(StepExpr stepExpr, ItemRuntimePlan argument) {
         AxisIterator axisIterator = this.visitAxisStep(stepExpr, stepExpr.getMetadata());
         NodeTest nodeTest = stepExpr.getNodeTest();
         return new StepExprIterator(
                 axisIterator,
                 nodeTest,
-                stepExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    .toBuilder()
-                    .staticType(SequenceType.createSequenceType("item"))
-                    .build()
-        );
+                stepExpr.getStaticContextForRuntime(this.config, this.visitorConfig).toBuilder()
+                        .staticType(SequenceType.createSequenceType("item"))
+                        .build());
     }
 
     @Override
-    public RuntimeIterator visitPathRootExpr(
-            org.rumbledb.expressions.xml.PathRootExpression expression,
-            RuntimeIterator argument
-    ) {
-        RuntimeIterator runtimeIterator = new PathRootRuntimeIterator(
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+    public ItemRuntimePlan visitPathRootExpr(PathRootExpression expression, ItemRuntimePlan argument) {
+        ItemRuntimePlan runtimeIterator =
+                new PathRootRuntimeIterator(expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
     }
 
     private AxisIterator visitAxisStep(StepExpr stepExpr, ExceptionMetadata metadata) {
         return stepExpr.accept(
-            new AxisIteratorVisitor(),
-            stepExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
-                .toBuilder()
-                .staticType(SequenceType.createSequenceType("string"))
-                .executionMode(ExecutionMode.LOCAL)
-                .metadata(metadata)
-                .build()
-        );
+                new AxisIteratorVisitor(),
+                stepExpr.getStaticContextForRuntime(this.config, this.visitorConfig).toBuilder()
+                        .staticType(SequenceType.createSequenceType("string"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(metadata)
+                        .build());
     }
-
 }

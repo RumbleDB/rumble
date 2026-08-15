@@ -1,32 +1,29 @@
 package org.rumbledb.runtime.functions.xml;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class NamespaceUriForPrefixFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class NamespaceUriForPrefixFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public NamespaceUriForPrefixFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public NamespaceUriForPrefixFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item prefixItem = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item prefixItem = this.getChild(0).materializeFirstOrNull(context);
         String prefix = prefixItem == null ? "" : prefixItem.getStringValue();
-        Item element = this.getChild(1).materializeFirstItemOrNull(context);
+        Item element = this.getChild(1).materializeFirstOrNull(context);
         for (Item namespaceNode : element.namespaceNodes()) {
             Name name = namespaceNode.nodeName();
             String namespacePrefix = name == null ? "" : name.getLocalName();

@@ -20,38 +20,39 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import scala.Tuple2;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 
+import lombok.NonNull;
+import scala.Tuple2;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+
+public class InsertBeforeFunctionIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator positionIterator;
-    private final RuntimeIterator insertIterator;
-    private Item nextResult;
-    private int insertPosition; // position to start inserting
-    private int currentPosition; // current position
-    private boolean insertingNow; // check if currently iterating over insertIterator
-    private boolean insertingCompleted;
 
-    public InsertBeforeFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan positionIterator;
+    private final ItemRuntimePlan insertIterator;
+    private int insertPosition; // position to start inserting
+
+    public InsertBeforeFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
@@ -59,19 +60,25 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
+                this.sequenceIterator, this.positionIterator, this.insertIterator, context, getMetadata());
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         init(context);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
 
-        if (this.insertIterator.isRDDOrDataFrame()) {
+        if (this.insertIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
             JavaRDD<Item> beforeRDD = zippedRDD
-                .filter((item) -> item._2() < this.insertPosition - 1)
-                .map((item) -> item._1);
+                    .filter((item) -> item._2() < this.insertPosition - 1)
+                    .map((item) -> item._1);
             JavaRDD<Item> afterRDD = zippedRDD
-                .filter((item) -> item._2() >= this.insertPosition - 1)
-                .map((item) -> item._1);
+                    .filter((item) -> item._2() >= this.insertPosition - 1)
+                    .map((item) -> item._1);
             return beforeRDD.union(insertsRDD).union(afterRDD);
         }
 
@@ -79,107 +86,123 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         int numPartitions = zippedRDD.partitions().size();
         int indexOfInsertion = this.insertPosition;
 
-        return zippedRDD.mapPartitionsWithIndex((partitionIndex, iterator) -> {
-            List<Item> list = new ArrayList<>();
-            int lastIndex = -1;
-            if (partitionIndex == 0 && indexOfInsertion - 1 < 0) {
-                list.addAll(inserts);
-            }
-            Tuple2<Item, Long> element;
-            while (iterator.hasNext()) {
-                element = iterator.next();
-                if (element._2() == indexOfInsertion - 1) {
-                    list.addAll(inserts);
-                }
-                list.add(element._1());
-                lastIndex = element._2().intValue();
-            }
-            if (partitionIndex == numPartitions - 1 && indexOfInsertion - 1 > lastIndex) {
-                list.addAll(inserts);
-            }
-            return list.iterator();
-        }, false);
-    }
-
-    @Override
-    protected void openLocal() {
-        init(this.currentDynamicContextForLocalExecution);
-        this.currentPosition = 1; // initialize index as the first item
-        this.insertingNow = false;
-        this.insertingCompleted = false;
-
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.insertIterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-        this.insertIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "insert-before function", getMetadata());
+        return zippedRDD.mapPartitionsWithIndex(
+                (partitionIndex, iterator) -> {
+                    List<Item> list = new ArrayList<>();
+                    int lastIndex = -1;
+                    if (partitionIndex == 0 && indexOfInsertion - 1 < 0) {
+                        list.addAll(inserts);
+                    }
+                    Tuple2<Item, Long> element;
+                    while (iterator.hasNext()) {
+                        element = iterator.next();
+                        if (element._2() == indexOfInsertion - 1) {
+                            list.addAll(inserts);
+                        }
+                        list.add(element._1());
+                        lastIndex = element._2().intValue();
+                    }
+                    if (partitionIndex == numPartitions - 1 && indexOfInsertion - 1 > lastIndex) {
+                        list.addAll(inserts);
+                    }
+                    return list.iterator();
+                },
+                false);
     }
 
     private void init(DynamicContext context) {
-        Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
+        Item positionItem = this.positionIterator.materializeFirstOrNull(context);
         this.insertPosition = positionItem.getIntValue();
     }
 
-    public void setNextResult() {
-        this.nextResult = null;
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        // don't check for insertion triggers once insertion is completed
-        if (!this.insertingCompleted) {
-            if (!this.insertingNow) {
-                if (this.insertPosition <= this.currentPosition) { // start inserting if condition is met
-                    if (this.insertIterator.hasNext()) {
-                        this.insertingNow = true;
-                        this.nextResult = this.insertIterator.next();
-                    } else {
-                        this.insertingNow = false;
-                        this.insertingCompleted = true;
-                    }
-                }
-            } else { // if inserting
-                if (this.insertIterator.hasNext()) { // return an item from insertIterator at each iteration
-                    this.nextResult = this.insertIterator.next();
-                } else {
-                    this.insertingNow = false;
-                    this.insertingCompleted = true;
-                }
-            }
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan positionPlan;
+        private final ItemRuntimePlan insertPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> sequenceCursor;
+        private Cursor<Item> insertCursor;
+        private int insertPosition;
+        private int currentPosition;
+        private boolean insertionCompleted;
+
+        private EvaluationCursor(
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan positionPlan,
+                @NonNull ItemRuntimePlan insertPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.positionPlan = positionPlan;
+            this.insertPlan = insertPlan;
+            this.context = context;
+            this.metadata = metadata;
         }
 
-        // if not inserting, take the next element from input sequence
-        if (!this.insertingNow) {
-            if (this.sequenceIterator.hasNext()) {
-                this.nextResult = this.sequenceIterator.next();
+        @Override
+        protected void openLocal() {
+            Item positionItem = this.positionPlan.materializeFirstOrNull(this.context);
+            this.insertPosition = positionItem.getIntValue();
+            this.currentPosition = 1;
+            this.insertionCompleted = false;
+
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
+            this.insertCursor = this.insertPlan.getCursor(this.context);
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            if (!this.insertionCompleted && this.insertPosition <= this.currentPosition) {
+                if (this.insertCursor.hasNext()) {
+                    return true;
+                }
+                this.insertionCompleted = true;
+            }
+
+            if (this.sequenceCursor.hasNext()) {
+                return true;
+            }
+
+            if (!this.insertionCompleted && this.insertCursor.hasNext()) {
+                return true;
+            }
+            this.insertionCompleted = true;
+            return false;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw exhausted();
+            }
+            if (!this.insertionCompleted && this.insertPosition <= this.currentPosition) {
+                return this.insertCursor.next();
+            }
+            if (this.sequenceCursor.hasNext()) {
                 this.currentPosition++;
-            } else if (this.insertIterator.hasNext()) {
-                this.nextResult = this.insertIterator.next();
+                return this.sequenceCursor.next();
+            }
+            return this.insertCursor.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+            if (this.insertCursor != null) {
+                this.insertCursor.close();
+                this.insertCursor = null;
             }
         }
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.sequenceIterator.close();
-            this.insertIterator.close();
-        } else {
-            this.hasNext = true;
+        private RuntimeException exhausted() {
+            return new IteratorFlowException(
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "insert-before function", this.metadata);
         }
     }
 }

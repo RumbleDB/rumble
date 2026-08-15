@@ -20,124 +20,124 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import lombok.extern.log4j.Log4j2;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.spark.SparkSessionManager;
-
-import scala.Tuple2;
-
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+
+import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
+import scala.Tuple2;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
 
 @Log4j2
-public class ReverseFunctionIterator extends HybridRuntimeIterator {
-
+public class ReverseFunctionIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private List<Item> results;
-    private int currentIndex = 0;
 
-    public ReverseFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    private final ItemRuntimePlan sequenceIterator;
+
+    public ReverseFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(this.sequenceIterator, context, getMetadata());
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         JavaPairRDD<Long, Item> zippedRDD = childRDD.zipWithIndex().mapToPair(Tuple2::swap);
         return zippedRDD.sortByKey(false).map(item -> item._2);
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
-        log.info(
-            String.format(
+        log.info(String.format(
                 "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
-                selectSQL,
-                selectSQL,
-                "foo",
-                viewName,
-                "foo"
-            )
-        );
+                selectSQL, selectSQL, "foo", viewName, "foo"));
         String tempName = SparkSessionManager.temporaryColumnName;
         HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
-            String.format(
-                "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
-                selectSQL,
-                selectSQL,
-                tempName,
-                viewName,
-                tempName
-            ),
-            childDataFrame.getItemType()
-        );
+                String.format(
+                        "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
+                        selectSQL, selectSQL, tempName, viewName, tempName),
+                childDataFrame.getItemType());
         return result;
     }
 
-    @Override
-    protected void openLocal() {
-        this.results = new ArrayList<>();
-        this.currentIndex = 0;
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 
-        List<Item> items = this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
+        private final ItemRuntimePlan sequencePlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private List<Item> results;
+        private int currentIndex;
 
-        for (int i = items.size() - 1; i >= 0; i--) {
-            this.results.add(items.get(i));
+        private EvaluationCursor(
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.context = context;
+            this.metadata = metadata;
         }
 
-        this.hasNext = this.results.size() != 0;
-    }
-
-    @Override
-    protected void closeLocal() {
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            return getResult();
+        @Override
+        protected void openLocal() {
+            this.results = new ArrayList<>();
+            try (Cursor<Item> childCursor = this.sequencePlan.getCursor(this.context)) {
+                while (childCursor.hasNext()) {
+                    this.results.add(childCursor.next());
+                }
+            }
+            this.currentIndex = this.results.size() - 1;
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "reverse function", getMetadata());
-    }
 
-    public Item getResult() {
-        if (this.results == null || this.results.size() == 0) {
-            throw new IteratorFlowException("getResult called on an empty list of results", getMetadata());
+        @Override
+        protected boolean hasNextLocal() {
+            return this.currentIndex >= 0;
         }
-        if (this.currentIndex == this.results.size() - 1) {
-            this.hasNext = false;
+
+        @Override
+        protected Item nextLocal() {
+            if (this.currentIndex < 0) {
+                throw new IteratorFlowException(
+                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "reverse function", this.metadata);
+            }
+            return this.results.get(this.currentIndex--);
         }
-        return this.results.get(this.currentIndex++);
+
+        @Override
+        protected void closeLocal() {
+            this.results = null;
+            this.currentIndex = -1;
+        }
     }
 }

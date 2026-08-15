@@ -20,33 +20,30 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class ConcatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ConcatFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ConcatFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ConcatFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         StringBuilder builder = new StringBuilder();
-        for (RuntimeIterator iterator : this.getChildren()) {
-            Item item = iterator.materializeFirstItemOrNull(context);
+        for (int index = 0; index < this.getChildren().size(); index++) {
+            Item item = this.getChild(index).materializeFirstOrNull(context);
             // if not empty sequence
             if (item != null) {
                 String stringValue = item.serialize();
@@ -57,5 +54,4 @@ public class ConcatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         return ItemFactory.getInstance().createStringItem(builder.toString());
     }
-
 }

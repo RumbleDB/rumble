@@ -20,20 +20,20 @@
 
 package org.rumbledb.runtime.navigation;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-
 import java.io.Serial;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
+import org.apache.spark.api.java.function.FlatMapFunction;
 
+import org.rumbledb.api.Item;
+
+public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
 
     @Override
     public Iterator<Item> call(Item arg0) throws Exception {
@@ -44,10 +44,11 @@ public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
             List<Item> results = arg0.getItemMembers();
             return results.iterator();
         }
-        java.util.List<Item> flat = new java.util.ArrayList<>();
-        for (java.util.List<Item> member : arg0.getSequenceMembers()) {
+        List<Item> flat = new ArrayList<>();
+        for (List<Item> member : arg0.getSequenceMembers()) {
             flat.addAll(member);
         }
         return flat.iterator();
     }
-};
+}
+;

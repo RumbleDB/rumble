@@ -20,35 +20,33 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.math.BigInteger;
-import java.util.List;
-
-public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class AbsFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public AbsFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public AbsFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Item value = this.getChild(0).materializeFirstOrNull(dynamicContext);
         if (value == null) {
             return null;
         }
@@ -64,32 +62,35 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 return value;
             }
             if (intValue == Integer.MIN_VALUE) {
-                return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(intValue).negate());
+                return ItemFactory.getInstance()
+                        .createIntegerItem(BigInteger.valueOf(intValue).negate());
             }
             return ItemFactory.getInstance().createIntItem(-intValue);
         }
         if (value.isInteger()) {
-            return ItemFactory.getInstance().createIntegerItem(value.getIntegerValue().abs());
+            return ItemFactory.getInstance()
+                    .createIntegerItem(value.getIntegerValue().abs());
         }
         if (value.isDecimal()) {
-            return ItemFactory.getInstance().createDecimalItem(value.getDecimalValue().abs());
+            return ItemFactory.getInstance()
+                    .createDecimalItem(value.getDecimalValue().abs());
         }
         throw new OurBadException("Numeric value expected in abs()");
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (SequenceType.Arity.OneOrMore.isSubtypeOf(nativeChildQuery.getResultingType().getArity())) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                nativeChildQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
         return new NativeClauseContext(
                 nativeChildQuery,
                 "ABS(" + nativeChildQuery.getResultingQuery() + ")",
-                nativeChildQuery.getResultingType()
-        );
+                nativeChildQuery.getResultingType());
     }
 }

@@ -1,6 +1,10 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -8,19 +12,12 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.update.primitives.Mode;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Getter
 public class TruncateCollectionExpression extends Expression {
     private Expression collectionName;
     private Mode mode;
 
-    public TruncateCollectionExpression(
-            Expression collectionName,
-            Mode mode,
-            ExceptionMetadata metadata
-    ) {
+    public TruncateCollectionExpression(Expression collectionName, Mode mode, ExceptionMetadata metadata) {
         super(metadata);
         if (collectionName == null) {
             throw new OurBadException("collection must be identified for truncation.");
@@ -47,5 +44,4 @@ public class TruncateCollectionExpression extends Expression {
         this.collectionName.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
-
 }

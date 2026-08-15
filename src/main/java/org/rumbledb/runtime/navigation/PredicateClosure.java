@@ -20,31 +20,33 @@
 
 package org.rumbledb.runtime.navigation;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.function.Function;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class PredicateClosure implements Function<Item, Boolean> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator expression;
+
+    private final ItemRuntimePlan expression;
     private final DynamicContext dynamicContext;
 
-    public PredicateClosure(RuntimeIterator expression, DynamicContext dynamicContext) {
+    public PredicateClosure(ItemRuntimePlan expression, DynamicContext dynamicContext) {
         this.expression = expression;
         if (this.expression.isSparkJobNeeded()) {
             throw new JobWithinAJobException(
                     "The expression in this predicate requires parallel execution, but the predicate is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
-            );
+                    this.expression.getRuntimeStaticContext().getMetadata());
         }
         this.dynamicContext = dynamicContext;
     }
@@ -56,9 +58,8 @@ public class PredicateClosure implements Function<Item, Boolean> {
         DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
         dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
 
-        boolean result = this.expression.getEffectiveBooleanValue(dynamicContext);
+        boolean result = EffectiveBooleanValue.evaluate(this.expression, dynamicContext);
         return result;
-
     }
-
-};
+}
+;

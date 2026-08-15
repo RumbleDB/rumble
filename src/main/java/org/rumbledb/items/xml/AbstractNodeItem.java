@@ -17,9 +17,9 @@
 
 package org.rumbledb.items.xml;
 
-import org.rumbledb.api.Item;
-
 import java.io.Serial;
+
+import org.rumbledb.api.Item;
 
 /**
  * Centralizes XDM node identity for Java collections.

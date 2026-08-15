@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -19,11 +20,7 @@ public class ValidateTypeExpression extends Expression {
     private boolean isValidate;
 
     public ValidateTypeExpression(
-            Expression mainExpression,
-            boolean isValidate,
-            SequenceType sequenceType,
-            ExceptionMetadata metadata
-    ) {
+            Expression mainExpression, boolean isValidate, SequenceType sequenceType, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
@@ -33,8 +30,7 @@ public class ValidateTypeExpression extends Expression {
         this.sequenceType = sequenceType;
         if (sequenceType.isEmptySequence()) {
             throw new OurBadException(
-                    "It is not possible to validate against the empty sequence type. Please use empty() instead to check for emptiness."
-            );
+                    "It is not possible to validate against the empty sequence type. Please use empty() instead to check for emptiness.");
         }
     }
 
@@ -54,21 +50,17 @@ public class ValidateTypeExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(
-            " ("
+        buffer.append(" ("
                 + (this.sequenceType.toString())
                 + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
-                + ") "
-        );
+                + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(
-            " | "
+        buffer.append(" | "
                 + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -82,5 +74,4 @@ public class ValidateTypeExpression extends Expression {
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append(" as {" + this.sequenceType.toString() + "\n}\n");
     }
-
 }

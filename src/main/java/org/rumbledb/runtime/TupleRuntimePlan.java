@@ -20,106 +20,50 @@
 
 package org.rumbledb.runtime;
 
-
-import lombok.Getter;
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.flwor.FlworDataFrame;
-import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
-import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
-import org.rumbledb.runtime.flwor.tuple.FlworTuple;
-
 import java.io.Serial;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple> {
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
+
+public abstract class TupleRuntimePlan extends RuntimePlan<FlworTuple>
+        implements LocalRuntimePlan<FlworTuple>, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
 
-    @Getter
-    private final RuntimeStaticContext staticContext;
-    protected final RuntimeTupleIterator child;
-
-    /**
-     * Limit on how deep the evaluation occurs.
-     * If it is 0, the clause ignores its child (this is for join purposes).
-     */
-    @Getter
+    protected final TupleRuntimePlan child;
     protected int evaluationDepthLimit;
 
-    protected transient DynamicContext currentDynamicContext;
-    protected transient boolean hasNext;
-    @Getter
-    protected transient boolean isOpen;
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
-    protected RuntimeTupleIterator(
-            RuntimeTupleIterator child,
-            RuntimeStaticContext staticContext
-    ) {
-        this.staticContext = staticContext;
-        this.isOpen = false;
+    protected TupleRuntimePlan(TupleRuntimePlan child, RuntimeStaticContext staticContext) {
+        super(staticContext);
         this.child = child;
         this.evaluationDepthLimit = -1;
     }
 
-    public RuntimeTupleIterator getChildIterator() {
+    public TupleRuntimePlan getChildIterator() {
         return this.child;
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        if (this.isOpen) {
-            throw new IteratorFlowException(
-                    "Runtime tuple iterator cannot be opened twice" + ", this: " + this.toString(),
-                    getMetadata()
-            );
-        }
-        this.isOpen = true;
-        this.hasNext = true;
-        this.currentDynamicContext = context;
-    }
-
-    @Override
-    public void close() {
-        this.isOpen = false;
-        this.child.close();
-    }
-
-
-    @Override
-    public boolean hasNext() {
-        return this.hasNext;
-    }
-
-    @Override
-    public abstract FlworTuple next();
-
-    public ExceptionMetadata getMetadata() {
-        return this.staticContext.getMetadata();
-    }
-
-    public ExecutionMode getHighestExecutionMode() {
-        return this.staticContext.getExecutionMode();
-    }
-
-    public RumbleConfiguration getConfiguration() {
-        return this.staticContext.getConfiguration();
-    }
+    public abstract Cursor<FlworTuple> createNativeCursor(DynamicContext context);
 
     public boolean isDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
@@ -127,18 +71,6 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         }
         return this.staticContext.getExecutionMode().isDataFrame();
     }
-
-    /**
-     * Obtains the dataframe from the child clause.
-     * It is possible, with the second parameter, to specify the variables it needs to project the others away,
-     * or that only a count is needed for a specific variable, which allows projecting away the actual items.
-     *
-     * @param context the dynamic context in which the evaluate the child clause's dataframe.
-     * @return the DataFrame with the tuples returned by the child clause.
-     */
-    public abstract FlworDataFrame getDataFrame(
-            DynamicContext context
-    );
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.
@@ -151,8 +83,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
      * @return the projection needed by this clause.
      */
     protected abstract Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> parentProjection
-    );
+            Map<Name, DynamicContext.VariableDependency> parentProjection);
 
     /**
      * Computes and stores the DataFrame projection that this clause needs to receive from its child clause.
@@ -165,8 +96,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
      * @param parentProjection the projection needed by the parent clause.
      */
     public void setInputAndOutputTupleVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> parentProjection
-    ) {
+            Map<Name, DynamicContext.VariableDependency> parentProjection) {
         this.outputTupleProjection = parentProjection;
         this.inputTupleProjection = this.getInputTupleVariableDependencies(parentProjection);
         if (this.child != null) {
@@ -190,8 +120,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
      *         dynamic context.
      */
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
-        Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<Name, DynamicContext.VariableDependency>();
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
@@ -208,9 +137,19 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
     }
 
     /**
+     * Returns the limit on how deep the evaluation occurs.
+     * If it is 0, the clause ignores its child (this is for join purposes).
+     *
+     * @return The evaluation depth limit. -1 if none.
+     */
+    public int getEvaluationDepthLimit() {
+        return this.evaluationDepthLimit;
+    }
+
+    /**
      * Sets the limit on how deep the evaluation occurs.
      * 0 to stop here.
-     * 
+     *
      * @param limit the limit to set. Must be between 0 and getHeight(), inclusive.
      */
     public void setEvaluationDepthLimit(int limit) {
@@ -218,8 +157,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         if (limit == 0) {
             if (!(this instanceof ForClauseIterator || this instanceof LetClauseIterator)) {
                 throw new OurBadException(
-                        "We cannot stop the evaluation of FLWOR clauses at any other place than a let or a for clause."
-                );
+                        "We cannot stop the evaluation of FLWOR clauses at any other place than a let or a for clause.");
             }
         }
         if (limit == -1) {
@@ -231,8 +169,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         if (this.child == null) {
             if (limit > 0) {
                 throw new OurBadException(
-                        "We cannot stop the evaluation of FLWOR clauses beyond the height of the tree."
-                );
+                        "We cannot stop the evaluation of FLWOR clauses beyond the height of the tree.");
             }
         }
         if (this.child != null) {
@@ -244,7 +181,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
     /**
      * Tells whether it is possible to set the limit on how deep the evaluation occurs.
      * 0 to stop here.
-     * 
+     *
      * @param limit the limit to set. Must be between 0 and getHeight(), inclusive.
      */
     public boolean canSetEvaluationDepthLimit(int limit) {
@@ -264,14 +201,13 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
      * Returns the clause subtree at the specified offset.
      * The parameter is compatible with setEvaluationDepthLimit, i.e., it returns the subtree right
      * below where the evaluation stops with the same limit.
-     * 
+     *
      * @return The evaluation depth limit. -1 if none.
      */
-    public RuntimeTupleIterator getSubtreeBeyondLimit(int limit) {
+    public TupleRuntimePlan getSubtreeBeyondLimit(int limit) {
         if (this.child == null) {
             throw new OurBadException(
-                    "Trying to get FLWOR clause subtree at depth " + limit + " but there are not further descendants."
-            );
+                    "Trying to get FLWOR clause subtree at depth " + limit + " but there are not further descendants.");
         }
         if (limit == 0) {
             return this.child;
@@ -283,7 +219,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
     /**
      * Returns the height of the clause within the current FLWOR expression, i.e.,
      * the number of descendant clauses.
-     * 
+     *
      * @return The number of descendant clauses. 0 if it is a starting clause.
      */
     public int getHeight() {
@@ -296,7 +232,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
     /**
      * Says whether or not the clause and its descendants include a clause
      * of the specified kind.
-     * 
+     *
      * @param kind the kind of clause to test for.
      * @return true if there is one. False otherwise.
      */
@@ -387,4 +323,12 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         return NativeClauseContext.NoNativeQuery;
     }
 
+    /**
+     * Returns the runtime static context of the clause.
+     *
+     * @return the static context of the clause.
+     */
+    public RuntimeStaticContext getStaticContext() {
+        return this.staticContext;
+    }
 }

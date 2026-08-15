@@ -20,39 +20,32 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class LowerCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class LowerCaseFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public LowerCaseFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public LowerCaseFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item stringItem = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
-
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Item stringItem = this.getChild(0).materializeFirstOrNull(dynamicContext);
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
-        } else {
-            String input = stringItem.getStringValue();
-            return ItemFactory.getInstance().createStringItem(input.toLowerCase());
         }
-
+        return ItemFactory.getInstance()
+                .createStringItem(stringItem.getStringValue().toLowerCase());
     }
-
 }

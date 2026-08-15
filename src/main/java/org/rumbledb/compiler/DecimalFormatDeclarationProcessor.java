@@ -1,24 +1,24 @@
 package org.rumbledb.compiler;
 
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.rumbledb.context.DecimalFormatDefinition;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.DecimalFormatPropertyInvalidValueException;
-import org.rumbledb.exceptions.DuplicateDecimalFormatPropertyException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.DecimalFormatPropertyConflictException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SemanticException;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.antlr.v4.runtime.tree.ParseTree;
+
+import org.rumbledb.context.DecimalFormatDefinition;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.DecimalFormatPropertyConflictException;
+import org.rumbledb.exceptions.DecimalFormatPropertyInvalidValueException;
+import org.rumbledb.exceptions.DuplicateDecimalFormatPropertyException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.SemanticException;
+
 public final class DecimalFormatDeclarationProcessor {
 
-    private DecimalFormatDeclarationProcessor() {
-    }
+    private DecimalFormatDeclarationProcessor() {}
 
     public static void process(
             boolean isDefaultDecimalFormat,
@@ -27,8 +27,7 @@ public final class DecimalFormatDeclarationProcessor {
             List<String> stringLiterals,
             StaticContext moduleContext,
             boolean isJSONiq,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         Name name = null;
         if (!isDefaultDecimalFormat) {
             name = processDecimalFormatName(nameContext, moduleContext, metadata);
@@ -57,9 +56,7 @@ public final class DecimalFormatDeclarationProcessor {
             boolean hasSeen = !seenProperties.add(propertyName);
             if (hasSeen) {
                 throw new DuplicateDecimalFormatPropertyException(
-                        "Decimal format property defined more than once: " + propertyName,
-                        metadata
-                );
+                        "Decimal format property defined more than once: " + propertyName, metadata);
             }
 
             switch (propertyName) {
@@ -114,8 +111,7 @@ public final class DecimalFormatDeclarationProcessor {
                 zeroDigit,
                 optionalDigit,
                 patternSeparator,
-                exponentSeparator
-        );
+                exponentSeparator);
 
         validateDecimalFormat(decimalFormat, metadata);
 
@@ -127,32 +123,23 @@ public final class DecimalFormatDeclarationProcessor {
     }
 
     private static String parseStringLiteral(String text, boolean isJSONiq, ExceptionMetadata metadata) {
-        return isJSONiq
-            ? StringLiteralUtils.parseJsoniq(text, metadata)
-            : StringLiteralUtils.parseXQuery(text);
+        return isJSONiq ? StringLiteralUtils.parseJsoniq(text, metadata) : StringLiteralUtils.parseXQuery(text);
     }
 
     public static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {
         if (value == null || value.codePointCount(0, value.length()) != 1) {
             throw new DecimalFormatPropertyInvalidValueException(
-                    "Decimal format property '" + propertyName + "' must be exactly one character.",
-                    metadata
-            );
+                    "Decimal format property '" + propertyName + "' must be exactly one character.", metadata);
         }
         return value.codePointAt(0);
     }
 
     public static void addUnique(
-            Set<Integer> characters,
-            int codePoint,
-            String propertyName,
-            ExceptionMetadata metadata
-    ) {
+            Set<Integer> characters, int codePoint, String propertyName, ExceptionMetadata metadata) {
         if (!characters.add(codePoint)) {
             throw new DecimalFormatPropertyConflictException(
                     "Decimal format contains duplicate picture-string character at property: " + propertyName,
-                    metadata
-            );
+                    metadata);
         }
     }
 
@@ -177,47 +164,33 @@ public final class DecimalFormatDeclarationProcessor {
             int cp = zeroDigit + i;
             if (!Character.isDigit(cp)) {
                 throw new SemanticException(
-                        "The zero-digit property must define a family of 10 consecutive digits.",
-                        metadata
-                );
+                        "The zero-digit property must define a family of 10 consecutive digits.", metadata);
             }
         }
     }
 
     public static Name processDecimalFormatName(
-            ParseTree nameContext,
-            StaticContext moduleContext,
-            ExceptionMetadata metadata
-    ) {
+            ParseTree nameContext, StaticContext moduleContext, ExceptionMetadata metadata) {
         if (nameContext == null) {
             throw new OurBadException("Decimal format name context must not be null.");
         }
 
         String text = nameContext.getText();
         if (text == null || text.isEmpty()) {
-            throw new SemanticException(
-                    "Invalid empty decimal format name.",
-                    metadata
-            );
+            throw new SemanticException("Invalid empty decimal format name.", metadata);
         }
 
         if (text.startsWith("Q{")) {
             int closingBrace = text.indexOf('}');
             if (closingBrace < 0 || closingBrace == text.length() - 1) {
-                throw new SemanticException(
-                        "Invalid URIQualifiedName: " + text,
-                        metadata
-                );
+                throw new SemanticException("Invalid URIQualifiedName: " + text, metadata);
             }
 
             String namespace = text.substring(2, closingBrace);
             String localName = text.substring(closingBrace + 1);
 
             if (localName.isEmpty()) {
-                throw new SemanticException(
-                        "Invalid URIQualifiedName, missing local name: " + text,
-                        metadata
-                );
+                throw new SemanticException("Invalid URIQualifiedName, missing local name: " + text, metadata);
             }
 
             return new Name(namespace, null, localName);
@@ -233,18 +206,13 @@ public final class DecimalFormatDeclarationProcessor {
         String localName = text.substring(colon + 1);
 
         if (prefix.isEmpty() || localName.isEmpty()) {
-            throw new SemanticException(
-                    "Invalid QName: " + text,
-                    metadata
-            );
+            throw new SemanticException("Invalid QName: " + text, metadata);
         }
 
         String namespace = moduleContext.resolveNamespace(prefix);
         if (namespace == null) {
             throw new SemanticException(
-                    "Prefix " + prefix + " could not be resolved against a namespace in scope.",
-                    metadata
-            );
+                    "Prefix " + prefix + " could not be resolved against a namespace in scope.", metadata);
         }
 
         return new Name(namespace, prefix, localName);

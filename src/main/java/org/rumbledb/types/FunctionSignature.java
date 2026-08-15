@@ -20,13 +20,12 @@
 
 package org.rumbledb.types;
 
-import lombok.Getter;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -42,23 +41,15 @@ public class FunctionSignature implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FunctionSignature(
-            List<SequenceType> parameterTypes,
-            SequenceType returnType,
-            boolean isUpdating
-    ) {
+    public FunctionSignature(List<SequenceType> parameterTypes, SequenceType returnType, boolean isUpdating) {
         this.parameterTypes = parameterTypes;
         this.returnType = returnType;
         this.isUpdating = isUpdating;
     }
 
-    public FunctionSignature(
-            List<SequenceType> parameterTypes,
-            SequenceType returnType
-    ) {
+    public FunctionSignature(List<SequenceType> parameterTypes, SequenceType returnType) {
         this(parameterTypes, returnType, false);
     }
-
 
     public boolean isSubtypeOf(FunctionSignature other) {
         // a signature is a subtype of another signature if it always respect its contract typewise (i.e. no static type

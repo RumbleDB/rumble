@@ -20,43 +20,36 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class ZeroOrOneIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ZeroOrOneIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ZeroOrOneIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator sequenceIterator = this.getChild(0);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        ItemRuntimePlan sequenceIterator = this.getChild(0);
         Item result = null;
         try {
-            result = sequenceIterator.materializeAtMostOneItemOrNull(context);
+            result = sequenceIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new SequenceExceptionZeroOrOne(
-                    "fn:zero-or-one() called with a sequence containing more than one item",
-                    getMetadata()
-            );
+                    "fn:zero-or-one() called with a sequence containing more than one item", getMetadata());
         }
         return result;
     }
-
 }

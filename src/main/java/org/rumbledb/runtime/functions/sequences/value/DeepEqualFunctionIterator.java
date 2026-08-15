@@ -20,10 +20,19 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
+import java.io.Serial;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction2;
+
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -32,19 +41,11 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import scala.Tuple2;
-
-import java.io.Serial;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-
-public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -55,55 +56,59 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return Objects.equals(q1, q2);
     }
 
-
-    public DeepEqualFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public DeepEqualFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator sequenceIterator1 = this.getChild(0);
-        RuntimeIterator sequenceIterator2 = this.getChild(1);
-        if (this.getChildren().size() == 3) {
-            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
+    public Item evaluateAtMostOne(DynamicContext context) {
+        ItemRuntimePlan sequenceIterator1 = this.getChild(0);
+        ItemRuntimePlan sequenceIterator2 = this.getChild(1);
+        validateCollation(this.getChildren().size() == 3 ? this.getChild(2).materializeFirstOrNull(context) : null);
 
-        if (sequenceIterator1.isRDDOrDataFrame() && sequenceIterator2.isRDDOrDataFrame()) {
+        if (sequenceIterator1.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()
+                && sequenceIterator2
+                        .getRuntimeStaticContext()
+                        .getExecutionMode()
+                        .isRDDOrDataFrame()) {
             JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(context);
             JavaRDD<Item> rdd2 = sequenceIterator2.getRDD(context);
             if (rdd1.partitions().size() == rdd2.partitions().size()) {
-                FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter =
-                    new SameElementsAndLengthClosure();
+                FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter = new SameElementsAndLengthClosure();
                 JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
-                return ItemFactory.getInstance().createBooleanItem(differences.isEmpty());
+                return booleanItem(differences.isEmpty());
             } else {
                 JavaPairRDD<Long, Item> rdd1Zipped = rdd1.zipWithIndex().mapToPair(Tuple2::swap);
                 JavaPairRDD<Long, Item> rdd2Zipped = rdd2.zipWithIndex().mapToPair(Tuple2::swap);
-                JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddJoined = rdd1Zipped.fullOuterJoin(
-                    rdd2Zipped
-                );
+                JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddJoined =
+                        rdd1Zipped.fullOuterJoin(rdd2Zipped);
                 JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddFiltered = rddJoined.filter(
-                    tuple -> !tuple._2()._1().equals(tuple._2()._2())
-                );
-                return ItemFactory.getInstance().createBooleanItem(rddFiltered.isEmpty());
+                        tuple -> !tuple._2()._1().equals(tuple._2()._2()));
+                return booleanItem(rddFiltered.isEmpty());
             }
         }
         List<Item> items1 = sequenceIterator1.materialize(context);
         List<Item> items2 = sequenceIterator2.materialize(context);
 
-        boolean res = checkDeepEqual(items1, items2);
-        return ItemFactory.getInstance().createBooleanItem(res);
+        return booleanItem(checkDeepEqual(items1, items2));
+    }
+
+    private void validateCollation(Item collationItem) {
+        if (collationItem != null
+                && !collationItem
+                        .getStringValue()
+                        .equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+            throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+        }
+    }
+
+    private static Item booleanItem(boolean value) {
+        return ItemFactory.getInstance().createBooleanItem(value);
     }
 
     /**
      * Checks if two lists of items are deep-equal according to specification.
-     * 
+     *
      * @param items1 The first list of items
      * @param items2 The second list of items
      * @return true if the lists are deep-equal, false otherwise
@@ -134,15 +139,12 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
      * @return true if the items are deep-equal, false otherwise
      */
     private boolean checkItemsDeepEqual(Item item1, Item item2) {
-        if (
-            (item1.isFunction() && !item1.isMap() && !item1.isArray())
-                || (item2.isFunction() && !item2.isMap() && !item2.isArray())
-        ) {
+        if ((item1.isFunction() && !item1.isMap() && !item1.isArray())
+                || (item2.isFunction() && !item2.isMap() && !item2.isArray())) {
             throw new RumbleException(
                     "fn:deep-equal cannot compare function items other than maps or arrays.",
                     ErrorCode.UnexpectedFunctionItem,
-                    getMetadata()
-            );
+                    getMetadata());
         }
 
         if (item1.isMap() && item2.isMap()) {
@@ -190,9 +192,9 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     /**
      * Checks if two nodes are deep-equal according to specification.
-     * 
+     *
      * @see https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
-     * 
+     *
      * @param node1 The first node to compare
      * @param node2 The second node to compare
      * @return true if the nodes are deep-equal, false otherwise
@@ -238,10 +240,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
         // 7: If the two nodes are both text nodes or comment nodes, then they are deep-equal
         // if and only if their string-values are equal.
-        if (
-            (node1.isTextNode() && node2.isTextNode())
-                || (node1.isCommentNode() && node2.isCommentNode())
-        ) {
+        if ((node1.isTextNode() && node2.isTextNode()) || (node1.isCommentNode() && node2.isCommentNode())) {
             return node1.getStringValue().equals(node2.getStringValue());
         }
 
@@ -251,45 +250,39 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     /**
      * Checks if two nodes are of the same kind.
-     * 
+     *
      * @param node1 The first node
      * @param node2 The second node
      * @return true if nodes are of the same kind, false otherwise
      */
     private boolean sameNodeKind(Item node1, Item node2) {
         return (node1.isDocumentNode() && node2.isDocumentNode())
-            ||
-            (node1.isElementNode() && node2.isElementNode())
-            ||
-            (node1.isAttributeNode() && node2.isAttributeNode())
-            ||
-            (node1.isTextNode() && node2.isTextNode())
-            ||
-            (node1.isCommentNode() && node2.isCommentNode())
-            ||
-            (node1.isProcessingInstructionNode() && node2.isProcessingInstructionNode());
+                || (node1.isElementNode() && node2.isElementNode())
+                || (node1.isAttributeNode() && node2.isAttributeNode())
+                || (node1.isTextNode() && node2.isTextNode())
+                || (node1.isCommentNode() && node2.isCommentNode())
+                || (node1.isProcessingInstructionNode() && node2.isProcessingInstructionNode());
         // TODO: Add support for namespace nodes when implemented
     }
 
     /**
      * Gets the child elements and text nodes of a document or element node.
      * This corresponds to the XPath expression (*|text()).
-     * 
+     *
      * @param node The document or element node
      * @return List of child elements and text nodes
      */
     private List<Item> getElementsAndTextNodes(Item node) {
-        return node.children()
-            .stream()
-            .filter(child -> child.isElementNode() || child.isTextNode())
-            .collect(java.util.stream.Collectors.toList());
+        return node.children().stream()
+                .filter(child -> child.isElementNode() || child.isTextNode())
+                .collect(Collectors.toList());
     }
 
     /**
      * 3: Checks if two element nodes are deep-equal according to specification.
-     * 
+     *
      * @see https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
-     * 
+     *
      * @param element1 The first element node
      * @param element2 The second element node
      * @return true if the element nodes are deep-equal, false otherwise
@@ -327,9 +320,9 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     /**
      * 4: Checks if two attribute nodes are deep-equal according to specification.
-     * 
+     *
      * @see https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
-     * 
+     *
      * @param attr1 The first attribute node
      * @param attr2 The second attribute node
      * @return true if the attribute nodes are deep-equal, false otherwise
@@ -349,7 +342,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     /**
      * Checks if two lists of attributes are deep-equal.
      * Each attribute in the first list must have a corresponding deep-equal attribute in the second list.
-     * 
+     *
      * @param attrs1 The first list of attributes
      * @param attrs2 The second list of attributes
      * @return true if the attribute lists are deep-equal, false otherwise

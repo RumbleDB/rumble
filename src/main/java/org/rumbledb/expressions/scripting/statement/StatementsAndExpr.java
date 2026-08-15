@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.scripting.statement;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 public class StatementsAndExpr extends Expression {
@@ -58,5 +59,4 @@ public class StatementsAndExpr extends Expression {
         this.expression.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
-
 }

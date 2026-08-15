@@ -1,5 +1,13 @@
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
 import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.RuleBasedCollator;
 import com.ibm.icu.util.ULocale;
@@ -8,20 +16,13 @@ import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnsupportedCollationException;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Resolves a collation URI to a {@link Comparator} usable for string comparison, backed by ICU4J
  * for the UCA-parametrized collation family.
  */
 public final class CollationResolver {
 
-    private CollationResolver() {
-    }
+    private CollationResolver() {}
 
     public static Comparator<String> resolve(String collationUri, ExceptionMetadata metadata) {
         if (collationUri == null || CollationCatalogue.CODEPOINT_COLLATION.equals(collationUri)) {
@@ -50,16 +51,18 @@ public final class CollationResolver {
      */
     public static byte[] collationKeyBytes(String value, String collationUri, ExceptionMetadata metadata) {
         if (collationUri == null || CollationCatalogue.CODEPOINT_COLLATION.equals(collationUri)) {
-            return value.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            return value.getBytes(StandardCharsets.UTF_8);
         }
         if (CollationCatalogue.HTML_ASCII_CASE_INSENSITIVE_COLLATION.equals(collationUri)) {
-            return asciiLowerCase(value).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            return asciiLowerCase(value).getBytes(StandardCharsets.UTF_8);
         }
         if (CollationCatalogue.FOTS_CASEBLIND_COLLATION.equals(collationUri)) {
-            return value.toLowerCase(java.util.Locale.ROOT).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            return value.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.UTF_8);
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
-            return buildICUCollator(collationUri, metadata).getCollationKey(value).toByteArray();
+            return buildICUCollator(collationUri, metadata)
+                    .getCollationKey(value)
+                    .toByteArray();
         }
         throw new UnsupportedCollationException("Unsupported collation: " + collationUri, metadata);
     }
@@ -113,10 +116,7 @@ public final class CollationResolver {
             case "secondary" -> Collator.SECONDARY;
             case "tertiary" -> Collator.TERTIARY;
             case "identical" -> Collator.IDENTICAL;
-            default -> throw new UnsupportedCollationException(
-                    "Unsupported collation strength: " + strength,
-                    metadata
-            );
+            default -> throw new UnsupportedCollationException("Unsupported collation strength: " + strength, metadata);
         };
     }
 

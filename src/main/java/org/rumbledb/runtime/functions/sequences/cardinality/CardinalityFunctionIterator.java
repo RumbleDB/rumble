@@ -20,24 +20,19 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
 import java.util.List;
 
-public abstract class CardinalityFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
+public abstract class CardinalityFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    protected CardinalityFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    protected CardinalityFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
-
 }

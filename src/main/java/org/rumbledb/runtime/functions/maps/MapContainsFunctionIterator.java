@@ -17,35 +17,41 @@
 
 package org.rumbledb.runtime.functions.maps;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * XPath/XQuery map:contains($map, $key) implementation.
  */
-public class MapContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapContainsFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public MapContainsFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    private final ItemRuntimePlan mapIterator;
+    private final ItemRuntimePlan keyIterator;
+
+    public MapContainsFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
+        this.mapIterator = arguments.get(0);
+        this.keyIterator = arguments.get(1);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item map = this.getChild(0).materializeFirstItemOrNull(context);
-        Item key = this.getChild(1).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item map = this.mapIterator.materializeFirstOrNull(context);
+        Item key = this.keyIterator.materializeFirstOrNull(context);
+        return evaluate(map, key);
+    }
+
+    private static Item evaluate(Item map, Item key) {
         boolean contains = map.getSequenceByKey(key) != null;
         return ItemFactory.getInstance().createBooleanItem(contains);
     }

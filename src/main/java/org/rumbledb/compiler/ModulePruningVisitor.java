@@ -28,21 +28,21 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 
-
 /**
  * This visitor removes duplicate module import, by depopulating variable and function declarations upon
  * duplicate visits.
- * 
+ *
  */
 public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
 
     @SuppressWarnings("unused")
     private final RumbleConfiguration configuration;
+
     private final List<String> visitedModules;
 
     /**
      * Builds a new visitor.
-     * 
+     *
      * @param configuration the configuration. This is used for trigerring or not debug output.
      */
     ModulePruningVisitor(RumbleConfiguration configuration) {
@@ -60,5 +60,4 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
         this.visitedModules.add(libraryModule.getNamespace());
         return argument;
     }
-
 }

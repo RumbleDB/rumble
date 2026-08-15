@@ -1,8 +1,8 @@
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class InvalidUpdatingExpressionPositionException extends RumbleException {
 
@@ -12,5 +12,4 @@ public class InvalidUpdatingExpressionPositionException extends RumbleException 
     public InvalidUpdatingExpressionPositionException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.InvalidUpdatingExpressionPositionErrorCode, metadata);
     }
-
 }

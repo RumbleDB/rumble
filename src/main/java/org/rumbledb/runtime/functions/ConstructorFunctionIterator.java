@@ -7,26 +7,23 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ConstructorFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator argumentIterator;
+    private final ItemRuntimePlan argumentIterator;
     private final SequenceType targetSequenceType;
 
     public ConstructorFunctionIterator(
-            FunctionIdentifier identifier,
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+            FunctionIdentifier identifier, List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
         this.argumentIterator = arguments.get(0);
@@ -34,12 +31,13 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        RuntimeIterator castIterator = new CastIterator(
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        ItemRuntimePlan castPlan = new CastIterator(
                 this.argumentIterator,
                 this.targetSequenceType,
-                this.staticContext.toBuilder().staticType(this.targetSequenceType).build()
-        );
-        return castIterator.materializeFirstItemOrNull(dynamicContext);
+                this.staticContext.toBuilder()
+                        .staticType(this.targetSequenceType)
+                        .build());
+        return castPlan.materializeFirstOrNull(dynamicContext);
     }
 }

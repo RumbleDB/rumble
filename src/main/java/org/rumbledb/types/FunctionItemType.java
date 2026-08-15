@@ -1,11 +1,11 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
+import java.util.Set;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
-
-import java.io.Serial;
-import java.util.Set;
 
 public class FunctionItemType extends AbstractItemType {
 
@@ -31,8 +31,6 @@ public class FunctionItemType extends AbstractItemType {
         this.signature = null;
     }
 
-
-
     @Override
     public Name getName() {
         return null;
@@ -55,9 +53,9 @@ public class FunctionItemType extends AbstractItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        if (
-            this.equals(superType) || superType.equals(anyFunctionItem) || superType.equals(BuiltinTypesCatalogue.item)
-        ) {
+        if (this.equals(superType)
+                || superType.equals(anyFunctionItem)
+                || superType.equals(BuiltinTypesCatalogue.item)) {
             return true;
         }
         if (this.signature == null) {

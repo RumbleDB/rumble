@@ -20,28 +20,29 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
-import java.io.Serial;
-
-public class NullRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class NullRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final Item item;
 
     public NullRuntimeIterator(RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+        super(List.of(), staticContext);
         this.item = ItemFactory.getInstance().createNullItem();
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return this.item;
     }
 }

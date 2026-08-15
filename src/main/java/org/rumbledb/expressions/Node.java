@@ -26,6 +26,7 @@ import java.util.function.Predicate;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -71,15 +72,13 @@ public abstract class Node {
      *
      * if Node.suppressUnsetExecutionModeAccessedErrors is false, then an error is thrown if an UNSET mode is found.
      * if Node.suppressUnsetExecutionModeAccessedErrors is true, it might silently return UNSET.
-     * 
+     *
      * @param visitorConfig the configuration of the visitor.
      * @return the highest execution mode.
      */
     public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (
-            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.highestExecutionMode == ExecutionMode.UNSET
-        ) {
+        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
         return this.highestExecutionMode;
@@ -181,7 +180,7 @@ public abstract class Node {
 
     /**
      * Tells whether the expression is context dependent.
-     * 
+     *
      * @return true if it is context dependent, false otherwise.
      */
     public boolean isContextDependent() {

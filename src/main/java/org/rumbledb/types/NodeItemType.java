@@ -1,10 +1,10 @@
 package org.rumbledb.types;
 
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.util.Set;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing the abstract node() item type.
@@ -25,8 +25,6 @@ public class NodeItemType extends AbstractItemType {
     NodeItemType() {
         this.name = Name.createVariableInDefaultTypeNamespace("node");
     }
-
-
 
     @Override
     public boolean hasName() {

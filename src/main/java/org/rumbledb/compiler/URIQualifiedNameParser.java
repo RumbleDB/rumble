@@ -18,6 +18,7 @@
 package org.rumbledb.compiler;
 
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
@@ -31,8 +32,7 @@ public final class URIQualifiedNameParser {
 
     public static final String XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
 
-    private URIQualifiedNameParser() {
-    }
+    private URIQualifiedNameParser() {}
 
     /**
      * @param tokenText full lexer text of one {@code URIQualifiedName} token, e.g. {@code Q{http://ex}invoice}
@@ -57,10 +57,9 @@ public final class URIQualifiedNameParser {
         if (namespaceUri != null && XMLNS_NAMESPACE_URI.equals(namespaceUri)) {
             throw new PredefinedPrefixInNamespaceDeclarationException(
                     "It is a static error [err:XQST0070] if the namespace URI for an EQName is "
-                        + XMLNS_NAMESPACE_URI
-                        + ".",
-                    metadata
-            );
+                            + XMLNS_NAMESPACE_URI
+                            + ".",
+                    metadata);
         }
         return new Name(namespaceUri, null, localName);
     }

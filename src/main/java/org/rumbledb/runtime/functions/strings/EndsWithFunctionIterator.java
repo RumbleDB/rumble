@@ -20,52 +20,43 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class EndsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class EndsWithFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public EndsWithFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public EndsWithFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         if (this.getChildren().size() == 3) {
-            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
+            String collation = this.getChild(2).materializeFirstOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
-        Item substringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        Item substringItem = this.getChild(1).materializeFirstOrNull(context);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         if (stringItem == null || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-        boolean result = stringItem.getStringValue()
-            .endsWith(
-                substringItem.getStringValue()
-            );
+        boolean result = stringItem.getStringValue().endsWith(substringItem.getStringValue());
         return ItemFactory.getInstance().createBooleanItem(result);
     }
-
 }

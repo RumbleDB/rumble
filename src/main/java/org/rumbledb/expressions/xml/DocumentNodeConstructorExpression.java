@@ -20,22 +20,23 @@
 
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * An expression representing a document node constructor.
- * 
+ *
  * All document node constructors are computed constructors.
- * 
+ *
  * The result of a document node constructor is a new document node, with its own node identity.
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-documentConstructors">XQuery 3.1, 3.9.3.3: Document Node
  *      Constructors</a>
  */
@@ -46,14 +47,11 @@ public class DocumentNodeConstructorExpression extends Expression {
 
     /**
      * Constructor for document node constructor.
-     * 
+     *
      * @param contentExpression The content expression
      * @param metadata The exception metadata
      */
-    public DocumentNodeConstructorExpression(
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+    public DocumentNodeConstructorExpression(Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.contentExpression = contentExpression;
     }

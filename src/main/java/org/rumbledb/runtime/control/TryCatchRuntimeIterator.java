@@ -20,13 +20,7 @@
 
 package org.rumbledb.runtime.control;
 
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -35,95 +29,55 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.control.CatchPattern;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
-
-public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
-
+public class TryCatchRuntimeIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator tryExpression;
-    private final Map<CatchPattern, RuntimeIterator> catchExpressions;
-    private List<Item> results = null;
-    private Item nextResult = null;
-    private int nextPosition = 0;
+
+    private final ItemRuntimePlan tryExpression;
+    private final Map<CatchPattern, ? extends ItemRuntimePlan> catchExpressions;
 
     public TryCatchRuntimeIterator(
-            RuntimeIterator tryExpression,
-            Map<CatchPattern, RuntimeIterator> catchExpressions,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan tryExpression,
+            Map<CatchPattern, ? extends ItemRuntimePlan> catchExpressions,
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.concat(Stream.of(tryExpression), catchExpressions.values().stream()).toList(),
-            staticContext
-        );
+                Stream.concat(Stream.of(tryExpression), catchExpressions.values().stream())
+                        .toList(),
+                staticContext);
         this.tryExpression = tryExpression;
         this.catchExpressions = catchExpressions;
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        setNextResult();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> evaluate(context).iterator(), getMetadata());
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item nextItem = this.nextResult;
-            setNextResult();
-            return nextItem;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in try-catch statement",
-                getMetadata()
-        );
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.results = null;
-    }
-
-    private void setNextResult() {
-        if (this.results == null) {
-            this.nextPosition = 0;
-            this.results = new ArrayList<>();
-            try {
-                this.tryExpression.open(this.currentDynamicContextForLocalExecution);
-                while (this.tryExpression.hasNext()) {
-                    this.results.add(this.tryExpression.next());
-                }
-                this.tryExpression.close();
-
-            } catch (Throwable throwable) {
-                RumbleException exception = RumbleException.unnestException(throwable);
-                this.results.clear();
-                RuntimeIterator catchingExpression = findMatchingCatch(exception);
-                if (catchingExpression != null) {
-                    DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
-                    ErrorVariables.injectDynamicContext(context, exception);
-                    catchingExpression.open(context);
-                    while (catchingExpression.hasNext()) {
-                        this.results.add(catchingExpression.next());
-                    }
-                    catchingExpression.close();
-                } else {
-                    throw throwable;
-                }
+    private List<Item> evaluate(DynamicContext context) {
+        try {
+            return this.tryExpression.materialize(context);
+        } catch (Throwable throwable) {
+            RumbleException exception = RumbleException.unnestException(throwable);
+            ItemRuntimePlan catchingExpression = findMatchingCatch(exception);
+            if (catchingExpression == null) {
+                throw throwable;
             }
-        }
-        if (this.nextPosition < this.results.size()) {
-            this.nextResult = this.results.get(this.nextPosition++);
-        } else {
-            this.hasNext = false;
+            DynamicContext catchContext = new DynamicContext(context);
+            ErrorVariables.injectDynamicContext(catchContext, exception);
+            return catchingExpression.materialize(catchContext);
         }
     }
 
-    private RuntimeIterator findMatchingCatch(RumbleException exception) {
-        for (Map.Entry<CatchPattern, RuntimeIterator> entry : this.catchExpressions.entrySet()) {
+    private ItemRuntimePlan findMatchingCatch(RumbleException exception) {
+        for (Map.Entry<CatchPattern, ? extends ItemRuntimePlan> entry : this.catchExpressions.entrySet()) {
             if (entry.getKey().matches(exception.getErrorCode())) {
                 return entry.getValue();
             }

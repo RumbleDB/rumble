@@ -29,6 +29,7 @@ import java.util.Map;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -38,8 +39,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.ml.ApplyEstimatorRuntimeIterator;
 import org.rumbledb.spark.ml.ApplyTransformerRuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
@@ -51,6 +52,7 @@ public class FunctionItem implements Item {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private FunctionIdentifier identifier;
     private List<Name> parameterNames;
 
@@ -59,11 +61,7 @@ public class FunctionItem implements Item {
      */
     private FunctionSignature signature;
 
-    /**
-     * The body iterator is not serialized directly, but through the FunctionBodyIteratorFactory,
-     * which allows for creating new instances of the body iterator when needed.
-     */
-    private FunctionBodyIteratorFactory bodyIteratorFactory;
+    private ItemRuntimePlan bodyIterator;
 
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
@@ -75,6 +73,10 @@ public class FunctionItem implements Item {
      */
     private boolean isBuiltin;
 
+    protected FunctionItem() {
+        super();
+    }
+
     /**
      * Creates a new function value for a named-function lookup. The function body factory is immutable: ordinary
      * bodies are created from its serialized snapshot and retained Spark ML bodies are intentionally shared. The
@@ -85,7 +87,7 @@ public class FunctionItem implements Item {
         this.identifier = source.identifier;
         this.parameterNames = source.parameterNames;
         this.signature = source.signature;
-        this.bodyIteratorFactory = source.bodyIteratorFactory;
+        this.bodyIterator = source.bodyIterator;
         this.dynamicModuleContext = source.dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>(source.localVariablesInClosure);
         this.RDDVariablesInClosure = new HashMap<>(source.RDDVariablesInClosure);
@@ -98,8 +100,7 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator
-    ) {
+            ItemRuntimePlan bodyIterator) {
         this(identifier, parameterNames, signature, dynamicModuleContext, bodyIterator, false);
     }
 
@@ -108,13 +109,12 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator,
-            boolean isBuiltin
-    ) {
+            ItemRuntimePlan bodyIterator,
+            boolean isBuiltin) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIteratorFactory = createBodyIteratorFactory(bodyIterator);
+        this.bodyIterator = bodyIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -127,22 +127,20 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator,
+            ItemRuntimePlan bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<Name, HomogeneousItemDataFrame> DFVariablesInClosure
-    ) {
+            Map<Name, HomogeneousItemDataFrame> DFVariablesInClosure) {
         this(
-            identifier,
-            parameterNames,
-            signature,
-            dynamicModuleContext,
-            bodyIterator,
-            localVariablesInClosure,
-            RDDVariablesInClosure,
-            DFVariablesInClosure,
-            false
-        );
+                identifier,
+                parameterNames,
+                signature,
+                dynamicModuleContext,
+                bodyIterator,
+                localVariablesInClosure,
+                RDDVariablesInClosure,
+                DFVariablesInClosure,
+                false);
     }
 
     public FunctionItem(
@@ -150,16 +148,15 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator,
+            ItemRuntimePlan bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
             Map<Name, HomogeneousItemDataFrame> DFVariablesInClosure,
-            boolean isBuiltin
-    ) {
+            boolean isBuiltin) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIteratorFactory = createBodyIteratorFactory(bodyIterator);
+        this.bodyIterator = bodyIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
@@ -172,9 +169,8 @@ public class FunctionItem implements Item {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator,
-            boolean isUpdating
-    ) {
+            ItemRuntimePlan bodyIterator,
+            boolean isUpdating) {
         this(name, paramNameToSequenceTypes, returnType, dynamicModuleContext, bodyIterator, isUpdating, false);
     }
 
@@ -183,10 +179,9 @@ public class FunctionItem implements Item {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator,
+            ItemRuntimePlan bodyIterator,
             boolean isUpdating,
-            boolean isBuiltin
-    ) {
+            boolean isBuiltin) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
         for (Map.Entry<Name, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
@@ -197,7 +192,7 @@ public class FunctionItem implements Item {
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType, isUpdating);
-        this.bodyIteratorFactory = createBodyIteratorFactory(bodyIterator);
+        this.bodyIterator = bodyIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -231,28 +226,18 @@ public class FunctionItem implements Item {
     }
 
     @Override
-    public RuntimeIterator getBodyIterator() {
-        return this.bodyIteratorFactory.getPrototype();
-    }
-
-    public RuntimeIterator createBodyIterator() {
-        return this.bodyIteratorFactory.createExecutionInstance();
+    public ItemRuntimePlan getBodyIterator() {
+        return this.bodyIterator;
     }
 
     /**
      * Returns an independent function value without serializing its iterator tree.
      *
      * This is suitable for named-function lookup, which only extends the closure of the returned value. The closure
-     * maps are copied while immutable function metadata and the body factory are shared.
+     * maps are copied while immutable function metadata and the body plan are shared.
      */
     public FunctionItem copyForLookup() {
         return new FunctionItem(this);
-    }
-
-    private static FunctionBodyIteratorFactory createBodyIteratorFactory(RuntimeIterator bodyIterator) {
-        boolean retainBody = bodyIterator instanceof ApplyEstimatorRuntimeIterator
-            || bodyIterator instanceof ApplyTransformerRuntimeIterator;
-        return new FunctionBodyIteratorFactory(bodyIterator, retainBody);
     }
 
     @Override
@@ -310,18 +295,28 @@ public class FunctionItem implements Item {
         sb.append("Closure:\n");
         sb.append("  Local:\n");
         for (Name name : this.localVariablesInClosure.keySet()) {
-            sb.append("    " + name + " (" + this.localVariablesInClosure.get(name).size() + " items)\n");
+            sb.append("    "
+                    + name
+                    + " ("
+                    + this.localVariablesInClosure.get(name).size()
+                    + " items)\n");
             if (this.localVariablesInClosure.get(name).size() == 1) {
-                sb.append("      " + this.localVariablesInClosure.get(name).get(0).serialize() + "\n");
+                sb.append(
+                        "      " + this.localVariablesInClosure.get(name).get(0).serialize() + "\n");
             }
         }
         sb.append("  RDD:\n");
         for (Name name : this.RDDVariablesInClosure.keySet()) {
-            sb.append("    " + name + " (" + this.RDDVariablesInClosure.get(name).count() + " items)\n");
+            sb.append(
+                    "    " + name + " (" + this.RDDVariablesInClosure.get(name).count() + " items)\n");
         }
         sb.append("  Data Frames:\n");
         for (Name name : this.dataFrameVariablesInClosure.keySet()) {
-            sb.append("    " + name + " (" + this.dataFrameVariablesInClosure.get(name).count() + " items)\n");
+            sb.append("    "
+                    + name
+                    + " ("
+                    + this.dataFrameVariablesInClosure.get(name).count()
+                    + " items)\n");
         }
         return sb.toString();
     }
@@ -343,21 +338,15 @@ public class FunctionItem implements Item {
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
         for (Name variable : dynamicContext.getVariableValues().getLocalVariableNames()) {
             this.localVariablesInClosure.put(
-                variable,
-                dynamicContext.getVariableValues().getLocalVariableValue(variable, metadata)
-            );
+                    variable, dynamicContext.getVariableValues().getLocalVariableValue(variable, metadata));
         }
         for (Name variable : dynamicContext.getVariableValues().getRDDVariableNames()) {
             this.RDDVariablesInClosure.put(
-                variable,
-                dynamicContext.getVariableValues().getRDDVariableValue(variable, metadata)
-            );
+                    variable, dynamicContext.getVariableValues().getRDDVariableValue(variable, metadata));
         }
         for (Name variable : dynamicContext.getVariableValues().getDataFrameVariableNames()) {
             this.dataFrameVariablesInClosure.put(
-                variable,
-                dynamicContext.getVariableValues().getDataFrameVariableValue(variable, metadata)
-            );
+                    variable, dynamicContext.getVariableValues().getDataFrameVariableValue(variable, metadata));
         }
     }
 
@@ -409,6 +398,10 @@ public class FunctionItem implements Item {
         throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
     }
 
+    public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
+        this.dynamicModuleContext = dynamicModuleContext;
+    }
+
     @Override
     public List<Item> atomizedValue() {
         throw new CannotAtomizeException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);
@@ -417,8 +410,6 @@ public class FunctionItem implements Item {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 }

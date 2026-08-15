@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Getter
 public class RenameExpression extends Expression {
@@ -21,8 +22,7 @@ public class RenameExpression extends Expression {
             Expression mainExpression,
             Expression locatorExpression,
             Expression nameExpression,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Main expression cannot be null in a rename expression.");
@@ -56,6 +56,5 @@ public class RenameExpression extends Expression {
         this.locatorExpression.serializeToJSONiq(sb, 0);
         this.nameExpression.serializeToJSONiq(sb, 0);
         sb.append("\n");
-
     }
 }

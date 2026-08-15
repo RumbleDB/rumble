@@ -1,87 +1,35 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
+import java.io.Serial;
+
 import org.apache.spark.api.java.function.Function;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.TreatException;
-import org.rumbledb.exceptions.UnexpectedNodeException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.runtime.typing.TreatTypeValidator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-
 public class TreatAsClosure implements Function<Item, Boolean> {
-    private final SequenceType sequenceType;
-    private final ExceptionMetadata metadata;
-    private final ErrorCode errorCode;
+
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public TreatAsClosure(SequenceType sequenceType, ErrorCode shouldThrowTreatException, ExceptionMetadata metadata) {
-        this.sequenceType = sequenceType;
-        this.errorCode = shouldThrowTreatException;
-        this.metadata = metadata;
+    private final TreatTypeValidator validator;
+
+    public TreatAsClosure(SequenceType sequenceType, ErrorCode errorCode, ExceptionMetadata metadata) {
+        this(new TreatTypeValidator(sequenceType, errorCode, metadata));
+    }
+
+    public TreatAsClosure(@NonNull TreatTypeValidator validator) {
+        this.validator = validator;
     }
 
     @Override
-    public Boolean call(Item input) throws Exception {
-        if (!InstanceOfIterator.doesItemTypeMatchItem(this.sequenceType.getItemType(), input)) {
-            if (this.errorCode.equals(ErrorCode.DynamicTypeTreatErrorCode)) {
-                throw new TreatException(
-                        input.getDynamicType().toString()
-                            + " cannot be treated as type "
-                            + this.sequenceType.getItemType().getIdentifierString()
-                            + this.sequenceType.getArity().getSymbol(),
-                        this.metadata
-                );
-            }
-            if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
-                throw new UnexpectedTypeException(
-                        input.getDynamicType().toString()
-                            + " is not expected here. The expected type is "
-                            + this.sequenceType.getItemType().getIdentifierString()
-                            + this.sequenceType.getArity().getSymbol(),
-                        this.metadata
-                );
-            }
-            if (this.errorCode.equals(ErrorCode.UnexpectedNode)) {
-                throw new UnexpectedNodeException(
-                        input.getDynamicType().toString()
-                            + " is not expected here. The expected type is "
-                            + this.sequenceType.getItemType().getIdentifierString()
-                            + this.sequenceType.getArity().getSymbol(),
-                        this.metadata
-                );
-            }
-            throw new OurBadException("Unexpected error code in treat as iterator.", this.metadata);
-        }
-        if (this.sequenceType.isEmptySequence()) {
-            if (this.errorCode.equals(ErrorCode.DynamicTypeTreatErrorCode)) {
-                throw new TreatException(
-                        input.getDynamicType().toString()
-                            + " cannot be treated as type empty-sequence()",
-                        this.metadata
-                );
-            }
-            if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
-                throw new UnexpectedTypeException(
-                        input.getDynamicType().toString()
-                            + " is not expected here. The expected type is empty-sequence()",
-                        this.metadata
-                );
-            }
-            if (this.errorCode.equals(ErrorCode.UnexpectedNode)) {
-                throw new UnexpectedNodeException(
-                        input.getDynamicType().toString()
-                            + " is not expected here. The expected type is empty-sequence()",
-                        this.metadata
-                );
-            }
-            throw new OurBadException("Unexpected error code in treat as iterator.", this.metadata);
-        }
+    public Boolean call(Item input) {
+        this.validator.validateItem(input, 1);
         return true;
     }
 }

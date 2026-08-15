@@ -26,54 +26,52 @@ import java.util.Arrays;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class AtMostOneItemIfRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public AtMostOneItemIfRuntimeIterator(
-            RuntimeIterator condition,
-            RuntimeIterator branch,
-            RuntimeIterator elseBranch,
-            RuntimeStaticContext staticContext
-    ) {
+            ItemRuntimePlan condition,
+            ItemRuntimePlan branch,
+            ItemRuntimePlan elseBranch,
+            RuntimeStaticContext staticContext) {
         super(Arrays.asList(condition, branch, elseBranch), staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
-            DynamicContext dynamicContext
-    ) {
-        RuntimeIterator condition = this.getChild(0);
-        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        ItemRuntimePlan condition = this.getChild(0);
+        boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(condition, dynamicContext);
 
         if (effectiveBooleanValue) {
-            return this.getChild(1).materializeFirstItemOrNull(dynamicContext);
+            return this.getChild(1).materializeFirstOrNull(dynamicContext);
         } else {
-            return this.getChild(2).materializeFirstItemOrNull(dynamicContext);
+            return this.getChild(2).materializeFirstOrNull(dynamicContext);
         }
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext conditionResult = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext conditionResult = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (conditionResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext thenResult = this.getChild(1)
-            .generateNativeQuery(new NativeClauseContext(conditionResult, null, null));
+        NativeClauseContext thenResult =
+                NativeQueryRuntimePlan.generate(this.getChild(1), new NativeClauseContext(conditionResult, null, null));
         if (thenResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext elseResult = this.getChild(2)
-            .generateNativeQuery(new NativeClauseContext(thenResult, null, null));
+        NativeClauseContext elseResult =
+                NativeQueryRuntimePlan.generate(this.getChild(2), new NativeClauseContext(thenResult, null, null));
         if (elseResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -87,26 +85,26 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( "
-            + "IF( "
-            + conditionResult.getResultingQuery()
-            + ", "
-            + thenResult.getResultingQuery()
-            + ", "
-            + elseResult.getResultingQuery()
-            + " ) )";
+                + "IF( "
+                + conditionResult.getResultingQuery()
+                + ", "
+                + thenResult.getResultingQuery()
+                + ", "
+                + elseResult.getResultingQuery()
+                + " ) )";
         SequenceType.Arity resultingArity = (thenResult.getResultingType().getArity() == SequenceType.Arity.One
-            && elseResult.getResultingType().getArity() == SequenceType.Arity.One)
+                        && elseResult.getResultingType().getArity() == SequenceType.Arity.One)
                 ? SequenceType.Arity.One
                 : SequenceType.Arity.OneOrZero;
         return new NativeClauseContext(
                 elseResult,
                 resultingQuery,
                 new SequenceType(
-                        thenResult.getResultingType()
-                            .getItemType()
-                            .findLeastCommonSuperTypeWith(elseResult.getResultingType().getItemType()),
-                        resultingArity
-                )
-        );
+                        thenResult
+                                .getResultingType()
+                                .getItemType()
+                                .findLeastCommonSuperTypeWith(
+                                        elseResult.getResultingType().getItemType()),
+                        resultingArity));
     }
 }

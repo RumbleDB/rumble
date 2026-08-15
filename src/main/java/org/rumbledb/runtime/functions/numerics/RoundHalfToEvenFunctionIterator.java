@@ -20,68 +20,58 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.function.IntSupplier;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
-
-public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class RoundHalfToEvenFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public RoundHalfToEvenFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public RoundHalfToEvenFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item value = this.getChild(0).materializeFirstOrNull(context);
+        return evaluate(
+                value,
+                () -> this.getChildren().size() > 1
+                        ? this.getChild(1).materializeFirstOrNull(context).getIntValue()
+                        : 0);
+    }
+
+    private Item evaluate(Item value, IntSupplier precisionSupplier) {
         if (value == null) {
             return null;
         }
-        if (
-            (value.isDouble() && Double.isNaN(value.getDoubleValue()))
-                || (value.isFloat() && Float.isNaN(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
             return value;
         }
-        if (
-            (value.isDouble() && Double.isInfinite(value.getDoubleValue()))
-                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))
-        ) {
+        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
             return value;
         }
-        if (
-            (value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
-                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))
-        ) {
+        if ((value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
+                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))) {
             return value;
         }
 
-        int precision;
-        if (this.getChildren().size() > 1) {
-            precision = this.getChild(1)
-                .materializeFirstItemOrNull(context)
-                .getIntValue();
-        }
-        // if second param is not given precision is set as 0 (rounds to a whole number)
-        else {
-            precision = 0;
-        }
+        int precision = precisionSupplier.getAsInt();
         try {
             if (value.isInt()) {
                 BigDecimal bd = new BigDecimal(value.getIntValue()).setScale(precision, RoundingMode.HALF_EVEN);
@@ -106,25 +96,17 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
                 return ItemFactory.getInstance().createFloatItem((float) sign * Math.abs(bd.floatValue()));
             }
             throw new UnexpectedTypeException(
-                    "Unexpected value in round-half-to-even(): " + value.getDynamicType(),
-                    getMetadata()
-            );
-
+                    "Unexpected value in round-half-to-even(): " + value.getDynamicType(), getMetadata());
 
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
-
     }
 
     private double getSign(double doubleValue) {
         double sign = 0;
-        if (doubleValue > 0)
-            sign = 1;
-        if (doubleValue < 0)
-            sign = -1;
+        if (doubleValue > 0) sign = 1;
+        if (doubleValue < 0) sign = -1;
         return sign;
     }
-
-
 }

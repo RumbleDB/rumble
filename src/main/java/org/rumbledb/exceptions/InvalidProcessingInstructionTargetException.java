@@ -20,9 +20,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class InvalidProcessingInstructionTargetException extends RumbleException {
 
@@ -33,4 +33,3 @@ public class InvalidProcessingInstructionTargetException extends RumbleException
         super(message, ErrorCode.InvalidProcessingInstructionTargetErrorCode, metadata);
     }
 }
-

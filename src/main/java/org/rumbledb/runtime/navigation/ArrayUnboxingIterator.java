@@ -20,118 +20,78 @@
 
 package org.rumbledb.runtime.navigation;
 
-import lombok.extern.log4j.Log4j2;
+import java.io.Serial;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.Serial;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
-
 @Log4j2
-public class ArrayUnboxingIterator extends HybridRuntimeIterator {
+public class ArrayUnboxingIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
-    public ArrayUnboxingIterator(
-            RuntimeIterator arrayIterator,
-            RuntimeStaticContext staticContext
-    ) {
+    private final ItemRuntimePlan iterator;
+
+    public ArrayUnboxingIterator(ItemRuntimePlan arrayIterator, RuntimeStaticContext staticContext) {
         super(Arrays.asList(arrayIterator), staticContext);
         this.iterator = arrayIterator;
     }
 
     @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next call in Array Unboxing", getMetadata());
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    private void setNextResult() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isArray()) {
-                if (0 < item.getSize()) {
-                    if (item.isArrayOfItems()) {
-                        this.nextResults.addAll(item.getItemMembers());
-                    } else {
-                        for (java.util.List<Item> member : item.getSequenceMembers()) {
-                            this.nextResults.addAll(member);
-                        }
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isArray()) {
+                        return List.<Item>of().iterator();
                     }
-                    break;
-                }
-            }
-        }
-
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
+                    if (item.isArrayOfItems()) {
+                        return item.getItemMembers().iterator();
+                    }
+                    return item.getSequenceMembers().stream()
+                            .flatMap(List::stream)
+                            .iterator();
+                },
+                getMetadata());
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
-    }
-
-    @Override
-    public boolean implementsDataFrames() {
-        return true;
     }
 
     @Override
@@ -140,7 +100,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             // unboxing only available for the FOR clause
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext newContext = NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
         if (newContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -150,23 +110,16 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             if (getConfiguration().analysis().enableStaticTyping()) {
                 throw new UnexpectedStaticTypeException(
                         "This is not a sequence of arrays,"
-                            + " so that the lookup will always result in the empty sequence no matter what. "
-                            + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                                + " so that the lookup will always result in the empty sequence no matter what. "
+                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
                         ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        getMetadata()
-                );
+                        getMetadata());
             }
-            log.warn(
-                "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
-            );
+            log.warn("Array unboxing on a DataFrame that does not an array type. Empty sequence returned.");
             return NativeClauseContext.NoNativeQuery;
         }
         newContext.setResultingType(
-            new SequenceType(
-                    newContextType.getArrayContentFacet(),
-                    SequenceType.Arity.ZeroOrMore
-            )
-        );
+                new SequenceType(newContextType.getArrayContentFacet(), SequenceType.Arity.ZeroOrMore));
 
         List<String> lateralViewPart = newContext.getLateralViewPart();
         if (lateralViewPart.size() == 0) {
@@ -175,8 +128,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
             // previous
             lateralViewPart.add(
-                "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
-            );
+                    "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")");
         }
         newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
         newContext.setResultingQuery(""); // dealt by for clause
@@ -184,28 +136,28 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     }
 
     public NativeClauseContext generateArrayReferenceQuery(NativeClauseContext nativeClauseContext) {
-        return this.iterator.generateNativeQuery(nativeClauseContext);
+        return NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
-            && childDataFrame.getItemType()
-                .getObjectKeysFacet()
-                .contains(SparkSessionManager.nonObjectJSONiqItemColumnName);
+                && childDataFrame
+                        .getItemType()
+                        .getObjectKeysFacet()
+                        .contains(SparkSessionManager.nonObjectJSONiqItemColumnName);
 
         // Check if metadata columns exist
         String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
         boolean hasRowIdColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.rowIdColumnName);
         boolean hasMutabilityColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.mutabilityLevelColumnName);
         boolean hasPathInColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.pathInColumnName);
-        boolean hasTableLocationColumn = Arrays.asList(fieldNames)
-            .contains(
-                SparkSessionManager.tableLocationColumnName
-            );
+        boolean hasTableLocationColumn =
+                Arrays.asList(fieldNames).contains(SparkSessionManager.tableLocationColumnName);
 
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
@@ -213,111 +165,103 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 // element is an object, preserve metadata columns if they exist
                 if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
                     return childDataFrame.evaluateSQL(
-                        String.format(
-                            "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
-                            SparkSessionManager.rowIdColumnName,
-                            SparkSessionManager.mutabilityLevelColumnName,
-                            SparkSessionManager.pathInColumnName,
-                            SparkSessionManager.pathInColumnName,
-                            SparkSessionManager.tableLocationColumnName,
-                            SparkSessionManager.nonObjectJSONiqItemColumnName,
-                            SparkSessionManager.rowIdColumnName,
-                            SparkSessionManager.mutabilityLevelColumnName,
-                            SparkSessionManager.pathInColumnName,
-                            SparkSessionManager.tableLocationColumnName,
-                            array
-                        ),
-                        elementType
-                    );
+                            String.format(
+                                    "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                                    SparkSessionManager.rowIdColumnName,
+                                    SparkSessionManager.mutabilityLevelColumnName,
+                                    SparkSessionManager.pathInColumnName,
+                                    SparkSessionManager.pathInColumnName,
+                                    SparkSessionManager.tableLocationColumnName,
+                                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                    SparkSessionManager.rowIdColumnName,
+                                    SparkSessionManager.mutabilityLevelColumnName,
+                                    SparkSessionManager.pathInColumnName,
+                                    SparkSessionManager.tableLocationColumnName,
+                                    array),
+                            elementType);
                 }
                 // Otherwise just return the object
                 return childDataFrame.evaluateSQL(
-                    String.format(
-                        "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        array
-                    ),
-                    elementType
-                );
+                        String.format(
+                                "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                array),
+                        elementType);
             }
             // Preserve metadata columns if they exist
             if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
                 String sql = String.format(
-                    "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
-                    SparkSessionManager.rowIdColumnName,
-                    SparkSessionManager.mutabilityLevelColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.tableLocationColumnName,
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    SparkSessionManager.rowIdColumnName,
-                    SparkSessionManager.mutabilityLevelColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.tableLocationColumnName,
-                    array
-                );
+                        "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        array);
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
                 return new HomogeneousItemDataFrame(df, elementType);
             }
             return childDataFrame.evaluateSQL(
-                String.format(
-                    "SELECT explode(`%s`) AS `%s` FROM %s",
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    array
-                ),
-                elementType
-            );
-        } else if (
-            hasNonObjectJSONiqItem
-                && childDataFrame.getItemType()
+                    String.format(
+                            "SELECT explode(`%s`) AS `%s` FROM %s",
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            array),
+                    elementType);
+        } else if (hasNonObjectJSONiqItem
+                && childDataFrame
+                        .getItemType()
+                        .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                        .getType()
+                        .isArrayItemType()
+                && childDataFrame
+                        .getItemType()
+                        .getObjectKeysFacet()
+                        .contains(SparkSessionManager.tableLocationColumnName)) {
+            ItemType elementType = childDataFrame
+                    .getItemType()
                     .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType()
-                    .isArrayItemType()
-                && childDataFrame.getItemType()
-                    .getObjectKeysFacet()
-                    .contains(SparkSessionManager.tableLocationColumnName)
-        ) {
-            ItemType elementType = childDataFrame.getItemType()
-                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
-                .getType()
-                .getArrayContentFacet();
+                    .getArrayContentFacet();
             String sql;
             HomogeneousItemDataFrame res;
             // TODO: SORT OUT INDEXING DURING UNBOXING
             if (elementType.isObjectItemType()) {
                 sql = String.format(
-                    "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
-                    SparkSessionManager.rowIdColumnName,
-                    SparkSessionManager.mutabilityLevelColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.tableLocationColumnName,
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    SparkSessionManager.rowIdColumnName,
-                    SparkSessionManager.mutabilityLevelColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.tableLocationColumnName,
-                    array
-                );
+                        "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        array);
                 res = childDataFrame.evaluateSQL(sql, elementType);
             } else {
                 sql = String.format(
-                    "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
-                    SparkSessionManager.rowIdColumnName,
-                    SparkSessionManager.mutabilityLevelColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.tableLocationColumnName,
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    SparkSessionManager.rowIdColumnName,
-                    SparkSessionManager.mutabilityLevelColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.tableLocationColumnName,
-                    array
-                );
+                        "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        array);
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
                 res = new HomogeneousItemDataFrame(df, elementType);
             }
@@ -326,15 +270,12 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         if (getConfiguration().analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     "This is not a sequence of arrays,"
-                        + " so that the lookup will always result in the empty sequence no matter what. "
-                        + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                            + " so that the lookup will always result in the empty sequence no matter what. "
+                            + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
                     ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        log.warn(
-            "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
-        );
+        log.warn("Array unboxing on a DataFrame that does not an array type. Empty sequence returned.");
         return HomogeneousItemDataFrame.emptyDataFrame();
     }
 }

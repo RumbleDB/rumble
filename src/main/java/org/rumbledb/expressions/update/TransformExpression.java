@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.update;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.expressions.*;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.expressions.*;
 
 @Getter
 public class TransformExpression extends Expression {
@@ -16,6 +17,7 @@ public class TransformExpression extends Expression {
     private List<CopyDeclaration> copyDeclarations;
     private Expression modifyExpression;
     private Expression returnExpression;
+
     @Setter
     private int mutabilityLevel;
 
@@ -23,8 +25,7 @@ public class TransformExpression extends Expression {
             List<CopyDeclaration> copyDeclarations,
             Expression modifyExpression,
             Expression returnExpression,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         if (copyDeclarations == null || copyDeclarations.isEmpty()) {
             throw new SemanticException("Transform expression must have at least one variable", metadata);
@@ -37,17 +38,17 @@ public class TransformExpression extends Expression {
 
     public List<Expression> getCopySourceExpressions() {
         return this.copyDeclarations.stream()
-            .filter(Objects::nonNull)
-            .map(CopyDeclaration::getSourceExpression)
-            .collect(Collectors.toList());
+                .filter(Objects::nonNull)
+                .map(CopyDeclaration::getSourceExpression)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = this.copyDeclarations.stream()
-            .filter(Objects::nonNull)
-            .map(CopyDeclaration::getSourceExpression)
-            .collect(Collectors.toList());
+                .filter(Objects::nonNull)
+                .map(CopyDeclaration::getSourceExpression)
+                .collect(Collectors.toList());
         result.add(this.modifyExpression);
         result.add(this.returnExpression);
         return result;
@@ -73,5 +74,4 @@ public class TransformExpression extends Expression {
         this.returnExpression.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
-
 }

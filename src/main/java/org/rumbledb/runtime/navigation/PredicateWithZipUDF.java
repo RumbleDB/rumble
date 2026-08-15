@@ -20,29 +20,31 @@
 
 package org.rumbledb.runtime.navigation;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
+
+import scala.Option;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
-
-import scala.Option;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator expression;
+    private final ItemRuntimePlan expression;
     private final DynamicContext dynamicContext;
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
@@ -50,12 +52,11 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
     final List<Item> currentItems = new ArrayList<>();
 
     public PredicateWithZipUDF(
-            RuntimeIterator expression,
+            ItemRuntimePlan expression,
             DynamicContext context,
             ExceptionMetadata metadata,
             ItemType itemType,
-            long contextSize
-    ) {
+            long contextSize) {
         this.expression = expression;
         this.dynamicContext = new DynamicContext(context);
         this.metadata = metadata;
@@ -77,10 +78,10 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
         this.dynamicContext.getVariableValues().setPosition(row.getLong((int) opt.get()));
         this.dynamicContext.getVariableValues().setLast(this.contextSize);
 
-        boolean result = this.expression.getEffectiveBooleanValueOrCheckPosition(
-            this.dynamicContext,
-            this.dynamicContext.getVariableValues().getPosition()
-        );
+        boolean result = EffectiveBooleanValue.evaluateOrCheckPosition(
+                this.expression,
+                this.dynamicContext,
+                this.dynamicContext.getVariableValues().getPosition());
 
         return result;
     }

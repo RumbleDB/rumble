@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -27,100 +32,62 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
     /**
      *
      */
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public CountFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public CountFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
-
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator iterator = this.getChild(0);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        ItemRuntimePlan iterator = this.getChild(0);
 
         // the count($x) case is treated separately because we can short-circuit the
         // count, e.g., if it comes from the group-by aggregation of a non-grouping
         // key.
         if (iterator instanceof VariableReferenceIterator expr) {
             // this.hasNext = false;
-            return context.getVariableValues()
-                .getVariableCount(expr.getVariableName(), getMetadata());
+            return context.getVariableValues().getVariableCount(expr.getVariableName(), getMetadata());
         }
-        return computeCount(
-            iterator,
-            context,
-            getMetadata()
-        );
-
+        return computeCount(iterator, context, getMetadata());
     }
 
-    public static Item computeCount(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
-        if (iterator.isDataFrame()) {
-            return computeDataFrame(
-                iterator,
-                context,
-                metadata
-            );
-        } else if (iterator.isRDDOrDataFrame()) {
-            return computeRDD(
-                iterator,
-                context,
-                metadata
-            );
+    public static Item computeCount(ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
+        if (iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            return computeDataFrame(iterator, context, metadata);
+        } else if (iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            return computeRDD(iterator, context, metadata);
         } else {
-            return computeLocally(
-                iterator,
-                context,
-                metadata
-            );
+            return computeLocalCount(iterator, context);
         }
     }
 
-    private static Item computeLocally(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
-        iterator.open(context);
+    private static Item computeLocalCount(ItemRuntimePlan plan, DynamicContext context) {
         long result = 0;
-
-        while (iterator.hasNext()) {
-            iterator.next();
-            result += 1;
+        try (Cursor<Item> cursor = plan.getCursor(context)) {
+            while (cursor.hasNext()) {
+                cursor.next();
+                result++;
+            }
         }
-        iterator.close();
         return ItemFactory.getInstance().createLongItem(result);
     }
 
-    private static Item computeRDD(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
+    private static Item computeRDD(ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
         long count = iterator.getRDD(context).count();
         if (count > (long) Integer.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
@@ -129,18 +96,13 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
-    private static Item computeDataFrame(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
-        long count = iterator.getDataFrame(context).count();
+    private static Item computeDataFrame(ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
+        long count = iterator.getDataFrame(context).toRDD(metadata).count();
         if (count > (long) Integer.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
         } else {
             return ItemFactory.getInstance().createLongItem(count);
         }
-
     }
 
     @Override
@@ -156,36 +118,36 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             if (nativeChildQuery.getResultingQuery().trim().startsWith("explode")) {
                 return new NativeClauseContext(
                         nativeClauseContext,
                         "size"
-                            + nativeChildQuery.getResultingQuery()
-                                .substring(nativeChildQuery.getResultingQuery().indexOf("explode") + 7),
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                );
+                                + nativeChildQuery
+                                        .getResultingQuery()
+                                        .substring(nativeChildQuery
+                                                        .getResultingQuery()
+                                                        .indexOf("explode")
+                                                + 7),
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
             } else if (nativeChildQuery.getResultingQuery().contains(".count")) {
                 return nativeChildQuery;
             } else if (nativeChildQuery.getResultingType().getArity().equals(SequenceType.Arity.One)) {
                 return new NativeClauseContext(
                         nativeChildQuery,
                         "1",
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                );
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
             } else if (nativeChildQuery.getResultingType().getArity().equals(SequenceType.Arity.OneOrZero)) {
                 return new NativeClauseContext(
                         nativeChildQuery,
                         "CASE WHEN (" + nativeChildQuery.getResultingQuery() + ") IS NULL THEN 0 ELSE 1 END",
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                );
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
             } else {
                 return new NativeClauseContext(
                         nativeChildQuery,
                         "size (" + nativeChildQuery.getResultingQuery() + ")",
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                );
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
             }
         }
         return NativeClauseContext.NoNativeQuery;

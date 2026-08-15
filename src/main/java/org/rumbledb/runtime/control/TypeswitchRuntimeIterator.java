@@ -1,243 +1,183 @@
 package org.rumbledb.runtime.control;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
-public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
+public class TypeswitchRuntimeIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator testField;
+
+    private final ItemRuntimePlan testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
-    private RuntimeIterator matchingIterator;
-    private Item testValue;
 
     public TypeswitchRuntimeIterator(
-            RuntimeIterator test,
+            ItemRuntimePlan test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
-            RuntimeStaticContext staticContext
-    ) {
+            RuntimeStaticContext staticContext) {
         super(
-            Stream.of(
-                Stream.of(test),
-                cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator),
-                Stream.of(defaultCase.getReturnIterator())
-            ).flatMap(Function.identity()).toList(),
-            staticContext
-        );
+                Stream.concat(
+                                Stream.concat(
+                                        Stream.of(test),
+                                        cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator)),
+                                Stream.of(defaultCase.getReturnIterator()))
+                        .toList(),
+                staticContext);
 
         this.testField = test;
         this.cases = cases;
         this.defaultCase = defaultCase;
-        this.matchingIterator = null;
     }
 
     @Override
-    public void openLocal() {
-        // this.matchingIterator is null at that point;
-        if (this.matchingIterator != null) {
-            throw new IteratorFlowException(
-                    "The matching iterator should be null when opening the typeswitch iterator!"
-            );
-        }
-        initializeIterator();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new TypeswitchLocalCursor(this.testField, this.cases, this.defaultCase, context, getMetadata());
     }
 
-    private void resetMatchingIteratorToNull() {
-        if (this.matchingIterator != null) {
-            this.matchingIterator.close();
-        }
-        this.matchingIterator = null;
-    }
+    private static final class TypeswitchLocalCursor extends AbstractLocalCursor<Item> {
+        private final ItemRuntimePlan testPlan;
+        private final List<TypeswitchRuntimeIteratorCase> cases;
+        private final TypeswitchRuntimeIteratorCase defaultCase;
+        private final DynamicContext context;
+        private Cursor<Item> selected;
 
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item nextItem = this.matchingIterator.next();
-            this.hasNext = this.matchingIterator.hasNext();
-            if (!this.hasNext()) {
-                resetMatchingIteratorToNull();
+        private TypeswitchLocalCursor(
+                ItemRuntimePlan testPlan,
+                List<TypeswitchRuntimeIteratorCase> cases,
+                TypeswitchRuntimeIteratorCase defaultCase,
+                DynamicContext context,
+                ExceptionMetadata metadata) {
+            super(metadata);
+            this.testPlan = testPlan;
+            this.cases = cases;
+            this.defaultCase = defaultCase;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            Match match = selectMatch();
+            bindMatch(match, this.context);
+            this.selected = match.typeSwitchCase.getReturnIterator().getCursor(this.context);
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.selected.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            return this.selected.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.selected != null) {
+                this.selected.close();
+                this.selected = null;
             }
-            return nextItem;
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in typeSwitch statement",
-                getMetadata()
-        );
-    }
 
-    @Override
-    public void closeLocal() {
-        resetMatchingIteratorToNull();
-    }
-
-    private void initializeIterator() {
-
-        this.testValue = this.testField.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
-            this.matchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
-            if (this.matchingIterator != null) {
-                if (typeSwitchCase.getVariableName() != null) {
-                    this.currentDynamicContextForLocalExecution.getVariableValues()
-                        .addVariableValue(
-                            typeSwitchCase.getVariableName(),
-                            Collections.singletonList(this.testValue)
-                        );
+        private Match selectMatch() {
+            Item testValue = this.testPlan.materializeFirstOrNull(this.context);
+            for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
+                if (doesTypeMatch(typeSwitchCase, testValue)) {
+                    return new Match(typeSwitchCase, testValue);
                 }
-                break;
             }
+            return new Match(this.defaultCase, testValue);
         }
-
-        if (this.matchingIterator == null) {
-            if (this.defaultCase.getVariableName() != null) {
-                this.currentDynamicContextForLocalExecution.getVariableValues()
-                    .addVariableValue(
-                        this.defaultCase.getVariableName(),
-                        Collections.singletonList(this.testValue)
-                    );
-            }
-            this.matchingIterator = this.defaultCase.getReturnIterator();
-        }
-
-        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.matchingIterator.hasNext();
     }
 
-    private RuntimeIterator testTypeMatchAndReturnCorrespondingIterator(TypeswitchRuntimeIteratorCase typeSwitchCase) {
+    private static final class Match {
+        private final TypeswitchRuntimeIteratorCase typeSwitchCase;
+        private final Item testValue;
+
+        private Match(TypeswitchRuntimeIteratorCase typeSwitchCase, Item testValue) {
+            this.typeSwitchCase = typeSwitchCase;
+            this.testValue = testValue;
+        }
+    }
+
+    private Match selectMatch(DynamicContext context) {
+        Item testValue = this.testField.materializeFirstOrNull(context);
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
+            if (doesTypeMatch(typeSwitchCase, testValue)) {
+                return new Match(typeSwitchCase, testValue);
+            }
+        }
+        return new Match(this.defaultCase, testValue);
+    }
+
+    private static void bindMatch(Match match, DynamicContext context) {
+        if (match.typeSwitchCase.getVariableName() != null) {
+            context.getVariableValues()
+                    .addVariableValue(
+                            match.typeSwitchCase.getVariableName(), Collections.singletonList(match.testValue));
+        }
+    }
+
+    private static boolean doesTypeMatch(TypeswitchRuntimeIteratorCase typeSwitchCase, Item testValue) {
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
             for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-                if (this.testValue == null && sequenceType.isEmptySequence()) {
-                    return typeSwitchCase.getReturnIterator();
+                if (testValue == null && sequenceType.isEmptySequence()) {
+                    return true;
                 }
-                if (
-                    this.testValue != null
-                        && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), this.testValue)
-                ) {
-                    return typeSwitchCase.getReturnIterator();
+                if (testValue != null
+                        && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), testValue)) {
+                    return true;
                 }
             }
         }
-        return null;
+        return false;
     }
 
     @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        this.testValue = this.testField.materializeFirstItemOrNull(dynamicContext);
-        RuntimeIterator localMatchingIterator;
-
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
-            localMatchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
-            if (localMatchingIterator != null) {
-                if (typeSwitchCase.getVariableName() != null) {
-                    dynamicContext.getVariableValues()
-                        .addVariableValue(
-                            typeSwitchCase.getVariableName(),
-                            Collections.singletonList(this.testValue)
-                        );
-                }
-
-                return localMatchingIterator.getRDD(dynamicContext);
-            }
-        }
-
-        if (this.defaultCase.getVariableName() != null) {
-            dynamicContext.getVariableValues()
-                .addVariableValue(
-                    this.defaultCase.getVariableName(),
-                    Collections.singletonList(this.testValue)
-                );
-        }
-
-        return this.defaultCase.getReturnIterator().getRDD(dynamicContext);
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
+        Match match = selectMatch(dynamicContext);
+        bindMatch(match, dynamicContext);
+        return match.typeSwitchCase.getReturnIterator().getRDD(dynamicContext);
     }
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (!isUpdating()) {
+        if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
-        this.testValue = this.testField.materializeFirstItemOrNull(context);
-        RuntimeIterator localMatchingIterator;
-
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
-            localMatchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
-            if (localMatchingIterator != null) {
-                if (typeSwitchCase.getVariableName() != null) {
-                    context.getVariableValues()
-                        .addVariableValue(
-                            typeSwitchCase.getVariableName(),
-                            Collections.singletonList(this.testValue)
-                        );
-                }
-                return localMatchingIterator.getPendingUpdateList(context);
-            }
-        }
-
-        if (this.defaultCase.getVariableName() != null) {
-            context.getVariableValues()
-                .addVariableValue(
-                    this.defaultCase.getVariableName(),
-                    Collections.singletonList(this.testValue)
-                );
-        }
-        return this.defaultCase.getReturnIterator().getPendingUpdateList(context);
+        Match match = selectMatch(context);
+        bindMatch(match, context);
+        return UpdatingRuntimePlan.get(match.typeSwitchCase.getReturnIterator(), context);
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        this.testValue = this.testField.materializeFirstItemOrNull(context);
-        RuntimeIterator localMatchingIterator;
-
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
-            localMatchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
-            if (localMatchingIterator != null) {
-                if (typeSwitchCase.getVariableName() != null) {
-                    context.getVariableValues()
-                        .addVariableValue(
-                            typeSwitchCase.getVariableName(),
-                            Collections.singletonList(this.testValue)
-                        );
-                }
-                return localMatchingIterator.getDataFrame(context);
-            }
-        }
-
-        if (this.defaultCase.getVariableName() != null) {
-            context.getVariableValues()
-                .addVariableValue(
-                    this.defaultCase.getVariableName(),
-                    Collections.singletonList(this.testValue)
-                );
-        }
-
-        return this.defaultCase.getReturnIterator().getDataFrame(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        Match match = selectMatch(context);
+        bindMatch(match, context);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(match.typeSwitchCase.getReturnIterator(), context);
     }
 }

@@ -1,12 +1,12 @@
 package org.rumbledb.serialization;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-
 import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 
 public class XhtmlSerializer extends XmlSerializer {
 
@@ -18,174 +18,157 @@ public class XhtmlSerializer extends XmlSerializer {
     private static final String MATHML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
 
     private static final Set<String> URI_ATTRIBUTES = Set.of(
-        "action",
-        "archive",
-        "background",
-        "cite",
-        "classid",
-        "codebase",
-        "data",
-        "formaction",
-        "href",
-        "icon",
-        "longdesc",
-        "manifest",
-        "poster",
-        "profile",
-        "src",
-        "usemap"
-    );
+            "action",
+            "archive",
+            "background",
+            "cite",
+            "classid",
+            "codebase",
+            "data",
+            "formaction",
+            "href",
+            "icon",
+            "longdesc",
+            "manifest",
+            "poster",
+            "profile",
+            "src",
+            "usemap");
 
     private static final Set<String> XHTML_EMPTY_ELEMENTS = Set.of(
-        "area",
-        "base",
-        "br",
-        "col",
-        "embed",
-        "hr",
-        "img",
-        "input",
-        "link",
-        "meta",
-        "basefont",
-        "frame",
-        "isindex",
-        "param"
-    );
+            "area",
+            "base",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "link",
+            "meta",
+            "basefont",
+            "frame",
+            "isindex",
+            "param");
 
     private static final Set<String> HTML5_VOID_ELEMENTS = Set.of(
-        "area",
-        "base",
-        "br",
-        "col",
-        "embed",
-        "hr",
-        "img",
-        "input",
-        "keygen",
-        "link",
-        "meta",
-        "param",
-        "source",
-        "track",
-        "wbr"
-    );
+            "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source",
+            "track", "wbr");
 
     private static final Set<String> HTML5_ELEMENTS = Set.of(
-        "a",
-        "abbr",
-        "address",
-        "area",
-        "article",
-        "aside",
-        "audio",
-        "b",
-        "base",
-        "bdi",
-        "bdo",
-        "blockquote",
-        "body",
-        "br",
-        "button",
-        "canvas",
-        "caption",
-        "cite",
-        "code",
-        "col",
-        "colgroup",
-        "data",
-        "datalist",
-        "dd",
-        "del",
-        "details",
-        "dfn",
-        "dialog",
-        "div",
-        "dl",
-        "dt",
-        "em",
-        "embed",
-        "fieldset",
-        "figcaption",
-        "figure",
-        "footer",
-        "form",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "head",
-        "header",
-        "hgroup",
-        "hr",
-        "html",
-        "i",
-        "iframe",
-        "img",
-        "input",
-        "ins",
-        "kbd",
-        "keygen",
-        "label",
-        "legend",
-        "li",
-        "link",
-        "main",
-        "map",
-        "mark",
-        "menu",
-        "meta",
-        "meter",
-        "nav",
-        "noscript",
-        "object",
-        "ol",
-        "optgroup",
-        "option",
-        "output",
-        "p",
-        "param",
-        "picture",
-        "pre",
-        "progress",
-        "q",
-        "rp",
-        "rt",
-        "ruby",
-        "s",
-        "samp",
-        "script",
-        "section",
-        "select",
-        "slot",
-        "small",
-        "source",
-        "span",
-        "strong",
-        "style",
-        "sub",
-        "summary",
-        "sup",
-        "table",
-        "tbody",
-        "td",
-        "template",
-        "textarea",
-        "tfoot",
-        "th",
-        "thead",
-        "time",
-        "title",
-        "tr",
-        "track",
-        "u",
-        "ul",
-        "var",
-        "video",
-        "wbr"
-    );
+            "a",
+            "abbr",
+            "address",
+            "area",
+            "article",
+            "aside",
+            "audio",
+            "b",
+            "base",
+            "bdi",
+            "bdo",
+            "blockquote",
+            "body",
+            "br",
+            "button",
+            "canvas",
+            "caption",
+            "cite",
+            "code",
+            "col",
+            "colgroup",
+            "data",
+            "datalist",
+            "dd",
+            "del",
+            "details",
+            "dfn",
+            "dialog",
+            "div",
+            "dl",
+            "dt",
+            "em",
+            "embed",
+            "fieldset",
+            "figcaption",
+            "figure",
+            "footer",
+            "form",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "head",
+            "header",
+            "hgroup",
+            "hr",
+            "html",
+            "i",
+            "iframe",
+            "img",
+            "input",
+            "ins",
+            "kbd",
+            "keygen",
+            "label",
+            "legend",
+            "li",
+            "link",
+            "main",
+            "map",
+            "mark",
+            "menu",
+            "meta",
+            "meter",
+            "nav",
+            "noscript",
+            "object",
+            "ol",
+            "optgroup",
+            "option",
+            "output",
+            "p",
+            "param",
+            "picture",
+            "pre",
+            "progress",
+            "q",
+            "rp",
+            "rt",
+            "ruby",
+            "s",
+            "samp",
+            "script",
+            "section",
+            "select",
+            "slot",
+            "small",
+            "source",
+            "span",
+            "strong",
+            "style",
+            "sub",
+            "summary",
+            "sup",
+            "table",
+            "tbody",
+            "td",
+            "template",
+            "textarea",
+            "tfoot",
+            "th",
+            "thead",
+            "time",
+            "title",
+            "tr",
+            "track",
+            "u",
+            "ul",
+            "var",
+            "video",
+            "wbr");
 
     public XhtmlSerializer(SerializationParameters params) {
         super(params);
@@ -244,12 +227,7 @@ public class XhtmlSerializer extends XmlSerializer {
         boolean hasSignificantTextChild = hasSignificantTextChild(children);
         String childIndent = nextIndent(indent);
         if (injectContentTypeMeta) {
-            if (
-                indenting
-                    && containsElementLikeChild
-                    && !preserveWhitespace
-                    && !hasSignificantTextChild
-            ) {
+            if (indenting && containsElementLikeChild && !preserveWhitespace && !hasSignificantTextChild) {
                 sb.append("\n").append(childIndent);
             }
             appendInjectedMetaElement(item, sb);
@@ -258,13 +236,11 @@ public class XhtmlSerializer extends XmlSerializer {
             if (shouldSkipExistingContentTypeMeta(item, child)) {
                 continue;
             }
-            if (
-                indenting
+            if (indenting
                     && containsElementLikeChild
                     && !preserveWhitespace
                     && !hasSignificantTextChild
-                    && shouldIndentBeforeChild(child)
-            ) {
+                    && shouldIndentBeforeChild(child)) {
                 sb.append("\n").append(childIndent);
             }
             serialize(child, sb, childIndent, false);
@@ -313,15 +289,21 @@ public class XhtmlSerializer extends XmlSerializer {
         if (entries == null || entries.isEmpty() || element.nodeName() == null) {
             return false;
         }
-        if (isRecognizedHtmlElement(element) && hasNoNamespace(element.nodeName().getNamespace())) {
+        if (isRecognizedHtmlElement(element)
+                && hasNoNamespace(element.nodeName().getNamespace())) {
             for (String entry : entries) {
-                if (!entry.startsWith("Q{") && entry.equalsIgnoreCase(element.nodeName().getLocalName())) {
+                if (!entry.startsWith("Q{")
+                        && entry.equalsIgnoreCase(element.nodeName().getLocalName())) {
                     return true;
                 }
-                if (
-                    entry.equals("Q{" + XHTML_NAMESPACE + "}" + element.nodeName().getLocalName())
-                        || entry.equals("Q{" + XHTML_NAMESPACE + "}" + element.nodeName().getLocalName().toLowerCase())
-                ) {
+                if (entry.equals("Q{"
+                                + XHTML_NAMESPACE
+                                + "}"
+                                + element.nodeName().getLocalName())
+                        || entry.equals("Q{"
+                                + XHTML_NAMESPACE
+                                + "}"
+                                + element.nodeName().getLocalName().toLowerCase())) {
                     return true;
                 }
             }
@@ -349,16 +331,14 @@ public class XhtmlSerializer extends XmlSerializer {
     }
 
     private boolean shouldSkipNamespaceDeclaration(
-            Item element,
-            Item namespace,
-            boolean emittedDefaultNamespaceForNormalizedElement
-    ) {
+            Item element, Item namespace, boolean emittedDefaultNamespaceForNormalizedElement) {
         if (!namespace.isNamespaceNode()) {
             return false;
         }
         String prefix = namespace.nodeName() == null ? "" : namespace.nodeName().getLocalName();
         String uri = namespace.getStringValue();
-        if (shouldApplyPrefixNormalization(element) && element.nodeName().getNamespace().equals(uri)) {
+        if (shouldApplyPrefixNormalization(element)
+                && element.nodeName().getNamespace().equals(uri)) {
             if (prefix.equals(element.nodeName().getPrefix())) {
                 return true;
             }
@@ -372,11 +352,9 @@ public class XhtmlSerializer extends XmlSerializer {
     private boolean isNormalizedDefaultNamespaceInScope(Item context, String namespace) {
         Item current = context;
         while (current != null && current.isElementNode()) {
-            if (
-                shouldApplyPrefixNormalization(current)
+            if (shouldApplyPrefixNormalization(current)
                     && current.nodeName() != null
-                    && namespace.equals(current.nodeName().getNamespace())
-            ) {
+                    && namespace.equals(current.nodeName().getNamespace())) {
                 return true;
             }
             for (Item namespaceNode : current.declaredNamespaceNodes()) {
@@ -440,18 +418,17 @@ public class XhtmlSerializer extends XmlSerializer {
         if (headName == null || hasNoNamespace(headName.getNamespace())) {
             return "meta";
         }
-        if (
-            shouldApplyPrefixNormalization(headElement)
+        if (shouldApplyPrefixNormalization(headElement)
                 || headName.getPrefix() == null
-                || headName.getPrefix().isEmpty()
-        ) {
+                || headName.getPrefix().isEmpty()) {
             return "meta";
         }
         return headName.getPrefix() + ":meta";
     }
 
     private boolean isExpectedToBeEmptyMeta(Item headElement) {
-        if (headElement.nodeName() == null || hasNoNamespace(headElement.nodeName().getNamespace())) {
+        if (headElement.nodeName() == null
+                || hasNoNamespace(headElement.nodeName().getNamespace())) {
             return isHtml5Mode() ? HTML5_VOID_ELEMENTS.contains("meta") : XHTML_EMPTY_ELEMENTS.contains("meta");
         }
         return true;
@@ -474,11 +451,7 @@ public class XhtmlSerializer extends XmlSerializer {
     }
 
     private boolean shouldEmitHtml5Doctype(List<Item> children, Item firstElementChild) {
-        if (
-            !isHtml5Mode()
-                || this.params.getDoctypeSystem() != null
-                || firstElementChild == null
-        ) {
+        if (!isHtml5Mode() || this.params.getDoctypeSystem() != null || firstElementChild == null) {
             return false;
         }
         if (!isRecognizedHtmlElement(firstElementChild) || !hasLocalName(firstElementChild, "html")) {
@@ -524,8 +497,8 @@ public class XhtmlSerializer extends XmlSerializer {
         }
         String namespace = item.nodeName().getNamespace();
         return XHTML_NAMESPACE.equals(namespace)
-            || SVG_NAMESPACE.equals(namespace)
-            || MATHML_NAMESPACE.equals(namespace);
+                || SVG_NAMESPACE.equals(namespace)
+                || MATHML_NAMESPACE.equals(namespace);
     }
 
     private boolean isExpectedToBeEmpty(Item item) {
@@ -548,8 +521,8 @@ public class XhtmlSerializer extends XmlSerializer {
             return true;
         }
         return isHtml5Mode()
-            && hasNoNamespace(name.getNamespace())
-            && HTML5_ELEMENTS.contains(name.getLocalName().toLowerCase());
+                && hasNoNamespace(name.getNamespace())
+                && HTML5_ELEMENTS.contains(name.getLocalName().toLowerCase());
     }
 
     private boolean hasLocalName(Item item, String localName) {

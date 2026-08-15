@@ -17,18 +17,14 @@ import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 public class EffectiveConfigurationVisitor extends AbstractNodeVisitor<RumbleConfiguration.RumbleConfigurationBuilder> {
 
     public RumbleConfiguration getEffectiveConfiguration(
-            Node node,
-            RumbleConfiguration.RumbleConfigurationBuilder builder
-    ) {
+            Node node, RumbleConfiguration.RumbleConfigurationBuilder builder) {
         visit(node, builder);
         return builder.build();
     }
 
     @Override
     public RumbleConfiguration.RumbleConfigurationBuilder visitStepExpr(
-            StepExpr stepExpr,
-            RumbleConfiguration.RumbleConfigurationBuilder builder
-    ) {
+            StepExpr stepExpr, RumbleConfiguration.RumbleConfigurationBuilder builder) {
         /**
          * Check if the step expression requires parent pointers.
          */
@@ -40,9 +36,7 @@ public class EffectiveConfigurationVisitor extends AbstractNodeVisitor<RumbleCon
 
     @Override
     public RumbleConfiguration.RumbleConfigurationBuilder visitFunctionCall(
-            FunctionCallExpression expression,
-            RumbleConfiguration.RumbleConfigurationBuilder builder
-    ) {
+            FunctionCallExpression expression, RumbleConfiguration.RumbleConfigurationBuilder builder) {
         if (functionRequiresParentPointers(expression.getFunctionIdentifier())) {
             disableParentPointerOptimization(builder);
         }
@@ -51,16 +45,12 @@ public class EffectiveConfigurationVisitor extends AbstractNodeVisitor<RumbleCon
 
     @Override
     public RumbleConfiguration.RumbleConfigurationBuilder visitPathRootExpr(
-            PathRootExpression expression,
-            RumbleConfiguration.RumbleConfigurationBuilder builder
-    ) {
+            PathRootExpression expression, RumbleConfiguration.RumbleConfigurationBuilder builder) {
         disableParentPointerOptimization(builder);
         return builder;
     }
 
-    private static void disableParentPointerOptimization(
-            RumbleConfiguration.RumbleConfigurationBuilder builder
-    ) {
+    private static void disableParentPointerOptimization(RumbleConfiguration.RumbleConfigurationBuilder builder) {
         builder.configureOptimization(optimization -> optimization.optimizeParentPointers(false));
     }
 
@@ -75,24 +65,21 @@ public class EffectiveConfigurationVisitor extends AbstractNodeVisitor<RumbleCon
     private static boolean functionRequiresParentPointers(FunctionIdentifier identifier) {
         Name name = identifier.getName();
         String namespace = name.getNamespace();
-        if (
-            !Name.FN_NS.equals(namespace)
-                && !Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(namespace)
-        ) {
+        if (!Name.FN_NS.equals(namespace) && !Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(namespace)) {
             return false;
         }
         String localName = name.getLocalName();
         int arity = identifier.getArity();
         return ("lang".equals(localName) && (arity == 1 || arity == 2))
-            || ("in-scope-prefixes".equals(localName) && arity == 1)
-            || ("namespace-uri-for-prefix".equals(localName) && arity == 2)
-            || ("serialize".equals(localName) && (arity == 1 || arity == 2))
-            || ("innermost".equals(localName) && arity == 1)
-            || ("outermost".equals(localName) && arity == 1)
-            || ("id".equals(localName) && (arity == 1 || arity == 2))
-            || ("idref".equals(localName) && (arity == 1 || arity == 2))
-            || ("element-with-id".equals(localName) && (arity == 1 || arity == 2))
-            || ("path".equals(localName) && (arity == 0 || arity == 1))
-            || ("resolve-QName".equals(localName) && arity == 2);
+                || ("in-scope-prefixes".equals(localName) && arity == 1)
+                || ("namespace-uri-for-prefix".equals(localName) && arity == 2)
+                || ("serialize".equals(localName) && (arity == 1 || arity == 2))
+                || ("innermost".equals(localName) && arity == 1)
+                || ("outermost".equals(localName) && arity == 1)
+                || ("id".equals(localName) && (arity == 1 || arity == 2))
+                || ("idref".equals(localName) && (arity == 1 || arity == 2))
+                || ("element-with-id".equals(localName) && (arity == 1 || arity == 2))
+                || ("path".equals(localName) && (arity == 0 || arity == 1))
+                || ("resolve-QName".equals(localName) && arity == 2);
     }
 }

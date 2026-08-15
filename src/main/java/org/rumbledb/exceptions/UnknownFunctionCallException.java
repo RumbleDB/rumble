@@ -20,11 +20,11 @@
 
 package org.rumbledb.exceptions;
 
+import java.io.Serial;
+
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
-
-import java.io.Serial;
 
 public class UnknownFunctionCallException extends RumbleException {
 
@@ -33,27 +33,23 @@ public class UnknownFunctionCallException extends RumbleException {
 
     public UnknownFunctionCallException(Name fnName, int arity, ExceptionMetadata metadata) {
         super(
-            "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
-                +
-                fnName
-                + "\" called with "
-                + arity
-                + " parameters.",
-            ErrorCode.InvalidFunctionCallErrorCode,
-            metadata
-        );
+                "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
+                        + fnName
+                        + "\" called with "
+                        + arity
+                        + " parameters.",
+                ErrorCode.InvalidFunctionCallErrorCode,
+                metadata);
     }
 
     public UnknownFunctionCallException(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(
-            "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
-                +
-                identifier.getName()
-                + "\" called with "
-                + identifier.getArity()
-                + " parameters.",
-            ErrorCode.InvalidFunctionCallErrorCode,
-            metadata
-        );
+                "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
+                        + identifier.getName()
+                        + "\" called with "
+                        + identifier.getArity()
+                        + " parameters.",
+                ErrorCode.InvalidFunctionCallErrorCode,
+                metadata);
     }
 }

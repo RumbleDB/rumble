@@ -1,55 +1,31 @@
 package org.rumbledb.runtime.scripting.declaration;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
-import java.io.Serial;
-import java.util.List;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /*
  * It is expected that no results are returned for this iterator.
  */
-public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+public class CommaVariableDeclStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator currentChild;
-    private int childIndex;
 
-    public CommaVariableDeclStatementIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public CommaVariableDeclStatementIterator(
+            List<? extends ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.childIndex = 0;
-
-        if (!this.getChildren().isEmpty()) {
-            this.currentChild = this.getChild(this.childIndex);
-            this.currentChild.open(this.currentDynamicContextForLocalExecution);
-            materializeChildren();
-        } else {
-            this.currentChild = null;
+    public Item evaluateAtMostOne(DynamicContext context) {
+        for (ItemRuntimePlan child : this.getChildren()) {
+            child.materialize(context);
         }
         return null;
-    }
-
-    public void materializeChildren() {
-        while (this.currentChild != null) {
-            if (this.currentChild.hasNext()) {
-                this.currentChild.next();
-            } else {
-                this.currentChild.close();
-                if (++this.childIndex == this.getChildren().size()) {
-                    this.currentChild = null;
-                } else {
-                    this.currentChild = this.getChild(this.childIndex);
-                    this.currentChild.open(this.currentDynamicContextForLocalExecution);
-                }
-            }
-        }
-        this.hasNext = false;
     }
 }

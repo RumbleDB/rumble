@@ -20,20 +20,21 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-
-import java.io.Serial;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 /**
  * Runtime iterator for text nodes in a direct element constructor.
- * 
+ *
  * @see org.rumbledb.expressions.xml.TextNodeExpression
  */
-public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class TextNodeRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -42,25 +43,17 @@ public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     /**
      * Constructor for text node runtime iterator.
-     * 
+     *
      * @param content The string content of the text node
      * @param staticContext The static context
      */
-    public TextNodeRuntimeIterator(
-            String content,
-            RuntimeStaticContext staticContext
-    ) {
-        super(null, staticContext);
+    public TextNodeRuntimeIterator(String content, RuntimeStaticContext staticContext) {
+        super(List.of(), staticContext);
         this.content = content;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        // Create and return the element item
-        this.hasNext = false;
-        return ItemFactory.getInstance()
-            .createXmlTextNode(
-                this.content
-            );
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        return ItemFactory.getInstance().createXmlTextNode(this.content);
     }
 }

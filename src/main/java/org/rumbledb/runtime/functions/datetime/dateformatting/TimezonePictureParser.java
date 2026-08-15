@@ -10,16 +10,14 @@ import org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger.Pri
 
 final class TimezonePictureParser {
 
-    private TimezonePictureParser() {
-    }
+    private TimezonePictureParser() {}
 
     static ParsedTimezonePicture parse(
             char component,
             String presentation,
             char secondPresentationModifier,
             String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         boolean zuluForZeroOffset = secondPresentationModifier == ParsedPresentationModifier.TRADITIONAL;
 
         if (presentation.isEmpty()) {
@@ -52,25 +50,14 @@ final class TimezonePictureParser {
     }
 
     private static ParsedTimezonePicture defaultTimezonePicture(
-            char component,
-            boolean zuluForZeroOffset,
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            char component, boolean zuluForZeroOffset, String pictureStringForErrors, ExceptionMetadata metadata) {
         return parseNumericTimezone("01:01", component == 'z', zuluForZeroOffset, pictureStringForErrors, metadata);
     }
 
     private static PrimaryFormatToken parsePrimaryFormatToken(
-            String presentation,
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            String presentation, String pictureStringForErrors, ExceptionMetadata metadata) {
         try {
-            return FormatIntegerPictureParser.parsePrimaryFormatToken(
-                presentation,
-                pictureStringForErrors,
-                metadata
-            );
+            return FormatIntegerPictureParser.parsePrimaryFormatToken(presentation, pictureStringForErrors, metadata);
         } catch (IncorrectSyntaxFormatNumberException e) {
             throw invalidPicture(pictureStringForErrors, metadata);
         }
@@ -81,8 +68,7 @@ final class TimezonePictureParser {
             boolean gmtPrefix,
             boolean zuluForZeroOffset,
             String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         int sepIndex = findSeparatorIndex(core);
         if (sepIndex >= 0) {
             String left = core.substring(0, sepIndex);
@@ -92,16 +78,15 @@ final class TimezonePictureParser {
             NumericPicture minPic = NumericPictureParser.parseForDate(right, pictureStringForErrors, metadata);
 
             return ParsedTimezonePicture.custom(
-                gmtPrefix,
-                true,
-                String.valueOf(core.charAt(sepIndex)),
-                hourPic.getMandatoryDigitCount(),
-                minPic.getMandatoryDigitCount(),
-                hourPic.getZeroDigit(),
-                zuluForZeroOffset,
-                false,
-                false
-            );
+                    gmtPrefix,
+                    true,
+                    String.valueOf(core.charAt(sepIndex)),
+                    hourPic.getMandatoryDigitCount(),
+                    minPic.getMandatoryDigitCount(),
+                    hourPic.getZeroDigit(),
+                    zuluForZeroOffset,
+                    false,
+                    false);
         }
 
         NumericPicture pic = NumericPictureParser.parseForDate(core, pictureStringForErrors, metadata);
@@ -109,30 +94,20 @@ final class TimezonePictureParser {
 
         if (digits == 1 || digits == 2) {
             return ParsedTimezonePicture.custom(
-                gmtPrefix,
-                false,
-                ":",
-                pic.getMandatoryDigitCount(),
-                2,
-                pic.getZeroDigit(),
-                zuluForZeroOffset,
-                true,
-                false
-            );
+                    gmtPrefix,
+                    false,
+                    ":",
+                    pic.getMandatoryDigitCount(),
+                    2,
+                    pic.getZeroDigit(),
+                    zuluForZeroOffset,
+                    true,
+                    false);
         }
 
         if (digits == 3 || digits == 4) {
             return ParsedTimezonePicture.custom(
-                gmtPrefix,
-                true,
-                "",
-                digits == 4 ? 2 : 1,
-                2,
-                pic.getZeroDigit(),
-                zuluForZeroOffset,
-                false,
-                true
-            );
+                    gmtPrefix, true, "", digits == 4 ? 2 : 1, 2, pic.getZeroDigit(), zuluForZeroOffset, false, true);
         }
 
         throw invalidPicture(pictureStringForErrors, metadata);
@@ -153,12 +128,8 @@ final class TimezonePictureParser {
     }
 
     private static IncorrectSyntaxFormatDateTimeException invalidPicture(
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            String pictureStringForErrors, ExceptionMetadata metadata) {
         return new IncorrectSyntaxFormatDateTimeException(
-                "\"" + pictureStringForErrors + "\": invalid picture string",
-                metadata
-        );
+                "\"" + pictureStringForErrors + "\": invalid picture string", metadata);
     }
 }

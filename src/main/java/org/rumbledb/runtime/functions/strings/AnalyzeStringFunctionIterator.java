@@ -1,15 +1,5 @@
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.MatchesEmptyStringException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.io.Serial;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -20,48 +10,50 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 
-public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.MatchesEmptyStringException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private static final Name ANALYZE_STRING_RESULT_NAME = new Name(Name.FN_NS, "fn", "analyze-string-result");
     private static final Name MATCH_NAME = new Name(Name.FN_NS, "fn", "match");
     private static final Name NON_MATCH_NAME = new Name(Name.FN_NS, "fn", "non-match");
     private static final Name GROUP_NAME = new Name(Name.FN_NS, "fn", "group");
     private static final Name NR_ATTRIBUTE_NAME = new Name(null, null, "nr");
 
-    public AnalyzeStringFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public AnalyzeStringFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         ItemFactory factory = ItemFactory.getInstance();
 
-        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstOrNull(context);
         String input = inputItem == null ? "" : inputItem.getStringValue();
 
-        String pattern = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+        String pattern = this.getChild(1).materializeFirstOrNull(context).getStringValue();
         String flags = null;
         if (this.getChildren().size() == 3) {
-            Item flagsItem = this.getChild(2).materializeFirstItemOrNull(context);
+            Item flagsItem = this.getChild(2).materializeFirstOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }
         }
 
-        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
-            pattern,
-            flags,
-            getMetadata()
-        );
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
         if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
             throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
-                    getMetadata()
-            );
+                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string", getMetadata());
         }
 
         List<Item> resultChildren = new ArrayList<>();
@@ -69,9 +61,8 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
         int currentPosition = 0;
         while (matcher.find()) {
             if (currentPosition < matcher.start()) {
-                resultChildren.add(
-                    createTextContainer(factory, NON_MATCH_NAME, input.substring(currentPosition, matcher.start()))
-                );
+                resultChildren.add(createTextContainer(
+                        factory, NON_MATCH_NAME, input.substring(currentPosition, matcher.start())));
             }
             resultChildren.add(createMatchElement(factory, input, matcher, compiledRegex.isQuote()));
             currentPosition = matcher.end();
@@ -80,11 +71,7 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
             resultChildren.add(createTextContainer(factory, NON_MATCH_NAME, input.substring(currentPosition)));
         }
 
-        Item root = factory.createXmlElementNode(
-            ANALYZE_STRING_RESULT_NAME,
-            resultChildren,
-            Collections.emptyList()
-        );
+        Item root = factory.createXmlElementNode(ANALYZE_STRING_RESULT_NAME, resultChildren, Collections.emptyList());
         root.addOrReplaceNamespace(factory.createXmlNamespaceNode("fn", Name.FN_NS));
         assignParentsRecursively(root);
         root.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
@@ -94,11 +81,8 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
     private Item createMatchElement(ItemFactory factory, String input, Matcher matcher, boolean quotedPattern) {
         int matchStart = matcher.start();
         int matchEnd = matcher.end();
-        RegexStructure regexStructure = buildRegexStructure(
-            matcher.pattern().pattern(),
-            matcher.groupCount(),
-            quotedPattern
-        );
+        RegexStructure regexStructure =
+                buildRegexStructure(matcher.pattern().pattern(), matcher.groupCount(), quotedPattern);
         Map<Integer, GroupCapture> captures = new LinkedHashMap<>();
         GroupCapture rootCapture = new GroupCapture(0, matchStart, matchEnd, true, 0);
         captures.put(0, rootCapture);
@@ -107,15 +91,9 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
             GroupSpec spec = regexStructure.groupSpecs.get(number);
             int start = matcher.start(number);
             captures.put(
-                number,
-                new GroupCapture(
-                        number,
-                        start,
-                        start == -1 ? -1 : matcher.end(number),
-                        start != -1,
-                        spec.branchIndex
-                )
-            );
+                    number,
+                    new GroupCapture(
+                            number, start, start == -1 ? -1 : matcher.end(number), start != -1, spec.branchIndex));
         }
         for (Integer number : regexStructure.orderedGroups) {
             GroupSpec spec = regexStructure.groupSpecs.get(number);
@@ -165,20 +143,14 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     private Item createGroupElement(ItemFactory factory, String input, GroupCapture capture) {
         List<Item> attributes = Collections.singletonList(
-            factory.createXmlAttributeNode(NR_ATTRIBUTE_NAME, String.valueOf(capture.getNumber()))
-        );
-        List<Item> children = capture.matched
-            ? materializeChildren(factory, input, capture)
-            : Collections.emptyList();
+                factory.createXmlAttributeNode(NR_ATTRIBUTE_NAME, String.valueOf(capture.getNumber())));
+        List<Item> children = capture.matched ? materializeChildren(factory, input, capture) : Collections.emptyList();
         return factory.createXmlElementNode(GROUP_NAME, children, attributes);
     }
 
     private Item createTextContainer(ItemFactory factory, Name nodeName, String content) {
         return factory.createXmlElementNode(
-            nodeName,
-            Collections.singletonList(factory.createXmlTextNode(content)),
-            Collections.emptyList()
-        );
+                nodeName, Collections.singletonList(factory.createXmlTextNode(content)), Collections.emptyList());
     }
 
     private void assignParentsRecursively(Item item) {

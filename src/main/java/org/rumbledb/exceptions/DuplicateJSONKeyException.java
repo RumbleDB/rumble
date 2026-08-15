@@ -1,8 +1,8 @@
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class DuplicateJSONKeyException extends RumbleException {
 
@@ -13,4 +13,3 @@ public class DuplicateJSONKeyException extends RumbleException {
         super(message, ErrorCode.DuplicateJSONKeyErrorCode, metadata);
     }
 }
-

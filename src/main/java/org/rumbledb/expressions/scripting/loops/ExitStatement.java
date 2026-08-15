@@ -1,14 +1,15 @@
 package org.rumbledb.expressions.scripting.loops;
 
+import java.util.Collections;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.statement.Statement;
-
-import java.util.Collections;
-import java.util.List;
 
 @Getter
 public class ExitStatement extends Statement {
@@ -34,5 +35,4 @@ public class ExitStatement extends Statement {
         indentIt(sb, indent);
         this.exitExpression.serializeToJSONiq(sb, 0);
     }
-
 }

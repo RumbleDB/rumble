@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -27,8 +28,7 @@ public class CastableExpression extends Expression {
         }
         if (type.getArity() != Arity.OneOrZero && type.getArity() != Arity.One) {
             throw new OurBadException(
-                    "Castable expressions cannot have an arity of more than one, something went wrong with the parser."
-            );
+                    "Castable expressions cannot have an arity of more than one, something went wrong with the parser.");
         }
     }
 
@@ -48,12 +48,10 @@ public class CastableExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(
-            " ("
+        buffer.append(" ("
                 + (this.sequenceType.toString())
                 + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
-                + ") "
-        );
+                + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
         buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));

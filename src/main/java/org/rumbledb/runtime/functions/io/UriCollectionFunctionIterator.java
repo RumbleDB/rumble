@@ -1,28 +1,25 @@
 package org.rumbledb.runtime.functions.io;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnimplementedFunctionException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class UriCollectionFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class UriCollectionFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public UriCollectionFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public UriCollectionFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        throw new UnimplementedFunctionException("uri-collection", getMetadata());
+    public Item evaluateAtMostOne(DynamicContext context) {
+        throw new UnimplementedFunctionException("fn:uri-collection", getMetadata());
     }
 }

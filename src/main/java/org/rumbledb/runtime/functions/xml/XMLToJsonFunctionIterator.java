@@ -1,5 +1,12 @@
 package org.rumbledb.runtime.functions.xml;
 
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -11,36 +18,27 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.JSONLiteralParsingUtils;
 import org.rumbledb.items.parsing.JSONParsingOptions;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
-
-public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private static final String FUNCTIONS_NAMESPACE = "http://www.w3.org/2005/xpath-functions";
     private static final Pattern JSON_NUMBER_PATTERN =
-        Pattern.compile("-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
+            Pattern.compile("-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
     private static final Pattern PERMISSIVE_NUMBER_PATTERN =
-        Pattern.compile("[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
+            Pattern.compile("[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
 
-    public XMLToJsonFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public XMLToJsonFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item input = materializeInput(context);
         if (input == null) {
             return null;
@@ -53,12 +51,10 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private Item materializeInput(DynamicContext context) {
         try {
-            return this.getChild(0).materializeAtMostOneItemOrNull(context);
+            return this.getChild(0).materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "fn:xml-to-json expects at most one input item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "fn:xml-to-json expects at most one input item [err:XPTY0004].", getMetadata());
         }
     }
 
@@ -69,25 +65,22 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
         Item options;
         try {
-            options = this.getChild(1).materializeAtMostOneItemOrNull(context);
+            options = this.getChild(1).materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "The options argument of fn:xml-to-json must be a single map item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "The options argument of fn:xml-to-json must be a single map item [err:XPTY0004].", getMetadata());
         }
+        return resolveIndentOption(options);
+    }
 
+    private boolean resolveIndentOption(Item options) {
         if (options == null) {
             throw new UnexpectedTypeException(
-                    "The options argument of fn:xml-to-json must be a map item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "The options argument of fn:xml-to-json must be a map item [err:XPTY0004].", getMetadata());
         }
         if (!options.isMap()) {
             throw new UnexpectedTypeException(
-                    "The options argument of fn:xml-to-json must be a map item [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "The options argument of fn:xml-to-json must be a map item [err:XPTY0004].", getMetadata());
         }
 
         List<Item> indentOption = options.getSequenceByKey("indent");
@@ -96,9 +89,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
         if (indentOption.size() != 1 || !indentOption.get(0).isBoolean()) {
             throw new UnexpectedTypeException(
-                    "The indent option of fn:xml-to-json must be a single xs:boolean [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "The indent option of fn:xml-to-json must be a single xs:boolean [err:XPTY0004].", getMetadata());
         }
         return indentOption.get(0).getBooleanValue();
     }
@@ -110,9 +101,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
         if (!input.isElementNode()) {
             throw new UnexpectedTypeException(
-                    "fn:xml-to-json expects an element or document node [err:XPTY0004].",
-                    getMetadata()
-            );
+                    "fn:xml-to-json expects an element or document node [err:XPTY0004].", getMetadata());
         }
         return parseJsonElement(input, true);
     }
@@ -168,14 +157,12 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             throw invalidRepresentation("Element is not in the XPath functions namespace.");
         }
         String localName = name.getLocalName();
-        if (
-            !localName.equals("map")
+        if (!localName.equals("map")
                 && !localName.equals("array")
                 && !localName.equals("string")
                 && !localName.equals("number")
                 && !localName.equals("boolean")
-                && !localName.equals("null")
-        ) {
+                && !localName.equals("null")) {
             throw invalidRepresentation("Element is not part of the XML representation of JSON.");
         }
     }
@@ -280,9 +267,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
         if (JSON_NUMBER_PATTERN.matcher(stringValue).matches()) {
             return JSONLiteralParsingUtils.getItemFromJSONNumber(
-                stringValue,
-                JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE
-            );
+                    stringValue, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE);
         }
         if (!PERMISSIVE_NUMBER_PATTERN.matcher(stringValue).matches()) {
             throw invalidRepresentation("Invalid lexical representation for a JSON number.");
@@ -364,12 +349,10 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return;
         }
         String normalized = value.trim();
-        if (
-            normalized.equals("true")
+        if (normalized.equals("true")
                 || normalized.equals("false")
                 || normalized.equals("1")
-                || normalized.equals("0")
-        ) {
+                || normalized.equals("0")) {
             return;
         }
         throw invalidRepresentation("Attribute " + attributeName + " must have a boolean value.");
@@ -401,7 +384,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             }
             try {
                 JSONLiteralParsingUtils.DecodedEscape decodedEscape =
-                    JSONLiteralParsingUtils.decodeEscapeSequence(content, index);
+                        JSONLiteralParsingUtils.decodeEscapeSequence(content, index);
                 decoded.append(decodedEscape.getDecodedText());
                 index = decodedEscape.getNextIndex();
             } catch (IllegalArgumentException e) {

@@ -21,117 +21,108 @@
 package org.rumbledb.runtime.typing;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
-
-public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
+public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
+
+    private final ItemRuntimePlan child;
     private final SequenceType sequenceType;
 
-    public InstanceOfIterator(
-            RuntimeIterator child,
-            SequenceType sequenceType,
-            RuntimeStaticContext staticContext
-    ) {
+    public InstanceOfIterator(ItemRuntimePlan child, SequenceType sequenceType, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.sequenceType = sequenceType;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
-            DynamicContext dynamicContext
-    ) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(dynamicContext, getMetadata());
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        ItemRuntimePlan child = this.child;
+        SequenceType sequenceType = this.sequenceType;
+        ExceptionMetadata metadata = getMetadata();
+        if (!sequenceType.isResolved()) {
+            sequenceType.resolve(dynamicContext, metadata);
         }
-        if (!this.child.isRDDOrDataFrame()) {
-            List<Item> items = new ArrayList<>();
-            this.child.open(dynamicContext);
-
-            while (this.child.hasNext()) {
-                items.add(this.child.next());
-            }
-            this.child.close();
-
-            if (this.sequenceType.isEmptySequence()) {
-                return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
-            }
-
-            if (isInvalidArity(items.size())) {
+        if (!child.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            return evaluateLocal(child, sequenceType, metadata, dynamicContext);
+        }
+        if (child.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            HomogeneousItemDataFrame childDF = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(child, dynamicContext);
+            if (isInvalidArity(childDF.take(2).size(), sequenceType)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
-
-            ItemType itemType = this.sequenceType.getItemType();
-            for (Item item : items) {
-                if (item != null && !item.getDynamicType().isResolved()) {
-                    item.getDynamicType().resolve(dynamicContext, getMetadata());
-                }
-                if (!doesItemTypeMatchItem(itemType, item)) {
-                    return ItemFactory.getInstance().createBooleanItem(false);
-                }
-            }
-
-            return ItemFactory.getInstance().createBooleanItem(true);
-        }
-        if (this.child.isDataFrame()) {
-            HomogeneousItemDataFrame childDF = this.child.getDataFrame(dynamicContext);
-            if (isInvalidArity(childDF.take(2).size())) {
-                return ItemFactory.getInstance().createBooleanItem(false);
-            }
-
             ItemType itemType = childDF.getItemType();
-            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(this.sequenceType.getItemType()));
+            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(sequenceType.getItemType()));
         }
-        JavaRDD<Item> childRDD = this.child.getRDD(dynamicContext);
-
-        if (isInvalidArity(childRDD.take(2).size())) {
+        JavaRDD<Item> childRDD = child.getRDD(dynamicContext);
+        if (isInvalidArity(childRDD.take(2).size(), sequenceType)) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-
-        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
+        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(sequenceType.getItemType()));
         return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
     }
 
-    private boolean isInvalidArity(long numOfItems) {
-        return (numOfItems != 0 && this.sequenceType.isEmptySequence())
-            ||
-            (numOfItems == 0
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore))
-            ||
-            (numOfItems > 1
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero));
+    private static Item evaluateLocal(
+            ItemRuntimePlan child,
+            SequenceType sequenceType,
+            ExceptionMetadata metadata,
+            DynamicContext dynamicContext) {
+        List<Item> items = child.materialize(dynamicContext);
+
+        if (sequenceType.isEmptySequence()) {
+            return ItemFactory.getInstance().createBooleanItem(items.isEmpty());
+        }
+        if (isInvalidArity(items.size(), sequenceType)) {
+            return ItemFactory.getInstance().createBooleanItem(false);
+        }
+
+        ItemType itemType = sequenceType.getItemType();
+        for (Item item : items) {
+            if (item != null && !item.getDynamicType().isResolved()) {
+                item.getDynamicType().resolve(dynamicContext, metadata);
+            }
+            if (!doesItemTypeMatchItem(itemType, item)) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+        }
+        return ItemFactory.getInstance().createBooleanItem(true);
+    }
+
+    private static boolean isInvalidArity(long numOfItems, SequenceType sequenceType) {
+        return (numOfItems != 0 && sequenceType.isEmptySequence())
+                || (numOfItems == 0
+                        && (sequenceType.getArity() == SequenceType.Arity.One
+                                || sequenceType.getArity() == SequenceType.Arity.OneOrMore))
+                || (numOfItems > 1
+                        && (sequenceType.getArity() == SequenceType.Arity.One
+                                || sequenceType.getArity() == SequenceType.Arity.OneOrZero));
     }
 
     /**
      * Item type tests. This supersedes the method isTypeOf() formerly located in the Item interface,
      * as part of the efforts to cleanly separate item storage from item manipulation (which is
      * the domain of responsibility of runtime iterators).
-     * 
+     *
      * @param itemType the item type to match against the item.
      * @param itemToMatch the item to match against the type.
      * @return true if itemToMatch matches itemType.
@@ -142,10 +133,8 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 // empty map: matches
                 // - all map types
                 // - object types (js:object) WITHOUT a JSound schema attached
-                if (
-                    itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
-                        && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem))
-                ) {
+                if (itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
+                        && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem))) {
                     return true;
                 }
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
@@ -157,14 +146,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             List<Item> keys = itemToMatch.getItemKeys();
             ItemType keyType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                keys,
-                ExceptionMetadata.EMPTY_METADATA,
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
+                    keys, ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.STRICT);
             SequenceType valueSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
-                itemToMatch.getSequenceValues(),
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
+                    itemToMatch.getSequenceValues(), TypeInferrenceUtils.TypeMergeMode.STRICT);
             ItemType runtimeMapType = ItemTypeFactory.mapOf(keyType, valueSequenceType);
 
             // Structural map type vs. UDT: map(xs:string, xs:int) is not a subtype of a named object
@@ -176,10 +160,8 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 // empty array: matches
                 // - all array types
                 // - js:array()
-                if (
-                    itemType.isSubtypeOf(BuiltinTypesCatalogue.xqueryArrayItem)
-                        && (!itemType.isArrayItemType() || itemType.equals(BuiltinTypesCatalogue.arrayItem))
-                )
+                if (itemType.isSubtypeOf(BuiltinTypesCatalogue.xqueryArrayItem)
+                        && (!itemType.isArrayItemType() || itemType.equals(BuiltinTypesCatalogue.arrayItem)))
                     return true;
                 // default behavior for array types (js:array()) WITH restrictions
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
@@ -210,16 +192,13 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 return true;
             }
             SequenceType memberSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
-                members,
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
+                    members, TypeInferrenceUtils.TypeMergeMode.STRICT);
             ItemType runtimeArrayType = ItemTypeFactory.xqueryArrayOf(memberSequenceType);
             // Structural array type vs. UDT: array(xs:string) is not a subtype of a named object
             // schema type, but the validated item's dynamic type is (e.g. local:x).
             return runtimeArrayType.isSubtypeOf(itemType)
-                || itemToMatch.getDynamicType().isSubtypeOf(itemType);
+                    || itemToMatch.getDynamicType().isSubtypeOf(itemType);
         }
         return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
-
 }
