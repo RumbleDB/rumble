@@ -48,9 +48,6 @@ final class TemporalComponentRenderer {
             case VariableMarker.Kind.NAME:
                 return formatNamedComponent(value, variableMarker, formattingContext, pictureString, metadata);
 
-            case VariableMarker.Kind.AM_PM:
-                return value.getHour() < 12 ? "am" : "pm";
-
             case VariableMarker.Kind.WORDS:
                 return formatWordsComponent(value, variableMarker, formattingContext, pictureString, metadata);
 
