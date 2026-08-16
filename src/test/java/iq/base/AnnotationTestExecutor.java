@@ -22,6 +22,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.Assertions;
@@ -114,7 +115,7 @@ public final class AnnotationTestExecutor {
     }
 
     private static AnnotationProcessor.TestAnnotation readAnnotation(String path) throws IOException {
-        try (Reader annotationReader = new FileReader(path)) {
+        try (Reader annotationReader = new FileReader(path, StandardCharsets.UTF_8)) {
             return AnnotationProcessor.readAnnotation(annotationReader);
         } catch (AnnotationParseException exception) {
             throw new AssertionError("Could not parse test annotation for " + path, exception);
