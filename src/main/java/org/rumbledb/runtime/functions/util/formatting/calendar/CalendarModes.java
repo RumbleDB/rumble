@@ -16,7 +16,9 @@ public final class CalendarModes {
             Map.entry("ISO", "gregorian"),
             Map.entry("AD", "gregorian"),
             Map.entry("CE", "gregorian"),
-            Map.entry("AH", "islamic"),
+            // ICU's Islamic variants differ by up to a day; the tabular one reproduces the AH example in
+            // F&O 3.1 (2002-12-31 -> 26 Shawwal 1423). The spec defines none of these calendars itself.
+            Map.entry("AH", "islamic-civil"),
             Map.entry("AP", "persian"),
             Map.entry("AM", "hebrew"),
             Map.entry("BE", "buddhist"),

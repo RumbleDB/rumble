@@ -21,38 +21,21 @@ import java.io.File;
 
 import org.rumbledb.config.RumbleConfiguration;
 
-/**
- * Base class for the per-language fn:format-integer word formatting suites.
- *
- * <p>
- * These tests depend on CLDR data shipped with ICU4J rather than on RumbleDB's own logic, so they live outside
- * {@code test_files/runtime} and run in their own workflow. That way an ICU4J upgrade shows up as a self-contained
- * failure naming the affected language instead of a red {@code RuntimeTests}.
- * </p>
- *
- * <p>
- * No Spark session is needed, so this extends {@link AnnotationsTestsBase} directly.
- * </p>
- */
-public abstract class FormattingLanguageTestsBase extends AnnotationsTestsBase {
+public abstract class FormattingTestsBase extends AnnotationsTestsBase {
 
-    private static final String TEST_FILES_ROOT =
-            System.getProperty("user.dir") + "/src/test/resources/test_files/formatting-languages/";
+    private static final String TEST_FILES_ROOT = System.getProperty("user.dir") + "/src/test/resources/test_files/";
 
-    /**
-     * @return the BCP 47 language subtag whose directory holds this suite's test files.
-     */
-    protected abstract String language();
+    protected abstract String subdirectory();
 
     @Override
     protected File testDirectory() {
-        return new File(TEST_FILES_ROOT + language());
+        return new File(TEST_FILES_ROOT + subdirectory());
     }
 
     @Override
     public RumbleConfiguration getConfiguration() {
-        // The default result size cap is well below the number of expressions in these files, which would
-        // silently truncate the compared sequence instead of failing.
+        // The default result size cap is below the number of expressions here and would silently truncate
+        // the compared sequence instead of failing.
         return TestConfigurations.defaultConfigurationBuilder()
                 .configureRuntime(runtime -> runtime.resultsSizeCap(200).materializationCap(100000))
                 .build();

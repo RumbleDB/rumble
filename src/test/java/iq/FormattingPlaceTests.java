@@ -17,15 +17,12 @@
 
 package iq;
 
-import iq.base.FormattingLanguageTestsBase;
+import iq.base.FormattingTestsBase;
 
-/**
- * Cardinal and ordinal word formatting for French ("fr").
- */
-public class FormattingLanguageTestsFr extends FormattingLanguageTestsBase {
+public class FormattingPlaceTests extends FormattingTestsBase {
 
     @Override
-    protected String language() {
-        return "fr";
+    protected String subdirectory() {
+        return "formatting-place";
     }
 }

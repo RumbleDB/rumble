@@ -1,6 +1,4 @@
-# Cardinal and ordinal word formatting for fn:format-integer, one job per language.
-
-name: ICU Formatting Languages
+name: ICU Formatting
 
 on:
   push:
@@ -10,22 +8,18 @@ on:
     branches:
       - '**'
 jobs:
-  formatting-languages:
+  formatting:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - test_class: FormattingLanguageTestsEn
-            language: English
-          - test_class: FormattingLanguageTestsDe
-            language: German
-          - test_class: FormattingLanguageTestsFr
-            language: French
-          - test_class: FormattingLanguageTestsIt
-            language: Italian
-          - test_class: FormattingLanguageTestsEs
-            language: Spanish
+          - test_class: FormattingLanguageTests
+            suite: Languages
+          - test_class: FormattingCalendarTests
+            suite: Calendars
+          - test_class: FormattingPlaceTests
+            suite: Places
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5
@@ -44,9 +38,9 @@ jobs:
         run: mvn install -DskipTests -Dgpg.skip --quiet
       - name: Report resolved ICU4J version
         run: mvn -q dependency:list -Dincludes=com.ibm.icu:icu4j -DoutputFile=/dev/stdout
-      - name: Run ${{ matrix.language }} formatting tests
+      - name: Run ${{ matrix.suite }} formatting tests
         run: mvn -Dtest='${{ matrix.test_class }}' test
-      - name: Publish Surefire Report ${{ matrix.language }}
+      - name: Publish Surefire Report ${{ matrix.suite }}
         if: always()
         uses: ScalableCapital/action-surefire-report@v2
         with:

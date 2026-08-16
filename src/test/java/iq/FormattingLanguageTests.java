@@ -17,15 +17,12 @@
 
 package iq;
 
-import iq.base.FormattingLanguageTestsBase;
+import iq.base.FormattingTestsBase;
 
-/**
- * Cardinal and ordinal word formatting for German ("de").
- */
-public class FormattingLanguageTestsDe extends FormattingLanguageTestsBase {
+public class FormattingLanguageTests extends FormattingTestsBase {
 
     @Override
-    protected String language() {
-        return "de";
+    protected String subdirectory() {
+        return "formatting-languages";
     }
 }

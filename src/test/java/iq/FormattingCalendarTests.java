@@ -17,15 +17,12 @@
 
 package iq;
 
-import iq.base.FormattingLanguageTestsBase;
+import iq.base.FormattingTestsBase;
 
-/**
- * Cardinal and ordinal word formatting for English ("en").
- */
-public class FormattingLanguageTestsEn extends FormattingLanguageTestsBase {
+public class FormattingCalendarTests extends FormattingTestsBase {
 
     @Override
-    protected String language() {
-        return "en";
+    protected String subdirectory() {
+        return "formatting-calendar";
     }
 }
