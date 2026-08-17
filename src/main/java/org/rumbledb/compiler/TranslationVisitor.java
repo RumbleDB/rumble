@@ -2734,14 +2734,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             Expression catchExpression = catchCtx.catch_expression == null
                     ? new CommaExpression(createMetadataFromContext(catchCtx))
                     : (Expression) this.visitExpr(catchCtx.catch_expression);
-            for (JsoniqParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                CatchPattern pattern = CatchPattern.exact(parseEqName(eqNameCtx, false, false, false, false));
-                if (!catchExpressions.containsKey(pattern)) {
-                    catchExpressions.put(pattern, catchExpression);
-                }
-            }
-            for (JsoniqParser.WildcardContext wildcardCtx : catchCtx.jokers) {
-                CatchPattern pattern = this.parseWildcardPattern(wildcardCtx);
+
+            for (var catchTarget : catchCtx.nameTest()) {
+                var wildcard = catchTarget.wildcard();
+                var errorcode = catchTarget.eqName();
+
+                CatchPattern pattern = wildcard != null
+                        ? this.parseWildcardPattern(wildcard)
+                        : CatchPattern.exact(parseEqName(errorcode, false, false, false, false));
                 if (!catchExpressions.containsKey(pattern)) {
                     catchExpressions.put(pattern, catchExpression);
                 }
@@ -3061,14 +3061,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         Map<CatchPattern, BlockStatement> catchBlockStatements = new LinkedHashMap<>();
         for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
-            for (JsoniqParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                CatchPattern pattern = CatchPattern.exact(parseEqName(eqNameCtx, false, false, false, false));
-                if (!catchBlockStatements.containsKey(pattern)) {
-                    catchBlockStatements.put(pattern, catchBlockStatement);
-                }
-            }
-            for (JsoniqParser.WildcardContext wildcardCtx : catchCtx.jokers) {
-                CatchPattern pattern = this.parseWildcardPattern(wildcardCtx);
+            for (var catchTarget : catchCtx.nameTest()) {
+                var wildcard = catchTarget.wildcard();
+                var errorcode = catchTarget.eqName();
+
+                CatchPattern pattern = wildcard != null
+                        ? this.parseWildcardPattern(wildcard)
+                        : CatchPattern.exact(parseEqName(errorcode, false, false, false, false));
                 if (!catchBlockStatements.containsKey(pattern)) {
                     catchBlockStatements.put(pattern, catchBlockStatement);
                 }
