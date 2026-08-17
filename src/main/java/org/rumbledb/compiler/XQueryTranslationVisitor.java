@@ -2510,7 +2510,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             Expression catchExpression = catchCtx.catch_expression == null
                     ? new CommaExpression(createMetadataFromContext(catchCtx))
                     : (Expression) this.visitExpr(catchCtx.catch_expression);
-            for (var catchTarget : catchCtx.catchErrorTarget()) {
+            for (var catchTarget : catchCtx.nameTest()) {
                 var wildcard = catchTarget.wildcard();
                 var errorcode = catchTarget.eqName();
 
@@ -2836,7 +2836,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         Map<CatchPattern, BlockStatement> catchBlockStatements = new LinkedHashMap<>();
         for (XQueryParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
-            for (var catchTarget : catchCtx.catchErrorTarget()) {
+            for (var catchTarget : catchCtx.nameTest()) {
                 var wildcard = catchTarget.wildcard();
                 var errorcode = catchTarget.eqName();
 

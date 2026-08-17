@@ -354,19 +354,9 @@ tryCatchExpr
    ;
 
 catchClause
-   : KW_CATCH catchErrorTarget (VBAR catchErrorTarget)*
+   : KW_CATCH nameTest (VBAR nameTest)*
    // replaced with the enclosedExpression production to match the JSONiq grammar
    LBRACE catch_expression = expr? RBRACE
-   ;
-   // A catch target is a NameTest: an exact error QName or a wildcard pattern.
-   
-   // Keeping this context distinct enables catch-specific completion without affecting
-   
-   // completion for the many other uses of eqName.
-   
-catchErrorTarget
-   : wildcard
-   | eqName
    ;
 
 enclosedExpression
@@ -1391,7 +1381,7 @@ tryCatchStatement
    
    
 catchCaseStatement
-   : KW_CATCH catchErrorTarget (VBAR catchErrorTarget)* catch_block = blockStatement
+   : KW_CATCH nameTest (VBAR nameTest)* catch_block = blockStatement
    ;
    // The optional variable is local to the default branch.
    
