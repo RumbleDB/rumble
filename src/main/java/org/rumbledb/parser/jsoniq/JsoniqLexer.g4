@@ -1,12 +1,10 @@
 lexer grammar JsoniqLexer;
 
 import CommonLexer;
-
 @ header
 {
 package org.rumbledb.parser.jsoniq;
 }
-
 DOUBLE_DOLLAR
    : '$$'
    ;
@@ -22,7 +20,7 @@ RBRACE_VBAR
 KW_JSONIQ
    : 'jsoniq'
    ;
-   
+
 KW_JSOUND
    : 'jsound'
    ;
@@ -50,3 +48,4 @@ KW_TRUE
 KW_FALSE
    : 'false'
    ;
+
