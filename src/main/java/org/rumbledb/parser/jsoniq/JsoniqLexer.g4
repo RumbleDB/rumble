@@ -5,6 +5,17 @@ import CommonLexer;
 {
 package org.rumbledb.parser.jsoniq;
 }
+// JSONiq requires "." to remain a separate DOT token for selectors such as $store."state".
+
+fragment NameChar
+   : NameStartChar
+   | '-'
+   |
+   | '\u00A1' .. '\u00BF'
+   | '\u0300' .. '\u036F'
+   | '\u203F' .. '\u2040'
+   ;
+
 DOUBLE_DOLLAR
    : '$$'
    ;
