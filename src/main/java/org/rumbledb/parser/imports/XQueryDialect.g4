@@ -212,3 +212,4 @@ xqueryKeywordOKForFunction
    | KW_NEXT
    | KW_PREVIOUS
    ;
+

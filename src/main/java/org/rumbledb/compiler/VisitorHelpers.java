@@ -333,12 +333,7 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     createParsingErrorMetadata(
-                        uri,
-                        query,
-                        parser,
-                        jsoniqTokens,
-                        lexer.getLine(),
-                        lexer.getCharPositionInLine()));
+                            uri, query, parser, jsoniqTokens, lexer.getLine(), lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }
@@ -386,12 +381,7 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     createParsingErrorMetadata(
-                        uri,
-                        query,
-                        parser,
-                        xQueryTokens,
-                        lexer.getLine(),
-                        lexer.getCharPositionInLine()));
+                            uri, query, parser, xQueryTokens, lexer.getLine(), lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }
@@ -437,12 +427,7 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     createParsingErrorMetadata(
-                        uri,
-                        query,
-                        parser,
-                        jsoniqTokens,
-                        lexer.getLine(),
-                        lexer.getCharPositionInLine()));
+                            uri, query, parser, jsoniqTokens, lexer.getLine(), lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }
@@ -476,12 +461,7 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     createParsingErrorMetadata(
-                        uri,
-                        query,
-                        parser,
-                        xQueryTokens,
-                        lexer.getLine(),
-                        lexer.getCharPositionInLine()));
+                            uri, query, parser, xQueryTokens, lexer.getLine(), lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }
@@ -557,20 +537,13 @@ public class VisitorHelpers {
     }
 
     private static ExceptionMetadata createParsingErrorMetadata(
-            URI uri,
-            String query,
-            Parser parser,
-            CommonTokenStream tokens,
-            int fallbackLine,
-            int fallbackColumn) {
+            URI uri, String query, Parser parser, CommonTokenStream tokens, int fallbackLine, int fallbackColumn) {
         Token current = parser.getCurrentToken();
         // JSONiq does not use doubled quotes as escapes. If prediction stopped on a closing quote and the next
         // visible token is another quote, that second quote is the unexpected start of an adjacent string.
-        if (
-            parser instanceof JsoniqParser
+        if (parser instanceof JsoniqParser
                 && current != null
-                && (current.getText().equals("\"") || current.getText().equals("'"))
-        ) {
+                && (current.getText().equals("\"") || current.getText().equals("'"))) {
             List<Token> bufferedTokens = tokens.getTokens();
             for (int index = current.getTokenIndex() + 1; index < bufferedTokens.size(); index++) {
                 Token next = bufferedTokens.get(index);
@@ -579,10 +552,10 @@ public class VisitorHelpers {
                 }
                 if (next.getText().equals(current.getText())) {
                     return ExceptionMetadata.fromPoint(
-                        uri.toString(),
-                        next.getLine(),
-                        next.getCharPositionInLine() + next.getText().length(),
-                        query);
+                            uri.toString(),
+                            next.getLine(),
+                            next.getCharPositionInLine() + next.getText().length(),
+                            query);
                 }
                 break;
             }

@@ -248,3 +248,4 @@ jsoniqKeywordOKForFunction
 escapedJsoniqStringCharacter
    : BACKSLASH .
    ;
+
