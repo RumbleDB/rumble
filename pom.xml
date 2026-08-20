@@ -510,33 +510,17 @@
                 <version>${antlr4.version}</version>
                 <executions>
                     <execution>
-                        <id>generate-jsoniq-antlr-sources</id>
+                        <id>generate-rumble-antlr-sources</id>
                         <goals>
                             <goal>antlr4</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/jsoniq</sourceDirectory>
+                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/rumble</sourceDirectory>
                             <includes>
                                 <include>*.g4</include>
                             </includes>
                             <libDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/imports</libDirectory>
-                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/jsoniq</outputDirectory>
-                            <listener>false</listener>
-                            <visitor>true</visitor>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>generate-xquery-antlr-sources</id>
-                        <goals>
-                            <goal>antlr4</goal>
-                        </goals>
-                        <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/xquery</sourceDirectory>
-                            <includes>
-                                <include>*.g4</include>
-                            </includes>
-                            <libDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/imports</libDirectory>
-                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/xquery</outputDirectory>
+                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/rumble</outputDirectory>
                             <listener>false</listener>
                             <visitor>true</visitor>
                         </configuration>

@@ -13,87 +13,70 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Authors: Matteo Agnoletto (EPMatt)
- *
- * A parser grammar for XQuery 3.1 that includes the XQuery Scripting Extensions, and additional update features.
- * This file is based on the XQuery parser grammar from the xqdoc project:
- * https://github.com/xqdoc/xqdoc/blob/master/src/main/antlr4/org/xqdoc/XQueryParser.g4
- * 
- * See LICENSE-xqdoc.txt for the original license terms.
- * 
  */
-parser grammar XQueryParser;
+parser grammar XQueryDialect;
 
-import CommonParser;
-@ header
-{
-// Java header
-package org.rumbledb.parser.xquery;
-}
-
-options { tokenVocab = XQueryLexer; }
-module
-   : // replaced with the versionDecl production to match the JSONiq grammar
+xqueryModule
+   : // replaced with the xqueryVersionDecl production to match the JSONiq grammar
    (KW_XQUERY KW_VERSION vers = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON)?
    // TODO: subsequent optional main modules are currently ignored
-   (libraryModule | (main = mainModule (SEMICOLON versionDecl? mainModule)*))
+   (libraryModule | (main = mainModule (SEMICOLON xqueryVersionDecl? mainModule)*))
    ;
 
-versionDecl
+xqueryVersionDecl
    : KW_XQUERY KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON
    ;
 
-annotatedDecl
+xqueryAnnotatedDecl
    : functionDecl
    | varDecl
    | contextItemDecl
    | optionDecl
    ;
 
-andExpr
+xqueryAndExpr
    : main_expr = comparisonExpr (KW_AND rhs += comparisonExpr)*
    ;
 
-postfixExpr
-   : main_expr = primaryExpr (predicate | argumentList | lookup)*
+xqueryPostfixExpr
+   : main_expr = xqueryPrimaryExpr (predicate | argumentList | lookup)*
    ;
 
-primaryExpr
+xqueryPrimaryExpr
    : literal
    | varRef
    | parenthesizedExpr
-   | contextItemExpr
+   | xqueryContextItemExpr
    | functionCall
    | orderedExpr
    | unorderedExpr
    | nodeConstructor
    | functionItemExpr
-   | objectConstructor
+   | xqueryObjectConstructor
    | arrayConstructor
    | stringConstructor
    | unaryLookup
    | blockExpr
    ;
 
-contextItemExpr
+xqueryContextItemExpr
    : DOT
    ;
 
-objectConstructor
-   : KW_MAP LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE
+xqueryObjectConstructor
+   : KW_MAP LBRACE (xqueryPairConstructor (COMMA xqueryPairConstructor)*)? RBRACE
    ;
 
-pairConstructor
+xqueryPairConstructor
    : lhs = exprSingle (COLON | COLON_EQ) rhs = exprSingle
    ;
 
-sequenceType
+xquerySequenceType
    : (KW_EMPTY_SEQUENCE LPAREN RPAREN)
-   | (item = itemType (question += QUESTION | star += STAR | plus += PLUS)?)
+   | (item = xqueryItemType (question += QUESTION | star += STAR | plus += PLUS)?)
    ;
 
-itemType
+xqueryItemType
    : kindTest
    | (KW_ITEM LPAREN RPAREN)
    | functionTest
@@ -108,7 +91,7 @@ itemType
    | parenthesizedItemTest
    ;
 
-keywordOKForFunction
+xqueryKeywordOKForFunction
    : KW_ANCESTOR
    | KW_ANCESTOR_OR_SELF
    | KW_AND
@@ -234,11 +217,11 @@ keywordOKForFunction
    | KW_PREVIOUS
    ;
 
-stringLiteralQuot
+xqueryStringLiteralQuot
    : Quot (escapedQuot | ~ (Quot | Ampersand))* Quot
    ;
 
-stringLiteralApos
+xqueryStringLiteralApos
    : Apos (escapedApos | ~ (Apos | Ampersand))* Apos
    ;
 
