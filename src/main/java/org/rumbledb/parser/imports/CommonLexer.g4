@@ -7,7 +7,6 @@
  * 
  * @author Matteo Agnoletto (EPMatt)
  */
-
 lexer grammar CommonLexer;
 
 IntegerLiteral
@@ -705,7 +704,7 @@ KW_WHERE
 KW_WINDOW
    : 'window'
    ;
-   
+
 KW_ARRAY_NODE
    : 'array-node'
    ;
