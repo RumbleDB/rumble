@@ -34,10 +34,6 @@ xqueryAnnotatedDecl
    | optionDecl
    ;
 
-xqueryAndExpr
-   : main_expr = comparisonExpr (KW_AND rhs += comparisonExpr)*
-   ;
-
 xqueryPostfixExpr
    : main_expr = xqueryPrimaryExpr (predicate | argumentList | lookup)*
    ;
@@ -216,12 +212,3 @@ xqueryKeywordOKForFunction
    | KW_NEXT
    | KW_PREVIOUS
    ;
-
-xqueryStringLiteralQuot
-   : Quot (escapedQuot | ~ (Quot | Ampersand))* Quot
-   ;
-
-xqueryStringLiteralApos
-   : Apos (escapedApos | ~ (Apos | Ampersand))* Apos
-   ;
-

@@ -60,13 +60,6 @@ annotatedDecl
    {isXQuery()}? xqueryAnnotatedDecl
    ;
 
-andExpr
-   :
-   {isJsoniq()}? jsoniqAndExpr
-   |
-   {isXQuery()}? xqueryAndExpr
-   ;
-
 postfixExpr
    :
    {isJsoniq()}? jsoniqPostfixExpr
@@ -124,16 +117,21 @@ keywordOKForFunction
    ;
 
 stringLiteralQuot
-   :
-   {isJsoniq()}? jsoniqStringLiteralQuot
-   |
-   {isXQuery()}? xqueryStringLiteralQuot
+   : Quot (
+      {isJsoniq()}? escapedJsoniqStringCharacter
+      | {isXQuery()}? escapedQuot
+      | Ampersand {isJsoniq()}?
+      | BACKSLASH {isXQuery()}?
+      | ~ (Quot | BACKSLASH | Ampersand)
+   )* Quot
    ;
 
 stringLiteralApos
-   :
-   {isJsoniq()}? jsoniqStringLiteralApos
-   |
-   {isXQuery()}? xqueryStringLiteralApos
+   : Apos (
+      {isJsoniq()}? escapedJsoniqStringCharacter
+      | {isXQuery()}? escapedApos
+      | Ampersand {isJsoniq()}?
+      | BACKSLASH {isXQuery()}?
+      | ~ (Apos | BACKSLASH | Ampersand)
+   )* Apos
    ;
-

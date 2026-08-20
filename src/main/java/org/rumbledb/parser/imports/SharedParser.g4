@@ -301,6 +301,14 @@ orExpr
    : main_expr = andExpr (KW_OR rhs += andExpr)*
    ;
 
+andExpr
+   : main_expr = notExpr (KW_AND rhs += notExpr)*
+   ;
+
+notExpr
+   : op += KW_NOT? main_expr = comparisonExpr
+   ;
+
 comparisonExpr
    : main_expr = stringConcatExpr (op += compOp rhs += stringConcatExpr)?
    ;
@@ -1144,4 +1152,3 @@ truncateCollectionExpr
 editCollectionExpr
    : KW_EDIT target = exprSingle KW_INTO content = exprSingle KW_IN KW_COLLECTION
    ;
-
