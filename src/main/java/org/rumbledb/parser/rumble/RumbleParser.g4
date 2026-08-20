@@ -118,20 +118,17 @@ keywordOKForFunction
 
 stringLiteralQuot
    : Quot (
-      {isJsoniq()}? escapedJsoniqStringCharacter
-      | {isXQuery()}? escapedQuot
-      | Ampersand {isJsoniq()}?
-      | BACKSLASH {isXQuery()}?
-      | ~ (Quot | BACKSLASH | Ampersand)
-   )* Quot
+   {isJsoniq()}? escapedJsoniqStringCharacter |
+   {isXQuery()}? escapedQuot | Ampersand
+   {isJsoniq()}? | BACKSLASH
+   {isXQuery()}? | ~ (Quot | BACKSLASH | Ampersand))* Quot
    ;
 
 stringLiteralApos
    : Apos (
-      {isJsoniq()}? escapedJsoniqStringCharacter
-      | {isXQuery()}? escapedApos
-      | Ampersand {isJsoniq()}?
-      | BACKSLASH {isXQuery()}?
-      | ~ (Apos | BACKSLASH | Ampersand)
-   )* Apos
+   {isJsoniq()}? escapedJsoniqStringCharacter |
+   {isXQuery()}? escapedApos | Ampersand
+   {isJsoniq()}? | BACKSLASH
+   {isXQuery()}? | ~ (Apos | BACKSLASH | Ampersand))* Apos
    ;
+
