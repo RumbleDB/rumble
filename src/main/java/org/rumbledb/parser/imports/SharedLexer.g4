@@ -7,7 +7,7 @@
  * 
  * @author Matteo Agnoletto (EPMatt)
  */
-lexer grammar CommonLexer;
+lexer grammar SharedLexer;
 
 IntegerLiteral
    : Digits

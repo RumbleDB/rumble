@@ -192,11 +192,11 @@ import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
-import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
-import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
-import org.rumbledb.parser.jsoniq.JsoniqParser.SetterContext;
-import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
 import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
+import org.rumbledb.parser.rumble.RumbleParser.DefaultCollationDeclContext;
+import org.rumbledb.parser.rumble.RumbleParser.EmptyOrderDeclContext;
+import org.rumbledb.parser.rumble.RumbleParser.SetterContext;
+import org.rumbledb.parser.rumble.RumbleParser.UriLiteralContext;
 import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
@@ -256,7 +256,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region module
     @Override
-    public Node visitModule(JsoniqParser.ModuleContext ctx) {
+    public Node visitJsoniqModule(JsoniqParser.JsoniqModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             String version = processStringLiteral(ctx.vers).trim();
             if (version.equals("1.0")) {
@@ -468,7 +468,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
         List<TypeDeclaration> typeDeclarations = new ArrayList<>();
-        for (JsoniqParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
+        for (JsoniqParser.AnnotatedDeclContext declaration : ctx.annotatedDecl()) {
+            JsoniqParser.JsoniqAnnotatedDeclContext annotatedDeclaration = declaration.jsoniqAnnotatedDecl();
             if (annotatedDeclaration.varDecl() != null) {
                 VariableDeclaration variableDeclaration =
                         (VariableDeclaration) this.visitVarDecl(annotatedDeclaration.varDecl());
@@ -1237,7 +1238,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitAndExpr(JsoniqParser.AndExprContext ctx) {
+    public Node visitJsoniqAndExpr(JsoniqParser.JsoniqAndExprContext ctx) {
         Expression result = (Expression) this.visitNotExpr(ctx.main_expr);
         if (ctx.rhs == null || ctx.rhs.isEmpty()) {
             return result;
@@ -1580,7 +1581,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (ctx.pairConstructor() != null && !ctx.pairConstructor().isEmpty()) {
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
-            for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
+            for (JsoniqParser.PairConstructorContext pair : ctx.pairConstructor()) {
+                JsoniqParser.JsoniqPairConstructorContext currentPair = pair.jsoniqPairConstructor();
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr stepExpr) {
                     if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
@@ -1751,8 +1753,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region postfix
     @Override
-    public Node visitPostfixExpr(JsoniqParser.PostfixExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
+    public Node visitJsoniqPostfixExpr(JsoniqParser.JsoniqPostfixExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitJsoniqPrimaryExpr(ctx.main_expr);
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
             if (child instanceof JsoniqParser.PredicateContext predicateContext) {
                 Expression expr = (Expression) this.visitPredicate(predicateContext);
@@ -1855,7 +1857,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return this.visitVarRef(ctx.vr);
         }
         if (ctx.ci != null) {
-            return this.visitContextItemExpr(ctx.ci);
+            return this.visitJsoniqContextItemExpr(ctx.ci);
         }
 
         throw new OurBadException("Unrecognized object lookup.");
@@ -1871,13 +1873,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region primary
     // TODO [EXPRVISITOR] orderedExpr unorderedExpr;
     @Override
-    public Node visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
+    public Node visitJsoniqPrimaryExpr(JsoniqParser.JsoniqPrimaryExprContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.VarRefContext varRefContext) {
             return this.visitVarRef(varRefContext);
         }
-        if (child instanceof JsoniqParser.ObjectConstructorContext objectConstructorContext) {
-            return this.visitObjectConstructor(objectConstructorContext);
+        if (child instanceof JsoniqParser.JsoniqObjectConstructorContext objectConstructorContext) {
+            return this.visitJsoniqObjectConstructor(objectConstructorContext);
         }
         if (child instanceof JsoniqParser.ArrayConstructorContext arrayConstructorContext) {
             return this.visitArrayConstructor(arrayConstructorContext);
@@ -1888,8 +1890,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (child instanceof JsoniqParser.LiteralContext literalContext) {
             return this.visitLiteral(literalContext);
         }
-        if (child instanceof JsoniqParser.ContextItemExprContext contextItemExprContext) {
-            return this.visitContextItemExpr(contextItemExprContext);
+        if (child instanceof JsoniqParser.JsoniqContextItemExprContext contextItemExprContext) {
+            return this.visitJsoniqContextItemExpr(contextItemExprContext);
         }
         if (child instanceof JsoniqParser.FunctionCallContext functionCallContext) {
             return this.visitFunctionCall(functionCallContext);
@@ -1957,14 +1959,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitObjectConstructor(JsoniqParser.ObjectConstructorContext ctx) {
+    public Node visitJsoniqObjectConstructor(JsoniqParser.JsoniqObjectConstructorContext ctx) {
         // no merging constructor, just visit the k/v pairs
         if (ctx.merge_operator == null
                 || ctx.merge_operator.size() == 0
                 || ctx.merge_operator.get(0).getText().isEmpty()) {
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
-            for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
+            for (JsoniqParser.JsoniqPairConstructorContext currentPair : ctx.jsoniqPairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr stepExpr) {
                     if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
@@ -2324,11 +2326,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitContextItemExpr(JsoniqParser.ContextItemExprContext ctx) {
+    public Node visitJsoniqContextItemExpr(JsoniqParser.JsoniqContextItemExprContext ctx) {
         return new ContextItemExpression(createMetadataFromContext(ctx));
     }
 
     public SequenceType processSequenceType(JsoniqParser.SequenceTypeContext ctx) {
+        return processSequenceType(ctx.jsoniqSequenceType());
+    }
+
+    public SequenceType processSequenceType(JsoniqParser.JsoniqSequenceTypeContext ctx) {
         if (ctx.item == null) {
             return SequenceType.createSequenceType("()");
         }
@@ -2358,6 +2364,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public ItemType processItemType(JsoniqParser.ItemTypeContext itemTypeContext) {
+        return processItemType(itemTypeContext.jsoniqItemType());
+    }
+
+    public ItemType processItemType(JsoniqParser.JsoniqItemTypeContext itemTypeContext) {
         if (itemTypeContext.parenthesizedItemTest() != null) {
             return processItemType(itemTypeContext.parenthesizedItemTest().itemType());
         }

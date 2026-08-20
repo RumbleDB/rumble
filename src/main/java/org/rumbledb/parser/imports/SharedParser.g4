@@ -23,7 +23,7 @@
  * See LICENSE-xqdoc.txt for the original license terms.
  * 
  */
-parser grammar CommonParser;
+parser grammar SharedParser;
 
 moduleAndThisIsIt
    : module EOF
