@@ -1238,7 +1238,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitJsoniqAndExpr(JsoniqParser.JsoniqAndExprContext ctx) {
+    public Node visitAndExpr(JsoniqParser.AndExprContext ctx) {
         Expression result = (Expression) this.visitNotExpr(ctx.main_expr);
         if (ctx.rhs == null || ctx.rhs.isEmpty()) {
             return result;

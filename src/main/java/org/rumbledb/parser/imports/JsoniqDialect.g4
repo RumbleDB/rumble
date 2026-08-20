@@ -45,14 +45,6 @@ schemaLanguage
    | KW_JSON KW_SCHEMA
    ;
 
-jsoniqAndExpr
-   : main_expr = notExpr (KW_AND rhs += notExpr)*
-   ;
-
-notExpr
-   : op += KW_NOT? main_expr = comparisonExpr
-   ;
-
 arrayLookup
    : LBRACKET LBRACKET expr RBRACKET RBRACKET
    ;
@@ -256,12 +248,3 @@ jsoniqKeywordOKForFunction
 escapedJsoniqStringCharacter
    : BACKSLASH .
    ;
-
-jsoniqStringLiteralQuot
-   : Quot (escapedJsoniqStringCharacter | ~ (Quot | BACKSLASH))* Quot
-   ;
-
-jsoniqStringLiteralApos
-   : Apos (escapedJsoniqStringCharacter | ~ (Apos | BACKSLASH))* Apos
-   ;
-
