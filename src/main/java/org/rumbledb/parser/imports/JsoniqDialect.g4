@@ -57,10 +57,6 @@ objectLookup
    : DOT (kw = keyword | lt = stringLiteral | nc = NCName | pe = parenthesizedExpr | vr = varRef | ci = jsoniqContextItemExpr)
    ;
 
-jsoniqPostfixExpr
-   : main_expr = jsoniqPrimaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList | lookup)*
-   ;
-
 jsoniqPrimaryExpr
    : literal
    | KW_NULL

@@ -34,10 +34,6 @@ xqueryAnnotatedDecl
    | optionDecl
    ;
 
-xqueryPostfixExpr
-   : main_expr = xqueryPrimaryExpr (predicate | argumentList | lookup)*
-   ;
-
 xqueryPrimaryExpr
    : literal
    | varRef
