@@ -61,10 +61,7 @@ annotatedDecl
    ;
 
 postfixExpr
-   :
-   {isJsoniq()}? jsoniqPostfixExpr
-   |
-   {isXQuery()}? xqueryPostfixExpr
+   : main_expr = primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList | lookup)*
    ;
 
 primaryExpr

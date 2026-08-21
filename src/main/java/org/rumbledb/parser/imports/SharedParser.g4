@@ -998,7 +998,7 @@ assignStatement
    ;
 
 blockStatement
-   : LBRACE statements RBRACE
+   : LBRACE statement+ RBRACE
    ;
 
 breakStatement
