@@ -23,7 +23,7 @@
  * See LICENSE-xqdoc.txt for the original license terms.
  * 
  */
-parser grammar CommonParser;
+parser grammar SharedParser;
 
 moduleAndThisIsIt
    : module EOF
@@ -299,6 +299,14 @@ enclosedExpression
 
 orExpr
    : main_expr = andExpr (KW_OR rhs += andExpr)*
+   ;
+
+andExpr
+   : main_expr = notExpr (KW_AND rhs += notExpr)*
+   ;
+
+notExpr
+   : op += KW_NOT? main_expr = comparisonExpr
    ;
 
 comparisonExpr
@@ -990,7 +998,7 @@ assignStatement
    ;
 
 blockStatement
-   : LBRACE statements RBRACE
+   : LBRACE statement+ RBRACE
    ;
 
 breakStatement

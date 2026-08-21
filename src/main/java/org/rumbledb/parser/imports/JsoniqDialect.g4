@@ -13,38 +13,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Authors: Matteo Agnoletto (EPMatt) and RumbleDB team.
- *
- * A parser grammar for JSONiq 1.0/3.1 that includes the XQuery Scripting Extensions, and additional update features.
- * This file is based on the XQuery parser grammar from the xqdoc project:
- * https://github.com/xqdoc/xqdoc/blob/master/src/main/antlr4/org/xqdoc/XQueryParser.g4
- * 
- * See LICENSE-xqdoc.txt for the original license terms.
- * 
  */
-parser grammar JsoniqParser;
+parser grammar JsoniqDialect;
 
-import CommonParser;
-@ header
-{
-// Java header
-package org.rumbledb.parser.jsoniq;
-}
-
-options { tokenVocab = JsoniqLexer; }
-module
-   // replaced with the versionDecl production to match the JSONiq grammar
+jsoniqModule
+   // replaced with the jsoniqVersionDecl production to match the JSONiq grammar
    : (KW_JSONIQ KW_VERSION vers = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON)?
    // TODO: subsequent optional main modules are currently ignored
    (libraryModule | main = mainModule)
    ;
 
-versionDecl
+jsoniqVersionDecl
    : KW_JSONIQ KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON
    ;
 
-annotatedDecl
+jsoniqAnnotatedDecl
    : functionDecl
    | varDecl
    | typeDecl
@@ -62,14 +45,6 @@ schemaLanguage
    | KW_JSON KW_SCHEMA
    ;
 
-andExpr
-   : main_expr = notExpr (KW_AND rhs += notExpr)*
-   ;
-
-notExpr
-   : op += KW_NOT? main_expr = comparisonExpr
-   ;
-
 arrayLookup
    : LBRACKET LBRACKET expr RBRACKET RBRACKET
    ;
@@ -79,52 +54,48 @@ arrayUnboxing
    ;
 
 objectLookup
-   : DOT (kw = keyword | lt = stringLiteral | nc = NCName | pe = parenthesizedExpr | vr = varRef | ci = contextItemExpr)
+   : DOT (kw = keyword | lt = stringLiteral | nc = NCName | pe = parenthesizedExpr | vr = varRef | ci = jsoniqContextItemExpr)
    ;
 
-postfixExpr
-   : main_expr = primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList | lookup)*
-   ;
-
-primaryExpr
+jsoniqPrimaryExpr
    : literal
    | KW_NULL
    | KW_TRUE
    | KW_FALSE
    | varRef
    | parenthesizedExpr
-   | contextItemExpr
+   | jsoniqContextItemExpr
    | functionCall
    | orderedExpr
    | unorderedExpr
    | nodeConstructor
    | functionItemExpr
-   | objectConstructor
+   | jsoniqObjectConstructor
    | arrayConstructor
    | stringConstructor
    | unaryLookup
    | blockExpr
    ;
 
-contextItemExpr
+jsoniqContextItemExpr
    : DOUBLE_DOLLAR
    ;
 
-objectConstructor
-   : KW_MAP? LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE
+jsoniqObjectConstructor
+   : KW_MAP? LBRACE (jsoniqPairConstructor (COMMA jsoniqPairConstructor)*)? RBRACE
    | merge_operator += LBRACE_VBAR expr RBRACE_VBAR
    ;
 
-pairConstructor
+jsoniqPairConstructor
    : lhs = exprSingle (COLON | COLON_EQ | QUESTION) rhs = exprSingle
    ;
 
-sequenceType
+jsoniqSequenceType
    : (KW_EMPTY_SEQUENCE? LPAREN RPAREN)
-   | (item = itemType (question += QUESTION | star += STAR | plus += PLUS)?)
+   | (item = jsoniqItemType (question += QUESTION | star += STAR | plus += PLUS)?)
    ;
 
-itemType
+jsoniqItemType
    : kindTest
    | (KW_ITEM LPAREN RPAREN)
    | functionTest
@@ -140,7 +111,7 @@ itemType
    | parenthesizedItemTest
    ;
 
-keywordOKForFunction
+jsoniqKeywordOKForFunction
    : KW_ANCESTOR
    | KW_ANCESTOR_OR_SELF
    | KW_AND
@@ -272,13 +243,5 @@ keywordOKForFunction
 
 escapedJsoniqStringCharacter
    : BACKSLASH .
-   ;
-
-stringLiteralQuot
-   : Quot (escapedJsoniqStringCharacter | ~ (Quot | BACKSLASH))* Quot
-   ;
-
-stringLiteralApos
-   : Apos (escapedJsoniqStringCharacter | ~ (Apos | BACKSLASH))* Apos
    ;
 

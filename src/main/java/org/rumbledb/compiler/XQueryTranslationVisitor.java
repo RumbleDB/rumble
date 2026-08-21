@@ -20,7 +20,6 @@
 
 package org.rumbledb.compiler;
 
-import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -97,10 +96,7 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
-import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
-import org.rumbledb.expressions.primary.DecimalLiteralExpression;
-import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
@@ -151,12 +147,10 @@ import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.expressions.xml.PathRootExpression;
-import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
-import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
@@ -171,12 +165,11 @@ import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
+import org.rumbledb.parser.rumble.RumbleParser.DefaultCollationDeclContext;
+import org.rumbledb.parser.rumble.RumbleParser.EmptyOrderDeclContext;
+import org.rumbledb.parser.rumble.RumbleParser.SetterContext;
+import org.rumbledb.parser.rumble.RumbleParser.UriLiteralContext;
 import org.rumbledb.parser.xquery.XQueryParser;
-import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
-import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
-import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
-import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
-import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
@@ -194,7 +187,7 @@ import static org.rumbledb.types.SequenceType.createSequenceType;
  * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
  */
 @Log4j2
-public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
+public class XQueryTranslationVisitor extends SharedTranslationVisitor {
 
     private final StaticContext moduleContext;
     private final RumbleConfiguration configuration;
@@ -205,6 +198,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private final String code;
     private final ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream xQueryTokenStream;
+
+    @Override
+    protected boolean supportsJsoniqPostfixSyntax() {
+        return false;
+    }
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
@@ -239,7 +237,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     // region module
     @Override
-    public Node visitModule(XQueryParser.ModuleContext ctx) {
+    public Node visitXqueryModule(XQueryParser.XqueryModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             String version = processStringLiteral(ctx.vers).trim();
             if (version.equals("1.0")) {
@@ -390,7 +388,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
         List<TypeDeclaration> typeDeclarations = new ArrayList<>();
-        for (XQueryParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
+        for (XQueryParser.AnnotatedDeclContext declaration : ctx.annotatedDecl()) {
+            XQueryParser.XqueryAnnotatedDeclContext annotatedDeclaration = declaration.xqueryAnnotatedDecl();
             if (annotatedDeclaration.varDecl() != null) {
                 VariableDeclaration variableDeclaration =
                         (VariableDeclaration) this.visitVarDecl(annotatedDeclaration.varDecl());
@@ -1156,16 +1155,25 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitAndExpr(XQueryParser.AndExprContext ctx) {
-        Expression result = (Expression) this.visitComparisonExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitNotExpr(ctx.main_expr);
         if (ctx.rhs == null || ctx.rhs.isEmpty()) {
             return result;
         }
-        for (XQueryParser.ComparisonExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitComparisonExpr(child);
+        for (XQueryParser.NotExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitNotExpr(child);
             result = new AndExpression(
                     result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
         }
         return result;
+    }
+
+    @Override
+    public Node visitNotExpr(XQueryParser.NotExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitComparisonExpr(ctx.main_expr);
+        if (ctx.op == null || ctx.op.isEmpty()) {
+            return mainExpression;
+        }
+        return new NotExpression(mainExpression, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1503,7 +1511,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // if (ctx.pairConstructor() != null && !ctx.pairConstructor().isEmpty()) {
     // List<Expression> keys = new ArrayList<>();
     // List<Expression> values = new ArrayList<>();
-    // for (XQueryParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
+    // for (XQueryParser.XqueryPairConstructorContext currentPair : ctx.pairConstructor()) {
     // Node lhs = this.visitExprSingle(currentPair.lhs);
     // if (lhs instanceof StepExpr) {
     // throw new ParsingException(
@@ -1615,35 +1623,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     // region postfix
     @Override
-    public Node visitPostfixExpr(XQueryParser.PostfixExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
-        for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
-            if (child instanceof XQueryParser.PredicateContext predicateContext) {
-                Expression expr = (Expression) this.visitPredicate(predicateContext);
-                mainExpression = new FilterExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromRange(ctx.main_expr.getStart(), predicateContext.getStop()));
-            } else if (child instanceof XQueryParser.LookupContext lookupContext) {
-                Expression expr = (Expression) this.visitLookup(lookupContext);
-                mainExpression = new PostfixLookupExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromRange(ctx.main_expr.getStart(), lookupContext.getStop()));
-            } else if (child instanceof XQueryParser.ArgumentListContext argumentListContext) {
-                List<Expression> arguments = getArgumentsFromArgumentListContext(argumentListContext);
-                mainExpression = new DynamicFunctionCallExpression(
-                        mainExpression,
-                        arguments,
-                        createMetadataFromRange(ctx.main_expr.getStart(), argumentListContext.getStop()));
-            } else {
-                throw new OurBadException("Unrecognized postfix expression found.");
-            }
-        }
-        return mainExpression;
-    }
-
-    @Override
     public Node visitPredicate(XQueryParser.PredicateContext ctx) {
         return this.visitExpr(ctx.expr());
     }
@@ -1688,46 +1667,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region primary
     // TODO [EXPRVISITOR] orderedExpr unorderedExpr;
     @Override
-    public Node visitPrimaryExpr(XQueryParser.PrimaryExprContext ctx) {
-        ParseTree child = ctx.children.get(0);
-        if (child instanceof XQueryParser.VarRefContext varRefContext) {
-            return this.visitVarRef(varRefContext);
-        }
-        if (child instanceof XQueryParser.ObjectConstructorContext objectConstructorContext) {
-            return this.visitObjectConstructor(objectConstructorContext);
-        }
-        if (child instanceof XQueryParser.ArrayConstructorContext arrayConstructorContext) {
-            return this.visitArrayConstructor(arrayConstructorContext);
-        }
-        if (child instanceof XQueryParser.ParenthesizedExprContext parenthesizedExprContext) {
-            return this.visitParenthesizedExpr(parenthesizedExprContext);
-        }
-        if (child instanceof XQueryParser.LiteralContext literalContext) {
-            return this.visitLiteral(literalContext);
-        }
-        if (child instanceof XQueryParser.ContextItemExprContext contextItemExprContext) {
-            return this.visitContextItemExpr(contextItemExprContext);
-        }
-        if (child instanceof XQueryParser.FunctionCallContext functionCallContext) {
-            return this.visitFunctionCall(functionCallContext);
-        }
-        if (child instanceof XQueryParser.FunctionItemExprContext functionItemExprContext) {
-            return this.visitFunctionItemExpr(functionItemExprContext);
-        }
-        if (child instanceof XQueryParser.BlockExprContext blockExprContext) {
-            return this.visitBlockExpr(blockExprContext);
-        }
-        if (child instanceof XQueryParser.UnaryLookupContext unaryLookupContext) {
-            return new UnaryLookupExpression(
-                    (Expression) this.visitUnaryLookup(unaryLookupContext), createMetadataFromContext(ctx));
-        }
-        if (child instanceof XQueryParser.NodeConstructorContext nodeConstructorContext) {
-            return this.visitNodeConstructor(nodeConstructorContext);
-        }
-        throw new UnsupportedFeatureException("Primary expression not yet implemented", createMetadataFromContext(ctx));
-    }
-
-    @Override
     public Node visitLiteral(XQueryParser.LiteralContext ctx) {
         ParseTree child = ctx.children.get(0);
 
@@ -1742,34 +1681,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         throw new UnsupportedFeatureException("Literal not yet implemented", createMetadataFromContext(ctx));
     }
 
-    private static Expression getLiteralExpressionFromToken(String token, ExceptionMetadata metadataFromContext) {
-        switch (token) {
-            case "null":
-                return new NullLiteralExpression(metadataFromContext);
-            case "true":
-                return new BooleanLiteralExpression(true, metadataFromContext);
-            case "false":
-                return new BooleanLiteralExpression(false, metadataFromContext);
-            default:
-        }
-        if (token.contains("E") || token.contains("e")) {
-            return new DoubleLiteralExpression(Double.parseDouble(token), metadataFromContext);
-        }
-        if (token.contains(".")) {
-            return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
-        }
-        return new IntegerLiteralExpression(token, metadataFromContext);
-    }
-
     private String parseStringLiteral(String source) {
         return StringLiteralUtils.parseXQuery(source);
     }
 
     @Override
-    public Node visitObjectConstructor(XQueryParser.ObjectConstructorContext ctx) {
+    public Node visitXqueryObjectConstructor(XQueryParser.XqueryObjectConstructorContext ctx) {
         List<Expression> keys = new ArrayList<>();
         List<Expression> values = new ArrayList<>();
-        for (XQueryParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
+        for (XQueryParser.XqueryPairConstructorContext currentPair : ctx.xqueryPairConstructor()) {
             Node lhs = this.visitExprSingle(currentPair.lhs);
             if (lhs instanceof StepExpr) {
                 throw new ParsingException(
@@ -2103,11 +2023,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitContextItemExpr(XQueryParser.ContextItemExprContext ctx) {
+    public Node visitXqueryContextItemExpr(XQueryParser.XqueryContextItemExprContext ctx) {
         return new ContextItemExpression(createMetadataFromContext(ctx));
     }
 
     public SequenceType processSequenceType(XQueryParser.SequenceTypeContext ctx) {
+        return processSequenceType(ctx.xquerySequenceType());
+    }
+
+    public SequenceType processSequenceType(XQueryParser.XquerySequenceTypeContext ctx) {
         if (ctx.item == null) {
             return SequenceType.createSequenceType("()");
         }
@@ -2137,6 +2061,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
+        return processItemType(itemTypeContext.xqueryItemType());
+    }
+
+    public ItemType processItemType(XQueryParser.XqueryItemTypeContext itemTypeContext) {
         if (itemTypeContext.parenthesizedItemTest() != null) {
             return processItemType(itemTypeContext.parenthesizedItemTest().itemType());
         }
@@ -2301,17 +2229,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         Name name = parseFunctionName(ctx.fn_name);
         return processFunctionCall(
                 name, getArgumentsFromArgumentListContext(ctx.argumentList()), createMetadataFromContext(ctx));
-    }
-
-    private List<Expression> getArgumentsFromArgumentListContext(XQueryParser.ArgumentListContext ctx) {
-        List<Expression> arguments = new ArrayList<>();
-        if (ctx.args != null) {
-            for (XQueryParser.ArgumentContext arg : ctx.args) {
-                Expression currentArg = (Expression) this.visitArgument(arg);
-                arguments.add(currentArg);
-            }
-        }
-        return arguments;
     }
 
     @Override
@@ -2527,7 +2444,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     // endregion
 
-    private ExceptionMetadata createMetadataFromContext(ParserRuleContext ctx) {
+    @Override
+    protected ExceptionMetadata createMetadataFromContext(ParserRuleContext ctx) {
         return generateMetadata(ctx.getStart(), ctx.getStop());
     }
 
@@ -2535,7 +2453,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return createMetadataFromRange(getStartToken(tree), getStopToken(tree));
     }
 
-    private ExceptionMetadata createMetadataFromRange(Token start, Token end) {
+    @Override
+    protected ExceptionMetadata createMetadataFromRange(Token start, Token end) {
         return generateMetadata(start, end);
     }
 
@@ -2713,7 +2632,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitBlockStatement(XQueryParser.BlockStatementContext ctx) {
         List<Statement> statements = new ArrayList<>();
-        for (XQueryParser.StatementContext statement : ctx.statements().statement()) {
+        for (XQueryParser.StatementContext statement : ctx.statement()) {
             statements.add((Statement) this.visitStatement(statement));
         }
         return new BlockStatement(statements, createMetadataFromContext(ctx));

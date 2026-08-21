@@ -10,6 +10,9 @@ import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.InputMismatchException;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.io.IOUtils;
 
@@ -281,7 +284,8 @@ public class VisitorHelpers {
                 moduleContext, true, compilationConfiguration, externalBindings, query, jsoniqTokens);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
+            JsoniqParser.JsoniqModuleContext modulectx = parser.jsoniqModule();
+            ensureEndOfInput(parser);
             if (modulectx == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
@@ -328,7 +332,8 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                    createParsingErrorMetadata(
+                            uri, query, parser, jsoniqTokens, lexer.getLine(), lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }
@@ -353,7 +358,8 @@ public class VisitorHelpers {
                 moduleContext, true, compilationConfiguration, externalBindings, query, xQueryTokens);
         try {
             // TODO Handle module extras
-            XQueryParser.ModuleContext main = parser.moduleAndThisIsIt().module();
+            XQueryParser.XqueryModuleContext main = parser.xqueryModule();
+            ensureEndOfInput(parser);
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
@@ -374,7 +380,8 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                    createParsingErrorMetadata(
+                            uri, query, parser, xQueryTokens, lexer.getLine(), lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }
@@ -410,7 +417,8 @@ public class VisitorHelpers {
                 moduleContext, false, compilationConfiguration, ExternalBindings.empty(), query, jsoniqTokens);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
+            JsoniqParser.JsoniqModuleContext main = parser.jsoniqModule();
+            ensureEndOfInput(parser);
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
@@ -418,7 +426,8 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                    createParsingErrorMetadata(
+                            uri, query, parser, jsoniqTokens, lexer.getLine(), lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }
@@ -442,7 +451,8 @@ public class VisitorHelpers {
                 moduleContext, false, compilationConfiguration, ExternalBindings.empty(), query, xQueryTokens);
         try {
             // TODO Handle module extras
-            XQueryParser.ModuleContext main = parser.module();
+            XQueryParser.XqueryModuleContext main = parser.xqueryModule();
+            ensureEndOfInput(parser);
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
@@ -450,7 +460,8 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                    createParsingErrorMetadata(
+                            uri, query, parser, xQueryTokens, lexer.getLine(), lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }
@@ -517,6 +528,39 @@ public class VisitorHelpers {
             log.warn(
                     "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report.");
         }
+    }
+
+    private static void ensureEndOfInput(Parser parser) {
+        if (parser.getInputStream().LA(1) != Token.EOF) {
+            throw new ParseCancellationException(new InputMismatchException(parser));
+        }
+    }
+
+    private static ExceptionMetadata createParsingErrorMetadata(
+            URI uri, String query, Parser parser, CommonTokenStream tokens, int fallbackLine, int fallbackColumn) {
+        Token current = parser.getCurrentToken();
+        // JSONiq does not use doubled quotes as escapes. If prediction stopped on a closing quote and the next
+        // visible token is another quote, that second quote is the unexpected start of an adjacent string.
+        if (parser instanceof JsoniqParser
+                && current != null
+                && (current.getText().equals("\"") || current.getText().equals("'"))) {
+            List<Token> bufferedTokens = tokens.getTokens();
+            for (int index = current.getTokenIndex() + 1; index < bufferedTokens.size(); index++) {
+                Token next = bufferedTokens.get(index);
+                if (next.getChannel() != Token.DEFAULT_CHANNEL) {
+                    continue;
+                }
+                if (next.getText().equals(current.getText())) {
+                    return ExceptionMetadata.fromPoint(
+                            uri.toString(),
+                            next.getLine(),
+                            next.getCharPositionInLine() + next.getText().length(),
+                            query);
+                }
+                break;
+            }
+        }
+        return ExceptionMetadata.fromPoint(uri.toString(), fallbackLine, fallbackColumn, query);
     }
 
     private static void populateStaticContext(Module module, RumbleConfiguration conf) {
