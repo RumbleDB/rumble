@@ -38,7 +38,6 @@ jobs:
               repo: context.repo.repo,
               workflow_id: workflowId,
               branch,
-              event,
               per_page: 100
             });
 
@@ -63,9 +62,15 @@ jobs:
             runs.sort(
               (a, b) => new Date(b.created_at) - new Date(a.created_at)
             );
+            core.info(
+              `Found ${runs.length} runs on branch ${branch}; newest is ${runs[0]?.id ?? 'none'}.`
+            );
 
             let baselineRun = null;
             for (const run of runs) {
+              if (run.event !== event) {
+                continue;
+              }
               if (run.conclusion !== 'success') {
                 continue;
               }
