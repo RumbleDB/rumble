@@ -61,6 +61,10 @@ jobs:
               );
             }
 
+            runs.sort(
+              (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            );
+
             let baselineRun = null;
             for (const run of runs) {
               if (run.conclusion !== 'success') {
