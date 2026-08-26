@@ -39,7 +39,6 @@ jobs:
               workflow_id: workflowId,
               branch,
               event,
-              status: 'completed',
               per_page: 100
             });
 
