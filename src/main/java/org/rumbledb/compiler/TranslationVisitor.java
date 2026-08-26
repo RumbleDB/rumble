@@ -141,6 +141,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
@@ -1565,9 +1566,18 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
-        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
-        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
-        return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
+        Expression mainExpression = (Expression) this.visitExpr(ctx.expr());
+        if (ctx.sequenceType() != null) {
+            // TODO: This is a compatibility hack to support JSONiq validate expression, which has a different semantics than XQuery validate expression
+            SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
+            return new ValidateTypeExpression(mainExpression, true, sequenceType, createMetadataFromContext(ctx));
+        }
+
+        ValidateExpression.ValidationMode validationMode = ValidateExpression.ValidationMode.STRICT;
+        if (ctx.validationMode() != null && ctx.validationMode().KW_LAX() != null) {
+            validationMode = ValidateExpression.ValidationMode.LAX;
+        }
+        return new ValidateExpression(mainExpression, validationMode, null, createMetadataFromContext(ctx));
     }
     // endregion
 
