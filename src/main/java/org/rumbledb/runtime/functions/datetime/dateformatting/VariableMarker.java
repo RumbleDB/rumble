@@ -22,7 +22,6 @@ final class VariableMarker {
         public static final String ALPHABETIC = "ALPHABETIC";
         public static final String NAME = "NAME";
         public static final String WORDS = "WORDS";
-        public static final String AM_PM = "AM_PM";
         public static final String FRACTIONAL_SECONDS = "FRACTIONAL_SECONDS";
         public static final String TIMEZONE = "TIMEZONE";
     }
@@ -238,7 +237,7 @@ final class VariableMarker {
                 return DateNames.monthName(value, formattingContext, this.minWidth, this.maxWidth);
             case 'P':
                 Calendar calendar = CalendarFields.calendar(value, formattingContext);
-                return DateNames.amPmName(calendar, formattingContext);
+                return DateNames.amPmName(calendar, formattingContext, this.minWidth, this.maxWidth);
             default:
                 throw unsupported(pictureString, metadata, this.presentation);
         }
@@ -314,10 +313,6 @@ final class VariableMarker {
         return new Builder(c, p, min, max, Kind.FRACTIONAL_SECONDS, secondPresentationModifier)
                 .lowerCaseRoman("i".equals(p))
                 .build();
-    }
-
-    static VariableMarker forAmPm(char c, String p, int min, int max, char secondPresentationModifier) {
-        return new Builder(c, p, min, max, Kind.AM_PM, secondPresentationModifier).build();
     }
 
     static VariableMarker forTimezone(
