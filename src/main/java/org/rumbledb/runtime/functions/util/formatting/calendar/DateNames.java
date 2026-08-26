@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.functions.util.formatting.calendar;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,10 +35,10 @@ public final class DateNames {
         return dayName(symbols, day, min, max);
     }
 
-    public static String amPmName(Calendar cal, FormattingContext context) {
+    public static String amPmName(Calendar cal, FormattingContext context, int min, int max) {
         DateFormatSymbols symbols = symbolsFor(cal, context.uLocale);
         String[] values = symbols.getAmPmStrings();
-        return values[cal.get(Calendar.AM_PM)];
+        return fitName(values[cal.get(Calendar.AM_PM)], min, max);
     }
 
     private static DateFormatSymbols symbolsFor(Calendar cal, ULocale locale) {
@@ -85,14 +84,41 @@ public final class DateNames {
     }
 
     private static String fitName(String wide, String abbr, String narrow, int min, int max) {
-        if (max < 0) {
-            return wide;
+        String name = wide;
+
+        if (max >= 0 && name.length() > max) {
+            name = conventionalAbbreviation(min, max, abbr, narrow);
+            if (name == null) {
+                name = truncateToCodePoints(wide, max);
+            }
         }
-        for (String candidate : List.of(abbr, narrow, wide)) {
-            if (candidate != null && candidate.length() >= min && candidate.length() <= max) {
+
+        return padToMinimumWidth(name, min);
+    }
+
+    private static String fitName(String full, int min, int max) {
+        return fitName(full, null, null, min, max);
+    }
+
+    // The minimum matters, not just the maximum: German abbreviations carry a period ("Jan.", "Mo."), so for
+    // [MN,3-3] no conventional form fits and the full name is truncated instead, giving "Jan" rather than "J".
+    private static String conventionalAbbreviation(int min, int max, String... candidates) {
+        for (String candidate : candidates) {
+            if (candidate != null && !candidate.isEmpty() && candidate.length() <= max && candidate.length() >= min) {
                 return candidate;
             }
         }
-        return wide.length() > max ? wide.substring(0, max) : wide;
+        return null;
+    }
+
+    private static String truncateToCodePoints(String name, int max) {
+        if (name.length() <= max) {
+            return name;
+        }
+        return name.substring(0, name.offsetByCodePoints(0, Math.min(max, name.codePointCount(0, name.length()))));
+    }
+
+    private static String padToMinimumWidth(String name, int min) {
+        return name.length() >= min ? name : name + " ".repeat(min - name.length());
     }
 }

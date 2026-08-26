@@ -18,10 +18,10 @@ import com.ibm.icu.text.RuleBasedNumberFormat;
 import com.ibm.icu.util.ULocale;
 
 public final class NumberWords {
-    // For plain ordinal word formatting (`Ww;o`) RumbleDB selects the ICU masculine ordinal rule set when available,
-    // with a small set of aliases for ICU's abbreviated rule-set names. This is implementation-defined behavior
-    // permitted by F&O 3.1 and matches the specification's example outputs.
     private static final String DEFAULT_ORDINAL_WORD_RULE_SET = "%spellout-ordinal-masculine";
+
+    private static final char SOFT_HYPHEN = '\u00AD';
+    private static final String SOFT_HYPHEN_TEXT = String.valueOf(SOFT_HYPHEN);
 
     private static final ThreadLocal<Map<RuleFormatKey, CachedRuleFormat>> RULE_FORMAT_CACHE =
             ThreadLocal.withInitial(HashMap::new);
@@ -37,12 +37,12 @@ public final class NumberWords {
             return formatted;
         }
 
-        return f.format.format(value);
+        return sanitize(f.format.format(value));
     }
 
     public static String ordinalDigits(long value, ULocale locale) {
         CachedRuleFormat f = ruleFormat(locale, RuleBasedNumberFormat.ORDINAL);
-        return f.format.format(value);
+        return sanitize(f.format.format(value));
     }
 
     public static String ordinalWords(long value, ULocale locale, String requestedRuleSet) {
@@ -53,13 +53,6 @@ public final class NumberWords {
             return formatted;
         }
 
-        if (requestedRuleSet == null) {
-            formatted = formatWithRequestedRuleSet(value, f, DEFAULT_ORDINAL_WORD_RULE_SET);
-            if (formatted != null) {
-                return formatted;
-            }
-        }
-
         String requestedSuffix = requestedSuffix(requestedRuleSet);
         if (requestedSuffix != null) {
             formatted = ordinalWordWithSuffix(value, f, requestedSuffix);
@@ -68,17 +61,26 @@ public final class NumberWords {
             }
         }
 
-        String ruleSet = neutralOrdinalRuleSet(f);
-        if (ruleSet != null) {
-            return f.format.format(value, ruleSet);
+        formatted = formatWithRequestedRuleSet(value, f, DEFAULT_ORDINAL_WORD_RULE_SET);
+        if (formatted != null) {
+            return formatted;
         }
 
-        return f.format.format(value);
+        String ruleSet = neutralOrdinalRuleSet(f);
+        if (ruleSet != null) {
+            return sanitize(f.format.format(value, ruleSet));
+        }
+
+        return sanitize(f.format.format(value));
     }
 
     public static String roman(long value, boolean lowerCase) {
         CachedRuleFormat f = ruleFormat(ULocale.ROOT, RuleBasedNumberFormat.NUMBERING_SYSTEM);
-        return f.format.format(value, lowerCase ? "%roman-lower" : "%roman-upper");
+        return sanitize(f.format.format(value, lowerCase ? "%roman-lower" : "%roman-upper"));
+    }
+
+    private static String sanitize(String formatted) {
+        return formatted.indexOf(SOFT_HYPHEN) < 0 ? formatted : formatted.replace(SOFT_HYPHEN_TEXT, "");
     }
 
     private static LocalizedNumberFormatter groupingFormatter(ULocale locale) {
@@ -125,12 +127,12 @@ public final class NumberWords {
         }
 
         if (f.ruleSetNames.contains(requestedRuleSet)) {
-            return f.format.format(value, requestedRuleSet);
+            return sanitize(f.format.format(value, requestedRuleSet));
         }
 
         String alias = requestedRuleSetAlias(requestedRuleSet);
         if (alias != null && f.ruleSetNames.contains(alias)) {
-            return f.format.format(value, alias);
+            return sanitize(f.format.format(value, alias));
         }
 
         return null;
@@ -162,7 +164,7 @@ public final class NumberWords {
                 continue;
             }
 
-            String formatted = f.format.format(value, ruleSet);
+            String formatted = sanitize(f.format.format(value, ruleSet));
 
             if (formatted.toLowerCase(Locale.ROOT).endsWith(requestedSuffix)) {
                 return formatted;
@@ -221,7 +223,8 @@ public final class NumberWords {
         long longValue = intValue;
         String ordinal = ordinalDigits(longValue, locale);
 
-        String localizedDigits = groupingFormatter(locale).format(longValue).toString();
+        String localizedDigits =
+                sanitize(groupingFormatter(locale).format(longValue).toString());
         if (ordinal.startsWith(localizedDigits)) {
             return ordinal.substring(localizedDigits.length());
         }

@@ -162,14 +162,14 @@ final class TemporalPictureParser {
             return VariableMarker.forFractionalSeconds(
                     component, "", width.minWidth, width.maxWidth, secondPresentationModifier);
         }
-
-        if (component == 'F') {
-            int maxWidth = width.maxWidth == WidthModifier.UNBOUNDED && width.minWidth == 1 ? 3 : width.maxWidth;
-            return VariableMarker.forName(component, "", width.minWidth, maxWidth, secondPresentationModifier, null);
-        }
-
-        if (component == 'P') {
-            return VariableMarker.forAmPm(component, "", width.minWidth, width.maxWidth, secondPresentationModifier);
+        if (component == 'F' || component == 'P') {
+            return VariableMarker.forName(
+                    component,
+                    "",
+                    width.minWidth,
+                    width.maxWidth,
+                    secondPresentationModifier,
+                    VariableMarker.NameForm.LOWER);
         }
 
         if (isDefaultNumericComponent(component)) {
