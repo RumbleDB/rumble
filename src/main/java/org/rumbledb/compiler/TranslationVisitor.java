@@ -1568,7 +1568,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
         Expression mainExpression = (Expression) this.visitExpr(ctx.expr());
         if (ctx.sequenceType() != null) {
-            // TODO: This is a compatibility hack to support JSONiq validate expression, which has a different semantics than XQuery validate expression
+            // TODO: This is a compatibility hack to support JSONiq validate expression, which has a different semantics
+            // than XQuery validate expression
             SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
             return new ValidateTypeExpression(mainExpression, true, sequenceType, createMetadataFromContext(ctx));
         }
