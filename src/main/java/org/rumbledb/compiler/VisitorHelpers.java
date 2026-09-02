@@ -396,6 +396,8 @@ public class VisitorHelpers {
      * Parses and statically analyses a standalone library module from source text.
      * Unlike {@link #parseLibraryModule(String, URI, StaticContext, CompilationConfiguration)},
      * this method also populates static contexts and infers expression types.
+     *
+     * Note: this method is used in the language server.
      */
     public static LibraryModule parseLibraryModuleFromQueryWithStaticContextAndInference(
             String query, URI uri, RumbleConfiguration configuration) {
