@@ -111,7 +111,7 @@ jobs:
 
   qt3-jsoniq:
     needs: [resolve-baseline, build]
-    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@jimmy/xml-schema
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: jsoniq
       rumble_artifact_name: rumble-build
@@ -119,7 +119,7 @@ jobs:
 
   qt3-xquery:
     needs: [resolve-baseline, build]
-    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@jimmy/xml-schema
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: xquery
       rumble_artifact_name: rumble-build
