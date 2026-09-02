@@ -80,6 +80,10 @@ contextItemExpr
    : DOT
    ;
 
+validateExpr
+   : KW_VALIDATE (validationMode | (KW_TYPE typeName))? LBRACE expr RBRACE
+   ;
+
 objectConstructor
    : KW_MAP LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE
    ;

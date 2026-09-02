@@ -46,6 +46,7 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
@@ -90,6 +91,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
@@ -135,6 +137,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitProlog(Prolog expression, Node argument) {
+        List<SchemaImport> schemaImports = expression.getSchemaImports().stream()
+                .map(schemaImport -> (SchemaImport) visit(schemaImport, argument))
+                .collect(Collectors.toList());
         List<LibraryModule> libraryModules = expression.getImportedModules().stream()
                 .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
                 .collect(Collectors.toList());
@@ -142,9 +147,21 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 .map(expr -> visit(expr, argument))
                 .collect(Collectors.toList());
         expression.setDeclarations(declarations);
+        expression.getSchemaImports().clear();
+        expression.getSchemaImports().addAll(schemaImports);
         expression.getImportedModules().clear();
         expression.getImportedModules().addAll(libraryModules);
         return expression;
+    }
+
+    @Override
+    public Node visitSchemaImport(SchemaImport schemaImport, Node argument) {
+        return new SchemaImport(
+                schemaImport.getTargetNamespace(),
+                schemaImport.getBindingKind(),
+                schemaImport.getPrefix(),
+                schemaImport.getLocationHints(),
+                schemaImport.getMetadata());
     }
 
     @Override
@@ -1136,6 +1153,19 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 (Expression) visit(expression.getMainExpression(), argument),
                 expression.isValidate(),
                 expression.getSequenceType(),
+                expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitValidateExpression(ValidateExpression expression, Node argument) {
+        Expression result = new ValidateExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.getValidationMode(),
+                expression.getTypeName(),
                 expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());

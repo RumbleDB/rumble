@@ -119,6 +119,10 @@ pairConstructor
    : lhs = exprSingle (COLON | COLON_EQ | QUESTION) rhs = exprSingle
    ;
 
+validateExpr
+   : KW_VALIDATE (validationMode | (KW_TYPE sequenceType))? LBRACE expr? RBRACE
+   ;
+
 sequenceType
    : (KW_EMPTY_SEQUENCE? LPAREN RPAREN)
    | (item = itemType (question += QUESTION | star += STAR | plus += PLUS)?)
