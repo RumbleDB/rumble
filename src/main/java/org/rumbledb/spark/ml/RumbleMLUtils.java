@@ -24,8 +24,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -47,13 +47,13 @@ public class RumbleMLUtils {
             JavaRDD<Item> rdd = context.getVariableValues().getRDDVariableValue(inputVariableName, metadata);
             ItemType type =
                     TypeInferrenceUtils.inferItemTypeOfRDDItems(rdd, metadata, TypeInferrenceUtils.TypeMergeMode.LAX);
-            return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, type, context, true, staticContext);
+            return JSONiqValidateIterator.convertRDDToValidDataFrame(rdd, type, context, true, staticContext);
         }
 
         List<Item> items = context.getVariableValues().getLocalVariableValue(inputVariableName, metadata);
         ItemType type =
                 TypeInferrenceUtils.inferItemTypeOfLocalItems(items, metadata, TypeInferrenceUtils.TypeMergeMode.LAX);
-        return ValidateTypeIterator.convertLocalItemsToDataFrame(items, type, context, true, staticContext);
+        return JSONiqValidateIterator.convertLocalItemsToDataFrame(items, type, context, true, staticContext);
     }
 
     public static ParamMap convertRumbleObjectItemToSparkMLParamMap(
