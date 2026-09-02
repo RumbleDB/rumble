@@ -35,6 +35,16 @@ public final class BuiltinTypeValidator {
 
     private BuiltinTypeValidator() {}
 
+    /**
+     * Validates an element or document node without modifying the operand. Validation returns a new node tree carrying
+     * the requested schema annotation, so a detached element copy must also retain all namespaces that were in scope on
+     * the original element, including bindings inherited from its ancestors.
+     *
+     * @param item the element or document node to validate
+     * @param itemType the built-in atomic schema type to apply
+     * @param metadata query metadata used for validation errors
+     * @return a validated copy of {@code item}
+     */
     public static Item validate(Item item, ItemType itemType, ExceptionMetadata metadata) {
         if (!itemType.isAtomicItemType()) {
             throw new OurBadException("Built-in XML validation requires an atomic target type.", metadata);
@@ -52,6 +62,7 @@ public final class BuiltinTypeValidator {
             copiedRoot = item.copy(false);
             reattachXmlParents(copiedRoot, null);
             validatedElement = copiedRoot;
+            preserveInScopeNamespaces(item, validatedElement);
         } else {
             throw new InvalidInstanceException(
                     "Atomic XML validation is only supported for document and element nodes.", metadata);
@@ -76,6 +87,12 @@ public final class BuiltinTypeValidator {
         }
         validatedElement.setSchemaType(itemType);
         return copiedRoot;
+    }
+
+    private static void preserveInScopeNamespaces(Item sourceElement, Item copiedElement) {
+        for (Item namespace : sourceElement.namespaceNodes()) {
+            copiedElement.addOrReplaceNamespace(namespace);
+        }
     }
 
     private static InvalidInstanceException invalidValue(
