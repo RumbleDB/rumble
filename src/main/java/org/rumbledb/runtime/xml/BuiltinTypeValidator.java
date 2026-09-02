@@ -17,8 +17,6 @@
 
 package org.rumbledb.runtime.xml;
 
-import java.util.List;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
