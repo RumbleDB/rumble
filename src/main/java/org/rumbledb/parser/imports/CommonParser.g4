@@ -393,10 +393,6 @@ nodeComp
    | (RANGLE RANGLE)
    ;
 
-validateExpr
-   : KW_VALIDATE (validationMode | (KW_TYPE sequenceType))? LBRACE expr? RBRACE
-   ;
-
 validationMode
    : KW_LAX
    | KW_STRICT
