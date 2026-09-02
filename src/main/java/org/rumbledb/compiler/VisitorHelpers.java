@@ -392,6 +392,27 @@ public class VisitorHelpers {
         return parseJSONiqLibraryModule(query, uri, importingModuleContext, compilationConfiguration);
     }
 
+    /**
+     * Parses and statically analyses a standalone library module from source text.
+     * Unlike {@link #parseLibraryModule(String, URI, StaticContext, CompilationConfiguration)},
+     * this method also populates static contexts and infers expression types.
+     *
+     * Note: this method is used in the language server.
+     */
+    public static LibraryModule parseLibraryModuleFromQueryWithStaticContextAndInference(
+            String query, URI uri, RumbleConfiguration configuration) {
+        StaticContext importingModuleContext = new StaticContext(uri, configuration);
+        UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
+        executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
+        importingModuleContext.setUserDefinedFunctionsExecutionModes(executionModes);
+
+        LibraryModule libraryModule =
+                parseLibraryModule(query, uri, importingModuleContext, new CompilationConfiguration(configuration));
+        populateStaticContext(libraryModule, configuration);
+        inferTypes(libraryModule, configuration);
+        return libraryModule;
+    }
+
     private static LibraryModule parseJSONiqLibraryModule(
             String query,
             URI uri,
