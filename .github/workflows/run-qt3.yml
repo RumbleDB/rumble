@@ -39,7 +39,6 @@ jobs:
               workflow_id: workflowId,
               branch,
               event,
-              status: 'completed',
               per_page: 100
             });
 
@@ -60,6 +59,10 @@ jobs:
                 available.has('surefire-all-xquery')
               );
             }
+
+            runs.sort(
+              (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            );
 
             let baselineRun = null;
             for (const run of runs) {

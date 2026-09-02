@@ -521,6 +521,7 @@
                             <includes>
                                 <include>*.g4</include>
                             </includes>
+                            <libDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/imports</libDirectory>
                             <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/jsoniq</outputDirectory>
                             <listener>false</listener>
                             <visitor>true</visitor>
@@ -536,6 +537,7 @@
                             <includes>
                                 <include>*.g4</include>
                             </includes>
+                            <libDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/imports</libDirectory>
                             <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/xquery</outputDirectory>
                             <listener>false</listener>
                             <visitor>true</visitor>
