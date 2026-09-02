@@ -2549,6 +2549,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitValidateExpression(ValidateExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
         if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
+            // Resolve the requested type statically and limit this initial implementation to concrete built-in atomic
+            // XML Schema types; strict and lax validation are handled separately by the runtime feature checks.
             Name typeName = expression.getTypeName();
             if (!Name.XS_NS.equals(typeName.getNamespace()) || !BuiltinTypesCatalogue.typeExists(typeName)) {
                 throw new SemanticException(
@@ -2565,12 +2567,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
         }
+        // Preserve a statically known element or document subtype; otherwise use node(), since invalid operand kinds
+        // are reported dynamically as XQTY0030.
         ItemType sourceItemType =
                 expression.getMainExpression().getStaticSequenceType().getItemType();
         ItemType resultItemType = sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)
                         || sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
                 ? sourceItemType
                 : BuiltinTypesCatalogue.nodeItem;
+
+        // Successful validation always returns exactly one copied node.
         expression.setStaticSequenceType(new SequenceType(resultItemType, SequenceType.Arity.One));
         return argument;
     }
