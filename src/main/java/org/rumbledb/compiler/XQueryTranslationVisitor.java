@@ -2510,14 +2510,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             Expression catchExpression = catchCtx.catch_expression == null
                     ? new CommaExpression(createMetadataFromContext(catchCtx))
                     : (Expression) this.visitExpr(catchCtx.catch_expression);
-            for (XQueryParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                CatchPattern pattern = CatchPattern.exact(parseEqName(eqNameCtx, false, false, false, false));
-                if (!catchExpressions.containsKey(pattern)) {
-                    catchExpressions.put(pattern, catchExpression);
-                }
-            }
-            for (XQueryParser.WildcardContext wildcardCtx : catchCtx.jokers) {
-                CatchPattern pattern = this.parseWildcardPattern(wildcardCtx);
+            for (var catchTarget : catchCtx.nameTest()) {
+                var wildcard = catchTarget.wildcard();
+                var errorcode = catchTarget.eqName();
+
+                CatchPattern pattern = wildcard != null
+                        ? this.parseWildcardPattern(wildcard)
+                        : CatchPattern.exact(parseEqName(errorcode, false, false, false, false));
                 if (!catchExpressions.containsKey(pattern)) {
                     catchExpressions.put(pattern, catchExpression);
                 }
@@ -2837,14 +2836,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         Map<CatchPattern, BlockStatement> catchBlockStatements = new LinkedHashMap<>();
         for (XQueryParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
-            for (XQueryParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                CatchPattern pattern = CatchPattern.exact(parseEqName(eqNameCtx, false, false, false, false));
-                if (!catchBlockStatements.containsKey(pattern)) {
-                    catchBlockStatements.put(pattern, catchBlockStatement);
-                }
-            }
-            for (XQueryParser.WildcardContext wildcardCtx : catchCtx.jokers) {
-                CatchPattern pattern = this.parseWildcardPattern(wildcardCtx);
+            for (var catchTarget : catchCtx.nameTest()) {
+                var wildcard = catchTarget.wildcard();
+                var errorcode = catchTarget.eqName();
+
+                CatchPattern pattern = wildcard != null
+                        ? this.parseWildcardPattern(wildcard)
+                        : CatchPattern.exact(parseEqName(errorcode, false, false, false, false));
                 if (!catchBlockStatements.containsKey(pattern)) {
                     catchBlockStatements.put(pattern, catchBlockStatement);
                 }

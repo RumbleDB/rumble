@@ -354,9 +354,7 @@ tryCatchExpr
    ;
 
 catchClause
-   : KW_CATCH
-   // replaced with the catchErrorList production to match the JSONiq grammar
-   ((jokers += wildcard | errors += eqName) (VBAR (jokers += wildcard | errors += eqName))* | (LPAREN catch_var = varBinding RPAREN))
+   : KW_CATCH nameTest (VBAR nameTest)*
    // replaced with the enclosedExpression production to match the JSONiq grammar
    LBRACE catch_expression = expr? RBRACE
    ;
@@ -1383,7 +1381,7 @@ tryCatchStatement
    
    
 catchCaseStatement
-   : KW_CATCH (jokers += wildcard | errors += eqName) (VBAR (jokers += wildcard | errors += eqName))* catch_block = blockStatement
+   : KW_CATCH nameTest (VBAR nameTest)* catch_block = blockStatement
    ;
    // The optional variable is local to the default branch.
    
