@@ -4,8 +4,9 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-import lombok.NonNull;
 import org.w3c.dom.Node;
+
+import lombok.NonNull;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;

@@ -8,9 +8,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import lombok.NonNull;
 import org.w3c.dom.Node;
 
+import lombok.NonNull;
 import lombok.Setter;
 
 import org.rumbledb.api.Item;
