@@ -11,6 +11,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the
- * project root.
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
