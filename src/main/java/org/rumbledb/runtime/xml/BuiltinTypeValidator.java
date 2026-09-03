@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
@@ -85,7 +87,7 @@ public final class BuiltinTypeValidator {
         if (typedValue == null) {
             throw invalidValue(item, itemType, metadata, null);
         }
-        validatedElement.setSchemaType(itemType);
+        validatedElement.setSchemaType(itemType, List.of(typedValue));
         return copiedRoot;
     }
 

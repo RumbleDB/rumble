@@ -6,11 +6,13 @@ import java.util.List;
 
 import org.w3c.dom.Node;
 
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.TypedValueUnavailableException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -24,24 +26,28 @@ public class AttributeItem extends AbstractNodeItem {
     private Item parent;
     private XMLDocumentPosition documentPos;
     private ItemType typeAnnotation;
+    private NodeTypedValue nodeTypedValue;
     // TODO: add is-id, is-idrefs
 
     public AttributeItem(Node attributeNode) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);
         this.stringValue = attributeNode.getNodeValue();
         this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
     }
 
     public AttributeItem(Name dmNodeName, String stringValue) {
         this.dmNodeName = dmNodeName;
         this.stringValue = stringValue;
         this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
     }
 
     @Override
     public Item copy(boolean mutable) {
         AttributeItem copy = new AttributeItem(this.dmNodeName, this.stringValue);
         copy.typeAnnotation = this.typeAnnotation;
+        copy.nodeTypedValue = this.nodeTypedValue;
         return copy;
     }
 
@@ -125,9 +131,6 @@ public class AttributeItem extends AbstractNodeItem {
      *
      * "For an Attribute Node, dm:is-id returns true if the attribute node is of type xs:ID or
      * is derived by restriction from xs:ID; otherwise it returns false."
-     *
-     * RumbleDB does not currently support schema type annotations on attributes, so this
-     * implementation always returns false.
      */
     @Override
     public boolean isId() {
@@ -140,9 +143,6 @@ public class AttributeItem extends AbstractNodeItem {
      * "For an Attribute Node, dm:is-idrefs returns true if the attribute node is of type
      * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise
      * it returns false."
-     *
-     * RumbleDB does not currently support schema type annotations on attributes, so this
-     * implementation always returns false.
      */
     @Override
     public boolean isIdrefs() {
@@ -161,13 +161,13 @@ public class AttributeItem extends AbstractNodeItem {
 
     @Override
     public List<Item> atomizedValue() {
-        if (this.typeAnnotation != null) {
-            Item typedValue = CastIterator.castItemToType(
-                    ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                    this.typeAnnotation,
-                    ExceptionMetadata.EMPTY_METADATA,
-                    NamespaceBindingUtils.namespaceResolver(this.parent));
-            return Collections.singletonList(typedValue);
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.AVAILABLE) {
+            return this.nodeTypedValue.getItems();
+        }
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.UNAVAILABLE) {
+            throw new TypedValueUnavailableException(
+                    "The typed value is not available for attribute " + this.dmNodeName + ".",
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
@@ -226,9 +226,6 @@ public class AttributeItem extends AbstractNodeItem {
      *
      * For an Attribute Node, dm:type-name returns the name of the dynamic type of the attribute
      * node, or the empty sequence if the node is untyped.
-     *
-     * RumbleDB does not currently support schema-validated attribute types, so this
-     * implementation returns the empty sequence.
      */
     @Override
     public List<Item> typeName() {
@@ -239,8 +236,16 @@ public class AttributeItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(ItemType typeAnnotation) {
+    public void setSchemaType(@NonNull ItemType typeAnnotation, List<Item> typedValue) {
+        NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
+        this.nodeTypedValue = newTypedValue;
+    }
+
+    @Override
+    public void clearSchemaType() {
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
     }
 
     @Override
