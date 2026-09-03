@@ -236,7 +236,7 @@ public class AttributeItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(@NonNull ItemType typeAnnotation, List<Item> typedValue) {
+    public void setSchemaType(@NonNull XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
         NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = newTypedValue;
