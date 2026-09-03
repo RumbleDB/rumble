@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.w3c.dom.Node;
 
+import lombok.NonNull;
 import lombok.Setter;
 
 import org.rumbledb.api.Item;
@@ -360,20 +361,7 @@ public class ElementItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation) {
-        if (typeAnnotation == null) {
-            clearSchemaType();
-            return;
-        }
-        this.typeAnnotation = typeAnnotation;
-        this.nodeTypedValue = NodeTypedValue.unavailable();
-    }
-
-    @Override
-    public void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
-        if (typeAnnotation == null) {
-            throw new IllegalArgumentException("A schema type annotation cannot be null.");
-        }
+    public void setSchemaType(@NonNull ItemType typeAnnotation, List<Item> typedValue) {
         NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = newTypedValue;

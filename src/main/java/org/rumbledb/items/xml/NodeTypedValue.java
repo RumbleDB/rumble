@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
@@ -42,7 +45,9 @@ public final class NodeTypedValue implements Serializable {
         UNAVAILABLE
     }
 
+    @Getter
     private final State state;
+
     private final List<Item> items;
 
     private NodeTypedValue(State state, List<Item> items) {
@@ -54,10 +59,7 @@ public final class NodeTypedValue implements Serializable {
         return UNTYPED_VALUE;
     }
 
-    public static NodeTypedValue available(List<Item> items) {
-        if (items == null) {
-            throw new OurBadException("A node typed value cannot be null.");
-        }
+    public static NodeTypedValue available(@NonNull List<Item> items) {
         for (Item item : items) {
             if (item == null || !item.isAtomic() || item.isNull()) {
                 throw new OurBadException("A node typed value can only contain XDM atomic values.");
@@ -68,10 +70,6 @@ public final class NodeTypedValue implements Serializable {
 
     public static NodeTypedValue unavailable() {
         return UNAVAILABLE_VALUE;
-    }
-
-    public State getState() {
-        return this.state;
     }
 
     public List<Item> getItems() {

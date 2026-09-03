@@ -6,10 +6,11 @@ import java.util.List;
 
 import org.w3c.dom.Node;
 
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TypedValueUnavailableException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
@@ -235,19 +236,7 @@ public class AttributeItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation) {
-        if (typeAnnotation == null) {
-            clearSchemaType();
-            return;
-        }
-        throw new OurBadException("A schema-typed attribute must be assigned a typed value.");
-    }
-
-    @Override
-    public void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
-        if (typeAnnotation == null) {
-            throw new IllegalArgumentException("A schema type annotation cannot be null.");
-        }
+    public void setSchemaType(@NonNull ItemType typeAnnotation, List<Item> typedValue) {
         NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = newTypedValue;

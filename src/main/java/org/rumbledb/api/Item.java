@@ -1625,17 +1625,6 @@ public interface Item extends Serializable {
     }
 
     /**
-     * Sets an element node's schema type annotation when its typed value is unavailable. Supplying {@code null}
-     * clears a node's schema annotation. Schema-typed attributes must use
-     * {@link #setSchemaType(XmlSchemaTypeAnnotation, List)}.
-     *
-     * @param typeAnnotation the schema type annotation, or {@code null} to restore untyped behavior
-     */
-    default void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
      * Sets a node's schema type annotation together with its XDM typed value.
      *
      * @param typeAnnotation the schema type annotation
