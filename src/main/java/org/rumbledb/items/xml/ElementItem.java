@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.NonNull;
 import org.w3c.dom.Node;
 
 import lombok.Setter;
@@ -360,10 +361,7 @@ public class ElementItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(ItemType typeAnnotation, List<Item> typedValue) {
-        if (typeAnnotation == null) {
-            throw new IllegalArgumentException("A schema type annotation cannot be null.");
-        }
+    public void setSchemaType(@NonNull ItemType typeAnnotation, List<Item> typedValue) {
         NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = newTypedValue;

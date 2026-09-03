@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.NonNull;
 import org.w3c.dom.Node;
 
 import org.rumbledb.api.Item;
@@ -234,10 +235,7 @@ public class AttributeItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(ItemType typeAnnotation, List<Item> typedValue) {
-        if (typeAnnotation == null) {
-            throw new IllegalArgumentException("A schema type annotation cannot be null.");
-        }
+    public void setSchemaType(@NonNull ItemType typeAnnotation, List<Item> typedValue) {
         NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = newTypedValue;
