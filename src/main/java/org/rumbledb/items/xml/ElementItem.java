@@ -360,16 +360,6 @@ public class ElementItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(ItemType typeAnnotation) {
-        if (typeAnnotation == null) {
-            clearSchemaType();
-            return;
-        }
-        this.typeAnnotation = typeAnnotation;
-        this.nodeTypedValue = NodeTypedValue.unavailable();
-    }
-
-    @Override
     public void setSchemaType(ItemType typeAnnotation, List<Item> typedValue) {
         if (typeAnnotation == null) {
             throw new IllegalArgumentException("A schema type annotation cannot be null.");

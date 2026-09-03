@@ -9,7 +9,6 @@ import org.w3c.dom.Node;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TypedValueUnavailableException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
@@ -232,15 +231,6 @@ public class AttributeItem extends AbstractNodeItem {
             return Collections.emptyList();
         }
         return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName()));
-    }
-
-    @Override
-    public void setSchemaType(ItemType typeAnnotation) {
-        if (typeAnnotation == null) {
-            clearSchemaType();
-            return;
-        }
-        throw new OurBadException("A schema-typed attribute must be assigned a typed value.");
     }
 
     @Override
