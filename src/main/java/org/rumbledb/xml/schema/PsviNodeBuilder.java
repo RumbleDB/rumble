@@ -29,6 +29,7 @@ import org.apache.xerces.xs.ElementPSVI;
 import org.apache.xerces.xs.PSVIProvider;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
+import org.apache.xerces.xs.XSValue;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -162,12 +163,13 @@ final class PsviNodeBuilder extends DefaultHandler {
                         attributePrefix(name.getNamespace(), declaredNamespaces, inScopeNamespaces),
                         name.getLocalName());
             }
-            String normalizedValue = psvi == null ? null : psvi.getSchemaValue().getNormalizedValue();
+            XSValue schemaValue = psvi == null ? null : psvi.getSchemaValue();
+            String normalizedValue = schemaValue == null ? null : schemaValue.getNormalizedValue();
             Item attribute = ItemFactory.getInstance()
                     .createXmlAttributeNode(
                             name, normalizedValue == null ? attributes.getValue(index) : normalizedValue);
-            if (psvi != null && psvi.getTypeDefinition() != null && psvi.getSchemaValue() != null) {
-                List<Item> typedValue = this.catalog.convertTypedValue(psvi.getSchemaValue());
+            if (psvi != null && psvi.getTypeDefinition() != null && schemaValue != null) {
+                List<Item> typedValue = this.catalog.convertTypedValue(schemaValue);
                 attribute.setSchemaType(this.catalog.getTypeAnnotation(psvi.getTypeDefinition()), typedValue);
                 setIdentityProperties(attribute, typedValue);
             } else if (Name.XML_NS.equals(name.getNamespace()) && "id".equals(name.getLocalName())) {

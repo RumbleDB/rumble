@@ -24,6 +24,7 @@ import org.apache.xerces.xs.ElementPSVI;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
+import org.apache.xerces.xs.XSValue;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
@@ -34,7 +35,11 @@ final class XmlSchemaWhitespaceNormalizer {
     private XmlSchemaWhitespaceNormalizer() {}
 
     static void normalize(List<Item> children, ElementPSVI psvi) {
-        String normalizedValue = psvi.getSchemaValue().getNormalizedValue();
+        XSValue schemaValue = psvi.getSchemaValue();
+        if (schemaValue == null) {
+            return;
+        }
+        String normalizedValue = schemaValue.getNormalizedValue();
         if (normalizedValue == null || children.stream().anyMatch(Item::isElementNode)) {
             return;
         }
