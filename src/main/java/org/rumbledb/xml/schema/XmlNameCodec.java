@@ -55,10 +55,6 @@ final class XmlNameCodec {
         return prefix == null || prefix.isEmpty() ? name.getLocalName() : prefix + ":" + name.getLocalName();
     }
 
-    static String normalizeNamespace(String namespace) {
-        return namespace == null ? "" : namespace;
-    }
-
     private static String emptyToNull(String value) {
         return value == null || value.isEmpty() ? null : value;
     }
