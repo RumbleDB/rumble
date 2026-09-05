@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.ItemType;
@@ -70,6 +71,7 @@ public final class BuiltinTypeValidator {
             throw new InvalidInstanceException(
                     "Atomic XML validation is only supported for document and element nodes.", metadata);
         }
+        copiedRoot.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
 
         Item typedValue;
         try {

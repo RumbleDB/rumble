@@ -25,16 +25,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
 
 import org.apache.xerces.dom.DOMInputImpl;
-import org.apache.xerces.xs.XSImplementation;
-import org.apache.xerces.xs.XSLoader;
+import org.apache.xerces.jaxp.validation.XMLSchemaFactory;
+import org.apache.xerces.jaxp.validation.XSGrammarPoolContainer;
+import org.apache.xerces.xni.grammars.Grammar;
+import org.apache.xerces.xni.grammars.XMLGrammarDescription;
+import org.apache.xerces.xni.grammars.XSGrammar;
 import org.apache.xerces.xs.XSModel;
-import org.w3c.dom.DOMError;
-import org.w3c.dom.DOMErrorHandler;
-import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import lombok.NonNull;
 
@@ -71,8 +77,8 @@ public final class XmlSchemaCatalogLoader {
         ExceptionMetadata metadata = schemaImports.get(0).getMetadata();
         SchemaResourceResolver resolver = new SchemaResourceResolver(
                 staticBaseUri, resolvedImports.locationsByNamespace(), compilationConfiguration, metadata);
-        XSModel schemaModel = loadSchemaModel(resolvedImports.locations(), resolver, metadata);
-        XmlSchemaCatalog catalog = new XmlSchemaCatalog(schemaModel);
+        LoadedSchema loadedSchema = loadSchema(resolvedImports.locations(), resolver, metadata);
+        XmlSchemaCatalog catalog = new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema());
         verifyImportedNamespaces(schemaImports, catalog);
 
         return Optional.of(catalog);
@@ -101,33 +107,40 @@ public final class XmlSchemaCatalogLoader {
         return new ResolvedImports(Map.copyOf(locationsByNamespace), locations);
     }
 
-    private static XSModel loadSchemaModel(
+    private static LoadedSchema loadSchema(
             List<URI> locations, SchemaResourceResolver resolver, ExceptionMetadata metadata) {
         try {
-            XSImplementation implementation =
-                    (XSImplementation) DOMImplementationRegistry.newInstance().getDOMImplementation("XS-Loader");
-            if (implementation == null) {
-                throw new SchemaImportException("The Xerces XML Schema loader is unavailable.", metadata);
-            }
-
             SchemaErrorHandler errorHandler = new SchemaErrorHandler();
-            XSLoader loader = implementation.createXSLoader(null);
-            loader.getConfig().setParameter("resource-resolver", resolver);
-            loader.getConfig().setParameter("error-handler", errorHandler);
-            LSInput[] inputs = locations.stream().map(resolver::resolveInput).toArray(LSInput[]::new);
-            XSModel schemaModel = loader.loadInputList(implementation.createLSInputList(inputs));
+            XMLSchemaFactory schemaFactory = new XMLSchemaFactory();
+            schemaFactory.setResourceResolver(resolver);
+            schemaFactory.setErrorHandler(errorHandler);
+            Source[] sources = locations.stream().map(resolver::resolveSource).toArray(Source[]::new);
+            Schema validationSchema = schemaFactory.newSchema(sources);
 
             if (errorHandler.getFirstError() != null) {
                 throw new SchemaImportException(
                         "Unable to process an imported XML Schema: " + errorHandler.getFirstError(), metadata);
             }
-            if (schemaModel == null) {
+            if (!(validationSchema instanceof XSGrammarPoolContainer grammarPoolContainer)) {
+                throw new SchemaImportException("The Xerces validation grammar pool is unavailable.", metadata);
+            }
+            Grammar[] grammars =
+                    grammarPoolContainer.getGrammarPool().retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
+            XSGrammar[] schemaGrammars = new XSGrammar[grammars.length];
+            for (int index = 0; index < grammars.length; index++) {
+                if (!(grammars[index] instanceof XSGrammar schemaGrammar)) {
+                    throw new SchemaImportException("Xerces returned a non-schema validation grammar.", metadata);
+                }
+                schemaGrammars[index] = schemaGrammar;
+            }
+            if (schemaGrammars.length == 0) {
                 throw new SchemaImportException("Unable to build the XML Schema component model.", metadata);
             }
-            return schemaModel;
+            XSModel schemaModel = schemaGrammars[0].toXSModel(schemaGrammars);
+            return new LoadedSchema(validationSchema, schemaModel);
         } catch (SchemaImportException exception) {
             throw exception;
-        } catch (ReflectiveOperationException | RuntimeException exception) {
+        } catch (SAXException | RuntimeException exception) {
             throw new SchemaImportException(
                     "Unable to initialize or run the Xerces XML Schema loader: " + exception.getMessage(),
                     metadata,
@@ -157,16 +170,25 @@ public final class XmlSchemaCatalogLoader {
 
     private record SchemaSource(URI systemId, byte[] content) {}
 
-    private static final class SchemaErrorHandler implements DOMErrorHandler {
+    private record LoadedSchema(Schema validationSchema, XSModel schemaModel) {}
+
+    private static final class SchemaErrorHandler implements ErrorHandler {
 
         private String firstError;
 
         @Override
-        public boolean handleError(DOMError error) {
-            if (this.firstError == null && error.getSeverity() >= DOMError.SEVERITY_ERROR) {
-                this.firstError = error.getMessage();
+        public void warning(SAXParseException exception) {}
+
+        @Override
+        public void error(SAXParseException exception) {
+            if (this.firstError == null) {
+                this.firstError = exception.getMessage();
             }
-            return true;
+        }
+
+        @Override
+        public void fatalError(SAXParseException exception) {
+            error(exception);
         }
 
         private String getFirstError() {
@@ -202,8 +224,11 @@ public final class XmlSchemaCatalogLoader {
         /**
          * Loads an initial schema given its URI.
          */
-        private LSInput resolveInput(URI location) {
-            return toInput(null, resolve(location));
+        private Source resolveSource(URI location) {
+            SchemaSource source = resolve(location);
+            StreamSource result = new StreamSource(new ByteArrayInputStream(source.content()));
+            result.setSystemId(source.systemId().toString());
+            return result;
         }
 
         /**
