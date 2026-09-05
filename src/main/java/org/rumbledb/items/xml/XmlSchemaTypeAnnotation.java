@@ -21,8 +21,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
+import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
@@ -47,10 +47,9 @@ public class XmlSchemaTypeAnnotation implements Serializable {
      */
     List<Name> typeHierarchy;
 
-    public XmlSchemaTypeAnnotation(Name name, List<Name> typeHierarchy) {
-        this.name = Objects.requireNonNull(name, "A schema type annotation must have a name.");
-        this.typeHierarchy =
-                List.copyOf(Objects.requireNonNull(typeHierarchy, "A schema type hierarchy cannot be null."));
+    public XmlSchemaTypeAnnotation(@NonNull Name name, @NonNull List<Name> typeHierarchy) {
+        this.name = name;
+        this.typeHierarchy = List.copyOf(typeHierarchy);
         if (this.typeHierarchy.isEmpty() || !this.name.equals(this.typeHierarchy.get(0))) {
             throw new IllegalArgumentException("A schema type hierarchy must start with the annotated type.");
         }
@@ -61,8 +60,7 @@ public class XmlSchemaTypeAnnotation implements Serializable {
     }
 
     /** Creates an annotation for the built-in atomic validation path. */
-    public static XmlSchemaTypeAnnotation forAtomicItemType(ItemType itemType) {
-        Objects.requireNonNull(itemType, "The atomic item type cannot be null.");
+    public static XmlSchemaTypeAnnotation forAtomicItemType(@NonNull ItemType itemType) {
         if (!itemType.isAtomicItemType()
                 || !itemType.hasName()
                 || !Name.XS_NS.equals(itemType.getName().getNamespace())) {
