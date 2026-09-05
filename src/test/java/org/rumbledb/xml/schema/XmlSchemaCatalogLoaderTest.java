@@ -34,12 +34,14 @@ import org.rumbledb.context.Name;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.resources.ResourceResolver;
 
+/**
+ * Covers schema imports that require a custom {@link ResourceResolver}. Annotation tests cover imports with location
+ * hints and import failures, but cannot supply the resolver mapping needed for an import without a location hint.
+ */
 public class XmlSchemaCatalogLoaderTest {
 
     private static final String NAMESPACE = "urn:test";
 
-    // Annotation tests cover location-hint imports and import failures. Annotation tests cannot configure a
-    // ResourceResolver, so this Java test covers an import without a location hint.
     @Test
     public void usesResourceMappingsWhenTheImportHasNoLocationHint(@TempDir Path directory) throws Exception {
         URI logicalSchemaUri = URI.create(NAMESPACE);

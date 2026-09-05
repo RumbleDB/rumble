@@ -48,6 +48,11 @@ import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
+/**
+ * Covers the internal conversion from Xerces validated values to Rumble items. Annotation tests exercise
+ * {@code validate type}, but cannot directly provide Xerces {@link ValidatedInfo} instances or inspect the resulting
+ * item representation, such as a selected union member or the items produced by a schema list.
+ */
 public class XercesTypedValueConverterTest {
 
     private static final XercesBuiltinAtomicTypeMapper TYPE_MAPPER = new XercesBuiltinAtomicTypeMapper();
