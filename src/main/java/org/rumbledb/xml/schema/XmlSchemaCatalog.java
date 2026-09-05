@@ -29,6 +29,7 @@ import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.apache.xerces.xs.XSValue;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -44,10 +45,10 @@ import org.rumbledb.types.ItemType;
  */
 public final class XmlSchemaCatalog {
 
-    @Getter
+    @Getter(AccessLevel.PACKAGE)
     private final XSModel schemaModel;
 
-    @Getter
+    @Getter(AccessLevel.PACKAGE)
     private final Schema validationSchema;
 
     private final XmlSchemaTypeMapper typeMapper;
