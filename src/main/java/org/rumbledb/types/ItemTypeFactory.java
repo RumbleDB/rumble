@@ -33,6 +33,29 @@ import org.rumbledb.spark.SparkSessionManager;
 @Log4j2
 public class ItemTypeFactory {
 
+    /**
+     * Creates Rumble's nominal representation of an atomic type declared in an XML Schema.
+     * Xerces remains responsible for validating the type's constraining facets.
+     *
+     * @param name the global schema type's expanded name, or null for an anonymous member type
+     * @param baseType the Rumble representation of its XSD base type
+     * @return the corresponding atomic item type
+     */
+    public static ItemType createXmlSchemaAtomicType(Name name, ItemType baseType) {
+        return new DerivedAtomicItemType(name, baseType, baseType.getPrimitiveType(), new Facets());
+    }
+
+    /**
+     * Creates Rumble's representation of a pure union type declared in an XML Schema.
+     *
+     * @param name the global schema type's expanded name, or null for an anonymous member type
+     * @param memberTypes the union's transitive atomic member types
+     * @return the corresponding generalized atomic item type
+     */
+    public static ItemType createXmlSchemaUnionType(Name name, List<ItemType> memberTypes) {
+        return new UnionItemType(name, BuiltinTypesCatalogue.atomicItem, List.copyOf(memberTypes));
+    }
+
     public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item, StaticContext staticContext) {
         if (item.isString()) {
             String typeString = item.getStringValue();

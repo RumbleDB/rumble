@@ -25,7 +25,7 @@ public class AttributeItem extends AbstractNodeItem {
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
-    private ItemType typeAnnotation;
+    private XmlSchemaTypeAnnotation typeAnnotation;
     private NodeTypedValue nodeTypedValue;
     // TODO: add is-id, is-idrefs
 
@@ -229,14 +229,14 @@ public class AttributeItem extends AbstractNodeItem {
      */
     @Override
     public List<Item> typeName() {
-        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+        if (this.typeAnnotation == null) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName()));
+        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.name()));
     }
 
     @Override
-    public void setSchemaType(@NonNull ItemType typeAnnotation, List<Item> typedValue) {
+    public void setSchemaType(@NonNull XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
         NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = newTypedValue;
@@ -249,7 +249,7 @@ public class AttributeItem extends AbstractNodeItem {
     }
 
     @Override
-    public ItemType getSchemaType() {
+    public XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
         return this.typeAnnotation;
     }
 }

@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.ItemType;
 
@@ -87,7 +88,7 @@ public final class BuiltinTypeValidator {
         if (typedValue == null) {
             throw invalidValue(item, itemType, metadata, null);
         }
-        validatedElement.setSchemaType(itemType, List.of(typedValue));
+        validatedElement.setSchemaType(XmlSchemaTypeAnnotation.forAtomicItemType(itemType), List.of(typedValue));
         return copiedRoot;
     }
 

@@ -19,6 +19,7 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.primitives.Collection;
@@ -1629,7 +1630,7 @@ public interface Item extends Serializable {
      * @param typeAnnotation the schema type annotation
      * @param typedValue the typed value, including an empty list for a valid empty typed value
      */
-    default void setSchemaType(ItemType typeAnnotation, List<Item> typedValue) {
+    default void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -1638,7 +1639,8 @@ public interface Item extends Serializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default ItemType getSchemaType() {
+    /** @return this node's XML Schema annotation, or {@code null} when the node is untyped. */
+    default XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
         return null;
     }
 
