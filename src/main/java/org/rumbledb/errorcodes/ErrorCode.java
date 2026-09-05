@@ -161,6 +161,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode ValidateOperandTypeErrorCode = registerBuiltIn("XQTY0030");
 
     public static final ErrorCode InvalidInstance = registerBuiltIn("XQDY0027");
+    public static final ErrorCode ValidateStrictNoDeclarationErrorCode = registerBuiltIn("XQDY0084");
     public static final ErrorCode InvalidProcessingInstructionTargetCastErrorCode = registerBuiltIn("XQDY0041");
     public static final ErrorCode InvalidValidateDocumentStructureErrorCode = registerBuiltIn("XQDY0061");
     public static final ErrorCode CycleInVariableDeclarationsErrorCode = registerBuiltIn("XQDY0054");
