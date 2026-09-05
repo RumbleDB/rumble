@@ -27,7 +27,8 @@ public class AttributeItem extends AbstractNodeItem {
     private XMLDocumentPosition documentPos;
     private XmlSchemaTypeAnnotation typeAnnotation;
     private NodeTypedValue nodeTypedValue;
-    // TODO: add is-id, is-idrefs
+    private boolean id;
+    private boolean idRefs;
 
     public AttributeItem(Node attributeNode) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);
@@ -48,6 +49,8 @@ public class AttributeItem extends AbstractNodeItem {
         AttributeItem copy = new AttributeItem(this.dmNodeName, this.stringValue);
         copy.typeAnnotation = this.typeAnnotation;
         copy.nodeTypedValue = this.nodeTypedValue;
+        copy.id = this.id;
+        copy.idRefs = this.idRefs;
         return copy;
     }
 
@@ -134,7 +137,7 @@ public class AttributeItem extends AbstractNodeItem {
      */
     @Override
     public boolean isId() {
-        return false;
+        return this.id;
     }
 
     /**
@@ -146,7 +149,7 @@ public class AttributeItem extends AbstractNodeItem {
      */
     @Override
     public boolean isIdrefs() {
-        return false;
+        return this.idRefs;
     }
 
     @Override
@@ -240,16 +243,26 @@ public class AttributeItem extends AbstractNodeItem {
         NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = newTypedValue;
+        this.id = false;
+        this.idRefs = false;
     }
 
     @Override
     public void clearSchemaType() {
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
+        this.id = false;
+        this.idRefs = false;
     }
 
     @Override
     public XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
         return this.typeAnnotation;
+    }
+
+    @Override
+    public void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        this.id = id;
+        this.idRefs = idRefs;
     }
 }
