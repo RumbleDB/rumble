@@ -19,13 +19,14 @@ package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSValue;
 import org.apache.xerces.xs.datatypes.XSQName;
+
+import lombok.NonNull;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -39,16 +40,13 @@ import org.rumbledb.types.ItemType;
 /** Converts a Xerces schema value into an XDM typed-value sequence. */
 final class XercesTypedValueConverter {
 
-    private final XmlSchemaTypeMapper typeMapper;
+    @NonNull private final XmlSchemaTypeMapper typeMapper;
 
-    XercesTypedValueConverter(XmlSchemaTypeMapper typeMapper) {
-        this.typeMapper = Objects.requireNonNull(typeMapper, "typeMapper must not be null");
+    XercesTypedValueConverter(@NonNull XmlSchemaTypeMapper typeMapper) {
+        this.typeMapper = typeMapper;
     }
 
-    List<Item> convert(XSValue schemaValue) {
-        if (schemaValue == null) {
-            throw new OurBadException("A Xerces schema value cannot be null.");
-        }
+    List<Item> convert(@NonNull XSValue schemaValue) {
         XSSimpleTypeDefinition schemaType = schemaValue.getTypeDefinition();
         if (schemaType == null) {
             throw new OurBadException("Xerces did not identify the type of its schema value.");
@@ -58,9 +56,9 @@ final class XercesTypedValueConverter {
             case XSSimpleTypeDefinition.VARIETY_ABSENT -> List.of(
                     ItemFactory.getInstance().createUntypedAtomicItem(normalizedValue(schemaValue)));
             case XSSimpleTypeDefinition.VARIETY_ATOMIC -> List.of(
-                    convertAtomicValue(normalizedValue(schemaValue), schemaValue.getActualValue(), schemaType));
-            case XSSimpleTypeDefinition.VARIETY_LIST -> convertListValue(schemaValue, schemaType);
-            case XSSimpleTypeDefinition.VARIETY_UNION -> List.of(convertAtomicValue(
+                    this.convertAtomicValue(normalizedValue(schemaValue), schemaValue.getActualValue(), schemaType));
+            case XSSimpleTypeDefinition.VARIETY_LIST -> this.convertListValue(schemaValue, schemaType);
+            case XSSimpleTypeDefinition.VARIETY_UNION -> List.of(this.convertAtomicValue(
                     normalizedValue(schemaValue), schemaValue.getActualValue(), selectedUnionMember(schemaValue)));
             default -> throw new OurBadException("Xerces returned an unknown XML Schema simple type variety.");
         };
@@ -75,15 +73,18 @@ final class XercesTypedValueConverter {
         String[] lexicalItems = normalizedValue.split(" ");
         if (!(schemaValue.getActualValue() instanceof List<?> actualValues)
                 || actualValues.size() != lexicalItems.length) {
+            // Checks that Xerces supplied the same number of parsed actualValues
             throw new OurBadException("Xerces did not provide the values of an XML Schema list.");
         }
 
         XSSimpleTypeDefinition itemType = listType.getItemType();
         XSObjectList selectedMemberTypes = schemaValue.getMemberTypeDefinitions();
+
         List<Item> result = new ArrayList<>(lexicalItems.length);
         for (int index = 0; index < lexicalItems.length; index++) {
             XSSimpleTypeDefinition atomicType = itemType;
             if (itemType.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION) {
+                // If the list item type is a union, Xerces supplies a selected member type for each position:
                 if (selectedMemberTypes == null || index >= selectedMemberTypes.getLength()) {
                     throw new OurBadException("Xerces did not identify a member type for a union list value.");
                 }
@@ -92,7 +93,7 @@ final class XercesTypedValueConverter {
                 }
                 atomicType = selectedType;
             }
-            result.add(convertAtomicValue(lexicalItems[index], actualValues.get(index), atomicType));
+            result.add(this.convertAtomicValue(lexicalItems[index], actualValues.get(index), atomicType));
         }
         return List.copyOf(result);
     }
@@ -113,12 +114,19 @@ final class XercesTypedValueConverter {
         Item result = primitiveKind == XSConstants.QNAME_DT
                 ? convertQName(actualValue)
                 : convertLexicalValue(lexicalValue, itemType);
+
         if (!result.getDynamicType().equals(itemType)) {
+            // In case the item type is a derived type, we annotate the item with its schema type to preserve the type
+            // information for later derivation checks.
             result = ItemFactory.getInstance().createAnnotatedItem(result, itemType);
         }
         return result;
     }
 
+    /**
+     * Converts a normalized lexical value into a Rumble item of the given atomic type, throwing an exception if
+     * the conversion fails.
+     */
     private static Item convertLexicalValue(String lexicalValue, ItemType itemType) {
         Item result = CastIterator.castItemToType(
                 ItemFactory.getInstance().createUntypedAtomicItem(lexicalValue),
@@ -140,6 +148,10 @@ final class XercesTypedValueConverter {
         return ItemFactory.getInstance().createQNameItem(new Name(namespace, prefix, qName.localpart));
     }
 
+    /**
+     * Return type of the union that was selected for a given schema value, throwing an exception if Xerces did not
+     * provide one.
+     */
     private static XSSimpleTypeDefinition selectedUnionMember(XSValue schemaValue) {
         XSSimpleTypeDefinition memberType = schemaValue.getMemberTypeDefinition();
         if (memberType == null) {
@@ -148,6 +160,10 @@ final class XercesTypedValueConverter {
         return memberType;
     }
 
+    /**
+     * Returns the normalized lexical value of a Xerces schema value, throwing an exception if it is null.
+     * For example, xs:token whitespace normalization changes " A B " into "A B"
+     */
     private static String normalizedValue(XSValue schemaValue) {
         String normalizedValue = schemaValue.getNormalizedValue();
         if (normalizedValue == null) {
