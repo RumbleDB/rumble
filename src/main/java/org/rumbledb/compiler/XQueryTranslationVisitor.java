@@ -470,6 +470,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         XmlSchemaCatalogLoader.load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
                 .ifPresent(catalog -> {
                     this.moduleContext.setXmlSchemaCatalog(catalog);
+
+                    /// Make the imported XML Schema atomic types visible to the XQuery compiler
                     for (ItemType itemType : catalog.getNamedGeneralizedAtomicItemTypes()) {
                         this.moduleContext.getInScopeSchemaTypes().addInScopeSchemaType(itemType, prolog.getMetadata());
                     }

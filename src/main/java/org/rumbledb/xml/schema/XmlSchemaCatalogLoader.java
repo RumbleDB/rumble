@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.xerces.dom.DOMInputImpl;
@@ -36,6 +35,8 @@ import org.w3c.dom.DOMErrorHandler;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
+
+import lombok.NonNull;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
@@ -52,10 +53,9 @@ public final class XmlSchemaCatalogLoader {
     private XmlSchemaCatalogLoader() {}
 
     public static Optional<XmlSchemaCatalog> load(
-            List<SchemaImport> schemaImports, URI staticBaseUri, CompilationConfiguration compilationConfiguration) {
-        Objects.requireNonNull(schemaImports, "schemaImports must not be null");
-        Objects.requireNonNull(staticBaseUri, "staticBaseUri must not be null");
-        Objects.requireNonNull(compilationConfiguration, "compilationConfiguration must not be null");
+            @NonNull List<SchemaImport> schemaImports,
+            @NonNull URI staticBaseUri,
+            @NonNull CompilationConfiguration compilationConfiguration) {
         if (schemaImports.isEmpty()) {
             return Optional.empty();
         }
