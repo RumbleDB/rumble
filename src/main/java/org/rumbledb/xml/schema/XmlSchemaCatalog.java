@@ -35,7 +35,10 @@ import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-/** The Xerces XML Schema component model available to one XQuery module. */
+/**
+ * Wrapper around Xerces’s model
+ * It can find schema type definitions and map them to RumbleDB ItemTypes or typed values.
+ */
 public final class XmlSchemaCatalog {
 
     private final XSModel schemaModel;

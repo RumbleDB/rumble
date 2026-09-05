@@ -47,7 +47,10 @@ import org.rumbledb.exceptions.SchemaImportException;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.resources.ResolvedResource;
 
-/** Loads the XSD 1.0 component model declared by an XQuery module's schema imports. */
+/**
+ * Loads the XSD 1.0 component model declared by an XQuery module's schema
+ * imports.
+ */
 public final class XmlSchemaCatalogLoader {
 
     private XmlSchemaCatalogLoader() {}
@@ -71,6 +74,7 @@ public final class XmlSchemaCatalogLoader {
         XSModel schemaModel = loadSchemaModel(resolvedImports.locations(), resolver, metadata);
         XmlSchemaCatalog catalog = new XmlSchemaCatalog(schemaModel);
         verifyImportedNamespaces(schemaImports, catalog);
+
         return Optional.of(catalog);
     }
 
@@ -131,6 +135,11 @@ public final class XmlSchemaCatalogLoader {
         }
     }
 
+    /**
+     * Verifies that each imported namespace actually occurs in the final catalog.
+     * Otherwise it raises a schema-import
+     * error.
+     */
     private static void verifyImportedNamespaces(List<SchemaImport> schemaImports, XmlSchemaCatalog catalog) {
         for (SchemaImport schemaImport : schemaImports) {
             String namespace = schemaImport.getTargetNamespace();
@@ -165,6 +174,11 @@ public final class XmlSchemaCatalogLoader {
         }
     }
 
+    /**
+     * Custom loader for XML Schema resources that ensures Xerces reads resources
+     * through RumbleDB’s own
+     * ResourceResolver, rather than directly from the file system or network.
+     */
     private static final class SchemaResourceResolver implements LSResourceResolver {
 
         private final URI defaultBaseUri;
@@ -185,10 +199,16 @@ public final class XmlSchemaCatalogLoader {
             this.sources = new HashMap<>();
         }
 
+        /**
+         * Loads an initial schema given its URI.
+         */
         private LSInput resolveInput(URI location) {
             return toInput(null, resolve(location));
         }
 
+        /**
+         * Xerces callback for nested xs:include or xs:import.
+         */
         @Override
         public LSInput resolveResource(
                 String type, String namespaceUri, String publicId, String systemId, String baseUri) {
@@ -196,6 +216,14 @@ public final class XmlSchemaCatalogLoader {
             return location == null ? null : toInput(publicId, resolve(location));
         }
 
+        /**
+         * Resolves the location of an imported schema.
+         * <p>
+         * if Xerces gives a systemId, resolve it relative to baseUri—this handles
+         * relative includes;
+         * otherwise, choose the configured location for the requested namespace—this
+         * handles namespace-only imports.
+         */
         private URI resolveLocation(String namespaceUri, String systemId, String baseUri) {
             if (systemId != null && !systemId.isEmpty()) {
                 URI base = baseUri == null || baseUri.isEmpty() ? this.defaultBaseUri : URI.create(baseUri);
@@ -205,6 +233,9 @@ public final class XmlSchemaCatalogLoader {
             return locations == null || locations.isEmpty() ? null : locations.get(0);
         }
 
+        /**
+         * Reads and caches a schema.
+         */
         private SchemaSource resolve(URI location) {
             SchemaSource cached = this.sources.get(location);
             if (cached != null) {
@@ -216,6 +247,9 @@ public final class XmlSchemaCatalogLoader {
             return source;
         }
 
+        /**
+         * Reads a schema from the given URI using RumbleDB’s ResourceResolver.
+         */
         private SchemaSource read(URI location) {
             try (ResolvedResource resource = this.compilationConfiguration
                     .resourceResolver()
@@ -228,6 +262,9 @@ public final class XmlSchemaCatalogLoader {
             }
         }
 
+        /**
+         * Converts a SchemaSource to an LSInput.
+         */
         private static LSInput toInput(String publicId, SchemaSource source) {
             return new DOMInputImpl(
                     publicId, source.systemId().toString(), null, new ByteArrayInputStream(source.content()), null);
