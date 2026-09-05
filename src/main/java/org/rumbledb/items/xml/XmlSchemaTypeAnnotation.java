@@ -38,6 +38,13 @@ public class XmlSchemaTypeAnnotation implements Serializable {
     private static final long serialVersionUID = 1L;
 
     Name name;
+
+    /**
+     * Hierarchy lets RumbleDB answer derivation questions such as “is this element annotated with a type derived from
+     * xs:string?”
+     *
+     * For non-atomic schema types, it still records the schema base-type chain and always ends at xs:anyType.
+     */
     List<Name> typeHierarchy;
 
     public XmlSchemaTypeAnnotation(Name name, List<Name> typeHierarchy) {
