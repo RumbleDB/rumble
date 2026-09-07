@@ -44,6 +44,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 public class StaticContext {
 
@@ -678,11 +679,15 @@ public class StaticContext {
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
     }
 
+    /** Returns the module's catalog, lazily loading built-in schemas when none were imported. */
     public XmlSchemaCatalog getXmlSchemaCatalog() {
-        if (this.xmlSchemaCatalog != null) {
-            return this.xmlSchemaCatalog;
+        if (this.parent != null) {
+            return this.parent.getXmlSchemaCatalog();
         }
-        return this.parent == null ? null : this.parent.getXmlSchemaCatalog();
+        if (this.xmlSchemaCatalog == null) {
+            this.xmlSchemaCatalog = XmlSchemaCatalogLoader.loadBuiltInCatalog();
+        }
+        return this.xmlSchemaCatalog;
     }
 
     public void setXmlSchemaCatalog(XmlSchemaCatalog xmlSchemaCatalog) {
