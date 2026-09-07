@@ -270,7 +270,6 @@ import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
-import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan> {
 
@@ -1490,9 +1489,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     public ItemRuntimePlan visitValidateExpression(ValidateExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan operand = this.visit(expression.getMainExpression(), argument);
         XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
-        if (schemaCatalog == null && expression.getValidationMode() != ValidateExpression.ValidationMode.TYPE) {
-            schemaCatalog = XmlSchemaCatalogLoader.loadBuiltInCatalog();
-        }
         return new XQueryValidateIterator(
                 operand,
                 expression.getValidationMode(),
@@ -1520,7 +1516,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Name targetTypeName = expression.getSequenceType().getItemType().hasName()
                 ? expression.getSequenceType().getItemType().getName()
                 : null;
-        if (schemaCatalog != null && schemaCatalog.isImportedSimpleType(targetTypeName)) {
+        if (schemaCatalog.isSchemaCastTarget(targetTypeName)) {
             return new XmlSchemaCastableIterator(
                     childExpression,
                     targetTypeName,
@@ -1543,7 +1539,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Name targetTypeName = expression.getSequenceType().getItemType().hasName()
                 ? expression.getSequenceType().getItemType().getName()
                 : null;
-        if (schemaCatalog != null && schemaCatalog.isImportedSimpleType(targetTypeName)) {
+        if (schemaCatalog.isSchemaCastTarget(targetTypeName)) {
             return new XmlSchemaCastIterator(
                     childExpression,
                     targetTypeName,

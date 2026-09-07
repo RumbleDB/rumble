@@ -185,7 +185,7 @@ final class XercesSimpleTypeCaster {
             // Once a member cast succeeds, failure of the union's own facets fails the whole cast.
             try {
                 checkPatterns(schemaType, memberValue.getActualValue().toString());
-                schemaType.validate(convertedContext.forFacetCheckingOnly(), memberValue);
+                schemaType.validate(convertedContext, memberValue);
                 return List.of(converted);
             } catch (InvalidDatatypeValueException exception) {
                 throw castException(typeName, item, metadata);
@@ -257,7 +257,7 @@ final class XercesSimpleTypeCaster {
                 sourceSchemaType, lexicalValue(patternSource), validationContext(patternSource, namespaceResolver));
         checkPatterns(schemaType, sourceValue.getActualValue().toString());
         // Do not parse as the target again: that would check its patterns against the target's form.
-        schemaType.validate(validationContext.forFacetCheckingOnly(), schemaValue);
+        schemaType.validate(validationContext, schemaValue);
         return schemaValue;
     }
 
@@ -320,19 +320,9 @@ final class XercesSimpleTypeCaster {
     private static final class SimpleTypeValidationContext implements ValidationContext {
 
         private final NamespaceResolver namespaceResolver;
-        private final boolean extraChecking;
 
         private SimpleTypeValidationContext(NamespaceResolver namespaceResolver) {
-            this(namespaceResolver, true);
-        }
-
-        private SimpleTypeValidationContext(NamespaceResolver namespaceResolver, boolean extraChecking) {
             this.namespaceResolver = namespaceResolver;
-            this.extraChecking = extraChecking;
-        }
-
-        private SimpleTypeValidationContext forFacetCheckingOnly() {
-            return this.extraChecking ? new SimpleTypeValidationContext(this.namespaceResolver, false) : this;
         }
 
         @Override
@@ -342,7 +332,8 @@ final class XercesSimpleTypeCaster {
 
         @Override
         public boolean needExtraChecking() {
-            return this.extraChecking;
+            // Casting has no document-level ID/IDREF/ENTITY constraints.
+            return false;
         }
 
         @Override
