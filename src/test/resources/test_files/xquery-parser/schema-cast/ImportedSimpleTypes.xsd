@@ -1,0 +1,61 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:t="urn:cast-test"
+           targetNamespace="urn:cast-test">
+    <xs:simpleType name="Count">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="Code">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{2}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="CodeOrInteger">
+        <xs:union memberTypes="t:Code xs:integer"/>
+    </xs:simpleType>
+
+    <xs:simpleType name="SensitiveUnion">
+        <xs:union memberTypes="xs:NCName xs:QName"/>
+    </xs:simpleType>
+
+    <xs:simpleType name="ListOfUnions">
+        <xs:list itemType="t:SensitiveUnion"/>
+    </xs:simpleType>
+
+    <xs:simpleType name="TwoCodes">
+        <xs:restriction base="t:ListOfUnions">
+            <xs:length value="2"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="LeadingZeroInteger">
+        <xs:restriction base="xs:integer">
+            <xs:pattern value="0[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="TwoDigitUnion">
+        <xs:restriction base="t:CodeOrInteger">
+            <xs:pattern value="[0-9]{2}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="DecimalPointRequired">
+        <xs:restriction base="xs:decimal">
+            <xs:pattern value="[0-9]+\.[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="DecimalPointUnion">
+        <xs:union memberTypes="t:DecimalPointRequired"/>
+    </xs:simpleType>
+
+    <xs:complexType name="Record">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
