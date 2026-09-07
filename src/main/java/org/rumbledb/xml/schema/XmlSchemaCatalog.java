@@ -87,7 +87,7 @@ public final class XmlSchemaCatalog {
                 .isPresent();
     }
 
-    public static boolean isBuiltInListType(Name name) {
+    private static boolean isBuiltInListType(Name name) {
         return name != null
                 && Name.XS_NS.equals(name.getNamespace())
                 && switch (name.getLocalName()) {

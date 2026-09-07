@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, true, true)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, true, true, true)" :)
 (: Constructors return typed atomic sequences, without requiring schema imports. :)
 (
     let $values := xs:IDREFS(" a  b ")
@@ -14,5 +14,9 @@
     return deep-equal($constructor("a b"), ("a", "b")),
     let $constructor := xs:ENTITIES(?)
     return deep-equal($constructor("a b"), ("a", "b")),
-    xs:IDREFS#1 instance of function(xs:anyAtomicType?) as xs:IDREF*
+    xs:IDREFS#1 instance of function(xs:anyAtomicType?) as xs:IDREF*,
+    (: A dynamically partially applied reference retains its resolved schema cast body. :)
+    let $constructor := xs:NMTOKENS#1
+    let $partial := $constructor(?)
+    return deep-equal($partial("a b"), ("a", "b")) and empty($partial(()))
 )

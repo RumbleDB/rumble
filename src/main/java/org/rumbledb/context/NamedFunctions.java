@@ -198,8 +198,11 @@ public class NamedFunctions implements Serializable {
         RumbleConfiguration conf = callerStaticContext.getConfiguration();
         ExceptionMetadata metadata = callerStaticContext.getMetadata();
         boolean checkReturnTypesOfBuiltinFunctions = conf.analysis().checkReturnTypeOfBuiltinFunctions();
-        BuiltinFunction builtinFunction =
-                BuiltinFunctionCatalogue.getBuiltinFunction(identifier, callerStaticContext.getQueryLanguage());
+        var resolvedConstructor =
+                ConstructorFunctionResolver.resolveBuiltIn(identifier, callerStaticContext.getQueryLanguage());
+        BuiltinFunction builtinFunction = resolvedConstructor == null
+                ? BuiltinFunctionCatalogue.getBuiltinFunction(identifier, callerStaticContext.getQueryLanguage())
+                : resolvedConstructor.asBuiltinFunction();
         if (builtinFunction == null) {
             throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
         }
@@ -262,12 +265,8 @@ public class NamedFunctions implements Serializable {
 
         ItemRuntimePlan functionCallIterator;
         try {
-            if (builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
-                Constructor<? extends ItemRuntimePlan> constructor = builtinFunction
-                        .getFunctionIteratorClass()
-                        .getConstructor(FunctionIdentifier.class, List.class, RuntimeStaticContext.class);
-                functionCallIterator =
-                        constructor.newInstance(builtinFunction.getIdentifier(), arguments, delegateContext);
+            if (resolvedConstructor != null) {
+                functionCallIterator = new ConstructorFunctionIterator(resolvedConstructor, arguments, delegateContext);
             } else {
                 Constructor<? extends ItemRuntimePlan> constructor = builtinFunction
                         .getFunctionIteratorClass()

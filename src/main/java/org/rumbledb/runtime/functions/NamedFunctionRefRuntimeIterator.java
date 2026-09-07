@@ -44,8 +44,7 @@ public class NamedFunctionRefRuntimeIterator extends AbstractAtMostOneItemRuntim
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        Item resolved = NamedFunctionLookup.lookupOrNull(
-                this.functionIdentifier, dynamicContext, getConfiguration(), getMetadata());
+        Item resolved = NamedFunctionLookup.lookupOrNull(this.functionIdentifier, dynamicContext, this.staticContext);
         if (resolved != null) {
             return resolved;
         }

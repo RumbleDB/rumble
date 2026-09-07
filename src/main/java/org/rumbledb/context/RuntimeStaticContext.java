@@ -18,6 +18,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 @Value
 @Builder(toBuilder = true)
@@ -41,6 +42,9 @@ public class RuntimeStaticContext implements Serializable {
     @NonNull private final RumbleConfiguration configuration;
 
     private final SequenceType staticType;
+
+    /** Shared module schema environment. Xerces grammars are local-only and are not serialized. */
+    private final transient XmlSchemaCatalog xmlSchemaCatalog;
 
     /**
      * Execution mode in which expressions in this context should be evaluated; the returned execution mode
@@ -142,6 +146,7 @@ public class RuntimeStaticContext implements Serializable {
      */
     public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
         return builder()
+                .xmlSchemaCatalog(staticContext.getXmlSchemaCatalog())
                 .staticURI(staticContext.getStaticBaseURI())
                 .staticURIString(staticContext.getStaticBaseUriString())
                 .queryLanguage(staticContext.getQueryLanguage())
