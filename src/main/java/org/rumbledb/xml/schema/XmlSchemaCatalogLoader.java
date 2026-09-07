@@ -71,8 +71,13 @@ public final class XmlSchemaCatalogLoader {
             SchemaErrorHandler errorHandler = new SchemaErrorHandler();
             XMLSchemaFactory schemaFactory = new XMLSchemaFactory();
             schemaFactory.setErrorHandler(errorHandler);
+
+            // Although the schema has no user declarations, Xerces supplies the standard built-in types such as
+            // xs:anyType.
+            // This allows lax and strict validation to run even when the query has no schema imports.
             StreamSource source = new StreamSource(new StringReader(EMPTY_SCHEMA));
             source.setSystemId(EMPTY_SCHEMA_SYSTEM_ID);
+
             LoadedSchema loadedSchema = loadedSchema(schemaFactory.newSchema(source), errorHandler, metadata);
             return new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema());
         } catch (SAXException | RuntimeException exception) {
@@ -158,6 +163,9 @@ public final class XmlSchemaCatalogLoader {
         if (!(validationSchema instanceof XSGrammarPoolContainer grammarPoolContainer)) {
             throw new SchemaImportException("The Xerces validation grammar pool is unavailable.", metadata);
         }
+
+        // Grammar pool is the collection of compiled XML Schema definitions
+        // We convert it into an XSModel, which will be used for validation and type checking.
         Grammar[] grammars =
                 grammarPoolContainer.getGrammarPool().retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
         XSGrammar[] schemaGrammars = new XSGrammar[grammars.length];
@@ -167,9 +175,11 @@ public final class XmlSchemaCatalogLoader {
             }
             schemaGrammars[index] = schemaGrammar;
         }
+
         if (schemaGrammars.length == 0) {
             throw new SchemaImportException("Unable to build the XML Schema component model.", metadata);
         }
+
         XSModel schemaModel = schemaGrammars[0].toXSModel(schemaGrammars);
         return new LoadedSchema(validationSchema, schemaModel);
     }
