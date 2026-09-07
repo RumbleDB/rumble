@@ -24,7 +24,7 @@ import java.io.Serial;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class UnknownCastTypeException extends RumbleException {
+public class UnknownCastTypeException extends SemanticException {
 
     @Serial
     private static final long serialVersionUID = 1L;
