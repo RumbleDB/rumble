@@ -238,12 +238,13 @@ final class XercesSimpleTypeCaster {
             throws InvalidDatatypeValueException {
         SimpleTypeValidationContext validationContext = validationContext(value, namespaceResolver);
         ValidatedInfo schemaValue = validateValue(builtInBaseType(schemaType), lexicalValue(value), validationContext);
-        // F&O 19.3.3 checks patterns against the source's canonical form. Across primitive
-        // families (19.3.4), the source of the restriction step is the converted primitive value.
+        // F&O casting primitives include integer and the duration subtypes, unlike XSD primitives.
+        // Across casting families, check the canonical form of the converted primitive value.
         ItemType primitiveType = this.typeMapper
-                .mapGeneralizedAtomicType(schemaType.getPrimitiveType())
-                .orElseThrow();
-        Item patternSource = source.getDynamicType().isSubtypeOf(primitiveType)
+                .mapGeneralizedAtomicType(schemaType)
+                .orElseThrow()
+                .getCastingPrimitiveType();
+        Item patternSource = source.getDynamicType().getCastingPrimitiveType().equals(primitiveType)
                 ? source
                 : CastIterator.castItemToType(source, primitiveType, metadata, namespaceResolver);
         ItemType sourceBase = patternSource.getDynamicType();
@@ -377,12 +378,14 @@ final class XercesSimpleTypeCaster {
 
         @Override
         public String getSymbol(String symbol) {
-            return symbol;
+            // Xerces QName equality relies on interned local names and namespace URIs.
+            return symbol.intern();
         }
 
         @Override
         public String getURI(String prefix) {
-            return this.namespaceResolver.resolvePrefix(prefix);
+            String namespace = this.namespaceResolver.resolvePrefix(prefix);
+            return namespace == null || namespace.isEmpty() ? null : getSymbol(namespace);
         }
 
         @Override

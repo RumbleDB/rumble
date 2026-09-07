@@ -9,9 +9,9 @@ import schema namespace t = "urn:cast-test" at "ImportedSimpleTypes.xsd";
     42 castable as t:TwoDigitUnion,
     not(7 castable as t:TwoDigitUnion),
     not(123 castable as t:TwoDigitUnion),
-    (: The integer source's canonical form is "42", not the converted decimal's "42.0". :)
-    not(42 castable as t:DecimalPointRequired),
-    not(42 castable as t:DecimalPointUnion),
+    (: Integer is a casting primitive: crossing to decimal checks its canonical form "42.0". :)
+    42 castable as t:DecimalPointRequired,
+    42 castable as t:DecimalPointUnion,
     (xs:decimal("42") cast as t:DecimalPointRequired) eq 42,
     ("42.0" cast as t:DecimalPointRequired) eq 42
 )
