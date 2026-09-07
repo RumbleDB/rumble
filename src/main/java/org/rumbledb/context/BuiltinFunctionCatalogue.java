@@ -348,6 +348,22 @@ public class BuiltinFunctionCatalogue {
         } else if (!Name.XS_NS.equals(functionName.getNamespace())) {
             return null;
         }
+        ItemType listItemType =
+                switch (typeName.getLocalName()) {
+                    case "IDREFS" -> BuiltinTypesCatalogue.IDREFItem;
+                    case "NMTOKENS" -> BuiltinTypesCatalogue.NMTOKENItem;
+                    case "ENTITIES" -> BuiltinTypesCatalogue.ENTITYItem;
+                    default -> null;
+                };
+        if (listItemType != null) {
+            return new BuiltinFunction(
+                    new FunctionIdentifier(typeName, identifier.getArity()),
+                    new FunctionSignature(
+                            List.of(SequenceType.createSequenceType("anyAtomicType?")),
+                            new SequenceType(listItemType, Arity.ZeroOrMore)),
+                    ConstructorFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+        }
         ItemType targetType;
         try {
             targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
