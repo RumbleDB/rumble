@@ -44,7 +44,7 @@ public final class NamedFunctionLookup {
             result.populateClosureFromDynamicContext(dynamicContext, staticContext.getMetadata());
             return result;
         }
-        var constructor = ConstructorFunctionResolver.resolveBuiltIn(identifier, staticContext.getQueryLanguage());
+        var constructor = ConstructorFunctionResolver.resolve(identifier, staticContext);
         if (constructor != null) {
             return FunctionItemFactory.createConstructorReference(
                     constructor, dynamicContext.getModuleContext(), staticContext);

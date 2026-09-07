@@ -198,8 +198,7 @@ public class NamedFunctions implements Serializable {
         RumbleConfiguration conf = callerStaticContext.getConfiguration();
         ExceptionMetadata metadata = callerStaticContext.getMetadata();
         boolean checkReturnTypesOfBuiltinFunctions = conf.analysis().checkReturnTypeOfBuiltinFunctions();
-        var resolvedConstructor =
-                ConstructorFunctionResolver.resolveBuiltIn(identifier, callerStaticContext.getQueryLanguage());
+        var resolvedConstructor = ConstructorFunctionResolver.resolve(identifier, callerStaticContext);
         BuiltinFunction builtinFunction = resolvedConstructor == null
                 ? BuiltinFunctionCatalogue.getBuiltinFunction(identifier, callerStaticContext.getQueryLanguage())
                 : resolvedConstructor.asBuiltinFunction();

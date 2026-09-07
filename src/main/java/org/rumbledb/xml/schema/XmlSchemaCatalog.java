@@ -107,9 +107,28 @@ public final class XmlSchemaCatalog {
             ItemType itemType = this.typeMapper.getListItemType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
             return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
         }
-        ItemType itemType =
-                this.typeMapper.mapGeneralizedAtomicType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
+        ItemType itemType = nearestGeneralizedAtomicType(schemaType);
         return new SequenceType(itemType, SequenceType.Arity.One);
+    }
+
+    /**
+     * A restricted union may not itself have an XDM item type, but its typed value is still
+     * within the nearest representable generalized atomic base type.
+     */
+    private ItemType nearestGeneralizedAtomicType(XSTypeDefinition schemaType) {
+        XSTypeDefinition current = schemaType;
+        while (current != null) {
+            Optional<ItemType> mappedType = this.typeMapper.mapGeneralizedAtomicType(current);
+            if (mappedType.isPresent()) {
+                return mappedType.get();
+            }
+            XSTypeDefinition baseType = current.getBaseType();
+            if (baseType == current) {
+                break;
+            }
+            current = baseType;
+        }
+        return BuiltinTypesCatalogue.atomicItem;
     }
 
     /** Casts one atomized value with the matching definition from this catalog. */

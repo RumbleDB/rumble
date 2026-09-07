@@ -312,12 +312,23 @@ public class BuiltinFunctionCatalogue {
         return null;
     }
 
+    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, StaticContext staticContext) {
+        var constructor = ConstructorFunctionResolver.resolve(identifier, staticContext);
+        return constructor == null
+                ? getBuiltinFunction(identifier, staticContext.getQueryLanguage())
+                : constructor.asBuiltinFunction();
+    }
+
     public static boolean exists(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return true;
         }
         return resolveConstructorFunction(identifier, queryLanguage) != null
                 || resolveIdentifierFallback(identifier) != null;
+    }
+
+    public static boolean exists(FunctionIdentifier identifier, StaticContext staticContext) {
+        return getBuiltinFunction(identifier, staticContext) != null;
     }
 
     // Compatibility adapter for compiler passes that still query all built-in signatures through this catalogue.

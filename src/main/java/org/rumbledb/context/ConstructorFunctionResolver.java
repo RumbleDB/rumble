@@ -8,6 +8,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /** Resolves constructor names and signatures separately from ordinary built-in functions. */
 public final class ConstructorFunctionResolver {
@@ -68,6 +69,33 @@ public final class ConstructorFunctionResolver {
             return null;
         }
         return resolved(typeName, new SequenceType(targetType, Arity.OneOrZero), false);
+    }
+
+    /** Resolves built-in and imported named simple-type constructors in a static context. */
+    public static ResolvedConstructor resolve(FunctionIdentifier identifier, StaticContext staticContext) {
+        ResolvedConstructor builtIn = resolveBuiltIn(identifier, staticContext.getQueryLanguage());
+        return builtIn != null ? builtIn : resolveImported(identifier, staticContext.getXmlSchemaCatalog());
+    }
+
+    /** Resolves built-in and imported constructors retained in a local runtime context. */
+    public static ResolvedConstructor resolve(FunctionIdentifier identifier, RuntimeStaticContext staticContext) {
+        ResolvedConstructor builtIn = resolveBuiltIn(identifier, staticContext.getQueryLanguage());
+        return builtIn != null ? builtIn : resolveImported(identifier, staticContext.getXmlSchemaCatalog());
+    }
+
+    private static ResolvedConstructor resolveImported(FunctionIdentifier identifier, XmlSchemaCatalog schemaCatalog) {
+        if (identifier.getArity() != 1 || schemaCatalog == null) {
+            return null;
+        }
+        Name typeName = identifier.getName();
+        if (!schemaCatalog.isSchemaCastTarget(typeName)) {
+            return null;
+        }
+        SequenceType castResult = schemaCatalog.getSimpleTypeCastResultType(typeName);
+        SequenceType returnType = castResult.getArity() == Arity.One
+                ? new SequenceType(castResult.getItemType(), Arity.OneOrZero)
+                : castResult;
+        return resolved(typeName, returnType, true);
     }
 
     private static ResolvedConstructor resolved(Name typeName, SequenceType returnType, boolean usesSchemaCaster) {

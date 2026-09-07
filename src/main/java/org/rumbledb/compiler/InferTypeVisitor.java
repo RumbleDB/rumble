@@ -595,7 +595,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function = null;
         FunctionSignature signature = null;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext.getQueryLanguage());
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext);
         if (function != null) {
             signature = function.getSignature();
         } else {
@@ -812,16 +812,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        String queryLanguage = expression.getStaticContext().getQueryLanguage();
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), expression.getStaticContext())) {
             if (expression.isPartialApplication()) {
                 // This should never be reached because partial application on built-in functions should have been
                 // rewritten before
                 throw new UnsupportedFeatureException(
                         "Partial application on built-in functions are not supported.", expression.getMetadata());
             }
-            BuiltinFunction builtinFunction =
-                    BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier(), queryLanguage);
+            BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
+                    expression.getFunctionIdentifier(), expression.getStaticContext());
             if (builtinFunction == null) {
                 throw new UnknownFunctionCallException(
                         expression.getFunctionIdentifier().getName(),
@@ -872,10 +871,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 if (returnType == null) {
                     returnType = SequenceType.createSequenceType("item*");
                 }
-                if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)
+                if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), expression.getStaticContext())
                         && parameterExpressions.size() == 1) {
                     BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                            expression.getFunctionIdentifier(), queryLanguage);
+                            expression.getFunctionIdentifier(), expression.getStaticContext());
                     if (builtinFunction != null
                             && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
                         SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
