@@ -28,6 +28,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ValidateException;
 import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
@@ -68,37 +69,42 @@ public final class XQueryValidateIterator extends AbstractAtMostOneItemRuntimePl
     public Item evaluateAtMostOne(DynamicContext context) {
         Item item;
         try {
-            item = this.operand.materializeAtMostOne(context);
+            item = this.operand.materializeExactlyOne(context);
         } catch (MoreThanOneItemException exception) {
-            throw operandTypeError("The operand contains more than one item.");
+            throw this.operandTypeError("The operand contains more than one item.");
+        } catch (NoItemException exception) {
+            throw this.operandTypeError("The operand is an empty sequence.");
         }
-        if (item == null) {
-            throw operandTypeError("The operand is an empty sequence.");
-        }
+
         if (!item.isDocumentNode() && !item.isElementNode()) {
-            throw operandTypeError("The operand is neither a document nor an element node.");
+            throw this.operandTypeError("The operand is neither a document nor an element node.");
         }
+
         if (item.isDocumentNode() && !BuiltinTypeValidator.hasValidDocumentStructure(item)) {
             throw new ValidateException(
                     "A document node being validated must have exactly one element child and only comment or "
                             + "processing-instruction siblings.",
                     ErrorCode.InvalidValidateDocumentStructureErrorCode,
-                    getMetadata());
+                    this.getMetadata());
         }
+
         if (this.validationMode == ValidationMode.TYPE
                 && Name.XS_NS.equals(this.targetTypeName.getNamespace())
                 && BuiltinTypesCatalogue.typeExists(this.targetTypeName)) {
+            // It's a builtin type, so we can validate it without the schema catalog.
             return BuiltinTypeValidator.validate(
-                    item, BuiltinTypesCatalogue.getItemTypeByName(this.targetTypeName), getMetadata());
+                    item, BuiltinTypesCatalogue.getItemTypeByName(this.targetTypeName), this.getMetadata());
         }
+
         if (this.schemaCatalog == null) {
-            throw new OurBadException("The XML Schema catalog is unavailable at runtime.", getMetadata());
+            throw new OurBadException("The XML Schema catalog is unavailable at runtime.", this.getMetadata());
         }
+
         XmlSchemaValidator validator = new XmlSchemaValidator(this.schemaCatalog);
         return switch (this.validationMode) {
-            case STRICT -> validator.validateStrict(item, getMetadata());
-            case LAX -> validator.validateLax(item, getMetadata());
-            case TYPE -> validator.validateType(item, this.targetTypeName, getMetadata());
+            case STRICT -> validator.validateStrict(item, this.getMetadata());
+            case LAX -> validator.validateLax(item, this.getMetadata());
+            case TYPE -> validator.validateType(item, this.targetTypeName, this.getMetadata());
         };
     }
 
@@ -106,6 +112,6 @@ public final class XQueryValidateIterator extends AbstractAtMostOneItemRuntimePl
         return new ValidateException(
                 "A validate expression requires exactly one document or element node. " + detail,
                 ErrorCode.ValidateOperandTypeErrorCode,
-                getMetadata());
+                this.getMetadata());
     }
 }
