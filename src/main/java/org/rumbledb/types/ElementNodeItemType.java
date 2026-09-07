@@ -1,6 +1,7 @@
 package org.rumbledb.types;
 
 import java.io.Serial;
+import java.util.List;
 import java.util.Set;
 
 import lombok.Getter;
@@ -24,9 +25,20 @@ public class ElementNodeItemType extends AbstractItemType {
     @Getter
     private Name nodeName;
 
+    @Getter
+    private Name schemaTypeName;
+
+    private List<Name> schemaTypeHierarchy;
+
+    @Getter
+    private boolean nillable;
+
     public ElementNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("element");
         this.nodeName = null;
+        this.schemaTypeName = null;
+        this.schemaTypeHierarchy = List.of();
+        this.nillable = false;
     }
 
     public ElementNodeItemType(Name nodeName) {
@@ -35,6 +47,20 @@ public class ElementNodeItemType extends AbstractItemType {
         }
         this.catalogueName = null;
         this.nodeName = nodeName;
+        this.schemaTypeName = null;
+        this.schemaTypeHierarchy = List.of();
+        this.nillable = false;
+    }
+
+    public ElementNodeItemType(Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, boolean nillable) {
+        if (schemaTypeName == null || schemaTypeHierarchy == null || schemaTypeHierarchy.isEmpty()) {
+            throw new IllegalArgumentException("A typed element test requires a schema type hierarchy.");
+        }
+        this.catalogueName = null;
+        this.nodeName = nodeName;
+        this.schemaTypeName = schemaTypeName;
+        this.schemaTypeHierarchy = List.copyOf(schemaTypeHierarchy);
+        this.nillable = nillable;
     }
 
     private boolean isWildcardElement() {
@@ -43,7 +69,8 @@ public class ElementNodeItemType extends AbstractItemType {
 
     @Override
     protected Object equalityKey() {
-        return structuralTypeKey(ElementNodeItemType.class, this.catalogueName, this.nodeName);
+        return structuralTypeKey(
+                ElementNodeItemType.class, this.catalogueName, this.nodeName, this.schemaTypeName, this.nillable);
     }
 
     @Override
@@ -82,9 +109,17 @@ public class ElementNodeItemType extends AbstractItemType {
             return false;
         }
         if (other.isWildcardElement()) {
-            return true;
+            return other.schemaTypeName == null || hasCompatibleSchemaType(other);
         }
-        return this.nodeName != null && this.nodeName.equals(other.nodeName);
+        return this.nodeName != null
+                && this.nodeName.equals(other.nodeName)
+                && (other.schemaTypeName == null || hasCompatibleSchemaType(other));
+    }
+
+    private boolean hasCompatibleSchemaType(ElementNodeItemType superType) {
+        return this.schemaTypeName != null
+                && this.schemaTypeHierarchy.contains(superType.schemaTypeName)
+                && (!this.nillable || superType.nillable);
     }
 
     @Override
@@ -127,10 +162,14 @@ public class ElementNodeItemType extends AbstractItemType {
 
     @Override
     public String toString() {
-        if (isWildcardElement()) {
+        if (this.catalogueName != null) {
             return this.catalogueName.toString();
         }
-        return "element(" + this.nodeName + ")";
+        String name = this.nodeName == null ? "*" : this.nodeName.toString();
+        if (this.schemaTypeName == null) {
+            return "element(" + name + ")";
+        }
+        return "element(" + name + ", " + this.schemaTypeName + (this.nillable ? "?" : "") + ")";
     }
 
     @Override

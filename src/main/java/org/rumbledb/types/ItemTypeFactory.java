@@ -572,6 +572,11 @@ public class ItemTypeFactory {
         return new ElementNodeItemType(nodeName);
     }
 
+    public static ItemType elementNodeItemType(
+            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, boolean nillable) {
+        return new ElementNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy, nillable);
+    }
+
     /**
      * Wildcard XQuery attribute node type attribute().
      *
@@ -592,6 +597,10 @@ public class ItemTypeFactory {
             throw new OurBadException("Attribute node name cannot be null.");
         }
         return new AttributeNodeItemType(nodeName);
+    }
+
+    public static ItemType attributeNodeItemType(Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy) {
+        return new AttributeNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy);
     }
 
     /**

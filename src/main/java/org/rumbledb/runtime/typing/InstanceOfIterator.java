@@ -28,6 +28,7 @@ import org.apache.spark.api.java.JavaRDD;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
@@ -36,7 +37,10 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.DocumentNodeItemType;
+import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
@@ -128,6 +132,24 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType instanceof ElementNodeItemType elementType) {
+            return matchesElementTest(elementType, itemToMatch);
+        }
+        if (itemType instanceof AttributeNodeItemType attributeType) {
+            return matchesAttributeTest(attributeType, itemToMatch);
+        }
+        if (itemType instanceof DocumentNodeItemType documentType && documentType.getElementTestType() != null) {
+            if (!itemToMatch.isDocumentNode()) {
+                return false;
+            }
+            if (itemToMatch.children().stream().anyMatch(Item::isTextNode)) {
+                return false;
+            }
+            List<Item> elementChildren =
+                    itemToMatch.children().stream().filter(Item::isElementNode).toList();
+            return elementChildren.size() == 1
+                    && doesItemTypeMatchItem(documentType.getElementTestType(), elementChildren.get(0));
+        }
         if (itemToMatch.isMap()) {
             if (itemToMatch.getSize() == 0) {
                 // empty map: matches
@@ -200,5 +222,44 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
                     || itemToMatch.getDynamicType().isSubtypeOf(itemType);
         }
         return itemToMatch.getDynamicType().isSubtypeOf(itemType);
+    }
+
+    private static boolean matchesElementTest(ElementNodeItemType test, Item item) {
+        if (!item.isElementNode()
+                || (test.getNodeName() != null && !test.getNodeName().equals(item.nodeName()))) {
+            return false;
+        }
+        if (test.getSchemaTypeName() == null) {
+            return true;
+        }
+        boolean nilled = item.nilled().stream().anyMatch(value -> value.getBooleanValue());
+        if (nilled && !test.isNillable()) {
+            return false;
+        }
+        if (item.getSchemaTypeAnnotation() != null) {
+            return item.getSchemaTypeAnnotation().isDerivedFrom(test.getSchemaTypeName());
+        }
+        String expected = test.getSchemaTypeName().getLocalName();
+        return Name.XS_NS.equals(test.getSchemaTypeName().getNamespace())
+                && ("untyped".equals(expected) || "anyType".equals(expected));
+    }
+
+    private static boolean matchesAttributeTest(AttributeNodeItemType test, Item item) {
+        if (!item.isAttributeNode()
+                || (test.getNodeName() != null && !test.getNodeName().equals(item.nodeName()))) {
+            return false;
+        }
+        if (test.getSchemaTypeName() == null) {
+            return true;
+        }
+        if (item.getSchemaTypeAnnotation() != null) {
+            return item.getSchemaTypeAnnotation().isDerivedFrom(test.getSchemaTypeName());
+        }
+        String expected = test.getSchemaTypeName().getLocalName();
+        return Name.XS_NS.equals(test.getSchemaTypeName().getNamespace())
+                && ("untypedAtomic".equals(expected)
+                        || "anyAtomicType".equals(expected)
+                        || "anySimpleType".equals(expected)
+                        || "anyType".equals(expected));
     }
 }
