@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -17,12 +16,11 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 public class IdRefFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
-
-    private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
     public IdRefFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
@@ -38,7 +36,7 @@ public class IdRefFunctionIterator extends ItemRuntimePlan implements LocalRunti
         Set<String> candidateIds = new HashSet<>();
         for (Item item : argument) {
             String value = item.getStringValue();
-            if (NCNAME_PATTERN.matcher(value).matches()) {
+            if (NamespaceBindingUtils.isValidNcName(value)) {
                 candidateIds.add(value);
             }
         }
@@ -72,9 +70,10 @@ public class IdRefFunctionIterator extends ItemRuntimePlan implements LocalRunti
             for (Item attribute : node.attributes()) {
                 collectIdrefs(attribute, candidateIds, matches);
             }
-            for (Item child : node.children()) {
-                collectIdrefs(child, candidateIds, matches);
-            }
+        }
+        // Lookup starts at a document node, so descend through documents as well as elements.
+        for (Item child : node.children()) {
+            collectIdrefs(child, candidateIds, matches);
         }
     }
 
