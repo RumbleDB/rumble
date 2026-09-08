@@ -892,8 +892,8 @@ keyword
    | keywordNotOKForFunction
    ;
 
-// These keywords do not conflict with function syntax, including decimal-format properties.
 keywordOKForFunction
+   // These keywords do not conflict with function syntax, including decimal-format properties.
    : dialectKeywordOKForFunction
    | KW_ANCESTOR
    | KW_ANCESTOR_OR_SELF
@@ -1028,8 +1028,8 @@ keywordOKForFunction
    | DFPropertyName
    | KW_BINARY
    ;
-
-// XQuery 3.1, A.3 Reserved Function Names: https://www.w3.org/TR/xquery-31/#id-reserved-fn-names
+   // XQuery 3.1, A.3 Reserved Function Names: https://www.w3.org/TR/xquery-31/#id-reserved-fn-names
+   
 keywordNotOKForFunction
    : KW_ATTRIBUTE
    | KW_COMMENT
