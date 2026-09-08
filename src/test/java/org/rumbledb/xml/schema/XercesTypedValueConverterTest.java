@@ -41,7 +41,6 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.resources.ResourceResolver;
@@ -166,10 +165,15 @@ public class XercesTypedValueConverterTest {
     }
 
     @Test
-    public void rejectsValuesWithoutASupportedRumbleRepresentation() throws Exception {
-        ValidatedInfo notation = validate("NOTATION", "p:value", Map.of("p", "urn:test"));
+    public void convertsNotationFromTheExpandedXercesValue() throws Exception {
+        // NOTATION uses an expanded name like QName, but retains its own primitive type.
+        Item value = convert("NOTATION", "p:value", Map.of("p", "urn:test"));
 
-        Assertions.assertThrows(OurBadException.class, () -> CONVERTER.convert(notation));
+        Assertions.assertTrue(value.isNotation());
+        Assertions.assertFalse(value.isQName());
+        Assertions.assertEquals(new Name("urn:test", "p", "value"), value.getNotationValue());
+        Assertions.assertEquals("p:value", value.getStringValue());
+        Assertions.assertEquals(BuiltinTypesCatalogue.NOTATIONItem, value.getDynamicType());
     }
 
     @Test
