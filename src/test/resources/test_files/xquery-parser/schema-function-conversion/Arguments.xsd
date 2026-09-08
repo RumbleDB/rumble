@@ -1,0 +1,15 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:t="urn:arguments"
+    targetNamespace="urn:arguments" elementFormDefault="qualified">
+    <xs:simpleType name="NumberOrBoolean">
+        <xs:union memberTypes="xs:integer xs:boolean" />
+    </xs:simpleType>
+    <xs:simpleType name="QNameOrInteger">
+        <xs:union memberTypes="xs:QName xs:integer" />
+    </xs:simpleType>
+    <xs:element name="integer" type="xs:integer" />
+    <xs:element name="numbers">
+        <xs:simpleType>
+            <xs:list itemType="xs:integer" />
+        </xs:simpleType>
+    </xs:element>
+</xs:schema>
