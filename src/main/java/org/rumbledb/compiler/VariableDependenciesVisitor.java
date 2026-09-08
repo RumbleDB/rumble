@@ -22,6 +22,7 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -30,8 +31,11 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.jgrapht.Graph;
+import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
+import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DirectedAcyclicGraph;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
@@ -96,10 +100,10 @@ import org.rumbledb.expressions.update.TransformExpression;
  * declare variable $x := 1;
  * declare function f() { $x };
  *
- * Note that a function cannot depend on a function, as mutually recursive calls are allowed.
+ * Functions may depend on each other, including through mutually recursive calls.
  *
- * Once all dependencies have been determined, the visitor builds a DAG, builds a topological ordering
- * thereof, and re-sorts declarations in the prolog for further processing by other visitors.
+ * The visitor groups recursive functions and topologically orders the resulting DAG to re-sort
+ * declarations in the prolog for further processing by other visitors.
  *
  */
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
@@ -455,39 +459,18 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return nameToNodeMap;
     }
 
-    private DirectedAcyclicGraph<Node, DefaultEdge> buildDependencyGraph(Map<Name, Node> nameToNodeMap, Prolog prolog) {
-        DirectedAcyclicGraph<Node, DefaultEdge> dependencyGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
-        for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
-            Set<Name> names = getInputVariableDependencies(variableDeclaration);
-            dependencyGraph.addVertex(variableDeclaration);
-            for (Name name : names) {
-                Node declaration = nameToNodeMap.get(name);
-                if (declaration != null) {
-                    dependencyGraph.addVertex(declaration);
-                    try {
-                        dependencyGraph.addEdge(declaration, variableDeclaration);
-                    } catch (IllegalArgumentException e) {
-                        throw new CycleInVariableDeclarationsException(
-                                "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
-                                variableDeclaration.getMetadata());
-                    }
-                }
+    private Graph<Node, DefaultEdge> buildDependencyGraph(Map<Name, Node> nameToNodeMap, Prolog prolog) {
+        Graph<Node, DefaultEdge> dependencyGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+        for (Node declaration : prolog.getDeclarations()) {
+            if (!(declaration instanceof VariableDeclaration) && !(declaration instanceof FunctionDeclaration)) {
+                continue;
             }
-        }
-        for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {
-            Set<Name> names = getInputVariableDependencies(functionDeclaration);
-            dependencyGraph.addVertex(functionDeclaration);
-            for (Name name : names) {
-                Node declaration = nameToNodeMap.get(name);
-                if (declaration != null) {
-                    dependencyGraph.addVertex(declaration);
-                    try {
-                        dependencyGraph.addEdge(declaration, functionDeclaration);
-                    } catch (IllegalArgumentException e) {
-                        throw new CycleInVariableDeclarationsException(
-                                "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
-                                functionDeclaration.getMetadata());
-                    }
+            dependencyGraph.addVertex(declaration);
+            for (Name name : getInputVariableDependencies(declaration)) {
+                Node dependency = nameToNodeMap.get(name);
+                if (dependency != null) {
+                    dependencyGraph.addVertex(dependency);
+                    dependencyGraph.addEdge(dependency, declaration);
                 }
             }
         }
@@ -497,7 +480,21 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     @Override
     public Void visitProlog(Prolog prolog, Void argument) {
         Map<Name, Node> nameToNodeMap = buildNameToNodeMap(prolog);
-        DirectedAcyclicGraph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);
+        Graph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);
+        var components = new KosarajuStrongConnectivityInspector<>(dependencyGraph);
+        // Function-only cycles are legal recursion; cycles involving variables cannot be initialized.
+        for (Graph<Node, DefaultEdge> component : components.getStronglyConnectedComponents()) {
+            if (component.edgeSet().isEmpty()) {
+                continue;
+            }
+            for (Node declaration : component.vertexSet()) {
+                if (declaration instanceof VariableDeclaration) {
+                    throw new CycleInVariableDeclarationsException(
+                            "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
+                            declaration.getMetadata());
+                }
+            }
+        }
         List<Node> resolvedList = new ArrayList<>();
         for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
             resolvedList.add(typeDeclaration);
@@ -509,10 +506,24 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                 resolvedList.add(declaration);
             }
         }
-        Iterator<Node> iterator = dependencyGraph.iterator();
+        Map<Node, Integer> declarationOrder = new HashMap<>();
+        for (int i = 0; i < prolog.getDeclarations().size(); i++) {
+            declarationOrder.put(prolog.getDeclarations().get(i), i);
+        }
+        // Keep independent groups in declaration order as well.
+        Iterator<Graph<Node, DefaultEdge>> iterator = new TopologicalOrderIterator<>(
+                components.getCondensation(), Comparator.comparingInt(group -> group.vertexSet().stream()
+                        .mapToInt(declarationOrder::get)
+                        .min()
+                        .orElseThrow()));
         while (iterator.hasNext()) {
-            Node nextDeclaration = iterator.next();
-            resolvedList.add(nextDeclaration);
+            Set<Node> group = iterator.next().vertexSet();
+            // Register the entire recursive group before evaluating any dependent declaration.
+            for (Node declaration : prolog.getDeclarations()) {
+                if (group.contains(declaration) && !(declaration instanceof TypeDeclaration)) {
+                    resolvedList.add(declaration);
+                }
+            }
         }
         prolog.setDeclarations(resolvedList);
         return null;
@@ -532,8 +543,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     public Void visitFunctionDeclaration(FunctionDeclaration expression, Void argument) {
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
-        removeInputVariableDependency(
-                expression, expression.getFunctionIdentifier().getNameWithArity());
         return null;
     }
 
