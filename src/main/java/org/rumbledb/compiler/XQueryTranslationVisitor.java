@@ -531,6 +531,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private static final class PrologPhase1Flags {
+        boolean constructionSet;
         boolean emptyOrderSet;
         boolean boundarySpaceSet;
         boolean copyNamespacesSet;
@@ -540,6 +541,18 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
+        if (setterContext.constructionDecl() != null) {
+            if (flags.constructionSet) {
+                throw new SemanticException(
+                        "The construction mode was already set.",
+                        ErrorCode.MoreThanOneConstructionDeclarationErrorCode,
+                        createMetadataFromContext(setterContext.constructionDecl()));
+            }
+            this.moduleContext.setConstructionPreserve(
+                    setterContext.constructionDecl().type.getType() == XQueryParser.KW_PRESERVE);
+            flags.constructionSet = true;
+            return;
+        }
         if (setterContext.boundarySpaceDecl() != null) {
             if (flags.boundarySpaceSet) {
                 throw new MoreThanOneBoundarySpaceDeclarationException(
