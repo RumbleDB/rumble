@@ -105,8 +105,8 @@ public final class XmlSchemaCatalog {
                     new Name(Name.XS_NS, "xs", "anySimpleType"),
                     new Name(Name.XS_NS, "xs", "anyType"));
         }
-        XSTypeDefinition type = definition.orElseThrow(() ->
-                new SemanticException("Unknown XML Schema type: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata));
+        XSTypeDefinition type = definition.orElseThrow(() -> new SemanticException(
+                "Unknown XML Schema type: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata));
         return this.typeMapper.mapTypeAnnotation(type).typeHierarchy();
     }
 
