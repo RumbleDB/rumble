@@ -35,6 +35,20 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
 public class FunctionInliningVisitor extends CloneVisitor {
 
     private String queryLanguage;
+    private Prolog prolog;
+    private boolean constructionPreserve;
+
+    private boolean hasDifferentConstructionMode(Prolog prolog, FunctionDeclaration target) {
+        for (var module : prolog.getImportedModules()) {
+            if (module.getProlog().getFunctionDeclarations().contains(target)) {
+                return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve;
+            }
+            if (hasDifferentConstructionMode(module.getProlog(), target)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private boolean isVariableReferenced(Node expression, Name name) {
         if (expression instanceof VariableReferenceExpression variableReference) {
@@ -367,8 +381,10 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
+        this.prolog = mainModule.getProlog();
         if (mainModule.getStaticContext() != null) {
             this.queryLanguage = mainModule.getStaticContext().getQueryLanguage();
+            this.constructionPreserve = mainModule.getStaticContext().isConstructionPreserve();
         }
         MainModule result = new MainModule(
                 mainModule.getProlog(),
@@ -384,9 +400,11 @@ public class FunctionInliningVisitor extends CloneVisitor {
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
         FunctionDeclaration targetFunction =
-                getFunctionDeclarationFromProlog((Prolog) argument, expression.getFunctionIdentifier());
+                getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
         if (expression.isPartialApplication()
                 || targetFunction == null
+                // Rebuilding an inlined body in the caller's context would change its constructor semantics.
+                || hasDifferentConstructionMode(this.prolog, targetFunction)
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
