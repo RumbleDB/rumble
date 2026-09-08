@@ -43,6 +43,7 @@ import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SchemaElementNodeItemType;
 import org.rumbledb.types.SequenceType;
 
 public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -132,6 +133,9 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType instanceof SchemaElementNodeItemType schemaType) {
+            return schemaType.getAlternatives().stream().anyMatch(type -> matchesElementTest(type, itemToMatch));
+        }
         if (itemType instanceof ElementNodeItemType elementType) {
             return matchesElementTest(elementType, itemToMatch);
         }
@@ -237,7 +241,7 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
             return false;
         }
         if (item.getSchemaTypeAnnotation() != null) {
-            return item.getSchemaTypeAnnotation().isDerivedFrom(test.getSchemaTypeName());
+            return test.getSchemaTypeAlternatives().stream().anyMatch(item.getSchemaTypeAnnotation()::isDerivedFrom);
         }
         String expected = test.getSchemaTypeName().getLocalName();
         return Name.XS_NS.equals(test.getSchemaTypeName().getNamespace())
@@ -253,7 +257,7 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
             return true;
         }
         if (item.getSchemaTypeAnnotation() != null) {
-            return item.getSchemaTypeAnnotation().isDerivedFrom(test.getSchemaTypeName());
+            return test.getSchemaTypeAlternatives().stream().anyMatch(item.getSchemaTypeAnnotation()::isDerivedFrom);
         }
         String expected = test.getSchemaTypeName().getLocalName();
         return Name.XS_NS.equals(test.getSchemaTypeName().getNamespace())

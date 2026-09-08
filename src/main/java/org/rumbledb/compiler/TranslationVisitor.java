@@ -188,6 +188,7 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
@@ -198,6 +199,7 @@ import org.rumbledb.parser.jsoniq.JsoniqParser.SetterContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
 import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
 import org.rumbledb.runtime.update.primitives.Mode;
+import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
@@ -2430,15 +2432,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private ItemType processKindTestAsItemType(JsoniqParser.KindTestContext kindTestContext) {
+        if (kindTestContext.schemaElementTest() != null) {
+            return getSchemaElementTestAsItemType(kindTestContext.schemaElementTest());
+        }
+        if (kindTestContext.schemaAttributeTest() != null) {
+            return getSchemaAttributeTestAsItemType(kindTestContext.schemaAttributeTest());
+        }
         if (kindTestContext.anyKindTest() != null) {
             return BuiltinTypesCatalogue.nodeItem;
         }
         if (kindTestContext.documentTest() != null) {
             JsoniqParser.DocumentTestContext documentTestContext = kindTestContext.documentTest();
             if (documentTestContext.schemaElementTest() != null) {
-                throw new UnsupportedFeatureException(
-                        "Schema element tests (schema-element(...)) are not supported",
-                        createMetadataFromContext(documentTestContext));
+                return ItemTypeFactory.documentNodeItemType(
+                        getSchemaElementTestAsItemType(documentTestContext.schemaElementTest()));
             }
             if (documentTestContext.elementTest() != null) {
                 ElementNodeItemType elementTestType = getElementTestAsItemType(documentTestContext.elementTest());
@@ -2497,6 +2504,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         throw new UnsupportedFeatureException(
                 "Unsupported kind test in item type: " + kindTestContext.getText(),
                 createMetadataFromContext(kindTestContext));
+    }
+
+    private ElementNodeItemType getSchemaElementTestAsItemType(JsoniqParser.SchemaElementTestContext ctx) {
+        Name name = parseEqName(ctx.elementDeclaration().elementName().eqName(), false, false, false, true);
+        return this.moduleContext.getXmlSchemaCatalog().getSchemaElementTest(name, createMetadataFromContext(ctx));
+    }
+
+    private ItemType getSchemaAttributeTestAsItemType(JsoniqParser.SchemaAttributeTestContext ctx) {
+        Name name = parseEqName(ctx.attributeDeclaration().attributeName().eqName(), false, false, false, false);
+        return this.moduleContext.getXmlSchemaCatalog().getSchemaAttributeTest(name, createMetadataFromContext(ctx));
     }
 
     private ElementNodeItemType getElementTestAsItemType(JsoniqParser.ElementTestContext elementTestContext) {
@@ -3310,7 +3327,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             if (ctx.abbrevForwardStep().AT() != null) {
                 // @ equivalent with 'attribute::'
                 forwardAxis = ForwardAxis.ATTRIBUTE;
-            } else if (nodeTest instanceof AttributeTest) {
+            } else if (nodeTest instanceof AttributeTest
+                    || (nodeTest instanceof SchemaNodeTest schemaTest
+                            && schemaTest.itemType() instanceof AttributeNodeItemType)) {
                 forwardAxis = ForwardAxis.ATTRIBUTE;
             } else {
                 forwardAxis = ForwardAxis.CHILD;
@@ -3368,9 +3387,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             // document-node() matches any document node.
             // document-node(element(...)) matches a document node containing an element matching the ElementTest.
             if (docContext.schemaElementTest() != null) {
-                throw new UnsupportedFeatureException(
-                        "Schema element tests within document-node() are not supported",
-                        createMetadataFromContext((ParserRuleContext) kindTest));
+                return new SchemaNodeTest(ItemTypeFactory.documentNodeItemType(
+                        getSchemaElementTestAsItemType(docContext.schemaElementTest())));
             }
             if (docContext.elementTest() == null) {
                 return new DocumentTest(null);
@@ -3483,16 +3501,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             // AnyKindTest ::= "node" "(" ")"
             // node() matches any node.
             return new AnyKindTest();
-        } else if (kindTest instanceof JsoniqParser.SchemaElementTestContext) {
-            // XQuery 3.1 Section 2.5.5.4 - Schema Element Test (unsupported, requires schema import)
-            throw new UnsupportedFeatureException(
-                    "Schema element tests (schema-element(...)) are not supported",
-                    createMetadataFromContext((ParserRuleContext) kindTest));
-        } else if (kindTest instanceof JsoniqParser.SchemaAttributeTestContext) {
-            // XQuery 3.1 Section 2.5.5.6 - Schema Attribute Test (unsupported, requires schema import)
-            throw new UnsupportedFeatureException(
-                    "Schema attribute tests (schema-attribute(...)) are not supported",
-                    createMetadataFromContext((ParserRuleContext) kindTest));
+        } else if (kindTest instanceof JsoniqParser.SchemaElementTestContext ctx) {
+            return new SchemaNodeTest(getSchemaElementTestAsItemType(ctx));
+        } else if (kindTest instanceof JsoniqParser.SchemaAttributeTestContext ctx) {
+            return new SchemaNodeTest(getSchemaAttributeTestAsItemType(ctx));
         } else {
             throw new UnsupportedFeatureException(
                     "Unsupported kind test: " + kindTest.getText(),
