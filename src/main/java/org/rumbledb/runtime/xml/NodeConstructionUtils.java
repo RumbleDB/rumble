@@ -60,7 +60,7 @@ final class NodeConstructionUtils {
             Item node, RuntimeStaticContext context, boolean detachedAttribute) {
         if ((detachedAttribute || !context.isCopyNamespacesPreserve()) && hasNamespaceSensitiveValue(node)) {
             throw new RumbleException(
-                    "Cannot preserve a QName typed value without its namespace bindings.",
+                    "Cannot preserve a QName or NOTATION typed value without its namespace bindings.",
                     ErrorCode.NamespaceSensitiveConstructionErrorCode,
                     context.getMetadata());
         }
@@ -79,7 +79,7 @@ final class NodeConstructionUtils {
             return false;
         }
         try {
-            return node.typedValue().stream().anyMatch(Item::isQName);
+            return node.typedValue().stream().anyMatch(value -> value.isQName() || value.isNotation());
         } catch (TypedValueUnavailableException e) {
             // Element-only complex content has no typed value; its attributes and descendants are checked separately.
             return false;

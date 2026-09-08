@@ -309,6 +309,12 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
             Boolean r = right.getBooleanValue();
             return processBoolean(l, r);
         }
+        if (left.isNotation() && right.isNotation()) {
+            return switch (comparisonOperator) {
+                case VC_EQ, GC_EQ, VC_NE, GC_NE -> left.getNotationValue().equals(right.getNotationValue()) ? 0 : 1;
+                default -> Long.MIN_VALUE;
+            };
+        }
         if (left.isQName() && right.isQName()) {
             switch (comparisonOperator) {
                 case VC_EQ:

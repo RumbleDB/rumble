@@ -628,6 +628,12 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
             }
             return finalizeAtomicBranchValue(convertedValue, targetType, BuiltinTypesCatalogue.gYearMonthItem);
         }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.NOTATIONItem) && item.isNotation()) {
+            return finalizeAtomicBranchValue(
+                    ItemFactory.getInstance().createNotationItem(item.getNotationValue()),
+                    targetType,
+                    BuiltinTypesCatalogue.NOTATIONItem);
+        }
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.QNameItem)) {
             if (item.isQName()) {
                 return finalizeAtomicBranchValue(

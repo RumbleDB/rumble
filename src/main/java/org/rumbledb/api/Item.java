@@ -384,6 +384,16 @@ public interface Item extends Serializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /** Returns whether this item is an xs:NOTATION value (including schema-derived types). */
+    default boolean isNotation() {
+        return false;
+    }
+
+    /** Returns the expanded name of an xs:NOTATION value; its prefix does not affect equality. */
+    default Name getNotationValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
     // endregion qnames
 
     /**

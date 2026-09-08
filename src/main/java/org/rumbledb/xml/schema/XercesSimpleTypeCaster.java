@@ -286,10 +286,10 @@ final class XercesSimpleTypeCaster {
     }
 
     private static SimpleTypeValidationContext validationContext(Item value, NamespaceResolver namespaceResolver) {
-        if (!value.isQName()) {
+        if (!value.isQName() && !value.isNotation()) {
             return new SimpleTypeValidationContext(namespaceResolver);
         }
-        Name name = value.getQNameValue();
+        Name name = value.isQName() ? value.getQNameValue() : value.getNotationValue();
         String qNamePrefix = name.getPrefix() == null ? "" : name.getPrefix();
         return new SimpleTypeValidationContext(
                 prefix -> qNamePrefix.equals(prefix) ? name.getNamespace() : namespaceResolver.resolvePrefix(prefix));
