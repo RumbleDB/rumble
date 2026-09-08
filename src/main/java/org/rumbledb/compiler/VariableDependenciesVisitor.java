@@ -487,8 +487,8 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             if (component.edgeSet().isEmpty()) {
                 continue;
             }
-            for (Node declaration : component.vertexSet()) {
-                if (declaration instanceof VariableDeclaration) {
+            for (Node declaration : prolog.getDeclarations()) {
+                if (declaration instanceof VariableDeclaration && component.containsVertex(declaration)) {
                     throw new CycleInVariableDeclarationsException(
                             "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
                             declaration.getMetadata());
