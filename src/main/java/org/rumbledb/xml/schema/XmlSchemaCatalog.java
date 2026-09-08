@@ -82,6 +82,14 @@ public final class XmlSchemaCatalog {
     /** Returns the named schema type followed by its base-type chain. */
     public List<Name> getTypeHierarchy(@NonNull Name name, @NonNull ExceptionMetadata metadata) {
         Optional<XSTypeDefinition> definition = getTypeDefinition(name);
+        // XQuery adds atomic types, such as untypedAtomic and the duration subtypes,
+        // that Xerces's XSD 1.0 catalog does not contain.
+        if (definition.isEmpty() && Name.XS_NS.equals(name.getNamespace()) && BuiltinTypesCatalogue.typeExists(name)) {
+            ItemType itemType = BuiltinTypesCatalogue.getItemTypeByName(name);
+            if (itemType.isAtomicItemType()) {
+                return XmlSchemaTypeAnnotation.forAtomicItemType(itemType).typeHierarchy();
+            }
+        }
         if (definition.isEmpty() && Name.XS_NS.equals(name.getNamespace()) && "untyped".equals(name.getLocalName())) {
             return List.of(name, new Name(Name.XS_NS, "xs", "anyType"));
         }
@@ -98,7 +106,7 @@ public final class XmlSchemaCatalog {
                     new Name(Name.XS_NS, "xs", "anyType"));
         }
         XSTypeDefinition type = definition.orElseThrow(() ->
-                new SemanticException("Unknown XML Schema type: " + name, ErrorCode.UndefinedTypeErrorCode, metadata));
+                new SemanticException("Unknown XML Schema type: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata));
         return this.typeMapper.mapTypeAnnotation(type).typeHierarchy();
     }
 

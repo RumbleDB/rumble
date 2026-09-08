@@ -1,2 +1,2 @@
-(:JIQS: ShouldNotCompile; ErrorCode="XPST0051" :)
+(:JIQS: ShouldNotCompile; ErrorCode="XPST0008" :)
 <plain/> instance of element(*, xs:doesNotExist)
