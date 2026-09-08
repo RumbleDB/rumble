@@ -42,14 +42,25 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
     @Override
     public Node visitMainModule(MainModule module, Node argument) {
+        StaticContext previousContext = this.moduleContext;
         this.moduleContext = module.getStaticContext();
-        return super.visitMainModule(module, argument);
+        try {
+            return super.visitMainModule(module, argument);
+        } finally {
+            this.moduleContext = previousContext;
+        }
     }
 
     @Override
     public Node visitLibraryModule(LibraryModule module, Node argument) {
+        StaticContext previousContext = this.moduleContext;
         this.moduleContext = module.getStaticContext();
-        return super.visitLibraryModule(module, argument);
+        try {
+            return super.visitLibraryModule(module, argument);
+        } finally {
+            // Resume resolving constructors in the importing module after visiting this library.
+            this.moduleContext = previousContext;
+        }
     }
 
     private InlineFunctionExpression rewriteBuiltinPartialApplication(
