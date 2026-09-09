@@ -28,6 +28,8 @@ import org.rumbledb.compiler.analysis.StaticContextVisitor;
 import org.rumbledb.compiler.analysis.VariableDependenciesVisitor;
 import org.rumbledb.compiler.backend.ExecutionModeInference;
 import org.rumbledb.compiler.frontend.ModuleParser;
+import org.rumbledb.compiler.frontend.ModuleSource;
+import org.rumbledb.compiler.frontend.ModuleSourceReader;
 import org.rumbledb.compiler.optimization.FunctionDependenciesVisitor;
 import org.rumbledb.compiler.optimization.FunctionInliningVisitor;
 import org.rumbledb.compiler.optimization.ModulePruningVisitor;
@@ -39,6 +41,7 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.context.UserDefinedFunctionExecutionModes;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -55,7 +58,10 @@ public final class CompilerPipeline {
             URI location, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings)
             throws IOException {
         return compile(
-                ModuleParser.parseMainModuleFromLocation(location, compilationConfiguration, externalBindings),
+                ModuleParser.parseMainModule(
+                        ModuleSourceReader.read(location, compilationConfiguration, ExceptionMetadata.EMPTY_METADATA),
+                        compilationConfiguration,
+                        externalBindings),
                 compilationConfiguration.runtimeConfiguration(),
                 externalBindings);
     }
@@ -63,7 +69,10 @@ public final class CompilerPipeline {
     public static MainModule compileMainModuleFromQuery(
             String query, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
         return compile(
-                ModuleParser.parseMainModuleFromQuery(query, compilationConfiguration, externalBindings),
+                ModuleParser.parseMainModule(
+                        ModuleSourceReader.fromQuery(query, compilationConfiguration),
+                        compilationConfiguration,
+                        externalBindings),
                 compilationConfiguration.runtimeConfiguration(),
                 externalBindings);
     }
@@ -74,7 +83,8 @@ public final class CompilerPipeline {
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings) {
         return compile(
-                ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings),
+                ModuleParser.parseMainModule(
+                        new ModuleSource(query, uri, uri), compilationConfiguration, externalBindings),
                 compilationConfiguration.runtimeConfiguration(),
                 externalBindings);
     }
@@ -132,8 +142,9 @@ public final class CompilerPipeline {
         executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
         importingModuleContext.setUserDefinedFunctionsExecutionModes(executionModes);
 
-        LibraryModule libraryModule =
-                ModuleParser.parseLibraryModule(query, uri, importingModuleContext, compilationConfiguration);
+        LibraryModule libraryModule = ModuleParser.parseLibraryModule(
+                new ModuleSource(query, uri, uri), importingModuleContext, compilationConfiguration);
+        resolveDependencies(libraryModule, configuration);
         populateStaticContext(libraryModule, configuration);
         inferTypes(libraryModule, configuration);
         return libraryModule;

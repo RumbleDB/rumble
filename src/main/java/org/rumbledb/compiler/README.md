@@ -1,8 +1,9 @@
 # Compiler organization
 
-`CompilerPipeline` is the compilation entry point. `frontend.ModuleParser` loads
-and translates source into an AST; its main-module result records the selected
-language so compilation uses the corresponding pass sequence. `backend.RuntimePlanBuilder`
+`CompilerPipeline` is the compilation entry point. `frontend.ModuleSourceReader`
+loads source through the configured resource resolver. `frontend.ModuleParser`
+translates source into an AST; its main-module result records the selected language
+so the shared pipeline can apply the appropriate conditional checks. `backend.RuntimePlanBuilder`
 creates executable plans and dynamic contexts. `VisitorHelpers` retains its public
 signatures as a compatibility facade.
 
@@ -48,10 +49,18 @@ XQuery main modules:
 10. Rewrite comparisons.
 11. Infer execution modes.
 
-Imported library modules receive variable dependency resolution during loading.
-Static contexts and types are processed later through the importing main module.
-`compileLibraryModuleFromQuery`, used for standalone library analysis, additionally
-populates static contexts and infers types without running the main-module pipeline.
+`ModuleSource` carries source text, source URI, and static base URI separately.
+Diagnostics and extension-based language selection use the source URI. Relative
+references use the static base URI, which may be overridden by configuration or a
+base-URI declaration without changing the diagnostic source identity. In-memory
+queries without an explicit source URI initially use the resolved base URI for both.
+
+`ModuleImportLoader` loads and parses imported libraries, resolves their variable
+dependencies, and validates their namespaces. Static contexts and types are processed
+later through the importing main module. `compileLibraryModuleFromQuery`, used for
+standalone library analysis, resolves dependencies, populates static contexts, and
+infers types without running the main-module pipeline. `ModuleParser` itself does
+not run dependency analysis.
 
 Execution-mode inference retains the local-only path and the initial, intermediate,
 and final passes for parallel execution, including the existing fallback for unresolved

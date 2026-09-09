@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
+import org.rumbledb.compiler.analysis.VariableDependenciesVisitor;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
@@ -52,8 +53,11 @@ final class ModuleImportLoader {
                 continue;
             }
             try {
-                LibraryModule module = ModuleParser.parseLibraryModuleFromLocation(
-                        location, importingModuleContext, compilationConfiguration, metadata);
+                ModuleSource source = ModuleSourceReader.read(location, compilationConfiguration, metadata);
+                LibraryModule module =
+                        ModuleParser.parseLibraryModule(source, importingModuleContext, compilationConfiguration);
+                // Preserve dependency validation before namespace validation and before returning the import.
+                new VariableDependenciesVisitor(compilationConfiguration.runtimeConfiguration()).visit(module, null);
 
                 if (!normalizedNamespace.equals(module.getNamespace())) {
                     throw new ModuleNotFoundException(

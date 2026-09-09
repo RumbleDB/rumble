@@ -216,6 +216,7 @@ public class JsoniqTranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private final boolean isMainModule;
     private String libraryModuleNamespace;
     private final String code;
+    private final String sourceUri;
     private final ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream jsoniqTokenStream;
 
@@ -224,7 +225,7 @@ public class JsoniqTranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             boolean isMainModule,
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings,
-            String code,
+            ModuleSource source,
             CommonTokenStream jsoniqTokenStream) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
@@ -232,7 +233,8 @@ public class JsoniqTranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         this.configuration = compilationConfiguration.runtimeConfiguration();
         this.externalBindings = externalBindings;
         this.isMainModule = isMainModule;
-        this.code = code;
+        this.code = source.text();
+        this.sourceUri = source.sourceUri().toString();
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.jsoniqTokenStream = jsoniqTokenStream;
 
@@ -3571,8 +3573,7 @@ public class JsoniqTranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public ExceptionMetadata generateMetadata(Token start, Token end) {
-        return ExceptionMetadata.fromTokens(
-                this.moduleContext.getStaticBaseURI().toString(), start, end, this.code);
+        return ExceptionMetadata.fromTokens(this.sourceUri, start, end, this.code);
     }
 
     private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {

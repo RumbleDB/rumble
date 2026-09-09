@@ -15,19 +15,15 @@
  */
 package org.rumbledb.compiler.frontend;
 
-import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.apache.commons.io.IOUtils;
 
 import org.rumbledb.bindings.ExternalBindings;
-import org.rumbledb.compiler.analysis.VariableDependenciesVisitor;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
@@ -40,47 +36,21 @@ import org.rumbledb.parser.jsoniq.JsoniqLexer;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryLexer;
 import org.rumbledb.parser.xquery.XQueryParser;
-import org.rumbledb.resources.ResolvedResource;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import static org.rumbledb.compiler.CompilerDiagnostics.debugPrintHeader;
 
-/** Loads and translates modules. Imported libraries also receive dependency resolution, as before. */
+/** Selects the language and translates module source into an AST. Analysis is performed by callers. */
 public final class ModuleParser {
     private ModuleParser() {}
 
-    /** The AST and the language selected from the source, URI, and configuration. */
+    /** Supported source languages. */
     public enum Language {
         JSONIQ,
         XQUERY
     }
 
+    /** The AST and the language selected from the source, URI, and configuration. */
     public record ParsedMainModule(MainModule module, Language language) {}
-
-    private record ModuleSource(String query, URI systemId) {}
-
-    private static URI resolveStaticBaseUri(String url) {
-        URI resolved = FileSystemUtil.resolveURIAgainstWorkingDirectory(url, ExceptionMetadata.EMPTY_METADATA);
-        if (url != null && url.endsWith("/") && !resolved.toString().endsWith("/")) {
-            resolved = URI.create(resolved + "/");
-        }
-        return resolved;
-    }
-
-    private static ModuleSource readModuleSource(
-            URI location, CompilationConfiguration compilationConfiguration, ExceptionMetadata metadata)
-            throws IOException {
-        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        try (ResolvedResource resource =
-                compilationConfiguration.resourceResolver().resolve(location, configuration, metadata)) {
-            String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8.name());
-            URI systemId = resource.getSystemId();
-            if (configuration.semantics().staticBaseUri() != null) {
-                systemId = resolveStaticBaseUri(configuration.semantics().staticBaseUri());
-            }
-            return new ModuleSource(query, systemId);
-        }
-    }
 
     private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
         if (query.contains("xquery version")) {
@@ -99,65 +69,31 @@ public final class ModuleParser {
         return configuration.semantics().queryLanguage().startsWith("xquery");
     }
 
-    public static ParsedMainModule parseMainModuleFromLocation(
-            URI location, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings)
-            throws IOException {
-        ModuleSource source = readModuleSource(location, compilationConfiguration, ExceptionMetadata.EMPTY_METADATA);
-        return parseMainModule(source.query(), source.systemId(), compilationConfiguration, externalBindings);
-    }
-
-    static LibraryModule parseLibraryModuleFromLocation(
-            URI location,
-            StaticContext importingModuleContext,
-            CompilationConfiguration compilationConfiguration,
-            ExceptionMetadata metadata)
-            throws IOException {
-        ModuleSource source = readModuleSource(location, compilationConfiguration, metadata);
-        return parseLibraryModule(source.query(), source.systemId(), importingModuleContext, compilationConfiguration);
-    }
-
-    public static ParsedMainModule parseMainModuleFromQuery(
-            String query, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
-        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        String url = ".";
-        if (configuration.semantics().staticBaseUri() != null) {
-            url = configuration.semantics().staticBaseUri();
-        }
-        URI location = resolveStaticBaseUri(url);
-        return parseMainModule(query, location, compilationConfiguration, externalBindings);
-    }
-
     public static ParsedMainModule parseMainModule(
-            String query,
-            URI uri,
-            CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings) {
+            ModuleSource source, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        if (shouldParseAsXQuery(query, uri, configuration)) {
+        if (shouldParseAsXQuery(source.text(), source.sourceUri(), configuration)) {
             return new ParsedMainModule(
-                    parseXQueryMainModule(query, uri, compilationConfiguration, externalBindings), Language.XQUERY);
+                    parseXQueryMainModule(source, compilationConfiguration, externalBindings), Language.XQUERY);
         }
         return new ParsedMainModule(
-                parseJSONiqMainModule(query, uri, compilationConfiguration, externalBindings), Language.JSONIQ);
+                parseJSONiqMainModule(source, compilationConfiguration, externalBindings), Language.JSONIQ);
     }
 
     private static MainModule parseJSONiqMainModule(
-            String query,
-            URI uri,
-            CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings) {
+            ModuleSource source, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        CharStream stream = CharStreams.fromString(query);
+        CharStream stream = CharStreams.fromString(source.text());
         JsoniqLexer lexer = new JsoniqLexer(stream);
         CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
         JsoniqParser parser = new JsoniqParser(jsoniqTokens);
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri, configuration);
+        StaticContext moduleContext = new StaticContext(source.staticBaseUri(), configuration);
         UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
         executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
         moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
         JsoniqTranslationVisitor visitor = new JsoniqTranslationVisitor(
-                moduleContext, true, compilationConfiguration, externalBindings, query, jsoniqTokens);
+                moduleContext, true, compilationConfiguration, externalBindings, source, jsoniqTokens);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
@@ -172,29 +108,30 @@ public final class ModuleParser {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                    ExceptionMetadata.fromPoint(
+                            source.sourceUri().toString(),
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine(),
+                            source.text()));
             e.initCause(ex);
             throw e;
         }
     }
 
     private static MainModule parseXQueryMainModule(
-            String query,
-            URI uri,
-            CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings) {
+            ModuleSource source, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        CharStream stream = CharStreams.fromString(query);
+        CharStream stream = CharStreams.fromString(source.text());
         XQueryLexer lexer = new XQueryLexer(stream);
         CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
         XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri, configuration);
+        StaticContext moduleContext = new StaticContext(source.staticBaseUri(), configuration);
         UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
         executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
         moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
-                moduleContext, true, compilationConfiguration, externalBindings, query, xQueryTokens);
+                moduleContext, true, compilationConfiguration, externalBindings, source, xQueryTokens);
         try {
             // TODO Handle module extras
             XQueryParser.ModuleContext main = parser.moduleAndThisIsIt().module();
@@ -206,83 +143,88 @@ public final class ModuleParser {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                    ExceptionMetadata.fromPoint(
+                            source.sourceUri().toString(),
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine(),
+                            source.text()));
             e.initCause(ex);
             throw e;
         }
     }
 
     public static LibraryModule parseLibraryModule(
-            String query,
-            URI uri,
+            ModuleSource source,
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        if (shouldParseAsXQuery(query, uri, configuration)) {
-            return parseXQueryLibraryModule(query, uri, importingModuleContext, compilationConfiguration);
+        if (shouldParseAsXQuery(source.text(), source.sourceUri(), configuration)) {
+            return parseXQueryLibraryModule(source, importingModuleContext, compilationConfiguration);
         }
-        return parseJSONiqLibraryModule(query, uri, importingModuleContext, compilationConfiguration);
+        return parseJSONiqLibraryModule(source, importingModuleContext, compilationConfiguration);
     }
 
     private static LibraryModule parseJSONiqLibraryModule(
-            String query,
-            URI uri,
+            ModuleSource source,
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        CharStream stream = CharStreams.fromString(query);
+        CharStream stream = CharStreams.fromString(source.text());
         JsoniqLexer lexer = new JsoniqLexer(stream);
         CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
         JsoniqParser parser = new JsoniqParser(jsoniqTokens);
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri, configuration);
+        StaticContext moduleContext = new StaticContext(source.staticBaseUri(), configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
                 importingModuleContext.getUserDefinedFunctionsExecutionModes());
         JsoniqTranslationVisitor visitor = new JsoniqTranslationVisitor(
-                moduleContext, false, compilationConfiguration, ExternalBindings.empty(), query, jsoniqTokens);
+                moduleContext, false, compilationConfiguration, ExternalBindings.empty(), source, jsoniqTokens);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
-            new VariableDependenciesVisitor(configuration).visit(libraryModule, null);
-            // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                    ExceptionMetadata.fromPoint(
+                            source.sourceUri().toString(),
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine(),
+                            source.text()));
             e.initCause(ex);
             throw e;
         }
     }
 
     private static LibraryModule parseXQueryLibraryModule(
-            String query,
-            URI uri,
+            ModuleSource source,
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        CharStream stream = CharStreams.fromString(query);
+        CharStream stream = CharStreams.fromString(source.text());
         XQueryLexer lexer = new XQueryLexer(stream);
         CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
         XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri, configuration);
+        StaticContext moduleContext = new StaticContext(source.staticBaseUri(), configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
                 importingModuleContext.getUserDefinedFunctionsExecutionModes());
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
-                moduleContext, false, compilationConfiguration, ExternalBindings.empty(), query, xQueryTokens);
+                moduleContext, false, compilationConfiguration, ExternalBindings.empty(), source, xQueryTokens);
         try {
             // TODO Handle module extras
             XQueryParser.ModuleContext main = parser.module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
-            new VariableDependenciesVisitor(configuration).visit(libraryModule, null);
-            // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    ExceptionMetadata.fromPoint(uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                    ExceptionMetadata.fromPoint(
+                            source.sourceUri().toString(),
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine(),
+                            source.text()));
             e.initCause(ex);
             throw e;
         }
