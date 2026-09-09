@@ -30,6 +30,7 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.InScopeSchemaTypes;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.resources.ResourceResolver;
@@ -55,10 +56,10 @@ public class XmlSchemaCatalogLoaderTest {
                 directory.resolve("query.xq").toUri(),
                 new ResourceResolver(Map.of(logicalSchemaUri, schema.toUri())));
 
-        Assertions.assertTrue(module.getStaticContext()
-                .getXmlSchemaCatalog()
-                .getTypeDefinition(new Name(NAMESPACE, "t", "Code"))
-                .isPresent());
+        InScopeSchemaTypes types = module.getStaticContext().getInScopeSchemaTypes();
+        Name code = new Name(NAMESPACE, "t", "Code");
+        Assertions.assertTrue(types.getXmlSchemaCatalog().getTypeDefinition(code).isPresent());
+        Assertions.assertNotNull(types.getInScopeSchemaType(code));
     }
 
     private static MainModule compile(String query, URI queryUri, ResourceResolver resolver) {
