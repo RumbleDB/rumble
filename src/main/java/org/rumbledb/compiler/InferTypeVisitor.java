@@ -1045,7 +1045,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private XmlSchemaCatalog importedSimpleTypeCatalog(SequenceType sequenceType, StaticContext staticContext) {
         ItemType itemType = sequenceType.getItemType();
-        XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
         return itemType.hasName() && schemaCatalog != null && schemaCatalog.isImportedSimpleType(itemType.getName())
                 ? schemaCatalog
                 : null;

@@ -1512,7 +1512,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitCastableExpression(CastableExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
-        XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         Name targetTypeName = expression.getSequenceType().getItemType().hasName()
                 ? expression.getSequenceType().getItemType().getName()
                 : null;
@@ -1535,7 +1536,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitCastExpression(CastExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
-        XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         Name targetTypeName = expression.getSequenceType().getItemType().hasName()
                 ? expression.getSequenceType().getItemType().getName()
                 : null;

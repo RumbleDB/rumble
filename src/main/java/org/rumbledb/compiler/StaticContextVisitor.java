@@ -498,7 +498,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // An XSD list is legal as a SingleType cast target, but it is deliberately not an XDM ItemType
         // and therefore cannot be resolved through InScopeSchemaTypes.
         ItemType itemType = sequenceType.getItemType();
-        XmlSchemaCatalog schemaCatalog = staticContext.getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
         if (itemType.hasName() && schemaCatalog != null && !BuiltinTypesCatalogue.typeExists(itemType.getName())) {
             if (schemaCatalog.isImportedSimpleType(itemType.getName())) {
                 return;
