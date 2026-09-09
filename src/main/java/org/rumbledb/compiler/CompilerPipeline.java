@@ -52,30 +52,6 @@ import static org.rumbledb.compiler.CompilerDiagnostics.debugPrintTree;
 public final class CompilerPipeline {
     private CompilerPipeline() {}
 
-    public static MainModule compileMainModuleFromLocation(URI location, RumbleConfiguration configuration)
-            throws IOException {
-        return compile(
-                ModuleParser.parseMainModuleFromLocation(location, configuration),
-                configuration,
-                ExternalBindings.empty());
-    }
-
-    public static MainModule compileMainModuleFromLocation(
-            URI location, RumbleConfiguration configuration, ExternalBindings externalBindings) throws IOException {
-        return compile(
-                ModuleParser.parseMainModuleFromLocation(location, configuration, externalBindings),
-                configuration,
-                externalBindings);
-    }
-
-    public static MainModule compileMainModuleFromLocation(
-            URI location, CompilationConfiguration compilationConfiguration) throws IOException {
-        return compile(
-                ModuleParser.parseMainModuleFromLocation(location, compilationConfiguration),
-                compilationConfiguration.runtimeConfiguration(),
-                ExternalBindings.empty());
-    }
-
     public static MainModule compileMainModuleFromLocation(
             URI location, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings)
             throws IOException {
@@ -86,34 +62,10 @@ public final class CompilerPipeline {
     }
 
     public static MainModule compileMainModuleFromQuery(
-            String query, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        return compile(
-                ModuleParser.parseMainModuleFromQuery(query, configuration, externalBindings),
-                configuration,
-                externalBindings);
-    }
-
-    public static MainModule compileMainModuleFromQuery(
-            String query, CompilationConfiguration compilationConfiguration) {
-        return compile(
-                ModuleParser.parseMainModuleFromQuery(query, compilationConfiguration),
-                compilationConfiguration.runtimeConfiguration(),
-                ExternalBindings.empty());
-    }
-
-    public static MainModule compileMainModuleFromQuery(
             String query, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
         return compile(
                 ModuleParser.parseMainModuleFromQuery(query, compilationConfiguration, externalBindings),
                 compilationConfiguration.runtimeConfiguration(),
-                externalBindings);
-    }
-
-    public static MainModule compileMainModule(
-            String query, URI uri, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        return compile(
-                ModuleParser.parseMainModule(query, uri, configuration, externalBindings),
-                configuration,
                 externalBindings);
     }
 
@@ -128,7 +80,7 @@ public final class CompilerPipeline {
                 externalBindings);
     }
 
-    public static MainModule compile(
+    private static MainModule compile(
             ModuleParser.ParsedMainModule parsed,
             RumbleConfiguration configuration,
             ExternalBindings externalBindings) {
@@ -138,14 +90,15 @@ public final class CompilerPipeline {
     }
 
     public static LibraryModule compileLibraryModuleFromQuery(
-            String query, URI uri, RumbleConfiguration configuration) {
+            String query, URI uri, CompilationConfiguration compilationConfiguration) {
+        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         StaticContext importingModuleContext = new StaticContext(uri, configuration);
         UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
         executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
         importingModuleContext.setUserDefinedFunctionsExecutionModes(executionModes);
 
-        LibraryModule libraryModule = ModuleParser.parseLibraryModule(
-                query, uri, importingModuleContext, new CompilationConfiguration(configuration));
+        LibraryModule libraryModule =
+                ModuleParser.parseLibraryModule(query, uri, importingModuleContext, compilationConfiguration);
         populateStaticContext(libraryModule, configuration);
         inferTypes(libraryModule, configuration);
         return libraryModule;

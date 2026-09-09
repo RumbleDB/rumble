@@ -42,17 +42,20 @@ public class VisitorHelpers {
 
     public static MainModule parseMainModuleFromLocation(URI location, RumbleConfiguration configuration)
             throws IOException {
-        return CompilerPipeline.compileMainModuleFromLocation(location, configuration);
+        return CompilerPipeline.compileMainModuleFromLocation(
+                location, new CompilationConfiguration(configuration), ExternalBindings.empty());
     }
 
     public static MainModule parseMainModuleFromLocation(
             URI location, RumbleConfiguration configuration, ExternalBindings externalBindings) throws IOException {
-        return CompilerPipeline.compileMainModuleFromLocation(location, configuration, externalBindings);
+        return CompilerPipeline.compileMainModuleFromLocation(
+                location, new CompilationConfiguration(configuration), externalBindings);
     }
 
     public static MainModule parseMainModuleFromLocation(
             URI location, CompilationConfiguration compilationConfiguration) throws IOException {
-        return CompilerPipeline.compileMainModuleFromLocation(location, compilationConfiguration);
+        return CompilerPipeline.compileMainModuleFromLocation(
+                location, compilationConfiguration, ExternalBindings.empty());
     }
 
     public static MainModule parseMainModuleFromLocation(
@@ -63,11 +66,12 @@ public class VisitorHelpers {
 
     public static MainModule parseMainModuleFromQuery(
             String query, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        return CompilerPipeline.compileMainModuleFromQuery(query, configuration, externalBindings);
+        return CompilerPipeline.compileMainModuleFromQuery(
+                query, new CompilationConfiguration(configuration), externalBindings);
     }
 
     public static MainModule parseMainModuleFromQuery(String query, CompilationConfiguration compilationConfiguration) {
-        return CompilerPipeline.compileMainModuleFromQuery(query, compilationConfiguration);
+        return CompilerPipeline.compileMainModuleFromQuery(query, compilationConfiguration, ExternalBindings.empty());
     }
 
     public static MainModule parseMainModuleFromQuery(
@@ -77,7 +81,8 @@ public class VisitorHelpers {
 
     public static MainModule parseMainModule(
             String query, URI uri, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        return CompilerPipeline.compileMainModule(query, uri, configuration, externalBindings);
+        return CompilerPipeline.compileMainModule(
+                query, uri, new CompilationConfiguration(configuration), externalBindings);
     }
 
     public static MainModule parseMainModule(
@@ -90,7 +95,7 @@ public class VisitorHelpers {
 
     public static LibraryModule parseLibraryModuleFromQueryWithStaticContextAndInference(
             String query, URI uri, RumbleConfiguration configuration) {
-        return CompilerPipeline.compileLibraryModuleFromQuery(query, uri, configuration);
+        return CompilerPipeline.compileLibraryModuleFromQuery(query, uri, new CompilationConfiguration(configuration));
     }
 
     public static DynamicContext createDynamicContext(Node node, RumbleConfiguration configuration) {

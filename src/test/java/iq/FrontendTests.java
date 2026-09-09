@@ -31,6 +31,7 @@ import iq.base.TestFileDiscovery;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.CompilerPipeline;
 import org.rumbledb.compiler.backend.RuntimePlanBuilder;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -98,8 +99,8 @@ public class FrontendTests {
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
                 URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                         testFile.getAbsolutePath(), ExceptionMetadata.EMPTY_METADATA);
-                MainModule mainModule =
-                        CompilerPipeline.compileMainModuleFromLocation(uri, configuration, ExternalBindings.empty());
+                MainModule mainModule = CompilerPipeline.compileMainModuleFromLocation(
+                        uri, new CompilationConfiguration(configuration), ExternalBindings.empty());
 
                 testVariableTypes(mainModule);
             }
@@ -114,7 +115,7 @@ public class FrontendTests {
                 .build();
         MainModule mainModule = CompilerPipeline.compileMainModuleFromQuery(
                 "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/parent::node()",
-                initialConfiguration,
+                new CompilationConfiguration(initialConfiguration),
                 ExternalBindings.empty());
 
         RumbleConfiguration effectiveConfiguration =
@@ -132,7 +133,7 @@ public class FrontendTests {
                 .build();
         MainModule mainModule = CompilerPipeline.compileMainModuleFromQuery(
                 "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/child::title",
-                initialConfiguration,
+                new CompilationConfiguration(initialConfiguration),
                 ExternalBindings.empty());
 
         RumbleConfiguration effectiveConfiguration =
@@ -149,7 +150,7 @@ public class FrontendTests {
                 .build();
         MainModule mainModule = CompilerPipeline.compileMainModuleFromQuery(
                 "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/following::node()",
-                initialConfiguration,
+                new CompilationConfiguration(initialConfiguration),
                 ExternalBindings.empty());
 
         RumbleConfiguration effectiveConfiguration =
@@ -165,7 +166,9 @@ public class FrontendTests {
                 .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
                 .build();
         MainModule mainModule = CompilerPipeline.compileMainModuleFromQuery(
-                "jsoniq version \"1.0\"; (1, serialize(1))", initialConfiguration, ExternalBindings.empty());
+                "jsoniq version \"1.0\"; (1, serialize(1))",
+                new CompilationConfiguration(initialConfiguration),
+                ExternalBindings.empty());
 
         RumbleConfiguration effectiveConfiguration =
                 RuntimePlanBuilder.getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
