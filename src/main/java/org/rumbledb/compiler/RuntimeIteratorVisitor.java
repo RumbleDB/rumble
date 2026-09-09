@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.compiler;
 
 import java.util.ArrayList;
@@ -1488,7 +1483,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitValidateExpression(ValidateExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan operand = this.visit(expression.getMainExpression(), argument);
-        XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         return new XQueryValidateIterator(
                 operand,
                 expression.getValidationMode(),
@@ -1512,7 +1508,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitCastableExpression(CastableExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
-        XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         Name targetTypeName = expression.getSequenceType().getItemType().hasName()
                 ? expression.getSequenceType().getItemType().getName()
                 : null;
@@ -1535,7 +1532,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitCastExpression(CastExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
-        XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         Name targetTypeName = expression.getSequenceType().getItemType().hasName()
                 ? expression.getSequenceType().getItemType().getName()
                 : null;

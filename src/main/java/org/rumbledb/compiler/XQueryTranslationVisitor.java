@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.compiler;
 
 import java.math.BigDecimal;
@@ -468,14 +463,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             prolog.addDeclaration(optionDeclaration);
         }
         XmlSchemaCatalogLoader.load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
-                .ifPresent(catalog -> {
-                    this.moduleContext.setXmlSchemaCatalog(catalog);
-
-                    /// Make the imported XML Schema atomic types visible to the XQuery compiler
-                    for (ItemType itemType : catalog.getNamedGeneralizedAtomicItemTypes()) {
-                        this.moduleContext.getInScopeSchemaTypes().addInScopeSchemaType(itemType, prolog.getMetadata());
-                    }
-                });
+                .ifPresent(catalog ->
+                        this.moduleContext.getInScopeSchemaTypes().importSchema(catalog, prolog.getMetadata()));
         return prolog;
     }
 
