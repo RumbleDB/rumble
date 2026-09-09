@@ -514,11 +514,10 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         while (iterator.hasNext()) {
             Set<Node> group = iterator.next().vertexSet();
             // Register the entire recursive group before evaluating any dependent declaration.
-            for (Node declaration : prolog.getDeclarations()) {
-                if (group.contains(declaration) && !(declaration instanceof TypeDeclaration)) {
-                    resolvedList.add(declaration);
-                }
-            }
+            group.stream()
+                    .filter(declaration -> !(declaration instanceof TypeDeclaration))
+                    .sorted(Comparator.comparingInt(declarationOrder::get))
+                    .forEach(resolvedList::add);
         }
         prolog.setDeclarations(resolvedList);
         return null;
