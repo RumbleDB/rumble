@@ -94,22 +94,6 @@ public final class ModuleParser {
         return configuration.semantics().queryLanguage().startsWith("xquery");
     }
 
-    public static ParsedMainModule parseMainModuleFromLocation(URI location, RumbleConfiguration configuration)
-            throws IOException {
-        return parseMainModuleFromLocation(
-                location, new CompilationConfiguration(configuration), ExternalBindings.empty());
-    }
-
-    public static ParsedMainModule parseMainModuleFromLocation(
-            URI location, RumbleConfiguration configuration, ExternalBindings externalBindings) throws IOException {
-        return parseMainModuleFromLocation(location, new CompilationConfiguration(configuration), externalBindings);
-    }
-
-    public static ParsedMainModule parseMainModuleFromLocation(
-            URI location, CompilationConfiguration compilationConfiguration) throws IOException {
-        return parseMainModuleFromLocation(location, compilationConfiguration, ExternalBindings.empty());
-    }
-
     public static ParsedMainModule parseMainModuleFromLocation(
             URI location, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings)
             throws IOException {
@@ -128,16 +112,6 @@ public final class ModuleParser {
     }
 
     public static ParsedMainModule parseMainModuleFromQuery(
-            String query, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        return parseMainModuleFromQuery(query, new CompilationConfiguration(configuration), externalBindings);
-    }
-
-    public static ParsedMainModule parseMainModuleFromQuery(
-            String query, CompilationConfiguration compilationConfiguration) {
-        return parseMainModuleFromQuery(query, compilationConfiguration, ExternalBindings.empty());
-    }
-
-    public static ParsedMainModule parseMainModuleFromQuery(
             String query, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         String url = ".";
@@ -146,11 +120,6 @@ public final class ModuleParser {
         }
         URI location = resolveStaticBaseUri(url);
         return parseMainModule(query, location, compilationConfiguration, externalBindings);
-    }
-
-    public static ParsedMainModule parseMainModule(
-            String query, URI uri, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        return parseMainModule(query, uri, new CompilationConfiguration(configuration), externalBindings);
     }
 
     public static ParsedMainModule parseMainModule(
