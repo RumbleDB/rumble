@@ -4,9 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -40,17 +38,9 @@ public class InScopeSchemaTypes implements Serializable {
 
         // Check every declaration before changing either the registry or the catalog.
         List<ItemType> importedTypes = catalog.getNamedGeneralizedAtomicItemTypes();
-        Set<Name> importedNames = new HashSet<>();
 
         for (ItemType itemType : importedTypes) {
-            validateNewSchemaType(itemType, metadata);
-            if (!importedNames.add(itemType.getName())) {
-                throw new InvalidSchemaException("This type is already defined: " + itemType.getName(), metadata);
-            }
-        }
-
-        for (ItemType itemType : importedTypes) {
-            this.inScopeSchemaTypes.put(itemType.getName(), itemType);
+            this.addInScopeSchemaType(itemType, metadata);
         }
 
         this.xmlSchemaCatalog = catalog;

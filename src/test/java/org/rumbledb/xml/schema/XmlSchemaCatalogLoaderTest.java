@@ -58,7 +58,8 @@ public class XmlSchemaCatalogLoaderTest {
 
         InScopeSchemaTypes types = module.getStaticContext().getInScopeSchemaTypes();
         Name code = new Name(NAMESPACE, "t", "Code");
-        Assertions.assertTrue(types.getXmlSchemaCatalog().getTypeDefinition(code).isPresent());
+        Assertions.assertTrue(
+                types.getXmlSchemaCatalog().getTypeDefinition(code).isPresent());
         Assertions.assertNotNull(types.getInScopeSchemaType(code));
     }
 
