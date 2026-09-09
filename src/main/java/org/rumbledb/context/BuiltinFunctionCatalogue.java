@@ -139,6 +139,7 @@ import org.rumbledb.runtime.functions.numerics.trigonometric.CoshFunctionIterato
 import org.rumbledb.runtime.functions.numerics.trigonometric.SinFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.trigonometric.SinhFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.trigonometric.TanFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.TanhFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectAccumulateFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantPairsFunctionIterator;
@@ -1393,6 +1394,17 @@ public class BuiltinFunctionCatalogue {
             "double?",
             SinhFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
+    /**
+     * function that returns the hyperbolic tangent of the angle given in radians
+     */
+    static final BuiltinFunction tanh = createBuiltinFunction(
+            new Name(Name.JN_NS, "jn", "tanh"),
+            List.of("double?"),
+            "double?",
+            TanhFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
 
     /**
      * function that returns string
@@ -3352,6 +3364,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(atan2.getIdentifier(), atan2);
         builtinFunctions.put(cosh.getIdentifier(), cosh);
         builtinFunctions.put(sinh.getIdentifier(), sinh);
+        builtinFunctions.put(tanh.getIdentifier(), tanh);
+
 
         builtinFunctions.put(string0.getIdentifier(), string0);
         builtinFunctions.put(string1.getIdentifier(), string1);
