@@ -122,11 +122,4 @@ public class VisitorConfig {
             .withSuppressErrorsForAccessingUnsetExecutionModes(false)
             .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(true)
             .build();
-
-    public static final VisitorConfig runtimeIteratorVisitorConfig = new VisitorConfig.Builder()
-            .withsuppressErrorsForFunctionSignatureCollision(false)
-            .withSuppressErrorsForCallingMissingFunctions(false)
-            .withSuppressErrorsForAccessingUnsetExecutionModes(false)
-            .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
-            .build();
 }

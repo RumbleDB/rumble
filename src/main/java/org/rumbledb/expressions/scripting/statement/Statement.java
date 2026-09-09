@@ -18,11 +18,11 @@ package org.rumbledb.expressions.scripting.statement;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
@@ -55,11 +55,12 @@ public abstract class Statement extends Node {
         }
     }
 
-    public RuntimeStaticContext getStaticContextForRuntime(RumbleConfiguration conf, VisitorConfig visitorConfig) {
+    /** Builds a runtime context using an execution mode validated by the backend. */
+    public RuntimeStaticContext getStaticContextForRuntime(RumbleConfiguration conf, ExecutionMode executionMode) {
         return RuntimeStaticContext.fromStaticContext(getStaticContext())
                 .configuration(conf)
                 .staticType(getStaticSequenceType())
-                .executionMode(getHighestExecutionMode(visitorConfig))
+                .executionMode(executionMode)
                 .metadata(getMetadata())
                 .isSequential(isSequential())
                 .build();

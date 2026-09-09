@@ -21,10 +21,8 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
@@ -75,11 +73,8 @@ public class LetClause extends Clause {
         return this.sequenceType;
     }
 
-    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
-        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.variableHighestStorageMode == ExecutionMode.UNSET) {
-            throw new OurBadException("An variable storage mode is accessed without being set.");
-        }
+    /** Returns the stored annotation, which may be UNSET during analysis. */
+    public ExecutionMode getVariableHighestStorageMode() {
         return this.variableHighestStorageMode;
     }
 

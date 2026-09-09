@@ -71,7 +71,14 @@ standalone library's declarations after its imports have been prepared.
 
 Execution-mode inference retains the local-only path and the initial, intermediate,
 and final passes for parallel execution, including the existing fallback for unresolved
-function modes. `VisitorConfig` remains at the root because AST classes also use it.
+function modes. AST execution-mode and storage-mode accessors return their stored
+annotations, including `UNSET`. `ExecutionModeVisitor` applies the current pass's
+`VisitorConfig` when reading those annotations; runtime-plan generation requires
+resolved execution modes. Function-mode registration also belongs to the execution-mode
+visitor. AST classes no longer depend on `VisitorConfig`.
+
+Runtime-context construction still lives on expressions, statements, and clauses for
+now. The backend passes an already validated execution mode to those methods.
 
 The language-specific pass differences and repeated analyses are intentional in this
 structural refactor; changing them requires a separate semantic change.
