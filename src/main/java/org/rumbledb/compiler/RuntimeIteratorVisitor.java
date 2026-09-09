@@ -1484,7 +1484,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitValidateExpression(ValidateExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan operand = this.visit(expression.getMainExpression(), argument);
-        XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         if (schemaCatalog == null && expression.getValidationMode() != ValidateExpression.ValidationMode.TYPE) {
             schemaCatalog = XmlSchemaCatalogLoader.loadBuiltInCatalog();
         }

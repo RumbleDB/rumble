@@ -2637,7 +2637,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             Name typeName = expression.getTypeName();
             boolean builtInType =
                     Name.XS_NS.equals(typeName.getNamespace()) && BuiltinTypesCatalogue.typeExists(typeName);
-            XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+            XmlSchemaCatalog schemaCatalog =
+                    expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
             boolean importedType = schemaCatalog != null
                     && schemaCatalog.getTypeDefinition(typeName).isPresent();
             if (!builtInType && !importedType) {
