@@ -1028,10 +1028,11 @@ keywordOKForFunction
    | DFPropertyName
    | KW_BINARY
    ;
-   // XQuery 3.1, A.3 Reserved Function Names: https://www.w3.org/TR/xquery-31/#id-reserved-fn-names
-   
+
 keywordNotOKForFunction
-   : KW_ATTRIBUTE
+   // XQuery 3.1, A.3 Reserved Function Names: https://www.w3.org/TR/xquery-31/#id-reserved-fn-names
+   : KW_ARRAY
+   | KW_ATTRIBUTE
    | KW_COMMENT
    | KW_DOCUMENT_NODE
    | KW_ELEMENT
@@ -1039,16 +1040,15 @@ keywordNotOKForFunction
    | KW_FUNCTION
    | KW_IF
    | KW_ITEM
+   | KW_MAP
+   | KW_NAMESPACE_NODE
    | KW_NODE
    | KW_PI
    | KW_SCHEMA_ATTR
    | KW_SCHEMA_ELEM
+   | KW_SWITCH
    | KW_TEXT
    | KW_TYPESWITCH
-   | KW_SWITCH
-   | KW_NAMESPACE_NODE
-   | KW_MAP
-   | KW_ARRAY
    ;
 
 uriLiteral
