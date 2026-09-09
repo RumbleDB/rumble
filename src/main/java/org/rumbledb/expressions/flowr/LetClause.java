@@ -47,7 +47,10 @@ public class LetClause extends Clause {
     @Setter
     private boolean isReferenced;
 
-    // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    /**
+     * Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+     */
+    @Getter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
     public LetClause(
@@ -71,11 +74,6 @@ public class LetClause extends Clause {
 
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
-    }
-
-    /** Returns the stored annotation, which may be UNSET during analysis. */
-    public ExecutionMode getVariableHighestStorageMode() {
-        return this.variableHighestStorageMode;
     }
 
     public void setVariableHighestExecutionMode(ExecutionMode newMode) {

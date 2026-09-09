@@ -55,6 +55,10 @@ public class VariableDeclaration extends Node {
     @Getter
     private final boolean isAssignable;
 
+    /**
+     * Returns the stored annotation, which may be UNSET during analysis.
+     */
+    @Getter
     @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
@@ -124,11 +128,6 @@ public class VariableDeclaration extends Node {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitVariableDeclaration(this, argument);
-    }
-
-    /** Returns the stored annotation, which may be UNSET during analysis. */
-    public ExecutionMode getVariableHighestStorageMode() {
-        return this.variableHighestStorageMode;
     }
 
     @Override

@@ -45,7 +45,10 @@ public class ForClause extends Clause {
     @Getter
     protected Expression expression;
 
-    // Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    /**
+     * Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+     */
+    @Getter
     @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
@@ -77,11 +80,6 @@ public class ForClause extends Clause {
 
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
-    }
-
-    /** Returns the stored annotation, which may be UNSET during analysis. */
-    public ExecutionMode getVariableHighestStorageMode() {
-        return this.variableHighestStorageMode;
     }
 
     @Override
