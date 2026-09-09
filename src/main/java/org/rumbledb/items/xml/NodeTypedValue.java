@@ -46,6 +46,9 @@ public final class NodeTypedValue implements Serializable {
     @Getter
     private final State state;
 
+    /**
+     * Validated atomic values of this node
+     */
     private final List<Item> items;
 
     private NodeTypedValue(State state, List<Item> items) {
