@@ -22,7 +22,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidFunctionNamespaceException;
 
 /** Static validation shared by the JSONiq and XQuery function declaration translators. */
-final class FunctionDeclarationValidator {
+public final class FunctionDeclarationValidator {
 
     private FunctionDeclarationValidator() {}
 
@@ -40,7 +40,7 @@ final class FunctionDeclarationValidator {
      * Functions cannot be declared in the reserved namespaces.
      * See https://www.w3.org/TR/xquery-31/#FunctionDeclns for more information.
      */
-    static void validateFunctionName(Name name, ExceptionMetadata metadata) {
+    public static void validateFunctionName(Name name, ExceptionMetadata metadata) {
         String namespace = name.getNamespace();
         if (RESERVED_NAMESPACES.contains(namespace)) {
             throw new InvalidFunctionNamespaceException(
