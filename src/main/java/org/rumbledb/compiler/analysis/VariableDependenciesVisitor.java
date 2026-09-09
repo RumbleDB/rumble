@@ -489,6 +489,10 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return dependencyGraph;
     }
 
+    /**
+     * Checks and orders this prolog's declarations without traversing its imported modules.
+     * Callers must analyze each imported library separately.
+     */
     @Override
     public Void visitProlog(Prolog prolog, Void argument) {
         Map<Name, Node> nameToNodeMap = buildNameToNodeMap(prolog);

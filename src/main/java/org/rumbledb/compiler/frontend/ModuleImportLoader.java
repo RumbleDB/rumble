@@ -56,7 +56,8 @@ final class ModuleImportLoader {
                 ModuleSource source = ModuleSourceReader.read(location, compilationConfiguration, metadata);
                 LibraryModule module =
                         ModuleParser.parseLibraryModule(source, importingModuleContext, compilationConfiguration);
-                // Preserve dependency validation before namespace validation and before returning the import.
+                // The dependency visitor does not traverse imports from a prolog, so each library
+                // needs its own pass. Run it before namespace validation and duplicate-import pruning.
                 new VariableDependenciesVisitor(compilationConfiguration.runtimeConfiguration()).visit(module, null);
 
                 if (!normalizedNamespace.equals(module.getNamespace())) {

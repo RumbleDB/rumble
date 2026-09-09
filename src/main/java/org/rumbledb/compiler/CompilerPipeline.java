@@ -144,6 +144,7 @@ public final class CompilerPipeline {
 
         LibraryModule libraryModule = ModuleParser.parseLibraryModule(
                 new ModuleSource(query, uri, uri), importingModuleContext, compilationConfiguration);
+        // Imports were analyzed during loading; analyze this standalone library's declarations here.
         resolveDependencies(libraryModule, configuration);
         populateStaticContext(libraryModule, configuration);
         inferTypes(libraryModule, configuration);

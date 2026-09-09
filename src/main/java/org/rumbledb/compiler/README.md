@@ -62,6 +62,13 @@ standalone library analysis, resolves dependencies, populates static contexts, a
 infers types without running the main-module pipeline. `ModuleParser` itself does
 not run dependency analysis.
 
+`VariableDependenciesVisitor.visitProlog` checks and orders declarations in the
+current prolog; it does not traverse imported modules. Each imported library therefore
+needs its own dependency-analysis pass during loading. The main-module pass does not
+replace these calls. Import dependency checks also run before namespace validation
+and before duplicate-import pruning. Standalone compilation explicitly analyzes the
+standalone library's declarations after its imports have been prepared.
+
 Execution-mode inference retains the local-only path and the initial, intermediate,
 and final passes for parallel execution, including the existing fallback for unresolved
 function modes. `VisitorConfig` remains at the root because AST classes also use it.
