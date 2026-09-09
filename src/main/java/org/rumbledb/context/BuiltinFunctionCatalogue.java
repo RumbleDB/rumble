@@ -1405,7 +1405,6 @@ public class BuiltinFunctionCatalogue {
             TanhFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-
     /**
      * function that returns string
      */
@@ -3365,7 +3364,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(cosh.getIdentifier(), cosh);
         builtinFunctions.put(sinh.getIdentifier(), sinh);
         builtinFunctions.put(tanh.getIdentifier(), tanh);
-
 
         builtinFunctions.put(string0.getIdentifier(), string0);
         builtinFunctions.put(string1.getIdentifier(), string1);
