@@ -28,7 +28,7 @@ import iq.base.TestFileDiscovery;
 import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.bindings.ExternalBindings;
-import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.compiler.CompilerPipeline;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
@@ -61,7 +61,7 @@ public class SequentialClassificationTests {
 
     private MainModule parseAndCompile(String filePath) throws IOException {
         URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(filePath, ExceptionMetadata.EMPTY_METADATA);
-        return VisitorHelpers.parseMainModuleFromLocation(uri, configuration, ExternalBindings.empty());
+        return CompilerPipeline.compileMainModuleFromLocation(uri, configuration, ExternalBindings.empty());
     }
 
     @Test
