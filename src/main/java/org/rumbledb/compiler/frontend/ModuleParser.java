@@ -50,7 +50,12 @@ public final class ModuleParser {
     private ModuleParser() {}
 
     /** The AST and the language selected from the source, URI, and configuration. */
-    public record ParsedMainModule(MainModule module, boolean xquery) {}
+    public enum Language {
+        JSONIQ,
+        XQUERY
+    }
+
+    public record ParsedMainModule(MainModule module, Language language) {}
 
     private record ModuleSource(String query, URI systemId) {}
 
@@ -130,10 +135,10 @@ public final class ModuleParser {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         if (shouldParseAsXQuery(query, uri, configuration)) {
             return new ParsedMainModule(
-                    parseXQueryMainModule(query, uri, compilationConfiguration, externalBindings), true);
+                    parseXQueryMainModule(query, uri, compilationConfiguration, externalBindings), Language.XQUERY);
         }
         return new ParsedMainModule(
-                parseJSONiqMainModule(query, uri, compilationConfiguration, externalBindings), false);
+                parseJSONiqMainModule(query, uri, compilationConfiguration, externalBindings), Language.JSONIQ);
     }
 
     private static MainModule parseJSONiqMainModule(

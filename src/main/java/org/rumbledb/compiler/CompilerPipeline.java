@@ -48,7 +48,6 @@ import org.rumbledb.expressions.module.Module;
 import static org.rumbledb.compiler.CompilerDiagnostics.debugPrintHeader;
 import static org.rumbledb.compiler.CompilerDiagnostics.debugPrintTree;
 
-/** Runs the language-specific compiler passes in their established order. */
 public final class CompilerPipeline {
     private CompilerPipeline() {}
 
@@ -84,9 +83,45 @@ public final class CompilerPipeline {
             ModuleParser.ParsedMainModule parsed,
             RumbleConfiguration configuration,
             ExternalBindings externalBindings) {
-        return parsed.xquery()
-                ? compileXQuery(parsed.module(), configuration, externalBindings)
-                : compileJsoniq(parsed.module(), configuration, externalBindings);
+        MainModule mainModule = parsed.module();
+        // Preserve the existing JSONiq-only checks until XQuery support is assessed separately.
+        boolean classifyExpressions = parsed.language() == ModuleParser.Language.JSONIQ;
+
+        debugPrintHeader(configuration, "Pruning modules");
+        pruneModules(mainModule, configuration);
+        debugPrintHeader(configuration, "Resolving dependencies");
+        resolveDependencies(mainModule, configuration);
+
+        if (classifyExpressions) {
+            debugPrintHeader(configuration, "Populating sequential classifications");
+            populateSequentialClassifications(mainModule, configuration);
+        }
+
+        debugPrintHeader(configuration, "Applying type independent optimizations");
+        mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
+        debugPrintHeader(configuration, "Populating static context");
+        populateStaticContext(mainModule, configuration);
+
+        if (classifyExpressions) {
+            debugPrintHeader(configuration, "Populating expression classifications");
+            populateExpressionClassifications(mainModule, configuration);
+            debugPrintHeader(configuration, "Verifying composability constraints");
+            verifyComposabilityConstraints(mainModule, configuration);
+        }
+
+        debugPrintHeader(configuration, "Inferring types");
+        inferTypes(mainModule, configuration);
+        debugPrintHeader(configuration, "Applying type dependent optimizations");
+        mainModule = applyTypeDependentOptimizations(mainModule);
+        debugPrintHeader(configuration, "Populating execution modes");
+        ExecutionModeInference.populateExecutionModes(mainModule, configuration, externalBindings);
+
+        if (classifyExpressions) {
+            debugPrintHeader(configuration, "Populating expression classifications");
+            populateExpressionClassifications(mainModule, configuration);
+        }
+        debugPrintTree(mainModule, configuration);
+        return mainModule;
     }
 
     public static LibraryModule compileLibraryModuleFromQuery(
@@ -102,63 +137,6 @@ public final class CompilerPipeline {
         populateStaticContext(libraryModule, configuration);
         inferTypes(libraryModule, configuration);
         return libraryModule;
-    }
-
-    private static MainModule compileJsoniq(
-            MainModule mainModule, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        debugPrintHeader(configuration, "Pruning modules");
-        pruneModules(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Resolving dependencies");
-        resolveDependencies(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Populating sequential classifications");
-        populateSequentialClassifications(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Applying type independent optimizations");
-        mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Populating static context");
-        populateStaticContext(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Populating expression classifications");
-        populateExpressionClassifications(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Verifying composability constraints");
-        verifyComposabilityConstraints(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Infering types");
-        inferTypes(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Applying type dependent optimizations");
-        mainModule = applyTypeDependentOptimizations(mainModule);
-
-        debugPrintHeader(configuration, "Populating execution modes");
-        ExecutionModeInference.populateExecutionModes(mainModule, configuration, externalBindings);
-
-        debugPrintHeader(configuration, "Populating expression classifications");
-        populateExpressionClassifications(mainModule, configuration);
-
-        debugPrintTree(mainModule, configuration);
-
-        return mainModule;
-    }
-
-    private static MainModule compileXQuery(
-            MainModule mainModule, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        pruneModules(mainModule, configuration);
-        resolveDependencies(mainModule, configuration);
-        mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
-        populateStaticContext(mainModule, configuration);
-        inferTypes(mainModule, configuration);
-        mainModule = applyTypeDependentOptimizations(mainModule);
-        ExecutionModeInference.populateExecutionModes(mainModule, configuration, externalBindings);
-        // TODO populate expression classifications here?
-        // populateExpressionClassifications(mainModule, configuration);
-        if (configuration.debug().printIteratorTree()) {
-            debugPrintTree(mainModule, configuration);
-        }
-        return mainModule;
     }
 
     private static void resolveDependencies(Node node, RumbleConfiguration conf) {
