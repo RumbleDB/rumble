@@ -156,6 +156,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode ValidateOperandTypeErrorCode = registerBuiltIn("XQTY0030");
 
     public static final ErrorCode InvalidInstance = registerBuiltIn("XQDY0027");
+    public static final ErrorCode ValidateStrictNoDeclarationErrorCode = registerBuiltIn("XQDY0084");
     public static final ErrorCode InvalidProcessingInstructionTargetCastErrorCode = registerBuiltIn("XQDY0041");
     public static final ErrorCode InvalidValidateDocumentStructureErrorCode = registerBuiltIn("XQDY0061");
     public static final ErrorCode CycleInVariableDeclarationsErrorCode = registerBuiltIn("XQDY0054");
@@ -188,6 +189,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DuplicateSchemaImportErrorCode = registerBuiltIn("XQST0058");
     public static final ErrorCode MoreThanOneCopyNamespacesDeclarationErrorCode = registerBuiltIn("XQST0055");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
+    public static final ErrorCode SchemaImportErrorCode = ModuleNotFoundErrorCode;
     public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
