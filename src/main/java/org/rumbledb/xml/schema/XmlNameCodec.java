@@ -53,7 +53,7 @@ final class XmlNameCodec {
         return prefix == null || prefix.isEmpty() ? name.getLocalName() : prefix + ":" + name.getLocalName();
     }
 
-    private static String emptyToNull(String value) {
+    public static String emptyToNull(String value) {
         return value == null || value.isEmpty() ? null : value;
     }
 }

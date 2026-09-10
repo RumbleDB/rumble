@@ -60,12 +60,11 @@ public final class XmlSchemaCatalog {
     }
 
     public Optional<XSTypeDefinition> getTypeDefinition(@NonNull Name name) {
-        return Optional.ofNullable(
-                this.schemaModel.getTypeDefinition(name.getLocalName(), emptyToNull(name.getNamespace())));
+        return Optional.ofNullable(this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace()));
     }
 
     public boolean containsNamespace(String namespace) {
-        return this.schemaModel.getNamespaces().contains(emptyToNull(namespace));
+        return this.schemaModel.getNamespaces().contains(XmlNameCodec.emptyToNull(namespace));
     }
 
     public List<ItemType> getNamedGeneralizedAtomicItemTypes() {
@@ -104,9 +103,5 @@ public final class XmlSchemaCatalog {
 
     List<Item> convertTypedValue(XSValue schemaValue) {
         return this.typedValueConverter.convert(schemaValue);
-    }
-
-    private static String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
     }
 }
