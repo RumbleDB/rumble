@@ -90,10 +90,12 @@ public final class XmlSchemaCatalog {
         }
         List<ElementNodeItemType> alternatives = new ArrayList<>();
         addElementAlternative(declaration, alternatives);
+
         XSObjectList substitutions = this.schemaModel.getSubstitutionGroup(declaration);
         for (int i = 0; i < substitutions.getLength(); i++) {
             addElementAlternative((XSElementDeclaration) substitutions.item(i), alternatives);
         }
+
         return new SchemaElementNodeItemType(name, alternatives);
     }
 
@@ -101,6 +103,7 @@ public final class XmlSchemaCatalog {
         if (declaration.getAbstract()) {
             return;
         }
+
         XmlSchemaTypeAnnotation annotation = this.typeMapper.mapTypeAnnotation(declaration.getTypeDefinition());
         alternatives.add(new ElementNodeItemType(
                 new Name(declaration.getNamespace(), null, declaration.getName()),
