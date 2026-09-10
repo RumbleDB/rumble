@@ -241,7 +241,7 @@ final class XmlSchemaTypeMapper {
         if (schemaType.getAnonymous() || schemaType.getName() == null) {
             return null;
         }
-        String namespace = emptyToNull(schemaType.getNamespace());
+        String namespace = schemaType.getNamespace();
         return new Name(namespace, Name.XS_NS.equals(namespace) ? "xs" : null, schemaType.getName());
     }
 
@@ -261,9 +261,5 @@ final class XmlSchemaTypeMapper {
 
     private static Name xsName(String localName) {
         return new Name(Name.XS_NS, "xs", localName);
-    }
-
-    private static String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
     }
 }
