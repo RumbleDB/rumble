@@ -47,7 +47,7 @@ public class ElementItem extends AbstractNodeItem {
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
-    private ItemType typeAnnotation;
+    private XmlSchemaTypeAnnotation typeAnnotation;
     private NodeTypedValue nodeTypedValue;
 
     @Setter
@@ -358,10 +358,10 @@ public class ElementItem extends AbstractNodeItem {
      */
     @Override
     public List<Item> typeName() {
-        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+        if (this.typeAnnotation == null) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName()));
+        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.name()));
     }
 
     /**
@@ -376,7 +376,7 @@ public class ElementItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(@NonNull ItemType typeAnnotation, List<Item> typedValue) {
+    public void setSchemaType(@NonNull XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
         NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
         this.typeAnnotation = typeAnnotation;
         this.nodeTypedValue = newTypedValue;
@@ -389,7 +389,7 @@ public class ElementItem extends AbstractNodeItem {
     }
 
     @Override
-    public ItemType getSchemaType() {
+    public XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
         return this.typeAnnotation;
     }
 

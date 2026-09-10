@@ -182,6 +182,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 import static org.rumbledb.types.SequenceType.createSequenceType;
 
@@ -461,6 +462,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (OptionDeclaration optionDeclaration : optionDeclarations) {
             prolog.addDeclaration(optionDeclaration);
         }
+        XmlSchemaCatalogLoader.load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
+                .ifPresent(catalog ->
+                        this.moduleContext.getInScopeSchemaTypes().importSchema(catalog, prolog.getMetadata()));
         return prolog;
     }
 
