@@ -27,7 +27,6 @@ import org.apache.xerces.xs.datatypes.XSQName;
 import lombok.NonNull;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
@@ -152,9 +151,8 @@ final class XercesTypedValueConverter {
             throw new OurBadException("Xerces did not provide an expanded QName value.");
         }
         var qName = qNameValue.getXNIQName();
-        String namespace = emptyToNull(qName.uri);
-        String prefix = emptyToNull(qName.prefix);
-        return ItemFactory.getInstance().createQNameItem(new Name(namespace, prefix, qName.localpart));
+        return ItemFactory.getInstance()
+                .createQNameItem(XmlNameCodec.fromExpandedName(qName.uri, qName.prefix, qName.localpart));
     }
 
     /**
@@ -179,9 +177,5 @@ final class XercesTypedValueConverter {
             throw new OurBadException("Xerces did not provide a normalized lexical value.");
         }
         return normalizedValue;
-    }
-
-    private static String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
     }
 }

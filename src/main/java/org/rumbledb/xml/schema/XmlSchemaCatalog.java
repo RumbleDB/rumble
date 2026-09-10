@@ -67,12 +67,11 @@ public final class XmlSchemaCatalog {
     }
 
     public Optional<XSTypeDefinition> getTypeDefinition(@NonNull Name name) {
-        return Optional.ofNullable(
-                this.schemaModel.getTypeDefinition(name.getLocalName(), emptyToNull(name.getNamespace())));
+        return Optional.ofNullable(this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace()));
     }
 
     public boolean containsNamespace(String namespace) {
-        return this.schemaModel.getNamespaces().contains(emptyToNull(namespace));
+        return this.schemaModel.getNamespaces().contains(XmlNameCodec.emptyToNull(namespace));
     }
 
     /** Whether a name denotes a user-imported XML Schema simple type. */
@@ -169,9 +168,5 @@ public final class XmlSchemaCatalog {
             }
         }
         return false;
-    }
-
-    private static String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
     }
 }
