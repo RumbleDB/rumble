@@ -52,14 +52,17 @@ public final class ModuleParser {
     /** The AST and the language selected from the source, URI, and configuration. */
     public record ParsedMainModule(MainModule module, Language language) {}
 
-    private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
+    // Preserve the pre-refactor selection policy: a configured static base URI takes
+    // precedence over the resource URI for extension detection. Source identity is
+    // kept separately for diagnostics and must not silently change the parser.
+    private static boolean shouldParseAsXQuery(String query, URI staticBaseUri, RumbleConfiguration configuration) {
         if (query.contains("xquery version")) {
             return true;
         }
         if (query.contains("jsoniq version")) {
             return false;
         }
-        String location = uri.toString();
+        String location = staticBaseUri.toString();
         if (location.endsWith(".xq") || location.endsWith(".xqy") || location.endsWith(".xquery")) {
             return true;
         }
@@ -72,7 +75,7 @@ public final class ModuleParser {
     public static ParsedMainModule parseMainModule(
             ModuleSource source, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        if (shouldParseAsXQuery(source.text(), source.sourceUri(), configuration)) {
+        if (shouldParseAsXQuery(source.text(), source.staticBaseUri(), configuration)) {
             return new ParsedMainModule(
                     parseXQueryMainModule(source, compilationConfiguration, externalBindings), Language.XQUERY);
         }
@@ -158,7 +161,7 @@ public final class ModuleParser {
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        if (shouldParseAsXQuery(source.text(), source.sourceUri(), configuration)) {
+        if (shouldParseAsXQuery(source.text(), source.staticBaseUri(), configuration)) {
             return parseXQueryLibraryModule(source, importingModuleContext, compilationConfiguration);
         }
         return parseJSONiqLibraryModule(source, importingModuleContext, compilationConfiguration);

@@ -50,9 +50,12 @@ XQuery main modules:
 11. Infer execution modes.
 
 `ModuleSource` carries source text, source URI, and static base URI separately.
-Diagnostics and extension-based language selection use the source URI. Relative
-references use the static base URI, which may be overridden by configuration or a
-base-URI declaration without changing the diagnostic source identity. In-memory
+Diagnostics use the source URI. Relative references use the static base URI, which
+may be overridden by configuration or a base-URI declaration without changing the
+diagnostic source identity. Parser selection preserves the existing policy: an
+explicit language declaration takes precedence, followed by the initial static base
+URI's extension, then the configured query language. In particular, a configured
+base URI still overrides the resource URI for extension-based selection. In-memory
 queries without an explicit source URI initially use the resolved base URI for both.
 
 `ModuleImportLoader` loads and parses imported libraries, resolves their variable
