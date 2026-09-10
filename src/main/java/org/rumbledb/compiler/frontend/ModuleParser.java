@@ -21,6 +21,7 @@ import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import org.rumbledb.bindings.ExternalBindings;
@@ -75,84 +76,40 @@ public final class ModuleParser {
     public static ParsedMainModule parseMainModule(
             ModuleSource source, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        if (shouldParseAsXQuery(source.text(), source.staticBaseUri(), configuration)) {
-            return new ParsedMainModule(
-                    parseXQueryMainModule(source, compilationConfiguration, externalBindings), Language.XQUERY);
-        }
-        return new ParsedMainModule(
-                parseJSONiqMainModule(source, compilationConfiguration, externalBindings), Language.JSONIQ);
-    }
-
-    private static MainModule parseJSONiqMainModule(
-            ModuleSource source, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
-        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
+        boolean useXQuery = shouldParseAsXQuery(source.text(), source.staticBaseUri(), configuration);
         CharStream stream = CharStreams.fromString(source.text());
-        JsoniqLexer lexer = new JsoniqLexer(stream);
-        CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
-        JsoniqParser parser = new JsoniqParser(jsoniqTokens);
-        parser.setErrorHandler(new BailErrorStrategy());
+        Lexer lexer = useXQuery ? new XQueryLexer(stream) : new JsoniqLexer(stream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
         StaticContext moduleContext = new StaticContext(source.staticBaseUri(), configuration);
         UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
         executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
         moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
-        JsoniqTranslationVisitor visitor = new JsoniqTranslationVisitor(
-                moduleContext, true, compilationConfiguration, externalBindings, source, jsoniqTokens);
+
         try {
-            // TODO Handle module extras
-            JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
-            if (modulectx == null) {
-                throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
+            if (useXQuery) {
+                XQueryParser parser = new XQueryParser(tokens);
+                parser.setErrorHandler(new BailErrorStrategy());
+                XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
+                        moduleContext, true, compilationConfiguration, externalBindings, source, tokens);
+                XQueryParser.ModuleContext module = parser.moduleAndThisIsIt().module();
+                if (module == null) {
+                    throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
+                }
+                return new ParsedMainModule((MainModule) visitor.visit(module), Language.XQUERY);
+            } else {
+                JsoniqParser parser = new JsoniqParser(tokens);
+                parser.setErrorHandler(new BailErrorStrategy());
+                JsoniqTranslationVisitor visitor = new JsoniqTranslationVisitor(
+                        moduleContext, true, compilationConfiguration, externalBindings, source, tokens);
+                JsoniqParser.ModuleContext module = parser.moduleAndThisIsIt().module();
+                if (module == null) {
+                    throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
+                }
+                debugPrintHeader(configuration, "Parsing program");
+                return new ParsedMainModule((MainModule) visitor.visit(module), Language.JSONIQ);
             }
-
-            debugPrintHeader(configuration, "Parsing program");
-            MainModule mainModule = (MainModule) visitor.visit(modulectx);
-
-            return mainModule;
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(
-                    lexer.getText(),
-                    ExceptionMetadata.fromPoint(
-                            source.sourceUri().toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            source.text()));
-            e.initCause(ex);
-            throw e;
-        }
-    }
-
-    private static MainModule parseXQueryMainModule(
-            ModuleSource source, CompilationConfiguration compilationConfiguration, ExternalBindings externalBindings) {
-        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        CharStream stream = CharStreams.fromString(source.text());
-        XQueryLexer lexer = new XQueryLexer(stream);
-        CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
-        XQueryParser parser = new XQueryParser(xQueryTokens);
-        parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(source.staticBaseUri(), configuration);
-        UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
-        executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
-        moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
-                moduleContext, true, compilationConfiguration, externalBindings, source, xQueryTokens);
-        try {
-            // TODO Handle module extras
-            XQueryParser.ModuleContext main = parser.moduleAndThisIsIt().module();
-            if (main == null) {
-                throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
-            }
-            MainModule mainModule = (MainModule) visitor.visit(main);
-            return mainModule;
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(
-                    lexer.getText(),
-                    ExceptionMetadata.fromPoint(
-                            source.sourceUri().toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            source.text()));
-            e.initCause(ex);
-            throw e;
+        } catch (ParseCancellationException exception) {
+            throw parsingException(lexer, source, exception);
         }
     }
 
@@ -161,75 +118,41 @@ public final class ModuleParser {
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        if (shouldParseAsXQuery(source.text(), source.staticBaseUri(), configuration)) {
-            return parseXQueryLibraryModule(source, importingModuleContext, compilationConfiguration);
-        }
-        return parseJSONiqLibraryModule(source, importingModuleContext, compilationConfiguration);
-    }
-
-    private static LibraryModule parseJSONiqLibraryModule(
-            ModuleSource source,
-            StaticContext importingModuleContext,
-            CompilationConfiguration compilationConfiguration) {
-        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
+        boolean useXQuery = shouldParseAsXQuery(source.text(), source.staticBaseUri(), configuration);
         CharStream stream = CharStreams.fromString(source.text());
-        JsoniqLexer lexer = new JsoniqLexer(stream);
-        CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
-        JsoniqParser parser = new JsoniqParser(jsoniqTokens);
-        parser.setErrorHandler(new BailErrorStrategy());
+        Lexer lexer = useXQuery ? new XQueryLexer(stream) : new JsoniqLexer(stream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
         StaticContext moduleContext = new StaticContext(source.staticBaseUri(), configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
                 importingModuleContext.getUserDefinedFunctionsExecutionModes());
-        JsoniqTranslationVisitor visitor = new JsoniqTranslationVisitor(
-                moduleContext, false, compilationConfiguration, ExternalBindings.empty(), source, jsoniqTokens);
+
         try {
-            // TODO Handle module extras
-            JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
-            LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
-            return libraryModule;
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(
-                    lexer.getText(),
-                    ExceptionMetadata.fromPoint(
-                            source.sourceUri().toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            source.text()));
-            e.initCause(ex);
-            throw e;
+            if (useXQuery) {
+                XQueryParser parser = new XQueryParser(tokens);
+                parser.setErrorHandler(new BailErrorStrategy());
+                XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
+                        moduleContext, false, compilationConfiguration, ExternalBindings.empty(), source, tokens);
+                // Preserve the existing XQuery library entry rule, which does not require EOF.
+                return (LibraryModule) visitor.visit(parser.module());
+            } else {
+                JsoniqParser parser = new JsoniqParser(tokens);
+                parser.setErrorHandler(new BailErrorStrategy());
+                JsoniqTranslationVisitor visitor = new JsoniqTranslationVisitor(
+                        moduleContext, false, compilationConfiguration, ExternalBindings.empty(), source, tokens);
+                return (LibraryModule) visitor.visit(parser.moduleAndThisIsIt().module());
+            }
+        } catch (ParseCancellationException exception) {
+            throw parsingException(lexer, source, exception);
         }
     }
 
-    private static LibraryModule parseXQueryLibraryModule(
-            ModuleSource source,
-            StaticContext importingModuleContext,
-            CompilationConfiguration compilationConfiguration) {
-        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        CharStream stream = CharStreams.fromString(source.text());
-        XQueryLexer lexer = new XQueryLexer(stream);
-        CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
-        XQueryParser parser = new XQueryParser(xQueryTokens);
-        parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(source.staticBaseUri(), configuration);
-        moduleContext.setUserDefinedFunctionsExecutionModes(
-                importingModuleContext.getUserDefinedFunctionsExecutionModes());
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
-                moduleContext, false, compilationConfiguration, ExternalBindings.empty(), source, xQueryTokens);
-        try {
-            // TODO Handle module extras
-            XQueryParser.ModuleContext main = parser.module();
-            LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
-            return libraryModule;
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(
-                    lexer.getText(),
-                    ExceptionMetadata.fromPoint(
-                            source.sourceUri().toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            source.text()));
-            e.initCause(ex);
-            throw e;
-        }
+    private static ParsingException parsingException(
+            Lexer lexer, ModuleSource source, ParseCancellationException cause) {
+        ParsingException exception = new ParsingException(
+                lexer.getText(),
+                ExceptionMetadata.fromPoint(
+                        source.sourceUri().toString(), lexer.getLine(), lexer.getCharPositionInLine(), source.text()));
+        exception.initCause(cause);
+        return exception;
     }
 }
