@@ -42,6 +42,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
+import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
@@ -232,23 +233,42 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    private void visitPreviousClause(Clause clause) {
+        Clause previous = clause.getPreviousClause();
+        if (previous != null) {
+            visit(previous, null);
+            addOutputVariableDependencies(clause, getOutputVariableDependencies(previous));
+        }
+    }
+
+    private void inheritPreviousClauseDependencies(Clause clause) {
+        Clause previous = clause.getPreviousClause();
+        if (previous != null) {
+            // Only this clause's references are shadowed by preceding bindings.
+            // Earlier free references must survive even if a later binding has the same name.
+            removeInputVariableDependencies(clause, getOutputVariableDependencies(previous));
+            addInputVariableDependencies(clause, getInputVariableDependencies(previous));
+        }
+    }
+
     @Override
     public Void visitForClause(ForClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
         addOutputVariableDependency(expression, expression.getVariableName());
+        if (expression.getPositionalVariableName() != null) {
+            addOutputVariableDependency(expression, expression.getPositionalVariableName());
+        }
 
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
 
-        removeInputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
     @Override
     public Void visitWindowClause(WindowClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
         addOutputVariableDependency(expression, expression.getWindowVariable());
         expression
                 .getStartCondition()
@@ -265,36 +285,37 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
         visit(expression.getStartCondition().expression(), null);
-        addInputVariableDependencies(
-                expression,
+        Set<Name> startDependencies = new TreeSet<>(
                 getInputVariableDependencies(expression.getStartCondition().expression()));
+        startDependencies.removeAll(expression.getStartCondition().variables().names());
+        addInputVariableDependencies(expression, startDependencies);
         if (expression.getEndCondition() != null) {
             visit(expression.getEndCondition().expression(), null);
-            addInputVariableDependencies(
-                    expression,
+            Set<Name> endDependencies = new TreeSet<>(
                     getInputVariableDependencies(expression.getEndCondition().expression()));
+            endDependencies.removeAll(expression.getStartCondition().variables().names());
+            endDependencies.removeAll(expression.getEndCondition().variables().names());
+            addInputVariableDependencies(expression, endDependencies);
         }
-        removeInputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
     @Override
     public Void visitLetClause(LetClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
         addOutputVariableDependency(expression, expression.getVariableName());
 
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
 
-        removeInputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
     @Override
     public Void visitGroupByClause(GroupByClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
 
         for (GroupByVariableDeclaration var : expression.getGroupVariables()) {
             if (var.getExpression() != null) {
@@ -306,52 +327,50 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             }
         }
 
-        removeInputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
     @Override
     public Void visitOrderByClause(OrderByClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
 
-        visit(expression.getPreviousClause(), null);
         for (OrderByClauseSortingKey var : expression.getSortingKeys()) {
             visit(var.getExpression(), null);
             addInputVariableDependencies(expression, getInputVariableDependencies(var.getExpression()));
         }
 
-        removeInputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
     @Override
     public Void visitWhereClause(WhereClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
 
         visit(expression.getWhereExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getWhereExpression()));
 
-        removeInputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
     @Override
     public Void visitCountClause(CountClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
+        addOutputVariableDependency(expression, expression.getCountVariableName());
 
-        removeInputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
     @Override
     public Void visitReturnClause(ReturnClause expression, Void argument) {
+        visitPreviousClause(expression);
         visit(expression.getReturnExpr(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getReturnExpr()));
 
-        removeInputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
@@ -475,6 +494,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     @Override
     public Void visitProlog(Prolog prolog, Void argument) {
         Map<Name, Node> nameToNodeMap = buildNameToNodeMap(prolog);
+
         Graph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);
         var components = new KosarajuStrongConnectivityInspector<>(dependencyGraph);
         // Function-only cycles are legal recursion; cycles involving variables cannot be initialized.
@@ -490,6 +510,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                 }
             }
         }
+
         List<Node> resolvedList = new ArrayList<>();
         for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
             resolvedList.add(typeDeclaration);
