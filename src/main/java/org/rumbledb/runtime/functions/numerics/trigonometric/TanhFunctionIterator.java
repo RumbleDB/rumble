@@ -38,7 +38,6 @@ public class TanhFunctionIterator extends AbstractAtMostOneItemRuntimePlan imple
 
     public TanhFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
-
         this.argument = arguments.get(0);
     }
 
@@ -65,7 +64,6 @@ public class TanhFunctionIterator extends AbstractAtMostOneItemRuntimePlan imple
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-
         NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(this.argument, nativeClauseContext);
 
         if (childQuery == NativeClauseContext.NoNativeQuery) {
