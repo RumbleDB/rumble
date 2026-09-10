@@ -29,7 +29,9 @@ import iq.base.TestConfigurations;
 import iq.base.TestFileDiscovery;
 
 import org.rumbledb.bindings.ExternalBindings;
-import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.compiler.CompilerPipeline;
+import org.rumbledb.compiler.backend.RuntimePlanBuilder;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -97,8 +99,8 @@ public class FrontendTests {
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
                 URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                         testFile.getAbsolutePath(), ExceptionMetadata.EMPTY_METADATA);
-                MainModule mainModule =
-                        VisitorHelpers.parseMainModuleFromLocation(uri, configuration, ExternalBindings.empty());
+                MainModule mainModule = CompilerPipeline.compileMainModuleFromLocation(
+                        uri, new CompilationConfiguration(configuration), ExternalBindings.empty());
 
                 testVariableTypes(mainModule);
             }
@@ -111,13 +113,13 @@ public class FrontendTests {
         RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
                 .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
                 .build();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+        MainModule mainModule = CompilerPipeline.compileMainModuleFromQuery(
                 "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/parent::node()",
-                initialConfiguration,
+                new CompilationConfiguration(initialConfiguration),
                 ExternalBindings.empty());
 
         RumbleConfiguration effectiveConfiguration =
-                VisitorHelpers.getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
+                RuntimePlanBuilder.getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
 
         Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
         Assertions.assertTrue(initialConfiguration.optimization().optimizeParentPointers());
@@ -129,13 +131,13 @@ public class FrontendTests {
         RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
                 .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
                 .build();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+        MainModule mainModule = CompilerPipeline.compileMainModuleFromQuery(
                 "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/child::title",
-                initialConfiguration,
+                new CompilationConfiguration(initialConfiguration),
                 ExternalBindings.empty());
 
         RumbleConfiguration effectiveConfiguration =
-                VisitorHelpers.getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
+                RuntimePlanBuilder.getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
 
         Assertions.assertTrue(effectiveConfiguration.optimization().optimizeParentPointers());
     }
@@ -146,13 +148,13 @@ public class FrontendTests {
         RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
                 .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
                 .build();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+        MainModule mainModule = CompilerPipeline.compileMainModuleFromQuery(
                 "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/following::node()",
-                initialConfiguration,
+                new CompilationConfiguration(initialConfiguration),
                 ExternalBindings.empty());
 
         RumbleConfiguration effectiveConfiguration =
-                VisitorHelpers.getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
+                RuntimePlanBuilder.getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
 
         Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
     }
@@ -163,11 +165,13 @@ public class FrontendTests {
         RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
                 .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
                 .build();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
-                "jsoniq version \"1.0\"; (1, serialize(1))", initialConfiguration, ExternalBindings.empty());
+        MainModule mainModule = CompilerPipeline.compileMainModuleFromQuery(
+                "jsoniq version \"1.0\"; (1, serialize(1))",
+                new CompilationConfiguration(initialConfiguration),
+                ExternalBindings.empty());
 
         RumbleConfiguration effectiveConfiguration =
-                VisitorHelpers.getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
+                RuntimePlanBuilder.getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
 
         Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
         Assertions.assertTrue(initialConfiguration.optimization().optimizeParentPointers());

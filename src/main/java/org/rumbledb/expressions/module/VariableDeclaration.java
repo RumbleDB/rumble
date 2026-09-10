@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -56,6 +55,10 @@ public class VariableDeclaration extends Node {
     @Getter
     private final boolean isAssignable;
 
+    /**
+     * Returns the stored annotation, which may be UNSET during analysis.
+     */
+    @Getter
     @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
@@ -125,14 +128,6 @@ public class VariableDeclaration extends Node {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitVariableDeclaration(this, argument);
-    }
-
-    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
-        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.variableHighestStorageMode == ExecutionMode.UNSET) {
-            throw new OurBadException("A variable storage mode is accessed without being set.");
-        }
-        return this.variableHighestStorageMode;
     }
 
     @Override

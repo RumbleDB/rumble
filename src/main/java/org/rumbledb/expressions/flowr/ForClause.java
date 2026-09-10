@@ -21,10 +21,8 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
@@ -47,7 +45,10 @@ public class ForClause extends Clause {
     @Getter
     protected Expression expression;
 
-    // Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    /**
+     * Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+     */
+    @Getter
     @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
@@ -79,14 +80,6 @@ public class ForClause extends Clause {
 
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
-    }
-
-    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
-        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.variableHighestStorageMode == ExecutionMode.UNSET) {
-            throw new OurBadException("A variable storage mode is accessed without being set.");
-        }
-        return this.variableHighestStorageMode;
     }
 
     @Override

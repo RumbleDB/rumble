@@ -20,7 +20,8 @@ import java.net.URI;
 
 import org.apache.spark.sql.SparkSession;
 
-import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.compiler.CompilerPipeline;
+import org.rumbledb.compiler.backend.RuntimePlanBuilder;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
@@ -118,7 +119,8 @@ public class Rumble {
      */
     public SequenceOfItems runQuery(String query, org.rumbledb.bindings.ExternalBindings bindings) {
         org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.compilationConfiguration, snapshot);
+        MainModule mainModule =
+                CompilerPipeline.compileMainModuleFromQuery(query, this.compilationConfiguration, snapshot);
         return createSequence(mainModule, snapshot);
     }
 
@@ -171,16 +173,16 @@ public class Rumble {
     public SequenceOfItems runQuery(URI location, org.rumbledb.bindings.ExternalBindings bindings) throws IOException {
         org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
         MainModule mainModule =
-                VisitorHelpers.parseMainModuleFromLocation(location, this.compilationConfiguration, snapshot);
+                CompilerPipeline.compileMainModuleFromLocation(location, this.compilationConfiguration, snapshot);
         return createSequence(mainModule, snapshot);
     }
 
     private SequenceOfItems createSequence(MainModule mainModule, org.rumbledb.bindings.ExternalBindings bindings) {
-        var effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
+        var effectiveConfiguration = RuntimePlanBuilder.getEffectiveConfiguration(
                 mainModule, this.compilationConfiguration.runtimeConfiguration().toBuilder());
         DynamicContext dynamicContext =
-                VisitorHelpers.createDynamicContext(mainModule, effectiveConfiguration, bindings);
-        ItemRuntimePlan plan = VisitorHelpers.generateRuntimeIterator(mainModule, effectiveConfiguration);
+                RuntimePlanBuilder.createDynamicContext(mainModule, effectiveConfiguration, bindings);
+        ItemRuntimePlan plan = RuntimePlanBuilder.generateRuntimeIterator(mainModule, effectiveConfiguration);
 
         return new SequenceOfItems(plan, dynamicContext, effectiveConfiguration);
     }
@@ -208,7 +210,7 @@ public class Rumble {
      * @return serialization of the JSONiq Expression Tree.
      */
     public String serializeToJSONiq(String query) {
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+        MainModule mainModule = CompilerPipeline.compileMainModuleFromQuery(
                 query, this.compilationConfiguration, ExternalBindings.empty().getInternalBindings());
         StringBuilder sb = new StringBuilder();
         mainModule.serializeToJSONiq(sb, 0);
