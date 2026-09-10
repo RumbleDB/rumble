@@ -731,6 +731,7 @@ public class JsoniqTranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         Name name = parseFunctionName(ctx.functionName());
+        FunctionDeclarationValidator.validateFunctionName(name, createMetadataFromContext(ctx.functionName()));
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;

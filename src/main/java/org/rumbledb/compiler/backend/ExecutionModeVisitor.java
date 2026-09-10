@@ -360,6 +360,14 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                                                 .isDataFrame()))
                         ? ExecutionMode.DATAFRAME
                         : ExecutionMode.LOCAL);
+        // An unresolved input may become distributed on a later inference pass.
+        // Do not commit downstream function parameters to LOCAL before it is known.
+        if (executionMode(clause) == ExecutionMode.LOCAL
+                && (executionMode(clause.getExpression()).isUnset()
+                        || (clause.getPreviousClause() != null
+                                && executionMode(clause.getPreviousClause()).isUnset()))) {
+            clause.setHighestExecutionMode(ExecutionMode.UNSET);
+        }
         clause.setVariableHighestStorageMode(ExecutionMode.LOCAL);
 
         argument.setVariableStorageMode(
