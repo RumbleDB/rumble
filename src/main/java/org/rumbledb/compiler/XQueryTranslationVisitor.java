@@ -40,6 +40,7 @@ import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
@@ -182,6 +183,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 import static org.rumbledb.types.SequenceType.createSequenceType;
 
@@ -461,6 +463,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (OptionDeclaration optionDeclaration : optionDeclarations) {
             prolog.addDeclaration(optionDeclaration);
         }
+        XmlSchemaCatalogLoader.load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
+                .ifPresent(catalog ->
+                        this.moduleContext.getInScopeSchemaTypes().importSchema(catalog, prolog.getMetadata()));
         return prolog;
     }
 
@@ -771,6 +776,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         Name name = parseFunctionName(ctx.functionName());
+        FunctionDeclarationValidator.validateFunctionName(name, createMetadataFromContext(ctx.functionName()));
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;

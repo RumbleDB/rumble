@@ -34,6 +34,7 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.primitives.Collection;
@@ -1638,12 +1639,43 @@ public interface Item extends Serializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default void setSchemaType(ItemType typeAnnotation) {
+    /**
+     * Sets an element node's schema type annotation when its typed value is unavailable.
+     *
+     * @param typeAnnotation the schema type annotation
+     */
+    default void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default ItemType getSchemaType() {
+    /**
+     * Sets a node's schema type annotation together with its XDM typed value.
+     *
+     * @param typeAnnotation the schema type annotation
+     * @param typedValue the typed value, including an empty list for a valid empty typed value
+     */
+    default void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /** Removes a node's schema annotation and restores its untyped typed-value behavior. */
+    default void clearSchemaType() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /** @return this node's XML Schema annotation, or {@code null} when the node is untyped. */
+    default XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
         return null;
+    }
+
+    /** Records the nilled property supplied by XML Schema validation. */
+    default void setXmlSchemaNilled(boolean nilled) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /** Records the ID and IDREF properties supplied by XML Schema validation. */
+    default void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
