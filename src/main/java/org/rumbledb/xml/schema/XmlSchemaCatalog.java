@@ -17,8 +17,8 @@ package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import javax.xml.validation.Schema;
 
 import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSModel;
@@ -26,6 +26,10 @@ import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.apache.xerces.xs.XSValue;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -39,24 +43,28 @@ import org.rumbledb.types.ItemType;
  */
 public final class XmlSchemaCatalog {
 
+    @Getter(AccessLevel.PACKAGE)
     private final XSModel schemaModel;
+
+    @Getter(AccessLevel.PACKAGE)
+    private final Schema validationSchema;
+
     private final XmlSchemaTypeMapper typeMapper;
     private final XercesTypedValueConverter typedValueConverter;
 
-    XmlSchemaCatalog(XSModel schemaModel) {
-        this.schemaModel = Objects.requireNonNull(schemaModel, "schemaModel must not be null");
+    XmlSchemaCatalog(@NonNull XSModel schemaModel, @NonNull Schema validationSchema) {
+        this.schemaModel = schemaModel;
+        this.validationSchema = validationSchema;
         this.typeMapper = new XmlSchemaTypeMapper();
         this.typedValueConverter = new XercesTypedValueConverter(this.typeMapper);
     }
 
-    public Optional<XSTypeDefinition> getTypeDefinition(Name name) {
-        Objects.requireNonNull(name, "name must not be null");
-        return Optional.ofNullable(
-                this.schemaModel.getTypeDefinition(name.getLocalName(), emptyToNull(name.getNamespace())));
+    public Optional<XSTypeDefinition> getTypeDefinition(@NonNull Name name) {
+        return Optional.ofNullable(this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace()));
     }
 
     public boolean containsNamespace(String namespace) {
-        return this.schemaModel.getNamespaces().contains(emptyToNull(namespace));
+        return this.schemaModel.getNamespaces().contains(XmlNameCodec.emptyToNull(namespace));
     }
 
     public List<ItemType> getNamedGeneralizedAtomicItemTypes() {
@@ -95,13 +103,5 @@ public final class XmlSchemaCatalog {
 
     List<Item> convertTypedValue(XSValue schemaValue) {
         return this.typedValueConverter.convert(schemaValue);
-    }
-
-    XSModel getSchemaModel() {
-        return this.schemaModel;
-    }
-
-    private static String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
     }
 }
