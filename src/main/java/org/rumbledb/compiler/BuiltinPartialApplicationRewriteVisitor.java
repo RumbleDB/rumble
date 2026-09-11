@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.compiler;
 
 import java.util.*;
@@ -42,14 +57,25 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
     @Override
     public Node visitMainModule(MainModule module, Node argument) {
+        StaticContext previousContext = this.moduleContext;
         this.moduleContext = module.getStaticContext();
-        return super.visitMainModule(module, argument);
+        try {
+            return super.visitMainModule(module, argument);
+        } finally {
+            this.moduleContext = previousContext;
+        }
     }
 
     @Override
     public Node visitLibraryModule(LibraryModule module, Node argument) {
+        StaticContext previousContext = this.moduleContext;
         this.moduleContext = module.getStaticContext();
-        return super.visitLibraryModule(module, argument);
+        try {
+            return super.visitLibraryModule(module, argument);
+        } finally {
+            // Resume resolving constructors in the importing module after visiting this library.
+            this.moduleContext = previousContext;
+        }
     }
 
     private InlineFunctionExpression rewriteBuiltinPartialApplication(
