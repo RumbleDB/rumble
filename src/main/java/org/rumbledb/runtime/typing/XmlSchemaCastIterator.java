@@ -31,7 +31,7 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
-/** Local cast to an imported XML Schema simple type. */
+/** Local cast to an imported simple type or a built-in XML Schema list type. */
 public final class XmlSchemaCastIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Serial

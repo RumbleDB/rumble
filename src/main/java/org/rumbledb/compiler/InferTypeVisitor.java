@@ -915,9 +915,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        XmlSchemaCatalog schemaCatalog = importedSimpleTypeCatalog(expression.getSequenceType(), argument);
-        if (schemaCatalog != null) {
-            checkImportedSimpleTypeCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
+        XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
+        if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
+            checkSchemaCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
             return argument;
         }
@@ -948,10 +948,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        XmlSchemaCatalog schemaCatalog = importedSimpleTypeCatalog(expression.getSequenceType(), argument);
-        if (schemaCatalog != null) {
+        XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
+        if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
             SequenceType expressionType = expression.getMainExpression().getStaticSequenceType();
-            checkImportedSimpleTypeCastOperand(expressionType, expression);
+            checkSchemaCastOperand(expressionType, expression);
 
             if (expressionType.isEmptySequence()) {
                 if (expression.getSequenceType().getArity() != SequenceType.Arity.OneOrZero) {
@@ -1050,12 +1050,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private XmlSchemaCatalog importedSimpleTypeCatalog(SequenceType sequenceType, StaticContext staticContext) {
+    private boolean isSchemaCastTarget(SequenceType sequenceType, XmlSchemaCatalog schemaCatalog) {
         ItemType itemType = sequenceType.getItemType();
-        XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
-        return itemType.hasName() && schemaCatalog != null && schemaCatalog.isImportedSimpleType(itemType.getName())
-                ? schemaCatalog
-                : null;
+        return itemType.hasName() && schemaCatalog.isSchemaCastTarget(itemType.getName());
     }
 
     /**
@@ -1064,7 +1061,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      * The static node types used here do not say whether atomization succeeds or how many
      * atomic values it produces; the runtime checks those properties after atomization.
      */
-    private void checkImportedSimpleTypeCastOperand(SequenceType operandType, Expression expression) {
+    private void checkSchemaCastOperand(SequenceType operandType, Expression expression) {
         basicChecks(operandType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
         if (!operandType.isEmptySequence()
                 && !operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
@@ -2647,8 +2644,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     Name.XS_NS.equals(typeName.getNamespace()) && BuiltinTypesCatalogue.typeExists(typeName);
             XmlSchemaCatalog schemaCatalog =
                     expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
-            boolean importedType = schemaCatalog != null
-                    && schemaCatalog.getTypeDefinition(typeName).isPresent();
+            boolean importedType = schemaCatalog.getTypeDefinition(typeName).isPresent();
             if (!builtInType && !importedType) {
                 throw new SemanticException(
                         "The type " + typeName + " is not defined in the in-scope schema types.",

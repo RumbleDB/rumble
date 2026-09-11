@@ -213,7 +213,7 @@ final class XercesSimpleTypeCaster {
             // This member accepted the value. The union's additional restrictions must also pass.
             try {
                 checkPatterns(schemaType, memberValue.getActualValue().toString());
-                schemaType.validate(convertedContext.forFacetCheckingOnly(), memberValue);
+                schemaType.validate(convertedContext, memberValue);
                 return List.of(converted);
             } catch (InvalidDatatypeValueException exception) {
                 throw castException(typeName, item, metadata);
@@ -306,7 +306,7 @@ final class XercesSimpleTypeCaster {
         checkPatterns(schemaType, sourceValue.getActualValue().toString());
         // Patterns have already been checked against the required text form. Check the remaining
         // restrictions on the parsed value without parsing its text again.
-        schemaType.validate(validationContext.forFacetCheckingOnly(), schemaValue);
+        schemaType.validate(validationContext, schemaValue);
         return schemaValue;
     }
 
@@ -395,27 +395,8 @@ final class XercesSimpleTypeCaster {
 
         private final NamespaceResolver namespaceResolver;
 
-        /**
-         * Whether to run extra checks such as XML ID handling.
-         * Schema restrictions, such as allowed ranges and lengths, remain enabled in either case.
-         */
-        private final boolean extraChecking;
-
         private SimpleTypeValidationContext(NamespaceResolver namespaceResolver) {
-            this(namespaceResolver, true);
-        }
-
-        private SimpleTypeValidationContext(NamespaceResolver namespaceResolver, boolean extraChecking) {
             this.namespaceResolver = namespaceResolver;
-            this.extraChecking = extraChecking;
-        }
-
-        /**
-         * Returns settings for checking restrictions on a value that has already been parsed.
-         * Disables extra checks so Xerces does not repeat work such as recording XML IDs or ID references.
-         */
-        private SimpleTypeValidationContext forFacetCheckingOnly() {
-            return this.extraChecking ? new SimpleTypeValidationContext(this.namespaceResolver, false) : this;
         }
 
         /**
@@ -431,7 +412,8 @@ final class XercesSimpleTypeCaster {
          */
         @Override
         public boolean needExtraChecking() {
-            return this.extraChecking;
+            // Casting has no document-level ID/IDREF/ENTITY constraints.
+            return false;
         }
 
         /**

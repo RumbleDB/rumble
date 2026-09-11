@@ -30,7 +30,7 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
-/** Local castability test for an imported XML Schema simple type. */
+/** Local castability test for an imported simple type or a built-in XML Schema list type. */
 public final class XmlSchemaCastableIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial

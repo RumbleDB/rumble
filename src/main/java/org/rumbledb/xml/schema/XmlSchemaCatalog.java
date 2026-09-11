@@ -74,9 +74,9 @@ public final class XmlSchemaCatalog {
         return this.schemaModel.getNamespaces().contains(XmlNameCodec.emptyToNull(namespace));
     }
 
-    /** Whether a name denotes a user-imported XML Schema simple type. */
-    public boolean isImportedSimpleType(Name name) {
-        if (name == null || Name.XS_NS.equals(name.getNamespace())) {
+    /** Whether the schema caster handles this target (imported simple types and built-in lists). */
+    public boolean isSchemaCastTarget(Name name) {
+        if (name == null || (Name.XS_NS.equals(name.getNamespace()) && !isBuiltInListType(name))) {
             return false;
         }
         return this.getTypeDefinition(name)
@@ -84,13 +84,22 @@ public final class XmlSchemaCatalog {
                 .isPresent();
     }
 
+    private static boolean isBuiltInListType(Name name) {
+        return name != null
+                && Name.XS_NS.equals(name.getNamespace())
+                && switch (name.getLocalName()) {
+                    case "IDREFS", "NMTOKENS", "ENTITIES" -> true;
+                    default -> false;
+                };
+    }
+
     /**
-     * Returns the XDM sequence type produced by casting to an imported simple type.
+     * Returns the XDM sequence type produced by a schema cast.
      * XML Schema list types are cast targets, not XDM item types, so their item type and
      * cardinality describe the list's typed-value sequence.
      */
     public SequenceType getSimpleTypeCastResultType(Name name) {
-        XSSimpleTypeDefinition schemaType = this.importedSimpleType(name);
+        XSSimpleTypeDefinition schemaType = this.simpleType(name);
         if (mayProduceMultipleValues(schemaType)) {
             ItemType itemType = this.typeMapper.getListItemType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
             return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
@@ -103,7 +112,7 @@ public final class XmlSchemaCatalog {
     /** Casts one atomized value with the matching definition from this catalog. */
     public List<Item> castSimpleType(
             Name name, Item item, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
-        return this.simpleTypeCaster.cast(name, this.importedSimpleType(name), item, namespaceResolver, metadata);
+        return this.simpleTypeCaster.cast(name, this.simpleType(name), item, namespaceResolver, metadata);
     }
 
     public List<ItemType> getNamedGeneralizedAtomicItemTypes() {
@@ -144,13 +153,13 @@ public final class XmlSchemaCatalog {
         return this.typedValueConverter.convert(schemaValue);
     }
 
-    private XSSimpleTypeDefinition importedSimpleType(Name name) {
+    private XSSimpleTypeDefinition simpleType(Name name) {
         return this.getTypeDefinition(name)
-                .filter(type -> !Name.XS_NS.equals(name.getNamespace()))
+                .filter(type -> !Name.XS_NS.equals(name.getNamespace()) || isBuiltInListType(name))
                 .filter(XSSimpleTypeDefinition.class::isInstance)
                 .map(XSSimpleTypeDefinition.class::cast)
                 .orElseThrow(
-                        () -> new OurBadException("The type " + name + " is not an imported XML Schema simple type."));
+                        () -> new OurBadException("The type " + name + " is not handled by the XML Schema caster."));
     }
 
     private static boolean mayProduceMultipleValues(XSSimpleTypeDefinition schemaType) {
