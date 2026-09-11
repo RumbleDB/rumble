@@ -263,8 +263,7 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         // Nodes without an explicit annotation have the XDM default xs:untyped.
         String expected = typeName.getLocalName();
-        return Name.XS_NS.equals(typeName.getNamespace())
-                && ("untyped".equals(expected) || "anyType".equals(expected));
+        return Name.XS_NS.equals(typeName.getNamespace()) && ("untyped".equals(expected) || "anyType".equals(expected));
     }
 
     /**
