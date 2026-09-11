@@ -79,7 +79,7 @@ public final class XmlSchemaCatalog {
         if (name == null || Name.XS_NS.equals(name.getNamespace())) {
             return false;
         }
-        return getTypeDefinition(name)
+        return this.getTypeDefinition(name)
                 .filter(XSSimpleTypeDefinition.class::isInstance)
                 .isPresent();
     }
@@ -90,7 +90,7 @@ public final class XmlSchemaCatalog {
      * cardinality describe the list's typed-value sequence.
      */
     public SequenceType getSimpleTypeCastResultType(Name name) {
-        XSSimpleTypeDefinition schemaType = importedSimpleType(name);
+        XSSimpleTypeDefinition schemaType = this.importedSimpleType(name);
         if (mayProduceMultipleValues(schemaType)) {
             ItemType itemType = this.typeMapper.getListItemType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
             return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
@@ -103,7 +103,7 @@ public final class XmlSchemaCatalog {
     /** Casts one atomized value with the matching definition from this catalog. */
     public List<Item> castSimpleType(
             Name name, Item item, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
-        return this.simpleTypeCaster.cast(name, importedSimpleType(name), item, namespaceResolver, metadata);
+        return this.simpleTypeCaster.cast(name, this.importedSimpleType(name), item, namespaceResolver, metadata);
     }
 
     public List<ItemType> getNamedGeneralizedAtomicItemTypes() {
@@ -145,7 +145,7 @@ public final class XmlSchemaCatalog {
     }
 
     private XSSimpleTypeDefinition importedSimpleType(Name name) {
-        return getTypeDefinition(name)
+        return this.getTypeDefinition(name)
                 .filter(type -> !Name.XS_NS.equals(name.getNamespace()))
                 .filter(XSSimpleTypeDefinition.class::isInstance)
                 .map(XSSimpleTypeDefinition.class::cast)
