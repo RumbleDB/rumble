@@ -23,9 +23,11 @@ import java.util.Map.Entry;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
+import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -84,6 +86,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -479,15 +482,36 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        resolveCastTarget(expression.getSequenceType(), argument, expression.getMetadata());
         return argument;
     }
 
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        resolveCastTarget(expression.getSequenceType(), argument, expression.getMetadata());
         return argument;
+    }
+
+    private static void resolveCastTarget(
+            SequenceType sequenceType, StaticContext staticContext, ExceptionMetadata metadata) {
+        // An XSD list is legal as a SingleType cast target, but it is deliberately not an XDM ItemType
+        // and therefore cannot be resolved through InScopeSchemaTypes.
+        ItemType itemType = sequenceType.getItemType();
+        XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
+        if (itemType.hasName() && schemaCatalog != null && !BuiltinTypesCatalogue.typeExists(itemType.getName())) {
+            if (schemaCatalog.isImportedSimpleType(itemType.getName())) {
+                return;
+            }
+            if (schemaCatalog.getTypeDefinition(itemType.getName()).isPresent()) {
+                throw new UnknownCastTypeException(
+                        "The type "
+                                + itemType.getIdentifierString()
+                                + " is not a simple type and cannot be used as a cast target.",
+                        metadata);
+            }
+        }
+        sequenceType.resolve(staticContext, metadata);
     }
 
     @Override

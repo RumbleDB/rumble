@@ -170,7 +170,7 @@ public class DerivedAtomicItemType extends AbstractItemType {
 
     @Override
     public ItemType getCastingPrimitiveType() {
-        return this.isCastingPrimitive() ? this : this.primitiveType;
+        return this.isCastingPrimitive() ? this : this.baseType.getCastingPrimitiveType();
     }
 
     @Override

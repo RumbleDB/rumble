@@ -915,6 +915,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        XmlSchemaCatalog schemaCatalog = importedSimpleTypeCatalog(expression.getSequenceType(), argument);
+        if (schemaCatalog != null) {
+            checkImportedSimpleTypeCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
+            return argument;
+        }
         ItemType itemType = expression.getSequenceType().getItemType();
         if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             throwStaticTypeException(
@@ -941,6 +947,49 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+
+        XmlSchemaCatalog schemaCatalog = importedSimpleTypeCatalog(expression.getSequenceType(), argument);
+        if (schemaCatalog != null) {
+            SequenceType expressionType = expression.getMainExpression().getStaticSequenceType();
+            checkImportedSimpleTypeCastOperand(expressionType, expression);
+
+            if (expressionType.isEmptySequence()) {
+                if (expression.getSequenceType().getArity() != SequenceType.Arity.OneOrZero) {
+                    throwStaticTypeException(
+                            "Empty sequence cannot be cast to a non-optional XML Schema simple type.",
+                            expression.getMetadata());
+                }
+                expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.Zero));
+                return argument;
+            }
+
+            // The operand's arity counts source nodes, but casts constrain the atomic values
+            // produced by atomization. One node can yield zero values (a nilled element),
+            // one value, or multiple values (a schema list). The static node type here does
+            // not distinguish these cases, so the runtime checks the atomized cardinality.
+            boolean nodeOperand = expressionType.getItemType().isNodeItemType();
+            if (!nodeOperand
+                    && !expressionType.isAritySubtypeOf(
+                            expression.getSequenceType().getArity())) {
+                throwStaticTypeException(
+                        "A cast expression operand must contain at most one item.", expression.getMetadata());
+            }
+
+            // Check the type of result will casting to this schema type produce
+            SequenceType resultType = schemaCatalog.getSimpleTypeCastResultType(
+                    expression.getSequenceType().getItemType().getName());
+
+            if (resultType.getArity() == SequenceType.Arity.One
+                    && expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero
+                    && (nodeOperand || expressionType.getArity() != SequenceType.Arity.One)) {
+                // Because getSimpleTypeCastResultType does not take into account the arity of the cast expression,
+                // this if-statement is needed to ensure that the result type is correctly set to OneOrZero when the
+                // cast expression has an optional arity.
+                resultType = new SequenceType(resultType.getItemType(), SequenceType.Arity.OneOrZero);
+            }
+            expression.setStaticSequenceType(resultType);
+            return argument;
+        }
 
         // check at static time for casting errors (note cast only allows for normal or ? arity)
         SequenceType expressionSequenceType = expression.getMainExpression().getStaticSequenceType();
@@ -999,6 +1048,34 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         expression.setStaticSequenceType(castedSequenceType);
         return argument;
+    }
+
+    private XmlSchemaCatalog importedSimpleTypeCatalog(SequenceType sequenceType, StaticContext staticContext) {
+        ItemType itemType = sequenceType.getItemType();
+        XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
+        return itemType.hasName() && schemaCatalog != null && schemaCatalog.isImportedSimpleType(itemType.getName())
+                ? schemaCatalog
+                : null;
+    }
+
+    /**
+     * Accepts atomic operands and nodes whose typed values are atomized at runtime.
+     * A node is not itself atomic, but its typed value can supply atomic cast operands.
+     * The static node types used here do not say whether atomization succeeds or how many
+     * atomic values it produces; the runtime checks those properties after atomization.
+     */
+    private void checkImportedSimpleTypeCastOperand(SequenceType operandType, Expression expression) {
+        basicChecks(operandType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        if (!operandType.isEmptySequence()
+                && !operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                && !operandType.getItemType().isNodeItemType()) {
+            throwStaticTypeException(
+                    "An XML Schema cast operand must be atomic after atomization, found " + operandType,
+                    operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
+                            ? ErrorCode.NonAtomicElementErrorCode
+                            : ErrorCode.AtomizationError,
+                    expression.getMetadata());
+        }
     }
 
     @Override
