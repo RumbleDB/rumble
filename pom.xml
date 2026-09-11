@@ -507,6 +507,10 @@
 
                         <removeUnusedImports/>
                         <formatAnnotations/>
+
+                        <licenseHeader>
+                            <file>${project.basedir}/license/header.txt</file>
+                        </licenseHeader>
                     </java>
                     <antlr4>
                         <includes>

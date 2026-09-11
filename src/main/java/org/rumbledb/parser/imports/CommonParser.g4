@@ -892,38 +892,163 @@ keyword
    | keywordNotOKForFunction
    ;
 
+keywordOKForFunction
+   // These keywords do not conflict with function syntax, including decimal-format properties.
+   : dialectKeywordOKForFunction
+   | DFPropertyName
+   | KW_AFTER
+   | KW_ALLOWING
+   | KW_ANCESTOR
+   | KW_ANCESTOR_OR_SELF
+   | KW_AND
+   | KW_APPEND
+   | KW_AS
+   | KW_ASCENDING
+   | KW_AT
+   | KW_BASE_URI
+   | KW_BEFORE
+   | KW_BINARY
+   | KW_BOUNDARY_SPACE
+   | KW_BREAK
+   | KW_BY
+   | KW_CASE
+   | KW_CAST
+   | KW_CASTABLE
+   | KW_CATCH
+   | KW_CHILD
+   | KW_COLLATION
+   | KW_COLLECTION
+   | KW_CONSTRUCTION
+   | KW_CONTEXT
+   | KW_CONTINUE
+   | KW_COPY
+   | KW_COPY_NS
+   | KW_COUNT
+   | KW_CREATE
+   | KW_DECIMAL_FORMAT
+   | KW_DECLARE
+   | KW_DEFAULT
+   | KW_DELETE
+   | KW_DELTA_FILE
+   | KW_DESCENDANT
+   | KW_DESCENDANT_OR_SELF
+   | KW_DESCENDING
+   | KW_DIV
+   | KW_DOCUMENT
+   | KW_EDIT
+   | KW_ELSE
+   | KW_EMPTY
+   | KW_ENCODING
+   | KW_END
+   | KW_EQ
+   | KW_EVERY
+   | KW_EXCEPT
+   | KW_EXIT
+   | KW_EXTERNAL
+   | KW_FIRST
+   | KW_FOLLOWING
+   | KW_FOLLOWING_SIBLING
+   | KW_FOR
+   | KW_FROM
+   | KW_GE
+   | KW_GREATEST
+   | KW_GROUP
+   | KW_GT
+   | KW_ICEBERG_TABLE
+   | KW_IDIV
+   | KW_IMPORT
+   | KW_IN
+   | KW_INHERIT
+   | KW_INSERT
+   | KW_INSTANCE
+   | KW_INTERSECT
+   | KW_INTO
+   | KW_IS
+   | KW_JSON
+   | KW_LAST
+   | KW_LAX
+   | KW_LE
+   | KW_LEAST
+   | KW_LET
+   | KW_LOOP
+   | KW_LT
+   | KW_MOD
+   | KW_MODIFY
+   | KW_MODULE
+   | KW_NAMESPACE
+   | KW_NE
+   | KW_NEXT
+   | KW_NO_INHERIT
+   | KW_NO_PRESERVE
+   | KW_OF
+   | KW_ONLY
+   | KW_OPTION
+   | KW_OR
+   | KW_ORDER
+   | KW_ORDERED
+   | KW_ORDERING
+   | KW_PARENT
+   | KW_POSITION
+   | KW_PRECEDING
+   | KW_PRECEDING_SIBLING
+   | KW_PRESERVE
+   | KW_PREVIOUS
+   | KW_RENAME
+   | KW_REPLACE
+   | KW_RETURN
+   | KW_RETURNING
+   | KW_SATISFIES
+   | KW_SCHEMA
+   | KW_SELF
+   | KW_SLIDING
+   | KW_SOME
+   | KW_STABLE
+   | KW_START
+   | KW_STATICALLY
+   | KW_STRICT
+   | KW_STRIP
+   | KW_TABLE
+   | KW_THEN
+   | KW_TO
+   | KW_TREAT
+   | KW_TRUNCATE
+   | KW_TRY
+   | KW_TUMBLING
+   | KW_TYPE
+   | KW_UNION
+   | KW_UNORDERED
+   | KW_UPDATING
+   | KW_VALIDATE
+   | KW_VALUE
+   | KW_VARIABLE
+   | KW_VERSION
+   | KW_WHEN
+   | KW_WHERE
+   | KW_WHILE
+   | KW_WINDOW
+   | KW_WITH
+   ;
+
 keywordNotOKForFunction
-   : KW_ATTRIBUTE
+   // XQuery 3.1, A.3 Reserved Function Names: https://www.w3.org/TR/xquery-31/#id-reserved-fn-names
+   : KW_ARRAY
+   | KW_ATTRIBUTE
    | KW_COMMENT
    | KW_DOCUMENT_NODE
    | KW_ELEMENT
    | KW_EMPTY_SEQUENCE
+   | KW_FUNCTION
    | KW_IF
    | KW_ITEM
-   | KW_CONTEXT
+   | KW_MAP
+   | KW_NAMESPACE_NODE
    | KW_NODE
    | KW_PI
    | KW_SCHEMA_ATTR
    | KW_SCHEMA_ELEM
-   | KW_BINARY
+   | KW_SWITCH
    | KW_TEXT
    | KW_TYPESWITCH
-   | KW_SWITCH
-   | KW_NAMESPACE_NODE
-   | KW_TYPE
-   | KW_TUMBLING
-   | KW_TRY
-   | KW_CATCH
-   | KW_ONLY
-   | KW_WHEN
-   | KW_SLIDING
-   | KW_DECIMAL_FORMAT
-   | KW_WINDOW
-   | KW_MAP
-   | KW_END
-   | KW_ALLOWING
-   | KW_ARRAY
-   | DFPropertyName
    ;
 
 uriLiteral

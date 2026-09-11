@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.context;
 
 import java.net.URI;
@@ -43,8 +38,6 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.xml.schema.XmlSchemaCatalog;
-import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 public class StaticContext {
 
@@ -54,7 +47,6 @@ public class StaticContext {
     private Map<String, String> staticallyKnownNamespaces;
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private InScopeSchemaTypes inScopeSchemaTypes;
-    private XmlSchemaCatalog xmlSchemaCatalog;
 
     @Setter
     private String queryLanguage;
@@ -677,24 +669,6 @@ public class StaticContext {
             return this.parent.getInScopeSchemaTypes();
         }
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
-    }
-
-    /** Returns the module's catalog, lazily loading built-in schemas when none were imported. */
-    public XmlSchemaCatalog getXmlSchemaCatalog() {
-        if (this.parent != null) {
-            return this.parent.getXmlSchemaCatalog();
-        }
-        if (this.xmlSchemaCatalog == null) {
-            this.xmlSchemaCatalog = XmlSchemaCatalogLoader.loadBuiltInCatalog();
-        }
-        return this.xmlSchemaCatalog;
-    }
-
-    public void setXmlSchemaCatalog(XmlSchemaCatalog xmlSchemaCatalog) {
-        if (this.parent != null) {
-            throw new OurBadException("An XML Schema catalog can only be set on a module context.");
-        }
-        this.xmlSchemaCatalog = xmlSchemaCatalog;
     }
 
     public boolean getIsAssignable(Name name) {
