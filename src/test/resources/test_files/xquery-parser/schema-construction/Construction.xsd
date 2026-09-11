@@ -1,0 +1,10 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:t="urn:construction"
+ targetNamespace="urn:construction" elementFormDefault="qualified">
+ <xs:element name="root"><xs:complexType><xs:sequence>
+  <xs:element name="value" type="xs:integer"/>
+  <xs:element name="nil" type="xs:integer" nillable="true"/>
+ </xs:sequence><xs:attribute name="number" type="xs:integer"/><xs:attribute name="key" type="xs:ID"/>
+ <xs:attribute name="refs" type="xs:IDREFS"/></xs:complexType></xs:element>
+ <xs:element name="qname" type="xs:QName"/>
+ <xs:element name="holder"><xs:complexType><xs:attribute name="q" type="xs:QName"/></xs:complexType></xs:element>
+</xs:schema>

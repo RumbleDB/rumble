@@ -148,9 +148,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
                         textAccumulator = null;
                     }
                     contentSequence.add(
-                            item.isNode()
-                                    ? NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext)
-                                    : item);
+                            item.isNode() ? NodeConstructionUtils.copyNode(item, this.staticContext) : item);
                     previousItemWasAtomic = false;
                 }
             }

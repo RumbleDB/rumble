@@ -376,12 +376,25 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         List<OptionDeclaration> optionDeclarations = new ArrayList<>();
         List<SetterContext> setters = ctx.setter();
+        boolean constructionSet = false;
         boolean emptyOrderSet = false;
         boolean boundarySpaceSet = false;
         boolean copyNamespacesSet = false;
         boolean defaultCollationSet = false;
         boolean baseURISet = false;
         for (SetterContext setterContext : setters) {
+            if (setterContext.constructionDecl() != null) {
+                if (constructionSet) {
+                    throw new SemanticException(
+                            "The construction mode was already set.",
+                            ErrorCode.MoreThanOneConstructionDeclarationErrorCode,
+                            createMetadataFromContext(setterContext.constructionDecl()));
+                }
+                this.moduleContext.setConstructionPreserve(
+                        setterContext.constructionDecl().type.getType() == JsoniqParser.KW_PRESERVE);
+                constructionSet = true;
+                continue;
+            }
             if (setterContext.boundarySpaceDecl() != null) {
                 if (boundarySpaceSet) {
                     throw new MoreThanOneBoundarySpaceDeclarationException(

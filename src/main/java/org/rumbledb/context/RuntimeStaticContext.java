@@ -102,6 +102,9 @@ public class RuntimeStaticContext implements Serializable {
     private final boolean isQuerySideEffecting;
 
     @Builder.Default
+    private final boolean constructionPreserve = false;
+
+    @Builder.Default
     private final boolean copyNamespacesPreserve = true;
 
     @Builder.Default
@@ -172,6 +175,7 @@ public class RuntimeStaticContext implements Serializable {
                 .defaultDecimalFormat(staticContext.getDefaultDecimalFormat())
                 .decimalFormats(staticContext.getDecimalFormats())
                 .isQuerySideEffecting(staticContext.isQuerySideEffecting())
+                .constructionPreserve(staticContext.isConstructionPreserve())
                 .copyNamespacesPreserve(staticContext.isCopyNamespacesPreserve())
                 .copyNamespacesInherit(staticContext.isCopyNamespacesInherit());
     }
