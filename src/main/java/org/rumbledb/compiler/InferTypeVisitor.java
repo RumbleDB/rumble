@@ -31,6 +31,7 @@ import lombok.extern.log4j.Log4j2;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.ConstructorFunctionResolver;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -854,6 +855,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<SequenceType> partialParams = new ArrayList<>();
         int paramsLength = parameterExpressions.size();
 
+        boolean constructorCall =
+                ConstructorFunctionResolver.resolve(expression.getFunctionIdentifier(), expression.getStaticContext())
+                        != null;
         // check arguments are of correct type
         for (int i = 0; i < paramsLength; ++i) {
             if (parameterExpressions.get(i) != null) {
@@ -863,7 +867,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
                 SequenceType expectedType = parameterTypes.get(i);
                 // check actual parameters is either a subtype of or can be promoted to expected type
-                if (!actualType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
+                // Constructor arguments undergo atomization. A node's static type does not
+                // describe its typed-value cardinality, so runtime argument conversion checks it.
+                boolean atomizedConstructorArgument =
+                        constructorCall && actualType.getItemType().isNodeItemType();
+                if (!atomizedConstructorArgument && !actualType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
                     throwStaticTypeException(
                             "Argument " + i + " requires " + expectedType + " but " + actualType + " was found",
                             expression.getMetadata());
@@ -894,6 +902,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
                         SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
                         if (argumentType != null
+                                && !argumentType.getItemType().isNodeItemType()
                                 && argumentType.getArity().equals(SequenceType.Arity.One)
                                 && returnType.getArity().equals(SequenceType.Arity.OneOrZero)) {
                             returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.One);
