@@ -2317,6 +2317,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     attributeName,
                     typeName,
                     this.moduleContext
+                            .getInScopeSchemaTypes()
                             .getXmlSchemaCatalog()
                             .getTypeHierarchy(typeName, createMetadataFromContext(attributeTestContext)));
         }
@@ -2362,6 +2363,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 elementName,
                 typeName,
                 this.moduleContext
+                        .getInScopeSchemaTypes()
                         .getXmlSchemaCatalog()
                         .getTypeHierarchy(typeName, createMetadataFromContext(elementTestContext)),
                 elementTestContext.optional != null);
