@@ -45,12 +45,14 @@ final class XmlSchemaTypeMapper {
     private final XercesBuiltinAtomicTypeMapper builtinTypeMapper;
     private final Map<XSTypeDefinition, Optional<ItemType>> mappedTypes;
     private final Map<XSTypeDefinition, XmlSchemaTypeAnnotation> mappedAnnotations;
+    private final Map<XSTypeDefinition, Name> anonymousTypeNames;
     private final Set<XSTypeDefinition> typesBeingMapped;
 
     XmlSchemaTypeMapper() {
         this.builtinTypeMapper = new XercesBuiltinAtomicTypeMapper();
         this.mappedTypes = new IdentityHashMap<>();
         this.mappedAnnotations = new IdentityHashMap<>();
+        this.anonymousTypeNames = new IdentityHashMap<>();
         this.typesBeingMapped = Collections.newSetFromMap(new IdentityHashMap<>());
     }
 
@@ -116,7 +118,7 @@ final class XmlSchemaTypeMapper {
             return Optional.empty();
         }
 
-        Name name = declaredNameOf(simpleType);
+        Name name = nameOf(simpleType);
         if (simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_ATOMIC) {
             /**
              * VARIETY_ATOMIC means the XML Schema simple type represents exactly one indivisible value.
@@ -174,10 +176,7 @@ final class XmlSchemaTypeMapper {
      * @return
      */
     private XmlSchemaTypeAnnotation createTypeAnnotation(XSTypeDefinition schemaType) {
-        Name name = declaredNameOf(schemaType);
-        if (name == null) {
-            name = new Name(ANONYMOUS_TYPE_NAMESPACE, null, "anonymousType-" + UUID.randomUUID());
-        }
+        Name name = nameOf(schemaType);
 
         List<Name> hierarchy = new ArrayList<>();
         hierarchy.add(name);
@@ -187,9 +186,8 @@ final class XmlSchemaTypeMapper {
             if (baseType == null || baseType == current) {
                 break;
             }
-            Name baseName = declaredNameOf(baseType);
-            if (baseName != null && !hierarchy.contains(baseName)) {
-                // Ignores anonymous base types and avoids duplicates:
+            Name baseName = nameOf(baseType);
+            if (!hierarchy.contains(baseName)) {
                 hierarchy.add(baseName);
             }
             current = baseType;
@@ -237,9 +235,15 @@ final class XmlSchemaTypeMapper {
         return true;
     }
 
-    private static Name declaredNameOf(XSTypeDefinition schemaType) {
+    /**
+     * Gives each schema definition one name shared by atomic values and node annotations.
+     * Anonymous definitions keep distinct internal names for the lifetime of this catalog;
+     * they are not added to the query's in-scope named schema types.
+     */
+    private Name nameOf(XSTypeDefinition schemaType) {
         if (schemaType.getAnonymous() || schemaType.getName() == null) {
-            return null;
+            return this.anonymousTypeNames.computeIfAbsent(
+                    schemaType, type -> new Name(ANONYMOUS_TYPE_NAMESPACE, null, "anonymousType-" + UUID.randomUUID()));
         }
         String namespace = schemaType.getNamespace();
         return new Name(namespace, Name.XS_NS.equals(namespace) ? "xs" : null, schemaType.getName());
