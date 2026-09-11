@@ -1,20 +1,18 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
@@ -29,7 +27,6 @@ import org.apache.xerces.xs.datatypes.XSQName;
 import lombok.NonNull;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
@@ -154,9 +151,8 @@ final class XercesTypedValueConverter {
             throw new OurBadException("Xerces did not provide an expanded QName value.");
         }
         var qName = qNameValue.getXNIQName();
-        String namespace = emptyToNull(qName.uri);
-        String prefix = emptyToNull(qName.prefix);
-        return ItemFactory.getInstance().createQNameItem(new Name(namespace, prefix, qName.localpart));
+        return ItemFactory.getInstance()
+                .createQNameItem(XmlNameCodec.fromExpandedName(qName.uri, qName.prefix, qName.localpart));
     }
 
     /**
@@ -181,9 +177,5 @@ final class XercesTypedValueConverter {
             throw new OurBadException("Xerces did not provide a normalized lexical value.");
         }
         return normalizedValue;
-    }
-
-    private static String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
     }
 }
