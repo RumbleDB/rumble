@@ -41,9 +41,9 @@ public class AttributeNodeItemType extends AbstractItemType {
     private Name nodeName;
 
     @Getter
-    private Name schemaTypeName;
+    private final Name schemaTypeName;
 
-    private List<Name> schemaTypeHierarchy;
+    private final List<Name> schemaTypeHierarchy;
 
     public AttributeNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("attribute");
@@ -117,11 +117,11 @@ public class AttributeNodeItemType extends AbstractItemType {
             return false;
         }
         if (other.isWildcardAttribute()) {
-            return other.schemaTypeName == null || hasCompatibleSchemaType(other);
+            return other.schemaTypeName == null || this.hasCompatibleSchemaType(other);
         }
         return this.nodeName != null
                 && this.nodeName.equals(other.nodeName)
-                && (other.schemaTypeName == null || hasCompatibleSchemaType(other));
+                && (other.schemaTypeName == null || this.hasCompatibleSchemaType(other));
     }
 
     private boolean hasCompatibleSchemaType(AttributeNodeItemType superType) {

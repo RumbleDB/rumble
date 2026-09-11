@@ -43,10 +43,10 @@ public class ElementNodeItemType extends AbstractItemType {
     @Getter
     private Name schemaTypeName;
 
-    private List<Name> schemaTypeHierarchy;
+    private final List<Name> schemaTypeHierarchy;
 
     @Getter
-    private boolean nillable;
+    private final boolean nillable;
 
     public ElementNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("element");
@@ -124,11 +124,11 @@ public class ElementNodeItemType extends AbstractItemType {
             return false;
         }
         if (other.isWildcardElement()) {
-            return other.schemaTypeName == null || hasCompatibleSchemaType(other);
+            return other.schemaTypeName == null || this.hasCompatibleSchemaType(other);
         }
         return this.nodeName != null
                 && this.nodeName.equals(other.nodeName)
-                && (other.schemaTypeName == null || hasCompatibleSchemaType(other));
+                && (other.schemaTypeName == null || this.hasCompatibleSchemaType(other));
     }
 
     private boolean hasCompatibleSchemaType(ElementNodeItemType superType) {
