@@ -1,20 +1,18 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
@@ -69,12 +67,11 @@ public final class XmlSchemaCatalog {
     }
 
     public Optional<XSTypeDefinition> getTypeDefinition(@NonNull Name name) {
-        return Optional.ofNullable(
-                this.schemaModel.getTypeDefinition(name.getLocalName(), emptyToNull(name.getNamespace())));
+        return Optional.ofNullable(this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace()));
     }
 
     public boolean containsNamespace(String namespace) {
-        return this.schemaModel.getNamespaces().contains(emptyToNull(namespace));
+        return this.schemaModel.getNamespaces().contains(XmlNameCodec.emptyToNull(namespace));
     }
 
     /** Whether the schema caster handles this target (imported simple types and built-in lists). */
@@ -82,7 +79,7 @@ public final class XmlSchemaCatalog {
         if (name == null || (Name.XS_NS.equals(name.getNamespace()) && !isBuiltInListType(name))) {
             return false;
         }
-        return getTypeDefinition(name)
+        return this.getTypeDefinition(name)
                 .filter(XSSimpleTypeDefinition.class::isInstance)
                 .isPresent();
     }
@@ -102,7 +99,7 @@ public final class XmlSchemaCatalog {
      * cardinality describe the list's typed-value sequence.
      */
     public SequenceType getSimpleTypeCastResultType(Name name) {
-        XSSimpleTypeDefinition schemaType = simpleType(name);
+        XSSimpleTypeDefinition schemaType = this.simpleType(name);
         if (mayProduceMultipleValues(schemaType)) {
             ItemType itemType = this.typeMapper.getListItemType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
             return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
@@ -134,7 +131,7 @@ public final class XmlSchemaCatalog {
     /** Casts one atomized value with the matching definition from this catalog. */
     public List<Item> castSimpleType(
             Name name, Item item, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
-        return this.simpleTypeCaster.cast(name, simpleType(name), item, namespaceResolver, metadata);
+        return this.simpleTypeCaster.cast(name, this.simpleType(name), item, namespaceResolver, metadata);
     }
 
     public List<ItemType> getNamedGeneralizedAtomicItemTypes() {
@@ -176,7 +173,7 @@ public final class XmlSchemaCatalog {
     }
 
     private XSSimpleTypeDefinition simpleType(Name name) {
-        return getTypeDefinition(name)
+        return this.getTypeDefinition(name)
                 .filter(type -> !Name.XS_NS.equals(name.getNamespace()) || isBuiltInListType(name))
                 .filter(XSSimpleTypeDefinition.class::isInstance)
                 .map(XSSimpleTypeDefinition.class::cast)
@@ -199,9 +196,5 @@ public final class XmlSchemaCatalog {
             }
         }
         return false;
-    }
-
-    private static String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
     }
 }

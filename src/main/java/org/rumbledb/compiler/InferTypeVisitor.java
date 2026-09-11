@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.compiler;
 
 import java.net.URI;
@@ -899,7 +914,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        XmlSchemaCatalog schemaCatalog = argument.getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
         if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
             checkSchemaCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
@@ -932,7 +947,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        XmlSchemaCatalog schemaCatalog = argument.getXmlSchemaCatalog();
+        XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
         if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
             SequenceType expressionType = expression.getMainExpression().getStaticSequenceType();
             checkSchemaCastOperand(expressionType, expression);
@@ -947,7 +962,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 return argument;
             }
 
-            if (!expressionType.isAritySubtypeOf(expression.getSequenceType().getArity())) {
+            // The operand's arity counts source nodes, but casts constrain the atomic values
+            // produced by atomization. One node can yield zero values (a nilled element),
+            // one value, or multiple values (a schema list). The static node type here does
+            // not distinguish these cases, so the runtime checks the atomized cardinality.
+            boolean nodeOperand = expressionType.getItemType().isNodeItemType();
+            if (!nodeOperand
+                    && !expressionType.isAritySubtypeOf(
+                            expression.getSequenceType().getArity())) {
                 throwStaticTypeException(
                         "A cast expression operand must contain at most one item.", expression.getMetadata());
             }
@@ -958,7 +980,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
             if (resultType.getArity() == SequenceType.Arity.One
                     && expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero
-                    && expressionType.getArity() != SequenceType.Arity.One) {
+                    && (nodeOperand || expressionType.getArity() != SequenceType.Arity.One)) {
                 // Because getSimpleTypeCastResultType does not take into account the arity of the cast expression,
                 // this if-statement is needed to ensure that the result type is correctly set to OneOrZero when the
                 // cast expression has an optional arity.
@@ -1033,15 +1055,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     /**
-     * Checks the static type of the input expression
-     *
-     * If the operand is not empty, checks that its inferred item type is a subtype of atomicItem.
-     * Otherwise, it reports an atomization-related type error.
+     * Accepts atomic operands and nodes whose typed values are atomized at runtime.
+     * A node is not itself atomic, but its typed value can supply atomic cast operands.
+     * The static node types used here do not say whether atomization succeeds or how many
+     * atomic values it produces; the runtime checks those properties after atomization.
      */
     private void checkSchemaCastOperand(SequenceType operandType, Expression expression) {
         basicChecks(operandType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
         if (!operandType.isEmptySequence()
-                && !operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+                && !operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                && !operandType.getItemType().isNodeItemType()) {
             throwStaticTypeException(
                     "An XML Schema cast operand must be atomic after atomization, found " + operandType,
                     operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
@@ -2618,7 +2641,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             Name typeName = expression.getTypeName();
             boolean builtInType =
                     Name.XS_NS.equals(typeName.getNamespace()) && BuiltinTypesCatalogue.typeExists(typeName);
-            XmlSchemaCatalog schemaCatalog = expression.getStaticContext().getXmlSchemaCatalog();
+            XmlSchemaCatalog schemaCatalog =
+                    expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
             boolean importedType = schemaCatalog.getTypeDefinition(typeName).isPresent();
             if (!builtInType && !importedType) {
                 throw new SemanticException(
