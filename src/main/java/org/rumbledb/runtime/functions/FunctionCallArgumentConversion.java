@@ -113,7 +113,7 @@ public final class FunctionCallArgumentConversion {
             String exceptionMessage,
             RuntimeStaticContext runtimeStaticContext) {
         ItemType targetItemType = sequenceType.getItemType();
-        if (targetItemType.isAtomicItemType()
+        if (isGeneralizedAtomicType(targetItemType)
                 && !argumentIterator
                         .getRuntimeStaticContext()
                         .getStaticType()
@@ -122,7 +122,7 @@ public final class FunctionCallArgumentConversion {
             argumentIterator =
                     new DataFunctionIterator(Collections.singletonList(argumentIterator), runtimeStaticContext);
         }
-        if (targetItemType.isAtomicItemType()) {
+        if (isGeneralizedAtomicType(targetItemType)) {
             argumentIterator = new FunctionUntypedAtomicCastIterator(
                     argumentIterator, targetItemType, exceptionMessage, runtimeStaticContext);
         }
@@ -135,7 +135,7 @@ public final class FunctionCallArgumentConversion {
             String exceptionMessage,
             RuntimeStaticContext runtimeStaticContext) {
         ItemType targetItemType = sequenceType.getItemType();
-        if (targetItemType.isAtomicItemType()
+        if (isGeneralizedAtomicType(targetItemType)
                 && !argumentIterator
                         .getRuntimeStaticContext()
                         .getStaticType()
@@ -149,7 +149,14 @@ public final class FunctionCallArgumentConversion {
                 sequenceType,
                 exceptionMessage,
                 runtimeStaticContext,
-                targetItemType.isAtomicItemType() ? targetItemType : null);
+                isGeneralizedAtomicType(targetItemType) ? targetItemType : null);
+    }
+
+    /** Schema imports expose only pure unions as item types; structured unions must not be atomized. */
+    private static boolean isGeneralizedAtomicType(ItemType type) {
+        return type.isAtomicItemType()
+                || (type.isUnionType()
+                        && type.getTypes().stream().allMatch(FunctionCallArgumentConversion::isGeneralizedAtomicType));
     }
 
     public static boolean isAtMostOne(SequenceType sequenceType) {

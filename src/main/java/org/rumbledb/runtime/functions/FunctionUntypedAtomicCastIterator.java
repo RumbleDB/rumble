@@ -44,7 +44,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 /**
- * Function conversion step for arguments: cast runtime xs:untypedAtomic values to the requested atomic type
+ * Function conversion step for arguments: cast runtime xs:untypedAtomic values to the requested generalized atomic type
  * before the generic type-promotion layer runs. Non-untyped values flow through unchanged.
  */
 public class FunctionUntypedAtomicCastIterator extends ItemRuntimePlan
@@ -115,7 +115,7 @@ public class FunctionUntypedAtomicCastIterator extends ItemRuntimePlan
             if (item.getDynamicType().isSubtypeOf(this.targetType)) {
                 return item;
             }
-            if (isQNameLikeTargetType(this.targetType) || isNotationLikeTargetType(this.targetType)) {
+            if (isNamespaceSensitiveTargetType(this.targetType)) {
                 throw invalidQNameOrNotationConversion(item);
             }
 
@@ -143,6 +143,13 @@ public class FunctionUntypedAtomicCastIterator extends ItemRuntimePlan
                     + " cannot be implicitly converted to type "
                     + this.targetType
                     + ".";
+        }
+
+        private static boolean isNamespaceSensitiveTargetType(ItemType type) {
+            return isQNameLikeTargetType(type)
+                    || isNotationLikeTargetType(type)
+                    || (type.isUnionType()
+                            && type.getTypes().stream().anyMatch(UntypedAtomicCaster::isNamespaceSensitiveTargetType));
         }
 
         private static boolean isQNameLikeTargetType(ItemType itemType) {
