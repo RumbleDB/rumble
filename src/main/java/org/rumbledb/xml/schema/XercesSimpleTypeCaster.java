@@ -1,20 +1,18 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
@@ -46,7 +44,11 @@ import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
 import org.rumbledb.types.ItemType;
 
-/** Applies one Xerces simple type to an atomic XDM value. */
+/**
+ * Casts values to simple types defined in an imported XML Schema (XSD).
+ * Uses RumbleDB to convert values and Xerces to check schema restrictions, such as number ranges
+ * and text patterns. Supports single values (atomic types), lists, and unions of allowed types.
+ */
 final class XercesSimpleTypeCaster {
 
     @NonNull private final XmlSchemaTypeMapper typeMapper;
@@ -59,6 +61,11 @@ final class XercesSimpleTypeCaster {
         this.typedValueConverter = typedValueConverter;
     }
 
+    /**
+     * Takes one atomic value, such as a string or number, and chooses the casting method for the
+     * target type: atomic, list, or union. Any XML node must already have been replaced by its value.
+     * Returns a list of items because casting to a schema list type can produce several values.
+     */
     List<Item> cast(
             @NonNull Name typeName,
             @NonNull XSSimpleTypeDefinition schemaType,
@@ -83,6 +90,11 @@ final class XercesSimpleTypeCaster {
         };
     }
 
+    /**
+     * Converts the input to a single typed value, such as an integer with a minimum allowed value.
+     * Xerces parses string and untyped text inputs. RumbleDB converts other inputs, and Xerces checks
+     * any remaining schema restrictions. If the input already has exactly the target type, returns it unchanged.
+     */
     private List<Item> castAtomic(
             Name typeName,
             XSSimpleType schemaType,
@@ -119,6 +131,11 @@ final class XercesSimpleTypeCaster {
         return List.of(converted);
     }
 
+    /**
+     * Converts text such as "10 20" into a sequence of values using the schema's list definition.
+     * Accepts only strings or xs:untypedAtomic values (text without a specific schema type),
+     * and checks list restrictions such as the required number of values.
+     */
     private List<Item> castList(
             Name typeName,
             XSSimpleType schemaType,
@@ -132,6 +149,13 @@ final class XercesSimpleTypeCaster {
         return validate(typeName, schemaType, item.getStringValue(), item, validationContext, metadata);
     }
 
+    /**
+     * Casts to a union, which allows a value to have one of several member types.
+     * For strings and untyped text, Xerces chooses the matching member. For other values, an existing
+     * member type can be used directly when the union qualifies as a pure union (see the check below).
+     * Otherwise, tries the atomic member types in schema order. Once a member succeeds, the value
+     * must also satisfy the union's own restrictions; failure at that point ends the cast.
+     */
     private List<Item> castUnion(
             Name typeName,
             XSSimpleType schemaType,
@@ -146,7 +170,8 @@ final class XercesSimpleTypeCaster {
         List<XSSimpleType> atomicMemberTypes = new ArrayList<>();
         collectAtomicMemberTypes(schemaType, atomicMemberTypes);
 
-        // Only pure unions support the subtype shortcut; restricted unions must try members in order.
+        // The mapper recognizes pure unions: unions of atomic types without extra union restrictions.
+        // For these, an input that already belongs to a member type can use that member directly.
         boolean pureUnion = this.typeMapper.mapGeneralizedAtomicType(schemaType).isPresent();
         for (XSSimpleType memberType : atomicMemberTypes) {
             ItemType memberItemType =
@@ -156,15 +181,17 @@ final class XercesSimpleTypeCaster {
             }
         }
 
-        // Try castable atomic union members in declaration order.
+        // Try each atomic member in the order written in the schema; skip members that reject the value.
         for (XSSimpleType memberType : atomicMemberTypes) {
             ItemType itemType =
                     this.typeMapper.mapGeneralizedAtomicType(memberType).orElse(null);
             if (itemType == null || !itemType.isAtomicItemType()) {
+                // Cannot find corresponding RumbleDB type for this member; skip it
                 continue;
             }
             Item converted;
             try {
+                // Try converting the original input to the member type.
                 converted = CastIterator.castItemToType(item, itemType, metadata, namespaceResolver);
             } catch (CastException | UnexpectedTypeException | NoNamespaceFoundForPrefixException exception) {
                 continue;
@@ -182,7 +209,8 @@ final class XercesSimpleTypeCaster {
             } catch (InvalidDatatypeValueException exception) {
                 continue;
             }
-            // Once a member cast succeeds, failure of the union's own facets fails the whole cast.
+
+            // This member accepted the value. The union's additional restrictions must also pass.
             try {
                 checkPatterns(schemaType, memberValue.getActualValue().toString());
                 schemaType.validate(convertedContext, memberValue);
@@ -194,6 +222,10 @@ final class XercesSimpleTypeCaster {
         throw castException(typeName, item, metadata);
     }
 
+    /**
+     * Asks Xerces to parse the input text and check it against the target schema type.
+     * Converts the result into RumbleDB items and reports validation failures as query errors.
+     */
     private List<Item> validate(
             Name typeName,
             XSSimpleType schemaType,
@@ -208,6 +240,10 @@ final class XercesSimpleTypeCaster {
         }
     }
 
+    /**
+     * Turns a Xerces validation error into a RumbleDB query error. Keeps missing namespace prefixes
+     * as a distinct error; other failures report that the input cannot be cast to the target type.
+     */
     private static RumbleException validationException(
             InvalidDatatypeValueException exception, Name typeName, Item sourceItem, ExceptionMetadata metadata) {
         if ("UndeclaredPrefix".equals(exception.getKey())) {
@@ -216,9 +252,13 @@ final class XercesSimpleTypeCaster {
         return castException(typeName, sourceItem, metadata);
     }
 
+    /**
+     * Checks whether the text matches each pattern returned by the schema type.
+     * Uses XML Schema regular-expression syntax. This separate check is needed because Xerces's
+     * validation of an already parsed value does not check text patterns.
+     */
     private static void checkPatterns(XSSimpleType schemaType, String lexical) throws InvalidDatatypeValueException {
-        // Xerces validate(context, value) checks value facets only. Check patterns separately to
-        // preserve the selected atomic member instead of parsing the value as the union again.
+        // Check the text directly so Xerces does not parse the union again and choose a different member.
         StringList patterns = schemaType.getLexicalPattern();
         for (int index = 0; index < patterns.getLength(); index++) {
             String pattern = patterns.item(index);
@@ -229,6 +269,14 @@ final class XercesSimpleTypeCaster {
         }
     }
 
+    /**
+     * Checks schema restrictions after RumbleDB has converted a value.
+     * Number ranges and other value restrictions are checked against the converted value. Text patterns
+     * are checked against a canonical form: the standard text representation produced by Xerces.
+     * Uses the source value's form when source and target share a casting primitive (the basic type
+     * used by the casting rules); otherwise, first converts the source to the target's casting primitive.
+     * Returns the converted value in Xerces's representation after the checks succeed.
+     */
     private ValidatedInfo validatedCanonicalValue(
             XSSimpleType schemaType,
             Item source,
@@ -238,8 +286,8 @@ final class XercesSimpleTypeCaster {
             throws InvalidDatatypeValueException {
         SimpleTypeValidationContext validationContext = validationContext(value, namespaceResolver);
         ValidatedInfo schemaValue = validateValue(builtInBaseType(schemaType), lexicalValue(value), validationContext);
-        // F&O casting primitives include integer and the duration subtypes, unlike XSD primitives.
-        // Across casting families, check the canonical form of the converted primitive value.
+        // Use the basic types defined by the query casting rules. These treat integer and the
+        // duration subtypes as casting primitives, although XML Schema does not call them primitives.
         ItemType primitiveType = this.typeMapper
                 .mapGeneralizedAtomicType(schemaType)
                 .orElseThrow()
@@ -256,11 +304,17 @@ final class XercesSimpleTypeCaster {
         ValidatedInfo sourceValue = validateValue(
                 sourceSchemaType, lexicalValue(patternSource), validationContext(patternSource, namespaceResolver));
         checkPatterns(schemaType, sourceValue.getActualValue().toString());
-        // Do not parse as the target again: that would check its patterns against the target's form.
+        // Patterns have already been checked against the required text form. Check the remaining
+        // restrictions on the parsed value without parsing its text again.
         schemaType.validate(validationContext, schemaValue);
         return schemaValue;
     }
 
+    /**
+     * Follows the types that the target was derived from until it reaches a built-in XML Schema type,
+     * such as xs:integer. Parsing with this base type lets the caller check the imported type's
+     * additional restrictions separately.
+     */
     private static XSSimpleType builtInBaseType(XSSimpleType schemaType) {
         XSTypeDefinition current = schemaType;
         while (current != null && !Name.XS_NS.equals(current.getNamespace())) {
@@ -276,6 +330,10 @@ final class XercesSimpleTypeCaster {
         return builtInType;
     }
 
+    /**
+     * Returns the value as text for Xerces to parse. For a QName (a name with a namespace),
+     * returns a name such as "xs:integer", or just the local name when there is no prefix.
+     */
     private static String lexicalValue(Item value) {
         if (!value.isQName()) {
             return value.getStringValue();
@@ -285,6 +343,11 @@ final class XercesSimpleTypeCaster {
         return prefix == null || prefix.isEmpty() ? name.getLocalName() : prefix + ":" + name.getLocalName();
     }
 
+    /**
+     * Provides the namespace lookup Xerces needs when validating a value.
+     * For an existing QName, uses the namespace stored in that value for its own prefix, even if
+     * the query maps that prefix differently. Other prefixes use the supplied namespace lookup.
+     */
     private static SimpleTypeValidationContext validationContext(Item value, NamespaceResolver namespaceResolver) {
         if (!value.isQName() && !value.isNotation()) {
             return new SimpleTypeValidationContext(namespaceResolver);
@@ -295,6 +358,11 @@ final class XercesSimpleTypeCaster {
                 prefix -> qNamePrefix.equals(prefix) ? name.getNamespace() : namespaceResolver.resolvePrefix(prefix));
     }
 
+    /**
+     * Parses text with Xerces and checks it against the given schema type.
+     * Returns both the parsed value and its type information, including the chosen member of a union.
+     * The caller decides how to handle a validation error.
+     */
     private static ValidatedInfo validateValue(
             XSSimpleType schemaType, String lexicalValue, ValidationContext validationContext)
             throws InvalidDatatypeValueException {
@@ -303,6 +371,11 @@ final class XercesSimpleTypeCaster {
         return schemaValue;
     }
 
+    /**
+     * Adds the union's atomic member types to the result in schema order, leaving out list types.
+     * Xerces already expands nested XML Schema 1.0 unions into their members, so this method only
+     * needs to examine one level.
+     */
     private static void collectAtomicMemberTypes(XSSimpleTypeDefinition schemaType, List<XSSimpleType> result) {
         XSObjectList memberTypes = schemaType.getMemberTypes();
         for (int index = 0; index < memberTypes.getLength(); index++) {
@@ -317,6 +390,7 @@ final class XercesSimpleTypeCaster {
         return new CastException("\"" + item.getStringValue() + "\" is not valid for type " + typeName + ".", metadata);
     }
 
+    /** Supplies Xerces with namespace lookups and validation settings for casting a standalone value. */
     private static final class SimpleTypeValidationContext implements ValidationContext {
 
         private final NamespaceResolver namespaceResolver;
@@ -325,60 +399,97 @@ final class XercesSimpleTypeCaster {
             this.namespaceResolver = namespaceResolver;
         }
 
+        /**
+         * Tells Xerces to check restrictions such as ranges, lengths, and lists of allowed values.
+         */
         @Override
         public boolean needFacetChecking() {
             return true;
         }
 
+        /**
+         * Tells Xerces whether to run extra checks, such as XML ID handling, for this call.
+         */
         @Override
         public boolean needExtraChecking() {
             // Casting has no document-level ID/IDREF/ENTITY constraints.
             return false;
         }
 
+        /**
+         * Tells Xerces to handle whitespace as the schema type requires, for example by trimming spaces.
+         */
         @Override
         public boolean needToNormalize() {
             return true;
         }
 
+        /**
+         * Tells Xerces to resolve namespace prefixes when checking QName values such as "xs:integer".
+         */
         @Override
         public boolean useNamespaces() {
             return true;
         }
 
+        /**
+         * Returns false because this cast has no XML document's entity declarations to look up.
+         */
         @Override
         public boolean isEntityDeclared(String name) {
             return false;
         }
 
+        /**
+         * Returns false because this cast has no declarations of entities that refer to non-XML content.
+         */
         @Override
         public boolean isEntityUnparsed(String name) {
             return false;
         }
 
+        /**
+         * Returns false because this cast does not keep track of IDs declared in an XML document.
+         */
         @Override
         public boolean isIdDeclared(String name) {
             return false;
         }
 
+        /**
+         * Ignores ID registration because casting a value does not add an ID to an XML document.
+         */
         @Override
         public void addId(String name) {}
 
+        /**
+         * Ignores ID references because this cast does not track links to IDs in an XML document.
+         */
         @Override
         public void addIdRef(String name) {}
 
+        /**
+         * Returns a shared string instance for equal names and namespace URIs (Java string interning).
+         * Xerces relies on these shared instances when comparing QName parts.
+         */
         @Override
         public String getSymbol(String symbol) {
-            // Xerces QName equality relies on interned local names and namespace URIs.
             return symbol.intern();
         }
 
+        /**
+         * Looks up the namespace URI for a prefix and returns its shared string instance for Xerces.
+         * Returns null when the prefix has no namespace or maps to an empty namespace.
+         */
         @Override
         public String getURI(String prefix) {
             String namespace = this.namespaceResolver.resolvePrefix(prefix);
             return namespace == null || namespace.isEmpty() ? null : getSymbol(namespace);
         }
 
+        /**
+         * Uses Locale.ROOT so Xerces messages do not depend on the machine's default language or region.
+         */
         @Override
         public Locale getLocale() {
             return Locale.ROOT;

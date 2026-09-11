@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.typing;
 
 import java.io.Serial;
@@ -228,39 +223,91 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
         return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
 
+    /**
+     * XQuery 3.1 §2.5.5.3: keep the six forms in specification order.
+     * https://www.w3.org/TR/xquery-31/#id-element-test
+     */
     private static boolean matchesElementTest(ElementNodeItemType test, Item item) {
-        if (!item.isElementNode()
-                || (test.getNodeName() != null && !test.getNodeName().equals(item.nodeName()))) {
+        if (!item.isElementNode()) {
             return false;
         }
-        if (test.getSchemaTypeName() == null) {
+        Name nodeName = test.getNodeName();
+        Name typeName = test.getSchemaTypeName();
+
+        // 1. element() and element(*)
+        if (nodeName == null && typeName == null) {
             return true;
         }
-        boolean nilled = item.nilled().stream().anyMatch(value -> value.getBooleanValue());
-        if (nilled && !test.isNillable()) {
-            return false;
+        // 2. element(N): neither the annotation nor nilled affects this form.
+        if (typeName == null) {
+            return nodeName.equals(item.nodeName());
         }
-        if (item.getSchemaTypeAnnotation() != null) {
-            return test.getSchemaTypeAlternatives().stream().anyMatch(item.getSchemaTypeAnnotation()::isDerivedFrom);
+        // 3. element(N, T): name, derivation, then nilled.
+        if (nodeName != null && !test.isNillable()) {
+            return nodeName.equals(item.nodeName())
+                    && matchesElementTypeAnnotation(test, item)
+                    && item.nilled().stream().noneMatch(value -> value.getBooleanValue());
         }
-        String expected = test.getSchemaTypeName().getLocalName();
-        return Name.XS_NS.equals(test.getSchemaTypeName().getNamespace())
-                && ("untyped".equals(expected) || "anyType".equals(expected));
+        // 4. element(N, T?): name and derivation; nilled is unrestricted.
+        if (nodeName != null) {
+            return nodeName.equals(item.nodeName()) && matchesElementTypeAnnotation(test, item);
+        }
+        // 5. element(*, T): derivation, then nilled.
+        if (!test.isNillable()) {
+            return matchesElementTypeAnnotation(test, item)
+                    && item.nilled().stream().noneMatch(value -> value.getBooleanValue());
+        }
+        // 6. element(*, T?): derivation only.
+        return matchesElementTypeAnnotation(test, item);
     }
 
-    private static boolean matchesAttributeTest(AttributeNodeItemType test, Item item) {
-        if (!item.isAttributeNode()
-                || (test.getNodeName() != null && !test.getNodeName().equals(item.nodeName()))) {
-            return false;
-        }
-        if (test.getSchemaTypeName() == null) {
-            return true;
-        }
+    private static boolean matchesElementTypeAnnotation(ElementNodeItemType test, Item item) {
         if (item.getSchemaTypeAnnotation() != null) {
+            // Declaration tests may also accept annotations derived from a pure union's members.
             return test.getSchemaTypeAlternatives().stream().anyMatch(item.getSchemaTypeAnnotation()::isDerivedFrom);
         }
-        String expected = test.getSchemaTypeName().getLocalName();
-        return Name.XS_NS.equals(test.getSchemaTypeName().getNamespace())
+        // Nodes without an explicit annotation have the XDM default xs:untyped.
+        Name typeName = test.getSchemaTypeName();
+        String expected = typeName.getLocalName();
+        return Name.XS_NS.equals(typeName.getNamespace()) && ("untyped".equals(expected) || "anyType".equals(expected));
+    }
+
+    /**
+     * XQuery 3.1 §2.5.5.5: keep the four forms in specification order.
+     * https://www.w3.org/TR/xquery-31/#id-attribute-test
+     */
+    private static boolean matchesAttributeTest(AttributeNodeItemType test, Item item) {
+        if (!item.isAttributeNode()) {
+            return false;
+        }
+        Name nodeName = test.getNodeName();
+        Name typeName = test.getSchemaTypeName();
+
+        // 1. attribute() and attribute(*)
+        if (nodeName == null && typeName == null) {
+            return true;
+        }
+        // 2. attribute(N): the annotation does not affect this form.
+        if (typeName == null) {
+            return nodeName.equals(item.nodeName());
+        }
+        // 3. attribute(N, T): name, then derivation.
+        if (nodeName != null) {
+            return nodeName.equals(item.nodeName()) && matchesAttributeTypeAnnotation(test, item);
+        }
+        // 4. attribute(*, T): derivation only.
+        return matchesAttributeTypeAnnotation(test, item);
+    }
+
+    private static boolean matchesAttributeTypeAnnotation(AttributeNodeItemType test, Item item) {
+        if (item.getSchemaTypeAnnotation() != null) {
+            // Declaration tests may also accept annotations derived from a pure union's members.
+            return test.getSchemaTypeAlternatives().stream().anyMatch(item.getSchemaTypeAnnotation()::isDerivedFrom);
+        }
+        // Attributes without an explicit annotation have the XDM default xs:untypedAtomic.
+        Name typeName = test.getSchemaTypeName();
+        String expected = typeName.getLocalName();
+        return Name.XS_NS.equals(typeName.getNamespace())
                 && ("untypedAtomic".equals(expected)
                         || "anyAtomicType".equals(expected)
                         || "anySimpleType".equals(expected)
