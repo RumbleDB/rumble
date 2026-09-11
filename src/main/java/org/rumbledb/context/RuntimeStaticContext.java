@@ -161,7 +161,7 @@ public class RuntimeStaticContext implements Serializable {
      */
     public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
         return builder()
-                .xmlSchemaCatalog(staticContext.getXmlSchemaCatalog())
+                .xmlSchemaCatalog(staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog())
                 .staticURI(staticContext.getStaticBaseURI())
                 .staticURIString(staticContext.getStaticBaseUriString())
                 .queryLanguage(staticContext.getQueryLanguage())
