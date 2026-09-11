@@ -1181,10 +1181,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Name fnName = expression.getFunctionName();
         int arity = arguments.size();
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
-        String queryLanguage = expression.getStaticContext().getQueryLanguage();
-
         ItemRuntimePlan runtimeIterator = null;
-        if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
+        if (BuiltinFunctionCatalogue.exists(identifier, expression.getStaticContext())) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                     identifier,
                     arguments,

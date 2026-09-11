@@ -70,6 +70,6 @@ public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntime
         }
 
         FunctionIdentifier id = new FunctionIdentifier(fnName, arity);
-        return NamedFunctionLookup.lookupOrNull(id, context, getConfiguration(), getMetadata());
+        return NamedFunctionLookup.lookupOrNull(id, context, this.staticContext);
     }
 }

@@ -20,9 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.rumbledb.context.ConstructorFunctionResolver;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
@@ -171,6 +173,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+        if (ConstructorFunctionResolver.resolve(expression.getFunctionIdentifier(), argument) != null) {
+            throw new DuplicateFunctionIdentifierException(
+                    expression.getFunctionIdentifier(), declaration.getMetadata());
+        }
         if (expression.getActualReturnType() != null) {
             expression.getActualReturnType().resolve(argument, declaration.getMetadata());
         }

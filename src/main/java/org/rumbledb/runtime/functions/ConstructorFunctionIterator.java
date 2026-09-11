@@ -19,40 +19,45 @@ import java.io.Serial;
 import java.util.List;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.ConstructorFunctionResolver.ResolvedConstructor;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.typing.CastIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.runtime.typing.XmlSchemaCastIterator;
 import org.rumbledb.types.SequenceType;
 
-public class ConstructorFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+/** Executes an already resolved constructor using the cast plan bound to its static context. */
+public class ConstructorFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final ItemRuntimePlan argumentIterator;
-    private final SequenceType targetSequenceType;
+    private final ItemRuntimePlan castPlan;
 
     public ConstructorFunctionIterator(
-            FunctionIdentifier identifier, List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+            ResolvedConstructor constructor, List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
-        ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
-        this.argumentIterator = arguments.get(0);
-        this.targetSequenceType = new SequenceType(targetType, SequenceType.Arity.OneOrZero);
+        if (constructor.usesSchemaCaster()) {
+            this.castPlan = new XmlSchemaCastIterator(
+                    arguments.get(0),
+                    constructor.identifier().getName(),
+                    true,
+                    staticContext.getXmlSchemaCatalog(),
+                    staticContext);
+        } else {
+            SequenceType targetSequenceType = constructor.signature().getReturnType();
+            this.castPlan = new CastIterator(
+                    arguments.get(0),
+                    targetSequenceType,
+                    staticContext.toBuilder().staticType(targetSequenceType).build());
+        }
     }
 
     @Override
-    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        ItemRuntimePlan castPlan = new CastIterator(
-                this.argumentIterator,
-                this.targetSequenceType,
-                this.staticContext.toBuilder()
-                        .staticType(this.targetSequenceType)
-                        .build());
-        return castPlan.materializeFirstOrNull(dynamicContext);
+    public Cursor<Item> createNativeCursor(DynamicContext dynamicContext) {
+        return this.castPlan.getCursor(dynamicContext);
     }
 }

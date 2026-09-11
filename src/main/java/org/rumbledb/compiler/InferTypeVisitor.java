@@ -31,6 +31,7 @@ import lombok.extern.log4j.Log4j2;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.ConstructorFunctionResolver;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -610,7 +611,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function = null;
         FunctionSignature signature = null;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext.getQueryLanguage());
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext);
         if (function != null) {
             signature = function.getSignature();
         } else {
@@ -827,16 +828,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        String queryLanguage = expression.getStaticContext().getQueryLanguage();
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), expression.getStaticContext())) {
             if (expression.isPartialApplication()) {
                 // This should never be reached because partial application on built-in functions should have been
                 // rewritten before
                 throw new UnsupportedFeatureException(
                         "Partial application on built-in functions are not supported.", expression.getMetadata());
             }
-            BuiltinFunction builtinFunction =
-                    BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier(), queryLanguage);
+            BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
+                    expression.getFunctionIdentifier(), expression.getStaticContext());
             if (builtinFunction == null) {
                 throw new UnknownFunctionCallException(
                         expression.getFunctionIdentifier().getName(),
@@ -855,6 +855,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<SequenceType> partialParams = new ArrayList<>();
         int paramsLength = parameterExpressions.size();
 
+        boolean constructorCall =
+                ConstructorFunctionResolver.resolve(expression.getFunctionIdentifier(), expression.getStaticContext())
+                        != null;
         // check arguments are of correct type
         for (int i = 0; i < paramsLength; ++i) {
             if (parameterExpressions.get(i) != null) {
@@ -864,7 +867,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
                 SequenceType expectedType = parameterTypes.get(i);
                 // check actual parameters is either a subtype of or can be promoted to expected type
-                if (!actualType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
+                // Constructor arguments undergo atomization. A node's static type does not
+                // describe its typed-value cardinality, so runtime argument conversion checks it.
+                boolean atomizedConstructorArgument =
+                        constructorCall && actualType.getItemType().isNodeItemType();
+                if (!atomizedConstructorArgument && !actualType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
                     throwStaticTypeException(
                             "Argument " + i + " requires " + expectedType + " but " + actualType + " was found",
                             expression.getMetadata());
@@ -887,14 +894,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 if (returnType == null) {
                     returnType = SequenceType.createSequenceType("item*");
                 }
-                if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)
+                if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), expression.getStaticContext())
                         && parameterExpressions.size() == 1) {
                     BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                            expression.getFunctionIdentifier(), queryLanguage);
+                            expression.getFunctionIdentifier(), expression.getStaticContext());
                     if (builtinFunction != null
                             && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
                         SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
                         if (argumentType != null
+                                && !argumentType.getItemType().isNodeItemType()
                                 && argumentType.getArity().equals(SequenceType.Arity.One)
                                 && returnType.getArity().equals(SequenceType.Arity.OneOrZero)) {
                             returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.One);
