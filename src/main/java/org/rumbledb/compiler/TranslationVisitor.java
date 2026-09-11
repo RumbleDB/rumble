@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.compiler;
 
 import java.math.BigDecimal;
@@ -46,6 +41,7 @@ import lombok.extern.log4j.Log4j2;
 import org.rumbledb.api.Item;
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
@@ -750,6 +746,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         Name name = parseFunctionName(ctx.functionName());
+        FunctionDeclarationValidator.validateFunctionName(name, createMetadataFromContext(ctx.functionName()));
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;
@@ -2521,12 +2518,18 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private ElementNodeItemType getSchemaElementTestAsItemType(JsoniqParser.SchemaElementTestContext ctx) {
         Name name = parseEqName(ctx.elementDeclaration().elementName().eqName(), false, false, false, true);
-        return this.moduleContext.getXmlSchemaCatalog().getSchemaElementTest(name, createMetadataFromContext(ctx));
+        return this.moduleContext
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getSchemaElementTest(name, createMetadataFromContext(ctx));
     }
 
     private ItemType getSchemaAttributeTestAsItemType(JsoniqParser.SchemaAttributeTestContext ctx) {
         Name name = parseEqName(ctx.attributeDeclaration().attributeName().eqName(), false, false, false, false);
-        return this.moduleContext.getXmlSchemaCatalog().getSchemaAttributeTest(name, createMetadataFromContext(ctx));
+        return this.moduleContext
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getSchemaAttributeTest(name, createMetadataFromContext(ctx));
     }
 
     private ElementNodeItemType getElementTestAsItemType(JsoniqParser.ElementTestContext elementTestContext) {
