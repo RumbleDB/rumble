@@ -47,7 +47,20 @@ public class XmlSchemaTypeAnnotation implements Serializable {
 
     public XmlSchemaTypeAnnotation(@NonNull Name name, @NonNull List<Name> typeHierarchy) {
         this.name = name;
-        this.typeHierarchy = List.copyOf(typeHierarchy);
+        List<Name> hierarchy = new ArrayList<>(typeHierarchy);
+        // xs:numeric is an XQuery type absent from Xerces's XML Schema base-type chain.
+        // Normalize here so imported types and built-in validation use the same hierarchy.
+        Name numeric = xsName("numeric");
+        if (!hierarchy.contains(numeric)) {
+            for (String primitive : List.of("decimal", "float", "double")) {
+                int index = hierarchy.indexOf(xsName(primitive));
+                if (index >= 0) {
+                    hierarchy.add(index + 1, numeric);
+                    break;
+                }
+            }
+        }
+        this.typeHierarchy = List.copyOf(hierarchy);
         if (this.typeHierarchy.isEmpty() || !this.name.equals(this.typeHierarchy.get(0))) {
             throw new IllegalArgumentException("A schema type hierarchy must start with the annotated type.");
         }

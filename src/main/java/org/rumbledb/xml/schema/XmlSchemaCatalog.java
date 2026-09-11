@@ -34,8 +34,10 @@ import lombok.NonNull;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -72,6 +74,37 @@ public final class XmlSchemaCatalog {
 
     public boolean containsNamespace(String namespace) {
         return this.schemaModel.getNamespaces().contains(XmlNameCodec.emptyToNull(namespace));
+    }
+
+    /** Returns the named schema type followed by its base-type chain. */
+    public List<Name> getTypeHierarchy(@NonNull Name name, @NonNull ExceptionMetadata metadata) {
+        Optional<XSTypeDefinition> definition = getTypeDefinition(name);
+        // XQuery adds atomic types, such as untypedAtomic and the duration subtypes,
+        // that Xerces's XSD 1.0 catalog does not contain.
+        if (definition.isEmpty() && Name.XS_NS.equals(name.getNamespace()) && BuiltinTypesCatalogue.typeExists(name)) {
+            ItemType itemType = BuiltinTypesCatalogue.getItemTypeByName(name);
+            if (itemType.isAtomicItemType()) {
+                return XmlSchemaTypeAnnotation.forAtomicItemType(itemType).typeHierarchy();
+            }
+        }
+        if (definition.isEmpty() && Name.XS_NS.equals(name.getNamespace()) && "untyped".equals(name.getLocalName())) {
+            return List.of(name, new Name(Name.XS_NS, "xs", "anyType"));
+        }
+        if (definition.isEmpty()
+                && Name.XS_NS.equals(name.getNamespace())
+                && "anyAtomicType".equals(name.getLocalName())) {
+            return List.of(name, new Name(Name.XS_NS, "xs", "anySimpleType"), new Name(Name.XS_NS, "xs", "anyType"));
+        }
+        if (definition.isEmpty() && Name.XS_NS.equals(name.getNamespace()) && "numeric".equals(name.getLocalName())) {
+            return List.of(
+                    name,
+                    new Name(Name.XS_NS, "xs", "anyAtomicType"),
+                    new Name(Name.XS_NS, "xs", "anySimpleType"),
+                    new Name(Name.XS_NS, "xs", "anyType"));
+        }
+        XSTypeDefinition type = definition.orElseThrow(() -> new SemanticException(
+                "Unknown XML Schema type: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata));
+        return this.typeMapper.mapTypeAnnotation(type).typeHierarchy();
     }
 
     /** Whether the schema caster handles this target (imported simple types and built-in lists). */
