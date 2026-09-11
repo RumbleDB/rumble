@@ -1,20 +1,18 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.xml.schema;
 
 import java.util.ArrayDeque;
@@ -46,6 +44,16 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
  * consumes the validated SAX stream and builds a new RumbleDB XML tree.
  */
 final class PsviNodeBuilder extends DefaultHandler {
+    /**
+     * Record type to hold the state of an element while it is being constructed.
+     * This is used to accumulate the children and attributes of the element before it is finalized.
+     */
+    private record ElementFrame(
+            Name name,
+            List<Item> children,
+            List<Item> attributes,
+            Map<String, String> declaredNamespaces,
+            Map<String, String> inScopeNamespaces) {}
 
     private final PSVIProvider psviProvider;
     private final XmlSchemaCatalog catalog;
@@ -86,7 +94,7 @@ final class PsviNodeBuilder extends DefaultHandler {
         this.elements.push(new ElementFrame(
                 XmlNameCodec.fromSax(uri, localName, qualifiedName),
                 new ArrayList<>(),
-                createAttributes(attributes, declaredNamespaces, inScopeNamespaces),
+                this.createAttributes(attributes, declaredNamespaces, inScopeNamespaces),
                 declaredNamespaces,
                 inScopeNamespaces));
         this.pendingNamespaces.clear();
@@ -108,11 +116,11 @@ final class PsviNodeBuilder extends DefaultHandler {
 
     @Override
     public void processingInstruction(String target, String data) {
-        addNode(ItemFactory.getInstance().createXmlProcessingInstructionNode(target, data));
+        this.addNode(ItemFactory.getInstance().createXmlProcessingInstructionNode(target, data));
     }
 
     void comment(String content) {
-        addNode(ItemFactory.getInstance().createXmlCommentNode(content));
+        this.addNode(ItemFactory.getInstance().createXmlCommentNode(content));
     }
 
     @Override
@@ -122,6 +130,7 @@ final class PsviNodeBuilder extends DefaultHandler {
         if (psvi == null || psvi.getTypeDefinition() == null) {
             throw new OurBadException("Xerces did not provide PSVI type information for an element.");
         }
+
         XmlSchemaWhitespaceNormalizer.normalize(frame.children(), psvi);
         Item element =
                 ItemFactory.getInstance().createXmlElementNode(frame.name(), frame.children(), frame.attributes());
@@ -129,8 +138,9 @@ final class PsviNodeBuilder extends DefaultHandler {
             element.addOrReplaceNamespace(
                     ItemFactory.getInstance().createXmlNamespaceNode(namespace.getKey(), namespace.getValue()));
         }
-        setElementSchemaType(element, psvi);
-        addNode(element);
+
+        this.setElementSchemaType(element, psvi);
+        this.addNode(element);
     }
 
     @Override
@@ -153,21 +163,27 @@ final class PsviNodeBuilder extends DefaultHandler {
     private List<Item> createAttributes(
             Attributes attributes, Map<String, String> declaredNamespaces, Map<String, String> inScopeNamespaces) {
         List<Item> result = new ArrayList<>(attributes.getLength());
+
         for (int index = 0; index < attributes.getLength(); index++) {
             AttributePSVI psvi = this.psviProvider.getAttributePSVI(index);
+
             Name name = XmlNameCodec.fromSax(
                     attributes.getURI(index), attributes.getLocalName(index), attributes.getQName(index));
             if (name.getNamespace() != null && name.getPrefix() == null) {
+                // Assign a prefix to the attribute if it has a namespace but no prefix, so that it can be serialized
+                // correctly.
                 name = XmlNameCodec.fromExpandedName(
                         name.getNamespace(),
                         attributePrefix(name.getNamespace(), declaredNamespaces, inScopeNamespaces),
                         name.getLocalName());
             }
+
             XSValue schemaValue = psvi == null ? null : psvi.getSchemaValue();
             String normalizedValue = schemaValue == null ? null : schemaValue.getNormalizedValue();
             Item attribute = ItemFactory.getInstance()
                     .createXmlAttributeNode(
                             name, normalizedValue == null ? attributes.getValue(index) : normalizedValue);
+
             if (psvi != null && psvi.getTypeDefinition() != null && schemaValue != null) {
                 List<Item> typedValue = this.catalog.convertTypedValue(schemaValue);
                 attribute.setSchemaType(this.catalog.getTypeAnnotation(psvi.getTypeDefinition()), typedValue);
@@ -175,6 +191,7 @@ final class PsviNodeBuilder extends DefaultHandler {
             } else if (Name.XML_NS.equals(name.getNamespace()) && "id".equals(name.getLocalName())) {
                 attribute.setXmlSchemaIdentityProperties(true, false);
             }
+
             result.add(attribute);
         }
         return result;
@@ -184,6 +201,7 @@ final class PsviNodeBuilder extends DefaultHandler {
         XSTypeDefinition schemaType = psvi.getTypeDefinition();
         var annotation = this.catalog.getTypeAnnotation(schemaType);
         List<Item> typedValue;
+
         if (psvi.getNil()) {
             typedValue = List.of();
         } else if (schemaType instanceof XSComplexTypeDefinition complexType) {
@@ -198,13 +216,13 @@ final class PsviNodeBuilder extends DefaultHandler {
                     typedValue = List.of(ItemFactory.getInstance().createUntypedAtomicItem(element.getStringValue()));
                     break;
                 case XSComplexTypeDefinition.CONTENTTYPE_SIMPLE:
-                    typedValue = schemaTypedValue(psvi);
+                    typedValue = this.schemaTypedValue(psvi);
                     break;
                 default:
                     throw new OurBadException("Xerces returned an unknown complex-content type.");
             }
         } else {
-            typedValue = schemaTypedValue(psvi);
+            typedValue = this.schemaTypedValue(psvi);
         }
 
         if (typedValue == null) {
@@ -213,6 +231,7 @@ final class PsviNodeBuilder extends DefaultHandler {
             element.setSchemaType(annotation, typedValue);
             setIdentityProperties(element, typedValue);
         }
+
         element.setXmlSchemaNilled(psvi.getNil());
     }
 
@@ -239,14 +258,19 @@ final class PsviNodeBuilder extends DefaultHandler {
         }
     }
 
+    /**
+     * Returns a prefix for an attribute in the given namespace, creating a new prefix if necessary.
+     */
     private static String attributePrefix(
             String namespace, Map<String, String> declaredNamespaces, Map<String, String> inScopeNamespaces) {
         if (namespace == null || namespace.isEmpty()) {
             return null;
         }
+
         if (Name.XML_NS.equals(namespace)) {
             return "xml";
         }
+
         for (Map.Entry<String, String> binding : inScopeNamespaces.entrySet()) {
             if (!binding.getKey().isEmpty() && namespace.equals(binding.getValue())) {
                 return binding.getKey();
@@ -258,15 +282,10 @@ final class PsviNodeBuilder extends DefaultHandler {
         do {
             prefix = "ns" + suffix++;
         } while (inScopeNamespaces.containsKey(prefix));
+
         declaredNamespaces.put(prefix, namespace);
         inScopeNamespaces.put(prefix, namespace);
+
         return prefix;
     }
-
-    private record ElementFrame(
-            Name name,
-            List<Item> children,
-            List<Item> attributes,
-            Map<String, String> declaredNamespaces,
-            Map<String, String> inScopeNamespaces) {}
 }
