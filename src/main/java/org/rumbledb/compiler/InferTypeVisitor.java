@@ -968,7 +968,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // one value, or multiple values (a schema list). The static node type here does
             // not distinguish these cases, so the runtime checks the atomized cardinality.
             boolean nodeOperand = expressionType.getItemType().isNodeItemType();
-            if (!nodeOperand && !expressionType.isAritySubtypeOf(expression.getSequenceType().getArity())) {
+            if (!nodeOperand
+                    && !expressionType.isAritySubtypeOf(
+                            expression.getSequenceType().getArity())) {
                 throwStaticTypeException(
                         "A cast expression operand must contain at most one item.", expression.getMetadata());
             }
