@@ -261,6 +261,10 @@ public class ItemFactory {
         return new AnyURIItem(s);
     }
 
+    public Item createNotationItem(Name name) {
+        return new NotationItem(name);
+    }
+
     public Item createQNameItem(Name name) {
         return new QNameItem(name);
     }
