@@ -57,7 +57,7 @@ public final class XmlSchemaValidator {
                         .getSchemaModel()
                         .getElementDeclaration(
                                 element.nodeName().getLocalName(),
-                                emptyToNull(element.nodeName().getNamespace()))
+                                element.nodeName().getNamespace())
                 == null) {
             throw new ValidateException(
                     "No global XML Schema element declaration is available for " + element.nodeName() + ".",
@@ -75,7 +75,7 @@ public final class XmlSchemaValidator {
                         .getSchemaModel()
                         .getElementDeclaration(
                                 element.nodeName().getLocalName(),
-                                emptyToNull(element.nodeName().getNamespace()))
+                                element.nodeName().getNamespace())
                 == null) {
             rootType = this.catalog
                     .getTypeDefinition(ANY_TYPE)
@@ -172,10 +172,6 @@ public final class XmlSchemaValidator {
                 new InvalidInstanceException("XML Schema validation failed: " + cause.getMessage(), metadata);
         exception.initCause(cause);
         return exception;
-    }
-
-    private static String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
     }
 
     private static final class ThrowingErrorHandler extends DefaultHandler {
