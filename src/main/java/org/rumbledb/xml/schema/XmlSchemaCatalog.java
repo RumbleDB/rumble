@@ -79,8 +79,8 @@ public final class XmlSchemaCatalog {
 
     /** Resolves a global declaration and the substitutions allowed by its blocking constraints. */
     public SchemaElementNodeItemType getSchemaElementTest(Name name, ExceptionMetadata metadata) {
-        XSElementDeclaration declaration =
-                this.schemaModel.getElementDeclaration(name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()));
+        XSElementDeclaration declaration = this.schemaModel.getElementDeclaration(
+                name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()));
         if (declaration == null) {
             throw new SemanticException(
                     "Unknown global schema element: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata);
@@ -112,8 +112,8 @@ public final class XmlSchemaCatalog {
 
     /** Attribute declaration tests have the same matching rules as a named, typed attribute test. */
     public AttributeNodeItemType getSchemaAttributeTest(Name name, ExceptionMetadata metadata) {
-        XSAttributeDeclaration declaration =
-                this.schemaModel.getAttributeDeclaration(name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()));
+        XSAttributeDeclaration declaration = this.schemaModel.getAttributeDeclaration(
+                name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()));
         if (declaration == null) {
             throw new SemanticException(
                     "Unknown global schema attribute: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata);

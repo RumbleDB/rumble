@@ -2356,12 +2356,18 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private ElementNodeItemType getSchemaElementTestAsItemType(XQueryParser.SchemaElementTestContext ctx) {
         Name name = parseEqName(ctx.elementDeclaration().elementName().eqName(), false, false, false, true);
-        return this.moduleContext.getInScopeSchemaTypes().getXmlSchemaCatalog().getSchemaElementTest(name, createMetadataFromContext(ctx));
+        return this.moduleContext
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getSchemaElementTest(name, createMetadataFromContext(ctx));
     }
 
     private ItemType getSchemaAttributeTestAsItemType(XQueryParser.SchemaAttributeTestContext ctx) {
         Name name = parseEqName(ctx.attributeDeclaration().attributeName().eqName(), false, false, false, false);
-        return this.moduleContext.getInScopeSchemaTypes().getXmlSchemaCatalog().getSchemaAttributeTest(name, createMetadataFromContext(ctx));
+        return this.moduleContext
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getSchemaAttributeTest(name, createMetadataFromContext(ctx));
     }
 
     private ElementNodeItemType getElementTestAsItemType(XQueryParser.ElementTestContext elementTestContext) {
