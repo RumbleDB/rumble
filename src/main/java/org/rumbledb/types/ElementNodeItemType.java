@@ -45,6 +45,10 @@ public class ElementNodeItemType extends AbstractItemType {
 
     private final List<Name> schemaTypeHierarchy;
 
+    // Includes member types when the declaration uses a pure union.
+    @Getter
+    private List<Name> schemaTypeAlternatives = List.of();
+
     @Getter
     private final boolean nillable;
 
@@ -75,7 +79,18 @@ public class ElementNodeItemType extends AbstractItemType {
         this.nodeName = nodeName;
         this.schemaTypeName = schemaTypeName;
         this.schemaTypeHierarchy = List.copyOf(schemaTypeHierarchy);
+        this.schemaTypeAlternatives = List.of(schemaTypeName);
         this.nillable = nillable;
+    }
+
+    public ElementNodeItemType(
+            Name nodeName,
+            Name schemaTypeName,
+            List<Name> schemaTypeHierarchy,
+            boolean nillable,
+            List<Name> schemaTypeAlternatives) {
+        this(nodeName, schemaTypeName, schemaTypeHierarchy, nillable);
+        this.schemaTypeAlternatives = List.copyOf(schemaTypeAlternatives);
     }
 
     private boolean isWildcardElement() {
@@ -85,7 +100,12 @@ public class ElementNodeItemType extends AbstractItemType {
     @Override
     protected Object equalityKey() {
         return structuralTypeKey(
-                ElementNodeItemType.class, this.catalogueName, this.nodeName, this.schemaTypeName, this.nillable);
+                ElementNodeItemType.class,
+                this.catalogueName,
+                this.nodeName,
+                this.schemaTypeName,
+                this.nillable,
+                this.schemaTypeAlternatives);
     }
 
     @Override
@@ -120,6 +140,9 @@ public class ElementNodeItemType extends AbstractItemType {
                 || superType.equals(BuiltinTypesCatalogue.nodeItem)) {
             return true;
         }
+        if (superType instanceof SchemaElementNodeItemType) {
+            return false;
+        }
         if (!(superType instanceof ElementNodeItemType other)) {
             return false;
         }
@@ -133,7 +156,7 @@ public class ElementNodeItemType extends AbstractItemType {
 
     private boolean hasCompatibleSchemaType(ElementNodeItemType superType) {
         return this.schemaTypeName != null
-                && this.schemaTypeHierarchy.contains(superType.schemaTypeName)
+                && superType.schemaTypeAlternatives.stream().anyMatch(this.schemaTypeHierarchy::contains)
                 && (!this.nillable || superType.nillable);
     }
 

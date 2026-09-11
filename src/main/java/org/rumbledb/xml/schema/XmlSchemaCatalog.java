@@ -20,7 +20,9 @@ import java.util.List;
 import java.util.Optional;
 import javax.xml.validation.Schema;
 
+import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSConstants;
+import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSObjectList;
@@ -40,8 +42,11 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
+import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SchemaElementNodeItemType;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -70,6 +75,66 @@ public final class XmlSchemaCatalog {
 
     public Optional<XSTypeDefinition> getTypeDefinition(@NonNull Name name) {
         return Optional.ofNullable(this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace()));
+    }
+
+    /** Resolves a global declaration and the substitutions allowed by its blocking constraints. */
+    public SchemaElementNodeItemType getSchemaElementTest(Name name, ExceptionMetadata metadata) {
+        XSElementDeclaration declaration = this.schemaModel.getElementDeclaration(
+                name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()));
+        if (declaration == null) {
+            throw new SemanticException(
+                    "Unknown global schema element: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata);
+        }
+        List<ElementNodeItemType> alternatives = new ArrayList<>();
+        addElementAlternative(declaration, alternatives);
+
+        XSObjectList substitutions = this.schemaModel.getSubstitutionGroup(declaration);
+        for (int i = 0; i < substitutions.getLength(); i++) {
+            addElementAlternative((XSElementDeclaration) substitutions.item(i), alternatives);
+        }
+
+        return new SchemaElementNodeItemType(name, alternatives);
+    }
+
+    private void addElementAlternative(XSElementDeclaration declaration, List<ElementNodeItemType> alternatives) {
+        if (declaration.getAbstract()) {
+            return;
+        }
+
+        XmlSchemaTypeAnnotation annotation = this.typeMapper.mapTypeAnnotation(declaration.getTypeDefinition());
+        alternatives.add(new ElementNodeItemType(
+                new Name(declaration.getNamespace(), null, declaration.getName()),
+                annotation.name(),
+                annotation.typeHierarchy(),
+                declaration.getNillable(),
+                matchingTypeNames(declaration.getTypeDefinition())));
+    }
+
+    /** Attribute declaration tests have the same matching rules as a named, typed attribute test. */
+    public AttributeNodeItemType getSchemaAttributeTest(Name name, ExceptionMetadata metadata) {
+        XSAttributeDeclaration declaration = this.schemaModel.getAttributeDeclaration(
+                name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()));
+        if (declaration == null) {
+            throw new SemanticException(
+                    "Unknown global schema attribute: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata);
+        }
+        XmlSchemaTypeAnnotation annotation = this.typeMapper.mapTypeAnnotation(declaration.getTypeDefinition());
+        return new AttributeNodeItemType(
+                name,
+                annotation.name(),
+                annotation.typeHierarchy(),
+                matchingTypeNames(declaration.getTypeDefinition()));
+    }
+
+    /** A pure union also accepts annotations derived from any of its atomic member types. */
+    private List<Name> matchingTypeNames(XSTypeDefinition definition) {
+        List<Name> names = new ArrayList<>();
+        names.add(this.typeMapper.mapTypeAnnotation(definition).name());
+        this.typeMapper
+                .mapGeneralizedAtomicType(definition)
+                .filter(ItemType::isUnionType)
+                .ifPresent(union -> union.getTypes().forEach(member -> names.add(member.getName())));
+        return List.copyOf(names);
     }
 
     public boolean containsNamespace(String namespace) {
