@@ -15,7 +15,8 @@ return every $check in (
     every $copy in ($direct/t:root, $computed/t:root, $document/t:root) satisfies (
         data($copy/t:value) instance of xs:untypedAtomic and
         data($copy/@number) instance of xs:untypedAtomic and
-        not(nilled($copy/t:nil)) and
+        (: Stripping must set nilled to boolean false, not the empty sequence. :)
+        deep-equal(nilled($copy/t:nil), false()) and
         not($copy is $source)
     ),
     data($attributeCopy/@number) instance of xs:untypedAtomic,

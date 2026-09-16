@@ -325,8 +325,8 @@ public class ElementItem extends AbstractNodeItem {
      * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
      * not nilled, or the empty sequence if the concept of nilled does not apply."
      *
-     * Untyped elements return the empty sequence. Schema-validated elements return the boolean
-     * value supplied by the PSVI.
+     * Schema-validated elements return the boolean value supplied by the PSVI.
+     * Stripping a schema annotation resets that value to false.
      */
     @Override
     public List<Item> nilled() {
@@ -408,7 +408,7 @@ public class ElementItem extends AbstractNodeItem {
     public void clearSchemaType() {
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
-        this.schemaNilled = null;
+        this.schemaNilled = false;
         this.id = false;
         this.idRefs = false;
     }
