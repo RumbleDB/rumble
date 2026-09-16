@@ -16,7 +16,8 @@
 package org.rumbledb.items;
 
 import java.io.Serial;
-import java.util.Objects;
+
+import lombok.NonNull;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -33,8 +34,8 @@ public class NotationItem extends AbstractAtomicItem {
 
     private final Name name;
 
-    public NotationItem(Name name) {
-        this.name = Objects.requireNonNull(name, "name");
+    public NotationItem(@NonNull Name name) {
+        this.name = name;
     }
 
     @Override
