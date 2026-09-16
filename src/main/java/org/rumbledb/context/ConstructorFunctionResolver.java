@@ -1,0 +1,125 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.context;
+
+import java.util.List;
+
+import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
+
+/** Resolves constructor names and signatures separately from ordinary built-in functions. */
+public final class ConstructorFunctionResolver {
+    private ConstructorFunctionResolver() {}
+
+    /** A resolved cast target and its function signature; it contains no runtime schema state. */
+    public record ResolvedConstructor(
+            FunctionIdentifier identifier, FunctionSignature signature, boolean usesSchemaCaster) {
+        public BuiltinFunction asBuiltinFunction() {
+            return new BuiltinFunction(
+                    this.identifier,
+                    this.signature,
+                    ConstructorFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+        }
+    }
+
+    /** Resolves the built-in constructors supported in the selected query language. */
+    public static ResolvedConstructor resolveBuiltIn(FunctionIdentifier identifier, String queryLanguage) {
+        Name functionName = identifier.getName();
+        if (identifier.getArity() != 1) {
+            return null;
+        }
+        Name typeName = functionName;
+        if (Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace())) {
+            if (queryLanguage == null || !queryLanguage.startsWith("jsoniq")) {
+                return null;
+            }
+            if ("boolean".equals(functionName.getLocalName())
+                    || "string".equals(functionName.getLocalName())
+                    || "QName".equals(functionName.getLocalName())
+                    || "error".equals(functionName.getLocalName())) {
+                return null;
+            }
+            typeName = Name.createVariableInDefaultTypeNamespace(functionName.getLocalName());
+        } else if (!Name.XS_NS.equals(functionName.getNamespace())) {
+            return null;
+        }
+        ItemType listItemType =
+                switch (typeName.getLocalName()) {
+                    case "IDREFS" -> BuiltinTypesCatalogue.IDREFItem;
+                    case "NMTOKENS" -> BuiltinTypesCatalogue.NMTOKENItem;
+                    case "ENTITIES" -> BuiltinTypesCatalogue.ENTITYItem;
+                    default -> null;
+                };
+        if (listItemType != null) {
+            return resolved(typeName, new SequenceType(listItemType, Arity.ZeroOrMore), true);
+        }
+        if (!BuiltinTypesCatalogue.typeExists(typeName)) {
+            return null;
+        }
+        ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
+        if (!(targetType.isAtomicItemType()
+                        || (targetType.isUnionType()
+                                && targetType.getTypes().stream().allMatch(ItemType::isAtomicItemType)))
+                || targetType.equals(BuiltinTypesCatalogue.atomicItem)
+                || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
+            return null;
+        }
+        return resolved(typeName, new SequenceType(targetType, Arity.OneOrZero), false);
+    }
+
+    /** Resolves built-in and imported named simple-type constructors in a static context. */
+    public static ResolvedConstructor resolve(FunctionIdentifier identifier, StaticContext staticContext) {
+        ResolvedConstructor builtIn = resolveBuiltIn(identifier, staticContext.getQueryLanguage());
+        return builtIn != null
+                ? builtIn
+                : resolveImported(
+                        identifier, staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog());
+    }
+
+    /** Resolves built-in and imported constructors retained in a local runtime context. */
+    public static ResolvedConstructor resolve(FunctionIdentifier identifier, RuntimeStaticContext staticContext) {
+        ResolvedConstructor builtIn = resolveBuiltIn(identifier, staticContext.getQueryLanguage());
+        return builtIn != null ? builtIn : resolveImported(identifier, staticContext.getXmlSchemaCatalog());
+    }
+
+    private static ResolvedConstructor resolveImported(FunctionIdentifier identifier, XmlSchemaCatalog schemaCatalog) {
+        if (identifier.getArity() != 1 || schemaCatalog == null) {
+            return null;
+        }
+        Name typeName = identifier.getName();
+        if (!schemaCatalog.isSchemaCastTarget(typeName)) {
+            return null;
+        }
+        SequenceType castResult = schemaCatalog.getSimpleTypeCastResultType(typeName);
+        SequenceType returnType = castResult.getArity() == Arity.One
+                ? new SequenceType(castResult.getItemType(), Arity.OneOrZero)
+                : castResult;
+        return resolved(typeName, returnType, true);
+    }
+
+    private static ResolvedConstructor resolved(Name typeName, SequenceType returnType, boolean usesSchemaCaster) {
+        return new ResolvedConstructor(
+                new FunctionIdentifier(typeName, 1),
+                new FunctionSignature(List.of(SequenceType.createSequenceType("anyAtomicType?")), returnType),
+                usesSchemaCaster);
+    }
+}

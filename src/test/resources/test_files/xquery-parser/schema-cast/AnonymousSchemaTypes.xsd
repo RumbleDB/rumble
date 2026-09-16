@@ -1,0 +1,31 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:t="urn:anonymous-types" targetNamespace="urn:anonymous-types">
+    <xs:element name="count">
+        <xs:simpleType><xs:restriction base="xs:integer"><xs:minInclusive value="0"/></xs:restriction></xs:simpleType>
+    </xs:element>
+    <xs:element name="otherCount">
+        <xs:simpleType><xs:restriction base="xs:integer"><xs:minInclusive value="0"/></xs:restriction></xs:simpleType>
+    </xs:element>
+    <xs:element name="counts">
+        <xs:simpleType><xs:list><xs:simpleType>
+            <xs:restriction base="xs:integer"><xs:minInclusive value="0"/></xs:restriction>
+        </xs:simpleType></xs:list></xs:simpleType>
+    </xs:element>
+    <xs:element name="choice">
+        <xs:simpleType><xs:union memberTypes="xs:integer"><xs:simpleType>
+            <xs:restriction base="xs:string"><xs:pattern value="[A-Z]+"/></xs:restriction>
+        </xs:simpleType></xs:union></xs:simpleType>
+    </xs:element>
+    <xs:complexType name="Amount">
+        <xs:simpleContent><xs:extension base="xs:decimal"><xs:attribute name="unit">
+            <xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="kg"/></xs:restriction></xs:simpleType>
+        </xs:attribute></xs:extension></xs:simpleContent>
+    </xs:complexType>
+    <xs:element name="amount" type="t:Amount"/>
+    <xs:complexType name="Base"><xs:simpleContent><xs:extension base="xs:string"/></xs:simpleContent></xs:complexType>
+    <xs:complexType name="Restricted"><xs:simpleContent><xs:restriction base="t:Base">
+        <xs:simpleType><xs:restriction base="xs:string"><xs:pattern value="[A-Z]+"/></xs:restriction></xs:simpleType>
+        <xs:maxLength value="3"/>
+    </xs:restriction></xs:simpleContent></xs:complexType>
+    <xs:element name="restricted" type="t:Restricted"/>
+</xs:schema>

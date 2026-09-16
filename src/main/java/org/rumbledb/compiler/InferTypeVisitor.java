@@ -31,6 +31,7 @@ import lombok.extern.log4j.Log4j2;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.ConstructorFunctionResolver;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -610,7 +611,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function = null;
         FunctionSignature signature = null;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext.getQueryLanguage());
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext);
         if (function != null) {
             signature = function.getSignature();
         } else {
@@ -827,16 +828,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        String queryLanguage = expression.getStaticContext().getQueryLanguage();
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), expression.getStaticContext())) {
             if (expression.isPartialApplication()) {
                 // This should never be reached because partial application on built-in functions should have been
                 // rewritten before
                 throw new UnsupportedFeatureException(
                         "Partial application on built-in functions are not supported.", expression.getMetadata());
             }
-            BuiltinFunction builtinFunction =
-                    BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier(), queryLanguage);
+            BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
+                    expression.getFunctionIdentifier(), expression.getStaticContext());
             if (builtinFunction == null) {
                 throw new UnknownFunctionCallException(
                         expression.getFunctionIdentifier().getName(),
@@ -855,6 +855,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<SequenceType> partialParams = new ArrayList<>();
         int paramsLength = parameterExpressions.size();
 
+        boolean constructorCall =
+                ConstructorFunctionResolver.resolve(expression.getFunctionIdentifier(), expression.getStaticContext())
+                        != null;
         // check arguments are of correct type
         for (int i = 0; i < paramsLength; ++i) {
             if (parameterExpressions.get(i) != null) {
@@ -864,7 +867,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
                 SequenceType expectedType = parameterTypes.get(i);
                 // check actual parameters is either a subtype of or can be promoted to expected type
-                if (!actualType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
+                // Constructor arguments undergo atomization. A node's static type does not
+                // describe its typed-value cardinality, so runtime argument conversion checks it.
+                boolean atomizedConstructorArgument =
+                        constructorCall && actualType.getItemType().isNodeItemType();
+                if (!atomizedConstructorArgument && !actualType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
                     throwStaticTypeException(
                             "Argument " + i + " requires " + expectedType + " but " + actualType + " was found",
                             expression.getMetadata());
@@ -887,14 +894,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 if (returnType == null) {
                     returnType = SequenceType.createSequenceType("item*");
                 }
-                if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)
+                if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), expression.getStaticContext())
                         && parameterExpressions.size() == 1) {
                     BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                            expression.getFunctionIdentifier(), queryLanguage);
+                            expression.getFunctionIdentifier(), expression.getStaticContext());
                     if (builtinFunction != null
                             && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
                         SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
                         if (argumentType != null
+                                && !argumentType.getItemType().isNodeItemType()
                                 && argumentType.getArity().equals(SequenceType.Arity.One)
                                 && returnType.getArity().equals(SequenceType.Arity.OneOrZero)) {
                             returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.One);
@@ -915,6 +923,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
+        if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
+            checkSchemaCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
+            return argument;
+        }
         ItemType itemType = expression.getSequenceType().getItemType();
         if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             throwStaticTypeException(
@@ -941,6 +955,49 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+
+        XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
+        if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
+            SequenceType expressionType = expression.getMainExpression().getStaticSequenceType();
+            checkSchemaCastOperand(expressionType, expression);
+
+            if (expressionType.isEmptySequence()) {
+                if (expression.getSequenceType().getArity() != SequenceType.Arity.OneOrZero) {
+                    throwStaticTypeException(
+                            "Empty sequence cannot be cast to a non-optional XML Schema simple type.",
+                            expression.getMetadata());
+                }
+                expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.Zero));
+                return argument;
+            }
+
+            // The operand's arity counts source nodes, but casts constrain the atomic values
+            // produced by atomization. One node can yield zero values (a nilled element),
+            // one value, or multiple values (a schema list). The static node type here does
+            // not distinguish these cases, so the runtime checks the atomized cardinality.
+            boolean nodeOperand = expressionType.getItemType().isNodeItemType();
+            if (!nodeOperand
+                    && !expressionType.isAritySubtypeOf(
+                            expression.getSequenceType().getArity())) {
+                throwStaticTypeException(
+                        "A cast expression operand must contain at most one item.", expression.getMetadata());
+            }
+
+            // Check the type of result will casting to this schema type produce
+            SequenceType resultType = schemaCatalog.getSimpleTypeCastResultType(
+                    expression.getSequenceType().getItemType().getName());
+
+            if (resultType.getArity() == SequenceType.Arity.One
+                    && expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero
+                    && (nodeOperand || expressionType.getArity() != SequenceType.Arity.One)) {
+                // Because getSimpleTypeCastResultType does not take into account the arity of the cast expression,
+                // this if-statement is needed to ensure that the result type is correctly set to OneOrZero when the
+                // cast expression has an optional arity.
+                resultType = new SequenceType(resultType.getItemType(), SequenceType.Arity.OneOrZero);
+            }
+            expression.setStaticSequenceType(resultType);
+            return argument;
+        }
 
         // check at static time for casting errors (note cast only allows for normal or ? arity)
         SequenceType expressionSequenceType = expression.getMainExpression().getStaticSequenceType();
@@ -999,6 +1056,31 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         expression.setStaticSequenceType(castedSequenceType);
         return argument;
+    }
+
+    private boolean isSchemaCastTarget(SequenceType sequenceType, XmlSchemaCatalog schemaCatalog) {
+        ItemType itemType = sequenceType.getItemType();
+        return itemType.hasName() && schemaCatalog.isSchemaCastTarget(itemType.getName());
+    }
+
+    /**
+     * Accepts atomic operands and nodes whose typed values are atomized at runtime.
+     * A node is not itself atomic, but its typed value can supply atomic cast operands.
+     * The static node types used here do not say whether atomization succeeds or how many
+     * atomic values it produces; the runtime checks those properties after atomization.
+     */
+    private void checkSchemaCastOperand(SequenceType operandType, Expression expression) {
+        basicChecks(operandType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        if (!operandType.isEmptySequence()
+                && !operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                && !operandType.getItemType().isNodeItemType()) {
+            throwStaticTypeException(
+                    "An XML Schema cast operand must be atomic after atomization, found " + operandType,
+                    operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
+                            ? ErrorCode.NonAtomicElementErrorCode
+                            : ErrorCode.AtomizationError,
+                    expression.getMetadata());
+        }
     }
 
     @Override
@@ -2570,8 +2652,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     Name.XS_NS.equals(typeName.getNamespace()) && BuiltinTypesCatalogue.typeExists(typeName);
             XmlSchemaCatalog schemaCatalog =
                     expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
-            boolean importedType = schemaCatalog != null
-                    && schemaCatalog.getTypeDefinition(typeName).isPresent();
+            boolean importedType = schemaCatalog.getTypeDefinition(typeName).isPresent();
             if (!builtInType && !importedType) {
                 throw new SemanticException(
                         "The type " + typeName + " is not defined in the in-scope schema types.",

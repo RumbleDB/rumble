@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -34,12 +33,11 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 public class IdFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
-
-    private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
     public IdFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
@@ -59,7 +57,7 @@ public class IdFunctionIterator extends ItemRuntimePlan implements LocalRuntimeP
                 continue;
             }
             for (String token : normalized.split(" ")) {
-                if (NCNAME_PATTERN.matcher(token).matches()) {
+                if (NamespaceBindingUtils.isValidNcName(token)) {
                     tokens.add(token);
                 }
             }
@@ -95,9 +93,17 @@ public class IdFunctionIterator extends ItemRuntimePlan implements LocalRuntimeP
 
     private static void indexIds(Item node, Map<String, Item> firstElementByIdValue) {
         if (node.isElementNode()) {
+            // Schema validation can mark the element's own typed value as an ID.
+            if (node.isId()) {
+                firstElementByIdValue.putIfAbsent(node.getStringValue().trim().replaceAll("\\s+", " "), node);
+            }
             for (Item attribute : node.attributes()) {
                 Name name = attribute.nodeName();
-                if (name != null && Name.XML_NS.equals(name.getNamespace()) && "id".equals(name.getLocalName())) {
+                // An ID attribute identifies its owning element, including the existing xml:id path.
+                if (attribute.isId()
+                        || (name != null
+                                && Name.XML_NS.equals(name.getNamespace())
+                                && "id".equals(name.getLocalName()))) {
                     String normalizedId = attribute.getStringValue().trim().replaceAll("\\s+", " ");
                     firstElementByIdValue.putIfAbsent(normalizedId, node);
                 }

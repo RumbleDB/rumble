@@ -19,7 +19,10 @@ import java.io.Serial;
 import java.util.Set;
 
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
 public class FunctionItemType extends AbstractItemType {
@@ -64,6 +67,43 @@ public class FunctionItemType extends AbstractItemType {
     @Override
     public FunctionSignature getSignature() {
         return this.signature;
+    }
+
+    @Override
+    public boolean isResolved() {
+        return this.isGeneric
+                || (this.signature.getParameterTypes().stream().allMatch(SequenceType::isResolved)
+                        && this.signature.getReturnType().isResolved());
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (this.isGeneric) {
+            return;
+        }
+        for (SequenceType parameterType : this.signature.getParameterTypes()) {
+            if (!parameterType.isResolved()) {
+                parameterType.resolve(context, metadata);
+            }
+        }
+        if (!this.signature.getReturnType().isResolved()) {
+            this.signature.getReturnType().resolve(context, metadata);
+        }
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (this.isGeneric) {
+            return;
+        }
+        for (SequenceType parameterType : this.signature.getParameterTypes()) {
+            if (!parameterType.isResolved()) {
+                parameterType.resolve(context, metadata);
+            }
+        }
+        if (!this.signature.getReturnType().isResolved()) {
+            this.signature.getReturnType().resolve(context, metadata);
+        }
     }
 
     @Override

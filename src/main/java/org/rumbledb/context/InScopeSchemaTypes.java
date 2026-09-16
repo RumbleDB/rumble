@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import lombok.Getter;
 import lombok.NonNull;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -29,6 +28,7 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 public class InScopeSchemaTypes implements Serializable {
 
@@ -38,7 +38,6 @@ public class InScopeSchemaTypes implements Serializable {
     private final HashMap<Name, ItemType> inScopeSchemaTypes;
 
     // Xerces definitions stay local; the mapped ItemTypes remain serializable.
-    @Getter
     private transient XmlSchemaCatalog xmlSchemaCatalog;
 
     public InScopeSchemaTypes() {
@@ -98,5 +97,12 @@ public class InScopeSchemaTypes implements Serializable {
             ItemType itemType = inScopeSchemaTypes.inScopeSchemaTypes.get(name);
             this.inScopeSchemaTypes.put(name, itemType);
         }
+    }
+
+    public XmlSchemaCatalog getXmlSchemaCatalog() {
+        if (this.xmlSchemaCatalog == null) {
+            this.xmlSchemaCatalog = XmlSchemaCatalogLoader.loadBuiltInCatalog();
+        }
+        return this.xmlSchemaCatalog;
     }
 }

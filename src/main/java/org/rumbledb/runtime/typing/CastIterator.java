@@ -245,6 +245,11 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                 // F&O 3.1 §19.3.3: Casting within a branch of the type hierarchy
                 // if ST and TT share the same primitive type, the cast succeeds iff the value
                 // conforms to the target type's facets.
+                // Check restrictions before narrowing the representation: converting an out-of-range
+                // integer to a Java int first can wrap it into a value that passes the range check.
+                if (!targetType.isCastingPrimitive() && !checkValueConformsToTargetFacets(item, targetType)) {
+                    return null;
+                }
                 converted = convertForCastTargetType(item, targetType, metadata, namespaceResolver);
             }
 
