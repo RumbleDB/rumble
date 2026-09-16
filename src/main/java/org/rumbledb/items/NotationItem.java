@@ -31,7 +31,7 @@ public class NotationItem extends AbstractAtomicItem {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Name name;
+    private final Name name;
 
     public NotationItem(Name name) {
         this.name = Objects.requireNonNull(name, "name");
