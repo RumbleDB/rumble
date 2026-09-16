@@ -1394,10 +1394,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                     schemaCatalog,
                     runtimeStaticContext(expression));
         }
-        ItemRuntimePlan runtimeIterator = new CastableIterator(
-                childExpression,
-                expression.getSequenceType(),
-                runtimeStaticContext(expression));
+        ItemRuntimePlan runtimeIterator =
+                new CastableIterator(childExpression, expression.getSequenceType(), runtimeStaticContext(expression));
 
         return runtimeIterator;
     }
@@ -1418,10 +1416,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                     schemaCatalog,
                     runtimeStaticContext(expression));
         }
-        ItemRuntimePlan runtimeIterator = new CastIterator(
-                childExpression,
-                expression.getSequenceType(),
-                runtimeStaticContext(expression));
+        ItemRuntimePlan runtimeIterator =
+                new CastIterator(childExpression, expression.getSequenceType(), runtimeStaticContext(expression));
 
         return runtimeIterator;
     }
