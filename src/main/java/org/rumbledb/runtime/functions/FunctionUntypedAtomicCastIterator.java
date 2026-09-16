@@ -145,6 +145,11 @@ public class FunctionUntypedAtomicCastIterator extends ItemRuntimePlan
                     + ".";
         }
 
+        /**
+         * Checks if the target type is namespace sensitive
+         * See 2.5.2 Namespace-sensitive Types
+         * https://www.w3.org/TR/xquery-31/#dt-namespace-sensitive
+         */
         private static boolean isNamespaceSensitiveTargetType(ItemType type) {
             return isQNameLikeTargetType(type)
                     || isNotationLikeTargetType(type)

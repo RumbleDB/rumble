@@ -152,7 +152,10 @@ public final class FunctionCallArgumentConversion {
                 isGeneralizedAtomicType(targetItemType) ? targetItemType : null);
     }
 
-    /** Schema imports expose only pure unions as item types; structured unions must not be atomized. */
+    /**
+     * Checks if the type is a generalized atomic type, which includes atomic types and union types of atomic types.
+     * See https://www.w3.org/TR/xquery-31/#dt-generalized-atomic-type
+     */
     private static boolean isGeneralizedAtomicType(ItemType type) {
         return type.isAtomicItemType()
                 || (type.isUnionType()
