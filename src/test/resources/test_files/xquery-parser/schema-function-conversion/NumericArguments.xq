@@ -2,6 +2,7 @@
 import schema namespace t = "urn:arguments" at "Arguments.xsd";
 let $number := validate strict { <t:integer>-12</t:integer> }
 let $abs := abs#1
+
 return every $check in (
     abs($number) eq 12,
     abs($number) instance of xs:integer,
