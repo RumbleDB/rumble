@@ -225,6 +225,8 @@ import org.rumbledb.runtime.typing.CastableIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.runtime.typing.TreatIterator;
+import org.rumbledb.runtime.typing.XmlSchemaCastIterator;
+import org.rumbledb.runtime.typing.XmlSchemaCastableIterator;
 import org.rumbledb.runtime.update.expression.AppendExpressionIterator;
 import org.rumbledb.runtime.update.expression.CreateCollectionIterator;
 import org.rumbledb.runtime.update.expression.DeleteExpressionIterator;
@@ -263,7 +265,6 @@ import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
-import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan> {
 
@@ -1093,10 +1094,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Name fnName = expression.getFunctionName();
         int arity = arguments.size();
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
-        String queryLanguage = expression.getStaticContext().getQueryLanguage();
-
         ItemRuntimePlan runtimeIterator = null;
-        if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
+        if (BuiltinFunctionCatalogue.exists(identifier, expression.getStaticContext())) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                     identifier,
                     arguments,
@@ -1359,9 +1358,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         ItemRuntimePlan operand = this.visit(expression.getMainExpression(), argument);
         XmlSchemaCatalog schemaCatalog =
                 expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
-        if (schemaCatalog == null && expression.getValidationMode() != ValidateExpression.ValidationMode.TYPE) {
-            schemaCatalog = XmlSchemaCatalogLoader.loadBuiltInCatalog();
-        }
         return new XQueryValidateIterator(
                 operand,
                 expression.getValidationMode(),
@@ -1385,8 +1381,23 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitCastableExpression(CastableExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
-        ItemRuntimePlan runtimeIterator =
-                new CastableIterator(childExpression, expression.getSequenceType(), runtimeStaticContext(expression));
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
+        Name targetTypeName = expression.getSequenceType().getItemType().hasName()
+                ? expression.getSequenceType().getItemType().getName()
+                : null;
+        if (schemaCatalog.isSchemaCastTarget(targetTypeName)) {
+            return new XmlSchemaCastableIterator(
+                    childExpression,
+                    targetTypeName,
+                    expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero,
+                    schemaCatalog,
+                    runtimeStaticContext(expression));
+        }
+        ItemRuntimePlan runtimeIterator = new CastableIterator(
+                childExpression,
+                expression.getSequenceType(),
+                runtimeStaticContext(expression));
 
         return runtimeIterator;
     }
@@ -1394,8 +1405,23 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitCastExpression(CastExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan childExpression = this.visit(expression.getMainExpression(), argument);
-        ItemRuntimePlan runtimeIterator =
-                new CastIterator(childExpression, expression.getSequenceType(), runtimeStaticContext(expression));
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
+        Name targetTypeName = expression.getSequenceType().getItemType().hasName()
+                ? expression.getSequenceType().getItemType().getName()
+                : null;
+        if (schemaCatalog.isSchemaCastTarget(targetTypeName)) {
+            return new XmlSchemaCastIterator(
+                    childExpression,
+                    targetTypeName,
+                    expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero,
+                    schemaCatalog,
+                    runtimeStaticContext(expression));
+        }
+        ItemRuntimePlan runtimeIterator = new CastIterator(
+                childExpression,
+                expression.getSequenceType(),
+                runtimeStaticContext(expression));
 
         return runtimeIterator;
     }

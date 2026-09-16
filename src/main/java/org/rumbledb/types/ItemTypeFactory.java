@@ -52,7 +52,7 @@ public class ItemTypeFactory {
      * Creates Rumble's nominal representation of an atomic type declared in an XML Schema.
      * Xerces remains responsible for validating the type's constraining facets.
      *
-     * @param name the global schema type's expanded name, or null for an anonymous member type
+     * @param name the declared type name or the internal name assigned to an anonymous schema type
      * @param baseType the Rumble representation of its XSD base type
      * @return the corresponding atomic item type
      */
@@ -63,7 +63,7 @@ public class ItemTypeFactory {
     /**
      * Creates Rumble's representation of a pure union type declared in an XML Schema.
      *
-     * @param name the global schema type's expanded name, or null for an anonymous member type
+     * @param name the declared type name or the internal name assigned to an anonymous schema type
      * @param memberTypes the union's transitive atomic member types
      * @return the corresponding generalized atomic item type
      */
@@ -587,6 +587,11 @@ public class ItemTypeFactory {
         return new ElementNodeItemType(nodeName);
     }
 
+    public static ItemType elementNodeItemType(
+            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, boolean nillable) {
+        return new ElementNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy, nillable);
+    }
+
     /**
      * Wildcard XQuery attribute node type attribute().
      *
@@ -607,6 +612,10 @@ public class ItemTypeFactory {
             throw new OurBadException("Attribute node name cannot be null.");
         }
         return new AttributeNodeItemType(nodeName);
+    }
+
+    public static ItemType attributeNodeItemType(Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy) {
+        return new AttributeNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy);
     }
 
     /**

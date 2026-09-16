@@ -397,6 +397,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 namespaces.add(libraryModule.getNamespace());
             }
         }
+        XmlSchemaCatalogLoader.load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
+                .ifPresent(catalog -> {
+                    this.moduleContext.getInScopeSchemaTypes().importSchema(catalog, createMetadataFromContext(ctx));
+                });
 
         // parse variables and function
         List<VariableDeclaration> globalVariables = new ArrayList<>();
@@ -463,9 +467,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (OptionDeclaration optionDeclaration : optionDeclarations) {
             prolog.addDeclaration(optionDeclaration);
         }
-        XmlSchemaCatalogLoader.load(schemaImports, this.moduleContext.getStaticBaseURI(), this.compilationConfiguration)
-                .ifPresent(catalog ->
-                        this.moduleContext.getInScopeSchemaTypes().importSchema(catalog, prolog.getMetadata()));
         return prolog;
     }
 
@@ -2294,27 +2295,31 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         if (kindTestContext.attributeTest() != null) {
             XQueryParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
-            if (attributeTestContext.typeName() != null) {
-                throw new UnsupportedFeatureException(
-                        "Typed attribute item tests are not supported yet",
-                        createMetadataFromContext(attributeTestContext));
+            Name attributeName = attributeTestContext.attributeNameOrWildcard() == null
+                            || attributeTestContext.attributeNameOrWildcard().attributeName() == null
+                    ? null
+                    : parseEqName(
+                            attributeTestContext
+                                    .attributeNameOrWildcard()
+                                    .attributeName()
+                                    .eqName(),
+                            false,
+                            false,
+                            false,
+                            false);
+            if (attributeTestContext.typeName() == null) {
+                return attributeName == null
+                        ? BuiltinTypesCatalogue.attributeNode
+                        : ItemTypeFactory.attributeNodeItemType(attributeName);
             }
-            if (attributeTestContext.attributeNameOrWildcard() == null) {
-                return BuiltinTypesCatalogue.attributeNode;
-            }
-            if (attributeTestContext.attributeNameOrWildcard().attributeName() == null) {
-                return BuiltinTypesCatalogue.attributeNode;
-            }
-            Name attributeName = parseEqName(
-                    attributeTestContext
-                            .attributeNameOrWildcard()
-                            .attributeName()
-                            .eqName(),
-                    false,
-                    false,
-                    false,
-                    false);
-            return ItemTypeFactory.attributeNodeItemType(attributeName);
+            Name typeName = parseEqName(attributeTestContext.typeName().eqName(), false, true, false, false);
+            return ItemTypeFactory.attributeNodeItemType(
+                    attributeName,
+                    typeName,
+                    this.moduleContext
+                            .getInScopeSchemaTypes()
+                            .getXmlSchemaCatalog()
+                            .getTypeHierarchy(typeName, createMetadataFromContext(attributeTestContext)));
         }
         if (kindTestContext.commentTest() != null) {
             return BuiltinTypesCatalogue.commentNode;
@@ -2343,20 +2348,25 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private ElementNodeItemType getElementTestAsItemType(XQueryParser.ElementTestContext elementTestContext) {
-        if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
-            throw new UnsupportedFeatureException(
-                    "Typed or nillable element item tests are not supported yet",
-                    createMetadataFromContext(elementTestContext));
+        Name elementName = elementTestContext.elementNameOrWildcard() == null
+                        || elementTestContext.elementNameOrWildcard().elementName() == null
+                ? null
+                : parseEqName(
+                        elementTestContext.elementNameOrWildcard().elementName().eqName(), false, false, false, true);
+        if (elementTestContext.typeName() == null) {
+            return elementName == null
+                    ? (ElementNodeItemType) BuiltinTypesCatalogue.elementNode
+                    : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
         }
-        if (elementTestContext.elementNameOrWildcard() == null) {
-            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
-        }
-        if (elementTestContext.elementNameOrWildcard().elementName() == null) {
-            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
-        }
-        Name elementName = parseEqName(
-                elementTestContext.elementNameOrWildcard().elementName().eqName(), false, false, false, false);
-        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
+        Name typeName = parseEqName(elementTestContext.typeName().eqName(), false, true, false, false);
+        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(
+                elementName,
+                typeName,
+                this.moduleContext
+                        .getInScopeSchemaTypes()
+                        .getXmlSchemaCatalog()
+                        .getTypeHierarchy(typeName, createMetadataFromContext(elementTestContext)),
+                elementTestContext.optional != null);
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {

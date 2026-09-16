@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.QNameFunctionIterator;
@@ -260,11 +259,8 @@ import org.rumbledb.spark.ml.AnnotateFunctionIterator;
 import org.rumbledb.spark.ml.BinaryClassificationMetricsFunctionIterator;
 import org.rumbledb.spark.ml.GetEstimatorFunctionIterator;
 import org.rumbledb.spark.ml.GetTransformerFunctionIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 public class BuiltinFunctionCatalogue {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtinFunctions;
@@ -331,6 +327,13 @@ public class BuiltinFunctionCatalogue {
         return null;
     }
 
+    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, StaticContext staticContext) {
+        var constructor = ConstructorFunctionResolver.resolve(identifier, staticContext);
+        return constructor == null
+                ? getBuiltinFunction(identifier, staticContext.getQueryLanguage())
+                : constructor.asBuiltinFunction();
+    }
+
     public static boolean exists(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return true;
@@ -339,50 +342,14 @@ public class BuiltinFunctionCatalogue {
                 || resolveIdentifierFallback(identifier) != null;
     }
 
-    private static boolean supportsUnprefixedConstructorFunctions(String queryLanguage) {
-        return queryLanguage != null && queryLanguage.startsWith("jsoniq");
+    public static boolean exists(FunctionIdentifier identifier, StaticContext staticContext) {
+        return getBuiltinFunction(identifier, staticContext) != null;
     }
 
+    // Compatibility adapter for compiler passes that still query all built-in signatures through this catalogue.
     private static BuiltinFunction resolveConstructorFunction(FunctionIdentifier identifier, String queryLanguage) {
-        Name functionName = identifier.getName();
-        if (identifier.getArity() != 1) {
-            return null;
-        }
-        Name typeName = functionName;
-        if (Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace())) {
-            if (!supportsUnprefixedConstructorFunctions(queryLanguage)) {
-                return null;
-            }
-            if ("boolean".equals(functionName.getLocalName())
-                    || "string".equals(functionName.getLocalName())
-                    || "QName".equals(functionName.getLocalName())
-                    || "error".equals(functionName.getLocalName())) {
-                return null;
-            }
-            typeName = Name.createVariableInDefaultTypeNamespace(functionName.getLocalName());
-        } else if (!Name.XS_NS.equals(functionName.getNamespace())) {
-            return null;
-        }
-        ItemType targetType;
-        try {
-            targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
-        } catch (RuntimeException e) {
-            return null;
-        }
-        if (!(targetType.isAtomicItemType()
-                        || (targetType.isUnionType()
-                                && targetType.getTypes().stream().allMatch(ItemType::isAtomicItemType)))
-                || targetType.equals(BuiltinTypesCatalogue.atomicItem)
-                || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
-            return null;
-        }
-        return new BuiltinFunction(
-                new FunctionIdentifier(typeName, identifier.getArity()),
-                new FunctionSignature(
-                        List.of(SequenceType.createSequenceType("anyAtomicType?")),
-                        new SequenceType(targetType, Arity.OneOrZero)),
-                ConstructorFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+        var constructor = ConstructorFunctionResolver.resolveBuiltIn(identifier, queryLanguage);
+        return constructor == null ? null : constructor.asBuiltinFunction();
     }
 
     private static BuiltinFunction createBuiltinFunction(
