@@ -1,8 +1,9 @@
 (:JIQS: ShouldRun; Output="true" :)
+(: Preserve must retain copied schema types, nilled and ID/IDREF properties while creating distinct nodes; new wrappers have xs:anyType. :)
 declare construction preserve;
 import schema namespace t = "urn:construction" at "Construction.xsd";
 let $source := validate strict {
- <t:root number="12" key="one" refs="one"><t:value>42</t:value><t:nil xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/></t:root>
+    <t:root number="12" key="one" refs="one"><t:value>42</t:value><t:nil xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/></t:root>
 }
 let $direct := <wrapper>{ $source }</wrapper>
 let $computed := element wrapper { $source }
@@ -19,6 +20,7 @@ return every $check in (
         not($copy is $source)
     ),
     data($attributeCopy/@number) instance of xs:integer,
+
     (: Construction must not change the validated source. :)
     data($source/t:value) instance of xs:integer,
     nilled($source/t:nil),
