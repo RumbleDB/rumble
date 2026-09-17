@@ -1,0 +1,33 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:t="urn:declarations"
+    targetNamespace="urn:declarations" elementFormDefault="qualified">
+    <xs:element name="head" type="xs:decimal" abstract="true"/>
+    <xs:element name="member" type="xs:integer" substitutionGroup="t:head"/>
+    <xs:element name="leaf" type="xs:int" substitutionGroup="t:member"/>
+    <xs:element name="nullable" type="xs:integer" substitutionGroup="t:head" nillable="true"/>
+    <xs:element name="blocked" type="xs:decimal" block="substitution"/>
+    <xs:element name="blockedMember" type="xs:integer" substitutionGroup="t:blocked"/>
+    <xs:element name="anonymous"><xs:simpleType><xs:restriction base="xs:integer"/></xs:simpleType></xs:element>
+    <xs:attribute name="code"><xs:simpleType><xs:restriction base="xs:NCName"/></xs:simpleType></xs:attribute>
+    <xs:element name="root"><xs:complexType><xs:sequence>
+        <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence><xs:attribute ref="t:code"/></xs:complexType></xs:element>
+    <xs:element name="localRoot"><xs:complexType><xs:sequence>
+        <xs:element name="member" type="xs:decimal"/>
+        <xs:element name="head" type="xs:decimal"/>
+        <xs:element name="local" type="xs:integer"/>
+    </xs:sequence><xs:attribute name="localAttribute" type="xs:integer"/></xs:complexType></xs:element>
+    <xs:simpleType name="numberUnion"><xs:union memberTypes="xs:integer xs:float"/></xs:simpleType>
+    <xs:simpleType name="negativeUnion"><xs:restriction base="t:numberUnion"><xs:pattern value="-.*"/></xs:restriction></xs:simpleType>
+    <xs:element name="unionHead" type="t:numberUnion"/>
+    <xs:element name="unionMember" substitutionGroup="t:unionHead"/>
+    <xs:element name="restricted" type="t:negativeUnion"/>
+    <xs:attribute name="unionCode" type="t:numberUnion"/>
+    <xs:attribute name="restrictedCode" type="t:negativeUnion"/>
+    <xs:element name="unionRoot"><xs:complexType><xs:sequence>
+        <xs:element name="unionMember" type="xs:integer"/>
+        <xs:element name="restricted" type="xs:integer"/>
+    </xs:sequence>
+        <xs:attribute name="unionCode" type="xs:integer" form="qualified"/>
+        <xs:attribute name="restrictedCode" type="xs:integer" form="qualified"/>
+    </xs:complexType></xs:element>
+</xs:schema>

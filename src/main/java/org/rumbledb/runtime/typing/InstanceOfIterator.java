@@ -38,6 +38,7 @@ import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SchemaElementNodeItemType;
 import org.rumbledb.types.SequenceType;
 
 public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -127,6 +128,9 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType instanceof SchemaElementNodeItemType schemaType) {
+            return schemaType.getAlternatives().stream().anyMatch(type -> matchesElementTest(type, itemToMatch));
+        }
         if (itemType instanceof ElementNodeItemType elementType) {
             return matchesElementTest(elementType, itemToMatch);
         }
@@ -241,27 +245,29 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
         // 3. element(N, T): name, derivation, then nilled.
         if (nodeName != null && !test.isNillable()) {
             return nodeName.equals(item.nodeName())
-                    && matchesElementTypeAnnotation(item, typeName)
+                    && matchesElementTypeAnnotation(test, item)
                     && item.nilled().stream().noneMatch(value -> value.getBooleanValue());
         }
         // 4. element(N, T?): name and derivation; nilled is unrestricted.
         if (nodeName != null) {
-            return nodeName.equals(item.nodeName()) && matchesElementTypeAnnotation(item, typeName);
+            return nodeName.equals(item.nodeName()) && matchesElementTypeAnnotation(test, item);
         }
         // 5. element(*, T): derivation, then nilled.
         if (!test.isNillable()) {
-            return matchesElementTypeAnnotation(item, typeName)
+            return matchesElementTypeAnnotation(test, item)
                     && item.nilled().stream().noneMatch(value -> value.getBooleanValue());
         }
         // 6. element(*, T?): derivation only.
-        return matchesElementTypeAnnotation(item, typeName);
+        return matchesElementTypeAnnotation(test, item);
     }
 
-    private static boolean matchesElementTypeAnnotation(Item item, Name typeName) {
+    private static boolean matchesElementTypeAnnotation(ElementNodeItemType test, Item item) {
         if (item.getSchemaTypeAnnotation() != null) {
-            return item.getSchemaTypeAnnotation().isDerivedFrom(typeName);
+            // Declaration tests may also accept annotations derived from a pure union's members.
+            return test.getSchemaTypeAlternatives().stream().anyMatch(item.getSchemaTypeAnnotation()::isDerivedFrom);
         }
         // Nodes without an explicit annotation have the XDM default xs:untyped.
+        Name typeName = test.getSchemaTypeName();
         String expected = typeName.getLocalName();
         return Name.XS_NS.equals(typeName.getNamespace()) && ("untyped".equals(expected) || "anyType".equals(expected));
     }
@@ -287,17 +293,19 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         // 3. attribute(N, T): name, then derivation.
         if (nodeName != null) {
-            return nodeName.equals(item.nodeName()) && matchesAttributeTypeAnnotation(item, typeName);
+            return nodeName.equals(item.nodeName()) && matchesAttributeTypeAnnotation(test, item);
         }
         // 4. attribute(*, T): derivation only.
-        return matchesAttributeTypeAnnotation(item, typeName);
+        return matchesAttributeTypeAnnotation(test, item);
     }
 
-    private static boolean matchesAttributeTypeAnnotation(Item item, Name typeName) {
+    private static boolean matchesAttributeTypeAnnotation(AttributeNodeItemType test, Item item) {
         if (item.getSchemaTypeAnnotation() != null) {
-            return item.getSchemaTypeAnnotation().isDerivedFrom(typeName);
+            // Declaration tests may also accept annotations derived from a pure union's members.
+            return test.getSchemaTypeAlternatives().stream().anyMatch(item.getSchemaTypeAnnotation()::isDerivedFrom);
         }
         // Attributes without an explicit annotation have the XDM default xs:untypedAtomic.
+        Name typeName = test.getSchemaTypeName();
         String expected = typeName.getLocalName();
         return Name.XS_NS.equals(typeName.getNamespace())
                 && ("untypedAtomic".equals(expected)

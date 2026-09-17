@@ -15,6 +15,8 @@
  */
 package org.rumbledb.xml.schema;
 
+import org.apache.xerces.xs.datatypes.XSQName;
+
 import org.rumbledb.context.Name;
 
 /** Converts expanded XML names between Rumble and SAX representations. */
@@ -42,6 +44,15 @@ final class XmlNameCodec {
         return normalizedNamespace == null
                 ? new Name(null, null, localName)
                 : new Name(normalizedNamespace, emptyToNull(prefix), localName);
+    }
+
+    static Name fromXSQName(XSQName xsQName) {
+        var qName = xsQName.getXNIQName();
+
+        String namespace = qName.uri;
+        String prefix = qName.prefix;
+        String localName = qName.localpart;
+        return fromExpandedName(namespace, prefix, localName);
     }
 
     static String namespaceUri(Name name) {
