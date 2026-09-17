@@ -27,6 +27,7 @@ import org.apache.xerces.xs.datatypes.XSQName;
 import lombok.NonNull;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
@@ -115,13 +116,13 @@ final class XercesTypedValueConverter {
             throw new OurBadException("xs:anyAtomicType cannot label a concrete typed value.");
         }
         short primitiveKind = schemaType.getPrimitiveType().getBuiltInKind();
-        if (primitiveKind == XSConstants.NOTATION_DT) {
-            throw new OurBadException("xs:NOTATION values do not have a Rumble item representation yet.");
-        }
-
-        Item result = primitiveKind == XSConstants.QNAME_DT
-                ? convertQName(actualValue)
-                : convertLexicalValue(lexicalValue, itemType);
+        Item result =
+                switch (primitiveKind) {
+                    case XSConstants.QNAME_DT -> ItemFactory.getInstance().createQNameItem(expandedName(actualValue));
+                    case XSConstants.NOTATION_DT -> ItemFactory.getInstance()
+                            .createNotationItem(expandedName(actualValue));
+                    default -> convertLexicalValue(lexicalValue, itemType);
+                };
 
         if (!result.getDynamicType().equals(itemType)) {
             // In case the item type is a derived type, we annotate the item with its schema type to preserve the type
@@ -146,13 +147,11 @@ final class XercesTypedValueConverter {
         return result;
     }
 
-    private static Item convertQName(Object actualValue) {
+    private static Name expandedName(Object actualValue) {
         if (!(actualValue instanceof XSQName qNameValue)) {
             throw new OurBadException("Xerces did not provide an expanded QName value.");
         }
-        var qName = qNameValue.getXNIQName();
-        return ItemFactory.getInstance()
-                .createQNameItem(XmlNameCodec.fromExpandedName(qName.uri, qName.prefix, qName.localpart));
+        return XmlNameCodec.fromXSQName(qNameValue);
     }
 
     /**

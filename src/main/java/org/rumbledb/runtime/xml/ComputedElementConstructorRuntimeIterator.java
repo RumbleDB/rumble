@@ -179,6 +179,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             elementItem.setXmlDocumentPosition(documentPath, 0);
         }
+        NodeConstructionUtils.initializeElement(elementItem, this.staticContext);
         return elementItem;
     }
 
@@ -204,11 +205,11 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
 
         for (Item item : expandedContentSequence) {
             if (item.isAttributeNode()) {
-                attributes.add(item.copy(true));
+                attributes.add(NodeConstructionUtils.copyNode(item, this.staticContext));
             } else if (item.isNamespaceNode()) {
                 namespaces.add(item.copy(true));
             } else if (item.isNode()) {
-                nonAttributeContent.add(NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext));
+                nonAttributeContent.add(NodeConstructionUtils.copyNode(item, this.staticContext));
             } else {
                 // Non-node items are converted to text nodes
                 String textContent = item.getStringValue();

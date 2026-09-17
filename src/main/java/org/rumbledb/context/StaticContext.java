@@ -56,6 +56,8 @@ public class StaticContext {
     private String staticBaseUriString;
     private boolean emptySequenceOrderLeast;
     private boolean boundarySpacePreserve;
+    // Strip is the implementation-defined default construction mode.
+    private boolean constructionPreserve;
     private boolean copyNamespacesPreserve;
     private boolean copyNamespacesInherit;
     private SerializationParameters serializationParameters;
@@ -526,6 +528,17 @@ public class StaticContext {
             throw new OurBadException("Boundary-space policy can only be set in the root static context.");
         }
         this.boundarySpacePreserve = boundarySpacePreserve;
+    }
+
+    public void setConstructionPreserve(boolean preserve) {
+        if (this.parent != null) {
+            throw new OurBadException("Construction mode can only be set in the root static context.");
+        }
+        this.constructionPreserve = preserve;
+    }
+
+    public boolean isConstructionPreserve() {
+        return this.parent == null ? this.constructionPreserve : this.parent.isConstructionPreserve();
     }
 
     public void setCopyNamespacesMode(boolean preserve, boolean inherit) {
