@@ -169,6 +169,7 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -180,6 +181,7 @@ import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SchemaElementNodeItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
@@ -3114,6 +3116,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private ItemType inferStepResultItemType(StepExpr stepExpr) {
         NodeTest nodeTest = stepExpr.getNodeTest();
+        if (nodeTest instanceof SchemaNodeTest schemaTest) {
+            return schemaTest.itemType();
+        }
         if (nodeTest instanceof AnyKindTest) {
             return BuiltinTypesCatalogue.nodeItem;
         }
@@ -3205,6 +3210,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private boolean nodeTestCanMatchContextNode(NodeTest nodeTest, ItemType contextItemType, ForwardAxis axis) {
+        if (contextItemType instanceof SchemaElementNodeItemType schemaType) {
+            return schemaType.getAlternatives().stream()
+                    .anyMatch(type -> nodeTestCanMatchContextNode(nodeTest, type, axis));
+        }
         if (nodeTest instanceof AnyKindTest) {
             return true;
         }

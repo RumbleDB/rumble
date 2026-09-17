@@ -35,11 +35,13 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
 
 public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
@@ -75,7 +77,9 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
     }
 
     private Item nodeTestItem(Item node, NodeTest test) {
-        if (test instanceof AnyKindTest) {
+        if (test instanceof SchemaNodeTest schemaTest) {
+            return InstanceOfIterator.doesItemTypeMatchItem(schemaTest.itemType(), node) ? node : null;
+        } else if (test instanceof AnyKindTest) {
             return anyKindTest(node);
         } else if (test instanceof TextTest) {
             return textKindTest(node);

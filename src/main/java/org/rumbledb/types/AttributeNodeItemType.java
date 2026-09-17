@@ -45,6 +45,10 @@ public class AttributeNodeItemType extends AbstractItemType {
 
     private final List<Name> schemaTypeHierarchy;
 
+    // Includes member types when the declaration uses a pure union.
+    @Getter
+    private List<Name> schemaTypeAlternatives = List.of();
+
     public AttributeNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("attribute");
         this.nodeName = null;
@@ -70,6 +74,13 @@ public class AttributeNodeItemType extends AbstractItemType {
         this.nodeName = nodeName;
         this.schemaTypeName = schemaTypeName;
         this.schemaTypeHierarchy = List.copyOf(schemaTypeHierarchy);
+        this.schemaTypeAlternatives = List.of(schemaTypeName);
+    }
+
+    public AttributeNodeItemType(
+            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, List<Name> schemaTypeAlternatives) {
+        this(nodeName, schemaTypeName, schemaTypeHierarchy);
+        this.schemaTypeAlternatives = List.copyOf(schemaTypeAlternatives);
     }
 
     private boolean isWildcardAttribute() {
@@ -78,7 +89,12 @@ public class AttributeNodeItemType extends AbstractItemType {
 
     @Override
     protected Object equalityKey() {
-        return structuralTypeKey(AttributeNodeItemType.class, this.catalogueName, this.nodeName, this.schemaTypeName);
+        return structuralTypeKey(
+                AttributeNodeItemType.class,
+                this.catalogueName,
+                this.nodeName,
+                this.schemaTypeName,
+                this.schemaTypeAlternatives);
     }
 
     @Override
@@ -125,7 +141,8 @@ public class AttributeNodeItemType extends AbstractItemType {
     }
 
     private boolean hasCompatibleSchemaType(AttributeNodeItemType superType) {
-        return this.schemaTypeName != null && this.schemaTypeHierarchy.contains(superType.schemaTypeName);
+        return this.schemaTypeName != null
+                && superType.schemaTypeAlternatives.stream().anyMatch(this.schemaTypeHierarchy::contains);
     }
 
     @Override
