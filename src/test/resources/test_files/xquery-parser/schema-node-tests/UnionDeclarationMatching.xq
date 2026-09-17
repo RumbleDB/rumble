@@ -9,6 +9,7 @@ return every $check in (
     $root/@t:unionCode instance of schema-attribute(t:unionCode),
     count($root/schema-element(t:unionHead)) eq 1,
     count($root/schema-attribute(t:unionCode)) eq 1,
+    (: The restricted union does not accept member types directly; these local integer annotations cannot match. :)
     not($root/t:restricted instance of schema-element(t:restricted)),
     not($root/@t:restrictedCode instance of schema-attribute(t:restrictedCode))
 ) satisfies $check
