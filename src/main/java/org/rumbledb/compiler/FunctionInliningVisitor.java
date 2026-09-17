@@ -65,6 +65,13 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return false;
     }
 
+    private boolean requiresSchemaParameterConversion(InlineFunctionExpression function) {
+        // Inlining runs before schema type references are resolved. Its promotion expressions do not
+        // implement union atomization and untyped conversion, so retain the normal call in these cases.
+        return function.getParams().values().stream()
+                .anyMatch(type -> !type.isResolved() || type.getItemType().isUnionType());
+    }
+
     private boolean isVariableReferenced(Node expression, Name name) {
         if (expression instanceof VariableReferenceExpression variableReference) {
             return variableReference.getVariableName().equals(name);
@@ -420,6 +427,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 || targetFunction == null
                 // Rebuilding an inlined body in the caller's context would change its constructor semantics.
                 || hasDifferentConstructionMode(this.prolog, targetFunction)
+                || requiresSchemaParameterConversion((InlineFunctionExpression) targetFunction.getExpression())
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
