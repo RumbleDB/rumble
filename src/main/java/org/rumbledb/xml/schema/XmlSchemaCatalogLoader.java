@@ -43,7 +43,7 @@ import org.xml.sax.SAXParseException;
 
 import lombok.NonNull;
 
-import org.rumbledb.compiler.utils.URILiteralUtils;
+import org.rumbledb.compiler.frontend.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;

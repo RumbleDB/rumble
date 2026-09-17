@@ -19,12 +19,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
@@ -195,11 +195,12 @@ public abstract class Clause extends Node {
         }
     }
 
-    public RuntimeStaticContext getStaticContextForRuntime(RumbleConfiguration conf, VisitorConfig visitorConfig) {
+    /** Builds a runtime context using an execution mode validated by the backend. */
+    public RuntimeStaticContext getStaticContextForRuntime(RumbleConfiguration conf, ExecutionMode executionMode) {
         return RuntimeStaticContext.fromStaticContext(this.staticContext)
                 .configuration(conf)
                 .staticType(null)
-                .executionMode(getHighestExecutionMode(visitorConfig))
+                .executionMode(executionMode)
                 .metadata(getMetadata())
                 .build();
     }

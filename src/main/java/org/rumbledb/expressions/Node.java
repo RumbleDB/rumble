@@ -22,9 +22,7 @@ import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 
 /**
  * This is the top-level class for nodes in the intermediate representation of a
@@ -42,9 +40,8 @@ public abstract class Node {
     /**
      * Gets the highest execution mode of this node, which determines
      * whether evaluation will be done locally, with RDDs or with DataFrames.
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
+     * May be UNSET while analysis is in progress. Consumers decide whether
+     * an unresolved annotation is acceptable at their compilation stage.
      */
     @Setter
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
@@ -53,30 +50,6 @@ public abstract class Node {
 
     protected Node(ExceptionMetadata metadata) {
         this.metadata = metadata;
-    }
-
-    /**
-     * Gets the highest execution mode of this node, which determines
-     * whether evaluation will be done locally, with RDDs or with DataFrames.
-     *
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
-     *
-     * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
-     *
-     * if Node.suppressUnsetExecutionModeAccessedErrors is false, then an error is thrown if an UNSET mode is found.
-     * if Node.suppressUnsetExecutionModeAccessedErrors is true, it might silently return UNSET.
-     *
-     * @param visitorConfig the configuration of the visitor.
-     * @return the highest execution mode.
-     */
-    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.highestExecutionMode == ExecutionMode.UNSET) {
-            throw new OurBadException("An execution mode is accessed without being set.");
-        }
-        return this.highestExecutionMode;
     }
 
     public int numberOfUnsetExecutionModes() {

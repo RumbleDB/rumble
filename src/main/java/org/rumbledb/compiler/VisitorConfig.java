@@ -94,7 +94,7 @@ public class VisitorConfig {
      * As Some functions may not be known yet, missing functions should not raise errors.
      * Since unknown functions have unset execution modes, errors should not be raised for accessing these.
      */
-    static final VisitorConfig staticContextVisitorInitialPassConfig = new VisitorConfig.Builder()
+    public static final VisitorConfig staticContextVisitorInitialPassConfig = new VisitorConfig.Builder()
             .withsuppressErrorsForFunctionSignatureCollision(false)
             .withSuppressErrorsForCallingMissingFunctions(true)
             .withSuppressErrorsForAccessingUnsetExecutionModes(true)
@@ -106,7 +106,7 @@ public class VisitorConfig {
      * As all UDFs should be known at this stage, missing functions should raise errors
      * As UDFs may still have unresolved execution modes, errors should not be raised for accessing these.
      */
-    static final VisitorConfig staticContextVisitorIntermediatePassConfig = new VisitorConfig.Builder()
+    public static final VisitorConfig staticContextVisitorIntermediatePassConfig = new VisitorConfig.Builder()
             .withsuppressErrorsForFunctionSignatureCollision(true)
             .withSuppressErrorsForCallingMissingFunctions(false)
             .withSuppressErrorsForAccessingUnsetExecutionModes(true)
@@ -116,17 +116,10 @@ public class VisitorConfig {
     /**
      * All expression execution mode and UDF information should be available in the final pass
      */
-    static final VisitorConfig staticContextVisitorFinalPassConfig = new VisitorConfig.Builder()
+    public static final VisitorConfig staticContextVisitorFinalPassConfig = new VisitorConfig.Builder()
             .withsuppressErrorsForFunctionSignatureCollision(true)
             .withSuppressErrorsForCallingMissingFunctions(false)
             .withSuppressErrorsForAccessingUnsetExecutionModes(false)
             .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(true)
-            .build();
-
-    static final VisitorConfig runtimeIteratorVisitorConfig = new VisitorConfig.Builder()
-            .withsuppressErrorsForFunctionSignatureCollision(false)
-            .withSuppressErrorsForCallingMissingFunctions(false)
-            .withSuppressErrorsForAccessingUnsetExecutionModes(false)
-            .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
             .build();
 }

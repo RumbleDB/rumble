@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -159,20 +158,6 @@ public class InlineFunctionExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.body);
-    }
-
-    public void registerUserDefinedFunctionExecutionMode(VisitorConfig visitorConfig) {
-        FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
-        // if named(static) function declaration
-        if (this.name != null) {
-            getStaticContext()
-                    .getUserDefinedFunctionsExecutionModes()
-                    .setExecutionMode(
-                            identifier,
-                            this.body.getHighestExecutionMode(visitorConfig),
-                            visitorConfig.suppressErrorsForFunctionSignatureCollision(),
-                            this.getMetadata());
-        }
     }
 
     @Override
