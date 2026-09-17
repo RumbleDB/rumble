@@ -24,9 +24,19 @@ return every $check in (
     count($doc/t:root/attribute::schema-attribute(t:code)) eq 1,
     (: The member's own integer type is required; the head's decimal type is insufficient. :)
     not($local/t:member instance of schema-element(t:head)),
+
+    (: The global head declaration is abstract, so a local element with that name cannot match. :)
     not($local/t:head instance of schema-element(t:head)),
+
+    (: The head blocks substitution, so its member cannot match the head test. :)
     not($doc/t:root/t:blockedMember instance of schema-element(t:blocked)),
+
+    (: Constructed elements are untyped and cannot match the declared integer type. :)
     not(<t:member>1</t:member> instance of schema-element(t:member)),
+
+    (: The constructed attribute is untypedAtomic, not the declared anonymous NCName restriction. :)
     not(attribute t:code { "valid" } instance of schema-attribute(t:code)),
+
+    (: A matching document requires a schema-typed root and no text children; this document violates both. :)
     not(document { <t:root/>, text { "extra" } } instance of document-node(schema-element(t:root)))
 ) satisfies $check
