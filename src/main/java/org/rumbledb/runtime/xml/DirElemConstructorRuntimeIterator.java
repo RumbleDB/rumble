@@ -100,7 +100,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                                         "Attribute or namespace nodes must appear before all other nodes in element content");
                             }
                             if (item.isAttributeNode()) {
-                                attributes.add(item.copy(true));
+                                attributes.add(NodeConstructionUtils.copyNode(item, this.staticContext));
                             } else {
                                 namespaces.add(item.copy(true));
                             }
@@ -142,7 +142,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                                 textAccumulator = null;
                             }
                             // add the non-text node
-                            content.add(NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext));
+                            content.add(NodeConstructionUtils.copyNode(item, this.staticContext));
                             previousItemWasAtomic = false;
                         }
                     }
@@ -169,7 +169,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                 for (Item item : materialize.apply(iterator, contextToUse)) {
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {
-                        attributes.add(item.copy(true));
+                        attributes.add(NodeConstructionUtils.copyNode(item, this.staticContext));
                     }
                 }
             }
@@ -191,6 +191,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             elementItem.setXmlDocumentPosition(documentPath, 0);
         }
+        NodeConstructionUtils.initializeElement(elementItem, this.staticContext);
         return elementItem;
     }
 
