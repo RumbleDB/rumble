@@ -17,7 +17,9 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -32,18 +34,24 @@ import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.OrExprContext;
+import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
 import org.rumbledb.compiler.context.SwitchExprContext;
+import org.rumbledb.compiler.context.TryCatchExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
 import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
+import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
@@ -51,9 +59,11 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.NodeComparisonExpression;
+import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
@@ -63,11 +73,13 @@ import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
+import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.typing.CastExpression;
@@ -427,6 +439,22 @@ public final class Translation {
         return new UnaryExpression(mainExpression, negated, translationContext.metadata(ctx.context()));
     }
 
+    public static <M extends ParserRuleContext, V extends ParserRuleContext> Node valueExpr(
+            ValueExprContext<M, V> ctx,
+            TranslationContext translationContext,
+            Function<M, Node> visitSimpleMapExpr,
+            Function<V, Node> visitValidateExpr) {
+        if (ctx.simpleMapExpr() != null) {
+            return visitSimpleMapExpr.apply(ctx.simpleMapExpr());
+        }
+        if (ctx.validateExpr() != null) {
+            return visitValidateExpr.apply(ctx.validateExpr());
+        }
+        // TODO: extension expression still unsupported
+        throw new UnsupportedFeatureException(
+                "Extension expression still unsupported", translationContext.metadata(ctx.context()));
+    }
+
     public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression ifExpr(
             IfExprContext<T, S> ctx,
             TranslationContext translationContext,
@@ -496,5 +524,89 @@ public final class Translation {
                 cases,
                 new TypeswitchCase(defaultVariableName, defaultCase),
                 translationContext.metadata(ctx.context()));
+    }
+
+    public static <S extends ParserRuleContext, V extends ParserRuleContext, Q extends ParserRuleContext>
+            Expression quantifiedExpr(
+                    QuantifiedExprContext<S, V, Q> ctx,
+                    TranslationContext translationContext,
+                    Function<S, Node> visitExprSingle,
+                    Function<V, Name> parseVariableBinding,
+                    Function<Q, SequenceType> processSequenceType) {
+        Clause lastClause = null;
+        Expression expression = (Expression) visitExprSingle.apply(ctx.exprSingle());
+        boolean isUniversal = ctx.isUniversal();
+        for (QuantifiedExprContext.Var<S, V, Q> currentVariable : ctx.vars()) {
+            Expression varExpression;
+            SequenceType sequenceType = null;
+            Name variableName = parseVariableBinding.apply(currentVariable.varBinding());
+            if (currentVariable.sequenceType() != null) {
+                sequenceType = processSequenceType.apply(currentVariable.sequenceType());
+            }
+
+            varExpression = (Expression) visitExprSingle.apply(currentVariable.exprSingle());
+            Clause newClause = new ForClause(
+                    variableName,
+                    false,
+                    sequenceType,
+                    null,
+                    varExpression,
+                    translationContext.metadata(currentVariable.context()));
+            if (lastClause != null) {
+                lastClause.chainWith(newClause);
+            }
+            lastClause = newClause;
+        }
+        if (lastClause == null) {
+            throw new OurBadException("A quantified expression must bind at least one variable.");
+        }
+        WhereClause whereClause = null;
+        if (!isUniversal) {
+            whereClause = new WhereClause(expression, translationContext.metadata(ctx.exprSingle()));
+        } else {
+            whereClause = new WhereClause(
+                    new NotExpression(expression, translationContext.metadata(ctx.exprSingle())),
+                    translationContext.metadata(ctx.exprSingle()));
+        }
+        lastClause.chainWith(whereClause);
+        ReturnClause returnClause = new ReturnClause(
+                new NullLiteralExpression(translationContext.metadata(ctx.context())),
+                translationContext.metadata(ctx.context()));
+        whereClause.chainWith(returnClause);
+        Expression flworExpression = new FlworExpression(returnClause, translationContext.metadata(ctx.context()));
+        if (!isUniversal) {
+            return new FunctionCallExpression(
+                    Name.createVariableInDefaultFunctionNamespace("exists"),
+                    Collections.singletonList(flworExpression),
+                    translationContext.metadata(ctx.context()));
+        } else {
+            return new FunctionCallExpression(
+                    Name.createVariableInDefaultFunctionNamespace("empty"),
+                    Collections.singletonList(flworExpression),
+                    translationContext.metadata(ctx.context()));
+        }
+    }
+
+    public static <T extends ParserRuleContext, C extends ParserRuleContext> Expression tryCatchExpr(
+            TryCatchExprContext<T, C> ctx,
+            TranslationContext translationContext,
+            Function<T, Node> visitExpr,
+            Function<C, CatchPattern> parseCatchTarget) {
+        Expression tryExpression = ctx.tryExpr() == null
+                ? new CommaExpression(translationContext.metadata(ctx.context()))
+                : (Expression) visitExpr.apply(ctx.tryExpr());
+        Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
+        for (TryCatchExprContext.Catch<T, C> catchCtx : ctx.catches()) {
+            Expression catchExpression = catchCtx.catchExpr() == null
+                    ? new CommaExpression(translationContext.metadata(catchCtx.context()))
+                    : (Expression) visitExpr.apply(catchCtx.catchExpr());
+            for (C catchTarget : catchCtx.nameTests()) {
+                CatchPattern pattern = parseCatchTarget.apply(catchTarget);
+                if (!catchExpressions.containsKey(pattern)) {
+                    catchExpressions.put(pattern, catchExpression);
+                }
+            }
+        }
+        return new TryCatchExpression(tryExpression, catchExpressions, translationContext.metadata(ctx.context()));
     }
 }
