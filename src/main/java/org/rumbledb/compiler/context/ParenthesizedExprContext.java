@@ -20,7 +20,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record ParenthesizedExprContext<E extends ParserRuleContext>(E expr, ParserRuleContext context) {
+public record ParenthesizedExprContext<ExprCtx extends ParserRuleContext>(ExprCtx expr, ParserRuleContext context) {
 
     public static ParenthesizedExprContext<JsoniqParser.ExprContext> from(JsoniqParser.ParenthesizedExprContext c) {
         return new ParenthesizedExprContext<>(c.expr(), c);

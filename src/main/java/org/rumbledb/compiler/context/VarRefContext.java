@@ -20,7 +20,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record VarRefContext<E extends ParserRuleContext>(E eqName, ParserRuleContext context) {
+public record VarRefContext<EqNameCtx extends ParserRuleContext>(EqNameCtx eqName, ParserRuleContext context) {
 
     public static VarRefContext<JsoniqParser.EqNameContext> from(JsoniqParser.VarRefContext c) {
         return new VarRefContext<>(c.eqName(), c);

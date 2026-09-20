@@ -24,11 +24,19 @@ import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
 public record QuantifiedExprContext<
-        S extends ParserRuleContext, V extends ParserRuleContext, Q extends ParserRuleContext>(
-        boolean isUniversal, List<Var<S, V, Q>> vars, S exprSingle, ParserRuleContext context) {
+        ExprSingleCtx extends ParserRuleContext,
+        VarBindingCtx extends ParserRuleContext,
+        SeqTypeCtx extends ParserRuleContext>(
+        boolean isUniversal,
+        List<Var<ExprSingleCtx, VarBindingCtx, SeqTypeCtx>> vars,
+        ExprSingleCtx exprSingle,
+        ParserRuleContext context) {
 
-    public record Var<S extends ParserRuleContext, V extends ParserRuleContext, Q extends ParserRuleContext>(
-            V varBinding, Q sequenceType, S exprSingle, ParserRuleContext context) {}
+    public record Var<
+            ExprSingleCtx extends ParserRuleContext,
+            VarBindingCtx extends ParserRuleContext,
+            SeqTypeCtx extends ParserRuleContext>(
+            VarBindingCtx varBinding, SeqTypeCtx sequenceType, ExprSingleCtx exprSingle, ParserRuleContext context) {}
 
     public static QuantifiedExprContext<
                     JsoniqParser.ExprSingleContext, JsoniqParser.VarBindingContext, JsoniqParser.SequenceTypeContext>

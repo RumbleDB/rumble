@@ -20,8 +20,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record LiteralExprContext<S extends ParserRuleContext>(
-        S stringLiteral, String numericLiteralText, ParserRuleContext context) {
+public record LiteralExprContext<StringLiteralCtx extends ParserRuleContext>(
+        StringLiteralCtx stringLiteral, String numericLiteralText, ParserRuleContext context) {
 
     public static LiteralExprContext<JsoniqParser.StringLiteralContext> from(JsoniqParser.LiteralContext c) {
         if (c.stringLiteral() != null) {

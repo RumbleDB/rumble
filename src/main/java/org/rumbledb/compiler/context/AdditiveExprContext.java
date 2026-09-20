@@ -23,8 +23,8 @@ import org.antlr.v4.runtime.Token;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record AdditiveExprContext<T extends ParserRuleContext>(
-        T mainExpr, List<T> rhs, List<Token> op, ParserRuleContext context) {
+public record AdditiveExprContext<ChildExprCtx extends ParserRuleContext>(
+        ChildExprCtx mainExpr, List<ChildExprCtx> rhs, List<Token> op, ParserRuleContext context) {
 
     public static AdditiveExprContext<JsoniqParser.MultiplicativeExprContext> from(JsoniqParser.AdditiveExprContext c) {
         return new AdditiveExprContext<>(c.main_expr, c.rhs, c.op, c);

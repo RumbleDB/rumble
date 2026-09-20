@@ -30,13 +30,15 @@ public final class LogicTranslation {
 
     private LogicTranslation() {}
 
-    public static <T extends ParserRuleContext> Expression orExpr(
-            OrExprContext<T> ctx, TranslationContext translationContext, Function<T, Node> visitAndExpr) {
+    public static <ChildExprCtx extends ParserRuleContext> Expression orExpr(
+            OrExprContext<ChildExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ChildExprCtx, Node> visitAndExpr) {
         Expression result = (Expression) visitAndExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
-        for (T child : ctx.rhs()) {
+        for (ChildExprCtx child : ctx.rhs()) {
             Expression rightExpression = (Expression) visitAndExpr.apply(child);
             result = new OrExpression(
                     result,
@@ -46,13 +48,15 @@ public final class LogicTranslation {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression andExpr(
-            AndExprContext<T> ctx, TranslationContext translationContext, Function<T, Node> visitNextExpr) {
+    public static <ChildExprCtx extends ParserRuleContext> Expression andExpr(
+            AndExprContext<ChildExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ChildExprCtx, Node> visitNextExpr) {
         Expression result = (Expression) visitNextExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
-        for (T child : ctx.rhs()) {
+        for (ChildExprCtx child : ctx.rhs()) {
             Expression rightExpression = (Expression) visitNextExpr.apply(child);
             result = new AndExpression(
                     result,

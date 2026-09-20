@@ -45,11 +45,12 @@ public final class PrimaryTranslation {
 
     private PrimaryTranslation() {}
 
-    public static <M extends ParserRuleContext, V extends ParserRuleContext> Node valueExpr(
-            ValueExprContext<M, V> ctx,
-            TranslationContext translationContext,
-            Function<M, Node> visitSimpleMapExpr,
-            Function<V, Node> visitValidateExpr) {
+    public static <SimpleMapExprCtx extends ParserRuleContext, ValidateExprCtx extends ParserRuleContext>
+            Node valueExpr(
+                    ValueExprContext<SimpleMapExprCtx, ValidateExprCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<SimpleMapExprCtx, Node> visitSimpleMapExpr,
+                    Function<ValidateExprCtx, Node> visitValidateExpr) {
         if (ctx.simpleMapExpr() != null) {
             return visitSimpleMapExpr.apply(ctx.simpleMapExpr());
         }
@@ -61,16 +62,20 @@ public final class PrimaryTranslation {
                 "Extension expression still unsupported", translationContext.metadata(ctx.context()));
     }
 
-    public static <E extends ParserRuleContext> Expression parenthesizedExpr(
-            ParenthesizedExprContext<E> ctx, TranslationContext translationContext, Function<E, Node> visitExpr) {
+    public static <ExprCtx extends ParserRuleContext> Expression parenthesizedExpr(
+            ParenthesizedExprContext<ExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ExprCtx, Node> visitExpr) {
         if (ctx.expr() == null) {
             return new CommaExpression(translationContext.metadata(ctx.context()));
         }
         return (Expression) visitExpr.apply(ctx.expr());
     }
 
-    public static <E extends ParserRuleContext> Expression varRef(
-            VarRefContext<E> ctx, TranslationContext translationContext, BiFunction<E, NameRole, Name> parseEqName) {
+    public static <EqNameCtx extends ParserRuleContext> Expression varRef(
+            VarRefContext<EqNameCtx> ctx,
+            TranslationContext translationContext,
+            BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
         Name name = parseEqName.apply(ctx.eqName(), NameRole.NO_DEFAULT_NAMESPACE);
         return new VariableReferenceExpression(name, translationContext.metadata(ctx.context()));
     }
@@ -79,10 +84,10 @@ public final class PrimaryTranslation {
         return new ContextItemExpression(translationContext.metadata(ctx));
     }
 
-    public static <S extends ParserRuleContext> Expression literal(
-            LiteralExprContext<S> ctx,
+    public static <StringLiteralCtx extends ParserRuleContext> Expression literal(
+            LiteralExprContext<StringLiteralCtx> ctx,
             TranslationContext translationContext,
-            Function<S, String> processStringLiteral) {
+            Function<StringLiteralCtx, String> processStringLiteral) {
         if (ctx.stringLiteral() != null) {
             return new StringLiteralExpression(
                     processStringLiteral.apply(ctx.stringLiteral()), translationContext.metadata(ctx.context()));

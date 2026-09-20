@@ -39,15 +39,15 @@ public final class ComparisonTranslation {
 
     private ComparisonTranslation() {}
 
-    public static <T extends ParserRuleContext> Expression comparisonExpr(
-            ComparisonExprContext<T> ctx,
+    public static <ChildExprCtx extends ParserRuleContext> Expression comparisonExpr(
+            ComparisonExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitStringConcatExpr) {
+            Function<ChildExprCtx, Node> visitStringConcatExpr) {
         Expression mainExpression = (Expression) visitStringConcatExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return mainExpression;
         }
-        T child = ctx.rhs().get(0);
+        ChildExprCtx child = ctx.rhs().get(0);
         Expression childExpression = (Expression) visitStringConcatExpr.apply(child);
 
         if (ctx.isNodeComp()) {

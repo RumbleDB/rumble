@@ -35,11 +35,12 @@ public final class TypeTranslation {
 
     private TypeTranslation() {}
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression instanceOfExpr(
-            TypeCheckExprContext<T, S> ctx,
-            TranslationContext translationContext,
-            Function<T, Node> visitIsStaticallyExpr,
-            Function<S, SequenceType> processSequenceType) {
+    public static <MainExprCtx extends ParserRuleContext, SeqTypeCtx extends ParserRuleContext>
+            Expression instanceOfExpr(
+                    TypeCheckExprContext<MainExprCtx, SeqTypeCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<MainExprCtx, Node> visitIsStaticallyExpr,
+                    Function<SeqTypeCtx, SequenceType> processSequenceType) {
         Expression mainExpression = (Expression) visitIsStaticallyExpr.apply(ctx.mainExpr());
         if (ctx.seq() == null || ctx.seq().isEmpty()) {
             return mainExpression;
@@ -48,11 +49,12 @@ public final class TypeTranslation {
         return new InstanceOfExpression(mainExpression, sequenceType, translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression isStaticallyExpr(
-            TypeCheckExprContext<T, S> ctx,
-            TranslationContext translationContext,
-            Function<T, Node> visitTreatExpr,
-            Function<S, SequenceType> processSequenceType) {
+    public static <MainExprCtx extends ParserRuleContext, SeqTypeCtx extends ParserRuleContext>
+            Expression isStaticallyExpr(
+                    TypeCheckExprContext<MainExprCtx, SeqTypeCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<MainExprCtx, Node> visitTreatExpr,
+                    Function<SeqTypeCtx, SequenceType> processSequenceType) {
         Expression mainExpression = (Expression) visitTreatExpr.apply(ctx.mainExpr());
         if (ctx.seq() == null || ctx.seq().isEmpty()) {
             return mainExpression;
@@ -61,11 +63,11 @@ public final class TypeTranslation {
         return new IsStaticallyExpression(mainExpression, sequenceType, translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression treatExpr(
-            TypeCheckExprContext<T, S> ctx,
+    public static <MainExprCtx extends ParserRuleContext, SeqTypeCtx extends ParserRuleContext> Expression treatExpr(
+            TypeCheckExprContext<MainExprCtx, SeqTypeCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitCastableExpr,
-            Function<S, SequenceType> processSequenceType) {
+            Function<MainExprCtx, Node> visitCastableExpr,
+            Function<SeqTypeCtx, SequenceType> processSequenceType) {
         Expression mainExpression = (Expression) visitCastableExpr.apply(ctx.mainExpr());
         if (ctx.seq() == null || ctx.seq().isEmpty()) {
             return mainExpression;
@@ -78,11 +80,12 @@ public final class TypeTranslation {
                 translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression castableExpr(
-            SingleTypeCheckExprContext<T, S> ctx,
-            TranslationContext translationContext,
-            Function<T, Node> visitCastExpr,
-            Function<S, SequenceType> processSingleType) {
+    public static <MainExprCtx extends ParserRuleContext, SingleTypeCtx extends ParserRuleContext>
+            Expression castableExpr(
+                    SingleTypeCheckExprContext<MainExprCtx, SingleTypeCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<MainExprCtx, Node> visitCastExpr,
+                    Function<SingleTypeCtx, SequenceType> processSingleType) {
         Expression mainExpression = (Expression) visitCastExpr.apply(ctx.mainExpr());
         if (ctx.single() == null || ctx.single().isEmpty()) {
             return mainExpression;
@@ -91,11 +94,11 @@ public final class TypeTranslation {
         return new CastableExpression(mainExpression, sequenceType, translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression castExpr(
-            SingleTypeCheckExprContext<T, S> ctx,
+    public static <MainExprCtx extends ParserRuleContext, SingleTypeCtx extends ParserRuleContext> Expression castExpr(
+            SingleTypeCheckExprContext<MainExprCtx, SingleTypeCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitArrowExpr,
-            Function<S, SequenceType> processSingleType) {
+            Function<MainExprCtx, Node> visitArrowExpr,
+            Function<SingleTypeCtx, SequenceType> processSingleType) {
         Expression mainExpression = (Expression) visitArrowExpr.apply(ctx.mainExpr());
         if (ctx.single() == null || ctx.single().isEmpty()) {
             return mainExpression;

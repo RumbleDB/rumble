@@ -49,28 +49,28 @@ public final class ControlTranslation {
 
     private ControlTranslation() {}
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression ifExpr(
-            IfExprContext<T, S> ctx,
+    public static <TestExprCtx extends ParserRuleContext, BranchExprCtx extends ParserRuleContext> Expression ifExpr(
+            IfExprContext<TestExprCtx, BranchExprCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitExpr,
-            Function<S, Node> visitExprSingle) {
+            Function<TestExprCtx, Node> visitExpr,
+            Function<BranchExprCtx, Node> visitExprSingle) {
         Expression condition = (Expression) visitExpr.apply(ctx.testCondition());
         Expression branch = (Expression) visitExprSingle.apply(ctx.branch());
         Expression elseBranch = (Expression) visitExprSingle.apply(ctx.elseBranch());
         return new ConditionalExpression(condition, branch, elseBranch, translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression switchExpr(
-            SwitchExprContext<T, S> ctx,
+    public static <CondExprCtx extends ParserRuleContext, CaseExprCtx extends ParserRuleContext> Expression switchExpr(
+            SwitchExprContext<CondExprCtx, CaseExprCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitExpr,
-            Function<S, Node> visitExprSingle) {
+            Function<CondExprCtx, Node> visitExpr,
+            Function<CaseExprCtx, Node> visitExprSingle) {
         Expression condition = (Expression) visitExpr.apply(ctx.cond());
         List<SwitchCase> cases = new ArrayList<>(ctx.cases().size());
-        for (SwitchExprContext.Case<S> caseClause : ctx.cases()) {
+        for (SwitchExprContext.Case<CaseExprCtx> caseClause : ctx.cases()) {
             List<Expression> conditionExpressions =
                     new ArrayList<>(caseClause.cond().size());
-            for (S expr : caseClause.cond()) {
+            for (CaseExprCtx expr : caseClause.cond()) {
                 conditionExpressions.add((Expression) visitExprSingle.apply(expr));
             }
             SwitchCase c = new SwitchCase(conditionExpressions, (Expression) visitExprSingle.apply(caseClause.ret()));
@@ -81,27 +81,27 @@ public final class ControlTranslation {
     }
 
     public static <
-                    T extends ParserRuleContext,
-                    S extends ParserRuleContext,
-                    V extends ParserRuleContext,
-                    Q extends ParserRuleContext>
+                    CondExprCtx extends ParserRuleContext,
+                    CaseExprCtx extends ParserRuleContext,
+                    VarBindingCtx extends ParserRuleContext,
+                    SeqTypeCtx extends ParserRuleContext>
             Expression typeswitchExpr(
-                    TypeswitchExprContext<T, S, V, Q> ctx,
+                    TypeswitchExprContext<CondExprCtx, CaseExprCtx, VarBindingCtx, SeqTypeCtx> ctx,
                     TranslationContext translationContext,
-                    Function<T, Node> visitExpr,
-                    Function<S, Node> visitExprSingle,
-                    Function<V, Name> parseVariableBinding,
-                    Function<Q, SequenceType> processSequenceType) {
+                    Function<CondExprCtx, Node> visitExpr,
+                    Function<CaseExprCtx, Node> visitExprSingle,
+                    Function<VarBindingCtx, Name> parseVariableBinding,
+                    Function<SeqTypeCtx, SequenceType> processSequenceType) {
         Expression condition = (Expression) visitExpr.apply(ctx.cond());
         List<TypeswitchCase> cases = new ArrayList<>(ctx.cases().size());
-        for (TypeswitchExprContext.Case<S, V, Q> expr : ctx.cases()) {
+        for (TypeswitchExprContext.Case<CaseExprCtx, VarBindingCtx, SeqTypeCtx> expr : ctx.cases()) {
             List<SequenceType> union = new ArrayList<>();
             Name variableName = null;
             if (expr.varRef() != null) {
                 variableName = parseVariableBinding.apply(expr.varRef());
             }
             if (expr.union() != null && !expr.union().isEmpty()) {
-                for (Q sequenceType : expr.union()) {
+                for (SeqTypeCtx sequenceType : expr.union()) {
                     union.add(processSequenceType.apply(sequenceType));
                 }
             }
@@ -136,28 +136,30 @@ public final class ControlTranslation {
         };
     }
 
-    public static <E extends ParserRuleContext> CatchPattern catchPattern(
-            NameTestContext<E> ctx, TranslationContext translationContext, BiFunction<E, NameRole, Name> parseEqName) {
+    public static <EqNameCtx extends ParserRuleContext> CatchPattern catchPattern(
+            NameTestContext<EqNameCtx> ctx,
+            TranslationContext translationContext,
+            BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
         if (ctx.wildcard() != null) {
             return wildcardPattern(ctx.wildcard(), translationContext);
         }
         return CatchPattern.exact(parseEqName.apply(ctx.eqName(), NameRole.NO_DEFAULT_NAMESPACE));
     }
 
-    public static <T extends ParserRuleContext, E extends ParserRuleContext> Expression tryCatchExpr(
-            TryCatchExprContext<T, E> ctx,
+    public static <ExprCtx extends ParserRuleContext, EqNameCtx extends ParserRuleContext> Expression tryCatchExpr(
+            TryCatchExprContext<ExprCtx, EqNameCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitExpr,
-            BiFunction<E, NameRole, Name> parseEqName) {
+            Function<ExprCtx, Node> visitExpr,
+            BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
         Expression tryExpression = ctx.tryExpr() == null
                 ? new CommaExpression(translationContext.metadata(ctx.context()))
                 : (Expression) visitExpr.apply(ctx.tryExpr());
         Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
-        for (TryCatchExprContext.Catch<T, E> catchCtx : ctx.catches()) {
+        for (TryCatchExprContext.Catch<ExprCtx, EqNameCtx> catchCtx : ctx.catches()) {
             Expression catchExpression = catchCtx.catchExpr() == null
                     ? new CommaExpression(translationContext.metadata(catchCtx.context()))
                     : (Expression) visitExpr.apply(catchCtx.catchExpr());
-            for (NameTestContext<E> catchTarget : catchCtx.nameTests()) {
+            for (NameTestContext<EqNameCtx> catchTarget : catchCtx.nameTests()) {
                 CatchPattern pattern = catchPattern(catchTarget, translationContext, parseEqName);
                 if (!catchExpressions.containsKey(pattern)) {
                     catchExpressions.put(pattern, catchExpression);
