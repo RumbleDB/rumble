@@ -21,7 +21,7 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.expressions.module.Module;
 
 /** Debug rendering shared by compilation stages. */
-@Log4j2(topic = "org.rumbledb.compiler.VisitorHelpers")
+@Log4j2
 final class CompilationDiagnostics {
 
     private CompilationDiagnostics() {}
