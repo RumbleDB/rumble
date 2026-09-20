@@ -23,8 +23,10 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import org.rumbledb.compiler.context.AdditiveExprContext;
+import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
@@ -40,6 +42,8 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
+import org.rumbledb.expressions.logic.AndExpression;
+import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
@@ -56,6 +60,38 @@ import org.rumbledb.types.SequenceType;
 public final class SharedTranslationLogic {
 
     private SharedTranslationLogic() {}
+
+    public static <T extends ParserRuleContext> Expression translateOrExpr(
+            OrExprContext<T> view, TranslationContext translationContext, Function<T, Node> visitAndExpr) {
+        Expression result = (Expression) visitAndExpr.apply(view.mainExpr());
+        if (view.rhs() == null || view.rhs().isEmpty()) {
+            return result;
+        }
+        for (T child : view.rhs()) {
+            Expression rightExpression = (Expression) visitAndExpr.apply(child);
+            result = new OrExpression(
+                    result,
+                    rightExpression,
+                    translationContext.metadata(view.mainExpr().getStart(), child.getStop()));
+        }
+        return result;
+    }
+
+    public static <T extends ParserRuleContext> Expression translateAndExpr(
+            AndExprContext<T> view, TranslationContext translationContext, Function<T, Node> visitNextExpr) {
+        Expression result = (Expression) visitNextExpr.apply(view.mainExpr());
+        if (view.rhs() == null || view.rhs().isEmpty()) {
+            return result;
+        }
+        for (T child : view.rhs()) {
+            Expression rightExpression = (Expression) visitNextExpr.apply(child);
+            result = new AndExpression(
+                    result,
+                    rightExpression,
+                    translationContext.metadata(view.mainExpr().getStart(), child.getStop()));
+        }
+        return result;
+    }
 
     public static <T extends ParserRuleContext> Expression translateStringConcatExpr(
             StringConcatExprContext<T> view, TranslationContext translationContext, Function<T, Node> visitRangeExpr) {

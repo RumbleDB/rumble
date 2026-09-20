@@ -37,8 +37,10 @@ import lombok.extern.log4j.Log4j2;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.context.AdditiveExprContext;
+import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
@@ -78,9 +80,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.flowr.WindowClause;
-import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
-import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -1043,30 +1043,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region operational
     @Override
     public Node visitOrExpr(XQueryParser.OrExprContext ctx) {
-        Expression result = (Expression) this.visitAndExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (XQueryParser.AndExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitAndExpr(child);
-            result = new OrExpression(
-                    result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return SharedTranslationLogic.translateOrExpr(
+                OrExprContext.from(ctx), this.translationContext, this::visitAndExpr);
     }
 
     @Override
     public Node visitAndExpr(XQueryParser.AndExprContext ctx) {
-        Expression result = (Expression) this.visitComparisonExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (XQueryParser.ComparisonExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitComparisonExpr(child);
-            result = new AndExpression(
-                    result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return SharedTranslationLogic.translateAndExpr(
+                AndExprContext.from(ctx), this.translationContext, this::visitComparisonExpr);
     }
 
     @Override

@@ -38,8 +38,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.context.AdditiveExprContext;
+import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
@@ -78,9 +80,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.flowr.WindowClause;
-import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
-import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -1061,30 +1061,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region operational
     @Override
     public Node visitOrExpr(JsoniqParser.OrExprContext ctx) {
-        Expression result = (Expression) this.visitAndExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (JsoniqParser.AndExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitAndExpr(child);
-            result = new OrExpression(
-                    result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return SharedTranslationLogic.translateOrExpr(
+                OrExprContext.from(ctx), this.translationContext, this::visitAndExpr);
     }
 
     @Override
     public Node visitAndExpr(JsoniqParser.AndExprContext ctx) {
-        Expression result = (Expression) this.visitNotExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (JsoniqParser.NotExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitNotExpr(child);
-            result = new AndExpression(
-                    result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return SharedTranslationLogic.translateAndExpr(
+                AndExprContext.from(ctx), this.translationContext, this::visitNotExpr);
     }
 
     @Override
