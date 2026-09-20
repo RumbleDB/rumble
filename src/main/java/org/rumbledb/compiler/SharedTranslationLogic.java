@@ -15,6 +15,7 @@
  */
 package org.rumbledb.compiler;
 
+import java.util.Collections;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -24,6 +25,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.OrExprContext;
@@ -34,6 +36,7 @@ import org.rumbledb.compiler.context.StringConcatExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
@@ -41,12 +44,22 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
+import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
+import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -91,6 +104,58 @@ public final class SharedTranslationLogic {
                     translationContext.metadata(view.mainExpr().getStart(), child.getStop()));
         }
         return result;
+    }
+
+    public static <T extends ParserRuleContext> Expression translateComparisonExpr(
+            ComparisonExprContext<T> view,
+            TranslationContext translationContext,
+            Function<T, Node> visitStringConcatExpr) {
+        Expression mainExpression = (Expression) visitStringConcatExpr.apply(view.mainExpr());
+        if (view.rhs() == null || view.rhs().isEmpty()) {
+            return mainExpression;
+        }
+        T child = view.rhs().get(0);
+        Expression childExpression = (Expression) visitStringConcatExpr.apply(child);
+
+        if (view.isNodeComp()) {
+            NodeComparisonExpression.NodeComparisonOperator nodeOp =
+                    NodeComparisonExpression.NodeComparisonOperator.fromSymbol(view.operatorSymbol());
+            return new NodeComparisonExpression(
+                    mainExpression, childExpression, nodeOp, translationContext.metadata(view.context()));
+        }
+
+        ComparisonExpression.ComparisonOperator kind =
+                ComparisonExpression.ComparisonOperator.fromSymbol(view.operatorSymbol());
+        if (kind.isValueComparison()
+                || translationContext.configuration().optimization().optimizeGeneralComparisonToValueComparison()) {
+            return new ComparisonExpression(
+                    mainExpression, childExpression, kind, translationContext.metadata(view.context()));
+        }
+
+        Name variableNameLeft = Name.TEMP_VAR1;
+        Name variableNameRight = Name.TEMP_VAR2;
+
+        Clause firstClause = new ForClause(
+                variableNameLeft, false, null, null, mainExpression, translationContext.metadata(view.context()));
+        Clause secondClause = new ForClause(
+                variableNameRight, false, null, null, childExpression, translationContext.metadata(view.context()));
+        firstClause.chainWith(secondClause);
+        Expression valueComparison = new ComparisonExpression(
+                new VariableReferenceExpression(variableNameLeft, translationContext.metadata(view.context())),
+                new VariableReferenceExpression(variableNameRight, translationContext.metadata(view.context())),
+                kind.getCorrespondingValueComparison(),
+                translationContext.metadata(view.context()));
+        WhereClause whereClause = new WhereClause(valueComparison, translationContext.metadata(view.context()));
+        secondClause.chainWith(whereClause);
+        ReturnClause returnClause = new ReturnClause(
+                new StringLiteralExpression("", translationContext.metadata(view.context())),
+                translationContext.metadata(view.context()));
+        whereClause.chainWith(returnClause);
+        Expression flworExpression = new FlworExpression(returnClause, translationContext.metadata(view.context()));
+        return new FunctionCallExpression(
+                Name.createVariableInDefaultFunctionNamespace("exists"),
+                Collections.singletonList(flworExpression),
+                translationContext.metadata(view.context()));
     }
 
     public static <T extends ParserRuleContext> Expression translateStringConcatExpr(

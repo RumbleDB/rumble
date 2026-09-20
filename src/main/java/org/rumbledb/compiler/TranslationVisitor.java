@@ -39,6 +39,7 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.OrExprContext;
@@ -60,7 +61,6 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
@@ -1082,46 +1082,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitComparisonExpr(JsoniqParser.ComparisonExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitStringConcatExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return mainExpression;
-        }
-        JsoniqParser.StringConcatExprContext child = ctx.rhs.get(0);
-        Expression childExpression = (Expression) this.visitStringConcatExpr(child);
-
-        ComparisonExpression.ComparisonOperator kind =
-                ComparisonExpression.ComparisonOperator.fromSymbol(ctx.op.get(0).getText());
-        if (kind.isValueComparison()
-                || this.translationContext
-                        .configuration()
-                        .optimization()
-                        .optimizeGeneralComparisonToValueComparison()) {
-            return new ComparisonExpression(mainExpression, childExpression, kind, createMetadataFromContext(ctx));
-        }
-
-        Name variableNameLeft = Name.TEMP_VAR1;
-        Name variableNameRight = Name.TEMP_VAR2;
-
-        Clause firstClause =
-                new ForClause(variableNameLeft, false, null, null, mainExpression, createMetadataFromContext(ctx));
-        Clause secondClause =
-                new ForClause(variableNameRight, false, null, null, childExpression, createMetadataFromContext(ctx));
-        firstClause.chainWith(secondClause);
-        Expression valueComparison = new ComparisonExpression(
-                new VariableReferenceExpression(variableNameLeft, createMetadataFromContext(ctx)),
-                new VariableReferenceExpression(variableNameRight, createMetadataFromContext(ctx)),
-                kind.getCorrespondingValueComparison(),
-                createMetadataFromContext(ctx));
-        WhereClause whereClause = new WhereClause(valueComparison, createMetadataFromContext(ctx));
-        secondClause.chainWith(whereClause);
-        ReturnClause returnClause = new ReturnClause(
-                new StringLiteralExpression("", createMetadataFromContext(ctx)), createMetadataFromContext(ctx));
-        whereClause.chainWith(returnClause);
-        Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
-        return new FunctionCallExpression(
-                Name.createVariableInDefaultFunctionNamespace("exists"),
-                Collections.singletonList(flworExpression),
-                createMetadataFromContext(ctx));
+        return SharedTranslationLogic.translateComparisonExpr(
+                ComparisonExprContext.from(ctx), this.translationContext, this::visitStringConcatExpr);
     }
 
     @Override
