@@ -50,6 +50,7 @@ import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
 import org.rumbledb.compiler.context.SwitchExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
+import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
@@ -65,8 +66,6 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.TryCatchExpression;
-import org.rumbledb.expressions.control.TypeSwitchExpression;
-import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
@@ -2311,29 +2310,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region quantified
     @Override
     public Node visitTypeswitchExpr(JsoniqParser.TypeswitchExprContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.cond);
-        List<TypeswitchCase> cases = new ArrayList<>();
-        for (JsoniqParser.CaseClauseContext expr : ctx.cses) {
-            List<SequenceType> union = new ArrayList<>();
-            Name variableName = null;
-            if (expr.var_ref != null) {
-                variableName = parseVariableBinding(expr.var_ref);
-            }
-            if (expr.union != null && !expr.union.isEmpty()) {
-                for (JsoniqParser.SequenceTypeContext sequenceType : expr.union) {
-                    union.add(this.processSequenceType(sequenceType));
-                }
-            }
-            Expression expression = (Expression) this.visitExprSingle(expr.ret);
-            cases.add(new TypeswitchCase(variableName, union, expression));
-        }
-        Name defaultVariableName = null;
-        if (ctx.var_ref != null) {
-            defaultVariableName = parseVariableBinding(ctx.var_ref);
-        }
-        Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
-        return new TypeSwitchExpression(
-                condition, cases, new TypeswitchCase(defaultVariableName, defaultCase), createMetadataFromContext(ctx));
+        return Translation.typeswitchExpr(
+                TypeswitchExprContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitExprSingle,
+                this::parseVariableBinding,
+                this::processSequenceType);
     }
 
     @Override

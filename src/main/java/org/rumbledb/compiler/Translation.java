@@ -38,6 +38,7 @@ import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
 import org.rumbledb.compiler.context.SwitchExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
+import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.context.Name;
@@ -53,6 +54,8 @@ import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
@@ -453,5 +456,45 @@ public final class Translation {
         }
         Expression defaultCase = (Expression) visitExprSingle.apply(ctx.def());
         return new SwitchExpression(condition, cases, defaultCase, translationContext.metadata(ctx.context()));
+    }
+
+    public static <
+                    T extends ParserRuleContext,
+                    S extends ParserRuleContext,
+                    V extends ParserRuleContext,
+                    Q extends ParserRuleContext>
+            Expression typeswitchExpr(
+                    TypeswitchExprContext<T, S, V, Q> ctx,
+                    TranslationContext translationContext,
+                    Function<T, Node> visitExpr,
+                    Function<S, Node> visitExprSingle,
+                    Function<V, Name> parseVariableBinding,
+                    Function<Q, SequenceType> processSequenceType) {
+        Expression condition = (Expression) visitExpr.apply(ctx.cond());
+        List<TypeswitchCase> cases = new ArrayList<>(ctx.cases().size());
+        for (TypeswitchExprContext.Case<S, V, Q> expr : ctx.cases()) {
+            List<SequenceType> union = new ArrayList<>();
+            Name variableName = null;
+            if (expr.varRef() != null) {
+                variableName = parseVariableBinding.apply(expr.varRef());
+            }
+            if (expr.union() != null && !expr.union().isEmpty()) {
+                for (Q sequenceType : expr.union()) {
+                    union.add(processSequenceType.apply(sequenceType));
+                }
+            }
+            Expression expression = (Expression) visitExprSingle.apply(expr.ret());
+            cases.add(new TypeswitchCase(variableName, union, expression));
+        }
+        Name defaultVariableName = null;
+        if (ctx.defaultVar() != null) {
+            defaultVariableName = parseVariableBinding.apply(ctx.defaultVar());
+        }
+        Expression defaultCase = (Expression) visitExprSingle.apply(ctx.def());
+        return new TypeSwitchExpression(
+                condition,
+                cases,
+                new TypeswitchCase(defaultVariableName, defaultCase),
+                translationContext.metadata(ctx.context()));
     }
 }
