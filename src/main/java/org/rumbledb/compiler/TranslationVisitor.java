@@ -39,24 +39,30 @@ import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.CommaExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
+import org.rumbledb.compiler.context.ContextItemDeclContext;
 import org.rumbledb.compiler.context.CountClauseContext;
 import org.rumbledb.compiler.context.EnclosedExprContext;
 import org.rumbledb.compiler.context.FlworExprContext;
 import org.rumbledb.compiler.context.ForClauseContext;
 import org.rumbledb.compiler.context.ForVarContext;
 import org.rumbledb.compiler.context.FunctionCallContext;
+import org.rumbledb.compiler.context.FunctionDeclContext;
 import org.rumbledb.compiler.context.GroupByClauseContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.LetClauseContext;
 import org.rumbledb.compiler.context.LetVarContext;
+import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
+import org.rumbledb.compiler.context.MainModuleContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
+import org.rumbledb.compiler.context.OptionDeclContext;
 import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.compiler.context.OrderByClauseContext;
 import org.rumbledb.compiler.context.ParenthesizedExprContext;
+import org.rumbledb.compiler.context.ProgramContext;
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
@@ -69,6 +75,7 @@ import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
+import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.context.WindowClauseContext;
@@ -77,6 +84,7 @@ import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
 import org.rumbledb.compiler.translation.FlworTranslation;
 import org.rumbledb.compiler.translation.LogicTranslation;
+import org.rumbledb.compiler.translation.ModuleTranslation;
 import org.rumbledb.compiler.translation.PostfixTranslation;
 import org.rumbledb.compiler.translation.PrimaryTranslation;
 import org.rumbledb.compiler.translation.QuantifiedTranslation;
@@ -84,7 +92,6 @@ import org.rumbledb.compiler.translation.SequenceTranslation;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.translation.TypeTranslation;
-import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
@@ -99,7 +106,6 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
-import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
@@ -115,7 +121,6 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
-import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
@@ -275,42 +280,28 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
-        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        Program program = (Program) this.visitProgram(ctx.program());
-        if (ExternalVariableDeclarationProcessor.process(
-                prolog, this.translationContext.externalBindings(), createMetadataFromContext(ctx))) {
-            log.warn("Adding context item declaration.");
-        }
-
-        MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
-        module.setStaticContext(this.translationContext.moduleContext());
-        return module;
+        return ModuleTranslation.mainModule(
+                MainModuleContext.from(ctx), this.translationContext, this::visitProlog, this::visitProgram);
     }
 
     // region program
     @Override
     public Node visitProgram(JsoniqParser.ProgramContext ctx) {
-        StatementsAndOptionalExpr statementsAndOptionalExpr =
-                (StatementsAndOptionalExpr) this.visitStatementsAndOptionalExpr(ctx.statementsAndOptionalExpr());
-        return new Program(statementsAndOptionalExpr, createMetadataFromContext(ctx));
+        return ModuleTranslation.program(
+                ProgramContext.from(ctx), this.translationContext, this::visitStatementsAndOptionalExpr);
     }
 
     // end region
 
     @Override
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
-        String prefix = ctx.ncName().getText();
-        String namespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.uriLiteral()));
-        if (namespace.equals("")) {
-            throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
-        }
-        this.libraryModuleNamespace = namespace;
-        bindNamespace(prefix, namespace, createMetadataFromContext(ctx));
-
-        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        LibraryModule module = new LibraryModule(prolog, namespace, createMetadataFromContext(ctx));
-        module.setStaticContext(this.translationContext.moduleContext());
-        return module;
+        return ModuleTranslation.libraryModule(
+                LibraryModuleContext.from(ctx),
+                this.translationContext,
+                this::processURILiteral,
+                ns -> this.libraryModuleNamespace = ns,
+                this::bindNamespace,
+                this::visitProlog);
     }
 
     @Override
@@ -523,9 +514,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitOptionDecl(JsoniqParser.OptionDeclContext ctx) {
-        Name name = parseEqName(ctx.name, NameRole.NO_DEFAULT_NAMESPACE);
-        String value = processStringLiteral(ctx.value);
-        return new OptionDeclaration(name, value, createMetadataFromContext(ctx));
+        return ModuleTranslation.optionDecl(
+                OptionDeclContext.from(ctx), this.translationContext, this::parseEqName, this::processStringLiteral);
     }
 
     private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {
@@ -574,47 +564,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
-        List<Annotation> annotations = processAnnotations(ctx.annotations());
-        Name name = parseFunctionName(ctx.functionName());
-        FunctionDeclarationValidator.validateFunctionName(name, createMetadataFromContext(ctx.functionName()));
-        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = null;
-        Name paramName;
-        SequenceType paramType;
-        if (ctx.paramList() != null) {
-            for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseVariableBinding(param.name);
-                paramType = SequenceType.createSequenceType("item*");
-                if (fnParams.containsKey(paramName)) {
-                    throw new DuplicateParamNameException(name, paramName, createMetadataFromContext(param));
-                }
-                if (param.sequenceType() != null) {
-                    paramType = this.processSequenceType(param.sequenceType());
-                } else {
-                    paramType = SequenceType.createSequenceType("item*");
-                }
-                fnParams.put(paramName, paramType);
-            }
-        }
-
-        if (ctx.return_type != null) {
-            fnReturnType = this.processSequenceType(ctx.return_type);
-        }
-
-        StatementsAndOptionalExpr funcBody =
-                (StatementsAndOptionalExpr) this.visitStatementsAndOptionalExpr(ctx.fn_body);
-
-        boolean isExternal = ctx.is_external != null;
-
-        return new InlineFunctionExpression(
-                annotations,
-                name,
-                fnParams,
-                fnReturnType,
-                funcBody,
-                isExternal,
-                createMetadataFromContext(ctx),
-                createMetadataFromContext(ctx.functionName()));
+        return ModuleTranslation.functionDecl(
+                FunctionDeclContext.from(ctx),
+                this.translationContext,
+                this::processAnnotations,
+                this::parseFunctionName,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::processSequenceType,
+                this::visitStatementsAndOptionalExpr);
     }
 
     @Override
@@ -2104,53 +2062,22 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitVarDecl(JsoniqParser.VarDeclContext ctx) {
-        // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
-        // but it is actually treated as if it was item*
-        List<Annotation> annotations = processAnnotations(ctx.annotations());
-        SequenceType seq = null;
-        boolean external;
-        Name var = parseVariableBinding(ctx.varBinding());
-        if (ctx.sequenceType() != null) {
-            seq = this.processSequenceType(ctx.sequenceType());
-        }
-        external = (ctx.external != null);
-        Expression expr = null;
-        if (ctx.exprSingle() != null) {
-            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-            if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-        }
-        return new VariableDeclaration(
-                var,
-                external,
-                seq,
-                expr,
-                annotations,
-                createMetadataFromContext(ctx),
-                createMetadataFromContext(ctx.varBinding()));
+        return ModuleTranslation.varDecl(
+                VarDeclContext.from(ctx),
+                this.translationContext,
+                this::processAnnotations,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
     public Node visitContextItemDecl(JsoniqParser.ContextItemDeclContext ctx) {
-        // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
-        // but it is actually treated as if it was item*
-        SequenceType seq = null;
-        boolean external;
-        Name var = Name.CONTEXT_ITEM;
-        if (ctx.sequenceType() != null) {
-            seq = this.processSequenceType(ctx.sequenceType());
-        }
-        external = (ctx.external != null);
-        Expression expr = null;
-        if (ctx.exprSingle() != null) {
-            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-            if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-        }
-
-        return new VariableDeclaration(var, external, seq, expr, null, createMetadataFromContext(ctx));
+        return ModuleTranslation.contextItemDecl(
+                ContextItemDeclContext.from(ctx),
+                this.translationContext,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     // region scripting

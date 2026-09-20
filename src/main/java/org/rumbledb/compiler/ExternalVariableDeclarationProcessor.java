@@ -29,12 +29,12 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 /** Adds global declarations implied by external API bindings. */
-final class ExternalVariableDeclarationProcessor {
+public final class ExternalVariableDeclarationProcessor {
 
     private ExternalVariableDeclarationProcessor() {}
 
     /** Returns whether a context-item declaration was synthesized. */
-    static boolean process(Prolog prolog, ExternalBindings externalBindings, ExceptionMetadata metadata) {
+    public static boolean process(Prolog prolog, ExternalBindings externalBindings, ExceptionMetadata metadata) {
         boolean addedContextItem = false;
         if (!prolog.hasContextItemDeclaration()
                 && getExternalVariableType(externalBindings, Name.CONTEXT_ITEM) != null) {
