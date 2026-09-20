@@ -37,11 +37,14 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
+import org.rumbledb.compiler.context.CommaExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.CountClauseContext;
+import org.rumbledb.compiler.context.EnclosedExprContext;
 import org.rumbledb.compiler.context.FlworExprContext;
 import org.rumbledb.compiler.context.ForClauseContext;
 import org.rumbledb.compiler.context.ForVarContext;
+import org.rumbledb.compiler.context.FunctionCallContext;
 import org.rumbledb.compiler.context.GroupByClauseContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
@@ -50,6 +53,7 @@ import org.rumbledb.compiler.context.LetVarContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NameTestContext;
+import org.rumbledb.compiler.context.NamedFunctionRefContext;
 import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.compiler.context.OrderByClauseContext;
 import org.rumbledb.compiler.context.ParenthesizedExprContext;
@@ -83,7 +87,6 @@ import org.rumbledb.compiler.translation.TypeTranslation;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
-import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -107,11 +110,9 @@ import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
-import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.MapConstructorExpression;
-import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -670,14 +671,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region expr
     @Override
     public Node visitExpr(JsoniqParser.ExprContext ctx) {
-        List<Expression> expressions = new ArrayList<>();
-        for (JsoniqParser.ExprSingleContext expr : ctx.exprSingle()) {
-            expressions.add((Expression) this.visitExprSingle(expr));
-        }
-        if (expressions.size() == 1) {
-            return expressions.get(0);
-        }
-        return new CommaExpression(expressions, createMetadataFromContext(ctx));
+        return SequenceTranslation.expr(CommaExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
@@ -767,11 +761,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region EnclosedExpression
     @Override
     public Node visitEnclosedExpression(JsoniqParser.EnclosedExpressionContext ctx) {
-        // empty expression
-        if (ctx.expr() == null) {
-            return new CommaExpression(createMetadataFromContext(ctx));
-        }
-        return this.visitExpr(ctx.expr());
+        return SequenceTranslation.enclosedExpr(
+                EnclosedExprContext.from(ctx), this.translationContext, this::visitExpr);
     }
     // endregion
 
@@ -1968,15 +1959,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
     }
 
-    private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
-        return new FunctionCallExpression(name, children, metadata);
-    }
-
     @Override
     public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
-        Name name = parseFunctionName(ctx.functionName());
-        return processFunctionCall(
-                name, getArgumentsFromArgumentListContext(ctx.argumentList()), createMetadataFromContext(ctx));
+        return PrimaryTranslation.functionCall(
+                FunctionCallContext.from(ctx), this.translationContext, this::parseFunctionName, arg ->
+                        (Expression) this.visitArgument(arg));
     }
 
     private List<Expression> getArgumentsFromArgumentListContext(JsoniqParser.ArgumentListContext ctx) {
@@ -2013,20 +2000,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        Name name = parseFunctionName(ctx.functionName());
-        String arityLiteral = ctx.arity.getText();
-        try {
-            int arity = Integer.parseInt(arityLiteral);
-            return new NamedFunctionReferenceExpression(
-                    new FunctionIdentifier(name, arity), createMetadataFromContext(ctx));
-        } catch (NumberFormatException e) {
-            throw new NumericOverflowOrUnderflow(
-                    "Named function reference arity is out of range for implementation limits: "
-                            + name
-                            + "#"
-                            + arityLiteral,
-                    createMetadataFromContext(ctx));
-        }
+        return PrimaryTranslation.namedFunctionRef(
+                NamedFunctionRefContext.from(ctx), this.translationContext, this::parseFunctionName);
     }
 
     @Override

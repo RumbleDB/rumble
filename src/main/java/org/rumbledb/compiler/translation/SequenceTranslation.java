@@ -15,14 +15,19 @@
  */
 package org.rumbledb.compiler.translation;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import org.rumbledb.compiler.context.CommaExprContext;
+import org.rumbledb.compiler.context.EnclosedExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
+import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
@@ -32,6 +37,30 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 public final class SequenceTranslation {
 
     private SequenceTranslation() {}
+
+    public static <ExprSingleCtx extends ParserRuleContext> Expression expr(
+            CommaExprContext<ExprSingleCtx> ctx,
+            TranslationContext translationContext,
+            Function<ExprSingleCtx, Node> visitExprSingle) {
+        List<Expression> expressions = new ArrayList<>();
+        for (ExprSingleCtx expr : ctx.exprSingles()) {
+            expressions.add((Expression) visitExprSingle.apply(expr));
+        }
+        if (expressions.size() == 1) {
+            return expressions.get(0);
+        }
+        return new CommaExpression(expressions, translationContext.metadata(ctx.context()));
+    }
+
+    public static <ExprCtx extends ParserRuleContext> Expression enclosedExpr(
+            EnclosedExprContext<ExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ExprCtx, Node> visitExpr) {
+        if (ctx.expr() == null) {
+            return new CommaExpression(translationContext.metadata(ctx.context()));
+        }
+        return (Expression) visitExpr.apply(ctx.expr());
+    }
 
     public static <ChildExprCtx extends ParserRuleContext> Expression stringConcatExpr(
             StringConcatExprContext<ChildExprCtx> ctx,

@@ -16,18 +16,24 @@
 package org.rumbledb.compiler.translation;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import org.rumbledb.compiler.context.FunctionCallContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
+import org.rumbledb.compiler.context.NamedFunctionRefContext;
 import org.rumbledb.compiler.context.ParenthesizedExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.NumericOverflowOrUnderflow;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -36,7 +42,9 @@ import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -116,5 +124,38 @@ public final class PrimaryTranslation {
             return new DecimalLiteralExpression(new BigDecimal(token), metadata);
         }
         return new IntegerLiteralExpression(token, metadata);
+    }
+
+    public static <FunctionNameCtx extends ParserRuleContext, ArgumentCtx extends ParserRuleContext>
+            FunctionCallExpression functionCall(
+                    FunctionCallContext<FunctionNameCtx, ArgumentCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<FunctionNameCtx, Name> parseFunctionName,
+                    Function<ArgumentCtx, Expression> visitArgument) {
+        Name name = parseFunctionName.apply(ctx.functionName());
+        List<Expression> arguments = new ArrayList<>();
+        for (ArgumentCtx arg : ctx.arguments()) {
+            arguments.add(visitArgument.apply(arg));
+        }
+        return new FunctionCallExpression(name, arguments, translationContext.metadata(ctx.context()));
+    }
+
+    public static <FunctionNameCtx extends ParserRuleContext> NamedFunctionReferenceExpression namedFunctionRef(
+            NamedFunctionRefContext<FunctionNameCtx> ctx,
+            TranslationContext translationContext,
+            Function<FunctionNameCtx, Name> parseFunctionName) {
+        Name name = parseFunctionName.apply(ctx.functionName());
+        try {
+            int arity = Integer.parseInt(ctx.arityLiteral());
+            return new NamedFunctionReferenceExpression(
+                    new FunctionIdentifier(name, arity), translationContext.metadata(ctx.context()));
+        } catch (NumberFormatException e) {
+            throw new NumericOverflowOrUnderflow(
+                    "Named function reference arity is out of range for implementation limits: "
+                            + name
+                            + "#"
+                            + ctx.arityLiteral(),
+                    translationContext.metadata(ctx.context()));
+        }
     }
 }
