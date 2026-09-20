@@ -74,13 +74,15 @@ public final class Translation {
 
     private Translation() {}
 
-    public static <T extends ParserRuleContext> Expression orExpr(
-            OrExprContext<T> ctx, TranslationContext translationContext, Function<T, Node> visitAndExpr) {
+    public static <ChildExprCtx extends ParserRuleContext> Expression orExpr(
+            OrExprContext<ChildExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ChildExprCtx, Node> visitAndExpr) {
         Expression result = (Expression) visitAndExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
-        for (T child : ctx.rhs()) {
+        for (ChildExprCtx child : ctx.rhs()) {
             Expression rightExpression = (Expression) visitAndExpr.apply(child);
             result = new OrExpression(
                     result,
@@ -90,13 +92,15 @@ public final class Translation {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression andExpr(
-            AndExprContext<T> ctx, TranslationContext translationContext, Function<T, Node> visitNextExpr) {
+    public static <ChildExprCtx extends ParserRuleContext> Expression andExpr(
+            AndExprContext<ChildExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ChildExprCtx, Node> visitNextExpr) {
         Expression result = (Expression) visitNextExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
-        for (T child : ctx.rhs()) {
+        for (ChildExprCtx child : ctx.rhs()) {
             Expression rightExpression = (Expression) visitNextExpr.apply(child);
             result = new AndExpression(
                     result,
@@ -106,15 +110,15 @@ public final class Translation {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression comparisonExpr(
-            ComparisonExprContext<T> ctx,
+    public static <ChildExprCtx extends ParserRuleContext> Expression comparisonExpr(
+            ComparisonExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitStringConcatExpr) {
+            Function<ChildExprCtx, Node> visitStringConcatExpr) {
         Expression mainExpression = (Expression) visitStringConcatExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return mainExpression;
         }
-        T child = ctx.rhs().get(0);
+        ChildExprCtx child = ctx.rhs().get(0);
         Expression childExpression = (Expression) visitStringConcatExpr.apply(child);
 
         if (ctx.isNodeComp()) {
@@ -158,13 +162,15 @@ public final class Translation {
                 translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext> Expression stringConcatExpr(
-            StringConcatExprContext<T> ctx, TranslationContext translationContext, Function<T, Node> visitRangeExpr) {
+    public static <ChildExprCtx extends ParserRuleContext> Expression stringConcatExpr(
+            StringConcatExprContext<ChildExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ChildExprCtx, Node> visitRangeExpr) {
         Expression result = (Expression) visitRangeExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
-        for (T child : ctx.rhs()) {
+        for (ChildExprCtx child : ctx.rhs()) {
             Expression rightExpression = (Expression) visitRangeExpr.apply(child);
             result = new StringConcatExpression(
                     result,
@@ -174,27 +180,29 @@ public final class Translation {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression rangeExpr(
-            RangeExprContext<T> ctx, TranslationContext translationContext, Function<T, Node> visitAdditiveExpr) {
+    public static <ChildExprCtx extends ParserRuleContext> Expression rangeExpr(
+            RangeExprContext<ChildExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ChildExprCtx, Node> visitAdditiveExpr) {
         Expression mainExpression = (Expression) visitAdditiveExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return mainExpression;
         }
-        T child = ctx.rhs().get(0);
+        ChildExprCtx child = ctx.rhs().get(0);
         Expression childExpression = (Expression) visitAdditiveExpr.apply(child);
         return new RangeExpression(mainExpression, childExpression, translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext> Expression additiveExpr(
-            AdditiveExprContext<T> ctx,
+    public static <ChildExprCtx extends ParserRuleContext> Expression additiveExpr(
+            AdditiveExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitMultiplicativeExpr) {
+            Function<ChildExprCtx, Node> visitMultiplicativeExpr) {
         Expression result = (Expression) visitMultiplicativeExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.rhs().size(); ++i) {
-            T child = ctx.rhs().get(i);
+            ChildExprCtx child = ctx.rhs().get(i);
             Expression rightExpression = (Expression) visitMultiplicativeExpr.apply(child);
             result = new AdditiveExpression(
                     result,
@@ -205,17 +213,17 @@ public final class Translation {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression multiplicativeExpr(
-            MultiplicativeExprContext<T> ctx,
+    public static <ChildExprCtx extends ParserRuleContext> Expression multiplicativeExpr(
+            MultiplicativeExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
             CommonTokenStream tokenStream,
-            Function<T, Node> visitUnionExpr) {
+            Function<ChildExprCtx, Node> visitUnionExpr) {
         Expression result = (Expression) visitUnionExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.rhs().size(); ++i) {
-            T child = ctx.rhs().get(i);
+            ChildExprCtx child = ctx.rhs().get(i);
             Token operator = ctx.op().get(i);
             validateMultiplicativeOperator(ctx.mainExpr(), child, operator, translationContext, tokenStream);
             Expression rightExpression = (Expression) visitUnionExpr.apply(child);
@@ -281,12 +289,12 @@ public final class Translation {
                 || character == ':';
     }
 
-    public static <T extends ParserRuleContext> Expression unionExpr(
-            UnionExprContext<T> ctx,
+    public static <ChildExprCtx extends ParserRuleContext> Expression unionExpr(
+            UnionExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitIntersectExceptExpr) {
+            Function<ChildExprCtx, Node> visitIntersectExceptExpr) {
         Expression result = (Expression) visitIntersectExceptExpr.apply(ctx.mainExpr());
-        for (T child : ctx.rhs()) {
+        for (ChildExprCtx child : ctx.rhs()) {
             Expression rightExpression = (Expression) visitIntersectExceptExpr.apply(child);
             result = new NodeSetExpression(
                     result,
@@ -297,13 +305,13 @@ public final class Translation {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression intersectExceptExpr(
-            IntersectExceptExprContext<T> ctx,
+    public static <ChildExprCtx extends ParserRuleContext> Expression intersectExceptExpr(
+            IntersectExceptExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitInstanceOfExpr) {
+            Function<ChildExprCtx, Node> visitInstanceOfExpr) {
         Expression result = (Expression) visitInstanceOfExpr.apply(ctx.mainExpr());
         for (int i = 0; i < ctx.rhs().size(); ++i) {
-            T child = ctx.rhs().get(i);
+            ChildExprCtx child = ctx.rhs().get(i);
             Expression rightExpression = (Expression) visitInstanceOfExpr.apply(child);
             result = new NodeSetExpression(
                     result,
@@ -314,16 +322,17 @@ public final class Translation {
         return result;
     }
 
-    public static <T extends ParserRuleContext, M extends ParserRuleContext> Expression simpleMapExpr(
-            SimpleMapExprContext<T, M> ctx,
-            TranslationContext translationContext,
-            Function<T, Node> visitPathExprForMain,
-            Function<M, Node> visitPathExprForMap) {
+    public static <MainExprCtx extends ParserRuleContext, MapExprCtx extends ParserRuleContext>
+            Expression simpleMapExpr(
+                    SimpleMapExprContext<MainExprCtx, MapExprCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<MainExprCtx, Node> visitPathExprForMain,
+                    Function<MapExprCtx, Node> visitPathExprForMap) {
         Expression result = (Expression) visitPathExprForMain.apply(ctx.mainExpr());
         if (ctx.mapExpr() == null || ctx.mapExpr().isEmpty()) {
             return result;
         }
-        for (M child : ctx.mapExpr()) {
+        for (MapExprCtx child : ctx.mapExpr()) {
             Expression rightExpression = (Expression) visitPathExprForMap.apply(child);
             result = new SimpleMapExpression(
                     result,
@@ -333,11 +342,12 @@ public final class Translation {
         return result;
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression instanceOfExpr(
-            TypeCheckExprContext<T, S> ctx,
-            TranslationContext translationContext,
-            Function<T, Node> visitIsStaticallyExpr,
-            Function<S, SequenceType> processSequenceType) {
+    public static <MainExprCtx extends ParserRuleContext, SeqTypeCtx extends ParserRuleContext>
+            Expression instanceOfExpr(
+                    TypeCheckExprContext<MainExprCtx, SeqTypeCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<MainExprCtx, Node> visitIsStaticallyExpr,
+                    Function<SeqTypeCtx, SequenceType> processSequenceType) {
         Expression mainExpression = (Expression) visitIsStaticallyExpr.apply(ctx.mainExpr());
         if (ctx.seq() == null || ctx.seq().isEmpty()) {
             return mainExpression;
@@ -346,11 +356,12 @@ public final class Translation {
         return new InstanceOfExpression(mainExpression, sequenceType, translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression isStaticallyExpr(
-            TypeCheckExprContext<T, S> ctx,
-            TranslationContext translationContext,
-            Function<T, Node> visitTreatExpr,
-            Function<S, SequenceType> processSequenceType) {
+    public static <MainExprCtx extends ParserRuleContext, SeqTypeCtx extends ParserRuleContext>
+            Expression isStaticallyExpr(
+                    TypeCheckExprContext<MainExprCtx, SeqTypeCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<MainExprCtx, Node> visitTreatExpr,
+                    Function<SeqTypeCtx, SequenceType> processSequenceType) {
         Expression mainExpression = (Expression) visitTreatExpr.apply(ctx.mainExpr());
         if (ctx.seq() == null || ctx.seq().isEmpty()) {
             return mainExpression;
@@ -359,11 +370,11 @@ public final class Translation {
         return new IsStaticallyExpression(mainExpression, sequenceType, translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression treatExpr(
-            TypeCheckExprContext<T, S> ctx,
+    public static <MainExprCtx extends ParserRuleContext, SeqTypeCtx extends ParserRuleContext> Expression treatExpr(
+            TypeCheckExprContext<MainExprCtx, SeqTypeCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitCastableExpr,
-            Function<S, SequenceType> processSequenceType) {
+            Function<MainExprCtx, Node> visitCastableExpr,
+            Function<SeqTypeCtx, SequenceType> processSequenceType) {
         Expression mainExpression = (Expression) visitCastableExpr.apply(ctx.mainExpr());
         if (ctx.seq() == null || ctx.seq().isEmpty()) {
             return mainExpression;
@@ -376,11 +387,12 @@ public final class Translation {
                 translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression castableExpr(
-            SingleTypeCheckExprContext<T, S> ctx,
-            TranslationContext translationContext,
-            Function<T, Node> visitCastExpr,
-            Function<S, SequenceType> processSingleType) {
+    public static <MainExprCtx extends ParserRuleContext, SingleTypeCtx extends ParserRuleContext>
+            Expression castableExpr(
+                    SingleTypeCheckExprContext<MainExprCtx, SingleTypeCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<MainExprCtx, Node> visitCastExpr,
+                    Function<SingleTypeCtx, SequenceType> processSingleType) {
         Expression mainExpression = (Expression) visitCastExpr.apply(ctx.mainExpr());
         if (ctx.single() == null || ctx.single().isEmpty()) {
             return mainExpression;
@@ -389,11 +401,11 @@ public final class Translation {
         return new CastableExpression(mainExpression, sequenceType, translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression castExpr(
-            SingleTypeCheckExprContext<T, S> ctx,
+    public static <MainExprCtx extends ParserRuleContext, SingleTypeCtx extends ParserRuleContext> Expression castExpr(
+            SingleTypeCheckExprContext<MainExprCtx, SingleTypeCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitArrowExpr,
-            Function<S, SequenceType> processSingleType) {
+            Function<MainExprCtx, Node> visitArrowExpr,
+            Function<SingleTypeCtx, SequenceType> processSingleType) {
         Expression mainExpression = (Expression) visitArrowExpr.apply(ctx.mainExpr());
         if (ctx.single() == null || ctx.single().isEmpty()) {
             return mainExpression;
@@ -402,8 +414,10 @@ public final class Translation {
         return new CastExpression(mainExpression, sequenceType, translationContext.metadata(ctx.context()));
     }
 
-    public static <T extends ParserRuleContext> Expression unaryExpr(
-            UnaryExprContext<T> ctx, TranslationContext translationContext, Function<T, Node> visitValueExpr) {
+    public static <ChildExprCtx extends ParserRuleContext> Expression unaryExpr(
+            UnaryExprContext<ChildExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ChildExprCtx, Node> visitValueExpr) {
         Expression mainExpression = (Expression) visitValueExpr.apply(ctx.mainExpr());
         if (ctx.op() == null || ctx.op().isEmpty()) {
             return mainExpression;
