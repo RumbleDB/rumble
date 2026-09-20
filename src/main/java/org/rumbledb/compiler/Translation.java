@@ -68,13 +68,13 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.SequenceType;
 
 /**
- * Shared translation logic used by both JSONiq and XQuery translation visitors.
+ * Shared translation methods used by both JSONiq and XQuery translation visitors.
  */
-public final class SharedTranslationLogic {
+public final class Translation {
 
-    private SharedTranslationLogic() {}
+    private Translation() {}
 
-    public static <T extends ParserRuleContext> Expression translateOrExpr(
+    public static <T extends ParserRuleContext> Expression orExpr(
             OrExprContext<T> view, TranslationContext translationContext, Function<T, Node> visitAndExpr) {
         Expression result = (Expression) visitAndExpr.apply(view.mainExpr());
         if (view.rhs() == null || view.rhs().isEmpty()) {
@@ -90,7 +90,7 @@ public final class SharedTranslationLogic {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression translateAndExpr(
+    public static <T extends ParserRuleContext> Expression andExpr(
             AndExprContext<T> view, TranslationContext translationContext, Function<T, Node> visitNextExpr) {
         Expression result = (Expression) visitNextExpr.apply(view.mainExpr());
         if (view.rhs() == null || view.rhs().isEmpty()) {
@@ -106,7 +106,7 @@ public final class SharedTranslationLogic {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression translateComparisonExpr(
+    public static <T extends ParserRuleContext> Expression comparisonExpr(
             ComparisonExprContext<T> view,
             TranslationContext translationContext,
             Function<T, Node> visitStringConcatExpr) {
@@ -158,7 +158,7 @@ public final class SharedTranslationLogic {
                 translationContext.metadata(view.context()));
     }
 
-    public static <T extends ParserRuleContext> Expression translateStringConcatExpr(
+    public static <T extends ParserRuleContext> Expression stringConcatExpr(
             StringConcatExprContext<T> view, TranslationContext translationContext, Function<T, Node> visitRangeExpr) {
         Expression result = (Expression) visitRangeExpr.apply(view.mainExpr());
         if (view.rhs() == null || view.rhs().isEmpty()) {
@@ -174,7 +174,7 @@ public final class SharedTranslationLogic {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression translateRangeExpr(
+    public static <T extends ParserRuleContext> Expression rangeExpr(
             RangeExprContext<T> view, TranslationContext translationContext, Function<T, Node> visitAdditiveExpr) {
         Expression mainExpression = (Expression) visitAdditiveExpr.apply(view.mainExpr());
         if (view.rhs() == null || view.rhs().isEmpty()) {
@@ -185,7 +185,7 @@ public final class SharedTranslationLogic {
         return new RangeExpression(mainExpression, childExpression, translationContext.metadata(view.context()));
     }
 
-    public static <T extends ParserRuleContext> Expression translateAdditiveExpr(
+    public static <T extends ParserRuleContext> Expression additiveExpr(
             AdditiveExprContext<T> view,
             TranslationContext translationContext,
             Function<T, Node> visitMultiplicativeExpr) {
@@ -205,7 +205,7 @@ public final class SharedTranslationLogic {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression translateMultiplicativeExpr(
+    public static <T extends ParserRuleContext> Expression multiplicativeExpr(
             MultiplicativeExprContext<T> view,
             TranslationContext translationContext,
             CommonTokenStream tokenStream,
@@ -281,7 +281,7 @@ public final class SharedTranslationLogic {
                 || character == ':';
     }
 
-    public static <T extends ParserRuleContext> Expression translateUnionExpr(
+    public static <T extends ParserRuleContext> Expression unionExpr(
             UnionExprContext<T> view,
             TranslationContext translationContext,
             Function<T, Node> visitIntersectExceptExpr) {
@@ -297,7 +297,7 @@ public final class SharedTranslationLogic {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression translateIntersectExceptExpr(
+    public static <T extends ParserRuleContext> Expression intersectExceptExpr(
             IntersectExceptExprContext<T> view,
             TranslationContext translationContext,
             Function<T, Node> visitInstanceOfExpr) {
@@ -315,7 +315,7 @@ public final class SharedTranslationLogic {
         return result;
     }
 
-    public static <T extends ParserRuleContext, M extends ParserRuleContext> Expression translateSimpleMapExpr(
+    public static <T extends ParserRuleContext, M extends ParserRuleContext> Expression simpleMapExpr(
             SimpleMapExprContext<T, M> view,
             TranslationContext translationContext,
             Function<T, Node> visitPathExprForMain,
@@ -334,7 +334,7 @@ public final class SharedTranslationLogic {
         return result;
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateInstanceOfExpr(
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression instanceOfExpr(
             TypeCheckExprContext<T, S> view,
             TranslationContext translationContext,
             Function<T, Node> visitIsStaticallyExpr,
@@ -347,7 +347,7 @@ public final class SharedTranslationLogic {
         return new InstanceOfExpression(mainExpression, sequenceType, translationContext.metadata(view.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateIsStaticallyExpr(
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression isStaticallyExpr(
             TypeCheckExprContext<T, S> view,
             TranslationContext translationContext,
             Function<T, Node> visitTreatExpr,
@@ -360,7 +360,7 @@ public final class SharedTranslationLogic {
         return new IsStaticallyExpression(mainExpression, sequenceType, translationContext.metadata(view.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateTreatExpr(
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression treatExpr(
             TypeCheckExprContext<T, S> view,
             TranslationContext translationContext,
             Function<T, Node> visitCastableExpr,
@@ -377,7 +377,7 @@ public final class SharedTranslationLogic {
                 translationContext.metadata(view.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateCastableExpr(
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression castableExpr(
             SingleTypeCheckExprContext<T, S> view,
             TranslationContext translationContext,
             Function<T, Node> visitCastExpr,
@@ -390,7 +390,7 @@ public final class SharedTranslationLogic {
         return new CastableExpression(mainExpression, sequenceType, translationContext.metadata(view.context()));
     }
 
-    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateCastExpr(
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression castExpr(
             SingleTypeCheckExprContext<T, S> view,
             TranslationContext translationContext,
             Function<T, Node> visitArrowExpr,
@@ -403,7 +403,7 @@ public final class SharedTranslationLogic {
         return new CastExpression(mainExpression, sequenceType, translationContext.metadata(view.context()));
     }
 
-    public static <T extends ParserRuleContext> Expression translateUnaryExpr(
+    public static <T extends ParserRuleContext> Expression unaryExpr(
             UnaryExprContext<T> view, TranslationContext translationContext, Function<T, Node> visitValueExpr) {
         Expression mainExpression = (Expression) visitValueExpr.apply(view.mainExpr());
         if (view.op() == null || view.op().isEmpty()) {

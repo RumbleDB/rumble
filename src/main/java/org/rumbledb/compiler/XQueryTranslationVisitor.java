@@ -1042,43 +1042,40 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region operational
     @Override
     public Node visitOrExpr(XQueryParser.OrExprContext ctx) {
-        return SharedTranslationLogic.translateOrExpr(
-                OrExprContext.from(ctx), this.translationContext, this::visitAndExpr);
+        return Translation.orExpr(OrExprContext.from(ctx), this.translationContext, this::visitAndExpr);
     }
 
     @Override
     public Node visitAndExpr(XQueryParser.AndExprContext ctx) {
-        return SharedTranslationLogic.translateAndExpr(
-                AndExprContext.from(ctx), this.translationContext, this::visitComparisonExpr);
+        return Translation.andExpr(AndExprContext.from(ctx), this.translationContext, this::visitComparisonExpr);
     }
 
     @Override
     public Node visitComparisonExpr(XQueryParser.ComparisonExprContext ctx) {
-        return SharedTranslationLogic.translateComparisonExpr(
+        return Translation.comparisonExpr(
                 ComparisonExprContext.from(ctx), this.translationContext, this::visitStringConcatExpr);
     }
 
     @Override
     public Node visitStringConcatExpr(XQueryParser.StringConcatExprContext ctx) {
-        return SharedTranslationLogic.translateStringConcatExpr(
+        return Translation.stringConcatExpr(
                 StringConcatExprContext.from(ctx), this.translationContext, this::visitRangeExpr);
     }
 
     @Override
     public Node visitRangeExpr(XQueryParser.RangeExprContext ctx) {
-        return SharedTranslationLogic.translateRangeExpr(
-                RangeExprContext.from(ctx), this.translationContext, this::visitAdditiveExpr);
+        return Translation.rangeExpr(RangeExprContext.from(ctx), this.translationContext, this::visitAdditiveExpr);
     }
 
     @Override
     public Node visitAdditiveExpr(XQueryParser.AdditiveExprContext ctx) {
-        return SharedTranslationLogic.translateAdditiveExpr(
+        return Translation.additiveExpr(
                 AdditiveExprContext.from(ctx), this.translationContext, this::visitMultiplicativeExpr);
     }
 
     @Override
     public Node visitMultiplicativeExpr(XQueryParser.MultiplicativeExprContext ctx) {
-        return SharedTranslationLogic.translateMultiplicativeExpr(
+        return Translation.multiplicativeExpr(
                 MultiplicativeExprContext.from(ctx),
                 this.translationContext,
                 this.xQueryTokenStream,
@@ -1087,25 +1084,25 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitUnionExpr(XQueryParser.UnionExprContext ctx) {
-        return SharedTranslationLogic.translateUnionExpr(
+        return Translation.unionExpr(
                 UnionExprContext.from(ctx), this.translationContext, this::visitIntersectExceptExpr);
     }
 
     @Override
     public Node visitIntersectExceptExpr(XQueryParser.IntersectExceptExprContext ctx) {
-        return SharedTranslationLogic.translateIntersectExceptExpr(
+        return Translation.intersectExceptExpr(
                 IntersectExceptExprContext.from(ctx), this.translationContext, this::visitInstanceOfExpr);
     }
 
     @Override
     public Node visitSimpleMapExpr(XQueryParser.SimpleMapExprContext ctx) {
-        return SharedTranslationLogic.translateSimpleMapExpr(
+        return Translation.simpleMapExpr(
                 SimpleMapExprContext.from(ctx), this.translationContext, this::visitPathExpr, this::visitPathExpr);
     }
 
     @Override
     public Node visitInstanceOfExpr(XQueryParser.InstanceOfExprContext ctx) {
-        return SharedTranslationLogic.translateInstanceOfExpr(
+        return Translation.instanceOfExpr(
                 TypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitIsStaticallyExpr,
@@ -1114,7 +1111,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitIsStaticallyExpr(XQueryParser.IsStaticallyExprContext ctx) {
-        return SharedTranslationLogic.translateIsStaticallyExpr(
+        return Translation.isStaticallyExpr(
                 TypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitTreatExpr,
@@ -1123,7 +1120,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitTreatExpr(XQueryParser.TreatExprContext ctx) {
-        return SharedTranslationLogic.translateTreatExpr(
+        return Translation.treatExpr(
                 TypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitCastableExpr,
@@ -1132,7 +1129,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitCastableExpr(XQueryParser.CastableExprContext ctx) {
-        return SharedTranslationLogic.translateCastableExpr(
+        return Translation.castableExpr(
                 SingleTypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitCastExpr,
@@ -1141,7 +1138,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitCastExpr(XQueryParser.CastExprContext ctx) {
-        return SharedTranslationLogic.translateCastExpr(
+        return Translation.castExpr(
                 SingleTypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitArrowExpr,
@@ -1177,8 +1174,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitUnaryExpr(XQueryParser.UnaryExprContext ctx) {
-        return SharedTranslationLogic.translateUnaryExpr(
-                UnaryExprContext.from(ctx), this.translationContext, this::visitValueExpr);
+        return Translation.unaryExpr(UnaryExprContext.from(ctx), this.translationContext, this::visitValueExpr);
     }
 
     @Override
