@@ -37,12 +37,15 @@ import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
+import org.rumbledb.compiler.context.CountClauseContext;
+import org.rumbledb.compiler.context.GroupByClauseContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.OrExprContext;
+import org.rumbledb.compiler.context.OrderByClauseContext;
 import org.rumbledb.compiler.context.ParenthesizedExprContext;
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
@@ -57,9 +60,11 @@ import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarRefContext;
+import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
+import org.rumbledb.compiler.translation.FlworTranslation;
 import org.rumbledb.compiler.translation.LogicTranslation;
 import org.rumbledb.compiler.translation.PostfixTranslation;
 import org.rumbledb.compiler.translation.PrimaryTranslation;
@@ -81,16 +86,10 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.flowr.Clause;
-import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.LetClause;
-import org.rumbledb.expressions.flowr.OrderByClause;
-import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
-import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -959,89 +958,34 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitGroupByClause(XQueryParser.GroupByClauseContext ctx) {
-        List<GroupByVariableDeclaration> vars = new ArrayList<>();
-        GroupByVariableDeclaration child;
-        for (XQueryParser.GroupByVarContext var : ctx.vars) {
-            child = this.processGroupByVar(var);
-            vars.add(child);
-        }
-        return new GroupByClause(vars, createMetadataFromContext(ctx));
+        return FlworTranslation.groupByClause(
+                GroupByClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle,
+                this::resolveCollationUri);
     }
 
     @Override
     public Node visitOrderByClause(XQueryParser.OrderByClauseContext ctx) {
-        boolean stable = false;
-        List<OrderByClauseSortingKey> exprs = new ArrayList<>();
-        OrderByClauseSortingKey child;
-        for (XQueryParser.OrderByExprContext var : ctx.orderByExpr()) {
-            child = this.processOrderByExpr(var);
-            exprs.add(child);
-        }
-        if (ctx.stb != null && !ctx.stb.getText().isEmpty()) {
-            stable = true;
-        }
-        return new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
-    }
-
-    public OrderByClauseSortingKey processOrderByExpr(XQueryParser.OrderByExprContext ctx) {
-        String uri = null;
-        if (ctx.uriLiteral() != null) {
-            String collation = resolveCollationUri(ctx.uriLiteral());
-            if (!this.translationContext.moduleContext().isStaticallyKnownCollation(collation)) {
-                throw new UnknownCollationException(
-                        "Unknown collation: " + collation, createMetadataFromContext(ctx.uriLiteral()));
-            }
-            uri = collation;
-        }
-        boolean ascending = true;
-        if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
-            ascending = false;
-        }
-        OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
-        if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
-            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.GREATEST;
-        }
-        if (ctx.ls != null && !ctx.ls.getText().isEmpty()) {
-            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.LEAST;
-        }
-        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
-        return new OrderByClauseSortingKey(expression, ascending, uri, empty_order);
-    }
-
-    public GroupByVariableDeclaration processGroupByVar(XQueryParser.GroupByVarContext ctx) {
-        String collationUri = null;
-        if (ctx.uriLiteral() != null) {
-            String collation = resolveCollationUri(ctx.uriLiteral());
-            if (!this.translationContext.moduleContext().isStaticallyKnownCollation(collation)) {
-                throw new UnknownCollationException(
-                        "Unknown collation: " + collation, createMetadataFromContext(ctx.uriLiteral()));
-            }
-            collationUri = collation;
-        }
-        SequenceType seq = null;
-        Expression expr = null;
-        Name var = parseVariableBinding(ctx.var_ref);
-
-        if (ctx.seq != null) {
-            seq = this.processSequenceType(ctx.seq);
-        }
-
-        if (ctx.ex != null) {
-            expr = (Expression) this.visitExprSingle(ctx.ex);
-        }
-
-        return new GroupByVariableDeclaration(var, seq, expr, collationUri);
+        return FlworTranslation.orderByClause(
+                OrderByClauseContext.from(ctx),
+                this.translationContext,
+                this::visitExprSingle,
+                this::resolveCollationUri);
     }
 
     @Override
     public Node visitWhereClause(XQueryParser.WhereClauseContext ctx) {
-        Expression expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-        return new WhereClause(expr, createMetadataFromContext(ctx));
+        return FlworTranslation.whereClause(
+                WhereClauseContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public Node visitCountClause(XQueryParser.CountClauseContext ctx) {
-        return new CountClause(parseVariableBinding(ctx.varBinding()), createMetadataFromContext(ctx));
+        return FlworTranslation.countClause(
+                CountClauseContext.from(ctx), this.translationContext, this::parseVariableBinding);
     }
     // endregion
 
