@@ -60,7 +60,7 @@ final class ExecutionModeResolver {
         ExecutionModeVisitor visitor = new ExecutionModeVisitor(conf, externalBindings);
         visitor.visit(module, module.getStaticContext());
 
-        visitor.setVisitorConfig(VisitorConfig.executionModeIntermediatePassConfig);
+        visitor.setVisitorConfig(VisitorConfig.EXECUTION_MODE_INTERMEDIATE_PASS);
         int prevUnsetCount = module.numberOfUnsetExecutionModes();
         if (conf.debug().printIteratorTree()) {
             debugPrintTree(module, conf);
@@ -86,7 +86,7 @@ final class ExecutionModeResolver {
             prevUnsetCount = currentUnsetCount;
         }
 
-        visitor.setVisitorConfig(VisitorConfig.executionModeFinalPassConfig);
+        visitor.setVisitorConfig(VisitorConfig.EXECUTION_MODE_FINAL_PASS);
         visitor.visit(module, module.getStaticContext());
         if (conf.debug().printIteratorTree()) {
             debugPrintTree(module, conf);
