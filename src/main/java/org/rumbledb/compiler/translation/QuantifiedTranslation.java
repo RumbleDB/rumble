@@ -39,17 +39,20 @@ public final class QuantifiedTranslation {
 
     private QuantifiedTranslation() {}
 
-    public static <S extends ParserRuleContext, V extends ParserRuleContext, Q extends ParserRuleContext>
+    public static <
+                    ExprSingleCtx extends ParserRuleContext,
+                    VarBindingCtx extends ParserRuleContext,
+                    SeqTypeCtx extends ParserRuleContext>
             Expression quantifiedExpr(
-                    QuantifiedExprContext<S, V, Q> ctx,
+                    QuantifiedExprContext<ExprSingleCtx, VarBindingCtx, SeqTypeCtx> ctx,
                     TranslationContext translationContext,
-                    Function<S, Node> visitExprSingle,
-                    Function<V, Name> parseVariableBinding,
-                    Function<Q, SequenceType> processSequenceType) {
+                    Function<ExprSingleCtx, Node> visitExprSingle,
+                    Function<VarBindingCtx, Name> parseVariableBinding,
+                    Function<SeqTypeCtx, SequenceType> processSequenceType) {
         Clause lastClause = null;
         Expression expression = (Expression) visitExprSingle.apply(ctx.exprSingle());
         boolean isUniversal = ctx.isUniversal();
-        for (QuantifiedExprContext.Var<S, V, Q> currentVariable : ctx.vars()) {
+        for (QuantifiedExprContext.Var<ExprSingleCtx, VarBindingCtx, SeqTypeCtx> currentVariable : ctx.vars()) {
             Expression varExpression;
             SequenceType sequenceType = null;
             Name variableName = parseVariableBinding.apply(currentVariable.varBinding());

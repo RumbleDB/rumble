@@ -24,19 +24,21 @@ import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
 public record ArrowExprContext<
-        T extends ParserRuleContext,
-        E extends ParserRuleContext,
-        V extends ParserRuleContext,
-        P extends ParserRuleContext,
-        A extends ParserRuleContext>(
-        T mainExpr, List<ArrowCall<E, V, P, A>> calls, ParserRuleContext context) {
+        MainExprCtx extends ParserRuleContext,
+        EqNameCtx extends ParserRuleContext,
+        VarRefCtx extends ParserRuleContext,
+        ParenthesizedExprCtx extends ParserRuleContext,
+        ArgumentListCtx extends ParserRuleContext>(
+        MainExprCtx mainExpr,
+        List<ArrowCall<EqNameCtx, VarRefCtx, ParenthesizedExprCtx, ArgumentListCtx>> calls,
+        ParserRuleContext context) {
 
     public record ArrowCall<
-            E extends ParserRuleContext,
-            V extends ParserRuleContext,
-            P extends ParserRuleContext,
-            A extends ParserRuleContext>(
-            E eqName, V varRef, P parenthesizedExpr, A argumentList) {}
+            EqNameCtx extends ParserRuleContext,
+            VarRefCtx extends ParserRuleContext,
+            ParenthesizedExprCtx extends ParserRuleContext,
+            ArgumentListCtx extends ParserRuleContext>(
+            EqNameCtx eqName, VarRefCtx varRef, ParenthesizedExprCtx parenthesizedExpr, ArgumentListCtx argumentList) {}
 
     public static ArrowExprContext<
                     JsoniqParser.UnaryExprContext,

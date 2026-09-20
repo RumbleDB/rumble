@@ -23,10 +23,10 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record SwitchExprContext<T extends ParserRuleContext, S extends ParserRuleContext>(
-        T cond, List<Case<S>> cases, S def, ParserRuleContext context) {
+public record SwitchExprContext<CondExprCtx extends ParserRuleContext, CaseExprCtx extends ParserRuleContext>(
+        CondExprCtx cond, List<Case<CaseExprCtx>> cases, CaseExprCtx def, ParserRuleContext context) {
 
-    public record Case<S extends ParserRuleContext>(List<S> cond, S ret) {}
+    public record Case<CaseExprCtx extends ParserRuleContext>(List<CaseExprCtx> cond, CaseExprCtx ret) {}
 
     public static SwitchExprContext<JsoniqParser.ExprContext, JsoniqParser.ExprSingleContext> from(
             JsoniqParser.SwitchExprContext c) {

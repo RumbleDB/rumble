@@ -27,11 +27,12 @@ public final class PrimaryTranslation {
 
     private PrimaryTranslation() {}
 
-    public static <M extends ParserRuleContext, V extends ParserRuleContext> Node valueExpr(
-            ValueExprContext<M, V> ctx,
-            TranslationContext translationContext,
-            Function<M, Node> visitSimpleMapExpr,
-            Function<V, Node> visitValidateExpr) {
+    public static <SimpleMapExprCtx extends ParserRuleContext, ValidateExprCtx extends ParserRuleContext>
+            Node valueExpr(
+                    ValueExprContext<SimpleMapExprCtx, ValidateExprCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<SimpleMapExprCtx, Node> visitSimpleMapExpr,
+                    Function<ValidateExprCtx, Node> visitValidateExpr) {
         if (ctx.simpleMapExpr() != null) {
             return visitSimpleMapExpr.apply(ctx.simpleMapExpr());
         }

@@ -37,16 +37,16 @@ public final class ArithmeticTranslation {
 
     private ArithmeticTranslation() {}
 
-    public static <T extends ParserRuleContext> Expression additiveExpr(
-            AdditiveExprContext<T> ctx,
+    public static <ChildExprCtx extends ParserRuleContext> Expression additiveExpr(
+            AdditiveExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<T, Node> visitMultiplicativeExpr) {
+            Function<ChildExprCtx, Node> visitMultiplicativeExpr) {
         Expression result = (Expression) visitMultiplicativeExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.rhs().size(); ++i) {
-            T child = ctx.rhs().get(i);
+            ChildExprCtx child = ctx.rhs().get(i);
             Expression rightExpression = (Expression) visitMultiplicativeExpr.apply(child);
             result = new AdditiveExpression(
                     result,
@@ -57,17 +57,17 @@ public final class ArithmeticTranslation {
         return result;
     }
 
-    public static <T extends ParserRuleContext> Expression multiplicativeExpr(
-            MultiplicativeExprContext<T> ctx,
+    public static <ChildExprCtx extends ParserRuleContext> Expression multiplicativeExpr(
+            MultiplicativeExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
             CommonTokenStream tokenStream,
-            Function<T, Node> visitUnionExpr) {
+            Function<ChildExprCtx, Node> visitUnionExpr) {
         Expression result = (Expression) visitUnionExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.rhs().size(); ++i) {
-            T child = ctx.rhs().get(i);
+            ChildExprCtx child = ctx.rhs().get(i);
             Token operator = ctx.op().get(i);
             validateMultiplicativeOperator(ctx.mainExpr(), child, operator, translationContext, tokenStream);
             Expression rightExpression = (Expression) visitUnionExpr.apply(child);
@@ -133,8 +133,10 @@ public final class ArithmeticTranslation {
                 || character == ':';
     }
 
-    public static <T extends ParserRuleContext> Expression unaryExpr(
-            UnaryExprContext<T> ctx, TranslationContext translationContext, Function<T, Node> visitValueExpr) {
+    public static <ChildExprCtx extends ParserRuleContext> Expression unaryExpr(
+            UnaryExprContext<ChildExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ChildExprCtx, Node> visitValueExpr) {
         Expression mainExpression = (Expression) visitValueExpr.apply(ctx.mainExpr());
         if (ctx.op() == null || ctx.op().isEmpty()) {
             return mainExpression;

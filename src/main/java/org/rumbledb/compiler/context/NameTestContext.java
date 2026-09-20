@@ -20,8 +20,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record NameTestContext<E extends ParserRuleContext>(
-        WildcardContext wildcard, E eqName, ParserRuleContext context) {
+public record NameTestContext<EqNameCtx extends ParserRuleContext>(
+        WildcardContext wildcard, EqNameCtx eqName, ParserRuleContext context) {
 
     public static NameTestContext<JsoniqParser.EqNameContext> from(JsoniqParser.NameTestContext c) {
         WildcardContext wildcard = c.wildcard() != null ? WildcardContext.from(c.wildcard()) : null;

@@ -37,16 +37,17 @@ public final class PostfixTranslation {
 
     private PostfixTranslation() {}
 
-    public static <T extends ParserRuleContext, M extends ParserRuleContext> Expression simpleMapExpr(
-            SimpleMapExprContext<T, M> ctx,
-            TranslationContext translationContext,
-            Function<T, Node> visitPathExprForMain,
-            Function<M, Node> visitPathExprForMap) {
+    public static <MainExprCtx extends ParserRuleContext, MapExprCtx extends ParserRuleContext>
+            Expression simpleMapExpr(
+                    SimpleMapExprContext<MainExprCtx, MapExprCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<MainExprCtx, Node> visitPathExprForMain,
+                    Function<MapExprCtx, Node> visitPathExprForMap) {
         Expression result = (Expression) visitPathExprForMain.apply(ctx.mainExpr());
         if (ctx.mapExpr() == null || ctx.mapExpr().isEmpty()) {
             return result;
         }
-        for (M child : ctx.mapExpr()) {
+        for (MapExprCtx child : ctx.mapExpr()) {
             Expression rightExpression = (Expression) visitPathExprForMap.apply(child);
             result = new SimpleMapExpression(
                     result,
@@ -57,23 +58,24 @@ public final class PostfixTranslation {
     }
 
     public static <
-                    T extends ParserRuleContext,
-                    E extends ParserRuleContext,
-                    V extends ParserRuleContext,
-                    P extends ParserRuleContext,
-                    A extends ParserRuleContext>
+                    MainExprCtx extends ParserRuleContext,
+                    EqNameCtx extends ParserRuleContext,
+                    VarRefCtx extends ParserRuleContext,
+                    ParenthesizedExprCtx extends ParserRuleContext,
+                    ArgumentListCtx extends ParserRuleContext>
             Expression arrowExpr(
-                    ArrowExprContext<T, E, V, P, A> ctx,
+                    ArrowExprContext<MainExprCtx, EqNameCtx, VarRefCtx, ParenthesizedExprCtx, ArgumentListCtx> ctx,
                     TranslationContext translationContext,
-                    Function<T, Node> visitUnaryExpr,
-                    BiFunction<E, NameRole, Name> parseEqName,
-                    Function<V, Node> visitVarRef,
-                    Function<P, Node> visitParenthesizedExpr,
-                    Function<A, List<Expression>> getArgumentsFromArgumentListContext) {
+                    Function<MainExprCtx, Node> visitUnaryExpr,
+                    BiFunction<EqNameCtx, NameRole, Name> parseEqName,
+                    Function<VarRefCtx, Node> visitVarRef,
+                    Function<ParenthesizedExprCtx, Node> visitParenthesizedExpr,
+                    Function<ArgumentListCtx, List<Expression>> getArgumentsFromArgumentListContext) {
         Expression mainExpression = (Expression) visitUnaryExpr.apply(ctx.mainExpr());
         Expression functionExpression = null;
 
-        for (ArrowExprContext.ArrowCall<E, V, P, A> call : ctx.calls()) {
+        for (ArrowExprContext.ArrowCall<EqNameCtx, VarRefCtx, ParenthesizedExprCtx, ArgumentListCtx> call :
+                ctx.calls()) {
             ExceptionMetadata metadata = translationContext.metadata(
                     ctx.mainExpr().getStart(), call.argumentList().getStop());
             List<Expression> children = new ArrayList<Expression>();

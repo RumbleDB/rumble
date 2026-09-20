@@ -23,8 +23,8 @@ import org.antlr.v4.runtime.Token;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record IntersectExceptExprContext<T extends ParserRuleContext>(
-        T mainExpr, List<T> rhs, List<Token> op, ParserRuleContext context) {
+public record IntersectExceptExprContext<ChildExprCtx extends ParserRuleContext>(
+        ChildExprCtx mainExpr, List<ChildExprCtx> rhs, List<Token> op, ParserRuleContext context) {
 
     public static IntersectExceptExprContext<JsoniqParser.InstanceOfExprContext> from(
             JsoniqParser.IntersectExceptExprContext c) {
