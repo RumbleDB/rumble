@@ -15,7 +15,6 @@
  */
 package org.rumbledb.compiler;
 
-import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -41,9 +40,11 @@ import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
+import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.OrExprContext;
+import org.rumbledb.compiler.context.ParenthesizedExprContext;
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
@@ -56,6 +57,7 @@ import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
+import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -105,19 +107,13 @@ import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
-import org.rumbledb.expressions.primary.BooleanLiteralExpression;
-import org.rumbledb.expressions.primary.ContextItemExpression;
-import org.rumbledb.expressions.primary.DecimalLiteralExpression;
-import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
-import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
@@ -1560,49 +1556,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return this.visitLiteral((JsoniqParser.LiteralContext) child);
         }
         if (child instanceof TerminalNode) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
+            return PrimaryTranslation.literalExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
         throw new UnsupportedFeatureException("Primary expression not yet implemented", createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitLiteral(JsoniqParser.LiteralContext ctx) {
-        ParseTree child = ctx.children.get(0);
-
-        if (child instanceof JsoniqParser.StringLiteralContext stringLiteralContext) {
-            return new StringLiteralExpression(
-                    processStringLiteral(stringLiteralContext), createMetadataFromContext(ctx));
-        }
-        if (child instanceof JsoniqParser.NumericLiteralContext) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
-        }
-        if (child instanceof JsoniqParser.LiteralContext) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
-        }
-        if (child instanceof TerminalNode) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
-        }
-
-        throw new UnsupportedFeatureException("Literal not yet implemented", createMetadataFromContext(ctx));
-    }
-
-    private static Expression getLiteralExpressionFromToken(String token, ExceptionMetadata metadataFromContext) {
-        switch (token) {
-            case "null":
-                return new NullLiteralExpression(metadataFromContext);
-            case "true":
-                return new BooleanLiteralExpression(true, metadataFromContext);
-            case "false":
-                return new BooleanLiteralExpression(false, metadataFromContext);
-            default:
-        }
-        if (token.contains("E") || token.contains("e")) {
-            return new DoubleLiteralExpression(Double.parseDouble(token), metadataFromContext);
-        }
-        if (token.contains(".")) {
-            return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
-        }
-        return new IntegerLiteralExpression(token, metadataFromContext);
+        return PrimaryTranslation.literal(
+                LiteralExprContext.from(ctx), this.translationContext, this::processStringLiteral);
     }
 
     @Override
@@ -1952,15 +1914,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitParenthesizedExpr(JsoniqParser.ParenthesizedExprContext ctx) {
-        if (ctx.expr() == null) {
-            return new CommaExpression(createMetadataFromContext(ctx));
-        }
-        return this.visitExpr(ctx.expr());
+        return PrimaryTranslation.parenthesizedExpr(
+                ParenthesizedExprContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
     public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
-        return new VariableReferenceExpression(parseVariableReference(ctx), createMetadataFromContext(ctx));
+        return PrimaryTranslation.varRef(VarRefContext.from(ctx), this.translationContext, this::parseEqName);
     }
 
     private Name parseVariableReference(JsoniqParser.VarRefContext ctx) {
@@ -1977,7 +1937,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitContextItemExpr(JsoniqParser.ContextItemExprContext ctx) {
-        return new ContextItemExpression(createMetadataFromContext(ctx));
+        return PrimaryTranslation.contextItemExpr(ctx, this.translationContext);
     }
 
     public SequenceType processSequenceType(JsoniqParser.SequenceTypeContext ctx) {

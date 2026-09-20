@@ -15,7 +15,6 @@
  */
 package org.rumbledb.compiler;
 
-import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -40,9 +39,11 @@ import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
+import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.OrExprContext;
+import org.rumbledb.compiler.context.ParenthesizedExprContext;
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
@@ -55,6 +56,7 @@ import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
+import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -102,18 +104,12 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
-import org.rumbledb.expressions.primary.BooleanLiteralExpression;
-import org.rumbledb.expressions.primary.ContextItemExpression;
-import org.rumbledb.expressions.primary.DecimalLiteralExpression;
-import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
-import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
@@ -1433,36 +1429,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitLiteral(XQueryParser.LiteralContext ctx) {
-        ParseTree child = ctx.children.get(0);
-
-        if (child instanceof XQueryParser.StringLiteralContext stringLiteralContext) {
-            return new StringLiteralExpression(
-                    processStringLiteral(stringLiteralContext), createMetadataFromContext(ctx));
-        }
-        if (child instanceof XQueryParser.NumericLiteralContext) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
-        }
-
-        throw new UnsupportedFeatureException("Literal not yet implemented", createMetadataFromContext(ctx));
-    }
-
-    private static Expression getLiteralExpressionFromToken(String token, ExceptionMetadata metadataFromContext) {
-        switch (token) {
-            case "null":
-                return new NullLiteralExpression(metadataFromContext);
-            case "true":
-                return new BooleanLiteralExpression(true, metadataFromContext);
-            case "false":
-                return new BooleanLiteralExpression(false, metadataFromContext);
-            default:
-        }
-        if (token.contains("E") || token.contains("e")) {
-            return new DoubleLiteralExpression(Double.parseDouble(token), metadataFromContext);
-        }
-        if (token.contains(".")) {
-            return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
-        }
-        return new IntegerLiteralExpression(token, metadataFromContext);
+        return PrimaryTranslation.literal(
+                LiteralExprContext.from(ctx), this.translationContext, this::processStringLiteral);
     }
 
     private String parseStringLiteral(String source) {
@@ -1783,15 +1751,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitParenthesizedExpr(XQueryParser.ParenthesizedExprContext ctx) {
-        if (ctx.expr() == null) {
-            return new CommaExpression(createMetadataFromContext(ctx));
-        }
-        return this.visitExpr(ctx.expr());
+        return PrimaryTranslation.parenthesizedExpr(
+                ParenthesizedExprContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
     public Node visitVarRef(XQueryParser.VarRefContext ctx) {
-        return new VariableReferenceExpression(parseVariableReference(ctx), createMetadataFromContext(ctx));
+        return PrimaryTranslation.varRef(VarRefContext.from(ctx), this.translationContext, this::parseEqName);
     }
 
     private Name parseVariableReference(XQueryParser.VarRefContext ctx) {
@@ -1808,7 +1774,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitContextItemExpr(XQueryParser.ContextItemExprContext ctx) {
-        return new ContextItemExpression(createMetadataFromContext(ctx));
+        return PrimaryTranslation.contextItemExpr(ctx, this.translationContext);
     }
 
     public SequenceType processSequenceType(XQueryParser.SequenceTypeContext ctx) {
