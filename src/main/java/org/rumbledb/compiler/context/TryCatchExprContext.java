@@ -23,11 +23,11 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record TryCatchExprContext<T extends ParserRuleContext, E extends ParserRuleContext>(
-        T tryExpr, List<Catch<T, E>> catches, ParserRuleContext context) {
+public record TryCatchExprContext<ExprCtx extends ParserRuleContext, EqNameCtx extends ParserRuleContext>(
+        ExprCtx tryExpr, List<Catch<ExprCtx, EqNameCtx>> catches, ParserRuleContext context) {
 
-    public record Catch<T extends ParserRuleContext, E extends ParserRuleContext>(
-            T catchExpr, List<NameTestContext<E>> nameTests, ParserRuleContext context) {}
+    public record Catch<ExprCtx extends ParserRuleContext, EqNameCtx extends ParserRuleContext>(
+            ExprCtx catchExpr, List<NameTestContext<EqNameCtx>> nameTests, ParserRuleContext context) {}
 
     public static TryCatchExprContext<JsoniqParser.ExprContext, JsoniqParser.EqNameContext> from(
             JsoniqParser.TryCatchExprContext c) {

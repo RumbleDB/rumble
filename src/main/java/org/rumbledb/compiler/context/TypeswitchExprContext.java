@@ -24,14 +24,21 @@ import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
 public record TypeswitchExprContext<
-        T extends ParserRuleContext,
-        S extends ParserRuleContext,
-        V extends ParserRuleContext,
-        Q extends ParserRuleContext>(
-        T cond, List<Case<S, V, Q>> cases, V defaultVar, S def, ParserRuleContext context) {
+        CondExprCtx extends ParserRuleContext,
+        CaseExprCtx extends ParserRuleContext,
+        VarBindingCtx extends ParserRuleContext,
+        SeqTypeCtx extends ParserRuleContext>(
+        CondExprCtx cond,
+        List<Case<CaseExprCtx, VarBindingCtx, SeqTypeCtx>> cases,
+        VarBindingCtx defaultVar,
+        CaseExprCtx def,
+        ParserRuleContext context) {
 
-    public record Case<S extends ParserRuleContext, V extends ParserRuleContext, Q extends ParserRuleContext>(
-            V varRef, List<Q> union, S ret) {}
+    public record Case<
+            CaseExprCtx extends ParserRuleContext,
+            VarBindingCtx extends ParserRuleContext,
+            SeqTypeCtx extends ParserRuleContext>(
+            VarBindingCtx varRef, List<SeqTypeCtx> union, CaseExprCtx ret) {}
 
     public static TypeswitchExprContext<
                     JsoniqParser.ExprContext,
