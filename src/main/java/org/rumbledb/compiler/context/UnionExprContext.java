@@ -13,24 +13,22 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler.view;
+package org.rumbledb.compiler.context;
 
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
 
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record MultiplicativeExprView<T extends ParserRuleContext>(
-        T mainExpr, List<T> rhs, List<Token> op, ParserRuleContext context) {
+public record UnionExprContext<T extends ParserRuleContext>(T mainExpr, List<T> rhs, ParserRuleContext context) {
 
-    public static MultiplicativeExprView<JsoniqParser.UnionExprContext> from(JsoniqParser.MultiplicativeExprContext c) {
-        return new MultiplicativeExprView<>(c.main_expr, c.rhs, c.op, c);
+    public static UnionExprContext<JsoniqParser.IntersectExceptExprContext> from(JsoniqParser.UnionExprContext c) {
+        return new UnionExprContext<>(c.main_expr, c.rhs, c);
     }
 
-    public static MultiplicativeExprView<XQueryParser.UnionExprContext> from(XQueryParser.MultiplicativeExprContext c) {
-        return new MultiplicativeExprView<>(c.main_expr, c.rhs, c.op, c);
+    public static UnionExprContext<XQueryParser.IntersectExceptExprContext> from(XQueryParser.UnionExprContext c) {
+        return new UnionExprContext<>(c.main_expr, c.rhs, c);
     }
 }

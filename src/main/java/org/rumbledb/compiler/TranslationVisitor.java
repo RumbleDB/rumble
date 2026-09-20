@@ -37,18 +37,18 @@ import lombok.extern.log4j.Log4j2;
 import org.rumbledb.api.Item;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.TranslationNameResolver.NameRole;
+import org.rumbledb.compiler.context.AdditiveExprContext;
+import org.rumbledb.compiler.context.IntersectExceptExprContext;
+import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.RangeExprContext;
+import org.rumbledb.compiler.context.SimpleMapExprContext;
+import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
+import org.rumbledb.compiler.context.StringConcatExprContext;
+import org.rumbledb.compiler.context.TypeCheckExprContext;
+import org.rumbledb.compiler.context.UnaryExprContext;
+import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
-import org.rumbledb.compiler.view.AdditiveExprView;
-import org.rumbledb.compiler.view.IntersectExceptExprView;
-import org.rumbledb.compiler.view.MultiplicativeExprView;
-import org.rumbledb.compiler.view.RangeExprView;
-import org.rumbledb.compiler.view.SimpleMapExprView;
-import org.rumbledb.compiler.view.SingleTypeCheckExprView;
-import org.rumbledb.compiler.view.StringConcatExprView;
-import org.rumbledb.compiler.view.TypeCheckExprView;
-import org.rumbledb.compiler.view.UnaryExprView;
-import org.rumbledb.compiler.view.UnionExprView;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -1143,25 +1143,25 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitStringConcatExpr(JsoniqParser.StringConcatExprContext ctx) {
         return SharedTranslationLogic.translateStringConcatExpr(
-                StringConcatExprView.from(ctx), this.translationContext, this::visitRangeExpr);
+                StringConcatExprContext.from(ctx), this.translationContext, this::visitRangeExpr);
     }
 
     @Override
     public Node visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
         return SharedTranslationLogic.translateRangeExpr(
-                RangeExprView.from(ctx), this.translationContext, this::visitAdditiveExpr);
+                RangeExprContext.from(ctx), this.translationContext, this::visitAdditiveExpr);
     }
 
     @Override
     public Node visitAdditiveExpr(JsoniqParser.AdditiveExprContext ctx) {
         return SharedTranslationLogic.translateAdditiveExpr(
-                AdditiveExprView.from(ctx), this.translationContext, this::visitMultiplicativeExpr);
+                AdditiveExprContext.from(ctx), this.translationContext, this::visitMultiplicativeExpr);
     }
 
     @Override
     public Node visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
         return SharedTranslationLogic.translateMultiplicativeExpr(
-                MultiplicativeExprView.from(ctx),
+                MultiplicativeExprContext.from(ctx),
                 this.translationContext,
                 this.jsoniqTokenStream,
                 this::visitUnionExpr);
@@ -1170,25 +1170,25 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitUnionExpr(JsoniqParser.UnionExprContext ctx) {
         return SharedTranslationLogic.translateUnionExpr(
-                UnionExprView.from(ctx), this.translationContext, this::visitIntersectExceptExpr);
+                UnionExprContext.from(ctx), this.translationContext, this::visitIntersectExceptExpr);
     }
 
     @Override
     public Node visitIntersectExceptExpr(JsoniqParser.IntersectExceptExprContext ctx) {
         return SharedTranslationLogic.translateIntersectExceptExpr(
-                IntersectExceptExprView.from(ctx), this.translationContext, this::visitInstanceOfExpr);
+                IntersectExceptExprContext.from(ctx), this.translationContext, this::visitInstanceOfExpr);
     }
 
     @Override
     public Node visitSimpleMapExpr(JsoniqParser.SimpleMapExprContext ctx) {
         return SharedTranslationLogic.translateSimpleMapExpr(
-                SimpleMapExprView.from(ctx), this.translationContext, this::visitPathExpr, this::visitPathExpr);
+                SimpleMapExprContext.from(ctx), this.translationContext, this::visitPathExpr, this::visitPathExpr);
     }
 
     @Override
     public Node visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
         return SharedTranslationLogic.translateInstanceOfExpr(
-                TypeCheckExprView.from(ctx),
+                TypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitIsStaticallyExpr,
                 this::processSequenceType);
@@ -1197,13 +1197,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitIsStaticallyExpr(JsoniqParser.IsStaticallyExprContext ctx) {
         return SharedTranslationLogic.translateIsStaticallyExpr(
-                TypeCheckExprView.from(ctx), this.translationContext, this::visitTreatExpr, this::processSequenceType);
+                TypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitTreatExpr,
+                this::processSequenceType);
     }
 
     @Override
     public Node visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
         return SharedTranslationLogic.translateTreatExpr(
-                TypeCheckExprView.from(ctx),
+                TypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitCastableExpr,
                 this::processSequenceType);
@@ -1212,7 +1215,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
         return SharedTranslationLogic.translateCastableExpr(
-                SingleTypeCheckExprView.from(ctx),
+                SingleTypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitCastExpr,
                 this::processSingleType);
@@ -1221,7 +1224,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitCastExpr(JsoniqParser.CastExprContext ctx) {
         return SharedTranslationLogic.translateCastExpr(
-                SingleTypeCheckExprView.from(ctx),
+                SingleTypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitArrowExpr,
                 this::processSingleType);
@@ -1257,7 +1260,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
         return SharedTranslationLogic.translateUnaryExpr(
-                UnaryExprView.from(ctx), this.translationContext, this::visitValueExpr);
+                UnaryExprContext.from(ctx), this.translationContext, this::visitValueExpr);
     }
 
     @Override

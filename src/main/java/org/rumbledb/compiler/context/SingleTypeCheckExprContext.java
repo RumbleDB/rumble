@@ -13,33 +13,33 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler.view;
+package org.rumbledb.compiler.context;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record SingleTypeCheckExprView<T extends ParserRuleContext, S extends ParserRuleContext>(
+public record SingleTypeCheckExprContext<T extends ParserRuleContext, S extends ParserRuleContext>(
         T mainExpr, S single, ParserRuleContext context) {
 
-    public static SingleTypeCheckExprView<JsoniqParser.CastExprContext, JsoniqParser.SingleTypeContext> from(
+    public static SingleTypeCheckExprContext<JsoniqParser.CastExprContext, JsoniqParser.SingleTypeContext> from(
             JsoniqParser.CastableExprContext c) {
-        return new SingleTypeCheckExprView<>(c.main_expr, c.single, c);
+        return new SingleTypeCheckExprContext<>(c.main_expr, c.single, c);
     }
 
-    public static SingleTypeCheckExprView<XQueryParser.CastExprContext, XQueryParser.SingleTypeContext> from(
+    public static SingleTypeCheckExprContext<XQueryParser.CastExprContext, XQueryParser.SingleTypeContext> from(
             XQueryParser.CastableExprContext c) {
-        return new SingleTypeCheckExprView<>(c.main_expr, c.single, c);
+        return new SingleTypeCheckExprContext<>(c.main_expr, c.single, c);
     }
 
-    public static SingleTypeCheckExprView<JsoniqParser.ArrowExprContext, JsoniqParser.SingleTypeContext> from(
+    public static SingleTypeCheckExprContext<JsoniqParser.ArrowExprContext, JsoniqParser.SingleTypeContext> from(
             JsoniqParser.CastExprContext c) {
-        return new SingleTypeCheckExprView<>(c.main_expr, c.single, c);
+        return new SingleTypeCheckExprContext<>(c.main_expr, c.single, c);
     }
 
-    public static SingleTypeCheckExprView<XQueryParser.ArrowExprContext, XQueryParser.SingleTypeContext> from(
+    public static SingleTypeCheckExprContext<XQueryParser.ArrowExprContext, XQueryParser.SingleTypeContext> from(
             XQueryParser.CastExprContext c) {
-        return new SingleTypeCheckExprView<>(c.main_expr, c.single, c);
+        return new SingleTypeCheckExprContext<>(c.main_expr, c.single, c);
     }
 }

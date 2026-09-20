@@ -13,23 +13,22 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler.view;
+package org.rumbledb.compiler.context;
 
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
 
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record UnaryExprView<T extends ParserRuleContext>(T mainExpr, List<Token> op, ParserRuleContext context) {
+public record StringConcatExprContext<T extends ParserRuleContext>(T mainExpr, List<T> rhs, ParserRuleContext context) {
 
-    public static UnaryExprView<JsoniqParser.ValueExprContext> from(JsoniqParser.UnaryExprContext c) {
-        return new UnaryExprView<>(c.main_expr, c.op, c);
+    public static StringConcatExprContext<JsoniqParser.RangeExprContext> from(JsoniqParser.StringConcatExprContext c) {
+        return new StringConcatExprContext<>(c.main_expr, c.rhs, c);
     }
 
-    public static UnaryExprView<XQueryParser.ValueExprContext> from(XQueryParser.UnaryExprContext c) {
-        return new UnaryExprView<>(c.main_expr, c.op, c);
+    public static StringConcatExprContext<XQueryParser.RangeExprContext> from(XQueryParser.StringConcatExprContext c) {
+        return new StringConcatExprContext<>(c.main_expr, c.rhs, c);
     }
 }

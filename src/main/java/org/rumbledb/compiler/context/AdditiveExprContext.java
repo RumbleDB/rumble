@@ -13,22 +13,24 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler.view;
+package org.rumbledb.compiler.context;
 
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record StringConcatExprView<T extends ParserRuleContext>(T mainExpr, List<T> rhs, ParserRuleContext context) {
+public record AdditiveExprContext<T extends ParserRuleContext>(
+        T mainExpr, List<T> rhs, List<Token> op, ParserRuleContext context) {
 
-    public static StringConcatExprView<JsoniqParser.RangeExprContext> from(JsoniqParser.StringConcatExprContext c) {
-        return new StringConcatExprView<>(c.main_expr, c.rhs, c);
+    public static AdditiveExprContext<JsoniqParser.MultiplicativeExprContext> from(JsoniqParser.AdditiveExprContext c) {
+        return new AdditiveExprContext<>(c.main_expr, c.rhs, c.op, c);
     }
 
-    public static StringConcatExprView<XQueryParser.RangeExprContext> from(XQueryParser.StringConcatExprContext c) {
-        return new StringConcatExprView<>(c.main_expr, c.rhs, c);
+    public static AdditiveExprContext<XQueryParser.MultiplicativeExprContext> from(XQueryParser.AdditiveExprContext c) {
+        return new AdditiveExprContext<>(c.main_expr, c.rhs, c.op, c);
     }
 }

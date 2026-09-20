@@ -13,7 +13,7 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler.view;
+package org.rumbledb.compiler.context;
 
 import java.util.List;
 
@@ -22,16 +22,13 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record SimpleMapExprView<T extends ParserRuleContext, M extends ParserRuleContext>(
-        T mainExpr, List<M> mapExpr, ParserRuleContext context) {
+public record RangeExprContext<T extends ParserRuleContext>(T mainExpr, List<T> rhs, ParserRuleContext context) {
 
-    public static SimpleMapExprView<JsoniqParser.PathExprContext, JsoniqParser.PathExprContext> from(
-            JsoniqParser.SimpleMapExprContext c) {
-        return new SimpleMapExprView<>(c.main_expr, c.map_expr, c);
+    public static RangeExprContext<JsoniqParser.AdditiveExprContext> from(JsoniqParser.RangeExprContext c) {
+        return new RangeExprContext<>(c.main_expr, c.rhs, c);
     }
 
-    public static SimpleMapExprView<XQueryParser.PathExprContext, XQueryParser.PathExprContext> from(
-            XQueryParser.SimpleMapExprContext c) {
-        return new SimpleMapExprView<>(c.main_expr, c.map_expr, c);
+    public static RangeExprContext<XQueryParser.AdditiveExprContext> from(XQueryParser.RangeExprContext c) {
+        return new RangeExprContext<>(c.main_expr, c.rhs, c);
     }
 }
