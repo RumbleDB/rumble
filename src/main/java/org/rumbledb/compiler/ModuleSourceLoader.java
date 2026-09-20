@@ -48,7 +48,7 @@ final class ModuleSourceLoader {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         try (ResolvedResource resource =
                 compilationConfiguration.resourceResolver().resolve(location, configuration, metadata)) {
-            String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8.name());
+            String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
             URI systemId = resource.getSystemId();
             if (configuration.semantics().staticBaseUri() != null) {
                 systemId = resolveStaticBaseUri(configuration.semantics().staticBaseUri());
