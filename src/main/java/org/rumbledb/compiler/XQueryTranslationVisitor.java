@@ -1128,25 +1128,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitStringConcatExpr(XQueryParser.StringConcatExprContext ctx) {
         return SharedTranslationLogic.translateStringConcatExpr(
-                StringConcatExprView.from(ctx),
-                this.translationContext,
-                this::visitRangeExpr);
+                StringConcatExprView.from(ctx), this.translationContext, this::visitRangeExpr);
     }
 
     @Override
     public Node visitRangeExpr(XQueryParser.RangeExprContext ctx) {
         return SharedTranslationLogic.translateRangeExpr(
-                RangeExprView.from(ctx),
-                this.translationContext,
-                this::visitAdditiveExpr);
+                RangeExprView.from(ctx), this.translationContext, this::visitAdditiveExpr);
     }
 
     @Override
     public Node visitAdditiveExpr(XQueryParser.AdditiveExprContext ctx) {
         return SharedTranslationLogic.translateAdditiveExpr(
-                AdditiveExprView.from(ctx),
-                this.translationContext,
-                this::visitMultiplicativeExpr);
+                AdditiveExprView.from(ctx), this.translationContext, this::visitMultiplicativeExpr);
     }
 
     @Override

@@ -15,18 +15,16 @@
  */
 package org.rumbledb.compiler.view;
 
+import java.util.List;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-import java.util.List;
-
 public record AdditiveExprView<T extends ParserRuleContext>(
-        T mainExpr,
-        List<T> rhs,
-        List<Token> op,
-        ParserRuleContext context) {
+        T mainExpr, List<T> rhs, List<Token> op, ParserRuleContext context) {
 
     public static AdditiveExprView<JsoniqParser.MultiplicativeExprContext> from(JsoniqParser.AdditiveExprContext c) {
         return new AdditiveExprView<>(c.main_expr, c.rhs, c.op, c);

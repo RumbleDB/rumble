@@ -15,16 +15,14 @@
  */
 package org.rumbledb.compiler.view;
 
+import java.util.List;
+
 import org.antlr.v4.runtime.ParserRuleContext;
+
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-import java.util.List;
-
-public record StringConcatExprView<T extends ParserRuleContext>(
-        T mainExpr,
-        List<T> rhs,
-        ParserRuleContext context) {
+public record StringConcatExprView<T extends ParserRuleContext>(T mainExpr, List<T> rhs, ParserRuleContext context) {
 
     public static StringConcatExprView<JsoniqParser.RangeExprContext> from(JsoniqParser.StringConcatExprContext c) {
         return new StringConcatExprView<>(c.main_expr, c.rhs, c);

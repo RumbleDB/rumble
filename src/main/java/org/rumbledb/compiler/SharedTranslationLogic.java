@@ -18,6 +18,7 @@ package org.rumbledb.compiler;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+
 import org.rumbledb.compiler.view.AdditiveExprView;
 import org.rumbledb.compiler.view.RangeExprView;
 import org.rumbledb.compiler.view.StringConcatExprView;
@@ -35,9 +36,7 @@ public final class SharedTranslationLogic {
     private SharedTranslationLogic() {}
 
     public static <T extends ParserRuleContext> Expression translateStringConcatExpr(
-            StringConcatExprView<T> view,
-            TranslationContext translationContext,
-            Function<T, Node> visitRangeExpr) {
+            StringConcatExprView<T> view, TranslationContext translationContext, Function<T, Node> visitRangeExpr) {
         Expression result = (Expression) visitRangeExpr.apply(view.mainExpr());
         if (view.rhs() == null || view.rhs().isEmpty()) {
             return result;
@@ -53,9 +52,7 @@ public final class SharedTranslationLogic {
     }
 
     public static <T extends ParserRuleContext> Expression translateRangeExpr(
-            RangeExprView<T> view,
-            TranslationContext translationContext,
-            Function<T, Node> visitAdditiveExpr) {
+            RangeExprView<T> view, TranslationContext translationContext, Function<T, Node> visitAdditiveExpr) {
         Expression mainExpression = (Expression) visitAdditiveExpr.apply(view.mainExpr());
         if (view.rhs() == null || view.rhs().isEmpty()) {
             return mainExpression;
