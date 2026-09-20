@@ -39,9 +39,14 @@ import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.CountClauseContext;
+import org.rumbledb.compiler.context.FlworExprContext;
+import org.rumbledb.compiler.context.ForClauseContext;
+import org.rumbledb.compiler.context.ForVarContext;
 import org.rumbledb.compiler.context.GroupByClauseContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
+import org.rumbledb.compiler.context.LetClauseContext;
+import org.rumbledb.compiler.context.LetVarContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NameTestContext;
@@ -87,10 +92,6 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.flowr.Clause;
-import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.LetClause;
-import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
@@ -777,123 +778,51 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region Flowr
     @Override
     public Node visitFlworExpr(JsoniqParser.FlworExprContext ctx) {
-        Clause clause;
-        // check the start clause, for or let
-        if (ctx.start_window != null) {
-            clause = (Clause) this.visitWindowClause(ctx.start_window);
-        } else if (ctx.start_for == null) {
-            clause = (Clause) this.visitLetClause(ctx.start_let);
-        } else {
-            clause = (Clause) this.visitForClause(ctx.start_for);
-        }
-
-        Clause previousFLWORClause = clause.getLastClause();
-
-        for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
-            if (child instanceof JsoniqParser.ForClauseContext forClauseContext) {
-                clause = (Clause) this.visitForClause(forClauseContext);
-            } else if (child instanceof JsoniqParser.LetClauseContext letClauseContext) {
-                clause = (Clause) this.visitLetClause(letClauseContext);
-            } else if (child instanceof JsoniqParser.WindowClauseContext windowClauseContext) {
-                clause = (Clause) this.visitWindowClause(windowClauseContext);
-            } else if (child instanceof JsoniqParser.WhereClauseContext whereClauseContext) {
-                clause = (Clause) this.visitWhereClause(whereClauseContext);
-            } else if (child instanceof JsoniqParser.GroupByClauseContext groupByClauseContext) {
-                clause = (Clause) this.visitGroupByClause(groupByClauseContext);
-            } else if (child instanceof JsoniqParser.OrderByClauseContext orderByClauseContext) {
-                clause = (Clause) this.visitOrderByClause(orderByClauseContext);
-            } else if (child instanceof JsoniqParser.CountClauseContext countClauseContext) {
-                clause = (Clause) this.visitCountClause(countClauseContext);
-            } else {
-                throw new UnsupportedFeatureException(
-                        "FLOWR clause not implemented yet", createMetadataFromContext(ctx));
-            }
-
-            previousFLWORClause.chainWith(clause.getFirstClause());
-            previousFLWORClause = clause.getLastClause();
-        }
-
-        Expression returnExpr = (Expression) this.visitExprSingle(ctx.return_expr);
-        ReturnClause returnClause = new ReturnClause(returnExpr, returnExpr.getMetadata());
-        previousFLWORClause.chainWith(returnClause);
-
-        returnClause = returnClause.detachInitialLetClauses();
-
-        return new FlworExpression(returnClause, createMetadataFromContext(ctx));
+        return FlworTranslation.flworExpr(
+                FlworExprContext.from(ctx),
+                this.translationContext,
+                child -> this.visit(child) instanceof Clause clause ? clause : null,
+                this::visitExprSingle);
     }
 
     @Override
     public Node visitForClause(JsoniqParser.ForClauseContext ctx) {
-        ForClause clause = null;
-        for (JsoniqParser.ForVarContext var : ctx.vars) {
-            ForClause newClause = (ForClause) this.visitForVar(var);
-            if (clause != null) {
-                clause.chainWith(newClause);
-            }
-            clause = newClause;
-        }
-
-        return clause;
+        return FlworTranslation.forClause(
+                ForClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
     public Node visitForVar(JsoniqParser.ForVarContext ctx) {
-        SequenceType seq = null;
-        boolean emptyFlag;
-        Name var = parseVariableBinding(ctx.var_ref);
-        if (ctx.seq != null) {
-            seq = this.processSequenceType(ctx.seq);
-        }
-        emptyFlag = (ctx.flag != null);
-        Name atVar = null;
-        if (ctx.at != null) {
-            atVar = parseVariableBinding(ctx.at);
-            if (atVar.equals(var)) {
-                throw new PositionalVariableNameSameAsForVariableException(
-                        "Positional variable " + var + " cannot have the same name as the main for variable.",
-                        createMetadataFromContext(ctx.at));
-            }
-        }
-        Expression expr = (Expression) this.visitExprSingle(ctx.ex);
-        // If the sequenceType is specified, we have to "extend" its arity to *
-        // because TreatIterator is wrapping the whole assignment expression,
-        // meaning there is not one TreatIterator for each variable we loop over.
-        if (seq != null) {
-            SequenceType expressionType = new SequenceType(seq.getItemType(), SequenceType.Arity.ZeroOrMore);
-            expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-        }
-
-        return new ForClause(var, emptyFlag, seq, atVar, expr, createMetadataFromContext(ctx));
+        return FlworTranslation.forVar(
+                ForVarContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
     public Node visitLetClause(JsoniqParser.LetClauseContext ctx) {
-        LetClause clause = null;
-        for (JsoniqParser.LetVarContext var : ctx.vars) {
-            LetClause newClause = (LetClause) this.visitLetVar(var);
-            if (clause != null) {
-                clause.chainWith(newClause);
-            }
-            clause = newClause;
-        }
-
-        return clause;
+        return FlworTranslation.letClause(
+                LetClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
     public Node visitLetVar(JsoniqParser.LetVarContext ctx) {
-        SequenceType seq = null;
-        Name var = parseVariableBinding(ctx.var_ref);
-        if (ctx.seq != null) {
-            seq = this.processSequenceType(ctx.seq);
-        }
-
-        Expression expr = (Expression) this.visitExprSingle(ctx.ex);
-        if (seq != null) {
-            expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-        }
-
-        return new LetClause(var, seq, expr, createMetadataFromContext(ctx));
+        return FlworTranslation.letVar(
+                LetVarContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
