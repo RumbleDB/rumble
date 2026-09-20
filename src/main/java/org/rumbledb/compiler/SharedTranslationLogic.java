@@ -17,16 +17,38 @@ package org.rumbledb.compiler;
 
 import java.util.function.Function;
 
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import org.rumbledb.compiler.view.AdditiveExprView;
+import org.rumbledb.compiler.view.IntersectExceptExprView;
+import org.rumbledb.compiler.view.MultiplicativeExprView;
 import org.rumbledb.compiler.view.RangeExprView;
+import org.rumbledb.compiler.view.SimpleMapExprView;
+import org.rumbledb.compiler.view.SingleTypeCheckExprView;
 import org.rumbledb.compiler.view.StringConcatExprView;
+import org.rumbledb.compiler.view.TypeCheckExprView;
+import org.rumbledb.compiler.view.UnaryExprView;
+import org.rumbledb.compiler.view.UnionExprView;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.arithmetic.UnaryExpression;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.IsStaticallyExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.types.SequenceType;
 
 /**
  * Shared translation logic used by both JSONiq and XQuery translation visitors.
@@ -80,5 +102,216 @@ public final class SharedTranslationLogic {
                     translationContext.metadata(view.mainExpr().getStart(), child.getStop()));
         }
         return result;
+    }
+
+    public static <T extends ParserRuleContext> Expression translateMultiplicativeExpr(
+            MultiplicativeExprView<T> view,
+            TranslationContext translationContext,
+            CommonTokenStream tokenStream,
+            Function<T, Node> visitUnionExpr) {
+        Expression result = (Expression) visitUnionExpr.apply(view.mainExpr());
+        if (view.rhs() == null || view.rhs().isEmpty()) {
+            return result;
+        }
+        for (int i = 0; i < view.rhs().size(); ++i) {
+            T child = view.rhs().get(i);
+            Token operator = view.op().get(i);
+            validateMultiplicativeOperator(view.mainExpr(), child, operator, translationContext, tokenStream);
+            Expression rightExpression = (Expression) visitUnionExpr.apply(child);
+            result = new MultiplicativeExpression(
+                    result,
+                    rightExpression,
+                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(operator.getText()),
+                    translationContext.metadata(view.mainExpr().getStart(), child.getStop()));
+        }
+        return result;
+    }
+
+    public static void validateMultiplicativeOperator(
+            ParseTree leftExpression,
+            ParseTree rightExpression,
+            Token operator,
+            TranslationContext translationContext,
+            CommonTokenStream tokenStream) {
+        String operatorText = operator.getText();
+        if (operatorText.equals("*")
+                && (leftExpression.getText().equals("/")
+                        || leftExpression.getText().equals("//"))) {
+            throw new ParsingException(
+                    "Missing path step after leading slash.",
+                    translationContext.metadata(translationContext.startToken(leftExpression), operator));
+        }
+        if (!operatorText.equals("div") && !operatorText.equals("idiv") && !operatorText.equals("mod")) {
+            return;
+        }
+        if (DirectConstructorUtils.getHiddenTextAfter(
+                                tokenStream,
+                                translationContext.stopToken(leftExpression).getTokenIndex())
+                        .isEmpty()
+                && !hasKeywordOperatorBoundary(
+                        translationContext.stopToken(leftExpression).getText(), false)) {
+            throw new ParsingException(
+                    "Keyword operator '" + operatorText + "' must be separated from the left operand.",
+                    translationContext.metadata(translationContext.startToken(leftExpression), operator));
+        }
+        if (DirectConstructorUtils.getHiddenTextAfter(tokenStream, operator.getTokenIndex())
+                        .isEmpty()
+                && !hasKeywordOperatorBoundary(
+                        translationContext.startToken(rightExpression).getText(), true)) {
+            throw new ParsingException(
+                    "Keyword operator '" + operatorText + "' must be separated from the right operand.",
+                    translationContext.metadata(operator, translationContext.startToken(rightExpression)));
+        }
+    }
+
+    public static boolean hasKeywordOperatorBoundary(String tokenText, boolean checkStart) {
+        if (tokenText == null || tokenText.isEmpty()) {
+            return false;
+        }
+        char boundaryCharacter = checkStart ? tokenText.charAt(0) : tokenText.charAt(tokenText.length() - 1);
+        return !isPotentialKeywordOperandCharacter(boundaryCharacter);
+    }
+
+    public static boolean isPotentialKeywordOperandCharacter(char character) {
+        return Character.isLetterOrDigit(character)
+                || character == '_'
+                || character == '-'
+                || character == '.'
+                || character == ':';
+    }
+
+    public static <T extends ParserRuleContext> Expression translateUnionExpr(
+            UnionExprView<T> view, TranslationContext translationContext, Function<T, Node> visitIntersectExceptExpr) {
+        Expression result = (Expression) visitIntersectExceptExpr.apply(view.mainExpr());
+        for (T child : view.rhs()) {
+            Expression rightExpression = (Expression) visitIntersectExceptExpr.apply(child);
+            result = new NodeSetExpression(
+                    result,
+                    rightExpression,
+                    NodeSetExpression.NodeSetOperator.UNION,
+                    translationContext.metadata(view.mainExpr().getStart(), child.getStop()));
+        }
+        return result;
+    }
+
+    public static <T extends ParserRuleContext> Expression translateIntersectExceptExpr(
+            IntersectExceptExprView<T> view,
+            TranslationContext translationContext,
+            Function<T, Node> visitInstanceOfExpr) {
+        Expression result = (Expression) visitInstanceOfExpr.apply(view.mainExpr());
+        for (int i = 0; i < view.rhs().size(); ++i) {
+            T child = view.rhs().get(i);
+            Expression rightExpression = (Expression) visitInstanceOfExpr.apply(child);
+            result = new NodeSetExpression(
+                    result,
+                    rightExpression,
+                    NodeSetExpression.NodeSetOperator.fromSymbol(
+                            view.op().get(i).getText()),
+                    translationContext.metadata(view.mainExpr().getStart(), child.getStop()));
+        }
+        return result;
+    }
+
+    public static <T extends ParserRuleContext, M extends ParserRuleContext> Expression translateSimpleMapExpr(
+            SimpleMapExprView<T, M> view,
+            TranslationContext translationContext,
+            Function<T, Node> visitPathExprForMain,
+            Function<M, Node> visitPathExprForMap) {
+        Expression result = (Expression) visitPathExprForMain.apply(view.mainExpr());
+        if (view.mapExpr() == null || view.mapExpr().isEmpty()) {
+            return result;
+        }
+        for (M child : view.mapExpr()) {
+            Expression rightExpression = (Expression) visitPathExprForMap.apply(child);
+            result = new SimpleMapExpression(
+                    result,
+                    rightExpression,
+                    translationContext.metadata(view.mainExpr().getStart(), child.getStop()));
+        }
+        return result;
+    }
+
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateInstanceOfExpr(
+            TypeCheckExprView<T, S> view,
+            TranslationContext translationContext,
+            Function<T, Node> visitIsStaticallyExpr,
+            Function<S, SequenceType> processSequenceType) {
+        Expression mainExpression = (Expression) visitIsStaticallyExpr.apply(view.mainExpr());
+        if (view.seq() == null || view.seq().isEmpty()) {
+            return mainExpression;
+        }
+        SequenceType sequenceType = processSequenceType.apply(view.seq());
+        return new InstanceOfExpression(mainExpression, sequenceType, translationContext.metadata(view.context()));
+    }
+
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateIsStaticallyExpr(
+            TypeCheckExprView<T, S> view,
+            TranslationContext translationContext,
+            Function<T, Node> visitTreatExpr,
+            Function<S, SequenceType> processSequenceType) {
+        Expression mainExpression = (Expression) visitTreatExpr.apply(view.mainExpr());
+        if (view.seq() == null || view.seq().isEmpty()) {
+            return mainExpression;
+        }
+        SequenceType sequenceType = processSequenceType.apply(view.seq());
+        return new IsStaticallyExpression(mainExpression, sequenceType, translationContext.metadata(view.context()));
+    }
+
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateTreatExpr(
+            TypeCheckExprView<T, S> view,
+            TranslationContext translationContext,
+            Function<T, Node> visitCastableExpr,
+            Function<S, SequenceType> processSequenceType) {
+        Expression mainExpression = (Expression) visitCastableExpr.apply(view.mainExpr());
+        if (view.seq() == null || view.seq().isEmpty()) {
+            return mainExpression;
+        }
+        SequenceType sequenceType = processSequenceType.apply(view.seq());
+        return new TreatExpression(
+                mainExpression,
+                sequenceType,
+                ErrorCode.DynamicTypeTreatErrorCode,
+                translationContext.metadata(view.context()));
+    }
+
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateCastableExpr(
+            SingleTypeCheckExprView<T, S> view,
+            TranslationContext translationContext,
+            Function<T, Node> visitCastExpr,
+            Function<S, SequenceType> processSingleType) {
+        Expression mainExpression = (Expression) visitCastExpr.apply(view.mainExpr());
+        if (view.single() == null || view.single().isEmpty()) {
+            return mainExpression;
+        }
+        SequenceType sequenceType = processSingleType.apply(view.single());
+        return new CastableExpression(mainExpression, sequenceType, translationContext.metadata(view.context()));
+    }
+
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression translateCastExpr(
+            SingleTypeCheckExprView<T, S> view,
+            TranslationContext translationContext,
+            Function<T, Node> visitArrowExpr,
+            Function<S, SequenceType> processSingleType) {
+        Expression mainExpression = (Expression) visitArrowExpr.apply(view.mainExpr());
+        if (view.single() == null || view.single().isEmpty()) {
+            return mainExpression;
+        }
+        SequenceType sequenceType = processSingleType.apply(view.single());
+        return new CastExpression(mainExpression, sequenceType, translationContext.metadata(view.context()));
+    }
+
+    public static <T extends ParserRuleContext> Expression translateUnaryExpr(
+            UnaryExprView<T> view, TranslationContext translationContext, Function<T, Node> visitValueExpr) {
+        Expression mainExpression = (Expression) visitValueExpr.apply(view.mainExpr());
+        if (view.op() == null || view.op().isEmpty()) {
+            return mainExpression;
+        }
+        boolean negated = false;
+        for (Token t : view.op()) {
+            if (t.getText().contentEquals("-")) {
+                negated = !negated;
+            }
+        }
+        return new UnaryExpression(mainExpression, negated, translationContext.metadata(view.context()));
     }
 }
