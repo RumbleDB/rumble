@@ -33,8 +33,13 @@ import org.rumbledb.compiler.context.LetVarContext;
 import org.rumbledb.compiler.context.OrderByClauseContext;
 import org.rumbledb.compiler.context.OrderByExprContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
+import org.rumbledb.compiler.context.WindowClauseContext;
+import org.rumbledb.compiler.context.WindowConditionContext;
+import org.rumbledb.compiler.context.WindowVarsContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.PositionalVariableNameSameAsForVariableException;
 import org.rumbledb.exceptions.UnknownCollationException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -51,6 +56,7 @@ import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.SequenceType;
 
@@ -263,5 +269,73 @@ public final class FlworTranslation {
             exprs.add(new OrderByClauseSortingKey(expression, exprCtx.ascending(), uri, exprCtx.emptyOrder()));
         }
         return new OrderByClause(exprs, ctx.stable(), translationContext.metadata(ctx.context()));
+    }
+
+    public static <
+                    VarBindingCtx extends ParserRuleContext,
+                    SeqTypeCtx extends ParserRuleContext,
+                    ExprSingleCtx extends ParserRuleContext>
+            WindowClause windowClause(
+                    WindowClauseContext<VarBindingCtx, SeqTypeCtx, ExprSingleCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<VarBindingCtx, Name> parseVariableBinding,
+                    Function<SeqTypeCtx, SequenceType> processSequenceType,
+                    Function<ExprSingleCtx, Node> visitExprSingle) {
+        Name windowVariable = parseVariableBinding.apply(ctx.windowVariable());
+        SequenceType sequenceType = ctx.seqType() == null ? null : processSequenceType.apply(ctx.seqType());
+        Expression expression = (Expression) visitExprSingle.apply(ctx.expression());
+        WindowClause.WindowCondition start =
+                buildWindowCondition(ctx.startCondition(), parseVariableBinding, visitExprSingle);
+        WindowClause.WindowCondition end = ctx.endCondition() == null
+                ? null
+                : buildWindowCondition(ctx.endCondition(), parseVariableBinding, visitExprSingle);
+        validateWindowVariables(windowVariable, start, end, translationContext.metadata(ctx.context()));
+        return new WindowClause(
+                ctx.windowType(),
+                windowVariable,
+                sequenceType,
+                expression,
+                start,
+                end,
+                translationContext.metadata(ctx.context()));
+    }
+
+    private static <VarBindingCtx extends ParserRuleContext, ExprSingleCtx extends ParserRuleContext>
+            WindowClause.WindowCondition buildWindowCondition(
+                    WindowConditionContext<VarBindingCtx, ExprSingleCtx> ctx,
+                    Function<VarBindingCtx, Name> parseVariableBinding,
+                    Function<ExprSingleCtx, Node> visitExprSingle) {
+        return new WindowClause.WindowCondition(
+                buildWindowVars(ctx.vars(), parseVariableBinding),
+                (Expression) visitExprSingle.apply(ctx.exprSingle()),
+                ctx.only());
+    }
+
+    private static <VarBindingCtx extends ParserRuleContext> WindowClause.WindowVars buildWindowVars(
+            WindowVarsContext<VarBindingCtx> ctx, Function<VarBindingCtx, Name> parseVariableBinding) {
+        Name current = ctx.currentItem() == null ? null : parseVariableBinding.apply(ctx.currentItem());
+        Name position = ctx.positionalVar() == null ? null : parseVariableBinding.apply(ctx.positionalVar());
+        Name previous = ctx.previousItem() == null ? null : parseVariableBinding.apply(ctx.previousItem());
+        Name next = ctx.nextItem() == null ? null : parseVariableBinding.apply(ctx.nextItem());
+        return new WindowClause.WindowVars(current, position, previous, next);
+    }
+
+    private static void validateWindowVariables(
+            Name windowVariable,
+            WindowClause.WindowCondition start,
+            WindowClause.WindowCondition end,
+            ExceptionMetadata metadata) {
+        List<Name> names = new ArrayList<>();
+        names.add(windowVariable);
+        names.addAll(start.variables().names());
+        if (end != null) {
+            names.addAll(end.variables().names());
+        }
+        if (names.size() != names.stream().distinct().count()) {
+            throw new ParsingException(
+                    "All variables in a window clause must have distinct names",
+                    ErrorCode.DuplicatedVariableNameInWindowCode,
+                    metadata);
+        }
     }
 }

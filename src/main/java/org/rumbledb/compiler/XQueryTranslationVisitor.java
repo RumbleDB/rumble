@@ -66,6 +66,7 @@ import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
+import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -91,7 +92,6 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.flowr.Clause;
-import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -811,78 +811,22 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitTumblingWindowClause(XQueryParser.TumblingWindowClauseContext ctx) {
-        Name windowVariable = parseVariableBinding(ctx.name);
-        SequenceType sequenceType = ctx.type == null ? null : this.processSequenceType(ctx.type.sequenceType());
-        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
-        WindowClause.WindowCondition start = this.buildWindowStartCondition(ctx.windowStartCondition());
-        WindowClause.WindowCondition end =
-                ctx.windowEndCondition() == null ? null : this.buildWindowEndCondition(ctx.windowEndCondition());
-        validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
-        return new WindowClause(
-                WindowClause.WindowType.TUMBLING,
-                windowVariable,
-                sequenceType,
-                expression,
-                start,
-                end,
-                createMetadataFromContext(ctx));
+        return FlworTranslation.windowClause(
+                WindowClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
     public Node visitSlidingWindowClause(XQueryParser.SlidingWindowClauseContext ctx) {
-        Name windowVariable = parseVariableBinding(ctx.name);
-        SequenceType sequenceType = ctx.type == null ? null : this.processSequenceType(ctx.type.sequenceType());
-        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
-        WindowClause.WindowCondition start = this.buildWindowStartCondition(ctx.windowStartCondition());
-        WindowClause.WindowCondition end = this.buildWindowEndCondition(ctx.windowEndCondition());
-        validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
-        return new WindowClause(
-                WindowClause.WindowType.SLIDING,
-                windowVariable,
-                sequenceType,
-                expression,
-                start,
-                end,
-                createMetadataFromContext(ctx));
-    }
-
-    private WindowClause.WindowCondition buildWindowStartCondition(XQueryParser.WindowStartConditionContext ctx) {
-        return new WindowClause.WindowCondition(
-                this.buildWindowVars(ctx.windowVars()), (Expression) this.visitExprSingle(ctx.exprSingle()), false);
-    }
-
-    private WindowClause.WindowCondition buildWindowEndCondition(XQueryParser.WindowEndConditionContext ctx) {
-        return new WindowClause.WindowCondition(
-                this.buildWindowVars(ctx.windowVars()),
-                (Expression) this.visitExprSingle(ctx.exprSingle()),
-                ctx.KW_ONLY() != null);
-    }
-
-    private WindowClause.WindowVars buildWindowVars(XQueryParser.WindowVarsContext ctx) {
-        Name current = ctx.currentItem == null ? null : parseVariableBinding(ctx.currentItem);
-        Name position = ctx.positionalVar() == null ? null : parseVariableBinding(ctx.positionalVar().pvar);
-        Name previous = ctx.previousItem == null ? null : parseVariableBinding(ctx.previousItem);
-        Name next = ctx.nextItem == null ? null : parseVariableBinding(ctx.nextItem);
-        return new WindowClause.WindowVars(current, position, previous, next);
-    }
-
-    private void validateWindowVariables(
-            Name windowVariable,
-            WindowClause.WindowCondition start,
-            WindowClause.WindowCondition end,
-            ExceptionMetadata metadata) {
-        List<Name> names = new ArrayList<>();
-        names.add(windowVariable);
-        names.addAll(start.variables().names());
-        if (end != null) {
-            names.addAll(end.variables().names());
-        }
-        if (names.size() != names.stream().distinct().count()) {
-            throw new ParsingException(
-                    "All variables in a window clause must have distinct names",
-                    ErrorCode.DuplicatedVariableNameInWindowCode,
-                    metadata);
-        }
+        return FlworTranslation.windowClause(
+                WindowClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
