@@ -91,7 +91,7 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
 /**
- * Static context visitor implements a multi-pass algorithm that enables function hoisting
+ * Propagates execution modes for one pass of the algorithm driven by ExecutionModeResolver.
  */
 @Log4j2
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
@@ -102,7 +102,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     private List<Statement> exitStatementChildren;
 
     ExecutionModeVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
+        this.visitorConfig = VisitorConfig.executionModeInitialPassConfig;
         this.configuration = configuration;
         this.externalBindings = externalBindings;
         this.exitStatementChildren = new ArrayList<>();

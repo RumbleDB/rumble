@@ -53,7 +53,7 @@ final class ModuleImportLoader {
                 continue;
             }
             try {
-                LibraryModule module = VisitorHelpers.parseLibraryModuleFromLocation(
+                LibraryModule module = CompilationPipeline.prepareLibraryModuleFromLocation(
                         location, importingModuleContext, compilationConfiguration, metadata);
 
                 if (!normalizedNamespace.equals(module.getNamespace())) {

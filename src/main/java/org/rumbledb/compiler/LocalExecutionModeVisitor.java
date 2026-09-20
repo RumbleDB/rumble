@@ -22,7 +22,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Node;
 
 /**
- * Static context visitor implements a multi-pass algorithm that enables function hoisting
+ * Marks all visited nodes as local when parallel execution is disabled.
  */
 public class LocalExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
