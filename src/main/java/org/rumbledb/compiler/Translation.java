@@ -443,7 +443,8 @@ public final class Translation {
         Expression condition = (Expression) visitExpr.apply(ctx.cond());
         List<SwitchCase> cases = new ArrayList<>(ctx.cases().size());
         for (SwitchExprContext.Case<S> caseClause : ctx.cases()) {
-            List<Expression> conditionExpressions = new ArrayList<>(caseClause.cond().size());
+            List<Expression> conditionExpressions =
+                    new ArrayList<>(caseClause.cond().size());
             for (S expr : caseClause.cond()) {
                 conditionExpressions.add((Expression) visitExprSingle.apply(expr));
             }

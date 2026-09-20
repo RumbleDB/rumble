@@ -15,18 +15,16 @@
  */
 package org.rumbledb.compiler.context;
 
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.rumbledb.parser.jsoniq.JsoniqParser;
-import org.rumbledb.parser.xquery.XQueryParser;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
+import org.rumbledb.parser.jsoniq.JsoniqParser;
+import org.rumbledb.parser.xquery.XQueryParser;
+
 public record SwitchExprContext<T extends ParserRuleContext, S extends ParserRuleContext>(
-        T cond,
-        List<Case<S>> cases,
-        S def,
-        ParserRuleContext context) {
+        T cond, List<Case<S>> cases, S def, ParserRuleContext context) {
 
     public record Case<S extends ParserRuleContext>(List<S> cond, S ret) {}
 
