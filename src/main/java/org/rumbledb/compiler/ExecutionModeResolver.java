@@ -36,7 +36,7 @@ import static org.rumbledb.compiler.CompilationDiagnostics.debugPrintTree;
  * intermediate passes propagate modes until resolved or stalled, and a final strict pass follows
  * the local fallback for unresolved functions. The local-only path skips this fixed-point process.
  */
-@Log4j2(topic = "org.rumbledb.compiler.VisitorHelpers")
+@Log4j2
 final class ExecutionModeResolver {
 
     private ExecutionModeResolver() {}
