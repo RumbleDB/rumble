@@ -13,17 +13,18 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler;
+package org.rumbledb.compiler.translation;
 
+import org.rumbledb.compiler.URIQualifiedNameParser;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
 
 /** Resolves lexical names after a grammar-specific visitor has extracted their components. */
-final class TranslationNameResolver {
+public final class TranslationNameResolver {
 
-    enum NameRole {
+    public enum NameRole {
         FUNCTION,
         TYPE,
         ANNOTATION,
@@ -37,7 +38,7 @@ final class TranslationNameResolver {
         this.context = context;
     }
 
-    Name resolveFunctionName(String lexicalName, ExceptionMetadata metadata) {
+    public Name resolveFunctionName(String lexicalName, ExceptionMetadata metadata) {
         if (lexicalName.startsWith("Q{")) {
             return URIQualifiedNameParser.parse(lexicalName, metadata);
         }
@@ -49,7 +50,8 @@ final class TranslationNameResolver {
         return this.resolveUnprefixedName(lexicalName, NameRole.FUNCTION);
     }
 
-    Name resolveQName(String fullQName, String prefix, String localName, NameRole role, ExceptionMetadata metadata) {
+    public Name resolveQName(
+            String fullQName, String prefix, String localName, NameRole role, ExceptionMetadata metadata) {
         if (fullQName != null) {
             int colonIndex = fullQName.indexOf(':');
             if (colonIndex < 0) {

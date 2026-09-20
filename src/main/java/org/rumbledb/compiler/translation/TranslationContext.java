@@ -13,7 +13,7 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler;
+package org.rumbledb.compiler.translation;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -32,7 +32,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
 /** Shared mutable state used while either grammar translates a module. */
-final class TranslationContext {
+public final class TranslationContext {
 
     private final StaticContext moduleContext;
     private final CompilationConfiguration compilationConfiguration;
@@ -43,7 +43,7 @@ final class TranslationContext {
     private final ArrayDeque<Map<String, String>> constructorNamespaceFrames;
     private final TranslationNameResolver nameResolver;
 
-    TranslationContext(
+    public TranslationContext(
             StaticContext moduleContext,
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings,
@@ -60,45 +60,45 @@ final class TranslationContext {
         this.nameResolver = new TranslationNameResolver(this);
     }
 
-    StaticContext moduleContext() {
+    public StaticContext moduleContext() {
         return this.moduleContext;
     }
 
-    CompilationConfiguration compilationConfiguration() {
+    public CompilationConfiguration compilationConfiguration() {
         return this.compilationConfiguration;
     }
 
-    RumbleConfiguration configuration() {
+    public RumbleConfiguration configuration() {
         return this.configuration;
     }
 
-    ExternalBindings externalBindings() {
+    public ExternalBindings externalBindings() {
         return this.externalBindings;
     }
 
-    boolean isMainModule() {
+    public boolean isMainModule() {
         return this.mainModule;
     }
 
-    TranslationNameResolver names() {
+    public TranslationNameResolver names() {
         return this.nameResolver;
     }
 
-    void pushConstructorNamespaceFrame() {
+    public void pushConstructorNamespaceFrame() {
         this.constructorNamespaceFrames.push(new HashMap<>());
     }
 
-    void popConstructorNamespaceFrame() {
+    public void popConstructorNamespaceFrame() {
         this.constructorNamespaceFrames.pop();
     }
 
-    void bindConstructorNamespace(String prefix, String namespace) {
+    public void bindConstructorNamespace(String prefix, String namespace) {
         if (!this.constructorNamespaceFrames.isEmpty()) {
             this.constructorNamespaceFrames.peek().put(prefix, namespace);
         }
     }
 
-    String resolveNamespace(String prefix) {
+    public String resolveNamespace(String prefix) {
         for (Map<String, String> frame : this.constructorNamespaceFrames) {
             if (frame.containsKey(prefix)) {
                 return frame.get(prefix);
@@ -107,24 +107,24 @@ final class TranslationContext {
         return this.moduleContext.resolveNamespace(prefix);
     }
 
-    ExceptionMetadata metadata(ParserRuleContext context) {
+    public ExceptionMetadata metadata(ParserRuleContext context) {
         return metadata(context.getStart(), context.getStop());
     }
 
-    ExceptionMetadata metadata(ParseTree tree) {
+    public ExceptionMetadata metadata(ParseTree tree) {
         return metadata(startToken(tree), stopToken(tree));
     }
 
-    ExceptionMetadata metadata(ParseTree startTree, ParseTree endTree) {
+    public ExceptionMetadata metadata(ParseTree startTree, ParseTree endTree) {
         return metadata(startToken(startTree), stopToken(endTree));
     }
 
-    ExceptionMetadata metadata(Token start, Token end) {
+    public ExceptionMetadata metadata(Token start, Token end) {
         return ExceptionMetadata.fromTokens(
                 this.moduleContext.getStaticBaseURI().toString(), start, end, this.source);
     }
 
-    Token startToken(ParseTree tree) {
+    public Token startToken(ParseTree tree) {
         if (tree instanceof ParserRuleContext parserRuleContext) {
             return parserRuleContext.getStart();
         }
@@ -135,7 +135,7 @@ final class TranslationContext {
                 "Cannot get start token from parse tree: " + tree.getClass().getName());
     }
 
-    Token stopToken(ParseTree tree) {
+    public Token stopToken(ParseTree tree) {
         if (tree instanceof ParserRuleContext parserRuleContext) {
             return parserRuleContext.getStop();
         }
