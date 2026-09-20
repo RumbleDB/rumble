@@ -17,15 +17,14 @@ package org.rumbledb.compiler;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.bindings.ExternalBindings;
-import org.rumbledb.compiler.wrapper.DescendentSequentialProperties;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExpressionClassification;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
@@ -57,9 +56,9 @@ final class CompilationPipeline {
         ModuleParser.Language language = ModuleParser.detectLanguage(query, uri, configuration);
         MainModule module =
                 ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings, language);
-        return language == ModuleParser.Language.XQUERY
-                ? compileXQuery(module, configuration, externalBindings)
-                : compileJSONiq(module, configuration, externalBindings);
+        CompilationContext context = new CompilationContext(configuration, externalBindings);
+        List<CompilationPass<MainModule>> passes = mainModulePasses(language, configuration);
+        return run(module, context, passes);
     }
 
     /**
@@ -69,8 +68,10 @@ final class CompilationPipeline {
     static LibraryModule prepareLibraryModule(
             String query, URI uri, StaticContext importingContext, CompilationConfiguration configuration) {
         LibraryModule module = ModuleParser.parseLibraryModule(query, uri, importingContext, configuration);
-        resolveDependencies(module, configuration.runtimeConfiguration());
-        return module;
+        return run(
+                module,
+                new CompilationContext(configuration.runtimeConfiguration(), ExternalBindings.empty()),
+                List.of(CompilationPasses.resolveDependencies()));
     }
 
     /** Standalone library analysis for language-server callers; deliberately does not run the main-module pipeline. */
@@ -78,161 +79,61 @@ final class CompilationPipeline {
         StaticContext importingContext = ModuleParser.createModuleContext(uri, configuration);
         LibraryModule module =
                 prepareLibraryModule(query, uri, importingContext, new CompilationConfiguration(configuration));
-        populateStaticContext(module, configuration);
-        inferTypes(module, configuration);
+        return run(
+                module,
+                new CompilationContext(configuration, ExternalBindings.empty()),
+                List.of(CompilationPasses.populateStaticContext(), CompilationPasses.inferTypes()));
+    }
+
+    /**
+     * Dependency ordering and sequential classification precede inlining. Context population and
+     * updating classification enable composability checks. Comparison normalization requires types;
+     * execution modes and updating classifications are populated on its output.
+     * XQuery retains its existing omission of sequential/updating classification and composability checks.
+     */
+    private static List<CompilationPass<MainModule>> mainModulePasses(
+            ModuleParser.Language language, RumbleConfiguration configuration) {
+        boolean isJSONiq = language == ModuleParser.Language.JSONIQ;
+        List<CompilationPass<MainModule>> passes = new ArrayList<>();
+        passes.add(CompilationPasses.pruneModules());
+        passes.add(CompilationPasses.resolveDependencies());
+        if (isJSONiq) {
+            passes.add(CompilationPasses.classifySequentialExpressions());
+        }
+        addTypeIndependentOptimizations(passes, configuration);
+        passes.add(CompilationPasses.populateStaticContext());
+        if (isJSONiq) {
+            passes.add(CompilationPasses.classifyUpdatingExpressions());
+            passes.add(CompilationPasses.verifyComposability());
+        }
+        passes.add(CompilationPasses.inferTypes());
+        passes.add(CompilationPasses.normalizeComparisons());
+        passes.add(CompilationPasses.resolveExecutionModes());
+        if (isJSONiq) {
+            passes.add(CompilationPasses.classifyUpdatingExpressions());
+        }
+        return List.copyOf(passes);
+    }
+
+    private static void addTypeIndependentOptimizations(
+            List<CompilationPass<MainModule>> passes, RumbleConfiguration configuration) {
+        passes.add(CompilationPasses.rewriteBuiltinPartialApplications());
+        passes.add(CompilationPasses.analyzeFunctionDependencies());
+        if (configuration.optimization().useFunctionInlining()) {
+            passes.add(CompilationPasses.inlineFunctions());
+        }
+        if (configuration.optimization().useTailCallOptimization()) {
+            passes.add(CompilationPasses.optimizeTailCalls());
+        }
+        passes.add(CompilationPasses.pushDownProjections());
+    }
+
+    private static <M extends Module> M run(M module, CompilationContext context, List<CompilationPass<M>> passes) {
+        for (CompilationPass<M> pass : passes) {
+            debugPrintHeader(context.configuration(), pass.name());
+            module = pass.apply(module, context);
+            debugPrintTree(module, context.configuration());
+        }
         return module;
-    }
-
-    /**
-     * Dependency ordering and sequential classification precede inlining. Rewrites run before context
-     * population, then updating classification enables composability checks. Comparison normalization
-     * requires inferred types; execution modes and updating classifications are populated on its output.
-     */
-    private static MainModule compileJSONiq(
-            MainModule mainModule, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        debugPrintHeader(configuration, "Pruning modules");
-        pruneModules(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Resolving dependencies");
-        resolveDependencies(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Populating sequential classifications");
-        populateSequentialClassifications(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Applying type independent optimizations");
-        mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Populating static context");
-        populateStaticContext(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Populating expression classifications");
-        populateExpressionClassifications(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Verifying composability constraints");
-        verifyComposabilityConstraints(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Infering types");
-        inferTypes(mainModule, configuration);
-
-        debugPrintHeader(configuration, "Applying type dependent optimizations");
-        mainModule = applyTypeDependentOptimizations(mainModule);
-
-        debugPrintHeader(configuration, "Populating execution modes");
-        ExecutionModeResolver.resolve(mainModule, configuration, externalBindings);
-
-        debugPrintHeader(configuration, "Populating expression classifications");
-        populateExpressionClassifications(mainModule, configuration);
-
-        debugPrintTree(mainModule, configuration);
-
-        return mainModule;
-    }
-
-    /**
-     * Preserves the XQuery pipeline: sequential/updating classification and composability checks are
-     * not currently run for this language. Adding them is a semantic change, not part of orchestration.
-     */
-    private static MainModule compileXQuery(
-            MainModule mainModule, RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        pruneModules(mainModule, configuration);
-        resolveDependencies(mainModule, configuration);
-        mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
-        populateStaticContext(mainModule, configuration);
-        inferTypes(mainModule, configuration);
-        mainModule = applyTypeDependentOptimizations(mainModule);
-        ExecutionModeResolver.resolve(mainModule, configuration, externalBindings);
-        if (configuration.debug().printIteratorTree()) {
-            debugPrintTree(mainModule, configuration);
-        }
-        return mainModule;
-    }
-
-    private static void resolveDependencies(Node node, RumbleConfiguration conf) {
-        new VariableDependenciesVisitor(conf).visit(node, null);
-    }
-
-    private static void pruneModules(Node node, RumbleConfiguration conf) {
-        new ModulePruningVisitor(conf).visit(node, null);
-    }
-
-    private static void inferTypes(Module module, RumbleConfiguration conf) {
-        new InferTypeVisitor(conf).visit(module, module.getStaticContext());
-        debugPrintTree(module, conf);
-    }
-
-    private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleConfiguration conf) {
-        MainModule result = module;
-
-        debugPrintHeader(conf, "Builtin Partial Application Rewrite Visitor");
-        result = (MainModule) new BuiltinPartialApplicationRewriteVisitor().visit(result, null);
-        debugPrintTree(result, conf);
-
-        // Annotate recursive functions as such
-        debugPrintHeader(conf, "Function dependencies visitor");
-        new FunctionDependenciesVisitor().visit(result, null);
-        debugPrintTree(module, conf);
-
-        // Inline non-recursive functions
-        if (conf.optimization().useFunctionInlining()) {
-            debugPrintHeader(conf, "Function inlining");
-            result = (MainModule) new FunctionInliningVisitor().visit(result, null);
-            debugPrintTree(result, conf);
-        }
-
-        // Apply tail call optimization
-        if (conf.optimization().useTailCallOptimization()) {
-            debugPrintHeader(conf, "Tail call optimization");
-            result = (MainModule) new TailCallOptimizationVisitor().visit(result, null);
-            debugPrintTree(result, conf);
-        }
-
-        debugPrintHeader(conf, "Projection pushdown");
-        result = (MainModule) new ProjectionPushdownVisitor().visit(result, null);
-        debugPrintTree(result, conf);
-
-        return result;
-    }
-
-    private static MainModule applyTypeDependentOptimizations(MainModule module) {
-        MainModule result = module;
-        result = (MainModule) new ComparisonVisitor().visit(result, null);
-        return result;
-    }
-
-    private static void populateStaticContext(Module module, RumbleConfiguration conf) {
-        if (conf.debug().printIteratorTree()) {
-            debugPrintTree(module, conf);
-        }
-        StaticContextVisitor visitor = new StaticContextVisitor();
-        visitor.visit(module, module.getStaticContext());
-
-        debugPrintTree(module, conf);
-    }
-
-    private static void populateExpressionClassifications(Module module, RumbleConfiguration conf) {
-        debugPrintTree(module, conf);
-
-        ExpressionClassificationVisitor visitor = new ExpressionClassificationVisitor();
-        visitor.visit(module, ExpressionClassification.SIMPLE);
-
-        debugPrintTree(module, conf);
-    }
-
-    private static void populateSequentialClassifications(MainModule mainModule, RumbleConfiguration configuration) {
-        debugPrintTree(mainModule, configuration);
-
-        SequentialClassificationVisitor visitor = new SequentialClassificationVisitor(mainModule.getProlog());
-        visitor.visit(mainModule, new DescendentSequentialProperties(false, false));
-
-        debugPrintTree(mainModule, configuration);
-    }
-
-    private static void verifyComposabilityConstraints(MainModule mainModule, RumbleConfiguration configuration) {
-        debugPrintTree(mainModule, configuration);
-
-        ComposabilityVisitor visitor = new ComposabilityVisitor();
-        visitor.visit(mainModule, null);
-
-        debugPrintTree(mainModule, configuration);
     }
 }
