@@ -39,6 +39,7 @@ import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
+import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.OrExprContext;
@@ -61,7 +62,6 @@ import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
-import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
@@ -2139,10 +2139,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region control
     @Override
     public Node visitIfExpr(XQueryParser.IfExprContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.test_condition);
-        Expression branch = (Expression) this.visitExprSingle(ctx.branch);
-        Expression else_branch = (Expression) this.visitExprSingle(ctx.else_branch);
-        return new ConditionalExpression(condition, branch, else_branch, createMetadataFromContext(ctx));
+        return Translation.ifExpr(
+                IfExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
     }
 
     @Override

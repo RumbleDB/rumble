@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
+import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.OrExprContext;
@@ -46,6 +47,7 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.NodeComparisonExpression;
+import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
@@ -415,5 +417,16 @@ public final class Translation {
             }
         }
         return new UnaryExpression(mainExpression, negated, translationContext.metadata(ctx.context()));
+    }
+
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression ifExpr(
+            IfExprContext<T, S> ctx,
+            TranslationContext translationContext,
+            Function<T, Node> visitExpr,
+            Function<S, Node> visitExprSingle) {
+        Expression condition = (Expression) visitExpr.apply(ctx.testCondition());
+        Expression branch = (Expression) visitExprSingle.apply(ctx.branch());
+        Expression elseBranch = (Expression) visitExprSingle.apply(ctx.elseBranch());
+        return new ConditionalExpression(condition, branch, elseBranch, translationContext.metadata(ctx.context()));
     }
 }
