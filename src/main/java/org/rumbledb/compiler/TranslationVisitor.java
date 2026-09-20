@@ -38,6 +38,7 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
@@ -1175,29 +1176,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
-        Expression functionExpression = null;
-
-        for (int i = 0; i < ctx.function.size(); ++i) {
-            JsoniqParser.ArrowFunctionSpecifierContext functionCallContext = ctx.function.get(i);
-            JsoniqParser.ArgumentListContext argumentListContext = ctx.arguments.get(i);
-            ExceptionMetadata metadata =
-                    createMetadataFromRange(ctx.main_expr.getStart(), argumentListContext.getStop());
-            List<Expression> children = new ArrayList<Expression>();
-            children.add(mainExpression);
-            children.addAll(getArgumentsFromArgumentListContext(argumentListContext));
-            if (functionCallContext.eqName() != null) {
-                Name name = parseEqName(functionCallContext.eqName(), NameRole.FUNCTION);
-                mainExpression = processFunctionCall(name, children, metadata);
-                continue;
-            } else if (functionCallContext.varRef() != null) {
-                functionExpression = (Expression) this.visitVarRef(functionCallContext.varRef());
-            } else {
-                functionExpression = (Expression) this.visitParenthesizedExpr(functionCallContext.parenthesizedExpr());
-            }
-            mainExpression = new DynamicFunctionCallExpression(functionExpression, children, metadata);
-        }
-        return mainExpression;
+        return Translation.arrowExpr(
+                ArrowExprContext.from(ctx),
+                this.translationContext,
+                this::visitUnaryExpr,
+                this::parseEqName,
+                this::visitVarRef,
+                this::visitParenthesizedExpr,
+                this::getArgumentsFromArgumentListContext);
     }
 
     @Override

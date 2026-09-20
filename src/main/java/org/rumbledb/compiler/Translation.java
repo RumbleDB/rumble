@@ -31,6 +31,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
@@ -52,6 +53,7 @@ import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.WildcardContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
@@ -83,6 +85,7 @@ import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
@@ -427,6 +430,43 @@ public final class Translation {
         }
         SequenceType sequenceType = processSingleType.apply(ctx.single());
         return new CastExpression(mainExpression, sequenceType, translationContext.metadata(ctx.context()));
+    }
+
+    public static <
+                    T extends ParserRuleContext,
+                    E extends ParserRuleContext,
+                    V extends ParserRuleContext,
+                    P extends ParserRuleContext,
+                    A extends ParserRuleContext>
+            Expression arrowExpr(
+                    ArrowExprContext<T, E, V, P, A> ctx,
+                    TranslationContext translationContext,
+                    Function<T, Node> visitUnaryExpr,
+                    BiFunction<E, NameRole, Name> parseEqName,
+                    Function<V, Node> visitVarRef,
+                    Function<P, Node> visitParenthesizedExpr,
+                    Function<A, List<Expression>> getArgumentsFromArgumentListContext) {
+        Expression mainExpression = (Expression) visitUnaryExpr.apply(ctx.mainExpr());
+        Expression functionExpression = null;
+
+        for (ArrowExprContext.ArrowCall<E, V, P, A> call : ctx.calls()) {
+            ExceptionMetadata metadata = translationContext.metadata(
+                    ctx.mainExpr().getStart(), call.argumentList().getStop());
+            List<Expression> children = new ArrayList<Expression>();
+            children.add(mainExpression);
+            children.addAll(getArgumentsFromArgumentListContext.apply(call.argumentList()));
+            if (call.eqName() != null) {
+                Name name = parseEqName.apply(call.eqName(), NameRole.FUNCTION);
+                mainExpression = new FunctionCallExpression(name, children, metadata);
+                continue;
+            } else if (call.varRef() != null) {
+                functionExpression = (Expression) visitVarRef.apply(call.varRef());
+            } else {
+                functionExpression = (Expression) visitParenthesizedExpr.apply(call.parenthesizedExpr());
+            }
+            mainExpression = new DynamicFunctionCallExpression(functionExpression, children, metadata);
+        }
+        return mainExpression;
     }
 
     public static <T extends ParserRuleContext> Expression unaryExpr(
