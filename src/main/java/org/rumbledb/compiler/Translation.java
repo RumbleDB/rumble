@@ -15,7 +15,9 @@
  */
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -34,6 +36,7 @@ import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
+import org.rumbledb.compiler.context.SwitchExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
@@ -48,6 +51,8 @@ import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchCase;
+import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
@@ -428,5 +433,24 @@ public final class Translation {
         Expression branch = (Expression) visitExprSingle.apply(ctx.branch());
         Expression elseBranch = (Expression) visitExprSingle.apply(ctx.elseBranch());
         return new ConditionalExpression(condition, branch, elseBranch, translationContext.metadata(ctx.context()));
+    }
+
+    public static <T extends ParserRuleContext, S extends ParserRuleContext> Expression switchExpr(
+            SwitchExprContext<T, S> ctx,
+            TranslationContext translationContext,
+            Function<T, Node> visitExpr,
+            Function<S, Node> visitExprSingle) {
+        Expression condition = (Expression) visitExpr.apply(ctx.cond());
+        List<SwitchCase> cases = new ArrayList<>(ctx.cases().size());
+        for (SwitchExprContext.Case<S> caseClause : ctx.cases()) {
+            List<Expression> conditionExpressions = new ArrayList<>(caseClause.cond().size());
+            for (S expr : caseClause.cond()) {
+                conditionExpressions.add((Expression) visitExprSingle.apply(expr));
+            }
+            SwitchCase c = new SwitchCase(conditionExpressions, (Expression) visitExprSingle.apply(caseClause.ret()));
+            cases.add(c);
+        }
+        Expression defaultCase = (Expression) visitExprSingle.apply(ctx.def());
+        return new SwitchExpression(condition, cases, defaultCase, translationContext.metadata(ctx.context()));
     }
 }

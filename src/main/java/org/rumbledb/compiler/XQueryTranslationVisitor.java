@@ -47,6 +47,7 @@ import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
+import org.rumbledb.compiler.context.SwitchExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
@@ -62,8 +63,6 @@ import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
-import org.rumbledb.expressions.control.SwitchCase;
-import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
@@ -2145,18 +2144,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitSwitchExpr(XQueryParser.SwitchExprContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.cond);
-        List<SwitchCase> cases = new ArrayList<>();
-        for (XQueryParser.SwitchCaseClauseContext expr : ctx.cases) {
-            List<Expression> conditionExpressions = new ArrayList<>();
-            for (int i = 0; i < expr.cond.size(); ++i) {
-                conditionExpressions.add((Expression) this.visitExprSingle(expr.cond.get(i)));
-            }
-            SwitchCase c = new SwitchCase(conditionExpressions, (Expression) this.visitExprSingle(expr.ret));
-            cases.add(c);
-        }
-        Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
-        return new SwitchExpression(condition, cases, defaultCase, createMetadataFromContext(ctx));
+        return Translation.switchExpr(
+                SwitchExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
     }
     // endregion
 
