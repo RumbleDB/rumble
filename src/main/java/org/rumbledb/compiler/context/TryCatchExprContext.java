@@ -23,31 +23,45 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record TryCatchExprContext<T extends ParserRuleContext, C extends ParserRuleContext>(
-        T tryExpr, List<Catch<T, C>> catches, ParserRuleContext context) {
+public record TryCatchExprContext<T extends ParserRuleContext, E extends ParserRuleContext>(
+        T tryExpr, List<Catch<T, E>> catches, ParserRuleContext context) {
 
-    public record Catch<T extends ParserRuleContext, C extends ParserRuleContext>(
-            T catchExpr, List<C> nameTests, ParserRuleContext context) {}
+    public record Catch<T extends ParserRuleContext, E extends ParserRuleContext>(
+            T catchExpr, List<NameTestContext<E>> nameTests, ParserRuleContext context) {}
 
-    public static TryCatchExprContext<JsoniqParser.ExprContext, JsoniqParser.NameTestContext> from(
+    public static TryCatchExprContext<JsoniqParser.ExprContext, JsoniqParser.EqNameContext> from(
             JsoniqParser.TryCatchExprContext c) {
-        List<Catch<JsoniqParser.ExprContext, JsoniqParser.NameTestContext>> catches =
+        List<Catch<JsoniqParser.ExprContext, JsoniqParser.EqNameContext>> catches =
                 new ArrayList<>(c.catches != null ? c.catches.size() : 0);
         if (c.catches != null) {
             for (JsoniqParser.CatchClauseContext catchCtx : c.catches) {
-                catches.add(new Catch<>(catchCtx.catch_expression, catchCtx.nameTest(), catchCtx));
+                List<NameTestContext<JsoniqParser.EqNameContext>> nameTests = new ArrayList<>(
+                        catchCtx.nameTest() != null ? catchCtx.nameTest().size() : 0);
+                if (catchCtx.nameTest() != null) {
+                    for (JsoniqParser.NameTestContext nt : catchCtx.nameTest()) {
+                        nameTests.add(NameTestContext.from(nt));
+                    }
+                }
+                catches.add(new Catch<>(catchCtx.catch_expression, nameTests, catchCtx));
             }
         }
         return new TryCatchExprContext<>(c.try_expression, catches, c);
     }
 
-    public static TryCatchExprContext<XQueryParser.ExprContext, XQueryParser.NameTestContext> from(
+    public static TryCatchExprContext<XQueryParser.ExprContext, XQueryParser.EqNameContext> from(
             XQueryParser.TryCatchExprContext c) {
-        List<Catch<XQueryParser.ExprContext, XQueryParser.NameTestContext>> catches =
+        List<Catch<XQueryParser.ExprContext, XQueryParser.EqNameContext>> catches =
                 new ArrayList<>(c.catches != null ? c.catches.size() : 0);
         if (c.catches != null) {
             for (XQueryParser.CatchClauseContext catchCtx : c.catches) {
-                catches.add(new Catch<>(catchCtx.catch_expression, catchCtx.nameTest(), catchCtx));
+                List<NameTestContext<XQueryParser.EqNameContext>> nameTests = new ArrayList<>(
+                        catchCtx.nameTest() != null ? catchCtx.nameTest().size() : 0);
+                if (catchCtx.nameTest() != null) {
+                    for (XQueryParser.NameTestContext nt : catchCtx.nameTest()) {
+                        nameTests.add(NameTestContext.from(nt));
+                    }
+                }
+                catches.add(new Catch<>(catchCtx.catch_expression, nameTests, catchCtx));
             }
         }
         return new TryCatchExprContext<>(c.try_expression, catches, c);

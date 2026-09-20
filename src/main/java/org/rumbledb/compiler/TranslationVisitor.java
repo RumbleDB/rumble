@@ -42,6 +42,7 @@ import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
@@ -2327,7 +2328,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
         return Translation.tryCatchExpr(
-                TryCatchExprContext.from(ctx), this.translationContext, this::visitExpr, this::parseCatchPattern);
+                TryCatchExprContext.from(ctx), this.translationContext, this::visitExpr, this::parseEqName);
     }
 
     // endregion
@@ -2620,55 +2621,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
             for (var catchTarget : catchCtx.nameTest()) {
-                CatchPattern pattern = this.parseCatchPattern(catchTarget);
+                CatchPattern pattern = Translation.catchPattern(
+                        NameTestContext.from(catchTarget), this.translationContext, this::parseEqName);
                 if (!catchBlockStatements.containsKey(pattern)) {
                     catchBlockStatements.put(pattern, catchBlockStatement);
                 }
             }
         }
         return new TryCatchStatement(tryBlock, catchBlockStatements, createMetadataFromContext(ctx));
-    }
-
-    private CatchPattern parseCatchPattern(JsoniqParser.NameTestContext catchTarget) {
-        var wildcard = catchTarget.wildcard();
-        var errorcode = catchTarget.eqName();
-        return wildcard != null
-                ? this.parseWildcardPattern(wildcard)
-                : CatchPattern.exact(parseEqName(errorcode, NameRole.NO_DEFAULT_NAMESPACE));
-    }
-
-    private CatchPattern parseWildcardPattern(JsoniqParser.WildcardContext wildcardContext) {
-        if (wildcardContext instanceof JsoniqParser.AllNamesContext) {
-            // Only * is provided
-            return CatchPattern.catchAll();
-        }
-        if (wildcardContext instanceof JsoniqParser.AllWithLocalContext) {
-            // Namespace is the wildcard
-            String wildcardText = wildcardContext.getText();
-            // First two characters *: are stripped to keep only the local name
-            return CatchPattern.namespaceWildcard(wildcardText.substring(2), wildcardText);
-        }
-        if (wildcardContext instanceof JsoniqParser.AllWithNSContext) {
-            // Local name is the wildcard
-            String wildcardText = wildcardContext.getText();
-
-            // Strip the last two characters :*
-            String prefix = wildcardText.substring(0, wildcardText.length() - 2);
-            String namespace = this.translationContext.resolveNamespace(prefix);
-            if (namespace == null) {
-                throw new PrefixCannotBeExpandedException(
-                        "Cannot expand prefix " + prefix, createMetadataFromContext(wildcardContext));
-            }
-            return CatchPattern.localNameWildcard(namespace, wildcardText);
-        }
-        if (wildcardContext instanceof JsoniqParser.BracedURILiteralContext) {
-            // Declare namespace in place, and match any local name
-            // For example, Q{http://example.com}:*
-            String wildcardText = wildcardContext.getText();
-            int closingBrace = wildcardText.indexOf('}');
-            return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
-        }
-        throw new OurBadException("Unsupported catch wildcard pattern: " + wildcardContext.getText());
     }
 
     @Override

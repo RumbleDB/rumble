@@ -41,6 +41,7 @@ import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
@@ -2167,7 +2168,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitTryCatchExpr(XQueryParser.TryCatchExprContext ctx) {
         return Translation.tryCatchExpr(
-                TryCatchExprContext.from(ctx), this.translationContext, this::visitExpr, this::parseCatchPattern);
+                TryCatchExprContext.from(ctx), this.translationContext, this::visitExpr, this::parseEqName);
     }
 
     // endregion
@@ -2460,47 +2461,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (XQueryParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
             for (var catchTarget : catchCtx.nameTest()) {
-                CatchPattern pattern = this.parseCatchPattern(catchTarget);
+                CatchPattern pattern = Translation.catchPattern(
+                        NameTestContext.from(catchTarget), this.translationContext, this::parseEqName);
                 if (!catchBlockStatements.containsKey(pattern)) {
                     catchBlockStatements.put(pattern, catchBlockStatement);
                 }
             }
         }
         return new TryCatchStatement(tryBlock, catchBlockStatements, createMetadataFromContext(ctx));
-    }
-
-    private CatchPattern parseCatchPattern(XQueryParser.NameTestContext catchTarget) {
-        var wildcard = catchTarget.wildcard();
-        var errorcode = catchTarget.eqName();
-        return wildcard != null
-                ? this.parseWildcardPattern(wildcard)
-                : CatchPattern.exact(parseEqName(errorcode, NameRole.NO_DEFAULT_NAMESPACE));
-    }
-
-    private CatchPattern parseWildcardPattern(XQueryParser.WildcardContext wildcardContext) {
-        if (wildcardContext instanceof XQueryParser.AllNamesContext) {
-            return CatchPattern.catchAll();
-        }
-        if (wildcardContext instanceof XQueryParser.AllWithLocalContext) {
-            String wildcardText = wildcardContext.getText();
-            return CatchPattern.namespaceWildcard(wildcardText.substring(2), wildcardText);
-        }
-        if (wildcardContext instanceof XQueryParser.AllWithNSContext) {
-            String wildcardText = wildcardContext.getText();
-            String prefix = wildcardText.substring(0, wildcardText.length() - 2);
-            String namespace = this.translationContext.resolveNamespace(prefix);
-            if (namespace == null) {
-                throw new PrefixCannotBeExpandedException(
-                        "Cannot expand prefix " + prefix, createMetadataFromContext(wildcardContext));
-            }
-            return CatchPattern.localNameWildcard(namespace, wildcardText);
-        }
-        if (wildcardContext instanceof XQueryParser.BracedURILiteralContext) {
-            String wildcardText = wildcardContext.getText();
-            int closingBrace = wildcardText.indexOf('}');
-            return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
-        }
-        throw new OurBadException("Unsupported catch wildcard pattern: " + wildcardContext.getText());
     }
 
     @Override

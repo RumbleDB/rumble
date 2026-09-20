@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -27,12 +28,14 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
@@ -46,10 +49,12 @@ import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
+import org.rumbledb.compiler.context.WildcardContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -587,21 +592,45 @@ public final class Translation {
         }
     }
 
-    public static <T extends ParserRuleContext, C extends ParserRuleContext> Expression tryCatchExpr(
-            TryCatchExprContext<T, C> ctx,
+    public static CatchPattern wildcardPattern(WildcardContext ctx, TranslationContext translationContext) {
+        return switch (ctx.type()) {
+            case ALL -> CatchPattern.catchAll();
+            case ALL_WITH_LOCAL -> CatchPattern.namespaceWildcard(ctx.localName(), ctx.text());
+            case ALL_WITH_NS -> {
+                String namespace = translationContext.resolveNamespace(ctx.prefix());
+                if (namespace == null) {
+                    throw new PrefixCannotBeExpandedException(
+                            "Cannot expand prefix " + ctx.prefix(), translationContext.metadata(ctx.context()));
+                }
+                yield CatchPattern.localNameWildcard(namespace, ctx.text());
+            }
+            case BRACED_URI_LITERAL -> CatchPattern.localNameWildcard(ctx.uri(), ctx.text());
+        };
+    }
+
+    public static <E extends ParserRuleContext> CatchPattern catchPattern(
+            NameTestContext<E> ctx, TranslationContext translationContext, BiFunction<E, NameRole, Name> parseEqName) {
+        if (ctx.wildcard() != null) {
+            return wildcardPattern(ctx.wildcard(), translationContext);
+        }
+        return CatchPattern.exact(parseEqName.apply(ctx.eqName(), NameRole.NO_DEFAULT_NAMESPACE));
+    }
+
+    public static <T extends ParserRuleContext, E extends ParserRuleContext> Expression tryCatchExpr(
+            TryCatchExprContext<T, E> ctx,
             TranslationContext translationContext,
             Function<T, Node> visitExpr,
-            Function<C, CatchPattern> parseCatchTarget) {
+            BiFunction<E, NameRole, Name> parseEqName) {
         Expression tryExpression = ctx.tryExpr() == null
                 ? new CommaExpression(translationContext.metadata(ctx.context()))
                 : (Expression) visitExpr.apply(ctx.tryExpr());
         Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
-        for (TryCatchExprContext.Catch<T, C> catchCtx : ctx.catches()) {
+        for (TryCatchExprContext.Catch<T, E> catchCtx : ctx.catches()) {
             Expression catchExpression = catchCtx.catchExpr() == null
                     ? new CommaExpression(translationContext.metadata(catchCtx.context()))
                     : (Expression) visitExpr.apply(catchCtx.catchExpr());
-            for (C catchTarget : catchCtx.nameTests()) {
-                CatchPattern pattern = parseCatchTarget.apply(catchTarget);
+            for (NameTestContext<E> catchTarget : catchCtx.nameTests()) {
+                CatchPattern pattern = catchPattern(catchTarget, translationContext, parseEqName);
                 if (!catchExpressions.containsKey(pattern)) {
                     catchExpressions.put(pattern, catchExpression);
                 }
