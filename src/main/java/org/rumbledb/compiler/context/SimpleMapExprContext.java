@@ -22,8 +22,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record SimpleMapExprContext<T extends ParserRuleContext, M extends ParserRuleContext>(
-        T mainExpr, List<M> mapExpr, ParserRuleContext context) {
+public record SimpleMapExprContext<MainExprCtx extends ParserRuleContext, MapExprCtx extends ParserRuleContext>(
+        MainExprCtx mainExpr, List<MapExprCtx> mapExpr, ParserRuleContext context) {
 
     public static SimpleMapExprContext<JsoniqParser.PathExprContext, JsoniqParser.PathExprContext> from(
             JsoniqParser.SimpleMapExprContext c) {

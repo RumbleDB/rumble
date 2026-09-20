@@ -22,7 +22,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record RangeExprContext<T extends ParserRuleContext>(T mainExpr, List<T> rhs, ParserRuleContext context) {
+public record RangeExprContext<ChildExprCtx extends ParserRuleContext>(
+        ChildExprCtx mainExpr, List<ChildExprCtx> rhs, ParserRuleContext context) {
 
     public static RangeExprContext<JsoniqParser.AdditiveExprContext> from(JsoniqParser.RangeExprContext c) {
         return new RangeExprContext<>(c.main_expr, c.rhs, c);

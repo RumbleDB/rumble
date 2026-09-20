@@ -22,8 +22,12 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record ComparisonExprContext<T extends ParserRuleContext>(
-        T mainExpr, List<T> rhs, String operatorSymbol, boolean isNodeComp, ParserRuleContext context) {
+public record ComparisonExprContext<ChildExprCtx extends ParserRuleContext>(
+        ChildExprCtx mainExpr,
+        List<ChildExprCtx> rhs,
+        String operatorSymbol,
+        boolean isNodeComp,
+        ParserRuleContext context) {
 
     public static ComparisonExprContext<JsoniqParser.StringConcatExprContext> from(
             JsoniqParser.ComparisonExprContext c) {

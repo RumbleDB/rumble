@@ -20,8 +20,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record TypeCheckExprContext<T extends ParserRuleContext, S extends ParserRuleContext>(
-        T mainExpr, S seq, ParserRuleContext context) {
+public record TypeCheckExprContext<MainExprCtx extends ParserRuleContext, SeqTypeCtx extends ParserRuleContext>(
+        MainExprCtx mainExpr, SeqTypeCtx seq, ParserRuleContext context) {
 
     public static TypeCheckExprContext<JsoniqParser.IsStaticallyExprContext, JsoniqParser.SequenceTypeContext> from(
             JsoniqParser.InstanceOfExprContext c) {
