@@ -39,6 +39,9 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
+import org.rumbledb.compiler.view.AdditiveExprView;
+import org.rumbledb.compiler.view.RangeExprView;
+import org.rumbledb.compiler.view.StringConcatExprView;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -48,7 +51,6 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -76,8 +78,6 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
-import org.rumbledb.expressions.miscellaneous.RangeExpression;
-import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -1143,45 +1143,26 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitStringConcatExpr(JsoniqParser.StringConcatExprContext ctx) {
-        Expression result = (Expression) this.visitRangeExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (JsoniqParser.RangeExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitRangeExpr(child);
-            result = new StringConcatExpression(
-                    result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return SharedTranslationLogic.translateStringConcatExpr(
+                StringConcatExprView.from(ctx),
+                this.translationContext,
+                this::visitRangeExpr);
     }
 
     @Override
     public Node visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitAdditiveExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return mainExpression;
-        }
-        JsoniqParser.AdditiveExprContext child = ctx.rhs.get(0);
-        Expression childExpression = (Expression) this.visitAdditiveExpr(child);
-        return new RangeExpression(mainExpression, childExpression, createMetadataFromContext(ctx));
+        return SharedTranslationLogic.translateRangeExpr(
+                RangeExprView.from(ctx),
+                this.translationContext,
+                this::visitAdditiveExpr);
     }
 
     @Override
     public Node visitAdditiveExpr(JsoniqParser.AdditiveExprContext ctx) {
-        Expression result = (Expression) this.visitMultiplicativeExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (int i = 0; i < ctx.rhs.size(); ++i) {
-            JsoniqParser.MultiplicativeExprContext child = ctx.rhs.get(i);
-            Expression rightExpression = (Expression) this.visitMultiplicativeExpr(child);
-            result = new AdditiveExpression(
-                    result,
-                    rightExpression,
-                    ctx.op.get(i).getText().equals("-"),
-                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return SharedTranslationLogic.translateAdditiveExpr(
+                AdditiveExprView.from(ctx),
+                this.translationContext,
+                this::visitMultiplicativeExpr);
     }
 
     @Override
