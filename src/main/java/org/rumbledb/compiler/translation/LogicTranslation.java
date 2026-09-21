@@ -22,7 +22,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 
@@ -33,13 +32,13 @@ public final class LogicTranslation {
     public static <ChildExprCtx extends ParserRuleContext> Expression orExpr(
             OrExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<ChildExprCtx, Node> visitAndExpr) {
-        Expression result = (Expression) visitAndExpr.apply(ctx.mainExpr());
+            Function<ChildExprCtx, Expression> visitAndExpr) {
+        Expression result = visitAndExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
         for (ChildExprCtx child : ctx.rhs()) {
-            Expression rightExpression = (Expression) visitAndExpr.apply(child);
+            Expression rightExpression = visitAndExpr.apply(child);
             result = new OrExpression(
                     result,
                     rightExpression,
@@ -51,13 +50,13 @@ public final class LogicTranslation {
     public static <ChildExprCtx extends ParserRuleContext> Expression andExpr(
             AndExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<ChildExprCtx, Node> visitNextExpr) {
-        Expression result = (Expression) visitNextExpr.apply(ctx.mainExpr());
+            Function<ChildExprCtx, Expression> visitNextExpr) {
+        Expression result = visitNextExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
         for (ChildExprCtx child : ctx.rhs()) {
-            Expression rightExpression = (Expression) visitNextExpr.apply(child);
+            Expression rightExpression = visitNextExpr.apply(child);
             result = new AndExpression(
                     result,
                     rightExpression,

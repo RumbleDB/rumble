@@ -23,7 +23,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.flowr.Clause;
@@ -42,13 +41,13 @@ public final class ComparisonTranslation {
     public static <ChildExprCtx extends ParserRuleContext> Expression comparisonExpr(
             ComparisonExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<ChildExprCtx, Node> visitStringConcatExpr) {
-        Expression mainExpression = (Expression) visitStringConcatExpr.apply(ctx.mainExpr());
+            Function<ChildExprCtx, Expression> visitStringConcatExpr) {
+        Expression mainExpression = visitStringConcatExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return mainExpression;
         }
         ChildExprCtx child = ctx.rhs().get(0);
-        Expression childExpression = (Expression) visitStringConcatExpr.apply(child);
+        Expression childExpression = visitStringConcatExpr.apply(child);
 
         if (ctx.isNodeComp()) {
             NodeComparisonExpression.NodeComparisonOperator nodeOp =

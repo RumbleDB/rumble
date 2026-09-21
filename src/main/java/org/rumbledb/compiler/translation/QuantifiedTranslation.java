@@ -24,7 +24,6 @@ import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
@@ -43,14 +42,14 @@ public final class QuantifiedTranslation {
                     ExprSingleCtx extends ParserRuleContext,
                     VarBindingCtx extends ParserRuleContext,
                     SeqTypeCtx extends ParserRuleContext>
-            Expression quantifiedExpr(
+            FunctionCallExpression quantifiedExpr(
                     QuantifiedExprContext<ExprSingleCtx, VarBindingCtx, SeqTypeCtx> ctx,
                     TranslationContext translationContext,
-                    Function<ExprSingleCtx, Node> visitExprSingle,
+                    Function<ExprSingleCtx, Expression> visitExprSingle,
                     Function<VarBindingCtx, Name> parseVariableBinding,
                     Function<SeqTypeCtx, SequenceType> processSequenceType) {
         Clause lastClause = null;
-        Expression expression = (Expression) visitExprSingle.apply(ctx.exprSingle());
+        Expression expression = visitExprSingle.apply(ctx.exprSingle());
         boolean isUniversal = ctx.isUniversal();
         for (QuantifiedExprContext.Var<ExprSingleCtx, VarBindingCtx, SeqTypeCtx> currentVariable : ctx.vars()) {
             Expression varExpression;
@@ -60,7 +59,7 @@ public final class QuantifiedTranslation {
                 sequenceType = processSequenceType.apply(currentVariable.sequenceType());
             }
 
-            varExpression = (Expression) visitExprSingle.apply(currentVariable.exprSingle());
+            varExpression = visitExprSingle.apply(currentVariable.exprSingle());
             Clause newClause = new ForClause(
                     variableName,
                     false,

@@ -44,7 +44,6 @@ import org.rumbledb.exceptions.PositionalVariableNameSameAsForVariableException;
 import org.rumbledb.exceptions.UnknownCollationException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
@@ -68,7 +67,7 @@ public final class FlworTranslation {
             FlworExprContext<ExprSingleCtx> ctx,
             TranslationContext translationContext,
             Function<ParseTree, Clause> visitClause,
-            Function<ExprSingleCtx, Node> visitExprSingle) {
+            Function<ExprSingleCtx, Expression> visitExprSingle) {
         Clause clause = visitClause.apply(ctx.startClause());
         if (clause == null) {
             throw new UnsupportedFeatureException(
@@ -86,7 +85,7 @@ public final class FlworTranslation {
             previousFLWORClause = nextClause.getLastClause();
         }
 
-        Expression returnExpr = (Expression) visitExprSingle.apply(ctx.returnExpr());
+        Expression returnExpr = visitExprSingle.apply(ctx.returnExpr());
         ReturnClause returnClause = new ReturnClause(returnExpr, returnExpr.getMetadata());
         previousFLWORClause.chainWith(returnClause);
 
@@ -104,7 +103,7 @@ public final class FlworTranslation {
                     TranslationContext translationContext,
                     Function<VarBindingCtx, Name> parseVariableBinding,
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
-                    Function<ExprSingleCtx, Node> visitExprSingle) {
+                    Function<ExprSingleCtx, Expression> visitExprSingle) {
         ForClause clause = null;
         for (ForVarContext<VarBindingCtx, SeqTypeCtx, ExprSingleCtx> varCtx : ctx.vars()) {
             ForClause newClause =
@@ -126,7 +125,7 @@ public final class FlworTranslation {
                     TranslationContext translationContext,
                     Function<VarBindingCtx, Name> parseVariableBinding,
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
-                    Function<ExprSingleCtx, Node> visitExprSingle) {
+                    Function<ExprSingleCtx, Expression> visitExprSingle) {
         SequenceType seq = null;
         Name var = parseVariableBinding.apply(ctx.varRef());
         if (ctx.seq() != null) {
@@ -142,7 +141,7 @@ public final class FlworTranslation {
                         translationContext.metadata(ctx.at()));
             }
         }
-        Expression expr = (Expression) visitExprSingle.apply(ctx.exprSingle());
+        Expression expr = visitExprSingle.apply(ctx.exprSingle());
         // If the sequenceType is specified, we have to "extend" its arity to *
         // because TreatIterator is wrapping the whole assignment expression,
         // meaning there is not one TreatIterator for each variable we loop over.
@@ -163,7 +162,7 @@ public final class FlworTranslation {
                     TranslationContext translationContext,
                     Function<VarBindingCtx, Name> parseVariableBinding,
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
-                    Function<ExprSingleCtx, Node> visitExprSingle) {
+                    Function<ExprSingleCtx, Expression> visitExprSingle) {
         LetClause clause = null;
         for (LetVarContext<VarBindingCtx, SeqTypeCtx, ExprSingleCtx> varCtx : ctx.vars()) {
             LetClause newClause =
@@ -185,14 +184,14 @@ public final class FlworTranslation {
                     TranslationContext translationContext,
                     Function<VarBindingCtx, Name> parseVariableBinding,
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
-                    Function<ExprSingleCtx, Node> visitExprSingle) {
+                    Function<ExprSingleCtx, Expression> visitExprSingle) {
         SequenceType seq = null;
         Name var = parseVariableBinding.apply(ctx.varRef());
         if (ctx.seq() != null) {
             seq = processSequenceType.apply(ctx.seq());
         }
 
-        Expression expr = (Expression) visitExprSingle.apply(ctx.exprSingle());
+        Expression expr = visitExprSingle.apply(ctx.exprSingle());
         if (seq != null) {
             expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
@@ -203,8 +202,8 @@ public final class FlworTranslation {
     public static <ExprSingleCtx extends ParserRuleContext> WhereClause whereClause(
             WhereClauseContext<ExprSingleCtx> ctx,
             TranslationContext translationContext,
-            Function<ExprSingleCtx, Node> visitExprSingle) {
-        Expression expr = (Expression) visitExprSingle.apply(ctx.exprSingle());
+            Function<ExprSingleCtx, Expression> visitExprSingle) {
+        Expression expr = visitExprSingle.apply(ctx.exprSingle());
         return new WhereClause(expr, translationContext.metadata(ctx.context()));
     }
 
@@ -226,7 +225,7 @@ public final class FlworTranslation {
                     TranslationContext translationContext,
                     Function<VarBindingCtx, Name> parseVariableBinding,
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
-                    Function<ExprSingleCtx, Node> visitExprSingle,
+                    Function<ExprSingleCtx, Expression> visitExprSingle,
                     Function<UriLiteralCtx, String> resolveCollationUri) {
         List<GroupByVariableDeclaration> vars = new ArrayList<>();
         for (GroupByVarContext<VarBindingCtx, SeqTypeCtx, ExprSingleCtx, UriLiteralCtx> varCtx : ctx.vars()) {
@@ -240,8 +239,7 @@ public final class FlworTranslation {
                 collationUri = collation;
             }
             SequenceType seq = varCtx.seq() != null ? processSequenceType.apply(varCtx.seq()) : null;
-            Expression expr =
-                    varCtx.exprSingle() != null ? (Expression) visitExprSingle.apply(varCtx.exprSingle()) : null;
+            Expression expr = varCtx.exprSingle() != null ? visitExprSingle.apply(varCtx.exprSingle()) : null;
             Name var = parseVariableBinding.apply(varCtx.varRef());
             vars.add(new GroupByVariableDeclaration(var, seq, expr, collationUri));
         }
@@ -252,7 +250,7 @@ public final class FlworTranslation {
             OrderByClause orderByClause(
                     OrderByClauseContext<ExprSingleCtx, UriLiteralCtx> ctx,
                     TranslationContext translationContext,
-                    Function<ExprSingleCtx, Node> visitExprSingle,
+                    Function<ExprSingleCtx, Expression> visitExprSingle,
                     Function<UriLiteralCtx, String> resolveCollationUri) {
         List<OrderByClauseSortingKey> exprs = new ArrayList<>();
         for (OrderByExprContext<ExprSingleCtx, UriLiteralCtx> exprCtx : ctx.exprs()) {
@@ -265,7 +263,7 @@ public final class FlworTranslation {
                 }
                 uri = collation;
             }
-            Expression expression = (Expression) visitExprSingle.apply(exprCtx.exprSingle());
+            Expression expression = visitExprSingle.apply(exprCtx.exprSingle());
             exprs.add(new OrderByClauseSortingKey(expression, exprCtx.ascending(), uri, exprCtx.emptyOrder()));
         }
         return new OrderByClause(exprs, ctx.stable(), translationContext.metadata(ctx.context()));
@@ -280,10 +278,10 @@ public final class FlworTranslation {
                     TranslationContext translationContext,
                     Function<VarBindingCtx, Name> parseVariableBinding,
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
-                    Function<ExprSingleCtx, Node> visitExprSingle) {
+                    Function<ExprSingleCtx, Expression> visitExprSingle) {
         Name windowVariable = parseVariableBinding.apply(ctx.windowVariable());
         SequenceType sequenceType = ctx.seqType() == null ? null : processSequenceType.apply(ctx.seqType());
-        Expression expression = (Expression) visitExprSingle.apply(ctx.expression());
+        Expression expression = visitExprSingle.apply(ctx.expression());
         WindowClause.WindowCondition start =
                 buildWindowCondition(ctx.startCondition(), parseVariableBinding, visitExprSingle);
         WindowClause.WindowCondition end = ctx.endCondition() == null
@@ -304,11 +302,9 @@ public final class FlworTranslation {
             WindowClause.WindowCondition buildWindowCondition(
                     WindowConditionContext<VarBindingCtx, ExprSingleCtx> ctx,
                     Function<VarBindingCtx, Name> parseVariableBinding,
-                    Function<ExprSingleCtx, Node> visitExprSingle) {
+                    Function<ExprSingleCtx, Expression> visitExprSingle) {
         return new WindowClause.WindowCondition(
-                buildWindowVars(ctx.vars(), parseVariableBinding),
-                (Expression) visitExprSingle.apply(ctx.exprSingle()),
-                ctx.only());
+                buildWindowVars(ctx.vars(), parseVariableBinding), visitExprSingle.apply(ctx.exprSingle()), ctx.only());
     }
 
     private static <VarBindingCtx extends ParserRuleContext> WindowClause.WindowVars buildWindowVars(

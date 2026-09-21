@@ -28,7 +28,6 @@ import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -41,14 +40,14 @@ public final class PostfixTranslation {
             Expression simpleMapExpr(
                     SimpleMapExprContext<MainExprCtx, MapExprCtx> ctx,
                     TranslationContext translationContext,
-                    Function<MainExprCtx, Node> visitPathExprForMain,
-                    Function<MapExprCtx, Node> visitPathExprForMap) {
-        Expression result = (Expression) visitPathExprForMain.apply(ctx.mainExpr());
+                    Function<MainExprCtx, Expression> visitPathExprForMain,
+                    Function<MapExprCtx, Expression> visitPathExprForMap) {
+        Expression result = visitPathExprForMain.apply(ctx.mainExpr());
         if (ctx.mapExpr() == null || ctx.mapExpr().isEmpty()) {
             return result;
         }
         for (MapExprCtx child : ctx.mapExpr()) {
-            Expression rightExpression = (Expression) visitPathExprForMap.apply(child);
+            Expression rightExpression = visitPathExprForMap.apply(child);
             result = new SimpleMapExpression(
                     result,
                     rightExpression,
@@ -66,12 +65,12 @@ public final class PostfixTranslation {
             Expression arrowExpr(
                     ArrowExprContext<MainExprCtx, EqNameCtx, VarRefCtx, ParenthesizedExprCtx, ArgumentListCtx> ctx,
                     TranslationContext translationContext,
-                    Function<MainExprCtx, Node> visitUnaryExpr,
+                    Function<MainExprCtx, Expression> visitUnaryExpr,
                     BiFunction<EqNameCtx, NameRole, Name> parseEqName,
-                    Function<VarRefCtx, Node> visitVarRef,
-                    Function<ParenthesizedExprCtx, Node> visitParenthesizedExpr,
+                    Function<VarRefCtx, Expression> visitVarRef,
+                    Function<ParenthesizedExprCtx, Expression> visitParenthesizedExpr,
                     Function<ArgumentListCtx, List<Expression>> getArgumentsFromArgumentListContext) {
-        Expression mainExpression = (Expression) visitUnaryExpr.apply(ctx.mainExpr());
+        Expression mainExpression = visitUnaryExpr.apply(ctx.mainExpr());
         Expression functionExpression = null;
 
         for (ArrowExprContext.ArrowCall<EqNameCtx, VarRefCtx, ParenthesizedExprCtx, ArgumentListCtx> call :
@@ -86,9 +85,9 @@ public final class PostfixTranslation {
                 mainExpression = new FunctionCallExpression(name, children, metadata);
                 continue;
             } else if (call.varRef() != null) {
-                functionExpression = (Expression) visitVarRef.apply(call.varRef());
+                functionExpression = visitVarRef.apply(call.varRef());
             } else {
-                functionExpression = (Expression) visitParenthesizedExpr.apply(call.parenthesizedExpr());
+                functionExpression = visitParenthesizedExpr.apply(call.parenthesizedExpr());
             }
             mainExpression = new DynamicFunctionCallExpression(functionExpression, children, metadata);
         }
