@@ -147,6 +147,8 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
+import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
@@ -942,9 +944,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
-        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
-        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
-        return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
+        Expression mainExpression = (Expression) this.visitExpr(ctx.expr());
+        if (ctx.KW_TYPE() != null) {
+            SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
+            return new ValidateTypeExpression(mainExpression, true, sequenceType, createMetadataFromContext(ctx));
+        }
+        ValidationMode validationMode =
+                ctx.validationMode() != null && ctx.validationMode().KW_LAX() != null
+                        ? ValidationMode.LAX
+                        : ValidationMode.STRICT;
+        return new ValidateExpression(mainExpression, validationMode, null, createMetadataFromContext(ctx));
     }
     // endregion
 
