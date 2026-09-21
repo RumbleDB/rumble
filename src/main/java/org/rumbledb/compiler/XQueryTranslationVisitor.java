@@ -17,11 +17,9 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -54,6 +52,7 @@ import org.rumbledb.compiler.context.LetVarContext;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
@@ -64,6 +63,7 @@ import org.rumbledb.compiler.context.ParenthesizedExprContext;
 import org.rumbledb.compiler.context.ProgramContext;
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
+import org.rumbledb.compiler.context.SchemaImportContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
@@ -86,6 +86,7 @@ import org.rumbledb.compiler.translation.LogicTranslation;
 import org.rumbledb.compiler.translation.ModuleTranslation;
 import org.rumbledb.compiler.translation.PostfixTranslation;
 import org.rumbledb.compiler.translation.PrimaryTranslation;
+import org.rumbledb.compiler.translation.PrologTranslation;
 import org.rumbledb.compiler.translation.QuantifiedTranslation;
 import org.rumbledb.compiler.translation.SequenceTranslation;
 import org.rumbledb.compiler.translation.TranslationContext;
@@ -101,14 +102,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.flowr.Clause;
-import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.LibraryModule;
-import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.module.SchemaImport;
-import org.rumbledb.expressions.module.SchemaImport.BindingKind;
-import org.rumbledb.expressions.module.TypeDeclaration;
-import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
@@ -176,9 +170,6 @@ import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.parser.xquery.XQueryParser;
-import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
-import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
-import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.types.AttributeNodeItemType;
@@ -189,7 +180,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -289,288 +279,188 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitProlog(XQueryParser.PrologContext ctx) {
-        List<LibraryModule> libraryModules = new ArrayList<>();
-        List<SchemaImport> schemaImports = new ArrayList<>();
-        List<OptionDeclaration> optionDeclarations = new ArrayList<>();
-        Set<String> namespaces = new HashSet<>();
-        Set<String> schemaNamespaces = new HashSet<>();
-        PrologPhase1Flags phase1 = new PrologPhase1Flags();
-        for (int ci = 0; ci < ctx.getChildCount(); ci++) {
-            ParseTree child = ctx.getChild(ci);
-            if (child instanceof TerminalNode) {
-                continue;
-            }
-            if (child instanceof XQueryParser.AnnotatedDeclContext) {
-                break;
-            }
-            if (child instanceof XQueryParser.DefaultNamespaceDeclContext defaultNamespaceDeclContext) {
-                processDefaultNamespaceDecl(defaultNamespaceDeclContext, phase1);
-            } else if (child instanceof XQueryParser.NamespaceDeclContext namespaceDeclContext) {
-                processNamespaceDecl(namespaceDeclContext);
-            } else if (child instanceof SetterContext setterContext) {
-                processPrologPhase1Setter(setterContext, phase1);
-            } else if (child instanceof XQueryParser.SchemaImportContext schemaImportContext) {
-                SchemaImport schemaImport = translateSchemaImport(schemaImportContext);
-                if (!schemaNamespaces.add(schemaImport.getTargetNamespace())) {
-                    throw new SemanticException(
-                            "The schema namespace "
-                                    + schemaImport.getTargetNamespace()
-                                    + " is imported more than once.",
-                            ErrorCode.DuplicateSchemaImportErrorCode,
-                            createMetadataFromContext(schemaImportContext));
-                }
-                bindSchemaImportNamespace(schemaImport);
-                schemaImports.add(schemaImport);
-            } else if (child instanceof XQueryParser.ModuleImportContext namespace) {
-                LibraryModule libraryModule = this.processModuleImport(namespace);
-                libraryModules.add(libraryModule);
-                if (namespaces.contains(libraryModule.getNamespace())) {
-                    throw new DuplicateModuleTargetNamespaceException(
-                            "Duplicate module target namespace: " + libraryModule.getNamespace(),
-                            createMetadataFromContext(namespace));
-                }
-                namespaces.add(libraryModule.getNamespace());
-            }
-        }
-        XmlSchemaCatalogLoader.load(
-                        schemaImports,
-                        this.translationContext.moduleContext().getStaticBaseURI(),
-                        this.translationContext.compilationConfiguration())
-                .ifPresent(catalog -> {
-                    this.translationContext
-                            .moduleContext()
-                            .getInScopeSchemaTypes()
-                            .importSchema(catalog, createMetadataFromContext(ctx));
-                });
-
-        // parse variables and function
-        List<VariableDeclaration> globalVariables = new ArrayList<>();
-        List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
-        List<TypeDeclaration> typeDeclarations = new ArrayList<>();
-        for (XQueryParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
-            if (annotatedDeclaration.varDecl() != null) {
-                VariableDeclaration variableDeclaration =
-                        (VariableDeclaration) this.visitVarDecl(annotatedDeclaration.varDecl());
-                if (!this.translationContext.isMainModule()) {
-                    String variableNamespace =
-                            variableDeclaration.getVariableName().getNamespace();
-                    if (variableNamespace == null || !variableNamespace.equals(this.libraryModuleNamespace)) {
-                        throw new NamespaceDoesNotMatchModuleException(
-                                "Variable "
-                                        + variableDeclaration.getVariableName().getLocalName()
-                                        + ": namespace "
-                                        + variableNamespace
-                                        + " must match module namespace "
-                                        + this.libraryModuleNamespace,
-                                createMetadataFromContext(annotatedDeclaration.varDecl()));
-                    }
-                }
-                globalVariables.add(variableDeclaration);
-            } else if (annotatedDeclaration.contextItemDecl() != null) {
-                VariableDeclaration variableDeclaration =
-                        (VariableDeclaration) this.visitContextItemDecl(annotatedDeclaration.contextItemDecl());
-                globalVariables.add(variableDeclaration);
-            } else if (annotatedDeclaration.functionDecl() != null) {
-                InlineFunctionExpression inlineFunctionExpression =
-                        (InlineFunctionExpression) this.visitFunctionDecl(annotatedDeclaration.functionDecl());
-                if (!this.translationContext.isMainModule()) {
-                    String functionNamespace =
-                            inlineFunctionExpression.getName().getNamespace();
-                    if (functionNamespace == null || !functionNamespace.equals(this.libraryModuleNamespace)) {
-                        throw new NamespaceDoesNotMatchModuleException(
-                                "Function "
-                                        + inlineFunctionExpression.getName().getLocalName()
-                                        + ": namespace "
-                                        + functionNamespace
-                                        + " must match module namespace "
-                                        + this.libraryModuleNamespace,
-                                createMetadataFromContext(annotatedDeclaration.functionDecl()));
-                    }
-                }
-                functionDeclarations.add(new FunctionDeclaration(
-                        inlineFunctionExpression, createMetadataFromContext(annotatedDeclaration.functionDecl())));
-            } else if (annotatedDeclaration.optionDecl() != null) {
-                optionDeclarations.add((OptionDeclaration) this.visitOptionDecl(annotatedDeclaration.optionDecl()));
-            }
-        }
-        for (XQueryParser.ModuleImportContext module : ctx.moduleImport()) {
-            this.visitModuleImport(module);
-        }
-
-        Prolog prolog =
-                new Prolog(globalVariables, functionDeclarations, typeDeclarations, createMetadataFromContext(ctx));
-        for (LibraryModule libraryModule : libraryModules) {
-            prolog.addImportedModule(libraryModule);
-        }
-        for (SchemaImport schemaImport : schemaImports) {
-            prolog.addSchemaImport(schemaImport);
-        }
-        for (OptionDeclaration optionDeclaration : optionDeclarations) {
-            prolog.addDeclaration(optionDeclaration);
-        }
-        return prolog;
+    public Prolog visitProlog(XQueryParser.PrologContext ctx) {
+        return new PrologBuilder().build(ctx);
     }
 
-    private SchemaImport translateSchemaImport(XQueryParser.SchemaImportContext ctx) {
-        String targetNamespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.nsURI));
-        BindingKind bindingKind = BindingKind.NONE;
-        String prefix = null;
-        if (ctx.schemaPrefix() != null) {
-            if (ctx.schemaPrefix().ncName() != null) {
-                bindingKind = BindingKind.PREFIX;
-                prefix = ctx.schemaPrefix().ncName().getText();
-            } else {
-                bindingKind = BindingKind.DEFAULT_ELEMENT_NAMESPACE;
-            }
-        }
-        List<String> locationHints = ctx.locations.stream()
-                .map(this::processURILiteral)
-                .map(URILiteralUtils::normalizeAsAnyURI)
-                .collect(Collectors.toList());
-        return new SchemaImport(targetNamespace, bindingKind, prefix, locationHints, createMetadataFromContext(ctx));
-    }
+    private class PrologBuilder extends XQueryParserBaseVisitor<Void> {
+        private final PrologTranslation translation = new PrologTranslation(
+                XQueryTranslationVisitor.this.translationContext, XQueryTranslationVisitor.this.libraryModuleNamespace);
 
-    private void bindSchemaImportNamespace(SchemaImport schemaImport) {
-        if (schemaImport.getBindingKind() == BindingKind.NONE) {
-            return;
+        Prolog build(XQueryParser.PrologContext ctx) {
+            if (ctx == null) {
+                return null;
+            }
+            visit(ctx);
+            return this.translation.build(createMetadataFromContext(ctx));
         }
-        String namespace = schemaImport.getTargetNamespace();
-        if (schemaImport.getBindingKind() == BindingKind.DEFAULT_ELEMENT_NAMESPACE) {
-            bindNamespace("", namespace, schemaImport.getMetadata());
-            return;
-        }
-        String prefix = schemaImport.getPrefix();
-        if (namespace.isEmpty()) {
-            throw new SemanticException(
-                    "A schema import cannot bind a prefix to a zero-length target namespace.",
-                    ErrorCode.SchemaImportWithoutTargetNamespaceErrorCode,
-                    schemaImport.getMetadata());
-        }
-        if (prefix.equals("xml") || prefix.equals("xmlns")) {
-            throw new PredefinedPrefixInNamespaceDeclarationException(
-                    "Schema import prefix " + prefix + " is reserved.", schemaImport.getMetadata());
-        }
-        bindNamespace(prefix, namespace, schemaImport.getMetadata());
-    }
 
-    @Override
-    public Node visitOptionDecl(XQueryParser.OptionDeclContext ctx) {
-        return ModuleTranslation.optionDecl(
-                OptionDeclContext.from(ctx), this.translationContext, this::parseEqName, this::processStringLiteral);
-    }
+        @Override
+        public Void visitProlog(XQueryParser.PrologContext ctx) {
+            return visitChildren(ctx);
+        }
 
-    private static final class PrologPhase1Flags {
-        boolean constructionSet;
-        boolean emptyOrderSet;
-        boolean boundarySpaceSet;
-        boolean copyNamespacesSet;
-        boolean defaultCollationSet;
-        boolean baseURISet;
-        boolean defaultFunctionNamespaceDeclared;
-    }
+        @Override
+        public Void visitSetter(XQueryParser.SetterContext ctx) {
+            return visitChildren(ctx);
+        }
 
-    private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
-        if (setterContext.constructionDecl() != null) {
-            if (flags.constructionSet) {
-                throw new SemanticException(
-                        "The construction mode was already set.",
-                        ErrorCode.MoreThanOneConstructionDeclarationErrorCode,
-                        createMetadataFromContext(setterContext.constructionDecl()));
-            }
-            this.translationContext
-                    .moduleContext()
-                    .setConstructionPreserve(
-                            setterContext.constructionDecl().type.getType() == XQueryParser.KW_PRESERVE);
-            flags.constructionSet = true;
-            return;
+        @Override
+        public Void visitAnnotatedDecl(XQueryParser.AnnotatedDeclContext ctx) {
+            this.translation.loadSchemaCatalog(createMetadataFromContext(ctx));
+            return visitChildren(ctx);
         }
-        if (setterContext.boundarySpaceDecl() != null) {
-            if (flags.boundarySpaceSet) {
-                throw new MoreThanOneBoundarySpaceDeclarationException(
-                        "The boundary-space policy was already set.",
-                        createMetadataFromContext(setterContext.boundarySpaceDecl()));
-            }
-            this.translationContext
-                    .moduleContext()
-                    .setBoundarySpacePreserve(
-                            setterContext.boundarySpaceDecl().type.getType() == XQueryParser.KW_PRESERVE);
-            flags.boundarySpaceSet = true;
-            return;
-        }
-        if (setterContext.copyNamespacesDecl() != null) {
-            if (flags.copyNamespacesSet) {
-                throw new MoreThanOneCopyNamespacesDeclarationException(
-                        "The copy-namespaces mode was already set.",
-                        createMetadataFromContext(setterContext.copyNamespacesDecl()));
-            }
-            this.translationContext
-                    .moduleContext()
-                    .setCopyNamespacesMode(
-                            setterContext.copyNamespacesDecl().preserveMode().KW_PRESERVE() != null,
-                            setterContext.copyNamespacesDecl().inheritMode().KW_INHERIT() != null);
-            flags.copyNamespacesSet = true;
-            return;
-        }
-        if (setterContext.emptyOrderDecl() != null) {
-            if (flags.emptyOrderSet) {
-                throw new MoreThanOneEmptyOrderDeclarationException(
-                        "The empty order was already set.", createMetadataFromContext(setterContext.emptyOrderDecl()));
-            }
-            processEmptySequenceOrder(setterContext.emptyOrderDecl());
-            flags.emptyOrderSet = true;
-            return;
-        }
-        if (setterContext.decimalFormatDecl() != null) {
-            processDecimalFormatDeclaration(
-                    setterContext.decimalFormatDecl(), createMetadataFromContext(setterContext.decimalFormatDecl()));
-            return;
-        }
-        if (setterContext.defaultCollationDecl() != null) {
-            if (flags.defaultCollationSet) {
-                throw new DefaultCollationException(
-                        "The default collation was already set.",
-                        createMetadataFromContext(setterContext.defaultCollationDecl()));
-            }
-            processDefaultCollation(setterContext.defaultCollationDecl());
-            flags.defaultCollationSet = true;
-            return;
-        }
-        if (setterContext.baseURIDecl() != null) {
-            if (flags.baseURISet) {
-                throw new MultipleBaseURIException(
-                        "The base-uri was already set.", createMetadataFromContext(setterContext.baseURIDecl()));
-            }
-            String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-            URI uri = URILiteralUtils.resolve(
-                    this.translationContext.moduleContext().getStaticBaseURI(),
-                    uriString,
-                    createMetadataFromContext(setterContext.baseURIDecl()));
-            this.translationContext
-                    .moduleContext()
-                    .setStaticBaseUri(uri, URILiteralUtils.toStaticBaseUriString(uri, uriString));
-            flags.baseURISet = true;
-            return;
-        }
-        throw new UnsupportedFeatureException(
-                "Setters are not supported yet, except for empty sequence ordering and default collations.",
-                createMetadataFromContext(setterContext));
-    }
 
-    private void processDefaultNamespaceDecl(XQueryParser.DefaultNamespaceDeclContext ctx, PrologPhase1Flags flags) {
-        String uri = processStringLiteral(ctx.stringLiteral());
-        int declType = ctx.type.getType();
-        if (declType == XQueryParser.KW_ELEMENT) {
-            bindNamespace("", uri, createMetadataFromContext(ctx));
-        } else if (declType == XQueryParser.KW_FUNCTION) {
-            if (flags.defaultFunctionNamespaceDeclared) {
-                throw new SemanticException(
-                        "The default function namespace has already been declared.", createMetadataFromContext(ctx));
-            }
-            this.translationContext.moduleContext().setDefaultFunctionNamespaceUri(uri);
-            flags.defaultFunctionNamespaceDeclared = true;
-        } else {
-            throw new OurBadException("Unexpected default namespace declaration kind.");
+        @Override
+        public Void visitNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
+            this.translation.bindNamespace(
+                    ctx.ncName().getText(), processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitDefaultNamespaceDecl(XQueryParser.DefaultNamespaceDeclContext ctx) {
+            boolean isFunction = ctx.type.getType() == XQueryParser.KW_FUNCTION;
+            this.translation.applyDefaultNamespace(
+                    isFunction, processStringLiteral(ctx.stringLiteral()), createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitModuleImport(XQueryParser.ModuleImportContext ctx) {
+            this.translation.importModule(
+                    PrologTranslation.moduleImport(
+                            ModuleImportContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processURILiteral,
+                            XQueryTranslationVisitor.this::bindNamespace),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitSchemaImport(XQueryParser.SchemaImportContext ctx) {
+            this.translation.importSchema(
+                    PrologTranslation.schemaImport(
+                            SchemaImportContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processURILiteral),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitConstructionDecl(XQueryParser.ConstructionDeclContext ctx) {
+            boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
+            this.translation.applyBooleanSetting(
+                    PrologTranslation.BooleanSettingKind.CONSTRUCTION, value, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitBoundarySpaceDecl(XQueryParser.BoundarySpaceDeclContext ctx) {
+            boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
+            this.translation.applyBooleanSetting(
+                    PrologTranslation.BooleanSettingKind.BOUNDARY_SPACE, value, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitEmptyOrderDecl(XQueryParser.EmptyOrderDeclContext ctx) {
+            boolean value = ctx.emptySequenceOrder.getText().equals("least");
+            this.translation.applyBooleanSetting(
+                    PrologTranslation.BooleanSettingKind.EMPTY_ORDER, value, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitCopyNamespacesDecl(XQueryParser.CopyNamespacesDeclContext ctx) {
+            boolean preserve = ctx.preserveMode().KW_PRESERVE() != null;
+            boolean inherit = ctx.inheritMode().KW_INHERIT() != null;
+            this.translation.applyCopyNamespaces(preserve, inherit, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitBaseURIDecl(XQueryParser.BaseURIDeclContext ctx) {
+            this.translation.applyBaseUri(processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitDefaultCollationDecl(XQueryParser.DefaultCollationDeclContext ctx) {
+            this.translation.applyDefaultCollation(
+                    processURILiteral(ctx.uriLiteral()),
+                    createMetadataFromContext(ctx.uriLiteral()),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
+            this.translation.applyDecimalFormat(
+                    () -> processDecimalFormatDeclaration(ctx, createMetadataFromContext(ctx)));
+            return null;
+        }
+
+        @Override
+        public Void visitOrderingModeDecl(XQueryParser.OrderingModeDeclContext ctx) {
+            this.translation.applyUnsupportedHeader(createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitVarDecl(XQueryParser.VarDeclContext ctx) {
+            this.translation.registerDeclaration(
+                    PrologTranslation.varDecl(
+                            VarDeclContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processAnnotations,
+                            XQueryTranslationVisitor.this::parseVariableBinding,
+                            XQueryTranslationVisitor.this::processSequenceType,
+                            XQueryTranslationVisitor.this::visitExprSingle),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitContextItemDecl(XQueryParser.ContextItemDeclContext ctx) {
+            this.translation.registerDeclaration(
+                    PrologTranslation.contextItemDecl(
+                            ContextItemDeclContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processSequenceType,
+                            XQueryTranslationVisitor.this::visitExprSingle),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
+            this.translation.registerDeclaration(
+                    PrologTranslation.functionDecl(
+                            FunctionDeclContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processAnnotations,
+                            XQueryTranslationVisitor.this::parseFunctionName,
+                            XQueryTranslationVisitor.this::parseVariableBinding,
+                            XQueryTranslationVisitor.this::processSequenceType,
+                            XQueryTranslationVisitor.this::processSequenceType,
+                            XQueryTranslationVisitor.this::visitStatementsAndOptionalExpr),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitOptionDecl(XQueryParser.OptionDeclContext ctx) {
+            this.translation.registerDeclaration(
+                    PrologTranslation.optionDecl(
+                            OptionDeclContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::parseEqName,
+                            XQueryTranslationVisitor.this::processStringLiteral),
+                    createMetadataFromContext(ctx));
+            return null;
         }
     }
 
@@ -603,19 +493,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         ctx.local_name == null ? null : ctx.local_name.getText(),
                         role,
                         createMetadataFromContext(ctx));
-    }
-
-    @Override
-    public Node visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
-        return ModuleTranslation.functionDecl(
-                FunctionDeclContext.from(ctx),
-                this.translationContext,
-                this::processAnnotations,
-                this::parseFunctionName,
-                this::parseVariableBinding,
-                this::processSequenceType,
-                this::processSequenceType,
-                this::visitStatementsAndOptionalExpr);
     }
 
     // endregion
@@ -1900,26 +1777,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return this.translationContext.metadata(startTree, endTree);
     }
 
-    @Override
-    public Node visitVarDecl(XQueryParser.VarDeclContext ctx) {
-        return ModuleTranslation.varDecl(
-                VarDeclContext.from(ctx),
-                this.translationContext,
-                this::processAnnotations,
-                this::parseVariableBinding,
-                this::processSequenceType,
-                this::visitExprSingle);
-    }
-
-    @Override
-    public Node visitContextItemDecl(XQueryParser.ContextItemDeclContext ctx) {
-        return ModuleTranslation.contextItemDecl(
-                ContextItemDeclContext.from(ctx),
-                this.translationContext,
-                this::processSequenceType,
-                this::visitExprSingle);
-    }
-
     // region scripting
     @Override
     public Node visitStatements(XQueryParser.StatementsContext ctx) {
@@ -2538,21 +2395,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     // end region
 
-    public void processNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
-        bindNamespace(ctx.ncName().getText(), processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
-    }
-
     public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
-        if (!prefix.isEmpty() && namespace.isEmpty()) {
-            if (this.translationContext.moduleContext().unbindNamespace(prefix)) {
-                return;
-            }
-            throw new NamespacePrefixBoundTwiceException("Prefix " + prefix + " is bound twice.", metadata);
-        }
-        boolean success = this.translationContext.moduleContext().bindNamespace(prefix, namespace);
-        if (!success) {
-            throw new NamespacePrefixBoundTwiceException("Prefix " + prefix + " is bound twice.", metadata);
-        }
+        PrologTranslation.bindNamespace(this.translationContext, prefix, namespace, metadata);
     }
 
     private String processURILiteral(UriLiteralContext ctx) {
@@ -2561,59 +2405,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return processStringLiteral(ctx.stringLiteral());
     }
 
-    private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
-        if (ctx.emptySequenceOrder.getText().equals("least")) {
-            this.translationContext.moduleContext().setEmptySequenceOrderLeast(true);
-        }
-        if (ctx.emptySequenceOrder.getText().equals("greatest")) {
-            this.translationContext.moduleContext().setEmptySequenceOrderLeast(false);
-        }
-    }
-
-    private void processDefaultCollation(DefaultCollationDeclContext ctx) {
-        String uri = resolveCollationUri(ctx.uriLiteral());
-        if (!this.translationContext.moduleContext().isStaticallyKnownCollation(uri)) {
-            throw new DefaultCollationException(
-                    "Unknown collation: " + uri, createMetadataFromContext(ctx.uriLiteral()));
-        }
-        this.translationContext.moduleContext().setDefaultCollation(uri);
-    }
-
     private String resolveCollationUri(UriLiteralContext ctx) {
         String uriString = processURILiteral(ctx);
         URI uri = URILiteralUtils.resolve(
                 this.translationContext.moduleContext().getStaticBaseURI(), uriString, createMetadataFromContext(ctx));
         return uri.toString();
-    }
-
-    public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
-        ExceptionMetadata metadata = createMetadataFromContext(ctx);
-        String namespace = processURILiteral(ctx.targetNamespace);
-        if (namespace.isEmpty()) {
-            throw new EmptyModuleURIException("Module URI is empty.", metadata);
-        }
-        if (ctx.ncName() != null) {
-            String prefix = ctx.ncName().getText();
-            if (prefix.equals("xml") || prefix.equals("xmlns")) {
-                throw new PredefinedPrefixInNamespaceDeclarationException(
-                        "Module import prefix " + prefix + " is reserved.", metadata);
-            }
-        }
-        namespace = URILiteralUtils.normalizeAsAnyURI(namespace);
-        List<String> locationHints = ctx.locations.stream()
-                .map(this::processURILiteral)
-                .map(URILiteralUtils::normalizeAsAnyURI)
-                .collect(Collectors.toList());
-        LibraryModule libraryModule = ModuleImportLoader.load(
-                namespace,
-                locationHints,
-                this.translationContext.moduleContext(),
-                this.translationContext.compilationConfiguration(),
-                metadata);
-        if (ctx.ncName() != null) {
-            bindNamespace(ctx.ncName().getText(), libraryModule.getNamespace(), metadata);
-        }
-        return libraryModule;
     }
 
     private List<Annotation> processAnnotations(XQueryParser.AnnotationsContext annotations) {
@@ -2757,11 +2553,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         DirectConstructorUtils.validateLiteral(childText, ctx, this::createMetadataFromTree);
         String processedContent = DirectConstructorUtils.processLiteralContent(childText);
         return List.of(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
-    }
-
-    @Override
-    public Node visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
-        return visitChildren(ctx);
     }
 
     private void processDecimalFormatDeclaration(
