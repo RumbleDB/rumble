@@ -82,7 +82,6 @@ import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
-import org.rumbledb.compiler.translation.DecimalFormatTranslation;
 import org.rumbledb.compiler.translation.DeclarationTranslation;
 import org.rumbledb.compiler.translation.FlworTranslation;
 import org.rumbledb.compiler.translation.ImportTranslation;
@@ -411,16 +410,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(JsoniqParser.DecimalFormatDeclContext ctx) {
-            DecimalFormatTranslation.process(
+            this.builder.applyDecimalFormat(
                     ctx.KW_DEFAULT() != null,
                     ctx.eqName(),
                     ctx.DFPropertyName(),
                     ctx.stringLiteral().stream()
-                            .map(stringLiteral -> TranslationVisitor.this.jsoniqTokenStream.getText(
-                                    stringLiteral.getSourceInterval()))
+                            .map(TranslationVisitor.this::processStringLiteral)
                             .toList(),
-                    TranslationVisitor.this.translationContext.moduleContext(),
-                    source -> StringLiteralUtils.parseJsoniq(source, createMetadataFromContext(ctx)),
                     createMetadataFromContext(ctx));
             return null;
         }
@@ -433,15 +429,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitVarDecl(JsoniqParser.VarDeclContext ctx) {
-            this.builder.addVariable(
-                    DeclarationTranslation.varDecl(
-                            VarDeclContext.from(ctx),
-                            TranslationVisitor.this.translationContext,
-                            TranslationVisitor.this::processAnnotations,
-                            TranslationVisitor.this::parseVariableBinding,
-                            TranslationVisitor.this::processSequenceType,
-                            TranslationVisitor.this::translateExprSingle),
-                    createMetadataFromContext(ctx));
+            this.builder.addVariable(DeclarationTranslation.varDecl(
+                    VarDeclContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::processAnnotations,
+                    TranslationVisitor.this::parseVariableBinding,
+                    TranslationVisitor.this::processSequenceType,
+                    TranslationVisitor.this::translateExprSingle));
             return null;
         }
 
@@ -457,17 +451,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
-            this.builder.addFunction(
-                    DeclarationTranslation.functionDecl(
-                            FunctionDeclContext.from(ctx),
-                            TranslationVisitor.this.translationContext,
-                            TranslationVisitor.this::processAnnotations,
-                            TranslationVisitor.this::parseFunctionName,
-                            TranslationVisitor.this::parseVariableBinding,
-                            TranslationVisitor.this::processSequenceType,
-                            TranslationVisitor.this::processSequenceType,
-                            TranslationVisitor.this::translateStatementsAndOptionalExpr),
-                    createMetadataFromContext(ctx));
+            this.builder.addFunction(DeclarationTranslation.functionDecl(
+                    FunctionDeclContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::processAnnotations,
+                    TranslationVisitor.this::parseFunctionName,
+                    TranslationVisitor.this::parseVariableBinding,
+                    TranslationVisitor.this::processSequenceType,
+                    TranslationVisitor.this::processSequenceType,
+                    TranslationVisitor.this::translateStatementsAndOptionalExpr));
             return null;
         }
 
@@ -483,7 +475,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitTypeDecl(JsoniqParser.TypeDeclContext ctx) {
-            this.builder.addType(processTypeDecl(ctx), createMetadataFromContext(ctx));
+            this.builder.addType(processTypeDecl(ctx));
             return null;
         }
     }

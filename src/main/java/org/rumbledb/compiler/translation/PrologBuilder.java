@@ -17,10 +17,11 @@ package org.rumbledb.compiler.translation;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.context.Name;
@@ -43,7 +44,6 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
@@ -51,15 +51,11 @@ import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
  */
 public final class PrologBuilder {
 
-    public enum BooleanSettingKind {
-        CONSTRUCTION,
-        BOUNDARY_SPACE,
-        EMPTY_ORDER
-    }
-
     private final TranslationContext translationContext;
     private final String libraryNamespace;
-    private final Set<BooleanSettingKind> booleanSettings = EnumSet.noneOf(BooleanSettingKind.class);
+    private boolean constructionSet;
+    private boolean boundarySpaceSet;
+    private boolean emptyOrderSet;
     private boolean copyNamespacesSet;
     private boolean baseUriSet;
     private boolean defaultCollationSet;
@@ -97,44 +93,46 @@ public final class PrologBuilder {
     }
 
     public void applyConstruction(boolean preserve, ExceptionMetadata metadata) {
-        applyBooleanSetting(BooleanSettingKind.CONSTRUCTION, preserve, metadata);
+        if (this.constructionSet) {
+            throw new SemanticException(
+                    "The construction mode was already set.",
+                    ErrorCode.MoreThanOneConstructionDeclarationErrorCode,
+                    metadata);
+        }
+        this.translationContext.moduleContext().setConstructionPreserve(preserve);
+        this.constructionSet = true;
     }
 
     public void applyBoundarySpace(boolean preserve, ExceptionMetadata metadata) {
-        applyBooleanSetting(BooleanSettingKind.BOUNDARY_SPACE, preserve, metadata);
+        if (this.boundarySpaceSet) {
+            throw new MoreThanOneBoundarySpaceDeclarationException(
+                    "The boundary-space policy was already set.", metadata);
+        }
+        this.translationContext.moduleContext().setBoundarySpacePreserve(preserve);
+        this.boundarySpaceSet = true;
     }
 
     public void applyEmptyOrder(boolean least, ExceptionMetadata metadata) {
-        applyBooleanSetting(BooleanSettingKind.EMPTY_ORDER, least, metadata);
+        if (this.emptyOrderSet) {
+            throw new MoreThanOneEmptyOrderDeclarationException("The empty order was already set.", metadata);
+        }
+        this.translationContext.moduleContext().setEmptySequenceOrderLeast(least);
+        this.emptyOrderSet = true;
     }
 
-    public void applyBooleanSetting(BooleanSettingKind kind, boolean value, ExceptionMetadata metadata) {
-        boolean duplicate = this.booleanSettings.contains(kind);
-        switch (kind) {
-            case CONSTRUCTION:
-                if (duplicate) {
-                    throw new SemanticException(
-                            "The construction mode was already set.",
-                            ErrorCode.MoreThanOneConstructionDeclarationErrorCode,
-                            metadata);
-                }
-                this.translationContext.moduleContext().setConstructionPreserve(value);
-                break;
-            case BOUNDARY_SPACE:
-                if (duplicate) {
-                    throw new MoreThanOneBoundarySpaceDeclarationException(
-                            "The boundary-space policy was already set.", metadata);
-                }
-                this.translationContext.moduleContext().setBoundarySpacePreserve(value);
-                break;
-            case EMPTY_ORDER:
-                if (duplicate) {
-                    throw new MoreThanOneEmptyOrderDeclarationException("The empty order was already set.", metadata);
-                }
-                this.translationContext.moduleContext().setEmptySequenceOrderLeast(value);
-                break;
-        }
-        this.booleanSettings.add(kind);
+    public void applyDecimalFormat(
+            boolean isDefaultDecimalFormat,
+            ParseTree nameContext,
+            List<? extends ParseTree> propertyNames,
+            List<String> propertyValues,
+            ExceptionMetadata metadata) {
+        DecimalFormatTranslation.process(
+                isDefaultDecimalFormat,
+                nameContext,
+                propertyNames,
+                propertyValues,
+                this.translationContext.moduleContext(),
+                metadata);
     }
 
     public void applyCopyNamespaces(boolean preserve, boolean inherit, ExceptionMetadata metadata) {
@@ -230,8 +228,8 @@ public final class PrologBuilder {
                         .importSchema(catalog, metadata));
     }
 
-    public void addVariable(VariableDeclaration declaration, ExceptionMetadata metadata) {
-        validateNamespace("Variable", declaration.getVariableName(), metadata);
+    public void addVariable(VariableDeclaration declaration) {
+        validateNamespace("Variable", declaration.getVariableName(), declaration.getMetadata());
         this.variables.add(declaration);
     }
 
@@ -239,13 +237,13 @@ public final class PrologBuilder {
         this.variables.add(declaration);
     }
 
-    public void addFunction(InlineFunctionExpression declaration, ExceptionMetadata metadata) {
-        validateNamespace("Function", declaration.getName(), metadata);
-        this.functions.add(new FunctionDeclaration(declaration, metadata));
+    public void addFunction(FunctionDeclaration declaration) {
+        validateNamespace("Function", declaration.getFunctionIdentifier().getName(), declaration.getMetadata());
+        this.functions.add(declaration);
     }
 
-    public void addType(TypeDeclaration declaration, ExceptionMetadata metadata) {
-        validateNamespace("Type", declaration.getDefinition().getName(), metadata);
+    public void addType(TypeDeclaration declaration) {
+        validateNamespace("Type", declaration.getDefinition().getName(), declaration.getMetadata());
         this.types.add(declaration);
     }
 

@@ -32,6 +32,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -121,7 +122,7 @@ public final class DeclarationTranslation {
                     SeqTypeCtx extends ParserRuleContext,
                     ReturnTypeCtx extends ParserRuleContext,
                     FnBodyCtx extends ParserRuleContext>
-            InlineFunctionExpression functionDecl(
+            FunctionDeclaration functionDecl(
                     FunctionDeclContext<
                                     AnnotationsCtx,
                                     FunctionNameCtx,
@@ -156,7 +157,7 @@ public final class DeclarationTranslation {
             fnReturnType = processReturnType.apply(ctx.returnType());
         }
         StatementsAndOptionalExpr funcBody = visitStatementsAndOptionalExpr.apply(ctx.fnBody());
-        return new InlineFunctionExpression(
+        InlineFunctionExpression inlineFunction = new InlineFunctionExpression(
                 annotations,
                 name,
                 fnParams,
@@ -165,5 +166,6 @@ public final class DeclarationTranslation {
                 ctx.isExternal(),
                 translationContext.metadata(ctx.context()),
                 translationContext.metadata(ctx.functionName()));
+        return new FunctionDeclaration(inlineFunction, translationContext.metadata(ctx.context()));
     }
 }

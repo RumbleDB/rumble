@@ -81,7 +81,6 @@ import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
-import org.rumbledb.compiler.translation.DecimalFormatTranslation;
 import org.rumbledb.compiler.translation.DeclarationTranslation;
 import org.rumbledb.compiler.translation.FlworTranslation;
 import org.rumbledb.compiler.translation.ImportTranslation;
@@ -389,16 +388,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
-            DecimalFormatTranslation.process(
+            this.builder.applyDecimalFormat(
                     ctx.KW_DEFAULT() != null,
                     ctx.eqName(),
                     ctx.DFPropertyName(),
                     ctx.stringLiteral().stream()
-                            .map(stringLiteral -> XQueryTranslationVisitor.this.xQueryTokenStream.getText(
-                                    stringLiteral.getSourceInterval()))
+                            .map(XQueryTranslationVisitor.this::processStringLiteral)
                             .toList(),
-                    XQueryTranslationVisitor.this.translationContext.moduleContext(),
-                    StringLiteralUtils::parseXQuery,
                     createMetadataFromContext(ctx));
             return null;
         }
@@ -411,15 +407,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitVarDecl(XQueryParser.VarDeclContext ctx) {
-            this.builder.addVariable(
-                    DeclarationTranslation.varDecl(
-                            VarDeclContext.from(ctx),
-                            XQueryTranslationVisitor.this.translationContext,
-                            XQueryTranslationVisitor.this::processAnnotations,
-                            XQueryTranslationVisitor.this::parseVariableBinding,
-                            XQueryTranslationVisitor.this::processSequenceType,
-                            XQueryTranslationVisitor.this::translateExprSingle),
-                    createMetadataFromContext(ctx));
+            this.builder.addVariable(DeclarationTranslation.varDecl(
+                    VarDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processAnnotations,
+                    XQueryTranslationVisitor.this::parseVariableBinding,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::translateExprSingle));
             return null;
         }
 
@@ -435,17 +429,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
-            this.builder.addFunction(
-                    DeclarationTranslation.functionDecl(
-                            FunctionDeclContext.from(ctx),
-                            XQueryTranslationVisitor.this.translationContext,
-                            XQueryTranslationVisitor.this::processAnnotations,
-                            XQueryTranslationVisitor.this::parseFunctionName,
-                            XQueryTranslationVisitor.this::parseVariableBinding,
-                            XQueryTranslationVisitor.this::processSequenceType,
-                            XQueryTranslationVisitor.this::processSequenceType,
-                            XQueryTranslationVisitor.this::translateStatementsAndOptionalExpr),
-                    createMetadataFromContext(ctx));
+            this.builder.addFunction(DeclarationTranslation.functionDecl(
+                    FunctionDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processAnnotations,
+                    XQueryTranslationVisitor.this::parseFunctionName,
+                    XQueryTranslationVisitor.this::parseVariableBinding,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::translateStatementsAndOptionalExpr));
             return null;
         }
 

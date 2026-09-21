@@ -18,7 +18,6 @@ package org.rumbledb.compiler.translation;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -40,9 +39,8 @@ public final class DecimalFormatTranslation {
             boolean isDefaultDecimalFormat,
             ParseTree nameContext,
             List<? extends ParseTree> propertyNames,
-            List<String> stringLiterals,
+            List<String> propertyValues,
             StaticContext moduleContext,
-            Function<String, String> parseStringLiteral,
             ExceptionMetadata metadata) {
         Name name = null;
         if (!isDefaultDecimalFormat) {
@@ -67,7 +65,7 @@ public final class DecimalFormatTranslation {
 
         for (int i = 0; i < propertyNames.size(); i++) {
             String propertyName = propertyNames.get(i).getText();
-            String value = parseStringLiteral.apply(stringLiterals.get(i));
+            String value = propertyValues.get(i);
 
             boolean hasSeen = !seenProperties.add(propertyName);
             if (hasSeen) {
