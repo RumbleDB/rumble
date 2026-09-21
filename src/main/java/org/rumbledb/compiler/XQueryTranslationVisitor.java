@@ -19,7 +19,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -54,7 +53,6 @@ import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MainModuleContext;
 import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
-import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
 import org.rumbledb.compiler.context.OptionDeclContext;
 import org.rumbledb.compiler.context.OrExprContext;
@@ -78,6 +76,10 @@ import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.context.WindowClauseContext;
+import org.rumbledb.compiler.context.scripting.FlworStatementContext;
+import org.rumbledb.compiler.context.scripting.SwitchStatementContext;
+import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
+import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -94,6 +96,8 @@ import org.rumbledb.compiler.translation.SequenceTranslation;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.translation.TypeTranslation;
+import org.rumbledb.compiler.translation.scripting.ControlStatementTranslation;
+import org.rumbledb.compiler.translation.scripting.LoopStatementTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
@@ -102,7 +106,6 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
@@ -136,18 +139,15 @@ import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
-import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
-import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
-import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
@@ -1770,25 +1770,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public FlowrStatement visitFlworStatement(XQueryParser.FlworStatementContext ctx) {
-        Clause clause;
-        // Check for start clause. Only for or let allowed.
-        if (ctx.start_for == null) {
-            clause = this.visitLetClause(ctx.start_let);
-        } else {
-            clause = this.visitForClause(ctx.start_for);
-        }
-        Clause lastFlowrClause = clause.getLastClause();
-        for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
-            clause = (Clause) this.visit(child);
-            lastFlowrClause.chainWith(clause.getFirstClause());
-            lastFlowrClause = clause.getLastClause();
-        }
-        Statement returnStatement = this.visitStatement(ctx.returnStmt);
-        ReturnStatementClause returnStatementClause =
-                new ReturnStatementClause(returnStatement, returnStatement.getMetadata());
-        lastFlowrClause.chainWith(returnStatementClause);
-        returnStatementClause = returnStatementClause.detachInitialLetClausesForStatements();
-        return new FlowrStatement(returnStatementClause, createMetadataFromContext(ctx));
+        return LoopStatementTranslation.flworStatement(
+                FlworStatementContext.from(ctx),
+                this.translationContext,
+                this::visitForClause,
+                this::visitLetClause,
+                child -> (Clause) this.visit(child),
+                this::visitStatement);
     }
 
     @Override
@@ -1812,65 +1800,32 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public SwitchStatement visitSwitchStatement(XQueryParser.SwitchStatementContext ctx) {
-        Expression condition = this.visitExpr(ctx.condExpr);
-        List<SwitchCaseStatement> cases = new ArrayList<>();
-        for (XQueryParser.SwitchCaseStatementContext stmt : ctx.cases) {
-            List<Expression> conditionExpressions = new ArrayList<>();
-            stmt.cond.forEach(exprSingle -> {
-                conditionExpressions.add(this.visitExprSingle(exprSingle));
-            });
-            SwitchCaseStatement swCase = new SwitchCaseStatement(conditionExpressions, this.visitStatement(stmt.ret));
-            cases.add(swCase);
-        }
-        Statement defaultCase = this.visitStatement(ctx.def);
-        return new SwitchStatement(condition, cases, defaultCase, createMetadataFromContext(ctx));
+        return ControlStatementTranslation.switchStatement(
+                SwitchStatementContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitExprSingle,
+                this::visitStatement);
     }
 
     @Override
     public TryCatchStatement visitTryCatchStatement(XQueryParser.TryCatchStatementContext ctx) {
-        BlockStatement tryBlock = this.visitBlockStatement(ctx.try_block);
-        Map<CatchPattern, BlockStatement> catchBlockStatements = new LinkedHashMap<>();
-        for (XQueryParser.CatchCaseStatementContext catchCtx : ctx.catches) {
-            BlockStatement catchBlockStatement = this.visitBlockStatement(catchCtx.catch_block);
-            for (var catchTarget : catchCtx.nameTest()) {
-                CatchPattern pattern = ControlTranslation.catchPattern(
-                        NameTestContext.from(catchTarget), this.translationContext, this::parseEqName);
-                if (!catchBlockStatements.containsKey(pattern)) {
-                    catchBlockStatements.put(pattern, catchBlockStatement);
-                }
-            }
-        }
-        return new TryCatchStatement(tryBlock, catchBlockStatements, createMetadataFromContext(ctx));
+        return ControlStatementTranslation.tryCatchStatement(
+                TryCatchStatementContext.from(ctx),
+                this.translationContext,
+                this::visitBlockStatement,
+                this::parseEqName);
     }
 
     @Override
     public TypeSwitchStatement visitTypeSwitchStatement(XQueryParser.TypeSwitchStatementContext ctx) {
-        Expression condition = this.visitExpr(ctx.cond);
-        List<TypeSwitchStatementCase> cases = new ArrayList<>();
-        for (XQueryParser.CaseStatementContext stmt : ctx.cases) {
-            List<SequenceType> union = new ArrayList<>();
-            Name variableName = null;
-            if (stmt.var_ref != null) {
-                variableName = parseVariableBinding(stmt.var_ref);
-            }
-            if (stmt.union != null && !stmt.union.isEmpty()) {
-                stmt.union.forEach(sequenceTypeContext -> {
-                    union.add(this.processSequenceType(sequenceTypeContext));
-                });
-            }
-            Statement returnStatement = this.visitStatement(stmt.ret);
-            cases.add(new TypeSwitchStatementCase(variableName, union, returnStatement));
-        }
-        Name defaultVariableName = null;
-        if (ctx.var_ref != null) {
-            defaultVariableName = parseVariableBinding(ctx.var_ref);
-        }
-        Statement defaultStatement = this.visitStatement(ctx.def);
-        return new TypeSwitchStatement(
-                condition,
-                cases,
-                new TypeSwitchStatementCase(defaultVariableName, defaultStatement),
-                createMetadataFromContext(ctx));
+        return ControlStatementTranslation.typeSwitchStatement(
+                TypeSwitchStatementContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitStatement,
+                this::parseVariableBinding,
+                this::processSequenceType);
     }
 
     // end control
