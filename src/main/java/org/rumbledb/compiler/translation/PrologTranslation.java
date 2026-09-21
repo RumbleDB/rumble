@@ -19,30 +19,21 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import org.rumbledb.compiler.ModuleImportLoader;
-import org.rumbledb.compiler.context.ContextItemDeclContext;
-import org.rumbledb.compiler.context.FunctionDeclContext;
 import org.rumbledb.compiler.context.ModuleImportContext;
-import org.rumbledb.compiler.context.OptionDeclContext;
 import org.rumbledb.compiler.context.SchemaImportContext;
-import org.rumbledb.compiler.context.VarDeclContext;
-import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
-import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
-import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneBoundarySpaceDeclarationException;
@@ -54,8 +45,6 @@ import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
@@ -64,10 +53,6 @@ import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
-import org.rumbledb.expressions.scripting.annotations.Annotation;
-import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
-import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
@@ -159,141 +144,6 @@ public final class PrologTranslation {
             bindNamespace.bind(ctx.prefix(), libraryModule.getNamespace(), metadata);
         }
         return libraryModule;
-    }
-
-    // endregion
-
-    // region Prolog Declaration Syntax Translators
-
-    public static <EqNameCtx extends ParserRuleContext, StringLiteralCtx extends ParserRuleContext>
-            OptionDeclaration optionDecl(
-                    OptionDeclContext<EqNameCtx, StringLiteralCtx> ctx,
-                    TranslationContext translationContext,
-                    BiFunction<EqNameCtx, NameRole, Name> parseEqName,
-                    Function<StringLiteralCtx, String> processStringLiteral) {
-        Name name = parseEqName.apply(ctx.name(), NameRole.NO_DEFAULT_NAMESPACE);
-        String value = processStringLiteral.apply(ctx.value());
-        return new OptionDeclaration(name, value, translationContext.metadata(ctx.context()));
-    }
-
-    public static <
-                    AnnotationsCtx extends ParserRuleContext,
-                    VarBindingCtx extends ParserRuleContext,
-                    SeqTypeCtx extends ParserRuleContext,
-                    ExprSingleCtx extends ParserRuleContext>
-            VariableDeclaration varDecl(
-                    VarDeclContext<AnnotationsCtx, VarBindingCtx, SeqTypeCtx, ExprSingleCtx> ctx,
-                    TranslationContext translationContext,
-                    Function<AnnotationsCtx, List<Annotation>> processAnnotations,
-                    Function<VarBindingCtx, Name> parseVariableBinding,
-                    Function<SeqTypeCtx, SequenceType> processSequenceType,
-                    Function<ExprSingleCtx, Node> visitExprSingle) {
-        List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
-        SequenceType seq = null;
-        Name var = parseVariableBinding.apply(ctx.varBinding());
-        if (ctx.sequenceType() != null) {
-            seq = processSequenceType.apply(ctx.sequenceType());
-        }
-        boolean external = ctx.isExternal();
-        Expression expr = null;
-        if (ctx.exprSingle() != null) {
-            expr = (Expression) visitExprSingle.apply(ctx.exprSingle());
-            if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-        }
-        return new VariableDeclaration(
-                var,
-                external,
-                seq,
-                expr,
-                annotations,
-                translationContext.metadata(ctx.context()),
-                translationContext.metadata(ctx.varBinding()));
-    }
-
-    public static <SeqTypeCtx extends ParserRuleContext, ExprSingleCtx extends ParserRuleContext>
-            VariableDeclaration contextItemDecl(
-                    ContextItemDeclContext<SeqTypeCtx, ExprSingleCtx> ctx,
-                    TranslationContext translationContext,
-                    Function<SeqTypeCtx, SequenceType> processSequenceType,
-                    Function<ExprSingleCtx, Node> visitExprSingle) {
-        SequenceType seq = null;
-        Name var = Name.CONTEXT_ITEM;
-        if (ctx.sequenceType() != null) {
-            seq = processSequenceType.apply(ctx.sequenceType());
-        }
-        boolean external = ctx.isExternal();
-        Expression expr = null;
-        if (ctx.exprSingle() != null) {
-            expr = (Expression) visitExprSingle.apply(ctx.exprSingle());
-            if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-        }
-        return new VariableDeclaration(var, external, seq, expr, null, translationContext.metadata(ctx.context()));
-    }
-
-    public static <
-                    AnnotationsCtx extends ParserRuleContext,
-                    FunctionNameCtx extends ParserRuleContext,
-                    VarBindingCtx extends ParserRuleContext,
-                    SeqTypeCtx extends ParserRuleContext,
-                    ReturnTypeCtx extends ParserRuleContext,
-                    FnBodyCtx extends ParserRuleContext>
-            InlineFunctionExpression functionDecl(
-                    FunctionDeclContext<
-                                    AnnotationsCtx,
-                                    FunctionNameCtx,
-                                    VarBindingCtx,
-                                    SeqTypeCtx,
-                                    ReturnTypeCtx,
-                                    FnBodyCtx>
-                            ctx,
-                    TranslationContext translationContext,
-                    Function<AnnotationsCtx, List<Annotation>> processAnnotations,
-                    Function<FunctionNameCtx, Name> parseFunctionName,
-                    Function<VarBindingCtx, Name> parseVariableBinding,
-                    Function<SeqTypeCtx, SequenceType> processSequenceType,
-                    Function<ReturnTypeCtx, SequenceType> processReturnType,
-                    Function<FnBodyCtx, Node> visitStatementsAndOptionalExpr) {
-        List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
-        Name name = parseFunctionName.apply(ctx.functionName());
-        FunctionDeclarationValidator.validateFunctionName(name, translationContext.metadata(ctx.functionName()));
-        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = null;
-        for (FunctionDeclContext.FunctionParam<VarBindingCtx, SeqTypeCtx> param : ctx.params()) {
-            Name paramName = parseVariableBinding.apply(param.name());
-            SequenceType paramType;
-            if (fnParams.containsKey(paramName)) {
-                throw new DuplicateParamNameException(name, paramName, translationContext.metadata(param.context()));
-            }
-            if (param.sequenceType() != null) {
-                paramType = processSequenceType.apply(param.sequenceType());
-            } else {
-                paramType = SequenceType.createSequenceType("item*");
-            }
-            fnParams.put(paramName, paramType);
-        }
-
-        if (ctx.returnType() != null) {
-            fnReturnType = processReturnType.apply(ctx.returnType());
-        }
-
-        StatementsAndOptionalExpr funcBody =
-                (StatementsAndOptionalExpr) visitStatementsAndOptionalExpr.apply(ctx.fnBody());
-
-        boolean isExternal = ctx.isExternal();
-
-        return new InlineFunctionExpression(
-                annotations,
-                name,
-                fnParams,
-                fnReturnType,
-                funcBody,
-                isExternal,
-                translationContext.metadata(ctx.context()),
-                translationContext.metadata(ctx.functionName()));
     }
 
     // endregion
@@ -390,10 +240,6 @@ public final class PrologTranslation {
         this.defaultCollationSet = true;
     }
 
-    public void applyDecimalFormat(Runnable translate) {
-        translate.run();
-    }
-
     public void importModule(LibraryModule module, ExceptionMetadata metadata) {
         if (!this.moduleNamespaces.add(module.getNamespace())) {
             throw new DuplicateModuleTargetNamespaceException(
@@ -452,24 +298,27 @@ public final class PrologTranslation {
                         .importSchema(catalog, metadata));
     }
 
-    public void registerDeclaration(Node declaration, ExceptionMetadata metadata) {
-        if (declaration == null) {
-            return;
-        }
-        if (declaration instanceof VariableDeclaration varDecl) {
-            if (!varDecl.getVariableName().equals(Name.CONTEXT_ITEM)) {
-                validateNamespace("Variable", varDecl.getVariableName(), metadata);
-            }
-            this.variables.add(varDecl);
-        } else if (declaration instanceof InlineFunctionExpression fn) {
-            validateNamespace("Function", fn.getName(), metadata);
-            this.functions.add(new FunctionDeclaration(fn, metadata));
-        } else if (declaration instanceof TypeDeclaration type) {
-            validateNamespace("Type", type.getDefinition().getName(), metadata);
-            this.types.add(type);
-        } else if (declaration instanceof OptionDeclaration option) {
-            this.options.add(option);
-        }
+    public void addVariable(VariableDeclaration declaration, ExceptionMetadata metadata) {
+        validateNamespace("Variable", declaration.getVariableName(), metadata);
+        this.variables.add(declaration);
+    }
+
+    public void addContextItem(VariableDeclaration declaration) {
+        this.variables.add(declaration);
+    }
+
+    public void addFunction(InlineFunctionExpression declaration, ExceptionMetadata metadata) {
+        validateNamespace("Function", declaration.getName(), metadata);
+        this.functions.add(new FunctionDeclaration(declaration, metadata));
+    }
+
+    public void addType(TypeDeclaration declaration, ExceptionMetadata metadata) {
+        validateNamespace("Type", declaration.getDefinition().getName(), metadata);
+        this.types.add(declaration);
+    }
+
+    public void addOption(OptionDeclaration declaration) {
+        this.options.add(declaration);
     }
 
     public Prolog build(ExceptionMetadata metadata) {

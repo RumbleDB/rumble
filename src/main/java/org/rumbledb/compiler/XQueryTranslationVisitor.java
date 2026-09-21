@@ -81,6 +81,7 @@ import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
+import org.rumbledb.compiler.translation.DeclarationTranslation;
 import org.rumbledb.compiler.translation.FlworTranslation;
 import org.rumbledb.compiler.translation.LogicTranslation;
 import org.rumbledb.compiler.translation.ModuleTranslation;
@@ -388,8 +389,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
-            this.translation.applyDecimalFormat(
-                    () -> processDecimalFormatDeclaration(ctx, createMetadataFromContext(ctx)));
+            processDecimalFormatDeclaration(ctx, createMetadataFromContext(ctx));
             return null;
         }
 
@@ -401,34 +401,32 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitVarDecl(XQueryParser.VarDeclContext ctx) {
-            this.translation.registerDeclaration(
-                    PrologTranslation.varDecl(
+            this.translation.addVariable(
+                    DeclarationTranslation.varDecl(
                             VarDeclContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
                             XQueryTranslationVisitor.this::processAnnotations,
                             XQueryTranslationVisitor.this::parseVariableBinding,
                             XQueryTranslationVisitor.this::processSequenceType,
-                            XQueryTranslationVisitor.this::visitExprSingle),
+                            XQueryTranslationVisitor.this::translateExprSingle),
                     createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitContextItemDecl(XQueryParser.ContextItemDeclContext ctx) {
-            this.translation.registerDeclaration(
-                    PrologTranslation.contextItemDecl(
-                            ContextItemDeclContext.from(ctx),
-                            XQueryTranslationVisitor.this.translationContext,
-                            XQueryTranslationVisitor.this::processSequenceType,
-                            XQueryTranslationVisitor.this::visitExprSingle),
-                    createMetadataFromContext(ctx));
+            this.translation.addContextItem(DeclarationTranslation.contextItemDecl(
+                    ContextItemDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::translateExprSingle));
             return null;
         }
 
         @Override
         public Void visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
-            this.translation.registerDeclaration(
-                    PrologTranslation.functionDecl(
+            this.translation.addFunction(
+                    DeclarationTranslation.functionDecl(
                             FunctionDeclContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
                             XQueryTranslationVisitor.this::processAnnotations,
@@ -436,22 +434,28 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                             XQueryTranslationVisitor.this::parseVariableBinding,
                             XQueryTranslationVisitor.this::processSequenceType,
                             XQueryTranslationVisitor.this::processSequenceType,
-                            XQueryTranslationVisitor.this::visitStatementsAndOptionalExpr),
+                            XQueryTranslationVisitor.this::translateFunctionBody),
                     createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitOptionDecl(XQueryParser.OptionDeclContext ctx) {
-            this.translation.registerDeclaration(
-                    PrologTranslation.optionDecl(
-                            OptionDeclContext.from(ctx),
-                            XQueryTranslationVisitor.this.translationContext,
-                            XQueryTranslationVisitor.this::parseEqName,
-                            XQueryTranslationVisitor.this::processStringLiteral),
-                    createMetadataFromContext(ctx));
+            this.translation.addOption(DeclarationTranslation.optionDecl(
+                    OptionDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName,
+                    XQueryTranslationVisitor.this::processStringLiteral));
             return null;
         }
+    }
+
+    private Expression translateExprSingle(XQueryParser.ExprSingleContext ctx) {
+        return (Expression) visitExprSingle(ctx);
+    }
+
+    private StatementsAndOptionalExpr translateFunctionBody(XQueryParser.StatementsAndOptionalExprContext ctx) {
+        return (StatementsAndOptionalExpr) visitStatementsAndOptionalExpr(ctx);
     }
 
     private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {

@@ -82,6 +82,7 @@ import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
+import org.rumbledb.compiler.translation.DeclarationTranslation;
 import org.rumbledb.compiler.translation.FlworTranslation;
 import org.rumbledb.compiler.translation.LogicTranslation;
 import org.rumbledb.compiler.translation.ModuleTranslation;
@@ -408,8 +409,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(JsoniqParser.DecimalFormatDeclContext ctx) {
-            this.translation.applyDecimalFormat(
-                    () -> processDecimalFormatDeclaration(ctx, createMetadataFromContext(ctx)));
+            processDecimalFormatDeclaration(ctx, createMetadataFromContext(ctx));
             return null;
         }
 
@@ -421,34 +421,32 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitVarDecl(JsoniqParser.VarDeclContext ctx) {
-            this.translation.registerDeclaration(
-                    PrologTranslation.varDecl(
+            this.translation.addVariable(
+                    DeclarationTranslation.varDecl(
                             VarDeclContext.from(ctx),
                             TranslationVisitor.this.translationContext,
                             TranslationVisitor.this::processAnnotations,
                             TranslationVisitor.this::parseVariableBinding,
                             TranslationVisitor.this::processSequenceType,
-                            TranslationVisitor.this::visitExprSingle),
+                            TranslationVisitor.this::translateExprSingle),
                     createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitContextItemDecl(JsoniqParser.ContextItemDeclContext ctx) {
-            this.translation.registerDeclaration(
-                    PrologTranslation.contextItemDecl(
-                            ContextItemDeclContext.from(ctx),
-                            TranslationVisitor.this.translationContext,
-                            TranslationVisitor.this::processSequenceType,
-                            TranslationVisitor.this::visitExprSingle),
-                    createMetadataFromContext(ctx));
+            this.translation.addContextItem(DeclarationTranslation.contextItemDecl(
+                    ContextItemDeclContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::processSequenceType,
+                    TranslationVisitor.this::translateExprSingle));
             return null;
         }
 
         @Override
         public Void visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
-            this.translation.registerDeclaration(
-                    PrologTranslation.functionDecl(
+            this.translation.addFunction(
+                    DeclarationTranslation.functionDecl(
                             FunctionDeclContext.from(ctx),
                             TranslationVisitor.this.translationContext,
                             TranslationVisitor.this::processAnnotations,
@@ -456,28 +454,34 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                             TranslationVisitor.this::parseVariableBinding,
                             TranslationVisitor.this::processSequenceType,
                             TranslationVisitor.this::processSequenceType,
-                            TranslationVisitor.this::visitStatementsAndOptionalExpr),
+                            TranslationVisitor.this::translateFunctionBody),
                     createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitOptionDecl(JsoniqParser.OptionDeclContext ctx) {
-            this.translation.registerDeclaration(
-                    PrologTranslation.optionDecl(
-                            OptionDeclContext.from(ctx),
-                            TranslationVisitor.this.translationContext,
-                            TranslationVisitor.this::parseEqName,
-                            TranslationVisitor.this::processStringLiteral),
-                    createMetadataFromContext(ctx));
+            this.translation.addOption(DeclarationTranslation.optionDecl(
+                    OptionDeclContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::parseEqName,
+                    TranslationVisitor.this::processStringLiteral));
             return null;
         }
 
         @Override
         public Void visitTypeDecl(JsoniqParser.TypeDeclContext ctx) {
-            this.translation.registerDeclaration(processTypeDecl(ctx), createMetadataFromContext(ctx));
+            this.translation.addType(processTypeDecl(ctx), createMetadataFromContext(ctx));
             return null;
         }
+    }
+
+    private Expression translateExprSingle(JsoniqParser.ExprSingleContext ctx) {
+        return (Expression) visitExprSingle(ctx);
+    }
+
+    private StatementsAndOptionalExpr translateFunctionBody(JsoniqParser.StatementsAndOptionalExprContext ctx) {
+        return (StatementsAndOptionalExpr) visitStatementsAndOptionalExpr(ctx);
     }
 
     private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {
