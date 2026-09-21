@@ -1278,25 +1278,29 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public ArrayConstructorExpression visitArrayConstructor(XQueryParser.ArrayConstructorContext ctx) {
-        ParseTree child = ctx.children.get(0);
-        if (child instanceof XQueryParser.SquareArrayConstructorContext sqCtx) {
-            List<XQueryParser.ExprSingleContext> memberCtxs = sqCtx.exprSingle();
-            if (memberCtxs == null || memberCtxs.isEmpty()) {
-                return new ArrayConstructorExpression(new ArrayList<>(), true, createMetadataFromContext(sqCtx));
-            }
-            List<Expression> memberExpressions = new ArrayList<>();
-            for (XQueryParser.ExprSingleContext memberCtx : memberCtxs) {
-                memberExpressions.add(this.visitExprSingle(memberCtx));
-            }
-            return new ArrayConstructorExpression(memberExpressions, true, createMetadataFromContext(sqCtx));
+        return (ArrayConstructorExpression) visit(ctx.getChild(0));
+    }
+
+    @Override
+    public ArrayConstructorExpression visitSquareArrayConstructor(XQueryParser.SquareArrayConstructorContext ctx) {
+        List<XQueryParser.ExprSingleContext> memberCtxs = ctx.exprSingle();
+        if (memberCtxs == null || memberCtxs.isEmpty()) {
+            return new ArrayConstructorExpression(new ArrayList<>(), true, createMetadataFromContext(ctx));
         }
-        // else curlyArrayConstructor
-        XQueryParser.CurlyArrayConstructorContext childCtx = (XQueryParser.CurlyArrayConstructorContext) child;
-        if (childCtx.enclosedExpression() == null) {
-            return new ArrayConstructorExpression(createMetadataFromContext(childCtx));
+        List<Expression> memberExpressions = new ArrayList<>();
+        for (XQueryParser.ExprSingleContext memberCtx : memberCtxs) {
+            memberExpressions.add(this.visitExprSingle(memberCtx));
         }
-        Expression content = this.visitEnclosedExpression(childCtx.enclosedExpression());
-        return new ArrayConstructorExpression(content, createMetadataFromContext(childCtx));
+        return new ArrayConstructorExpression(memberExpressions, true, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public ArrayConstructorExpression visitCurlyArrayConstructor(XQueryParser.CurlyArrayConstructorContext ctx) {
+        if (ctx.enclosedExpression() == null) {
+            return new ArrayConstructorExpression(createMetadataFromContext(ctx));
+        }
+        Expression content = this.visitEnclosedExpression(ctx.enclosedExpression());
+        return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1775,22 +1779,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         Clause lastFlowrClause = clause.getLastClause();
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
-            if (child instanceof XQueryParser.ForClauseContext forClauseContext) {
-                clause = this.visitForClause(forClauseContext);
-            } else if (child instanceof XQueryParser.LetClauseContext letClauseContext) {
-                clause = this.visitLetClause(letClauseContext);
-            } else if (child instanceof XQueryParser.WhereClauseContext whereClauseContext) {
-                clause = this.visitWhereClause(whereClauseContext);
-            } else if (child instanceof XQueryParser.GroupByClauseContext groupByClauseContext) {
-                clause = this.visitGroupByClause(groupByClauseContext);
-            } else if (child instanceof XQueryParser.OrderByClauseContext orderByClauseContext) {
-                clause = this.visitOrderByClause(orderByClauseContext);
-            } else if (child instanceof XQueryParser.CountClauseContext countClauseContext) {
-                clause = this.visitCountClause(countClauseContext);
-            } else {
-                throw new UnsupportedFeatureException(
-                        "FLOWR clause not implemented yet", createMetadataFromContext(ctx));
-            }
+            clause = (Clause) this.visit(child);
             lastFlowrClause.chainWith(clause.getFirstClause());
             lastFlowrClause = clause.getLastClause();
         }

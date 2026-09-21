@@ -1502,37 +1502,41 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public ArrayConstructorExpression visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
-        ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.SquareArrayConstructorContext sqCtx) {
-            List<JsoniqParser.ExprSingleContext> memberCtxs = sqCtx.exprSingle();
-            if (memberCtxs == null || memberCtxs.isEmpty()) {
-                return new ArrayConstructorExpression(new ArrayList<>(), true, createMetadataFromContext(sqCtx));
-            }
-            List<Expression> memberExpressions = new ArrayList<>();
-            if (this.translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
-                // In JSONiq 1.0, the square array constructor behaves like the curly array constructor.
-                // Thus, we concatenate all expressions into a single comma expression.
-                for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
-                    memberExpressions.add(this.visitExprSingle(memberCtx));
-                }
-                Expression commaExpression = new CommaExpression(memberExpressions, createMetadataFromContext(sqCtx));
-                return new ArrayConstructorExpression(commaExpression, createMetadataFromContext(sqCtx));
-            } else {
-                log.debug("Not concatenating to comma.");
-                // In JSONiq 4.0, the square array constructor behaves like in XQuery 4.0.
-                for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
-                    memberExpressions.add(this.visitExprSingle(memberCtx));
-                }
-                return new ArrayConstructorExpression(memberExpressions, true, createMetadataFromContext(sqCtx));
-            }
+        return (ArrayConstructorExpression) visit(ctx.getChild(0));
+    }
+
+    @Override
+    public ArrayConstructorExpression visitSquareArrayConstructor(JsoniqParser.SquareArrayConstructorContext ctx) {
+        List<JsoniqParser.ExprSingleContext> memberCtxs = ctx.exprSingle();
+        if (memberCtxs == null || memberCtxs.isEmpty()) {
+            return new ArrayConstructorExpression(new ArrayList<>(), true, createMetadataFromContext(ctx));
         }
-        // else curlyArrayConstructor
-        JsoniqParser.CurlyArrayConstructorContext childCtx = (JsoniqParser.CurlyArrayConstructorContext) child;
-        if (childCtx.enclosedExpression() == null) {
-            return new ArrayConstructorExpression(createMetadataFromContext(childCtx));
+        List<Expression> memberExpressions = new ArrayList<>();
+        if (this.translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
+            // In JSONiq 1.0, the square array constructor behaves like the curly array constructor.
+            // Thus, we concatenate all expressions into a single comma expression.
+            for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
+                memberExpressions.add(this.visitExprSingle(memberCtx));
+            }
+            Expression commaExpression = new CommaExpression(memberExpressions, createMetadataFromContext(ctx));
+            return new ArrayConstructorExpression(commaExpression, createMetadataFromContext(ctx));
+        } else {
+            log.debug("Not concatenating to comma.");
+            // In JSONiq 4.0, the square array constructor behaves like in XQuery 4.0.
+            for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
+                memberExpressions.add(this.visitExprSingle(memberCtx));
+            }
+            return new ArrayConstructorExpression(memberExpressions, true, createMetadataFromContext(ctx));
         }
-        Expression content = this.visitEnclosedExpression(childCtx.enclosedExpression());
-        return new ArrayConstructorExpression(content, createMetadataFromContext(childCtx));
+    }
+
+    @Override
+    public ArrayConstructorExpression visitCurlyArrayConstructor(JsoniqParser.CurlyArrayConstructorContext ctx) {
+        if (ctx.enclosedExpression() == null) {
+            return new ArrayConstructorExpression(createMetadataFromContext(ctx));
+        }
+        Expression content = this.visitEnclosedExpression(ctx.enclosedExpression());
+        return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -2002,22 +2006,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         Clause lastFlowrClause = clause.getLastClause();
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
-            if (child instanceof JsoniqParser.ForClauseContext forClauseContext) {
-                clause = this.visitForClause(forClauseContext);
-            } else if (child instanceof JsoniqParser.LetClauseContext letClauseContext) {
-                clause = this.visitLetClause(letClauseContext);
-            } else if (child instanceof JsoniqParser.WhereClauseContext whereClauseContext) {
-                clause = this.visitWhereClause(whereClauseContext);
-            } else if (child instanceof JsoniqParser.GroupByClauseContext groupByClauseContext) {
-                clause = this.visitGroupByClause(groupByClauseContext);
-            } else if (child instanceof JsoniqParser.OrderByClauseContext orderByClauseContext) {
-                clause = this.visitOrderByClause(orderByClauseContext);
-            } else if (child instanceof JsoniqParser.CountClauseContext countClauseContext) {
-                clause = this.visitCountClause(countClauseContext);
-            } else {
-                throw new UnsupportedFeatureException(
-                        "FLOWR clause not implemented yet", createMetadataFromContext(ctx));
-            }
+            clause = (Clause) this.visit(child);
             lastFlowrClause.chainWith(clause.getFirstClause());
             lastFlowrClause = clause.getLastClause();
         }
