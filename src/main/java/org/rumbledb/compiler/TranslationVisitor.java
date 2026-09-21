@@ -1179,7 +1179,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // endregion
 
     // region primary
-    // TODO [EXPRVISITOR] orderedExpr unorderedExpr;
     @Override
     public Expression visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
         ParseTree child = ctx.getChild(0);
@@ -1187,6 +1186,22 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return PrimaryTranslation.literalExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
         return (Expression) visit(child);
+    }
+
+    @Override
+    public Expression visitOrderedExpr(JsoniqParser.OrderedExprContext ctx) {
+        throw new UnsupportedFeatureException("Ordered expression not yet implemented", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Expression visitUnorderedExpr(JsoniqParser.UnorderedExprContext ctx) {
+        throw new UnsupportedFeatureException(
+                "Unordered expression not yet implemented", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Expression visitStringConstructor(JsoniqParser.StringConstructorContext ctx) {
+        throw new UnsupportedFeatureException("String constructor not yet implemented", createMetadataFromContext(ctx));
     }
 
     @Override

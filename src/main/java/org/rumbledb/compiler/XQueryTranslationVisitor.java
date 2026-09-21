@@ -976,10 +976,25 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // endregion
 
     // region primary
-    // TODO [EXPRVISITOR] orderedExpr unorderedExpr;
     @Override
     public Expression visitPrimaryExpr(XQueryParser.PrimaryExprContext ctx) {
         return (Expression) visit(ctx.getChild(0));
+    }
+
+    @Override
+    public Expression visitOrderedExpr(XQueryParser.OrderedExprContext ctx) {
+        throw new UnsupportedFeatureException("Ordered expression not yet implemented", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Expression visitUnorderedExpr(XQueryParser.UnorderedExprContext ctx) {
+        throw new UnsupportedFeatureException(
+                "Unordered expression not yet implemented", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Expression visitStringConstructor(XQueryParser.StringConstructorContext ctx) {
+        throw new UnsupportedFeatureException("String constructor not yet implemented", createMetadataFromContext(ctx));
     }
 
     @Override
