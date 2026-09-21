@@ -19,7 +19,9 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import lombok.NonNull;
 
@@ -36,6 +38,7 @@ public class InScopeSchemaTypes implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final HashMap<Name, ItemType> inScopeSchemaTypes;
+    private final Set<Name> xmlSchemaTypeNames = new HashSet<>();
 
     // Xerces definitions stay local; the mapped ItemTypes remain serializable.
     private transient XmlSchemaCatalog xmlSchemaCatalog;
@@ -55,6 +58,7 @@ public class InScopeSchemaTypes implements Serializable {
 
         for (ItemType itemType : importedTypes) {
             this.addInScopeSchemaType(itemType, metadata);
+            this.xmlSchemaTypeNames.add(itemType.getName());
         }
 
         this.xmlSchemaCatalog = catalog;
@@ -94,6 +98,10 @@ public class InScopeSchemaTypes implements Serializable {
 
     public void importModuleTypes(InScopeSchemaTypes inScopeSchemaTypes) {
         for (Name name : inScopeSchemaTypes.inScopeSchemaTypes.keySet()) {
+            // JSONiq type declarations are exported; imported XML Schema definitions remain module-local.
+            if (inScopeSchemaTypes.xmlSchemaTypeNames.contains(name)) {
+                continue;
+            }
             ItemType itemType = inScopeSchemaTypes.inScopeSchemaTypes.get(name);
             this.inScopeSchemaTypes.put(name, itemType);
         }

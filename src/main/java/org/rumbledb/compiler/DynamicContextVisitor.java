@@ -318,6 +318,9 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         argument.getVariableValues()
                 .importModuleValues(
                         this.importedModuleContexts.get(module.getNamespace()).getVariableValues());
+        argument.getInScopeSchemaTypes()
+                .importModuleTypes(
+                        this.importedModuleContexts.get(module.getNamespace()).getInScopeSchemaTypes());
         return argument;
     }
 
