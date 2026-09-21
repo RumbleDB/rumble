@@ -81,8 +81,10 @@ import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
+import org.rumbledb.compiler.translation.DecimalFormatTranslation;
 import org.rumbledb.compiler.translation.DeclarationTranslation;
 import org.rumbledb.compiler.translation.FlworTranslation;
+import org.rumbledb.compiler.translation.ImportTranslation;
 import org.rumbledb.compiler.translation.LogicTranslation;
 import org.rumbledb.compiler.translation.ModuleTranslation;
 import org.rumbledb.compiler.translation.PostfixTranslation;
@@ -320,7 +322,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         @Override
         public Void visitModuleImport(XQueryParser.ModuleImportContext ctx) {
             this.translation.importModule(
-                    PrologTranslation.moduleImport(
+                    ImportTranslation.moduleImport(
                             ModuleImportContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
                             XQueryTranslationVisitor.this::processURILiteral,
@@ -332,7 +334,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         @Override
         public Void visitSchemaImport(XQueryParser.SchemaImportContext ctx) {
             this.translation.importSchema(
-                    PrologTranslation.schemaImport(
+                    ImportTranslation.schemaImport(
                             SchemaImportContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
                             XQueryTranslationVisitor.this::processURILiteral),
@@ -389,7 +391,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
-            DecimalFormatDeclarationProcessor.process(
+            DecimalFormatTranslation.process(
                     ctx.KW_DEFAULT() != null,
                     ctx.eqName(),
                     ctx.DFPropertyName(),
@@ -398,7 +400,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                                     stringLiteral.getSourceInterval()))
                             .toList(),
                     XQueryTranslationVisitor.this.translationContext.moduleContext(),
-                    false,
+                    StringLiteralUtils::parseXQuery,
                     createMetadataFromContext(ctx));
             return null;
         }

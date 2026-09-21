@@ -13,11 +13,12 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler;
+package org.rumbledb.compiler.translation;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -31,9 +32,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 
-public final class DecimalFormatDeclarationProcessor {
+public final class DecimalFormatTranslation {
 
-    private DecimalFormatDeclarationProcessor() {}
+    private DecimalFormatTranslation() {}
 
     public static void process(
             boolean isDefaultDecimalFormat,
@@ -41,7 +42,7 @@ public final class DecimalFormatDeclarationProcessor {
             List<? extends ParseTree> propertyNames,
             List<String> stringLiterals,
             StaticContext moduleContext,
-            boolean isJSONiq,
+            Function<String, String> parseStringLiteral,
             ExceptionMetadata metadata) {
         Name name = null;
         if (!isDefaultDecimalFormat) {
@@ -66,7 +67,7 @@ public final class DecimalFormatDeclarationProcessor {
 
         for (int i = 0; i < propertyNames.size(); i++) {
             String propertyName = propertyNames.get(i).getText();
-            String value = parseStringLiteral(stringLiterals.get(i), isJSONiq, metadata);
+            String value = parseStringLiteral.apply(stringLiterals.get(i));
 
             boolean hasSeen = !seenProperties.add(propertyName);
             if (hasSeen) {
@@ -135,10 +136,6 @@ public final class DecimalFormatDeclarationProcessor {
         } else {
             moduleContext.addDecimalFormat(name, decimalFormat, metadata);
         }
-    }
-
-    private static String parseStringLiteral(String text, boolean isJSONiq, ExceptionMetadata metadata) {
-        return isJSONiq ? StringLiteralUtils.parseJsoniq(text, metadata) : StringLiteralUtils.parseXQuery(text);
     }
 
     public static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {

@@ -82,8 +82,10 @@ import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
+import org.rumbledb.compiler.translation.DecimalFormatTranslation;
 import org.rumbledb.compiler.translation.DeclarationTranslation;
 import org.rumbledb.compiler.translation.FlworTranslation;
+import org.rumbledb.compiler.translation.ImportTranslation;
 import org.rumbledb.compiler.translation.LogicTranslation;
 import org.rumbledb.compiler.translation.ModuleTranslation;
 import org.rumbledb.compiler.translation.PostfixTranslation;
@@ -340,7 +342,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         @Override
         public Void visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
             this.translation.importModule(
-                    PrologTranslation.moduleImport(
+                    ImportTranslation.moduleImport(
                             ModuleImportContext.from(ctx),
                             TranslationVisitor.this.translationContext,
                             TranslationVisitor.this::processURILiteral,
@@ -352,7 +354,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         @Override
         public Void visitSchemaImport(JsoniqParser.SchemaImportContext ctx) {
             this.translation.importSchema(
-                    PrologTranslation.schemaImport(
+                    ImportTranslation.schemaImport(
                             SchemaImportContext.from(ctx),
                             TranslationVisitor.this.translationContext,
                             TranslationVisitor.this::processURILiteral),
@@ -409,7 +411,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(JsoniqParser.DecimalFormatDeclContext ctx) {
-            DecimalFormatDeclarationProcessor.process(
+            DecimalFormatTranslation.process(
                     ctx.KW_DEFAULT() != null,
                     ctx.eqName(),
                     ctx.DFPropertyName(),
@@ -418,7 +420,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                                     stringLiteral.getSourceInterval()))
                             .toList(),
                     TranslationVisitor.this.translationContext.moduleContext(),
-                    true,
+                    source -> StringLiteralUtils.parseJsoniq(source, createMetadataFromContext(ctx)),
                     createMetadataFromContext(ctx));
             return null;
         }

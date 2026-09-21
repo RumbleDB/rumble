@@ -75,7 +75,7 @@ public final class ModuleTranslation {
                     TranslationContext translationContext,
                     Function<UriLiteralCtx, String> processURILiteral,
                     Consumer<String> setLibraryModuleNamespace,
-                    PrologTranslation.NamespaceBinder bindNamespace,
+                    NamespaceBinder bindNamespace,
                     Function<PrologCtx, Node> visitProlog) {
         String prefix = ctx.prefix();
         String namespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral.apply(ctx.uriLiteral()));

@@ -21,20 +21,12 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import org.antlr.v4.runtime.ParserRuleContext;
-
-import org.rumbledb.compiler.ModuleImportLoader;
-import org.rumbledb.compiler.context.ModuleImportContext;
-import org.rumbledb.compiler.context.SchemaImportContext;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
-import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneBoundarySpaceDeclarationException;
 import org.rumbledb.exceptions.MoreThanOneCopyNamespacesDeclarationException;
@@ -56,15 +48,9 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
- * Handles shared prolog translation state, syntax translation, and validation
- * for both Jsoniq and XQuery frontends.
+ * Handles shared prolog translation state and validation for both Jsoniq and XQuery frontends.
  */
 public final class PrologTranslation {
-
-    @FunctionalInterface
-    public interface NamespaceBinder {
-        void bind(String prefix, String namespace, ExceptionMetadata metadata);
-    }
 
     public enum BooleanSettingKind {
         CONSTRUCTION,
@@ -92,61 +78,6 @@ public final class PrologTranslation {
         this.translationContext = translationContext;
         this.libraryNamespace = libraryNamespace;
     }
-
-    // region Prolog Import Syntax Translators
-
-    public static <UriLiteralCtx extends ParserRuleContext> SchemaImport schemaImport(
-            SchemaImportContext<UriLiteralCtx> ctx,
-            TranslationContext translationContext,
-            Function<UriLiteralCtx, String> processURILiteral) {
-        String targetNamespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral.apply(ctx.targetNamespace()));
-        List<String> locationHints = ctx.locations().stream()
-                .map(processURILiteral)
-                .map(URILiteralUtils::normalizeAsAnyURI)
-                .collect(Collectors.toList());
-        return new SchemaImport(
-                targetNamespace,
-                ctx.bindingKind(),
-                ctx.prefix(),
-                locationHints,
-                translationContext.metadata(ctx.context()));
-    }
-
-    public static <UriLiteralCtx extends ParserRuleContext> LibraryModule moduleImport(
-            ModuleImportContext<UriLiteralCtx> ctx,
-            TranslationContext translationContext,
-            Function<UriLiteralCtx, String> processURILiteral,
-            NamespaceBinder bindNamespace) {
-        ExceptionMetadata metadata = translationContext.metadata(ctx.context());
-        String namespace = processURILiteral.apply(ctx.targetNamespace());
-        if (namespace.isEmpty()) {
-            throw new EmptyModuleURIException("Module URI is empty.", metadata);
-        }
-        if (ctx.prefix() != null) {
-            String prefix = ctx.prefix();
-            if (prefix.equals("xml") || prefix.equals("xmlns")) {
-                throw new PredefinedPrefixInNamespaceDeclarationException(
-                        "Module import prefix " + prefix + " is reserved.", metadata);
-            }
-        }
-        namespace = URILiteralUtils.normalizeAsAnyURI(namespace);
-        List<String> locationHints = ctx.locations().stream()
-                .map(processURILiteral)
-                .map(URILiteralUtils::normalizeAsAnyURI)
-                .collect(Collectors.toList());
-        LibraryModule libraryModule = ModuleImportLoader.load(
-                namespace,
-                locationHints,
-                translationContext.moduleContext(),
-                translationContext.compilationConfiguration(),
-                metadata);
-        if (ctx.prefix() != null) {
-            bindNamespace.bind(ctx.prefix(), libraryModule.getNamespace(), metadata);
-        }
-        return libraryModule;
-    }
-
-    // endregion
 
     // region State-Manipulating Header Receivers
 
