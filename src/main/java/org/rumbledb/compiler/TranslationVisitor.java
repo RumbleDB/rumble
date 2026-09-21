@@ -90,7 +90,7 @@ import org.rumbledb.compiler.translation.LogicTranslation;
 import org.rumbledb.compiler.translation.ModuleTranslation;
 import org.rumbledb.compiler.translation.PostfixTranslation;
 import org.rumbledb.compiler.translation.PrimaryTranslation;
-import org.rumbledb.compiler.translation.PrologTranslation;
+import org.rumbledb.compiler.translation.PrologBuilder;
 import org.rumbledb.compiler.translation.QuantifiedTranslation;
 import org.rumbledb.compiler.translation.SequenceTranslation;
 import org.rumbledb.compiler.translation.TranslationContext;
@@ -305,11 +305,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Prolog visitProlog(JsoniqParser.PrologContext ctx) {
-        return new PrologBuilder().build(ctx);
+        return new PrologVisitor().build(ctx);
     }
 
-    private class PrologBuilder extends JsoniqParserBaseVisitor<Void> {
-        private final PrologTranslation translation = new PrologTranslation(
+    private class PrologVisitor extends JsoniqParserBaseVisitor<Void> {
+        private final PrologBuilder builder = new PrologBuilder(
                 TranslationVisitor.this.translationContext, TranslationVisitor.this.libraryModuleNamespace);
 
         Prolog build(JsoniqParser.PrologContext ctx) {
@@ -319,11 +319,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PrologHeaderContext header : ctx.headers) {
                 visit(header);
             }
-            this.translation.finishHeader(createMetadataFromContext(ctx));
+            this.builder.finishHeader(createMetadataFromContext(ctx));
             for (JsoniqParser.AnnotatedDeclContext declaration : ctx.declarations) {
                 visit(declaration);
             }
-            return this.translation.build(createMetadataFromContext(ctx));
+            return this.builder.build(createMetadataFromContext(ctx));
         }
 
         @Override
@@ -336,14 +336,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         @Override
         public Void visitDefaultNamespaceDecl(JsoniqParser.DefaultNamespaceDeclContext ctx) {
             boolean isFunction = ctx.type.getType() == JsoniqParser.KW_FUNCTION;
-            this.translation.applyDefaultNamespace(
+            this.builder.applyDefaultNamespace(
                     isFunction, processStringLiteral(ctx.stringLiteral()), createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
-            this.translation.importModule(
+            this.builder.importModule(
                     ImportTranslation.moduleImport(
                             ModuleImportContext.from(ctx),
                             TranslationVisitor.this.translationContext,
@@ -354,7 +354,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitSchemaImport(JsoniqParser.SchemaImportContext ctx) {
-            this.translation.importSchema(
+            this.builder.importSchema(
                     ImportTranslation.schemaImport(
                             SchemaImportContext.from(ctx),
                             TranslationVisitor.this.translationContext,
@@ -366,24 +366,24 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         @Override
         public Void visitConstructionDecl(JsoniqParser.ConstructionDeclContext ctx) {
             boolean value = ctx.type.getType() == JsoniqParser.KW_PRESERVE;
-            this.translation.applyBooleanSetting(
-                    PrologTranslation.BooleanSettingKind.CONSTRUCTION, value, createMetadataFromContext(ctx));
+            this.builder.applyBooleanSetting(
+                    PrologBuilder.BooleanSettingKind.CONSTRUCTION, value, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitBoundarySpaceDecl(JsoniqParser.BoundarySpaceDeclContext ctx) {
             boolean value = ctx.type.getType() == JsoniqParser.KW_PRESERVE;
-            this.translation.applyBooleanSetting(
-                    PrologTranslation.BooleanSettingKind.BOUNDARY_SPACE, value, createMetadataFromContext(ctx));
+            this.builder.applyBooleanSetting(
+                    PrologBuilder.BooleanSettingKind.BOUNDARY_SPACE, value, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitEmptyOrderDecl(JsoniqParser.EmptyOrderDeclContext ctx) {
             boolean value = ctx.emptySequenceOrder.getText().equals("least");
-            this.translation.applyBooleanSetting(
-                    PrologTranslation.BooleanSettingKind.EMPTY_ORDER, value, createMetadataFromContext(ctx));
+            this.builder.applyBooleanSetting(
+                    PrologBuilder.BooleanSettingKind.EMPTY_ORDER, value, createMetadataFromContext(ctx));
             return null;
         }
 
@@ -391,19 +391,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         public Void visitCopyNamespacesDecl(JsoniqParser.CopyNamespacesDeclContext ctx) {
             boolean preserve = ctx.preserveMode().KW_PRESERVE() != null;
             boolean inherit = ctx.inheritMode().KW_INHERIT() != null;
-            this.translation.applyCopyNamespaces(preserve, inherit, createMetadataFromContext(ctx));
+            this.builder.applyCopyNamespaces(preserve, inherit, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitBaseURIDecl(JsoniqParser.BaseURIDeclContext ctx) {
-            this.translation.applyBaseUri(processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
+            this.builder.applyBaseUri(processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitDefaultCollationDecl(JsoniqParser.DefaultCollationDeclContext ctx) {
-            this.translation.applyDefaultCollation(
+            this.builder.applyDefaultCollation(
                     processURILiteral(ctx.uriLiteral()),
                     createMetadataFromContext(ctx.uriLiteral()),
                     createMetadataFromContext(ctx));
@@ -428,13 +428,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitOrderingModeDecl(JsoniqParser.OrderingModeDeclContext ctx) {
-            this.translation.applyUnsupportedHeader(createMetadataFromContext(ctx));
+            this.builder.applyUnsupportedHeader(createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitVarDecl(JsoniqParser.VarDeclContext ctx) {
-            this.translation.addVariable(
+            this.builder.addVariable(
                     DeclarationTranslation.varDecl(
                             VarDeclContext.from(ctx),
                             TranslationVisitor.this.translationContext,
@@ -448,7 +448,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitContextItemDecl(JsoniqParser.ContextItemDeclContext ctx) {
-            this.translation.addContextItem(DeclarationTranslation.contextItemDecl(
+            this.builder.addContextItem(DeclarationTranslation.contextItemDecl(
                     ContextItemDeclContext.from(ctx),
                     TranslationVisitor.this.translationContext,
                     TranslationVisitor.this::processSequenceType,
@@ -458,7 +458,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
-            this.translation.addFunction(
+            this.builder.addFunction(
                     DeclarationTranslation.functionDecl(
                             FunctionDeclContext.from(ctx),
                             TranslationVisitor.this.translationContext,
@@ -474,7 +474,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitOptionDecl(JsoniqParser.OptionDeclContext ctx) {
-            this.translation.addOption(DeclarationTranslation.optionDecl(
+            this.builder.addOption(DeclarationTranslation.optionDecl(
                     OptionDeclContext.from(ctx),
                     TranslationVisitor.this.translationContext,
                     TranslationVisitor.this::parseEqName,
@@ -484,7 +484,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitTypeDecl(JsoniqParser.TypeDeclContext ctx) {
-            this.translation.addType(processTypeDecl(ctx), createMetadataFromContext(ctx));
+            this.builder.addType(processTypeDecl(ctx), createMetadataFromContext(ctx));
             return null;
         }
     }

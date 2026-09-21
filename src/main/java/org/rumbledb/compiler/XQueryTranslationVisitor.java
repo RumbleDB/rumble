@@ -89,7 +89,7 @@ import org.rumbledb.compiler.translation.LogicTranslation;
 import org.rumbledb.compiler.translation.ModuleTranslation;
 import org.rumbledb.compiler.translation.PostfixTranslation;
 import org.rumbledb.compiler.translation.PrimaryTranslation;
-import org.rumbledb.compiler.translation.PrologTranslation;
+import org.rumbledb.compiler.translation.PrologBuilder;
 import org.rumbledb.compiler.translation.QuantifiedTranslation;
 import org.rumbledb.compiler.translation.SequenceTranslation;
 import org.rumbledb.compiler.translation.TranslationContext;
@@ -285,11 +285,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Prolog visitProlog(XQueryParser.PrologContext ctx) {
-        return new PrologBuilder().build(ctx);
+        return new PrologVisitor().build(ctx);
     }
 
-    private class PrologBuilder extends XQueryParserBaseVisitor<Void> {
-        private final PrologTranslation translation = new PrologTranslation(
+    private class PrologVisitor extends XQueryParserBaseVisitor<Void> {
+        private final PrologBuilder builder = new PrologBuilder(
                 XQueryTranslationVisitor.this.translationContext, XQueryTranslationVisitor.this.libraryModuleNamespace);
 
         Prolog build(XQueryParser.PrologContext ctx) {
@@ -299,11 +299,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             for (XQueryParser.PrologHeaderContext header : ctx.headers) {
                 visit(header);
             }
-            this.translation.finishHeader(createMetadataFromContext(ctx));
+            this.builder.finishHeader(createMetadataFromContext(ctx));
             for (XQueryParser.AnnotatedDeclContext declaration : ctx.declarations) {
                 visit(declaration);
             }
-            return this.translation.build(createMetadataFromContext(ctx));
+            return this.builder.build(createMetadataFromContext(ctx));
         }
 
         @Override
@@ -316,14 +316,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         @Override
         public Void visitDefaultNamespaceDecl(XQueryParser.DefaultNamespaceDeclContext ctx) {
             boolean isFunction = ctx.type.getType() == XQueryParser.KW_FUNCTION;
-            this.translation.applyDefaultNamespace(
+            this.builder.applyDefaultNamespace(
                     isFunction, processStringLiteral(ctx.stringLiteral()), createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitModuleImport(XQueryParser.ModuleImportContext ctx) {
-            this.translation.importModule(
+            this.builder.importModule(
                     ImportTranslation.moduleImport(
                             ModuleImportContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
@@ -334,7 +334,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitSchemaImport(XQueryParser.SchemaImportContext ctx) {
-            this.translation.importSchema(
+            this.builder.importSchema(
                     ImportTranslation.schemaImport(
                             SchemaImportContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
@@ -346,24 +346,24 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         @Override
         public Void visitConstructionDecl(XQueryParser.ConstructionDeclContext ctx) {
             boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
-            this.translation.applyBooleanSetting(
-                    PrologTranslation.BooleanSettingKind.CONSTRUCTION, value, createMetadataFromContext(ctx));
+            this.builder.applyBooleanSetting(
+                    PrologBuilder.BooleanSettingKind.CONSTRUCTION, value, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitBoundarySpaceDecl(XQueryParser.BoundarySpaceDeclContext ctx) {
             boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
-            this.translation.applyBooleanSetting(
-                    PrologTranslation.BooleanSettingKind.BOUNDARY_SPACE, value, createMetadataFromContext(ctx));
+            this.builder.applyBooleanSetting(
+                    PrologBuilder.BooleanSettingKind.BOUNDARY_SPACE, value, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitEmptyOrderDecl(XQueryParser.EmptyOrderDeclContext ctx) {
             boolean value = ctx.emptySequenceOrder.getText().equals("least");
-            this.translation.applyBooleanSetting(
-                    PrologTranslation.BooleanSettingKind.EMPTY_ORDER, value, createMetadataFromContext(ctx));
+            this.builder.applyBooleanSetting(
+                    PrologBuilder.BooleanSettingKind.EMPTY_ORDER, value, createMetadataFromContext(ctx));
             return null;
         }
 
@@ -371,19 +371,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         public Void visitCopyNamespacesDecl(XQueryParser.CopyNamespacesDeclContext ctx) {
             boolean preserve = ctx.preserveMode().KW_PRESERVE() != null;
             boolean inherit = ctx.inheritMode().KW_INHERIT() != null;
-            this.translation.applyCopyNamespaces(preserve, inherit, createMetadataFromContext(ctx));
+            this.builder.applyCopyNamespaces(preserve, inherit, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitBaseURIDecl(XQueryParser.BaseURIDeclContext ctx) {
-            this.translation.applyBaseUri(processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
+            this.builder.applyBaseUri(processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitDefaultCollationDecl(XQueryParser.DefaultCollationDeclContext ctx) {
-            this.translation.applyDefaultCollation(
+            this.builder.applyDefaultCollation(
                     processURILiteral(ctx.uriLiteral()),
                     createMetadataFromContext(ctx.uriLiteral()),
                     createMetadataFromContext(ctx));
@@ -408,13 +408,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitOrderingModeDecl(XQueryParser.OrderingModeDeclContext ctx) {
-            this.translation.applyUnsupportedHeader(createMetadataFromContext(ctx));
+            this.builder.applyUnsupportedHeader(createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitVarDecl(XQueryParser.VarDeclContext ctx) {
-            this.translation.addVariable(
+            this.builder.addVariable(
                     DeclarationTranslation.varDecl(
                             VarDeclContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
@@ -428,7 +428,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitContextItemDecl(XQueryParser.ContextItemDeclContext ctx) {
-            this.translation.addContextItem(DeclarationTranslation.contextItemDecl(
+            this.builder.addContextItem(DeclarationTranslation.contextItemDecl(
                     ContextItemDeclContext.from(ctx),
                     XQueryTranslationVisitor.this.translationContext,
                     XQueryTranslationVisitor.this::processSequenceType,
@@ -438,7 +438,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
-            this.translation.addFunction(
+            this.builder.addFunction(
                     DeclarationTranslation.functionDecl(
                             FunctionDeclContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
@@ -454,7 +454,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitOptionDecl(XQueryParser.OptionDeclContext ctx) {
-            this.translation.addOption(DeclarationTranslation.optionDecl(
+            this.builder.addOption(DeclarationTranslation.optionDecl(
                     OptionDeclContext.from(ctx),
                     XQueryTranslationVisitor.this.translationContext,
                     XQueryTranslationVisitor.this::parseEqName,

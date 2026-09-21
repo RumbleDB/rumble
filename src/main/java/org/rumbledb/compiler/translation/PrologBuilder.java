@@ -49,7 +49,7 @@ import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 /**
  * Handles shared prolog translation state and validation for both Jsoniq and XQuery frontends.
  */
-public final class PrologTranslation {
+public final class PrologBuilder {
 
     public enum BooleanSettingKind {
         CONSTRUCTION,
@@ -73,7 +73,7 @@ public final class PrologTranslation {
     private final List<TypeDeclaration> types = new ArrayList<>();
     private final List<OptionDeclaration> options = new ArrayList<>();
 
-    public PrologTranslation(TranslationContext translationContext, String libraryNamespace) {
+    public PrologBuilder(TranslationContext translationContext, String libraryNamespace) {
         this.translationContext = translationContext;
         this.libraryNamespace = libraryNamespace;
     }
