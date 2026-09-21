@@ -316,19 +316,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitModuleImport(XQueryParser.ModuleImportContext ctx) {
-            this.builder.importModule(ImportTranslation.moduleImport(
-                    ModuleImportContext.from(ctx),
-                    XQueryTranslationVisitor.this.translationContext,
-                    XQueryTranslationVisitor.this::processURILiteral));
+            this.builder.importModule(
+                    ImportTranslation.moduleImport(
+                            ModuleImportContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processURILiteral),
+                    createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitSchemaImport(XQueryParser.SchemaImportContext ctx) {
-            this.builder.importSchema(ImportTranslation.schemaImport(
-                    SchemaImportContext.from(ctx),
-                    XQueryTranslationVisitor.this.translationContext,
-                    XQueryTranslationVisitor.this::processURILiteral));
+            this.builder.importSchema(
+                    ImportTranslation.schemaImport(
+                            SchemaImportContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processURILiteral),
+                    createMetadataFromContext(ctx));
             return null;
         }
 

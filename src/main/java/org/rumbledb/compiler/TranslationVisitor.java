@@ -338,19 +338,23 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
-            this.builder.importModule(ImportTranslation.moduleImport(
-                    ModuleImportContext.from(ctx),
-                    TranslationVisitor.this.translationContext,
-                    TranslationVisitor.this::processURILiteral));
+            this.builder.importModule(
+                    ImportTranslation.moduleImport(
+                            ModuleImportContext.from(ctx),
+                            TranslationVisitor.this.translationContext,
+                            TranslationVisitor.this::processURILiteral),
+                    createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitSchemaImport(JsoniqParser.SchemaImportContext ctx) {
-            this.builder.importSchema(ImportTranslation.schemaImport(
-                    SchemaImportContext.from(ctx),
-                    TranslationVisitor.this.translationContext,
-                    TranslationVisitor.this::processURILiteral));
+            this.builder.importSchema(
+                    ImportTranslation.schemaImport(
+                            SchemaImportContext.from(ctx),
+                            TranslationVisitor.this.translationContext,
+                            TranslationVisitor.this::processURILiteral),
+                    createMetadataFromContext(ctx));
             return null;
         }
 

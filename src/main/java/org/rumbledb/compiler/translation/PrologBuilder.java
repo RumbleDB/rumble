@@ -166,20 +166,20 @@ public final class PrologBuilder {
         this.defaultCollationSet = true;
     }
 
-    public void importModule(LibraryModule module) {
+    public void importModule(LibraryModule module, ExceptionMetadata metadata) {
         if (!this.moduleNamespaces.add(module.getNamespace())) {
             throw new DuplicateModuleTargetNamespaceException(
-                    "Duplicate module target namespace: " + module.getNamespace(), module.getMetadata());
+                    "Duplicate module target namespace: " + module.getNamespace(), metadata);
         }
         this.modules.add(module);
     }
 
-    public void importSchema(SchemaImport schema) {
+    public void importSchema(SchemaImport schema, ExceptionMetadata metadata) {
         if (!this.schemaNamespaces.add(schema.getTargetNamespace())) {
             throw new SemanticException(
                     "The schema namespace " + schema.getTargetNamespace() + " is imported more than once.",
                     ErrorCode.DuplicateSchemaImportErrorCode,
-                    schema.getMetadata());
+                    metadata);
         }
         bindSchemaNamespace(schema);
         this.schemas.add(schema);
