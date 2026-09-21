@@ -34,7 +34,15 @@ libraryModule
    ;
 
 prolog
-   : (defaultNamespaceDecl | setter | namespaceDecl | schemaImport | moduleImport)* (annotatedDecl)*
+   : headers += prologHeader* declarations += annotatedDecl*
+   ;
+
+prologHeader
+   : defaultNamespaceDecl
+   | setter
+   | namespaceDecl
+   | schemaImport
+   | moduleImport
    ;
 
 defaultNamespaceDecl
