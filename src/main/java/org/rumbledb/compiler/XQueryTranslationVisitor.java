@@ -291,24 +291,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             if (ctx == null) {
                 return null;
             }
-            visit(ctx);
+            for (XQueryParser.PrologHeaderContext header : ctx.headers) {
+                visit(header);
+            }
+            this.translation.finishHeader(createMetadataFromContext(ctx));
+            for (XQueryParser.AnnotatedDeclContext declaration : ctx.declarations) {
+                visit(declaration);
+            }
             return this.translation.build(createMetadataFromContext(ctx));
-        }
-
-        @Override
-        public Void visitProlog(XQueryParser.PrologContext ctx) {
-            return visitChildren(ctx);
-        }
-
-        @Override
-        public Void visitSetter(XQueryParser.SetterContext ctx) {
-            return visitChildren(ctx);
-        }
-
-        @Override
-        public Void visitAnnotatedDecl(XQueryParser.AnnotatedDeclContext ctx) {
-            this.translation.loadSchemaCatalog(createMetadataFromContext(ctx));
-            return visitChildren(ctx);
         }
 
         @Override

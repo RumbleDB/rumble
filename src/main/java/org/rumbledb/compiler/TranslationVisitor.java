@@ -311,24 +311,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             if (ctx == null) {
                 return null;
             }
-            visit(ctx);
+            for (JsoniqParser.PrologHeaderContext header : ctx.headers) {
+                visit(header);
+            }
+            this.translation.finishHeader(createMetadataFromContext(ctx));
+            for (JsoniqParser.AnnotatedDeclContext declaration : ctx.declarations) {
+                visit(declaration);
+            }
             return this.translation.build(createMetadataFromContext(ctx));
-        }
-
-        @Override
-        public Void visitProlog(JsoniqParser.PrologContext ctx) {
-            return visitChildren(ctx);
-        }
-
-        @Override
-        public Void visitSetter(JsoniqParser.SetterContext ctx) {
-            return visitChildren(ctx);
-        }
-
-        @Override
-        public Void visitAnnotatedDecl(JsoniqParser.AnnotatedDeclContext ctx) {
-            this.translation.loadSchemaCatalog(createMetadataFromContext(ctx));
-            return visitChildren(ctx);
         }
 
         @Override

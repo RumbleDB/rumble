@@ -94,7 +94,6 @@ public final class PrologTranslation {
     private boolean baseUriSet;
     private boolean defaultCollationSet;
     private boolean defaultFunctionNamespaceSet;
-    private boolean schemaCatalogLoaded;
     private final Set<String> moduleNamespaces = new HashSet<>();
     private final Set<String> schemaNamespaces = new HashSet<>();
     private final List<LibraryModule> modules = new ArrayList<>();
@@ -441,11 +440,8 @@ public final class PrologTranslation {
         bindNamespace(prefix, namespace, schema.getMetadata());
     }
 
-    public void loadSchemaCatalog(ExceptionMetadata metadata) {
-        if (this.schemaCatalogLoaded) {
-            return;
-        }
-        this.schemaCatalogLoaded = true;
+    /** Complete header processing by loading schemas before any declaration is translated. */
+    public void finishHeader(ExceptionMetadata metadata) {
         XmlSchemaCatalogLoader.load(
                         this.schemas,
                         this.translationContext.moduleContext().getStaticBaseURI(),
@@ -477,7 +473,6 @@ public final class PrologTranslation {
     }
 
     public Prolog build(ExceptionMetadata metadata) {
-        loadSchemaCatalog(metadata);
         Prolog result = new Prolog(this.variables, this.functions, this.types, metadata);
         this.modules.forEach(result::addImportedModule);
         this.schemas.forEach(result::addSchemaImport);
