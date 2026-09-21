@@ -43,6 +43,7 @@ public final class TranslationContext {
     private final String source;
     private final ArrayDeque<Map<String, String>> constructorNamespaceFrames;
     private final TranslationNameResolver nameResolver;
+    private String libraryModuleNamespace;
 
     public TranslationContext(
             StaticContext moduleContext,
@@ -79,6 +80,14 @@ public final class TranslationContext {
 
     public boolean isMainModule() {
         return this.mainModule;
+    }
+
+    public String libraryModuleNamespace() {
+        return this.libraryModuleNamespace;
+    }
+
+    public void setLibraryModuleNamespace(String libraryModuleNamespace) {
+        this.libraryModuleNamespace = libraryModuleNamespace;
     }
 
     public TranslationNameResolver names() {

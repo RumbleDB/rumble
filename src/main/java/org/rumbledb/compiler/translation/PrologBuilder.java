@@ -21,8 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.antlr.v4.runtime.tree.ParseTree;
-
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -52,7 +50,6 @@ import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 public final class PrologBuilder {
 
     private final TranslationContext translationContext;
-    private final String libraryNamespace;
     private boolean constructionSet;
     private boolean boundarySpaceSet;
     private boolean emptyOrderSet;
@@ -69,9 +66,8 @@ public final class PrologBuilder {
     private final List<TypeDeclaration> types = new ArrayList<>();
     private final List<OptionDeclaration> options = new ArrayList<>();
 
-    public PrologBuilder(TranslationContext translationContext, String libraryNamespace) {
+    public PrologBuilder(TranslationContext translationContext) {
         this.translationContext = translationContext;
-        this.libraryNamespace = libraryNamespace;
     }
 
     // region State-Manipulating Header Receivers
@@ -122,13 +118,13 @@ public final class PrologBuilder {
 
     public void applyDecimalFormat(
             boolean isDefaultDecimalFormat,
-            ParseTree nameContext,
-            List<? extends ParseTree> propertyNames,
+            Name name,
+            List<String> propertyNames,
             List<String> propertyValues,
             ExceptionMetadata metadata) {
         DecimalFormatTranslation.process(
                 isDefaultDecimalFormat,
-                nameContext,
+                name,
                 propertyNames,
                 propertyValues,
                 this.translationContext.moduleContext(),
@@ -170,20 +166,20 @@ public final class PrologBuilder {
         this.defaultCollationSet = true;
     }
 
-    public void importModule(LibraryModule module, ExceptionMetadata metadata) {
+    public void importModule(LibraryModule module) {
         if (!this.moduleNamespaces.add(module.getNamespace())) {
             throw new DuplicateModuleTargetNamespaceException(
-                    "Duplicate module target namespace: " + module.getNamespace(), metadata);
+                    "Duplicate module target namespace: " + module.getNamespace(), module.getMetadata());
         }
         this.modules.add(module);
     }
 
-    public void importSchema(SchemaImport schema, ExceptionMetadata metadata) {
+    public void importSchema(SchemaImport schema) {
         if (!this.schemaNamespaces.add(schema.getTargetNamespace())) {
             throw new SemanticException(
                     "The schema namespace " + schema.getTargetNamespace() + " is imported more than once.",
                     ErrorCode.DuplicateSchemaImportErrorCode,
-                    metadata);
+                    schema.getMetadata());
         }
         bindSchemaNamespace(schema);
         this.schemas.add(schema);
@@ -261,7 +257,8 @@ public final class PrologBuilder {
 
     private void validateNamespace(String kind, Name name, ExceptionMetadata metadata) {
         if (!this.translationContext.isMainModule()
-                && (name.getNamespace() == null || !name.getNamespace().equals(this.libraryNamespace))) {
+                && (name.getNamespace() == null
+                        || !name.getNamespace().equals(this.translationContext.libraryModuleNamespace()))) {
             throw new NamespaceDoesNotMatchModuleException(
                     kind
                             + " "
@@ -269,7 +266,7 @@ public final class PrologBuilder {
                             + ": namespace "
                             + name.getNamespace()
                             + " must match module namespace "
-                            + this.libraryNamespace,
+                            + this.translationContext.libraryModuleNamespace(),
                     metadata);
         }
     }

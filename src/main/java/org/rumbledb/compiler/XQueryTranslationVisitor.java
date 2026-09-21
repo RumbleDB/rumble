@@ -195,7 +195,6 @@ import org.rumbledb.types.SequenceType;
 @Log4j2
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
-    private String libraryModuleNamespace;
     private final CommonTokenStream xQueryTokenStream;
     private final TranslationContext translationContext;
 
@@ -275,11 +274,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public LibraryModule visitLibraryModule(XQueryParser.LibraryModuleContext ctx) {
         return ModuleTranslation.libraryModule(
-                LibraryModuleContext.from(ctx),
-                this.translationContext,
-                this::processURILiteral,
-                ns -> this.libraryModuleNamespace = ns,
-                this::visitProlog);
+                LibraryModuleContext.from(ctx), this.translationContext, this::processURILiteral, this::visitProlog);
     }
 
     @Override
@@ -288,8 +283,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private class PrologVisitor extends XQueryParserBaseVisitor<Void> {
-        private final PrologBuilder builder = new PrologBuilder(
-                XQueryTranslationVisitor.this.translationContext, XQueryTranslationVisitor.this.libraryModuleNamespace);
+        private final PrologBuilder builder = new PrologBuilder(XQueryTranslationVisitor.this.translationContext);
 
         Prolog build(XQueryParser.PrologContext ctx) {
             if (ctx == null) {
@@ -322,23 +316,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitModuleImport(XQueryParser.ModuleImportContext ctx) {
-            this.builder.importModule(
-                    ImportTranslation.moduleImport(
-                            ModuleImportContext.from(ctx),
-                            XQueryTranslationVisitor.this.translationContext,
-                            XQueryTranslationVisitor.this::processURILiteral),
-                    createMetadataFromContext(ctx));
+            this.builder.importModule(ImportTranslation.moduleImport(
+                    ModuleImportContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processURILiteral));
             return null;
         }
 
         @Override
         public Void visitSchemaImport(XQueryParser.SchemaImportContext ctx) {
-            this.builder.importSchema(
-                    ImportTranslation.schemaImport(
-                            SchemaImportContext.from(ctx),
-                            XQueryTranslationVisitor.this.translationContext,
-                            XQueryTranslationVisitor.this::processURILiteral),
-                    createMetadataFromContext(ctx));
+            this.builder.importSchema(ImportTranslation.schemaImport(
+                    SchemaImportContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processURILiteral));
             return null;
         }
 
@@ -388,10 +378,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
+            Name name = ctx.eqName() == null ? null : parseEqName(ctx.eqName(), NameRole.NO_DEFAULT_NAMESPACE);
             this.builder.applyDecimalFormat(
                     ctx.KW_DEFAULT() != null,
-                    ctx.eqName(),
-                    ctx.DFPropertyName(),
+                    name,
+                    ctx.DFPropertyName().stream().map(ParseTree::getText).toList(),
                     ctx.stringLiteral().stream()
                             .map(XQueryTranslationVisitor.this::processStringLiteral)
                             .toList(),

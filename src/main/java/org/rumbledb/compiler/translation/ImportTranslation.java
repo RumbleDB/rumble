@@ -17,7 +17,6 @@ package org.rumbledb.compiler.translation;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
@@ -44,7 +43,7 @@ public final class ImportTranslation {
         List<String> locationHints = ctx.locations().stream()
                 .map(processURILiteral)
                 .map(URILiteralUtils::normalizeAsAnyURI)
-                .collect(Collectors.toList());
+                .toList();
         return new SchemaImport(
                 targetNamespace,
                 ctx.bindingKind(),
@@ -73,7 +72,7 @@ public final class ImportTranslation {
         List<String> locationHints = ctx.locations().stream()
                 .map(processURILiteral)
                 .map(URILiteralUtils::normalizeAsAnyURI)
-                .collect(Collectors.toList());
+                .toList();
         LibraryModule libraryModule = ModuleImportLoader.load(
                 namespace,
                 locationHints,

@@ -221,7 +221,6 @@ import org.rumbledb.types.SequenceType;
 @Log4j2
 public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
-    private String libraryModuleNamespace;
     private final CommonTokenStream jsoniqTokenStream;
     private final TranslationContext translationContext;
 
@@ -297,11 +296,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public LibraryModule visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
         return ModuleTranslation.libraryModule(
-                LibraryModuleContext.from(ctx),
-                this.translationContext,
-                this::processURILiteral,
-                ns -> this.libraryModuleNamespace = ns,
-                this::visitProlog);
+                LibraryModuleContext.from(ctx), this.translationContext, this::processURILiteral, this::visitProlog);
     }
 
     @Override
@@ -310,8 +305,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private class PrologVisitor extends JsoniqParserBaseVisitor<Void> {
-        private final PrologBuilder builder = new PrologBuilder(
-                TranslationVisitor.this.translationContext, TranslationVisitor.this.libraryModuleNamespace);
+        private final PrologBuilder builder = new PrologBuilder(TranslationVisitor.this.translationContext);
 
         Prolog build(JsoniqParser.PrologContext ctx) {
             if (ctx == null) {
@@ -344,23 +338,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
-            this.builder.importModule(
-                    ImportTranslation.moduleImport(
-                            ModuleImportContext.from(ctx),
-                            TranslationVisitor.this.translationContext,
-                            TranslationVisitor.this::processURILiteral),
-                    createMetadataFromContext(ctx));
+            this.builder.importModule(ImportTranslation.moduleImport(
+                    ModuleImportContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::processURILiteral));
             return null;
         }
 
         @Override
         public Void visitSchemaImport(JsoniqParser.SchemaImportContext ctx) {
-            this.builder.importSchema(
-                    ImportTranslation.schemaImport(
-                            SchemaImportContext.from(ctx),
-                            TranslationVisitor.this.translationContext,
-                            TranslationVisitor.this::processURILiteral),
-                    createMetadataFromContext(ctx));
+            this.builder.importSchema(ImportTranslation.schemaImport(
+                    SchemaImportContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::processURILiteral));
             return null;
         }
 
@@ -410,10 +400,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(JsoniqParser.DecimalFormatDeclContext ctx) {
+            Name name = ctx.eqName() == null ? null : parseEqName(ctx.eqName(), NameRole.NO_DEFAULT_NAMESPACE);
             this.builder.applyDecimalFormat(
                     ctx.KW_DEFAULT() != null,
-                    ctx.eqName(),
-                    ctx.DFPropertyName(),
+                    name,
+                    ctx.DFPropertyName().stream().map(ParseTree::getText).toList(),
                     ctx.stringLiteral().stream()
                             .map(TranslationVisitor.this::processStringLiteral)
                             .toList(),

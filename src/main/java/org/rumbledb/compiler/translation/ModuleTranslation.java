@@ -15,7 +15,6 @@
  */
 package org.rumbledb.compiler.translation;
 
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -72,14 +71,13 @@ public final class ModuleTranslation {
                     LibraryModuleContext<UriLiteralCtx, PrologCtx> ctx,
                     TranslationContext translationContext,
                     Function<UriLiteralCtx, String> processURILiteral,
-                    Consumer<String> setLibraryModuleNamespace,
                     Function<PrologCtx, Prolog> visitProlog) {
         String prefix = ctx.prefix();
         String namespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral.apply(ctx.uriLiteral()));
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", translationContext.metadata(ctx.context()));
         }
-        setLibraryModuleNamespace.accept(namespace);
+        translationContext.setLibraryModuleNamespace(namespace);
         translationContext.bindNamespace(prefix, namespace, translationContext.metadata(ctx.context()));
 
         Prolog prolog = visitProlog.apply(ctx.prolog());
