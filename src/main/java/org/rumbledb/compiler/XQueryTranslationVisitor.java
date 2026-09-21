@@ -80,6 +80,7 @@ import org.rumbledb.compiler.context.scripting.FlworStatementContext;
 import org.rumbledb.compiler.context.scripting.SwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
 import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
+import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -97,12 +98,12 @@ import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.translation.TypeTranslation;
 import org.rumbledb.compiler.translation.scripting.ControlStatementTranslation;
+import org.rumbledb.compiler.translation.scripting.DeclarationStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.LoopStatementTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -142,8 +143,6 @@ import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
-import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
-import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
@@ -154,7 +153,6 @@ import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
-import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
@@ -1834,30 +1832,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Statement visitVarDeclStatement(XQueryParser.VarDeclStatementContext ctx) {
-        List<Annotation> annotations = processAnnotations(ctx.annotations());
-        List<VariableDeclStatement> variables = new ArrayList<>();
-        for (XQueryParser.VarDeclForStatementContext varDecl : ctx.varDeclForStatement()) {
-            SequenceType seq = null;
-            Name var = parseVariableBinding(varDecl.var_ref);
-            Expression exprSingle = null;
-
-            if (varDecl.sequenceType() != null) {
-                seq = this.processSequenceType(varDecl.sequenceType());
-            }
-            if (varDecl.exprSingle() != null) {
-                exprSingle = this.visitExprSingle(varDecl.exprSingle());
-                if (seq != null) {
-                    exprSingle = new TreatExpression(
-                            exprSingle, seq, ErrorCode.UnexpectedTypeErrorCode, exprSingle.getMetadata());
-                }
-            }
-            variables.add(
-                    new VariableDeclStatement(annotations, var, seq, exprSingle, createMetadataFromContext(varDecl)));
-        }
-        if (variables.size() == 1) {
-            return variables.get(0);
-        }
-        return new CommaVariableDeclStatement(variables, createMetadataFromContext(ctx));
+        return DeclarationStatementTranslation.varDeclStatement(
+                VarDeclStatementContext.from(ctx),
+                this.translationContext,
+                this::processAnnotations,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     // end declaration
