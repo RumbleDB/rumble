@@ -33,7 +33,6 @@ import org.rumbledb.exceptions.MoreThanOneCopyNamespacesDeclarationException;
 import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
 import org.rumbledb.exceptions.MultipleBaseURIException;
 import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
-import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -81,20 +80,6 @@ public final class PrologTranslation {
 
     // region State-Manipulating Header Receivers
 
-    public void bindNamespace(String prefix, String uri, ExceptionMetadata metadata) {
-        bindNamespace(this.translationContext, prefix, uri, metadata);
-    }
-
-    public static void bindNamespace(
-            TranslationContext translationContext, String prefix, String namespace, ExceptionMetadata metadata) {
-        boolean success = !prefix.isEmpty() && namespace.isEmpty()
-                ? translationContext.moduleContext().unbindNamespace(prefix)
-                : translationContext.moduleContext().bindNamespace(prefix, namespace);
-        if (!success) {
-            throw new NamespacePrefixBoundTwiceException("Prefix " + prefix + " is bound twice.", metadata);
-        }
-    }
-
     public void applyDefaultNamespace(boolean function, String uri, ExceptionMetadata metadata) {
         if (function) {
             if (this.defaultFunctionNamespaceSet) {
@@ -103,7 +88,7 @@ public final class PrologTranslation {
             this.translationContext.moduleContext().setDefaultFunctionNamespaceUri(uri);
             this.defaultFunctionNamespaceSet = true;
         } else {
-            bindNamespace("", uri, metadata);
+            this.translationContext.bindNamespace("", uri, metadata);
         }
     }
 
@@ -200,7 +185,7 @@ public final class PrologTranslation {
         }
         String namespace = schema.getTargetNamespace();
         if (schema.getBindingKind() == SchemaImport.BindingKind.DEFAULT_ELEMENT_NAMESPACE) {
-            bindNamespace("", namespace, schema.getMetadata());
+            this.translationContext.bindNamespace("", namespace, schema.getMetadata());
             return;
         }
         if (namespace.isEmpty()) {
@@ -214,7 +199,7 @@ public final class PrologTranslation {
             throw new PredefinedPrefixInNamespaceDeclarationException(
                     "Schema import prefix " + prefix + " is reserved.", schema.getMetadata());
         }
-        bindNamespace(prefix, namespace, schema.getMetadata());
+        this.translationContext.bindNamespace(prefix, namespace, schema.getMetadata());
     }
 
     /** Complete header processing by loading schemas before any declaration is translated. */

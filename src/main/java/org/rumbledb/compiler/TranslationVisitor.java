@@ -297,7 +297,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 this.translationContext,
                 this::processURILiteral,
                 ns -> this.libraryModuleNamespace = ns,
-                this::bindNamespace,
+                this.translationContext::bindNamespace,
                 this::visitProlog);
     }
 
@@ -326,7 +326,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
-            this.translation.bindNamespace(
+            TranslationVisitor.this.translationContext.bindNamespace(
                     ctx.ncName().getText(), processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
             return null;
         }
@@ -346,7 +346,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                             ModuleImportContext.from(ctx),
                             TranslationVisitor.this.translationContext,
                             TranslationVisitor.this::processURILiteral,
-                            TranslationVisitor.this::bindNamespace),
+                            TranslationVisitor.this.translationContext::bindNamespace),
                     createMetadataFromContext(ctx));
             return null;
         }
@@ -2641,10 +2641,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     // end region
-
-    public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
-        PrologTranslation.bindNamespace(this.translationContext, prefix, namespace, metadata);
-    }
 
     private String processURILiteral(UriLiteralContext ctx) {
         // URI literals use the ordinary JSONiq string rules. XML entity

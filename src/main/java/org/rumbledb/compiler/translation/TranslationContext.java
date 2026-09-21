@@ -29,6 +29,7 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
 import org.rumbledb.exceptions.OurBadException;
 
 /** Shared mutable state used while either grammar translates a module. */
@@ -82,6 +83,15 @@ public final class TranslationContext {
 
     public TranslationNameResolver names() {
         return this.nameResolver;
+    }
+
+    public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
+        boolean success = !prefix.isEmpty() && namespace.isEmpty()
+                ? this.moduleContext.unbindNamespace(prefix)
+                : this.moduleContext.bindNamespace(prefix, namespace);
+        if (!success) {
+            throw new NamespacePrefixBoundTwiceException("Prefix " + prefix + " is bound twice.", metadata);
+        }
     }
 
     public void pushConstructorNamespaceFrame() {

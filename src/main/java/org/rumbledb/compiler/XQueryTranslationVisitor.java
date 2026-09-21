@@ -277,7 +277,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 this.translationContext,
                 this::processURILiteral,
                 ns -> this.libraryModuleNamespace = ns,
-                this::bindNamespace,
+                this.translationContext::bindNamespace,
                 this::visitProlog);
     }
 
@@ -306,7 +306,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
-            this.translation.bindNamespace(
+            XQueryTranslationVisitor.this.translationContext.bindNamespace(
                     ctx.ncName().getText(), processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
             return null;
         }
@@ -326,7 +326,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                             ModuleImportContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
                             XQueryTranslationVisitor.this::processURILiteral,
-                            XQueryTranslationVisitor.this::bindNamespace),
+                            XQueryTranslationVisitor.this.translationContext::bindNamespace),
                     createMetadataFromContext(ctx));
             return null;
         }
@@ -2400,10 +2400,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     // end region
-
-    public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
-        PrologTranslation.bindNamespace(this.translationContext, prefix, namespace, metadata);
-    }
 
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
