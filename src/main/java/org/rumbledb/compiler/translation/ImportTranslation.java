@@ -56,8 +56,7 @@ public final class ImportTranslation {
     public static <UriLiteralCtx extends ParserRuleContext> LibraryModule moduleImport(
             ModuleImportContext<UriLiteralCtx> ctx,
             TranslationContext translationContext,
-            Function<UriLiteralCtx, String> processURILiteral,
-            NamespaceBinder bindNamespace) {
+            Function<UriLiteralCtx, String> processURILiteral) {
         ExceptionMetadata metadata = translationContext.metadata(ctx.context());
         String namespace = processURILiteral.apply(ctx.targetNamespace());
         if (namespace.isEmpty()) {
@@ -82,7 +81,7 @@ public final class ImportTranslation {
                 translationContext.compilationConfiguration(),
                 metadata);
         if (ctx.prefix() != null) {
-            bindNamespace.bind(ctx.prefix(), libraryModule.getNamespace(), metadata);
+            translationContext.bindNamespace(ctx.prefix(), libraryModule.getNamespace(), metadata);
         }
         return libraryModule;
     }

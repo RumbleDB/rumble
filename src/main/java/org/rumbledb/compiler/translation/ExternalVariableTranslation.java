@@ -13,7 +13,7 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler;
+package org.rumbledb.compiler.translation;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -29,9 +29,9 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 /** Adds global declarations implied by external API bindings. */
-public final class ExternalVariableDeclarationProcessor {
+public final class ExternalVariableTranslation {
 
-    private ExternalVariableDeclarationProcessor() {}
+    private ExternalVariableTranslation() {}
 
     /** Returns whether a context-item declaration was synthesized. */
     public static boolean process(Prolog prolog, ExternalBindings externalBindings, ExceptionMetadata metadata) {

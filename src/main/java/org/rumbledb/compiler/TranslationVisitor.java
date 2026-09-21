@@ -108,6 +108,8 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.logic.NotExpression;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
@@ -121,6 +123,7 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
@@ -276,28 +279,27 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
+    public MainModule visitMainModule(JsoniqParser.MainModuleContext ctx) {
         return ModuleTranslation.mainModule(
                 MainModuleContext.from(ctx), this.translationContext, this::visitProlog, this::visitProgram);
     }
 
     // region program
     @Override
-    public Node visitProgram(JsoniqParser.ProgramContext ctx) {
+    public Program visitProgram(JsoniqParser.ProgramContext ctx) {
         return ModuleTranslation.program(
-                ProgramContext.from(ctx), this.translationContext, this::visitStatementsAndOptionalExpr);
+                ProgramContext.from(ctx), this.translationContext, this::translateStatementsAndOptionalExpr);
     }
 
     // end region
 
     @Override
-    public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
+    public LibraryModule visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
         return ModuleTranslation.libraryModule(
                 LibraryModuleContext.from(ctx),
                 this.translationContext,
                 this::processURILiteral,
                 ns -> this.libraryModuleNamespace = ns,
-                this.translationContext::bindNamespace,
                 this::visitProlog);
     }
 
@@ -345,8 +347,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     ImportTranslation.moduleImport(
                             ModuleImportContext.from(ctx),
                             TranslationVisitor.this.translationContext,
-                            TranslationVisitor.this::processURILiteral,
-                            TranslationVisitor.this.translationContext::bindNamespace),
+                            TranslationVisitor.this::processURILiteral),
                     createMetadataFromContext(ctx));
             return null;
         }
@@ -466,7 +467,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                             TranslationVisitor.this::parseVariableBinding,
                             TranslationVisitor.this::processSequenceType,
                             TranslationVisitor.this::processSequenceType,
-                            TranslationVisitor.this::translateFunctionBody),
+                            TranslationVisitor.this::translateStatementsAndOptionalExpr),
                     createMetadataFromContext(ctx));
             return null;
         }
@@ -492,7 +493,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return (Expression) visitExprSingle(ctx);
     }
 
-    private StatementsAndOptionalExpr translateFunctionBody(JsoniqParser.StatementsAndOptionalExprContext ctx) {
+    private StatementsAndOptionalExpr translateStatementsAndOptionalExpr(
+            JsoniqParser.StatementsAndOptionalExprContext ctx) {
         return (StatementsAndOptionalExpr) visitStatementsAndOptionalExpr(ctx);
     }
 

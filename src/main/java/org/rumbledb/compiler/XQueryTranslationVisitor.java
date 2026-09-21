@@ -105,6 +105,8 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
@@ -113,6 +115,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
@@ -256,28 +259,27 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitMainModule(XQueryParser.MainModuleContext ctx) {
+    public MainModule visitMainModule(XQueryParser.MainModuleContext ctx) {
         return ModuleTranslation.mainModule(
                 MainModuleContext.from(ctx), this.translationContext, this::visitProlog, this::visitProgram);
     }
 
     // region program
     @Override
-    public Node visitProgram(XQueryParser.ProgramContext ctx) {
+    public Program visitProgram(XQueryParser.ProgramContext ctx) {
         return ModuleTranslation.program(
-                ProgramContext.from(ctx), this.translationContext, this::visitStatementsAndOptionalExpr);
+                ProgramContext.from(ctx), this.translationContext, this::translateStatementsAndOptionalExpr);
     }
 
     // end region
 
     @Override
-    public Node visitLibraryModule(XQueryParser.LibraryModuleContext ctx) {
+    public LibraryModule visitLibraryModule(XQueryParser.LibraryModuleContext ctx) {
         return ModuleTranslation.libraryModule(
                 LibraryModuleContext.from(ctx),
                 this.translationContext,
                 this::processURILiteral,
                 ns -> this.libraryModuleNamespace = ns,
-                this.translationContext::bindNamespace,
                 this::visitProlog);
     }
 
@@ -325,8 +327,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     ImportTranslation.moduleImport(
                             ModuleImportContext.from(ctx),
                             XQueryTranslationVisitor.this.translationContext,
-                            XQueryTranslationVisitor.this::processURILiteral,
-                            XQueryTranslationVisitor.this.translationContext::bindNamespace),
+                            XQueryTranslationVisitor.this::processURILiteral),
                     createMetadataFromContext(ctx));
             return null;
         }
@@ -446,7 +447,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                             XQueryTranslationVisitor.this::parseVariableBinding,
                             XQueryTranslationVisitor.this::processSequenceType,
                             XQueryTranslationVisitor.this::processSequenceType,
-                            XQueryTranslationVisitor.this::translateFunctionBody),
+                            XQueryTranslationVisitor.this::translateStatementsAndOptionalExpr),
                     createMetadataFromContext(ctx));
             return null;
         }
@@ -466,7 +467,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return (Expression) visitExprSingle(ctx);
     }
 
-    private StatementsAndOptionalExpr translateFunctionBody(XQueryParser.StatementsAndOptionalExprContext ctx) {
+    private StatementsAndOptionalExpr translateStatementsAndOptionalExpr(
+            XQueryParser.StatementsAndOptionalExprContext ctx) {
         return (StatementsAndOptionalExpr) visitStatementsAndOptionalExpr(ctx);
     }
 

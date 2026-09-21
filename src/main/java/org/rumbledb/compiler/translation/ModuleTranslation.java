@@ -22,13 +22,11 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import lombok.extern.log4j.Log4j2;
 
-import org.rumbledb.compiler.ExternalVariableDeclarationProcessor;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.MainModuleContext;
 import org.rumbledb.compiler.context.ProgramContext;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.exceptions.EmptyModuleURIException;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -46,20 +44,20 @@ public final class ModuleTranslation {
     public static <StatementsCtx extends ParserRuleContext> Program program(
             ProgramContext<StatementsCtx> ctx,
             TranslationContext translationContext,
-            Function<StatementsCtx, Node> visitStatementsAndOptionalExpr) {
+            Function<StatementsCtx, StatementsAndOptionalExpr> visitStatementsAndOptionalExpr) {
         StatementsAndOptionalExpr statementsAndOptionalExpr =
-                (StatementsAndOptionalExpr) visitStatementsAndOptionalExpr.apply(ctx.statementsAndOptionalExpr());
+                visitStatementsAndOptionalExpr.apply(ctx.statementsAndOptionalExpr());
         return new Program(statementsAndOptionalExpr, translationContext.metadata(ctx.context()));
     }
 
     public static <PrologCtx extends ParserRuleContext, ProgramCtx extends ParserRuleContext> MainModule mainModule(
             MainModuleContext<PrologCtx, ProgramCtx> ctx,
             TranslationContext translationContext,
-            Function<PrologCtx, Node> visitProlog,
-            Function<ProgramCtx, Node> visitProgram) {
-        Prolog prolog = (Prolog) visitProlog.apply(ctx.prolog());
-        Program program = (Program) visitProgram.apply(ctx.program());
-        if (ExternalVariableDeclarationProcessor.process(
+            Function<PrologCtx, Prolog> visitProlog,
+            Function<ProgramCtx, Program> visitProgram) {
+        Prolog prolog = visitProlog.apply(ctx.prolog());
+        Program program = visitProgram.apply(ctx.program());
+        if (ExternalVariableTranslation.process(
                 prolog, translationContext.externalBindings(), translationContext.metadata(ctx.context()))) {
             log.warn("Adding context item declaration.");
         }
@@ -75,17 +73,16 @@ public final class ModuleTranslation {
                     TranslationContext translationContext,
                     Function<UriLiteralCtx, String> processURILiteral,
                     Consumer<String> setLibraryModuleNamespace,
-                    NamespaceBinder bindNamespace,
-                    Function<PrologCtx, Node> visitProlog) {
+                    Function<PrologCtx, Prolog> visitProlog) {
         String prefix = ctx.prefix();
         String namespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral.apply(ctx.uriLiteral()));
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", translationContext.metadata(ctx.context()));
         }
         setLibraryModuleNamespace.accept(namespace);
-        bindNamespace.bind(prefix, namespace, translationContext.metadata(ctx.context()));
+        translationContext.bindNamespace(prefix, namespace, translationContext.metadata(ctx.context()));
 
-        Prolog prolog = (Prolog) visitProlog.apply(ctx.prolog());
+        Prolog prolog = visitProlog.apply(ctx.prolog());
         LibraryModule module = new LibraryModule(prolog, namespace, translationContext.metadata(ctx.context()));
         module.setStaticContext(translationContext.moduleContext());
         return module;
