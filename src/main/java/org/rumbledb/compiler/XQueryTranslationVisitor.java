@@ -308,7 +308,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
-            XQueryTranslationVisitor.this.translationContext.bindNamespace(
+            this.builder.bindNamespace(
                     ctx.ncName().getText(), processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
             return null;
         }
@@ -346,24 +346,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         @Override
         public Void visitConstructionDecl(XQueryParser.ConstructionDeclContext ctx) {
             boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
-            this.builder.applyBooleanSetting(
-                    PrologBuilder.BooleanSettingKind.CONSTRUCTION, value, createMetadataFromContext(ctx));
+            this.builder.applyConstruction(value, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitBoundarySpaceDecl(XQueryParser.BoundarySpaceDeclContext ctx) {
             boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
-            this.builder.applyBooleanSetting(
-                    PrologBuilder.BooleanSettingKind.BOUNDARY_SPACE, value, createMetadataFromContext(ctx));
+            this.builder.applyBoundarySpace(value, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitEmptyOrderDecl(XQueryParser.EmptyOrderDeclContext ctx) {
             boolean value = ctx.emptySequenceOrder.getText().equals("least");
-            this.builder.applyBooleanSetting(
-                    PrologBuilder.BooleanSettingKind.EMPTY_ORDER, value, createMetadataFromContext(ctx));
+            this.builder.applyEmptyOrder(value, createMetadataFromContext(ctx));
             return null;
         }
 

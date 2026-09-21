@@ -80,6 +80,10 @@ public final class PrologBuilder {
 
     // region State-Manipulating Header Receivers
 
+    public void bindNamespace(String prefix, String uri, ExceptionMetadata metadata) {
+        this.translationContext.bindNamespace(prefix, uri, metadata);
+    }
+
     public void applyDefaultNamespace(boolean function, String uri, ExceptionMetadata metadata) {
         if (function) {
             if (this.defaultFunctionNamespaceSet) {
@@ -90,6 +94,18 @@ public final class PrologBuilder {
         } else {
             this.translationContext.bindNamespace("", uri, metadata);
         }
+    }
+
+    public void applyConstruction(boolean preserve, ExceptionMetadata metadata) {
+        applyBooleanSetting(BooleanSettingKind.CONSTRUCTION, preserve, metadata);
+    }
+
+    public void applyBoundarySpace(boolean preserve, ExceptionMetadata metadata) {
+        applyBooleanSetting(BooleanSettingKind.BOUNDARY_SPACE, preserve, metadata);
+    }
+
+    public void applyEmptyOrder(boolean least, ExceptionMetadata metadata) {
+        applyBooleanSetting(BooleanSettingKind.EMPTY_ORDER, least, metadata);
     }
 
     public void applyBooleanSetting(BooleanSettingKind kind, boolean value, ExceptionMetadata metadata) {

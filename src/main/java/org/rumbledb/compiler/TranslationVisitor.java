@@ -330,7 +330,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
-            TranslationVisitor.this.translationContext.bindNamespace(
+            this.builder.bindNamespace(
                     ctx.ncName().getText(), processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
             return null;
         }
@@ -368,24 +368,21 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         @Override
         public Void visitConstructionDecl(JsoniqParser.ConstructionDeclContext ctx) {
             boolean value = ctx.type.getType() == JsoniqParser.KW_PRESERVE;
-            this.builder.applyBooleanSetting(
-                    PrologBuilder.BooleanSettingKind.CONSTRUCTION, value, createMetadataFromContext(ctx));
+            this.builder.applyConstruction(value, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitBoundarySpaceDecl(JsoniqParser.BoundarySpaceDeclContext ctx) {
             boolean value = ctx.type.getType() == JsoniqParser.KW_PRESERVE;
-            this.builder.applyBooleanSetting(
-                    PrologBuilder.BooleanSettingKind.BOUNDARY_SPACE, value, createMetadataFromContext(ctx));
+            this.builder.applyBoundarySpace(value, createMetadataFromContext(ctx));
             return null;
         }
 
         @Override
         public Void visitEmptyOrderDecl(JsoniqParser.EmptyOrderDeclContext ctx) {
             boolean value = ctx.emptySequenceOrder.getText().equals("least");
-            this.builder.applyBooleanSetting(
-                    PrologBuilder.BooleanSettingKind.EMPTY_ORDER, value, createMetadataFromContext(ctx));
+            this.builder.applyEmptyOrder(value, createMetadataFromContext(ctx));
             return null;
         }
 
