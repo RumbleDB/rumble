@@ -142,10 +142,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
         }
         argument.importModuleContext(this.importedModuleContexts.get(libraryModule.getNamespace()));
-        argument.getInScopeSchemaTypes()
-                .importModuleTypes(this.importedModuleContexts
-                        .get(libraryModule.getNamespace())
-                        .getInScopeSchemaTypes());
         return argument;
     }
 
