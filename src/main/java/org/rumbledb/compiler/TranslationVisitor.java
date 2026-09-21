@@ -409,7 +409,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(JsoniqParser.DecimalFormatDeclContext ctx) {
-            processDecimalFormatDeclaration(ctx, createMetadataFromContext(ctx));
+            DecimalFormatDeclarationProcessor.process(
+                    ctx.KW_DEFAULT() != null,
+                    ctx.eqName(),
+                    ctx.DFPropertyName(),
+                    ctx.stringLiteral().stream()
+                            .map(stringLiteral -> TranslationVisitor.this.jsoniqTokenStream.getText(
+                                    stringLiteral.getSourceInterval()))
+                            .toList(),
+                    TranslationVisitor.this.translationContext.moduleContext(),
+                    true,
+                    createMetadataFromContext(ctx));
             return null;
         }
 
@@ -2794,19 +2804,5 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
         }
         return expressions;
-    }
-
-    private void processDecimalFormatDeclaration(
-            JsoniqParser.DecimalFormatDeclContext ctx, ExceptionMetadata metadata) {
-        DecimalFormatDeclarationProcessor.process(
-                ctx.KW_DEFAULT() != null,
-                ctx.eqName(),
-                ctx.DFPropertyName(),
-                ctx.stringLiteral().stream()
-                        .map(stringLiteral -> this.jsoniqTokenStream.getText(stringLiteral.getSourceInterval()))
-                        .toList(),
-                this.translationContext.moduleContext(),
-                true,
-                metadata);
     }
 }

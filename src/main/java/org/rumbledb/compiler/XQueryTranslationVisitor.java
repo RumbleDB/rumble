@@ -389,7 +389,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
-            processDecimalFormatDeclaration(ctx, createMetadataFromContext(ctx));
+            DecimalFormatDeclarationProcessor.process(
+                    ctx.KW_DEFAULT() != null,
+                    ctx.eqName(),
+                    ctx.DFPropertyName(),
+                    ctx.stringLiteral().stream()
+                            .map(stringLiteral -> XQueryTranslationVisitor.this.xQueryTokenStream.getText(
+                                    stringLiteral.getSourceInterval()))
+                            .toList(),
+                    XQueryTranslationVisitor.this.translationContext.moduleContext(),
+                    false,
+                    createMetadataFromContext(ctx));
             return null;
         }
 
@@ -2547,19 +2557,5 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         DirectConstructorUtils.validateLiteral(childText, ctx, this::createMetadataFromTree);
         String processedContent = DirectConstructorUtils.processLiteralContent(childText);
         return List.of(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
-    }
-
-    private void processDecimalFormatDeclaration(
-            XQueryParser.DecimalFormatDeclContext ctx, ExceptionMetadata metadata) {
-        DecimalFormatDeclarationProcessor.process(
-                ctx.KW_DEFAULT() != null,
-                ctx.eqName(),
-                ctx.DFPropertyName(),
-                ctx.stringLiteral().stream()
-                        .map(stringLiteral -> this.xQueryTokenStream.getText(stringLiteral.getSourceInterval()))
-                        .toList(),
-                this.translationContext.moduleContext(),
-                false,
-                metadata);
     }
 }
