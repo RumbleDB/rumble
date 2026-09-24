@@ -107,9 +107,11 @@ import org.rumbledb.compiler.context.xml.DocumentTestContext;
 import org.rumbledb.compiler.context.xml.ElementTestContext;
 import org.rumbledb.compiler.context.xml.EnclosedContentExprContext;
 import org.rumbledb.compiler.context.xml.NameTestContext;
+import org.rumbledb.compiler.context.xml.PathExprContext;
 import org.rumbledb.compiler.context.xml.PiTestContext;
 import org.rumbledb.compiler.context.xml.SchemaAttributeTestContext;
 import org.rumbledb.compiler.context.xml.SchemaElementTestContext;
+import org.rumbledb.compiler.context.xml.StepExprContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -134,6 +136,7 @@ import org.rumbledb.compiler.translation.scripting.MutationStatementTranslation;
 import org.rumbledb.compiler.translation.xml.XmlComputedConstructorTranslation;
 import org.rumbledb.compiler.translation.xml.XmlDirectConstructorTranslation;
 import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
+import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
@@ -217,27 +220,17 @@ import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
-import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
-import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
-import org.rumbledb.expressions.xml.axis.ForwardAxis;
-import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
-import org.rumbledb.expressions.xml.axis.ReverseAxis;
-import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
-import org.rumbledb.expressions.xml.node_test.AnyKindTest;
-import org.rumbledb.expressions.xml.node_test.AttributeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
-import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
 import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
 import org.rumbledb.runtime.update.primitives.Mode;
-import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
@@ -1921,154 +1914,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Expression visitPathExpr(JsoniqParser.PathExprContext ctx) {
-        if (ctx.singleslash != null) {
-            return visitSingleSlash(ctx, ctx.singleslash);
-        } else if (ctx.doubleslash != null) {
-            return visitDoubleSlash(ctx, ctx.doubleslash);
-        } else if (ctx.relative != null) {
-            return visitRelativeWithoutSlash(ctx.relative);
-        }
-        return visitSingleSlashNoStepExpr(ctx);
-    }
-
-    private Expression visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
-        // Case: No StepExpr, only dash
-        return new PathRootExpression(createMetadataFromContext(ctx));
-    }
-
-    private Expression visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
-        if (relativeContext.stepExpr().size() == 1
-                && relativeContext.stepExpr(0).postfixExpr() != null) {
-            // We only have a postfix expression, not a path expression
-            return this.visitPostfixExpr(relativeContext.stepExpr(0).postfixExpr());
-        }
-        return getSlashes(relativeContext, null);
-    }
-
-    private Expression visitDoubleSlash(
-            JsoniqParser.PathExprContext pathContext, JsoniqParser.RelativePathExprContext doubleSlashContext) {
-        Token leadingDoubleSlash = pathContext.getStart();
-        PathRootExpression functionCallExpression =
-                new PathRootExpression(createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash));
-        StepExpr stepExpr = new ForwardStepExpr(
-                ForwardAxis.DESCENDANT_OR_SELF,
-                new AnyKindTest(),
-                createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash));
-        Expression starter = new SlashExpr(
-                functionCallExpression, stepExpr, createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash));
-        return getSlashes(doubleSlashContext, starter, leadingDoubleSlash);
-    }
-
-    private Expression visitSingleSlash(
-            JsoniqParser.PathExprContext pathContext, JsoniqParser.RelativePathExprContext singleSlashContext) {
-        Token leadingSlash = pathContext.getStart();
-        PathRootExpression functionCallExpression =
-                new PathRootExpression(createMetadataFromRange(leadingSlash, leadingSlash));
-        return getSlashes(singleSlashContext, functionCallExpression, leadingSlash);
-    }
-
-    /**
-     * This method takes a leftMost expression and a path and returns a nested tree of slash expressions which
-     * correspond to the steps in the path applied to the leftMost expression
-     */
-    private Expression getSlashes(JsoniqParser.RelativePathExprContext relativePathExprContext, Expression leftMost) {
-        return getSlashes(relativePathExprContext, leftMost, relativePathExprContext.getStart());
-    }
-
-    private Expression getSlashes(
-            JsoniqParser.RelativePathExprContext relativePathExprContext, Expression leftMost, Token expressionStart) {
-        Expression currentTop = leftMost; // can be null
-        Expression currentStepExpr;
-        for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
-            currentStepExpr = this.visitStepExpr(relativePathExprContext.stepExpr(i));
-            if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
-                // Unroll '//' to forward axis
-                StepExpr intermediaryStepExpr = new ForwardStepExpr(
-                        ForwardAxis.DESCENDANT_OR_SELF,
-                        new AnyKindTest(),
-                        createMetadataFromRange(
-                                relativePathExprContext.sep.get(i - 1), relativePathExprContext.sep.get(i - 1)));
-                if (currentTop == null) {
-                    currentTop = intermediaryStepExpr;
-                } else {
-                    currentTop = new SlashExpr(
-                            currentTop,
-                            intermediaryStepExpr,
-                            createMetadataFromRange(expressionStart, relativePathExprContext.sep.get(i - 1)));
-                }
-            }
-            if (currentTop == null) {
-                currentTop = currentStepExpr;
-            } else {
-                currentTop = new SlashExpr(
-                        currentTop,
-                        currentStepExpr,
-                        createMetadataFromRange(
-                                expressionStart,
-                                relativePathExprContext.stepExpr(i).getStop()));
-            }
-        }
-        return currentTop;
+        return XmlPathTranslation.pathExpr(PathExprContext.from(ctx), this.translationContext, this::visitStepExpr);
     }
 
     @Override
     public Expression visitStepExpr(JsoniqParser.StepExprContext ctx) {
-        if (ctx.postfixExpr() == null) {
-            Expression stepExpr = getStep(ctx.axisStep());
-            for (JsoniqParser.PredicateContext predicateContext :
-                    ctx.axisStep().predicateList().predicate()) {
-                Expression predicate = this.visitPredicate(predicateContext);
-                stepExpr = new FilterExpression(
-                        stepExpr, predicate, createMetadataFromRange(ctx.getStart(), predicateContext.getStop()));
-            }
-            return stepExpr;
-        }
-        return this.visitPostfixExpr(ctx.postfixExpr());
-    }
-
-    private StepExpr getStep(JsoniqParser.AxisStepContext ctx) {
-        if (ctx.forwardStep() == null) {
-            return getReverseStep(ctx.reverseStep());
-        }
-        return getForwardStep(ctx.forwardStep());
-    }
-
-    private StepExpr getForwardStep(JsoniqParser.ForwardStepContext ctx) {
-        ForwardAxis forwardAxis;
-        NodeTest nodeTest;
-        if (ctx.nodeTest() == null) {
-            // Abbreviated step: unprefixed names use default element namespace on child axis, not on @attr.
-            boolean unprefixedUsesDefaultElementNs = ctx.abbrevForwardStep().AT() == null;
-            nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest(), unprefixedUsesDefaultElementNs);
-            if (ctx.abbrevForwardStep().AT() != null) {
-                // @ equivalent with 'attribute::'
-                forwardAxis = ForwardAxis.ATTRIBUTE;
-            } else if (nodeTest instanceof AttributeTest
-                    || (nodeTest instanceof SchemaNodeTest schemaTest
-                            && schemaTest.itemType() instanceof AttributeNodeItemType)) {
-                forwardAxis = ForwardAxis.ATTRIBUTE;
-            } else {
-                forwardAxis = ForwardAxis.CHILD;
-            }
-            return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
-        }
-        forwardAxis = ForwardAxis.fromString(ctx.forwardAxis().getText());
-        boolean unprefixedUsesDefaultElementNs = forwardAxis != ForwardAxis.ATTRIBUTE;
-        nodeTest = getNodeTest(ctx.nodeTest(), unprefixedUsesDefaultElementNs);
-        return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
-    }
-
-    private StepExpr getReverseStep(JsoniqParser.ReverseStepContext ctx) {
-        if (ctx.nodeTest() == null) {
-            // .. equivalent with 'parent::node()'
-            ReverseAxis reverseAxis = ReverseAxis.PARENT;
-            NodeTest nodeTest = new AnyKindTest();
-            return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
-        }
-        ReverseAxis reverseAxis = ReverseAxis.fromString(ctx.reverseAxis().getText());
-        // Reverse axes only match element (and similar) nodes; unprefixed QNames use default element namespace.
-        NodeTest nodeTest = getNodeTest(ctx.nodeTest(), true);
-        return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
+        return XmlPathTranslation.stepExpr(
+                StepExprContext.from(ctx),
+                this.translationContext,
+                this::visitPostfixExpr,
+                this::getNodeTest,
+                this::visitPredicate);
     }
 
     /**
