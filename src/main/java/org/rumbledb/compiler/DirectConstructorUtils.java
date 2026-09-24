@@ -175,7 +175,7 @@ public final class DirectConstructorUtils {
      * @param contentProcessor processes grammar-specific attribute content
      * @return the normalized sequence of attribute content expressions
      */
-    static List<Expression> processQuotedValue(
+    public static List<Expression> processQuotedValue(
             CommonTokenStream tokenStream,
             ParserRuleContext ctx,
             boolean allowEnclosedExpressions,
@@ -243,7 +243,7 @@ public final class DirectConstructorUtils {
      * @param contentProcessor converts a grammar-specific child context to an expression
      * @return element content with adjacent text nodes merged
      */
-    static <T extends ParserRuleContext> List<Expression> mergeElementContent(
+    public static <T extends ParserRuleContext> List<Expression> mergeElementContent(
             CommonTokenStream tokenStream,
             Token firstContentToken,
             List<T> children,
@@ -265,7 +265,7 @@ public final class DirectConstructorUtils {
         return result.finish();
     }
 
-    private static boolean isWhitespaceOnly(String value) {
+    public static boolean isWhitespaceOnly(String value) {
         for (int i = 0; i < value.length(); i++) {
             if (!Character.isWhitespace(value.charAt(i))) {
                 return false;
@@ -279,7 +279,7 @@ public final class DirectConstructorUtils {
      *
      * @return the decoded literal, or the original content when it is not an escape
      */
-    static String processLiteralContent(String content) {
+    public static String processLiteralContent(String content) {
         if (content.startsWith("&") && content.endsWith(";")) {
             return StringEscapeUtils.unescapeXml(content);
         }
@@ -299,7 +299,8 @@ public final class DirectConstructorUtils {
      * @param tree parse-tree node used to locate a validation error
      * @param metadataFactory creates error metadata for the supplied node
      */
-    static void validateLiteral(String source, ParseTree tree, Function<ParseTree, ExceptionMetadata> metadataFactory) {
+    public static void validateLiteral(
+            String source, ParseTree tree, Function<ParseTree, ExceptionMetadata> metadataFactory) {
         if (source.indexOf('<') >= 0) {
             throw new ParsingException(
                     "A direct attribute value must not contain a literal '<' character.", metadataFactory.apply(tree));
