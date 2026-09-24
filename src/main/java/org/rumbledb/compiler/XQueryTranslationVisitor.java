@@ -90,6 +90,7 @@ import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
 import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
 import org.rumbledb.compiler.context.scripting.WhileStatementContext;
+import org.rumbledb.compiler.context.xml.AttributeTestContext;
 import org.rumbledb.compiler.context.xml.CommonContentContext;
 import org.rumbledb.compiler.context.xml.CompAttrConstructorContext;
 import org.rumbledb.compiler.context.xml.CompCommentConstructorContext;
@@ -100,7 +101,13 @@ import org.rumbledb.compiler.context.xml.CompPIConstructorContext;
 import org.rumbledb.compiler.context.xml.CompTextConstructorContext;
 import org.rumbledb.compiler.context.xml.DirElemContentContext;
 import org.rumbledb.compiler.context.xml.DirectConstructorContext;
+import org.rumbledb.compiler.context.xml.DocumentTestContext;
+import org.rumbledb.compiler.context.xml.ElementTestContext;
 import org.rumbledb.compiler.context.xml.EnclosedContentExprContext;
+import org.rumbledb.compiler.context.xml.NameTestContext;
+import org.rumbledb.compiler.context.xml.PiTestContext;
+import org.rumbledb.compiler.context.xml.SchemaAttributeTestContext;
+import org.rumbledb.compiler.context.xml.SchemaElementTestContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -124,6 +131,7 @@ import org.rumbledb.compiler.translation.scripting.LoopStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.MutationStatementTranslation;
 import org.rumbledb.compiler.translation.xml.XmlComputedConstructorTranslation;
 import org.rumbledb.compiler.translation.xml.XmlDirectConstructorTranslation;
+import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
@@ -197,15 +205,8 @@ import org.rumbledb.expressions.xml.axis.ReverseAxis;
 import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
-import org.rumbledb.expressions.xml.node_test.CommentTest;
-import org.rumbledb.expressions.xml.node_test.DocumentTest;
-import org.rumbledb.expressions.xml.node_test.ElementTest;
-import org.rumbledb.expressions.xml.node_test.NameTest;
-import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
-import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
-import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
@@ -1849,153 +1850,109 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
      */
     private NodeTest getNodeTest(
             XQueryParser.NodeTestContext nodeTestContext, boolean unprefixedUsesDefaultElementNamespace) {
-        if (nodeTestContext.nameTest() == null) {
-            // kind test
-            return getKindTest(nodeTestContext.kindTest().children.get(0));
-        }
-        if (nodeTestContext.nameTest().wildcard() == null) {
-            NameRole role = unprefixedUsesDefaultElementNamespace
-                    ? NameRole.ELEMENT_CONSTRUCTOR
-                    : NameRole.NO_DEFAULT_NAMESPACE;
-            Name name = parseEqName(nodeTestContext.nameTest().eqName(), role);
-            return new NameTest(name);
-        } else {
-            String wildcard = nodeTestContext.nameTest().wildcard().getText();
-            return new NameTest(wildcard);
-        }
+        return new NodeTestVisitor(unprefixedUsesDefaultElementNamespace).visit(nodeTestContext);
     }
 
-    // XQuery 3.1 Section 2.5.5 - SequenceType Matching
-    // KindTest ::= DocumentTest | ElementTest | AttributeTest | SchemaElementTest
-    // | SchemaAttributeTest | PITest | CommentTest | TextTest
-    // | NamespaceNodeTest | AnyKindTest
-    private NodeTest getKindTest(ParseTree kindTest) {
-        if (kindTest instanceof XQueryParser.DocumentTestContext docContext) {
-            // XQuery 3.1 Section 2.5.5.3 - Element Test (used within DocumentTest)
-            // DocumentTest ::= "document-node" "(" (ElementTest | SchemaElementTest)? ")"
-            // document-node() matches any document node.
-            // document-node(element(...)) matches a document node containing an element matching the ElementTest.
-            if (docContext.schemaElementTest() != null) {
-                return new SchemaNodeTest(ItemTypeFactory.documentNodeItemType(
-                        getSchemaElementTestAsItemType(docContext.schemaElementTest())));
+    private class NodeTestVisitor extends XQueryParserBaseVisitor<NodeTest> {
+        private final boolean unprefixedUsesDefaultElementNamespace;
+
+        NodeTestVisitor(boolean unprefixedUsesDefaultElementNamespace) {
+            this.unprefixedUsesDefaultElementNamespace = unprefixedUsesDefaultElementNamespace;
+        }
+
+        @Override
+        public NodeTest visitNodeTest(XQueryParser.NodeTestContext ctx) {
+            if (ctx.nameTest() != null) {
+                return visitNameTest(ctx.nameTest());
             }
-            if (docContext.elementTest() == null) {
-                return new DocumentTest(null);
+            if (ctx.kindTest() != null) {
+                return visitKindTest(ctx.kindTest());
             }
-            return new DocumentTest(getKindTest(docContext.elementTest()));
-        } else if (kindTest instanceof XQueryParser.ElementTestContext elementContext) {
-            // XQuery 3.1 Section 2.5.5.3 - Element Test
-            // ElementTest ::= "element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")"
-            // element() and element(*) match any single element node.
-            // element(N) matches any element node whose name is N.
-            // element(N, T) matches an element node whose name is N and whose type annotation is T.
-            // element(*, T) matches any element node whose type annotation is T.
-            // element(N, T?) also matches nillable elements (validation-related, unsupported).
-            // Reject the nillable marker "?" (validation-related feature)
-            if (elementContext.optional != null) {
+            throw new ParsingException("Invalid node test", createMetadataFromContext(ctx));
+        }
+
+        @Override
+        public NodeTest visitNameTest(XQueryParser.NameTestContext ctx) {
+            return XmlNodeTestTranslation.nameTest(
+                    NameTestContext.from(ctx),
+                    this.unprefixedUsesDefaultElementNamespace,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitKindTest(XQueryParser.KindTestContext ctx) {
+            NodeTest result = visit(ctx.getChild(0));
+            if (result == null) {
                 throw new UnsupportedFeatureException(
-                        "Nillable element tests (element(name, type?)) are not supported (validation feature)",
-                        createMetadataFromContext((ParserRuleContext) kindTest));
+                        "Unsupported kind test: " + ctx.getText(), createMetadataFromContext(ctx));
             }
-            Name elementName;
-            if (elementContext.elementNameOrWildcard() != null) {
-                boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
-                if (!hasWildcard) {
-                    elementName = parseEqName(
-                            elementContext.elementNameOrWildcard().elementName().eqName(),
-                            NameRole.ELEMENT_CONSTRUCTOR);
-                    if (elementContext.typeName() == null) {
-                        return new ElementTest(elementName, null);
-                    }
-                    Name typeName = parseEqName(elementContext.typeName().eqName(), NameRole.TYPE);
-                    return new ElementTest(elementName, typeName);
-                }
-                // Wildcard case: element(*) or element(*, type)
-                if (elementContext.typeName() != null) {
-                    Name typeName = parseEqName(elementContext.typeName().eqName(), NameRole.TYPE);
-                    return new ElementTest(typeName);
-                }
-                return new ElementTest(true);
-            }
-            return new ElementTest();
-        } else if (kindTest instanceof XQueryParser.AttributeTestContext attributeTestContext) {
-            // XQuery 3.1 Section 2.5.5.5 - Attribute Test
-            // AttributeTest ::= "attribute" "(" (AttribNameOrWildcard ("," TypeName)?)? ")"
-            // attribute() and attribute(*) match any single attribute node.
-            // attribute(N) matches any attribute node whose name is N.
-            // attribute(N, T) matches an attribute node whose name is N and whose type annotation is T.
-            // attribute(*, T) matches any attribute node whose type annotation is T.
-            Name attributeName;
-            if (attributeTestContext.attributeNameOrWildcard() != null) {
-                boolean hasWildcard =
-                        attributeTestContext.attributeNameOrWildcard().attributeName() == null;
-                if (!hasWildcard) {
-                    attributeName = parseEqName(
-                            attributeTestContext
-                                    .attributeNameOrWildcard()
-                                    .attributeName()
-                                    .eqName(),
-                            NameRole.NO_DEFAULT_NAMESPACE);
-                    if (attributeTestContext.typeName() != null) {
-                        Name typeName =
-                                parseEqName(attributeTestContext.typeName().eqName(), NameRole.TYPE);
-                        return new AttributeTest(attributeName, typeName);
-                    } else {
-                        return new AttributeTest(attributeName, null);
-                    }
-                } else {
-                    // Wildcard case: attribute(*) or attribute(*, type)
-                    if (attributeTestContext.typeName() != null) {
-                        Name typeName =
-                                parseEqName(attributeTestContext.typeName().eqName(), NameRole.TYPE);
-                        return new AttributeTest(typeName);
-                    }
-                    return new AttributeTest(true);
-                }
-            }
-            return new AttributeTest();
-        } else if (kindTest instanceof XQueryParser.TextTestContext) {
-            // XQuery 3.1 Section 2.5.5
-            // TextTest ::= "text" "(" ")"
-            // A TextTest matches any text node.
-            return new TextTest();
-        } else if (kindTest instanceof XQueryParser.CommentTestContext) {
-            // XQuery 3.1 Section 2.5.5
-            // CommentTest ::= "comment" "(" ")"
-            // A CommentTest matches any comment node.
-            return new CommentTest();
-        } else if (kindTest instanceof XQueryParser.PiTestContext piContext) {
-            // XQuery 3.1 Section 2.5.5
-            // PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
-            // processing-instruction() matches any processing-instruction node.
-            // processing-instruction(N) matches any processing-instruction node whose target
-            // name equals fn:normalize-space(N).
-            if (piContext.ncName() != null) {
-                return new PITest(piContext.ncName().getText());
-            }
-            if (piContext.stringLiteral() != null) {
-                String targetName = processStringLiteral(piContext.stringLiteral());
-                return new PITest(targetName);
-            }
-            return new PITest();
-        } else if (kindTest instanceof XQueryParser.NamespaceNodeTestContext) {
-            // XQuery 3.1 Section 2.5.5
-            // NamespaceNodeTest ::= "namespace-node" "(" ")"
-            // A NamespaceNodeTest matches any namespace node.
-            return new NamespaceNodeTest();
-        } else if (kindTest instanceof XQueryParser.AnyKindTestContext) {
-            // XQuery 3.1 Section 2.5.5
-            // AnyKindTest ::= "node" "(" ")"
-            // node() matches any node.
-            return new AnyKindTest();
-        } else if (kindTest instanceof XQueryParser.SchemaElementTestContext ctx) {
-            return new SchemaNodeTest(getSchemaElementTestAsItemType(ctx));
-        } else if (kindTest instanceof XQueryParser.SchemaAttributeTestContext ctx) {
-            return new SchemaNodeTest(getSchemaAttributeTestAsItemType(ctx));
-        } else {
-            throw new UnsupportedFeatureException(
-                    "Unsupported kind test: " + kindTest.getText(),
-                    createMetadataFromContext((ParserRuleContext) kindTest));
+            return result;
+        }
+
+        @Override
+        public NodeTest visitDocumentTest(XQueryParser.DocumentTestContext ctx) {
+            return XmlNodeTestTranslation.documentTest(
+                    DocumentTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitElementTest(XQueryParser.ElementTestContext ctx) {
+            return XmlNodeTestTranslation.elementTest(
+                    ElementTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitAttributeTest(XQueryParser.AttributeTestContext ctx) {
+            return XmlNodeTestTranslation.attributeTest(
+                    AttributeTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitSchemaElementTest(XQueryParser.SchemaElementTestContext ctx) {
+            return XmlNodeTestTranslation.schemaElementTest(
+                    SchemaElementTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitSchemaAttributeTest(XQueryParser.SchemaAttributeTestContext ctx) {
+            return XmlNodeTestTranslation.schemaAttributeTest(
+                    SchemaAttributeTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitPiTest(XQueryParser.PiTestContext ctx) {
+            return XmlNodeTestTranslation.piTest(
+                    PiTestContext.from(ctx), XQueryTranslationVisitor.this::processStringLiteral);
+        }
+
+        @Override
+        public NodeTest visitCommentTest(XQueryParser.CommentTestContext ctx) {
+            return XmlNodeTestTranslation.commentTest();
+        }
+
+        @Override
+        public NodeTest visitTextTest(XQueryParser.TextTestContext ctx) {
+            return XmlNodeTestTranslation.textTest();
+        }
+
+        @Override
+        public NodeTest visitNamespaceNodeTest(XQueryParser.NamespaceNodeTestContext ctx) {
+            return XmlNodeTestTranslation.namespaceNodeTest();
+        }
+
+        @Override
+        public NodeTest visitAnyKindTest(XQueryParser.AnyKindTestContext ctx) {
+            return XmlNodeTestTranslation.anyKindTest();
         }
     }
 
