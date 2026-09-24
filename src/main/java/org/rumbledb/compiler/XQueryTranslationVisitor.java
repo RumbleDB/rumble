@@ -36,6 +36,19 @@ import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.TranslationNameResolver.NameRole;
+import org.rumbledb.compiler.context.AdditiveExprContext;
+import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.ComparisonExprContext;
+import org.rumbledb.compiler.context.IntersectExceptExprContext;
+import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.OrExprContext;
+import org.rumbledb.compiler.context.RangeExprContext;
+import org.rumbledb.compiler.context.SimpleMapExprContext;
+import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
+import org.rumbledb.compiler.context.StringConcatExprContext;
+import org.rumbledb.compiler.context.TypeCheckExprContext;
+import org.rumbledb.compiler.context.UnaryExprContext;
+import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
@@ -47,11 +60,6 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.arithmetic.AdditiveExpression;
-import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
-import org.rumbledb.expressions.arithmetic.UnaryExpression;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
@@ -69,15 +77,9 @@ import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
-import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.flowr.WindowClause;
-import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
-import org.rumbledb.expressions.logic.OrExpression;
-import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
-import org.rumbledb.expressions.miscellaneous.RangeExpression;
-import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -125,10 +127,6 @@ import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.CastableExpression;
-import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
@@ -1044,298 +1042,107 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region operational
     @Override
     public Node visitOrExpr(XQueryParser.OrExprContext ctx) {
-        Expression result = (Expression) this.visitAndExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (XQueryParser.AndExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitAndExpr(child);
-            result = new OrExpression(
-                    result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return Translation.orExpr(OrExprContext.from(ctx), this.translationContext, this::visitAndExpr);
     }
 
     @Override
     public Node visitAndExpr(XQueryParser.AndExprContext ctx) {
-        Expression result = (Expression) this.visitComparisonExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (XQueryParser.ComparisonExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitComparisonExpr(child);
-            result = new AndExpression(
-                    result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return Translation.andExpr(AndExprContext.from(ctx), this.translationContext, this::visitComparisonExpr);
     }
 
     @Override
     public Node visitComparisonExpr(XQueryParser.ComparisonExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitStringConcatExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.StringConcatExprContext child = ctx.rhs.get(0);
-        Expression childExpression = (Expression) this.visitStringConcatExpr(child);
-
-        String operatorSymbol = ctx.op.get(0).getText();
-
-        // Check if node comparison operator
-        if (ctx.op.get(0).nodeComp() != null) {
-            NodeComparisonExpression.NodeComparisonOperator nodeOp =
-                    NodeComparisonExpression.NodeComparisonOperator.fromSymbol(operatorSymbol);
-            return new NodeComparisonExpression(
-                    mainExpression, childExpression, nodeOp, createMetadataFromContext(ctx));
-        }
-
-        // else, it's a generic or value comparison
-        ComparisonExpression.ComparisonOperator kind =
-                ComparisonExpression.ComparisonOperator.fromSymbol(operatorSymbol);
-        if (kind.isValueComparison()
-                || this.translationContext
-                        .configuration()
-                        .optimization()
-                        .optimizeGeneralComparisonToValueComparison()) {
-            return new ComparisonExpression(mainExpression, childExpression, kind, createMetadataFromContext(ctx));
-        }
-
-        Name variableNameLeft = Name.TEMP_VAR1;
-        Name variableNameRight = Name.TEMP_VAR2;
-
-        Clause firstClause =
-                new ForClause(variableNameLeft, false, null, null, mainExpression, createMetadataFromContext(ctx));
-        Clause secondClause =
-                new ForClause(variableNameRight, false, null, null, childExpression, createMetadataFromContext(ctx));
-        firstClause.chainWith(secondClause);
-        Expression valueComparison = new ComparisonExpression(
-                new VariableReferenceExpression(variableNameLeft, createMetadataFromContext(ctx)),
-                new VariableReferenceExpression(variableNameRight, createMetadataFromContext(ctx)),
-                kind.getCorrespondingValueComparison(),
-                createMetadataFromContext(ctx));
-        WhereClause whereClause = new WhereClause(valueComparison, createMetadataFromContext(ctx));
-        secondClause.chainWith(whereClause);
-        ReturnClause returnClause = new ReturnClause(
-                new StringLiteralExpression("", createMetadataFromContext(ctx)), createMetadataFromContext(ctx));
-        whereClause.chainWith(returnClause);
-        Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
-        return new FunctionCallExpression(
-                Name.createVariableInDefaultFunctionNamespace("exists"),
-                Collections.singletonList(flworExpression),
-                createMetadataFromContext(ctx));
+        return Translation.comparisonExpr(
+                ComparisonExprContext.from(ctx), this.translationContext, this::visitStringConcatExpr);
     }
 
     @Override
     public Node visitStringConcatExpr(XQueryParser.StringConcatExprContext ctx) {
-        Expression result = (Expression) this.visitRangeExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (XQueryParser.RangeExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitRangeExpr(child);
-            result = new StringConcatExpression(
-                    result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return Translation.stringConcatExpr(
+                StringConcatExprContext.from(ctx), this.translationContext, this::visitRangeExpr);
     }
 
     @Override
     public Node visitRangeExpr(XQueryParser.RangeExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitAdditiveExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.AdditiveExprContext child = ctx.rhs.get(0);
-        Expression childExpression = (Expression) this.visitAdditiveExpr(child);
-        return new RangeExpression(mainExpression, childExpression, createMetadataFromContext(ctx));
+        return Translation.rangeExpr(RangeExprContext.from(ctx), this.translationContext, this::visitAdditiveExpr);
     }
 
     @Override
     public Node visitAdditiveExpr(XQueryParser.AdditiveExprContext ctx) {
-        Expression result = (Expression) this.visitMultiplicativeExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (int i = 0; i < ctx.rhs.size(); ++i) {
-            XQueryParser.MultiplicativeExprContext child = ctx.rhs.get(i);
-            Expression rightExpression = (Expression) this.visitMultiplicativeExpr(child);
-            result = new AdditiveExpression(
-                    result,
-                    rightExpression,
-                    ctx.op.get(i).getText().equals("-"),
-                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return Translation.additiveExpr(
+                AdditiveExprContext.from(ctx), this.translationContext, this::visitMultiplicativeExpr);
     }
 
     @Override
     public Node visitMultiplicativeExpr(XQueryParser.MultiplicativeExprContext ctx) {
-        Expression result = (Expression) this.visitUnionExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (int i = 0; i < ctx.rhs.size(); ++i) {
-            XQueryParser.UnionExprContext child = ctx.rhs.get(i);
-            Token operator = ctx.op.get(i);
-            validateMultiplicativeOperator(ctx.main_expr, child, operator);
-            Expression rightExpression = (Expression) this.visitUnionExpr(child);
-            result = new MultiplicativeExpression(
-                    result,
-                    rightExpression,
-                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(operator.getText()),
-                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
-    }
-
-    private void validateMultiplicativeOperator(ParseTree leftExpression, ParseTree rightExpression, Token operator) {
-        String operatorText = operator.getText();
-        if (operatorText.equals("*")
-                && (leftExpression.getText().equals("/")
-                        || leftExpression.getText().equals("//"))) {
-            throw new ParsingException(
-                    "Missing path step after leading slash.",
-                    createMetadataFromRange(this.translationContext.startToken(leftExpression), operator));
-        }
-        if (!operatorText.equals("div") && !operatorText.equals("idiv") && !operatorText.equals("mod")) {
-            return;
-        }
-        if (DirectConstructorUtils.getHiddenTextAfter(
-                                this.xQueryTokenStream,
-                                this.translationContext
-                                        .stopToken(leftExpression)
-                                        .getTokenIndex())
-                        .isEmpty()
-                && !hasKeywordOperatorBoundary(
-                        this.translationContext.stopToken(leftExpression).getText(), false)) {
-            throw new ParsingException(
-                    "Keyword operator '" + operatorText + "' must be separated from the left operand.",
-                    createMetadataFromRange(this.translationContext.startToken(leftExpression), operator));
-        }
-        if (DirectConstructorUtils.getHiddenTextAfter(this.xQueryTokenStream, operator.getTokenIndex())
-                        .isEmpty()
-                && !hasKeywordOperatorBoundary(
-                        this.translationContext.startToken(rightExpression).getText(), true)) {
-            throw new ParsingException(
-                    "Keyword operator '" + operatorText + "' must be separated from the right operand.",
-                    createMetadataFromRange(operator, this.translationContext.startToken(rightExpression)));
-        }
-    }
-
-    private boolean hasKeywordOperatorBoundary(String tokenText, boolean checkStart) {
-        if (tokenText == null || tokenText.isEmpty()) {
-            return false;
-        }
-        char boundaryCharacter = checkStart ? tokenText.charAt(0) : tokenText.charAt(tokenText.length() - 1);
-        return !isPotentialKeywordOperandCharacter(boundaryCharacter);
-    }
-
-    private boolean isPotentialKeywordOperandCharacter(char character) {
-        return Character.isLetterOrDigit(character)
-                || character == '_'
-                || character == '-'
-                || character == '.'
-                || character == ':';
+        return Translation.multiplicativeExpr(
+                MultiplicativeExprContext.from(ctx),
+                this.translationContext,
+                this.xQueryTokenStream,
+                this::visitUnionExpr);
     }
 
     @Override
     public Node visitUnionExpr(XQueryParser.UnionExprContext ctx) {
-        Expression result = (Expression) this.visitIntersectExceptExpr(ctx.main_expr);
-        for (XQueryParser.IntersectExceptExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitIntersectExceptExpr(child);
-            result = new NodeSetExpression(
-                    result,
-                    rightExpression,
-                    NodeSetExpression.NodeSetOperator.UNION,
-                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return Translation.unionExpr(
+                UnionExprContext.from(ctx), this.translationContext, this::visitIntersectExceptExpr);
     }
 
     @Override
     public Node visitIntersectExceptExpr(XQueryParser.IntersectExceptExprContext ctx) {
-        Expression result = (Expression) this.visitInstanceOfExpr(ctx.main_expr);
-        for (int i = 0; i < ctx.rhs.size(); ++i) {
-            Expression rightExpression = (Expression) this.visitInstanceOfExpr(ctx.rhs.get(i));
-            result = new NodeSetExpression(
-                    result,
-                    rightExpression,
-                    NodeSetExpression.NodeSetOperator.fromSymbol(ctx.op.get(i).getText()),
-                    createMetadataFromRange(
-                            ctx.main_expr.getStart(), ctx.rhs.get(i).getStop()));
-        }
-        return result;
+        return Translation.intersectExceptExpr(
+                IntersectExceptExprContext.from(ctx), this.translationContext, this::visitInstanceOfExpr);
     }
 
     @Override
     public Node visitSimpleMapExpr(XQueryParser.SimpleMapExprContext ctx) {
-        Expression result = (Expression) this.visitPathExpr(ctx.main_expr);
-        if (ctx.map_expr == null || ctx.map_expr.isEmpty()) {
-            return result;
-        }
-        for (int i = 0; i < ctx.map_expr.size(); ++i) {
-            XQueryParser.PathExprContext child = ctx.map_expr.get(i);
-            Expression rightExpression = (Expression) this.visitPathExpr(child);
-            result = new SimpleMapExpression(
-                    result, rightExpression, createMetadataFromRange(ctx.main_expr.getStart(), child.getStop()));
-        }
-        return result;
+        return Translation.simpleMapExpr(
+                SimpleMapExprContext.from(ctx), this.translationContext, this::visitPathExpr, this::visitPathExpr);
     }
 
     @Override
     public Node visitInstanceOfExpr(XQueryParser.InstanceOfExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitIsStaticallyExpr(ctx.main_expr);
-        if (ctx.seq == null || ctx.seq.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.SequenceTypeContext child = ctx.seq;
-        SequenceType sequenceType = this.processSequenceType(child);
-        return new InstanceOfExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+        return Translation.instanceOfExpr(
+                TypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitIsStaticallyExpr,
+                this::processSequenceType);
     }
 
     @Override
     public Node visitIsStaticallyExpr(XQueryParser.IsStaticallyExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
-        if (ctx.seq == null || ctx.seq.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.SequenceTypeContext child = ctx.seq;
-        SequenceType sequenceType = this.processSequenceType(child);
-        return new IsStaticallyExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+        return Translation.isStaticallyExpr(
+                TypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitTreatExpr,
+                this::processSequenceType);
     }
 
     @Override
     public Node visitTreatExpr(XQueryParser.TreatExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitCastableExpr(ctx.main_expr);
-        if (ctx.seq == null || ctx.seq.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.SequenceTypeContext child = ctx.seq;
-        SequenceType sequenceType = this.processSequenceType(child);
-        return new TreatExpression(
-                mainExpression, sequenceType, ErrorCode.DynamicTypeTreatErrorCode, createMetadataFromContext(ctx));
+        return Translation.treatExpr(
+                TypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitCastableExpr,
+                this::processSequenceType);
     }
 
     @Override
     public Node visitCastableExpr(XQueryParser.CastableExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitCastExpr(ctx.main_expr);
-        if (ctx.single == null || ctx.single.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.SingleTypeContext child = ctx.single;
-        SequenceType sequenceType = this.processSingleType(child);
-        return new CastableExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+        return Translation.castableExpr(
+                SingleTypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitCastExpr,
+                this::processSingleType);
     }
 
     @Override
     public Node visitCastExpr(XQueryParser.CastExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitArrowExpr(ctx.main_expr);
-        if (ctx.single == null || ctx.single.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.SingleTypeContext child = ctx.single;
-        SequenceType sequenceType = this.processSingleType(child);
-        return new CastExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+        return Translation.castExpr(
+                SingleTypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitArrowExpr,
+                this::processSingleType);
     }
 
     @Override
@@ -1367,17 +1174,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitUnaryExpr(XQueryParser.UnaryExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitValueExpr(ctx.main_expr);
-        if (ctx.op == null || ctx.op.isEmpty()) {
-            return mainExpression;
-        }
-        boolean negated = false;
-        for (Token t : ctx.op) {
-            if (t.getText().contentEquals("-")) {
-                negated = !negated;
-            }
-        }
-        return new UnaryExpression(mainExpression, negated, createMetadataFromContext(ctx));
+        return Translation.unaryExpr(UnaryExprContext.from(ctx), this.translationContext, this::visitValueExpr);
     }
 
     @Override
