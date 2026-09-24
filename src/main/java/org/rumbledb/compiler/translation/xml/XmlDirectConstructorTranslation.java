@@ -22,10 +22,11 @@ import java.util.function.Function;
 
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.commons.text.StringEscapeUtils;
 
-import org.rumbledb.compiler.DirectConstructorUtils;
 import org.rumbledb.compiler.context.xml.CommonContentContext;
 import org.rumbledb.compiler.context.xml.DirAttributeListContext;
 import org.rumbledb.compiler.context.xml.DirElemContentContext;
@@ -33,10 +34,12 @@ import org.rumbledb.compiler.context.xml.DirElemOpenCloseContext;
 import org.rumbledb.compiler.context.xml.DirectConstructorContext;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
+import org.rumbledb.compiler.utils.TokenStreamUtils;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DirectElementConstructorTagMismatchException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NamespaceDeclarationAttributeEnclosedExpressionException;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -56,6 +59,121 @@ public final class XmlDirectConstructorTranslation {
     private static class DirAttributeProcessingResult {
         public final List<Expression> attributes = new ArrayList<>();
         public final List<NamespaceDeclaration> namespaceDeclarations = new ArrayList<>();
+    }
+
+    private static final class AttributeValueBuilder {
+        private final BiFunction<ParseTree, ParseTree, ExceptionMetadata> metadataFactory;
+        private final List<Expression> expressions = new ArrayList<>();
+        private StringBuilder text;
+
+        // Used to track the first and last parse-tree nodes of a literal run so that we can assign a source range to
+        // the merged content
+        private ParseTree firstTextTree;
+        private ParseTree lastTextTree;
+
+        AttributeValueBuilder(BiFunction<ParseTree, ParseTree, ExceptionMetadata> metadataFactory) {
+            this.metadataFactory = metadataFactory;
+        }
+
+        void appendText(String value, ParseTree source) {
+            if (value.isEmpty()) {
+                return;
+            }
+            if (this.text == null) {
+                this.text = new StringBuilder();
+                this.firstTextTree = source;
+            }
+            this.text.append(value);
+            this.lastTextTree = source;
+        }
+
+        void append(Expression expression, ParseTree source) {
+            if (expression instanceof AttributeNodeContentExpression textExpression) {
+                appendText(textExpression.getContent(), source);
+                return;
+            }
+            flushText();
+            this.expressions.add(expression);
+        }
+
+        List<Expression> finish() {
+            flushText();
+            return this.expressions;
+        }
+
+        private void flushText() {
+            if (this.text == null) {
+                return;
+            }
+            this.expressions.add(new AttributeNodeContentExpression(
+                    this.text.toString(), this.metadataFactory.apply(this.firstTextTree, this.lastTextTree)));
+            this.text = null;
+            this.firstTextTree = null;
+            this.lastTextTree = null;
+        }
+    }
+
+    private static final class ElementContentBuilder {
+        private final boolean preserveBoundarySpace;
+        private final List<Expression> expressions = new ArrayList<>();
+        private StringBuilder text;
+        private ExceptionMetadata firstTextMetadata;
+        private boolean boundaryWhitespaceOnly;
+
+        ElementContentBuilder(boolean preserveBoundarySpace) {
+            this.preserveBoundarySpace = preserveBoundarySpace;
+        }
+
+        void appendHiddenText(String value, ExceptionMetadata metadata) {
+            if (value.isEmpty()) {
+                return;
+            }
+            ensureText(metadata);
+            this.text.append(value);
+            this.boundaryWhitespaceOnly = this.boundaryWhitespaceOnly && isWhitespaceOnly(value);
+        }
+
+        void append(Expression expression) {
+            if (expression instanceof TextNodeExpression textExpression) {
+                String value = textExpression.getContent();
+                if (value.isEmpty()) {
+                    return;
+                }
+                ensureText(textExpression.getMetadata());
+                this.text.append(value);
+                this.boundaryWhitespaceOnly =
+                        this.boundaryWhitespaceOnly && textExpression.isBoundaryWhitespace() && isWhitespaceOnly(value);
+                return;
+            }
+            flushText();
+            this.expressions.add(expression);
+        }
+
+        List<Expression> finish() {
+            flushText();
+            return this.expressions;
+        }
+
+        private void ensureText(ExceptionMetadata metadata) {
+            if (this.text != null) {
+                return;
+            }
+            this.text = new StringBuilder();
+            this.firstTextMetadata = metadata;
+            this.boundaryWhitespaceOnly = true;
+        }
+
+        private void flushText() {
+            if (this.text == null) {
+                return;
+            }
+            if (this.text.length() > 0 && (this.preserveBoundarySpace || !this.boundaryWhitespaceOnly)) {
+                this.expressions.add(new TextNodeExpression(this.text.toString(), this.firstTextMetadata));
+            }
+            this.text = null;
+            this.firstTextMetadata = null;
+            this.boundaryWhitespaceOnly = true;
+        }
     }
 
     public static <
@@ -155,7 +273,7 @@ public final class XmlDirectConstructorTranslation {
                         visitExpr);
             }
 
-            List<Expression> content = DirectConstructorUtils.mergeElementContent(
+            List<Expression> content = mergeElementContent(
                     tokenStream,
                     openClose.endOpen(),
                     openClose.dirElemContent(),
@@ -225,8 +343,7 @@ public final class XmlDirectConstructorTranslation {
             return new TextNodeExpression(
                     text.substring(9, text.length() - 3), translationContext.metadata(ctx.context()));
         }
-        return new TextNodeExpression(
-                text, translationContext.metadata(ctx.context()), DirectConstructorUtils.isWhitespaceOnly(text));
+        return new TextNodeExpression(text, translationContext.metadata(ctx.context()), isWhitespaceOnly(text));
     }
 
     public static <ExprCtx extends ParserRuleContext> Expression commonContent(
@@ -236,8 +353,7 @@ public final class XmlDirectConstructorTranslation {
         if (ctx.expr() != null) {
             return visitExpr.apply(ctx.expr());
         }
-        String processedContent =
-                DirectConstructorUtils.processLiteralContent(ctx.context().getText());
+        String processedContent = processLiteralContent(ctx.context().getText());
         return new TextNodeExpression(processedContent, translationContext.metadata(ctx.context()));
     }
 
@@ -313,7 +429,7 @@ public final class XmlDirectConstructorTranslation {
                     Function<ParserRuleContext, ExprCtx> extractExprFromAttributeContent,
                     Function<ExprCtx, Expression> visitExpr) {
         if (ctx.getChildCount() > 0 && ctx.getChild(0) instanceof ParserRuleContext quotedValue) {
-            return DirectConstructorUtils.processQuotedValue(
+            return processQuotedValue(
                     tokenStream,
                     quotedValue,
                     allowEnclosedExpressions,
@@ -364,9 +480,123 @@ public final class XmlDirectConstructorTranslation {
         }
 
         String childText = tokenStream.getText(ctx.getSourceInterval());
-        DirectConstructorUtils.validateLiteral(childText, ctx, translationContext::metadata);
-        String processedContent = DirectConstructorUtils.processLiteralContent(childText);
+        validateLiteral(childText, ctx, translationContext::metadata);
+        String processedContent = processLiteralContent(childText);
         ParseTree child = ctx.getChildCount() > 0 ? ctx.getChild(0) : ctx;
         return List.of(new AttributeNodeContentExpression(processedContent, translationContext.metadata(child)));
+    }
+
+    private static List<Expression> processQuotedValue(
+            CommonTokenStream tokenStream,
+            ParserRuleContext ctx,
+            boolean allowEnclosedExpressions,
+            Function<ParseTree, ExceptionMetadata> metadataFactory,
+            BiFunction<ParseTree, ParseTree, ExceptionMetadata> rangeMetadataFactory,
+            BiFunction<ParserRuleContext, Boolean, List<Expression>> contentProcessor) {
+        AttributeValueBuilder result = new AttributeValueBuilder(rangeMetadataFactory);
+        Token previousToken = ctx.getStart();
+        String delimiter = previousToken.getText();
+        String escapeSequence = delimiter + delimiter;
+
+        // Skip the opening and closing delimiter tokens.
+        for (int i = 1; i < ctx.getChildCount() - 1; i++) {
+            ParseTree child = ctx.getChild(i);
+            appendHiddenText(tokenStream, result, previousToken, child, metadataFactory);
+
+            String childText = child.getText();
+            if (childText.startsWith("&") && childText.endsWith(";")) {
+                result.append(
+                        new AttributeNodeContentExpression(
+                                StringEscapeUtils.unescapeXml(childText), metadataFactory.apply(child)),
+                        child);
+            } else if (childText.equals(escapeSequence)) {
+                result.append(new AttributeNodeContentExpression(delimiter, metadataFactory.apply(child)), child);
+            } else {
+                for (Expression expression :
+                        contentProcessor.apply((ParserRuleContext) child, allowEnclosedExpressions)) {
+                    result.append(expression, child);
+                }
+            }
+            previousToken = getStopToken(child);
+        }
+
+        appendHiddenText(tokenStream, result, previousToken, ctx, metadataFactory);
+        return result.finish();
+    }
+
+    private static <T extends ParserRuleContext> List<Expression> mergeElementContent(
+            CommonTokenStream tokenStream,
+            Token firstContentToken,
+            List<T> children,
+            boolean preserveBoundarySpace,
+            Function<T, Expression> contentProcessor) {
+        ElementContentBuilder result = new ElementContentBuilder(preserveBoundarySpace);
+        Token previousToken = firstContentToken;
+
+        for (T child : children) {
+            Expression expression = contentProcessor.apply(child);
+            result.appendHiddenText(
+                    TokenStreamUtils.getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+                    expression.getMetadata());
+            result.append(expression);
+            previousToken = child.getStop();
+        }
+
+        result.appendHiddenText(
+                TokenStreamUtils.getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+                ExceptionMetadata.EMPTY_METADATA);
+        return result.finish();
+    }
+
+    public static boolean isWhitespaceOnly(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isWhitespace(value.charAt(i))) {
+                return false;
+            }
+        }
+        return !value.isEmpty();
+    }
+
+    public static String processLiteralContent(String content) {
+        if (content.startsWith("&") && content.endsWith(";")) {
+            return StringEscapeUtils.unescapeXml(content);
+        }
+        if (content.equals("{{")) {
+            return "{";
+        }
+        if (content.equals("}}")) {
+            return "}";
+        }
+        return content;
+    }
+
+    private static void validateLiteral(
+            String source, ParseTree tree, Function<ParseTree, ExceptionMetadata> metadataFactory) {
+        if (source.indexOf('<') >= 0) {
+            throw new ParsingException(
+                    "A direct attribute value must not contain a literal '<' character.", metadataFactory.apply(tree));
+        }
+    }
+
+    private static void appendHiddenText(
+            CommonTokenStream tokenStream,
+            AttributeValueBuilder result,
+            Token previousToken,
+            ParseTree tree,
+            Function<ParseTree, ExceptionMetadata> metadataFactory) {
+        String hiddenText = TokenStreamUtils.getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
+        validateLiteral(hiddenText, tree, metadataFactory);
+        result.appendText(hiddenText, tree);
+    }
+
+    private static Token getStopToken(ParseTree tree) {
+        if (tree instanceof ParserRuleContext parserRuleContext) {
+            return parserRuleContext.getStop();
+        }
+        if (tree instanceof TerminalNode terminalNode) {
+            return terminalNode.getSymbol();
+        }
+        throw new IllegalArgumentException(
+                "Cannot get stop token from parse tree: " + tree.getClass().getName());
     }
 }
