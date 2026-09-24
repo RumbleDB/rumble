@@ -33,7 +33,8 @@ public record ComparisonExprContext<ChildExprCtx extends ParserRuleContext>(
             JsoniqParser.ComparisonExprContext c) {
         String operatorSymbol =
                 (c.op == null || c.op.isEmpty()) ? null : c.op.get(0).getText();
-        return new ComparisonExprContext<>(c.main_expr, c.rhs, operatorSymbol, false, c);
+        boolean isNodeComp = (c.op != null && !c.op.isEmpty() && c.op.get(0).nodeComp() != null);
+        return new ComparisonExprContext<>(c.main_expr, c.rhs, operatorSymbol, isNodeComp, c);
     }
 
     public static ComparisonExprContext<XQueryParser.StringConcatExprContext> from(
