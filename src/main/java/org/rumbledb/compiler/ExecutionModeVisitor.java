@@ -91,7 +91,7 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
 /**
- * Static context visitor implements a multi-pass algorithm that enables function hoisting
+ * Propagates execution modes for one pass of the algorithm driven by ExecutionModeResolver.
  */
 @Log4j2
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
@@ -102,7 +102,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     private List<Statement> exitStatementChildren;
 
     ExecutionModeVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
-        this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
+        this.visitorConfig = VisitorConfig.EXECUTION_MODE_INITIAL_PASS;
         this.configuration = configuration;
         this.externalBindings = externalBindings;
         this.exitStatementChildren = new ArrayList<>();
@@ -153,7 +153,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         Name variableName = expression.getVariableName();
         ExecutionMode mode = expression.getStaticContext().getVariableStorageMode(variableName);
-        if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
+        if (this.visitorConfig.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal()
+                && mode.equals(ExecutionMode.UNSET)) {
             if (expression.getStaticSequenceType().getArity().equals(Arity.OneOrMore)
                     || expression.getStaticSequenceType().getArity().equals(Arity.ZeroOrMore)) {
                 if (expression.getStaticSequenceType().getItemType().isObjectItemType()) {

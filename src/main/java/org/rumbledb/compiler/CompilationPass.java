@@ -15,23 +15,16 @@
  */
 package org.rumbledb.compiler;
 
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.StaticContext;
-import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.Module;
 
 /**
- * Marks all visited nodes as local when parallel execution is disabled.
+ * One ordered compilation stage. Analysis and validation passes may mutate the input and return it;
+ * rewrites may return a replacement. Callers must always continue with the returned module.
+ * Implementations must not retain visitor state between invocations. Prerequisites and annotation
+ * effects are documented by each pass; ordering is owned by CompilationPipeline.
  */
-public class LocalExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
+interface CompilationPass<M extends Module> {
+    String name();
 
-    LocalExecutionModeVisitor(RumbleConfiguration configuration) {}
-
-    @Override
-    protected StaticContext defaultAction(Node node, StaticContext argument) {
-        visitDescendants(node, argument);
-        node.setHighestExecutionMode(ExecutionMode.LOCAL);
-        return argument;
-    }
+    M apply(M module, CompilationContext context);
 }

@@ -15,23 +15,8 @@
  */
 package org.rumbledb.compiler;
 
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.StaticContext;
-import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.Node;
 
-/**
- * Marks all visited nodes as local when parallel execution is disabled.
- */
-public class LocalExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
-
-    LocalExecutionModeVisitor(RumbleConfiguration configuration) {}
-
-    @Override
-    protected StaticContext defaultAction(Node node, StaticContext argument) {
-        visitDescendants(node, argument);
-        node.setHighestExecutionMode(ExecutionMode.LOCAL);
-        return argument;
-    }
-}
+/** Inputs shared by compilation passes, separate from the language's lexical StaticContext. */
+record CompilationContext(RumbleConfiguration configuration, ExternalBindings externalBindings) {}

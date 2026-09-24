@@ -272,7 +272,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     private final RumbleConfiguration config;
 
     public RuntimeIteratorVisitor(RumbleConfiguration config) {
-        this.visitorConfig = VisitorConfig.runtimeIteratorVisitorConfig;
+        this.visitorConfig = VisitorConfig.RUNTIME_PLAN_GENERATION;
         this.config = config;
     }
 

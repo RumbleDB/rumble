@@ -15,78 +15,27 @@
  */
 package org.rumbledb.compiler;
 
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Value;
+import lombok.experimental.Accessors;
+
+@Value
+@Builder(access = AccessLevel.PACKAGE)
+@Accessors(fluent = true)
 public class VisitorConfig {
 
-    // flag to suppress errors when a function declaration collides with an existing function
-    private final boolean suppressErrorsForFunctionSignatureCollision;
-    // flag to suppress errors when an unrecognized function is called
-    private final boolean suppressErrorsForCallingMissingFunctions;
-    // flag to suppress errors when an unset execution mode value is fetched from a node
-    private final boolean suppressErrorsForAccessingUnsetExecutionModes;
-    // flag to set unset expressions (actually, variable references) to local
-    private final boolean setUnsetExecutionModeOfVariableReferenceExpressionsToLocal;
+    /** Whether duplicate function signatures are tolerated during this pass. */
+    boolean suppressErrorsForFunctionSignatureCollision;
 
-    public static class Builder {
-        private boolean suppressErrorsForFunctionSignatureCollision = false;
-        private boolean suppressErrorsForCallingMissingFunctions = false;
-        private boolean suppressErrorsForAccessingUnsetExecutionModes = false;
-        private boolean setUnsetExecutionModeOfVariableReferenceExpressionsToLocal = false;
+    /** Whether unresolved function calls are tolerated during this pass. */
+    boolean suppressErrorsForCallingMissingFunctions;
 
-        Builder withsuppressErrorsForFunctionSignatureCollision(boolean value) {
-            this.suppressErrorsForFunctionSignatureCollision = value;
-            return this;
-        }
+    /** Whether reading an unresolved execution mode is tolerated during this pass. */
+    boolean suppressErrorsForAccessingUnsetExecutionModes;
 
-        Builder withSuppressErrorsForCallingMissingFunctions(boolean value) {
-            this.suppressErrorsForCallingMissingFunctions = value;
-            return this;
-        }
-
-        Builder withSuppressErrorsForAccessingUnsetExecutionModes(boolean value) {
-            this.suppressErrorsForAccessingUnsetExecutionModes = value;
-            return this;
-        }
-
-        Builder withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(boolean value) {
-            this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal = value;
-            return this;
-        }
-
-        VisitorConfig build() {
-            return new VisitorConfig(
-                    this.suppressErrorsForFunctionSignatureCollision,
-                    this.suppressErrorsForCallingMissingFunctions,
-                    this.suppressErrorsForAccessingUnsetExecutionModes,
-                    this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal);
-        }
-    }
-
-    private VisitorConfig(
-            boolean suppressErrorsForFunctionSignatureCollision,
-            boolean suppressErrorsForCallingMissingFunctions,
-            boolean suppressErrorsForAccessingUnsetExecutionModes,
-            boolean setUnsetToLocal) {
-        this.suppressErrorsForFunctionSignatureCollision = suppressErrorsForFunctionSignatureCollision;
-        this.suppressErrorsForCallingMissingFunctions = suppressErrorsForCallingMissingFunctions;
-        this.suppressErrorsForAccessingUnsetExecutionModes = suppressErrorsForAccessingUnsetExecutionModes;
-        this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal = setUnsetToLocal;
-    }
-
-    public boolean suppressErrorsForFunctionSignatureCollision() {
-        return this.suppressErrorsForFunctionSignatureCollision;
-    }
-
-    public boolean suppressErrorsForCallingMissingFunctions() {
-        return this.suppressErrorsForCallingMissingFunctions;
-    }
-
-    public boolean suppressErrorsForAccessingUnsetExecutionModes() {
-        return this.suppressErrorsForAccessingUnsetExecutionModes;
-    }
-
-    public boolean setUnsetToLocal() {
-        return this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal;
-    }
+    /** Whether unresolved variable-reference execution modes are treated as local. */
+    boolean setUnsetExecutionModeOfVariableReferenceExpressionsToLocal;
 
     /**
      * The initial pass should collect all function declaration information to support hoisting.
@@ -94,11 +43,9 @@ public class VisitorConfig {
      * As Some functions may not be known yet, missing functions should not raise errors.
      * Since unknown functions have unset execution modes, errors should not be raised for accessing these.
      */
-    static final VisitorConfig staticContextVisitorInitialPassConfig = new VisitorConfig.Builder()
-            .withsuppressErrorsForFunctionSignatureCollision(false)
-            .withSuppressErrorsForCallingMissingFunctions(true)
-            .withSuppressErrorsForAccessingUnsetExecutionModes(true)
-            .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
+    static final VisitorConfig EXECUTION_MODE_INITIAL_PASS = VisitorConfig.builder()
+            .suppressErrorsForCallingMissingFunctions(true)
+            .suppressErrorsForAccessingUnsetExecutionModes(true)
             .build();
 
     /**
@@ -106,27 +53,18 @@ public class VisitorConfig {
      * As all UDFs should be known at this stage, missing functions should raise errors
      * As UDFs may still have unresolved execution modes, errors should not be raised for accessing these.
      */
-    static final VisitorConfig staticContextVisitorIntermediatePassConfig = new VisitorConfig.Builder()
-            .withsuppressErrorsForFunctionSignatureCollision(true)
-            .withSuppressErrorsForCallingMissingFunctions(false)
-            .withSuppressErrorsForAccessingUnsetExecutionModes(true)
-            .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
+    static final VisitorConfig EXECUTION_MODE_INTERMEDIATE_PASS = VisitorConfig.builder()
+            .suppressErrorsForFunctionSignatureCollision(true)
+            .suppressErrorsForAccessingUnsetExecutionModes(true)
             .build();
 
     /**
      * All expression execution mode and UDF information should be available in the final pass
      */
-    static final VisitorConfig staticContextVisitorFinalPassConfig = new VisitorConfig.Builder()
-            .withsuppressErrorsForFunctionSignatureCollision(true)
-            .withSuppressErrorsForCallingMissingFunctions(false)
-            .withSuppressErrorsForAccessingUnsetExecutionModes(false)
-            .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(true)
+    static final VisitorConfig EXECUTION_MODE_FINAL_PASS = VisitorConfig.builder()
+            .suppressErrorsForFunctionSignatureCollision(true)
+            .setUnsetExecutionModeOfVariableReferenceExpressionsToLocal(true)
             .build();
 
-    static final VisitorConfig runtimeIteratorVisitorConfig = new VisitorConfig.Builder()
-            .withsuppressErrorsForFunctionSignatureCollision(false)
-            .withSuppressErrorsForCallingMissingFunctions(false)
-            .withSuppressErrorsForAccessingUnsetExecutionModes(false)
-            .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
-            .build();
+    static final VisitorConfig RUNTIME_PLAN_GENERATION = VisitorConfig.builder().build();
 }
