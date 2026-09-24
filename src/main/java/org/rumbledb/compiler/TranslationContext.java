@@ -108,15 +108,15 @@ final class TranslationContext {
     }
 
     ExceptionMetadata metadata(ParserRuleContext context) {
-        return metadata(context.getStart(), context.getStop());
+        return this.metadata(context.getStart(), context.getStop());
     }
 
     ExceptionMetadata metadata(ParseTree tree) {
-        return metadata(startToken(tree), stopToken(tree));
+        return this.metadata(this.startToken(tree), this.stopToken(tree));
     }
 
     ExceptionMetadata metadata(ParseTree startTree, ParseTree endTree) {
-        return metadata(startToken(startTree), stopToken(endTree));
+        return this.metadata(this.startToken(startTree), this.stopToken(endTree));
     }
 
     ExceptionMetadata metadata(Token start, Token end) {
