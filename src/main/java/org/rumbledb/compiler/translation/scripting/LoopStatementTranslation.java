@@ -20,11 +20,18 @@ import java.util.function.Function;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import org.rumbledb.compiler.context.scripting.ExitStatementContext;
 import org.rumbledb.compiler.context.scripting.FlworStatementContext;
+import org.rumbledb.compiler.context.scripting.WhileStatementContext;
 import org.rumbledb.compiler.translation.TranslationContext;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ContinueStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 
 public final class LoopStatementTranslation {
@@ -61,5 +68,32 @@ public final class LoopStatementTranslation {
         lastFlowrClause.chainWith(returnStatementClause);
         returnStatementClause = returnStatementClause.detachInitialLetClausesForStatements();
         return new FlowrStatement(returnStatementClause, translationContext.metadata(ctx.context()));
+    }
+
+    public static <ExprCtx extends ParserRuleContext, StmtCtx extends ParserRuleContext> WhileStatement whileStatement(
+            WhileStatementContext<ExprCtx, StmtCtx> ctx,
+            TranslationContext translationContext,
+            Function<ExprCtx, Expression> visitExpr,
+            Function<StmtCtx, Statement> visitStatement) {
+        Expression testCondition = visitExpr.apply(ctx.testExpr());
+        Statement statement = visitStatement.apply(ctx.stmt());
+        return new WhileStatement(testCondition, statement, translationContext.metadata(ctx.context()));
+    }
+
+    public static BreakStatement breakStatement(ParserRuleContext context, TranslationContext translationContext) {
+        return new BreakStatement(translationContext.metadata(context));
+    }
+
+    public static ContinueStatement continueStatement(
+            ParserRuleContext context, TranslationContext translationContext) {
+        return new ContinueStatement(translationContext.metadata(context));
+    }
+
+    public static <ExprSingleCtx extends ParserRuleContext> ExitStatement exitStatement(
+            ExitStatementContext<ExprSingleCtx> ctx,
+            TranslationContext translationContext,
+            Function<ExprSingleCtx, Expression> visitExprSingle) {
+        Expression exprSingle = visitExprSingle.apply(ctx.exprSingle());
+        return new ExitStatement(exprSingle, translationContext.metadata(ctx.context()));
     }
 }

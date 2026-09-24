@@ -76,11 +76,21 @@ import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.context.WindowClauseContext;
+import org.rumbledb.compiler.context.scripting.ApplyStatementContext;
+import org.rumbledb.compiler.context.scripting.AssignStatementContext;
+import org.rumbledb.compiler.context.scripting.BlockExprContext;
+import org.rumbledb.compiler.context.scripting.BlockStatementContext;
+import org.rumbledb.compiler.context.scripting.ExitStatementContext;
 import org.rumbledb.compiler.context.scripting.FlworStatementContext;
+import org.rumbledb.compiler.context.scripting.IfStatementContext;
+import org.rumbledb.compiler.context.scripting.StatementsAndExprContext;
+import org.rumbledb.compiler.context.scripting.StatementsAndOptionalExprContext;
+import org.rumbledb.compiler.context.scripting.StatementsContext;
 import org.rumbledb.compiler.context.scripting.SwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
 import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
+import org.rumbledb.compiler.context.scripting.WhileStatementContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -97,9 +107,11 @@ import org.rumbledb.compiler.translation.SequenceTranslation;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.translation.TypeTranslation;
+import org.rumbledb.compiler.translation.scripting.BlockStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.ControlStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.DeclarationStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.LoopStatementTranslation;
+import org.rumbledb.compiler.translation.scripting.MutationStatementTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
@@ -1682,34 +1694,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region scripting
     @Override
     public StatementsAndOptionalExpr visitStatements(XQueryParser.StatementsContext ctx) {
-        List<Statement> statements = new ArrayList<>();
-        for (XQueryParser.StatementContext stmt : ctx.statement()) {
-            statements.add(this.visitStatement(stmt));
-        }
-        return new StatementsAndOptionalExpr(statements, null, createMetadataFromContext(ctx));
+        return BlockStatementTranslation.statements(
+                StatementsContext.from(ctx), this.translationContext, this::visitStatement);
     }
 
     @Override
     public StatementsAndExpr visitStatementsAndExpr(XQueryParser.StatementsAndExprContext ctx) {
-        List<Statement> statements = new ArrayList<>();
-        for (XQueryParser.StatementContext stmt : ctx.statements().statement()) {
-            statements.add(this.visitStatement(stmt));
-        }
-        Expression expression = this.visitExpr(ctx.expr());
-        return new StatementsAndExpr(statements, expression, createMetadataFromContext(ctx));
+        return BlockStatementTranslation.statementsAndExpr(
+                StatementsAndExprContext.from(ctx), this.translationContext, this::visitStatement, this::visitExpr);
     }
 
     @Override
     public StatementsAndOptionalExpr visitStatementsAndOptionalExpr(XQueryParser.StatementsAndOptionalExprContext ctx) {
-        List<Statement> statements = new ArrayList<>();
-        for (XQueryParser.StatementContext stmt : ctx.statements().statement()) {
-            statements.add(this.visitStatement(stmt));
-        }
-        if (ctx.expr() != null) {
-            Expression expression = this.visitExpr(ctx.expr());
-            return new StatementsAndOptionalExpr(statements, expression, createMetadataFromContext(ctx));
-        }
-        return new StatementsAndOptionalExpr(statements, null, createMetadataFromContext(ctx));
+        return BlockStatementTranslation.statementsAndOptionalExpr(
+                StatementsAndOptionalExprContext.from(ctx),
+                this.translationContext,
+                this::visitStatement,
+                this::visitExpr);
     }
 
     @Override
@@ -1720,50 +1721,49 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // mutation
     @Override
     public ApplyStatement visitApplyStatement(XQueryParser.ApplyStatementContext ctx) {
-        Expression exprSimple = this.visitExprSimple(ctx.exprSimple());
-        return new ApplyStatement(exprSimple, createMetadataFromContext(ctx));
+        return MutationStatementTranslation.applyStatement(
+                ApplyStatementContext.from(ctx), this.translationContext, this::visitExprSimple);
     }
 
     @Override
     public AssignStatement visitAssignStatement(XQueryParser.AssignStatementContext ctx) {
-        Name paramName = parseVariableReference(ctx.var_ref);
-        Expression exprSingle = this.visitExprSingle(ctx.exprSingle());
-        return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
+        return MutationStatementTranslation.assignStatement(
+                AssignStatementContext.from(ctx),
+                this.translationContext,
+                this::parseVariableReference,
+                this::visitExprSingle);
     }
     // end mutation
 
     // block
     @Override
     public BlockStatement visitBlockStatement(XQueryParser.BlockStatementContext ctx) {
-        List<Statement> statements = new ArrayList<>();
-        for (XQueryParser.StatementContext statement : ctx.statements().statement()) {
-            statements.add(this.visitStatement(statement));
-        }
-        return new BlockStatement(statements, createMetadataFromContext(ctx));
+        return BlockStatementTranslation.blockStatement(
+                BlockStatementContext.from(ctx), this.translationContext, this::visitStatement);
     }
 
     @Override
     public BlockExpression visitBlockExpr(XQueryParser.BlockExprContext ctx) {
-        StatementsAndExpr statementsAndExpr = this.visitStatementsAndExpr(ctx.statementsAndExpr());
-        return new BlockExpression(statementsAndExpr, createMetadataFromContext(ctx));
+        return BlockStatementTranslation.blockExpr(
+                BlockExprContext.from(ctx), this.translationContext, this::visitStatementsAndExpr);
     }
     // end block
 
     // loops
     @Override
     public BreakStatement visitBreakStatement(XQueryParser.BreakStatementContext ctx) {
-        return new BreakStatement(createMetadataFromContext(ctx));
+        return LoopStatementTranslation.breakStatement(ctx, this.translationContext);
     }
 
     @Override
     public ContinueStatement visitContinueStatement(XQueryParser.ContinueStatementContext ctx) {
-        return new ContinueStatement(createMetadataFromContext(ctx));
+        return LoopStatementTranslation.continueStatement(ctx, this.translationContext);
     }
 
     @Override
     public ExitStatement visitExitStatement(XQueryParser.ExitStatementContext ctx) {
-        Expression exprSingle = this.visitExprSingle(ctx.exprSingle());
-        return new ExitStatement(exprSingle, createMetadataFromContext(ctx));
+        return LoopStatementTranslation.exitStatement(
+                ExitStatementContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
@@ -1779,9 +1779,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public WhileStatement visitWhileStatement(XQueryParser.WhileStatementContext ctx) {
-        Expression testCondition = this.visitExpr(ctx.test_expr);
-        Statement statement = this.visitStatement(ctx.stmt);
-        return new WhileStatement(testCondition, statement, createMetadataFromContext(ctx));
+        return LoopStatementTranslation.whileStatement(
+                WhileStatementContext.from(ctx), this.translationContext, this::visitExpr, this::visitStatement);
     }
 
     // end loops
@@ -1790,10 +1789,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public ConditionalStatement visitIfStatement(XQueryParser.IfStatementContext ctx) {
-        Expression condition = this.visitExpr(ctx.test_expr);
-        Statement branch = this.visitStatement(ctx.branch);
-        Statement elseBranch = this.visitStatement(ctx.else_branch);
-        return new ConditionalStatement(condition, branch, elseBranch, createMetadataFromContext(ctx));
+        return ControlStatementTranslation.ifStatement(
+                IfStatementContext.from(ctx), this.translationContext, this::visitExpr, this::visitStatement);
     }
 
     @Override

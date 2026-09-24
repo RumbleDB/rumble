@@ -25,6 +25,7 @@ import java.util.function.Function;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import org.rumbledb.compiler.context.NameTestContext;
+import org.rumbledb.compiler.context.scripting.IfStatementContext;
 import org.rumbledb.compiler.context.scripting.SwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
 import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
@@ -35,6 +36,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
@@ -128,5 +130,17 @@ public final class ControlStatementTranslation {
                 cases,
                 new TypeSwitchStatementCase(defaultVariableName, defaultStatement),
                 translationContext.metadata(ctx.context()));
+    }
+
+    public static <ExprCtx extends ParserRuleContext, StmtCtx extends ParserRuleContext>
+            ConditionalStatement ifStatement(
+                    IfStatementContext<ExprCtx, StmtCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<ExprCtx, Expression> visitExpr,
+                    Function<StmtCtx, Statement> visitStatement) {
+        Expression condition = visitExpr.apply(ctx.testExpr());
+        Statement branch = visitStatement.apply(ctx.branch());
+        Statement elseBranch = visitStatement.apply(ctx.elseBranch());
+        return new ConditionalStatement(condition, branch, elseBranch, translationContext.metadata(ctx.context()));
     }
 }
