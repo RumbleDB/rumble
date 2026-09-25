@@ -13,7 +13,6 @@ jobs:
   resolve-baseline:
     name: Resolve Baseline
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     permissions:
       actions: read
     outputs:
@@ -23,7 +22,6 @@ jobs:
         id: find-baseline
         uses: actions/github-script@v9
         with:
-          retries: 3
           script: |
             const isPullRequest = context.eventName === 'pull_request';
             const branch = isPullRequest
