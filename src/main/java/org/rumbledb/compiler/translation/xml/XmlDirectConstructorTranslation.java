@@ -54,10 +54,18 @@ import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 
+/**
+ * Translation logic for XML direct constructors (elements, comments, processing instructions, attributes, and content).
+ * Operates on parser-agnostic context adapters so that direct constructor AST construction is shared between JSONiq and
+ * XQuery.
+ */
 public final class XmlDirectConstructorTranslation {
 
     private XmlDirectConstructorTranslation() {}
 
+    /**
+     * Holds the translated attribute node expressions and namespace declarations for an element constructor.
+     */
     private record DirAttributeProcessingResult(
             List<Expression> attributes, List<NamespaceDeclaration> namespaceDeclarations) {}
 
@@ -89,15 +97,15 @@ public final class XmlDirectConstructorTranslation {
 
         void append(Expression expression, ParseTree source) {
             if (expression instanceof AttributeNodeContentExpression textExpression) {
-                appendText(textExpression.getContent(), source);
+                this.appendText(textExpression.getContent(), source);
                 return;
             }
-            flushText();
+            this.flushText();
             this.expressions.add(expression);
         }
 
         List<Expression> finish() {
-            flushText();
+            this.flushText();
             return this.expressions;
         }
 
@@ -128,7 +136,7 @@ public final class XmlDirectConstructorTranslation {
             if (value.isEmpty()) {
                 return;
             }
-            ensureText(metadata);
+            this.ensureText(metadata);
             this.text.append(value);
             this.boundaryWhitespaceOnly = this.boundaryWhitespaceOnly && isWhitespaceOnly(value);
         }
@@ -139,18 +147,18 @@ public final class XmlDirectConstructorTranslation {
                 if (value.isEmpty()) {
                     return;
                 }
-                ensureText(textExpression.getMetadata());
+                this.ensureText(textExpression.getMetadata());
                 this.text.append(value);
                 this.boundaryWhitespaceOnly =
                         this.boundaryWhitespaceOnly && textExpression.isBoundaryWhitespace() && isWhitespaceOnly(value);
                 return;
             }
-            flushText();
+            this.flushText();
             this.expressions.add(expression);
         }
 
         List<Expression> finish() {
-            flushText();
+            this.flushText();
             return this.expressions;
         }
 
@@ -167,7 +175,7 @@ public final class XmlDirectConstructorTranslation {
             if (this.text == null) {
                 return;
             }
-            if (this.text.length() > 0 && (this.preserveBoundarySpace || !this.boundaryWhitespaceOnly)) {
+            if (!this.text.isEmpty() && (this.preserveBoundarySpace || !this.boundaryWhitespaceOnly)) {
                 this.expressions.add(new TextNodeExpression(this.text.toString(), this.firstTextMetadata));
             }
             this.text = null;
@@ -176,6 +184,20 @@ public final class XmlDirectConstructorTranslation {
         }
     }
 
+    /**
+     * Translates a direct constructor (element, comment, or processing instruction) into an {@link Expression}.
+     *
+     * @param <QnameCtx> the parse-tree context type for QNames
+     * @param <DirElemContentCtx> the parse-tree context type for direct element content
+     * @param <ExprCtx> the parse-tree context type for expressions
+     * @param ctx the direct constructor context adapter
+     * @param tokenStream the common token stream
+     * @param translationContext the current translation context
+     * @param parseName function resolving a QName to a {@link Name}
+     * @param visitDirElemContent visitor function for direct element content
+     * @param visitExpr visitor function for general expressions
+     * @return the translated direct constructor expression
+     */
     public static <
                     QnameCtx extends ParserRuleContext,
                     DirElemContentCtx extends ParserRuleContext,
@@ -201,6 +223,13 @@ public final class XmlDirectConstructorTranslation {
                 "Direct constructor not yet implemented", translationContext.metadata(ctx.context()));
     }
 
+    /**
+     * Translates a direct processing instruction token into a {@link DirPIConstructorExpression}.
+     *
+     * @param piToken the terminal node containing the processing instruction
+     * @param metadata the source metadata
+     * @return the translated processing instruction expression
+     */
     private static DirPIConstructorExpression dirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
         String tokenText = piToken.getText();
         String inner = tokenText.substring(2, tokenText.length() - 2);
@@ -218,6 +247,12 @@ public final class XmlDirectConstructorTranslation {
         return new DirPIConstructorExpression(target, contentExpression, metadata);
     }
 
+    /**
+     * Finds the index of the first whitespace character in a string.
+     *
+     * @param value the string to search
+     * @return the 0-based index of the first whitespace character, or -1 if none is found
+     */
     private static int indexOfWhitespace(String value) {
         for (int i = 0; i < value.length(); i++) {
             if (Character.isWhitespace(value.charAt(i))) {
@@ -227,6 +262,11 @@ public final class XmlDirectConstructorTranslation {
         return -1;
     }
 
+    /**
+     * Translates a direct element constructor (open/close tag or single empty tag) into a
+     * {@link DirElemConstructorExpression}.
+     * Verifies matching end tag names and manages the constructor namespace frame during translation.
+     */
     private static <
                     QnameCtx extends ParserRuleContext,
                     DirElemContentCtx extends ParserRuleContext,
@@ -276,6 +316,19 @@ public final class XmlDirectConstructorTranslation {
         }
     }
 
+    /**
+     * Translates direct element content (nested direct constructor, common content, CDATA, or literal text)
+     * into an {@link Expression}.
+     *
+     * @param <DirectConstructorCtx> the parse-tree context type for direct constructors
+     * @param <CommonContentCtx> the parse-tree context type for common content
+     * @param ctx the element content context adapter
+     * @param tokenStream the common token stream
+     * @param translationContext the current translation context
+     * @param visitDirectConstructor visitor function for nested direct constructors
+     * @param visitCommonContent visitor function for common content
+     * @return the translated element content expression
+     */
     public static <DirectConstructorCtx extends ParserRuleContext, CommonContentCtx extends ParserRuleContext>
             Expression dirElemContent(
                     DirElemContentContext<DirectConstructorCtx, CommonContentCtx> ctx,
@@ -297,6 +350,15 @@ public final class XmlDirectConstructorTranslation {
         return new TextNodeExpression(text, translationContext.metadata(ctx.context()), isWhitespaceOnly(text));
     }
 
+    /**
+     * Translates direct constructor common content (enclosed expression or literal content) into an {@link Expression}.
+     *
+     * @param <ExprCtx> the parse-tree context type for expressions
+     * @param ctx the common content context adapter
+     * @param translationContext the current translation context
+     * @param visitExpr visitor function for expressions
+     * @return the translated common content expression
+     */
     public static <ExprCtx extends ParserRuleContext> Expression commonContent(
             CommonContentContext<ExprCtx> ctx,
             TranslationContext translationContext,
@@ -308,6 +370,24 @@ public final class XmlDirectConstructorTranslation {
         return new TextNodeExpression(processedContent, translationContext.metadata(ctx.context()));
     }
 
+    /**
+     * Processes element direct attributes in two passes:
+     * <ol>
+     * <li>Namespace declaration attributes ({@code xmlns} or {@code xmlns:*}) are extracted, validated to ensure they
+     * do not contain enclosed expressions, and registered into the constructor namespace frame.</li>
+     * <li>Non-namespace attributes are translated within the established namespace scope, preserving their original
+     * source ordering.</li>
+     * </ol>
+     *
+     * @param <QnameCtx> the parse-tree context type for QNames
+     * @param <ExprCtx> the parse-tree context type for expressions
+     * @param ctx the attribute list context adapter
+     * @param tokenStream the common token stream
+     * @param translationContext the current translation context
+     * @param parseName function resolving a QName to a {@link Name}
+     * @param visitExpr visitor function for expressions
+     * @return a {@link DirAttributeProcessingResult} containing the translated attributes and namespace declarations
+     */
     private static <QnameCtx extends ParserRuleContext, ExprCtx extends ParserRuleContext>
             DirAttributeProcessingResult getAttributesExpressionsList(
                     DirAttributeListContext<QnameCtx, ExprCtx> ctx,
@@ -360,10 +440,28 @@ public final class XmlDirectConstructorTranslation {
         return new DirAttributeProcessingResult(attributes, namespaceDeclarations);
     }
 
+    /**
+     * Checks if a lexical attribute name represents a namespace declaration ({@code xmlns} or {@code xmlns:prefix}).
+     *
+     * @param lexical the attribute name string
+     * @return {@code true} if the name is a namespace declaration, {@code false} otherwise
+     */
     private static boolean isNamespaceDeclaration(String lexical) {
         return "xmlns".equals(lexical) || lexical.startsWith("xmlns:");
     }
 
+    /**
+     * Translates a direct attribute value (quoted or apostrophe string) into a list of literal content and enclosed
+     * expressions.
+     *
+     * @param <ExprCtx> the parse-tree context type for expressions
+     * @param ctx the attribute value context adapter
+     * @param allowEnclosedExpressions whether enclosed expressions {@code {expr}} are permitted in this attribute
+     * @param tokenStream the common token stream
+     * @param translationContext the current translation context
+     * @param visitExpr visitor function for expressions
+     * @return the list of translated expressions representing the attribute value components
+     */
     private static <ExprCtx extends ParserRuleContext> List<Expression> getAttributeValuesExpressionsList(
             DirAttributeValueContext<ExprCtx> ctx,
             boolean allowEnclosedExpressions,
@@ -384,6 +482,17 @@ public final class XmlDirectConstructorTranslation {
                 "Unsupported attribute value: " + ctx.context().getText());
     }
 
+    /**
+     * Extracts and validates the static URI literal from a namespace declaration attribute value.
+     *
+     * @param <ExprCtx> the parse-tree context type for expressions
+     * @param ctx the attribute value context adapter
+     * @param tokenStream the common token stream
+     * @param translationContext the current translation context
+     * @param visitExpr visitor function for expressions
+     * @return the resolved namespace URI string
+     * @throws NamespaceDeclarationAttributeEnclosedExpressionException if the attribute contains an enclosed expression
+     */
     private static <ExprCtx extends ParserRuleContext> String getNamespaceDeclarationUri(
             DirAttributeValueContext<ExprCtx> ctx,
             CommonTokenStream tokenStream,
@@ -403,6 +512,17 @@ public final class XmlDirectConstructorTranslation {
         return uriBuilder.toString();
     }
 
+    /**
+     * Translates a single attribute content chunk (enclosed expression or literal text).
+     *
+     * @param <ExprCtx> the parse-tree context type for expressions
+     * @param ctx the attribute content context adapter
+     * @param allowEnclosedExpressions whether enclosed expressions are permitted
+     * @param tokenStream the common token stream
+     * @param translationContext the current translation context
+     * @param visitExpr visitor function for expressions
+     * @return the list containing the translated expression
+     */
     private static <ExprCtx extends ParserRuleContext> List<Expression> processAttributeContent(
             DirAttributeContentContext<ExprCtx> ctx,
             boolean allowEnclosedExpressions,
@@ -425,6 +545,11 @@ public final class XmlDirectConstructorTranslation {
         return List.of(new AttributeNodeContentExpression(processedContent, translationContext.metadata(child)));
     }
 
+    /**
+     * Iterates the children of a quoted attribute value (between opening and closing delimiters), preserving
+     * hidden-channel tokens, unescaping predefined XML entities, resolving escaped quote characters, and
+     * delegating attribute content chunks to the provided processor.
+     */
     private static <ExprCtx extends ParserRuleContext> List<Expression> processQuotedValue(
             CommonTokenStream tokenStream,
             ParserRuleContext ctx,
@@ -465,6 +590,10 @@ public final class XmlDirectConstructorTranslation {
         return result.finish();
     }
 
+    /**
+     * Merges element content expressions and intervening hidden-channel whitespace/text, respecting the boundary
+     * space preservation setting.
+     */
     private static <T extends ParserRuleContext> List<Expression> mergeElementContent(
             CommonTokenStream tokenStream,
             Token firstContentToken,
@@ -489,6 +618,12 @@ public final class XmlDirectConstructorTranslation {
         return result.finish();
     }
 
+    /**
+     * Checks if a string consists exclusively of whitespace characters and is non-empty.
+     *
+     * @param value the string to check
+     * @return {@code true} if non-empty and all whitespace, {@code false} otherwise
+     */
     private static boolean isWhitespaceOnly(String value) {
         for (int i = 0; i < value.length(); i++) {
             if (!Character.isWhitespace(value.charAt(i))) {
@@ -498,6 +633,13 @@ public final class XmlDirectConstructorTranslation {
         return !value.isEmpty();
     }
 
+    /**
+     * Processes literal text within a direct constructor, unescaping XML entities and resolving double braces
+     * ({@code {{}} and {@code }}}).
+     *
+     * @param content the raw literal content
+     * @return the processed literal text
+     */
     private static String processLiteralContent(String content) {
         if (content.startsWith("&") && content.endsWith(";")) {
             return StringEscapeUtils.unescapeXml(content);
@@ -511,6 +653,14 @@ public final class XmlDirectConstructorTranslation {
         return content;
     }
 
+    /**
+     * Validates that literal attribute content does not contain forbidden characters (such as {@code '<'}).
+     *
+     * @param source the literal text to validate
+     * @param tree the source parse-tree node
+     * @param metadataFactory metadata factory function
+     * @throws ParsingException if the literal contains an invalid character
+     */
     private static void validateLiteral(
             String source, ParseTree tree, Function<ParseTree, ExceptionMetadata> metadataFactory) {
         if (source.indexOf('<') >= 0) {
@@ -519,6 +669,9 @@ public final class XmlDirectConstructorTranslation {
         }
     }
 
+    /**
+     * Retrieves hidden-channel tokens following {@code previousToken} and appends them to the attribute builder.
+     */
     private static void appendHiddenText(
             CommonTokenStream tokenStream,
             AttributeValueBuilder result,
@@ -530,6 +683,12 @@ public final class XmlDirectConstructorTranslation {
         result.appendText(hiddenText, tree);
     }
 
+    /**
+     * Resolves the stop token for a parse-tree node.
+     *
+     * @param tree the parse tree node (either {@link ParserRuleContext} or {@link TerminalNode})
+     * @return the stop token
+     */
     private static Token getStopToken(ParseTree tree) {
         if (tree instanceof ParserRuleContext parserRuleContext) {
             return parserRuleContext.getStop();
