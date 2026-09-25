@@ -1805,13 +1805,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public ConditionalStatement visitIfStatement(XQueryParser.IfStatementContext ctx) {
         Expression condition = this.visitExpr(ctx.test_expr);
-        // Verify and set branch.
-        ParseTree branchContent = ctx.children.get(5);
-        checkForUnsupportedStatement(branchContent);
         Statement branch = this.visitStatement(ctx.branch);
-        // Verify and set else branch.
-        ParseTree elseBranchContent = ctx.children.get(7);
-        checkForUnsupportedStatement(elseBranchContent);
         Statement elseBranch = this.visitStatement(ctx.else_branch);
         return new ConditionalStatement(condition, branch, elseBranch, createMetadataFromContext(ctx));
     }
@@ -1825,16 +1819,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             stmt.cond.forEach(exprSingle -> {
                 conditionExpressions.add(this.visitExprSingle(exprSingle));
             });
-            // TODO: Test this behaviour with return!
-            // Verify return statement
-            ParseTree caseTree = stmt.children.get(stmt.children.size() - 1);
-            checkForUnsupportedStatement(caseTree);
             SwitchCaseStatement swCase = new SwitchCaseStatement(conditionExpressions, this.visitStatement(stmt.ret));
             cases.add(swCase);
         }
-        // Verify default statement
-        ParseTree defaultTree = ctx.children.get(ctx.children.size() - 1);
-        checkForUnsupportedStatement(defaultTree);
         Statement defaultCase = this.visitStatement(ctx.def);
         return new SwitchStatement(condition, cases, defaultCase, createMetadataFromContext(ctx));
     }
@@ -1884,16 +1871,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 cases,
                 new TypeSwitchStatementCase(defaultVariableName, defaultStatement),
                 createMetadataFromContext(ctx));
-    }
-
-    public void checkForUnsupportedStatement(ParseTree content) {
-        if (content instanceof XQueryParser.BreakStatementContext) {
-            throw new OurBadException("Break statement is not supported in an if branch!");
-        } else if (content instanceof XQueryParser.ContinueStatementContext) {
-            throw new OurBadException("Continue statement is not supported in an if branch!");
-        } else if (content instanceof XQueryParser.ExitStatementContext) {
-            throw new OurBadException("Exit statement is not supported in an if branch!");
-        }
     }
 
     // end control
