@@ -23,68 +23,51 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
-            const workflowId = 'run-qt3.yml';
             const isPullRequest = context.eventName === 'pull_request';
-            const defaultBranch = context.payload.repository.default_branch;
             const branch = isPullRequest
               ? context.payload.pull_request.base.ref
               : context.ref.replace('refs/heads/', '');
-            const event = !isPullRequest || branch === defaultBranch
-              ? 'push'
-              : 'pull_request';
+            const event = isPullRequest && branch !== context.payload.repository.default_branch
+              ? 'pull_request'
+              : 'push';
+            // A push rerun must not compare with a later master run.
+            const createdBefore = isPullRequest ? null : Date.parse((await github.rest.actions.getWorkflowRun({
+              ...context.repo, run_id: context.runId
+            })).data.created_at);
+            core.setOutput('baseline_run_id', '');
 
-            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: workflowId,
-              branch,
-              event,
-              per_page: 100
-            });
-
-            async function hasBaselineArtifacts(runId) {
-              const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                run_id: runId,
-                per_page: 100
-              });
-              const available = new Set(
-                artifacts
-                  .filter((artifact) => !artifact.expired)
-                  .map((artifact) => artifact.name)
-              );
-              return (
-                available.has('surefire-all-jsoniq') &&
-                available.has('surefire-all-xquery')
-              );
-            }
-
-            runs.sort(
-              (a, b) => new Date(b.created_at) - new Date(a.created_at)
-            );
-
-            let baselineRun = null;
-            for (const run of runs) {
-              if (run.conclusion !== 'success') {
-                continue;
-              }
-              if (run.id === context.runId) {
-                continue;
-              }
-              if (await hasBaselineArtifacts(run.id)) {
-                baselineRun = run;
-                break;
+            // Workflow runs are listed newest first. Fetch pages lazily and stop at
+            // the first usable baseline, without a search filter or fixed page limit.
+            const requiredArtifacts = ['surefire-all-jsoniq', 'surefire-all-xquery'];
+            for await (const { data } of github.paginate.iterator(
+              github.rest.actions.listWorkflowRuns,
+              { ...context.repo, workflow_id: 'run-qt3.yml', per_page: 100 }
+            )) {
+              const candidates = data.filter((run) => run.id !== context.runId
+                && run.head_branch === branch && run.event === event
+                && run.head_repository?.id === context.payload.repository.id
+                && (isPullRequest || Date.parse(run.created_at) < createdBefore));
+              for (const run of candidates) {
+                core.info(`Checking run ${run.id} (${run.created_at}, ${run.head_sha}): ${run.status}/${run.conclusion}.`);
+                if (run.status !== 'completed' || run.conclusion !== 'success') {
+                  continue;
+                }
+                const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
+                  ...context.repo, run_id: run.id, per_page: 100
+                });
+                const available = new Set(artifacts.filter((artifact) => !artifact.expired)
+                  .map((artifact) => artifact.name));
+                const missing = requiredArtifacts.filter((name) => !available.has(name));
+                if (missing.length) {
+                  core.info(`Skipping run ${run.id}: missing or expired artifacts: ${missing.join(', ')}.`);
+                  continue;
+                }
+                core.info(`Using latest available baseline: ${run.html_url} (${run.head_sha}, ${run.created_at}).`);
+                core.setOutput('baseline_run_id', String(run.id));
+                return;
               }
             }
-
-            const baselineRunId = baselineRun ? String(baselineRun.id) : '';
-            core.info(
-              baselineRunId
-                ? `Using baseline run ${baselineRunId} from ${event} on branch ${branch}.`
-                : `No successful ${event} baseline run with unexpired QT3 artifacts found for branch ${branch}.`
-            );
-            core.setOutput('baseline_run_id', baselineRunId);
+            core.warning(`No successful ${event} baseline with both unexpired artifacts found for ${branch}.`);
 
   build:
     name: Build RumbleDB
@@ -111,7 +94,7 @@ jobs:
 
   qt3-jsoniq:
     needs: [resolve-baseline, build]
-    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@jimmy/new-prolog-grammar
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: jsoniq
       rumble_artifact_name: rumble-build
@@ -119,7 +102,7 @@ jobs:
 
   qt3-xquery:
     needs: [resolve-baseline, build]
-    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@jimmy/new-prolog-grammar
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: xquery
       rumble_artifact_name: rumble-build
