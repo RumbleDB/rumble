@@ -1,17 +1,41 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.xml.node_test;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serial;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.rumbledb.context.Name;
 
+@NoArgsConstructor(force = true)
 public class ElementTest implements NodeTest {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Name elementName;
-    private boolean hasWildcard;
-    private Name typeName;
-    // TODO: add support for optional type
+    /**
+     * Expanded name from the kind test (namespace URI + local name).
+     * Only valid when isNameWithoutTypeCheck is true.
+     */
+    @Getter
+    private final Name elementName;
 
+    private final boolean hasWildcard;
+    private final Name typeName;
+    // TODO: add support for optional type
 
     public ElementTest(Name elementName, Name typeName) {
         this.elementName = elementName;
@@ -29,12 +53,6 @@ public class ElementTest implements NodeTest {
         this.elementName = null;
         this.typeName = null;
         this.hasWildcard = true;
-    }
-
-    public ElementTest() {
-        this.elementName = null;
-        this.typeName = null;
-        this.hasWildcard = false;
     }
 
     @Override
@@ -60,29 +78,7 @@ public class ElementTest implements NodeTest {
         return this.elementName != null && this.typeName == null;
     }
 
-    /**
-     * Expanded name from the kind test (namespace URI + local name). Only valid when
-     * {@link #isNameWithoutTypeCheck()} is true.
-     */
-    public Name getElementName() {
-        return this.elementName;
-    }
-
     public boolean isWildcardOnly() {
         return this.elementName == null && this.typeName == null && this.hasWildcard;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.elementName);
-        output.writeBoolean(this.hasWildcard);
-        kryo.writeObject(output, this.typeName);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.elementName = kryo.readObject(input, Name.class);
-        this.hasWildcard = input.readBoolean();
-        this.typeName = kryo.readObject(input, Name.class);
     }
 }

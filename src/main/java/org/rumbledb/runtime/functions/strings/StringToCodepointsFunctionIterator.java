@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,78 +11,76 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.strings;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Item nextResult;
-    private String input;
-    private int currentPosition;
 
-    public StringToCodepointsFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StringToCodepointsFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "string-to-codepoints function", getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new StringToCodepointsLocalCursor(this.getChild(0), context, getMetadata());
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.input = null;
-        this.currentPosition = -1;
-        setNextResult();
-    }
+    private static final class StringToCodepointsLocalCursor extends AbstractLocalCursor<Item> {
 
-    public void setNextResult() {
-        if (this.input == null) {
-            // Getting first parameter
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        private final ItemRuntimePlan argumentPlan;
+        private final DynamicContext context;
+        private String input;
+        private int position;
 
-            if (stringItem == null) {
-                this.hasNext = false;
-                return;
-            }
-            this.input = stringItem.getStringValue();
-            if (this.input.equals("")) {
-                this.hasNext = false;
-                return;
-            }
-
-            this.currentPosition = 0;
+        private StringToCodepointsLocalCursor(
+                ItemRuntimePlan argumentPlan, DynamicContext context, ExceptionMetadata metadata) {
+            super(metadata);
+            this.argumentPlan = argumentPlan;
+            this.context = context;
         }
-        if (this.currentPosition < this.input.length()) {
-            this.nextResult = ItemFactory.getInstance().createIntItem(this.input.codePointAt(this.currentPosition));
-            this.currentPosition = this.input.offsetByCodePoints(this.currentPosition, 1);
-            this.hasNext = true;
-        } else {
-            this.hasNext = false;
+
+        @Override
+        protected void openLocal() {
+            Item argument = this.argumentPlan.materializeFirstOrNull(this.context);
+            this.input = argument == null ? null : argument.getStringValue();
+            this.position = 0;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.input != null && this.position < this.input.length();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw invalidState("String-to-codepoints cursor is exhausted.");
+            }
+            int codepoint = this.input.codePointAt(this.position);
+            this.position = this.input.offsetByCodePoints(this.position, 1);
+            return ItemFactory.getInstance().createIntItem(codepoint);
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.input = null;
         }
     }
 }

@@ -1,33 +1,46 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.ItemType;
-import java.util.Arrays;
+import java.io.Serial;
 import java.util.regex.Pattern;
 
-public class HexBinaryItem implements Item {
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
+import lombok.Getter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+
+public class HexBinaryItem extends AbstractAtomicItem {
+
+    @Serial
     private static final long serialVersionUID = 1L;
+
+    @Getter
     private byte[] value;
+
     private String stringValue;
 
-    private final static String hexDigit = "[\\da-fA-F]";
-    private final static String hexOctet = "(" + hexDigit + hexDigit + ")";
-    private final static String hexBinary = hexOctet + "*";
-    private final static Pattern hexBinaryPattern = Pattern.compile(hexBinary);
-
-    public HexBinaryItem() {
-        super();
-    }
+    private static final String hexDigit = "[\\da-fA-F]";
+    private static final String hexOctet = "(" + hexDigit + hexDigit + ")";
+    private static final String hexBinary = hexOctet + "*";
+    private static final Pattern hexBinaryPattern = Pattern.compile(hexBinary);
 
     HexBinaryItem(String stringValue) {
         this.stringValue = stringValue;
@@ -35,21 +48,8 @@ public class HexBinaryItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    public byte[] getValue() {
-        return this.value;
+    public Item copy(boolean mutable) {
+        return new HexBinaryItem(this.stringValue);
     }
 
     @Override
@@ -95,24 +95,6 @@ public class HexBinaryItem implements Item {
     @Override
     public boolean isHexBinary() {
         return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(this.getValue());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this.getValue().length);
-        output.writeBytes(this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        int bytesLength = input.readInt();
-        this.value = input.readBytes(bytesLength);
-        this.stringValue = Hex.encodeHexString(this.value);
     }
 
     @Override

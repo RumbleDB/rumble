@@ -24,7 +24,7 @@ try {
   validate type local:optional* {
     { "foo" : "null" }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 validate type local:required* {
@@ -34,14 +34,14 @@ try {
   validate type local:required* {
     { "foo" : null }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:required* {
     { "foo" : "null" }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 validate type local:requiredcanbenull* {

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,16 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.exceptions;
+
+import java.io.Serial;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
 public class JobWithinAJobException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public JobWithinAJobException(String message, ExceptionMetadata metadata) {
@@ -32,9 +30,8 @@ public class JobWithinAJobException extends RumbleException {
 
     public JobWithinAJobException(ExceptionMetadata metadata) {
         super(
-            "RumbleDB did not manage to execute your query in parallel, because an expression executed in parallel attempts to manipulate a big sequence. Please try to rewrite it, or open an issue on GitHub if you would like us to investigate and improve RumbleDB to support it, or need advice.",
-            ErrorCode.JobWithinAJobErrorCode,
-            metadata
-        );
+                "RumbleDB did not manage to execute your query in parallel, because an expression executed in parallel attempts to manipulate a big sequence. Please try to rewrite it, or open an issue on GitHub if you would like us to investigate and improve RumbleDB to support it, or need advice.",
+                ErrorCode.JobWithinAJobErrorCode,
+                metadata);
     }
 }

@@ -1,8 +1,26 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -10,20 +28,24 @@ import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.util.Collections;
-import java.util.List;
-
-public class NamespaceItem implements Item {
+public class NamespaceItem extends AbstractNodeItem {
+    @Serial
     private static final long serialVersionUID = 1L;
+
+    /**
+     * Nnamespace prefix (possibly empty).
+     */
+    @Getter
     private String prefix;
+
+    /**
+     * Namespaces URI.
+     */
+    @Getter
     private String uri;
+
     private Item parent;
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    @SuppressWarnings("unused")
-    public NamespaceItem() {
-    }
 
     /**
      * Constructor for a namespace item.
@@ -36,6 +58,10 @@ public class NamespaceItem implements Item {
         this.uri = uri;
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new NamespaceItem(this.prefix, this.uri);
+    }
 
     /**
      * Each Namespace Node represents the binding of a namespace URI to a namespace prefix or to the default
@@ -43,7 +69,6 @@ public class NamespaceItem implements Item {
      * Namespaces have the following properties: prefix , possibly empty uri parent , possibly empty
      * A Namespace Node must not have the name xmlns nor the string-value http://www.w3.org/2000/xmlns/ .
      */
-
     @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
@@ -59,22 +84,6 @@ public class NamespaceItem implements Item {
     public void addParentToDescendants() {
         // no descendants
         // Namespaces do not have descendants.
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.parent);
-        output.writeString(this.prefix);
-        output.writeString(this.uri);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.parent = (Item) kryo.readClassAndObject(input);
-        this.prefix = input.readString();
-        this.uri = input.readString();
     }
 
     @Override
@@ -95,20 +104,6 @@ public class NamespaceItem implements Item {
             return null;
         }
         return NamespaceBindingUtils.nameLocalOnly(this.prefix);
-    }
-
-    /**
-     * Returns the namespace prefix (possibly empty).
-     */
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    /**
-     * Returns the namespace URI.
-     */
-    public String getUri() {
-        return this.uri;
     }
 
     @Override
@@ -140,20 +135,6 @@ public class NamespaceItem implements Item {
     @Override
     public String nodeKind() {
         return "namespace";
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof NamespaceItem)) {
-            return false;
-        }
-        NamespaceItem otherNamespaceItem = (NamespaceItem) other;
-        return this.getXmlDocumentPosition().equals(otherNamespaceItem.getXmlDocumentPosition());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.documentPos.hashCode();
     }
 
     @Override
@@ -261,4 +242,3 @@ public class NamespaceItem implements Item {
         return Collections.emptyList();
     }
 }
-

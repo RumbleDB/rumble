@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.xml;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,36 +30,30 @@ import org.rumbledb.exceptions.InvalidProcessingInstructionTargetCastException;
 import org.rumbledb.exceptions.InvalidProcessingInstructionTargetException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.regex.Pattern;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Runtime iterator for computed processing instruction constructors.
  *
  * @see org.rumbledb.expressions.xml.ComputedPIConstructorExpression
  */
-public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
     private final String staticTarget;
     private final DataFunctionIterator nameIterator;
     private final DataFunctionIterator contentIterator;
 
     public ComputedPIConstructorRuntimeIterator(
-            String staticTarget,
-            DataFunctionIterator contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+            String staticTarget, DataFunctionIterator contentIterator, RuntimeStaticContext staticContext) {
         super(
-            contentIterator != null ? Collections.singletonList(contentIterator) : Collections.emptyList(),
-            staticContext
-        );
+                contentIterator != null ? Collections.singletonList(contentIterator) : Collections.emptyList(),
+                staticContext);
         this.staticTarget = staticTarget;
         this.nameIterator = null;
         this.contentIterator = contentIterator;
@@ -66,63 +62,44 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
     public ComputedPIConstructorRuntimeIterator(
             DataFunctionIterator nameIterator,
             DataFunctionIterator contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
-        super(createChildList(nameIterator, contentIterator), staticContext);
+            RuntimeStaticContext staticContext) {
+        super(List.of(nameIterator, contentIterator), staticContext);
         this.staticTarget = null;
         this.nameIterator = nameIterator;
         this.contentIterator = contentIterator;
     }
 
-    private static List<RuntimeIterator> createChildList(RuntimeIterator... iterators) {
-        List<RuntimeIterator> children = new ArrayList<>();
-        for (RuntimeIterator iterator : iterators) {
-            if (iterator != null) {
-                children.add(iterator);
-            }
-        }
-        return children;
-    }
-
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
         String target;
         if (this.staticTarget != null) {
             target = this.staticTarget;
         } else {
-            List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
+            List<Item> atomizedNameItems = materialize.apply(this.nameIterator);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
-                        "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic"
-                );
+                        "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic");
             }
             Item atomizedNameItem = atomizedNameItems.get(0);
-            if (!atomizedNameItem.isAtomic()) {
+            if (!atomizedNameItem.isAtomic() || !(atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic())) {
                 throw new UnexpectedStaticTypeException(
-                        "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic"
-                );
+                        "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic");
             }
             String nameString = atomizedNameItem.getStringValue();
             if (!isValidNCName(nameString)) {
                 throw new InvalidProcessingInstructionTargetCastException(
-                        "Processing instruction target cannot be cast to xs:NCName.",
-                        getMetadata()
-                );
+                        "Processing instruction target cannot be cast to xs:NCName.", getMetadata());
             }
             target = nameString;
         }
-
         if (target != null && target.equalsIgnoreCase("xml")) {
             throw new InvalidProcessingInstructionTargetException(
                     "Processing instruction target must not be XML in any combination of upper and lower case.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-
-        List<Item> materialized = this.contentIterator != null
-            ? this.contentIterator.materialize(dynamicContext)
-            : Collections.emptyList();
-
+        List<Item> materialized =
+                this.contentIterator != null ? materialize.apply(this.contentIterator) : Collections.emptyList();
         List<String> stringValues = new ArrayList<>();
         if (materialized.isEmpty()) {
             stringValues.add("");
@@ -131,23 +108,19 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
                 String value = item.getStringValue();
                 if (value.contains("?>")) {
                     throw new InvalidProcessingInstructionContentException(
-                            "Processing instruction content must not contain the string '?>'.",
-                            getMetadata()
-                    );
+                            "Processing instruction content must not contain the string '?>'.", getMetadata());
                 }
                 stringValues.add(value);
             }
         }
-
         String content = String.join(" ", stringValues);
         content = removeLeadingWhitespace(content);
-
-        this.hasNext = false;
-        return ItemFactory.getInstance()
-            .createXmlProcessingInstructionNode(
-                target,
-                content
-            );
+        Item processingInstructionItem = ItemFactory.getInstance().createXmlProcessingInstructionNode(target, content);
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+            processingInstructionItem.setXmlDocumentPosition(documentPath, 0);
+        }
+        return processingInstructionItem;
     }
 
     private boolean isValidNCName(String value) {
@@ -162,4 +135,3 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
         return value.substring(index);
     }
 }
-

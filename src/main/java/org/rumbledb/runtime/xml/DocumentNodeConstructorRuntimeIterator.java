@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,57 +11,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.xml;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.BiFunction;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Runtime iterator for document node constructors.
- * 
+ *
  * Document node constructors create document nodes according to the XQuery 3.1 specification.
  * All document node constructors are computed constructors. The result of a document node
  * constructor is a new document node, with its own node identity.
- * 
+ *
  * @see org.rumbledb.expressions.xml.DocumentNodeConstructorExpression
  */
-public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator contentIterator;
+
+    private final ItemRuntimePlan contentIterator;
 
     /**
      * Constructor for document node constructor runtime iterator
-     * 
+     *
      * @param contentIterator Iterator for the content expression
      * @param staticContext The static context
      */
-    public DocumentNodeConstructorRuntimeIterator(
-            RuntimeIterator contentIterator,
-            RuntimeStaticContext staticContext
-    ) {
+    public DocumentNodeConstructorRuntimeIterator(ItemRuntimePlan contentIterator, RuntimeStaticContext staticContext) {
         super(
-            contentIterator != null ? Collections.singletonList(contentIterator) : Collections.emptyList(),
-            staticContext
-        );
+                contentIterator != null ? Collections.singletonList(contentIterator) : Collections.emptyList(),
+                staticContext);
         this.contentIterator = contentIterator;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize =
+                (iterator, childContext) -> iterator.materialize(childContext);
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -75,38 +73,29 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
             // A top-level iterator is already set - use the provided context
             contextToUse = dynamicContext;
         }
-
         // Process content expression according to specification,
         // The content expression of a document node constructor is processed in exactly the same way
         // as an enclosed expression in the content of a direct element constructor, as described in
         // Step 1e of 3.9.1.3 Content. The result of processing the content expression is a sequence
         // of nodes called the content sequence.
-        List<Item> processedContent = processContentExpression(contextToUse);
-
+        List<Item> processedContent = processContentExpression(
+                this.contentIterator == null ? List.of() : materialize.apply(this.contentIterator, contextToUse));
         // Create and return the document node item
-        this.hasNext = false;
-        Item documentItem = ItemFactory.getInstance()
-            .createXmlDocumentNode(
-                processedContent
-            );
-
+        Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(processedContent);
         // Set the parent of the child nodes to the document node
         documentItem.addParentToDescendants();
-
         // Set XML document position if this is the top-level runtime iterator
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             // This is the top-level runtime iterator - set XML document positions recursively
-            // Use the hash code of the runtime iterator object as the path to track the identity of constructed objects
-            String documentPath = String.valueOf(this.hashCode());
+            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             documentItem.setXmlDocumentPosition(documentPath, 0);
         }
-
         return documentItem;
     }
 
     /**
      * Processes the content expression of the document node constructor.
-     * 
+     *
      * Processing of the document node constructor proceeds as follows:
      * 1. If the content sequence contains a document node, the document node is replaced in the content
      * sequence by its children.
@@ -116,52 +105,73 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
      * 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
      * 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
      */
-    private List<Item> processContentExpression(DynamicContext dynamicContext) {
-        List<Item> rawContentSequence = new ArrayList<>();
+    private List<Item> processContentExpression(List<Item> contentItems) {
+        List<Item> contentSequence = new ArrayList<>();
+        StringBuilder textAccumulator = null;
+        boolean previousItemWasAtomic = false;
 
         // Collect all content items
         if (this.contentIterator != null) {
-            this.contentIterator.open(dynamicContext);
-            while (this.contentIterator.hasNext()) {
-                Item item = this.contentIterator.next();
-                rawContentSequence.add(item);
-            }
-            this.contentIterator.close();
-        }
+            for (Item contentItem : contentItems) {
+                List<Item> expandedItems = new ArrayList<>();
+                XmlConstructorContentUtils.appendExpandedItem(contentItem, expandedItems);
+                for (Item item : expandedItems) {
+                    if (item.isAttributeNode() || item.isNamespaceNode()) {
+                        if (textAccumulator != null) {
+                            flushTextAccumulator(contentSequence, textAccumulator);
+                            textAccumulator = null;
+                        }
+                        contentSequence.add(item);
+                        previousItemWasAtomic = false;
+                        continue;
+                    }
 
-        // 1. If the content sequence contains a document node, the document node is replaced in the content
-        // sequence by its children.
-        List<Item> expandedContentSequence = expandDocumentNodes(rawContentSequence);
+                    if (item.isTextNode() || !item.isNode()) {
+                        String textContent = item.isTextNode() ? item.getTextValue() : item.getStringValue();
+                        if (textAccumulator == null) {
+                            textAccumulator = new StringBuilder();
+                        }
+                        if (item.isAtomic() && previousItemWasAtomic) {
+                            textAccumulator.append(' ');
+                        }
+                        if (textContent.isEmpty()) {
+                            previousItemWasAtomic = item.isAtomic();
+                            continue;
+                        }
+                        textAccumulator.append(textContent);
+                        previousItemWasAtomic = item.isAtomic();
+                        continue;
+                    }
+
+                    if (textAccumulator != null) {
+                        flushTextAccumulator(contentSequence, textAccumulator);
+                        textAccumulator = null;
+                    }
+                    contentSequence.add(
+                            item.isNode() ? NodeConstructionUtils.copyNode(item, this.staticContext) : item);
+                    previousItemWasAtomic = false;
+                }
+            }
+        }
+        if (textAccumulator != null) {
+            flushTextAccumulator(contentSequence, textAccumulator);
+        }
 
         // 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
         // 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
-        validateNoAttributesOrNamespaces(expandedContentSequence);
+        validateNoAttributesOrNamespaces(contentSequence);
 
         // 2. Adjacent text nodes in the content sequence are merged into a single text node by concatenating
         // their contents, with no intervening blanks. After concatenation, any text node whose content
         // is a zero-length string is deleted from the content sequence.
-        List<Item> mergedContentSequence = mergeAdjacentTextNodes(expandedContentSequence);
-
-        return mergedContentSequence;
+        return mergeAdjacentTextNodes(contentSequence);
     }
 
-    /**
-     * Expands document nodes by replacing them with their children.
-     * 1. If the content sequence contains a document node, the document node is replaced in the content
-     * sequence by its children.
-     */
-    private List<Item> expandDocumentNodes(List<Item> contentSequence) {
-        List<Item> expandedSequence = new ArrayList<>();
-        for (Item item : contentSequence) {
-            if (item.isDocumentNode()) {
-                // 1. If the content sequence contains a document node, the document node is replaced in the content
-                // sequence by its children.
-                expandedSequence.addAll(item.children());
-            } else {
-                expandedSequence.add(item);
-            }
+    private void flushTextAccumulator(List<Item> contentSequence, StringBuilder textAccumulator) {
+        String accumulatedText = textAccumulator.toString();
+        if (!accumulatedText.isEmpty()) {
+            contentSequence.add(ItemFactory.getInstance().createXmlTextNode(accumulatedText));
         }
-        return expandedSequence;
     }
 
     /**
@@ -174,14 +184,12 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
             if (item.isAttributeNode()) {
                 // 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
                 throw new UnexpectedStaticTypeException(
-                        "Document node constructor content cannot contain attribute nodes [err:XPTY0004]"
-                );
+                        "Document node constructor content cannot contain attribute nodes [err:XPTY0004]");
             }
             // 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
             if (item.isNamespaceNode()) {
                 throw new UnexpectedStaticTypeException(
-                        "Document node constructor content cannot contain namespace nodes [err:XPTY0004]"
-                );
+                        "Document node constructor content cannot contain namespace nodes [err:XPTY0004]");
             }
         }
     }

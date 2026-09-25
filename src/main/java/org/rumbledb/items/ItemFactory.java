@@ -1,6 +1,30 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import java.time.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.util.List;
+import java.util.Map;
+
+import org.w3c.dom.Node;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -12,13 +36,8 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.w3c.dom.Node;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 public class ItemFactory {
 
@@ -54,10 +73,14 @@ public class ItemFactory {
     }
 
     public Item createStringItem(String s) {
-        if (s.equals("")) {
+        if (s == null || s.isEmpty()) {
             return this.emptyStringItem;
         }
         return new StringItem(s);
+    }
+
+    public Item createLanguageItem(String s) {
+        return this.createAnnotatedItem(this.createStringItem(s), BuiltinTypesCatalogue.languageItem);
     }
 
     public Item createUntypedAtomicItem(String s) {
@@ -74,6 +97,10 @@ public class ItemFactory {
 
     public Item createDecimalItem(BigDecimal d) {
         return new DecimalItem(d);
+    }
+
+    public Item createDecimalItem(BigDecimal d, String displayValue) {
+        return new DecimalItem(d, displayValue);
     }
 
     public Item createIntegerItem(BigInteger i) {
@@ -234,8 +261,16 @@ public class ItemFactory {
         return new AnyURIItem(s);
     }
 
+    public Item createNotationItem(Name name) {
+        return new NotationItem(name);
+    }
+
     public Item createQNameItem(Name name) {
         return new QNameItem(name);
+    }
+
+    public Item createNCNameItem(String s) {
+        return this.createAnnotatedItem(this.createStringItem(s), BuiltinTypesCatalogue.NCNameItem);
     }
 
     public Item createHexBinaryItem(String s) {
@@ -254,8 +289,14 @@ public class ItemFactory {
         return new LazyObjectItem();
     }
 
-    public Item createArrayItem() {
-        return new ArrayItem();
+    public Item createArrayItem(boolean mutable) {
+        Item result = new ArrayItem();
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
     public Item createArrayItem(List<Item> items, boolean mutable) {
@@ -279,11 +320,7 @@ public class ItemFactory {
     }
 
     public Item createObjectItem(
-            List<String> keys,
-            List<Item> values,
-            ExceptionMetadata itemMetadata,
-            boolean mutable
-    ) {
+            List<String> keys, List<Item> values, ExceptionMetadata itemMetadata, boolean mutable) {
         Item result = new ObjectItem(keys, values, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
@@ -293,16 +330,7 @@ public class ItemFactory {
         return result;
     }
 
-    /**
-     * Create an object item from a map of string keys and list of items.
-     * 
-     * @deprecated Use {@link #createObjectItemOptimized(Map<String, Item>, boolean)} instead.
-     * @param keyValuePairs The map of string keys and list of items.
-     * @param mutable The mutability level of the object item.
-     * @return The object item.
-     */
-    @Deprecated
-    public Item createObjectItem(Map<String, List<Item>> keyValuePairs, boolean mutable) {
+    public Item createObjectItemFromValueLists(Map<String, List<Item>> keyValuePairs, boolean mutable) {
         Item result = new ObjectItem(keyValuePairs);
         if (mutable) {
             result.setMutabilityLevel(0);
@@ -322,12 +350,49 @@ public class ItemFactory {
         return result;
     }
 
+    public Item createMapItem(Item onlyKey, List<Item> onlyValue, boolean mutable) {
+        if (!mutable) {
+            return new MapEntryItem(onlyKey, onlyValue);
+        }
+        List<Item> keys = List.of(onlyKey);
+        List<List<Item>> values = List.of(onlyValue);
+        return new MapItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    public Item createMapItemRemovingKeys(Item original, List<Item> keysToRemove) {
+        original = rebaseDeepMapOverlay(original);
+        return new MapWithRemovedEntryItem(original, keysToRemove);
+    }
+
+    public Item createMapItemAddingKey(Item original, Item keyToAdd, List<Item> valueToAdd) {
+        original = rebaseDeepMapOverlay(original);
+        return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
+    }
+
+    static int getMapOverlayChainLength(Item item) {
+        if (item instanceof MapWithAdditionalEntryItem additionalEntry) {
+            return additionalEntry.getOverlayChainLength();
+        }
+        if (item instanceof MapWithRemovedEntryItem removedEntry) {
+            return removedEntry.getOverlayChainLength();
+        }
+        return 0;
+    }
+
+    private Item rebaseDeepMapOverlay(Item original) {
+        if (getMapOverlayChainLength(original) < MapWithAdditionalEntryItem.MAX_OVERLAY_CHAIN_LENGTH) {
+            return original;
+        }
+        return createMapItem(
+                original.getItemKeys(), original.getSequenceValues(), ExceptionMetadata.EMPTY_METADATA, false);
+    }
+
     public Item createMapItem(
-            List<Item> keys,
-            List<List<Item>> values,
-            ExceptionMetadata itemMetadata,
-            boolean mutable
-    ) {
+            List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
+        if (!mutable && keys.size() == 1) {
+            Item key = keys.get(0);
+            return new MapEntryItem(key, values.get(0));
+        }
         Item result = new MapItem(keys, values, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
@@ -338,6 +403,11 @@ public class ItemFactory {
     }
 
     public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
+        if (!mutable && keyValuePairs.size() == 1) {
+            Item key = keyValuePairs.keySet().iterator().next();
+            List<Item> values = keyValuePairs.get(key);
+            return new MapEntryItem(key, values);
+        }
         Item result = new MapItem(keyValuePairs, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
@@ -353,7 +423,7 @@ public class ItemFactory {
 
     /**
      * Create a text item.
-     * 
+     *
      * @param content The string content of the text item
      * @return The text item
      */
@@ -363,6 +433,10 @@ public class ItemFactory {
 
     public Item createXmlCommentNode(String content) {
         return new CommentItem(content);
+    }
+
+    public Item createXmlCommentNode(Node currentNode) {
+        return new CommentItem(currentNode);
     }
 
     public Item createXmlAttributeNode(Node attribute) {
@@ -379,7 +453,7 @@ public class ItemFactory {
 
     /**
      * Create a document item.
-     * 
+     *
      * @param children The children items of the document
      * @return The document item
      */
@@ -388,11 +462,7 @@ public class ItemFactory {
     }
 
     public Item createXmlElementNode(
-            Node elementNode,
-            List<Item> children,
-            List<Item> attributes,
-            Map<String, String> namespaceBindings
-    ) {
+            Node elementNode, List<Item> children, List<Item> attributes, Map<String, String> namespaceBindings) {
         return new ElementItem(elementNode, children, attributes, namespaceBindings);
     }
 
@@ -420,5 +490,9 @@ public class ItemFactory {
      */
     public Item createXmlProcessingInstructionNode(String target, String content) {
         return new ProcessingInstructionItem(target, content);
+    }
+
+    public Item createXmlProcessingInstructionNode(Node currentNode) {
+        return new ProcessingInstructionItem(currentNode);
     }
 }

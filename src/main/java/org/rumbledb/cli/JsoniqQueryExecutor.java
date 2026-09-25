@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,21 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.cli;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.api.Rumble;
-import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.exceptions.CliException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.optimizations.Profiler;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.serialization.Serializer;
 
 import java.io.IOException;
 import java.net.URI;
@@ -37,57 +22,62 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.spark.sql.SaveMode;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.api.Rumble;
+import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.CliException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.optimizations.Profiler;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.serialization.Serializer;
 
 public class JsoniqQueryExecutor {
-    private RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
+    private final ExternalBindings externalBindings;
 
-    public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
+    public JsoniqQueryExecutor(RumbleConfiguration configuration) {
+        this(configuration, ExternalBindings.empty());
+    }
+
+    public JsoniqQueryExecutor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this.configuration = configuration;
+        this.externalBindings = externalBindings.snapshot();
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
-        if (FileSystemUtil.exists(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
-            if (!this.configuration.getOverwrite()) {
+        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
+            if (!this.configuration.output().allowOverwrite()) {
                 throw new CliException(
-                        "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
-                );
+                        "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite.");
             } else {
-                FileSystemUtil.delete(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+                FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
             }
         }
     }
 
     public List<Item> runQuery() throws IOException {
-        String queryFile = this.configuration.getQueryPath();
+        String queryFile = this.configuration.input().queryPath();
         URI queryUri = null;
         if (queryFile != null) {
-            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                queryFile,
-                this.configuration,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(queryFile, ExceptionMetadata.EMPTY_METADATA);
         }
-        String outputPath = this.configuration.getOutputPath();
+        String outputPath = this.configuration.output().outputPath();
         URI outputUri = null;
         if (outputPath != null) {
-            outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                outputPath,
-                this.configuration,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
             checkOutputFile(outputUri);
         }
 
-        String logPath = this.configuration.getLogPath();
+        String logPath = this.configuration.output().logPath();
         URI logUri = null;
         if (logPath != null) {
-            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                logPath,
-                this.configuration,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            if (FileSystemUtil.exists(logUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
-                FileSystemUtil.delete(logUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
+            if (FileSystemUtil.exists(logUri, ExceptionMetadata.EMPTY_METADATA)) {
+                FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
             }
         }
 
@@ -96,15 +86,14 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = null;
-        if (this.configuration.getQuery() != null) {
-            if (this.configuration.getQueryPath() != null) {
+        if (this.configuration.input().query() != null) {
+            if (this.configuration.input().queryPath() != null) {
                 throw new CliException(
-                        "It is not possible to specify both a --query and a --query-path. It is either or."
-                );
+                        "It is not possible to specify both a --query and a --query-path. It is either or.");
             }
-            sequence = rumble.runQuery(this.configuration.getQuery());
+            sequence = rumble.runQuery(this.configuration.input().query(), this.externalBindings);
         } else {
-            sequence = rumble.runQuery(queryUri);
+            sequence = rumble.runQuery(queryUri, this.externalBindings);
         }
 
         if (outputPath != null) {
@@ -112,25 +101,23 @@ public class JsoniqQueryExecutor {
         } else {
             // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
-            long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
+            long materializationCount = sequence.populateList(
+                    outputList, this.configuration.runtime().resultsSizeCap());
 
-            Serializer serializer = sequence.write().mode(org.apache.spark.sql.SaveMode.ErrorIfExists).getSerializer();
+            Serializer serializer =
+                    sequence.write().mode(SaveMode.ErrorIfExists).getSerializer();
 
-            List<String> lines = outputList.stream()
-                .map(serializer::serialize)
-                .collect(Collectors.toList());
-            System.out.println(String.join("\n", lines));
+            List<String> lines = outputList.stream().map(serializer::serialize).collect(Collectors.toList());
+            ConsoleOutput.out(String.join("\n", lines));
             if (materializationCount != -1) {
-                issueMaterializationWarning(materializationCount, this.configuration.getResultSizeCap());
-                if (outputPath == null) {
-                    System.err.println(
-                        "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
-                    );
-                }
+                issueMaterializationWarning(
+                        materializationCount, this.configuration.runtime().resultsSizeCap());
+                ConsoleOutput.warn(
+                        "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system.");
             }
         }
 
-        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+        if (this.configuration.runtime().shouldApplyUpdates() && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
 
@@ -139,43 +126,35 @@ public class JsoniqQueryExecutor {
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
             time += "\n[ProfilerCount] " + Profiler.get();
-            FileSystemUtil.append(
-                logUri,
-                Collections.singletonList(time),
-                this.configuration,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            FileSystemUtil.append(logUri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
         }
         return outputList;
     }
 
     public static void issueMaterializationWarning(long materializationCount, long resultSizeCap) {
         if (materializationCount == Long.MAX_VALUE) {
-            System.err.println(
-                "Warning! The output sequence contains "
-                    + "too many items and its materialization was capped at "
-                    + resultSizeCap
-                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
-            );
+            ConsoleOutput.warn(
+                    "Warning! The output sequence contains "
+                            + "too many items and its materialization was capped at "
+                            + resultSizeCap
+                            + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup");
         } else {
-            System.err.println(
-                "Warning! The output sequence contains "
-                    + materializationCount
-                    + " items but its materialization was capped at "
-                    + resultSizeCap
-                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
-            );
+            ConsoleOutput.warn(
+                    "Warning! The output sequence contains "
+                            + materializationCount
+                            + " items but its materialization was capped at "
+                            + resultSizeCap
+                            + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup");
         }
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
         resultList.clear();
         Rumble rumble = new Rumble(this.configuration);
-        SequenceOfItems sequence = rumble.runQuery(query);
-        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+        SequenceOfItems sequence = rumble.runQuery(query, this.externalBindings);
+        if (this.configuration.runtime().shouldApplyUpdates() && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
-        return sequence.populateList(resultList, this.configuration.getResultSizeCap());
+        return sequence.populateList(resultList, this.configuration.runtime().resultsSizeCap());
     }
-
 }

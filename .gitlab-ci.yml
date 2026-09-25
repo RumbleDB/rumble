@@ -189,28 +189,6 @@ StaticTypingTest:
     reports:
       junit: target/surefire-reports/TEST-iq.StaticTypeTests.xml
 
-MLTests:
-  stage: tests
-  script:
-    - mvn -Dtest=MLTests test --log-file target/ml_test.log
-  artifacts:
-    when: always
-    paths:
-      - target/surefire-reports/TEST-iq.MLTests.xml
-    reports:
-      junit: target/surefire-reports/TEST-iq.MLTests.xml
-
-MLTestsNativeDeactivated:
-  stage: tests
-  script:
-    - mvn -Dtest=MLTestsNativeDeactivated test
-  artifacts:
-    when: always
-    paths:
-      - target/surefire-reports/TEST-iq.MLTestsNativeDeactivated.xml
-    reports:
-      junit: target/surefire-reports/TEST-iq.MLTestsNativeDeactivated.xml
-
 BackwardsCompatibilityTests:
   stage: tests
   script:

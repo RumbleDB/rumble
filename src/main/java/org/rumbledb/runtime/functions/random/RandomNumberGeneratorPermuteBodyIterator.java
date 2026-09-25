@@ -1,0 +1,63 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.functions.random;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
+/**
+ * Body of the "permute" entry of a random-number-generator map: a seed-deterministic Fisher-Yates shuffle
+ * of the bound "arg" parameter.
+ */
+public class RandomNumberGeneratorPermuteBodyIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final long seed;
+
+    public RandomNumberGeneratorPermuteBodyIterator(long seed, RuntimeStaticContext staticContext) {
+        super(List.of(), staticContext);
+        this.seed = seed;
+    }
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> shuffledItems(context).iterator(), getMetadata());
+    }
+
+    private List<Item> shuffledItems(DynamicContext context) {
+        List<Item> items = new ArrayList<>(context.getVariableValues()
+                .getLocalVariableValue(RandomNumberGeneratorMapBuilder.PERMUTE_PARAM_NAME, getMetadata()));
+        Random random = new Random(this.seed);
+        for (int i = items.size() - 1; i > 0; --i) {
+            int j = random.nextInt(i + 1);
+            Item temp = items.get(i);
+            items.set(i, items.get(j));
+            items.set(j, temp);
+        }
+        return items;
+    }
+}

@@ -1,50 +1,61 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.input;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.spark.SparkSessionManager;
-
+import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
-public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
+
+public class DeltaFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public DeltaFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public DeltaFileFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator urlIterator = this.children.get(0);
-        urlIterator.open(context);
-        String url = urlIterator.next().getStringValue();
-        urlIterator.close();
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        ItemRuntimePlan urlIterator = this.getChild(0);
+        String url = urlIterator.materializeFirstOrNull(context).getStringValue();
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
 
         Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .read()
-            .format("delta")
-            .load(FileSystemUtil.convertURIToStringForSpark(uri));
+                .getOrCreateSession()
+                .read()
+                .format("delta")
+                .load(FileSystemUtil.convertURIToStringForSpark(uri));
 
         return DeltaTableFunctionIterator.postProcess(
-            dataFrame,
-            "delta.`" + FileSystemUtil.convertURIToStringForSpark(uri) + "`"
-        );
+                dataFrame, "delta.`" + FileSystemUtil.convertURIToStringForSpark(uri) + "`");
     }
 }
-

@@ -1,65 +1,86 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.scripting.block;
+
+import java.io.Serial;
+import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
-import java.util.List;
-
-public class StatementsWithExprIterator extends HybridRuntimeIterator {
+public class StatementsWithExprIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator currentChild;
-    private int childIndex;
-    private Item result;
 
     public StatementsWithExprIterator(
-            List<RuntimeIterator> statements,
-            RuntimeIterator exprIterator,
-            RuntimeStaticContext staticContext
-    ) {
-        super(null, staticContext);
-        // Expect an expression to be present
-        assert exprIterator != null;
-
-        this.children.addAll(statements);
-        this.children.add(exprIterator);
-
-        for (RuntimeIterator child : this.children) {
-            if (child.isSequential()) {
-                this.isSequential = child.isSequential();
-            }
-        }
+            List<? extends ItemRuntimePlan> statements,
+            ItemRuntimePlan exprIterator,
+            RuntimeStaticContext staticContext) {
+        super(
+                Stream.concat(statements.stream(), Stream.of(exprIterator)).toList(),
+                staticContext.toBuilder()
+                        .isUpdating(exprIterator.getRuntimeStaticContext().isUpdating())
+                        .isSequential(isSequential(statements, exprIterator))
+                        .build());
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.currentDynamicContextForLocalExecution = context;
-        startLocal();
-        return this.result;
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        int resultIndex = this.getChildren().size() - 1;
+        return new SequentialLocalCursor<>(
+                this.getChildren().subList(0, resultIndex), this.getChild(resultIndex), context, getMetadata());
+    }
+
+    private static boolean isSequential(List<? extends ItemRuntimePlan> statements, ItemRuntimePlan exprIterator) {
+        return exprIterator.getRuntimeStaticContext().isSequential()
+                || statements.stream()
+                        .anyMatch(
+                                statement -> statement.getRuntimeStaticContext().isSequential());
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        if (!this.children.isEmpty()) {
-            this.childIndex = 0;
-            this.currentChild = this.children.get(this.childIndex);
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
+        if (!this.getChildren().isEmpty()) {
+            int childIndex = 0;
+            ItemRuntimePlan currentChild = this.getChild(childIndex);
 
-            JavaRDD<Item> childRDD = this.currentChild.getRDD(dynamicContext);
-            this.childIndex++;
+            JavaRDD<Item> childRDD = currentChild.getRDD(dynamicContext);
+            childIndex++;
 
-            while (this.childIndex < this.children.size()) {
-                this.currentChild = this.children.get(this.childIndex);
-                JavaRDD<Item> nextChildRDD = this.currentChild.getRDD(dynamicContext);
+            while (childIndex < this.getChildren().size()) {
+                currentChild = this.getChild(childIndex);
+                JavaRDD<Item> nextChildRDD = currentChild.getRDD(dynamicContext);
                 childRDD = childRDD.union(nextChildRDD);
-                this.childIndex++;
+                childIndex++;
             }
             return childRDD;
         } else {
@@ -68,105 +89,22 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
         }
     }
 
-
-    private void startLocal() {
-        this.childIndex = 0;
-        this.currentChild = this.children.get(this.childIndex);
-        this.currentChild.open(this.currentDynamicContextForLocalExecution);
-
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        if (this.currentChild == null) {
-            this.hasNext = false;
-            return;
-        }
-
-        this.result = null;
-        while (this.result == null) {
-            if (!this.currentChild.hasNext()) {
-                this.currentChild.close();
-                if (++this.childIndex == this.children.size()) {
-                    this.currentChild = null;
-                    break;
-                } else {
-                    this.currentChild = this.children.get(this.childIndex);
-                    this.currentChild.open(this.currentDynamicContextForLocalExecution);
-                }
-            } else {
-                if (this.childIndex == this.children.size() - 1) {
-                    // Result is only the expression's result
-                    this.result = this.currentChild.next();
-                } else {
-                    // We have a statement with next. Result is ignored
-                    this.currentChild.next();
-                }
-            }
-        }
-
-        this.hasNext = this.result != null;
-    }
-
     @Override
-    public void openLocal() {
-        startLocal();
-    }
-
-    @Override
-    public void closeLocal() {
-        if (this.currentChild != null) {
-            this.currentChild.close();
-        }
-    }
-
-    @Override
-    public void resetLocal() {
-        startLocal();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.result; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in StatementsWithExpression", getMetadata());
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         int childIndex = 0;
-        while (childIndex < this.children.size() - 1) {
-            this.children.get(childIndex).getDataFrame(dynamicContext);
+        while (childIndex < this.getChildren().size() - 1) {
+            ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(childIndex), dynamicContext);
             ++childIndex;
         }
-        RuntimeIterator exprIterator = this.children.get(childIndex);
-        return exprIterator.getDataFrame(dynamicContext);
-    }
-
-    @Override
-    public boolean isUpdating() {
-        this.isUpdating = this.children.get(this.children.size() - 1).isUpdating();
-        return this.isUpdating;
+        ItemRuntimePlan exprIterator = this.getChild(childIndex);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(exprIterator, dynamicContext);
     }
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        RuntimeIterator exprIterator = this.children.get(this.children.size() - 1);
-        if (exprIterator.isUpdating()) {
-            return exprIterator.getPendingUpdateList(context);
+        ItemRuntimePlan exprIterator = this.getChild(this.getChildren().size() - 1);
+        if (exprIterator.getRuntimeStaticContext().isUpdating()) {
+            return UpdatingRuntimePlan.get(exprIterator, context);
         }
         return new PendingUpdateList();
     }

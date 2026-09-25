@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,16 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Ghislain Fourny
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.flwor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.ItemType;
@@ -31,8 +32,10 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
+@EqualsAndHashCode
 public class FlworDataFrameColumn implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public enum ColumnFormat {
@@ -46,16 +49,17 @@ public class FlworDataFrameColumn implements Serializable {
         AVERAGE
     };
 
+    @Setter
+    @Getter
     private String tableName;
+
+    @Getter
     private Name variableName;
+
     private ColumnFormat columnFormat;
 
     public FlworDataFrameColumn(
-            String tableName,
-            Name variableName,
-            ColumnFormat columnFormat,
-            SequenceType sequenceType
-    ) {
+            String tableName, Name variableName, ColumnFormat columnFormat, SequenceType sequenceType) {
         this.tableName = tableName;
         this.variableName = variableName;
         this.columnFormat = columnFormat;
@@ -81,38 +85,6 @@ public class FlworDataFrameColumn implements Serializable {
         } else {
             this.variableName = Name.createVariableInNoNamespace(columnName.substring(0, pos));
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof FlworDataFrameColumn)) {
-            return false;
-        }
-        FlworDataFrameColumn other = (FlworDataFrameColumn) o;
-        if (this.tableName == null && other.tableName != null) {
-            return false;
-        }
-        if (this.tableName != null && other.tableName == null) {
-            return false;
-        }
-        if (this.tableName != null && !this.tableName.equals(other.tableName)) {
-            return false;
-        }
-        if (!this.variableName.equals(other.variableName)) {
-            return false;
-        }
-        if (!this.columnFormat.equals(other.columnFormat)) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        if (this.tableName == null) {
-            return this.variableName.hashCode() + this.columnFormat.hashCode();
-        }
-        return this.tableName.hashCode() + this.variableName.hashCode() + this.columnFormat.hashCode();
     }
 
     public static SequenceType getSequenceTypeFromColumn(String columnName, StructType inputSchema) {
@@ -179,14 +151,6 @@ public class FlworDataFrameColumn implements Serializable {
         return "`" + getColumnName() + "`";
     }
 
-    public String getTableName() {
-        return this.tableName;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
     public String getColumnName() {
         switch (this.columnFormat) {
             case SERIALIZED_SEQUENCE:
@@ -240,9 +204,4 @@ public class FlworDataFrameColumn implements Serializable {
     public boolean isAverage() {
         return this.columnFormat.equals(ColumnFormat.AVERAGE);
     }
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
 }

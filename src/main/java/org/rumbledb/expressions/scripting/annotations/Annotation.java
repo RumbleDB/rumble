@@ -1,15 +1,34 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.scripting.annotations;
+
+import java.util.List;
+
+import lombok.Getter;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidAnnotationException;
+import org.rumbledb.exceptions.InvalidAnnotationNamespaceException;
 import org.rumbledb.expressions.Expression;
-
-import java.util.List;
 
 import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.ASSIGNABLE;
 import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.NON_ASSIGNABLE;
 
+@Getter
 public class Annotation {
     private final Name annotationName;
     private final List<Expression> literals;
@@ -19,19 +38,8 @@ public class Annotation {
         this.literals = literals;
     }
 
-    public Name getAnnotationName() {
-        return this.annotationName;
-    }
-
-    public List<Expression> getLiterals() {
-        return this.literals;
-    }
-
     public static boolean checkAssignable(
-            List<Annotation> annotations,
-            boolean defaultAssignable,
-            ExceptionMetadata exceptionMetadata
-    ) {
+            List<Annotation> annotations, boolean defaultAssignable, ExceptionMetadata exceptionMetadata) {
         boolean isAssignable = defaultAssignable;
         boolean hasAssignableAnnotation = false;
         boolean hasNonAssignableAnnotation = false;
@@ -46,10 +54,36 @@ public class Annotation {
             if (hasAssignableAnnotation && hasNonAssignableAnnotation) {
                 throw new InvalidAnnotationException(
                         "Both %an:assignable and %an:nonassignable annotations cannot be used for the same declaration",
-                        exceptionMetadata
-                );
+                        exceptionMetadata);
             }
         }
         return isAssignable;
+    }
+
+    public static void validateAnnotationName(Name annotationName, ExceptionMetadata metadata) {
+        String namespace = annotationName.getNamespace();
+        if (namespace == null) {
+            return;
+        }
+        if (namespace.equals(Name.XQUERY_ANNOTATIONS_NS)) {
+            String localName = annotationName.getLocalName();
+            if ("updating".equals(localName)
+                    || "simple".equals(localName)
+                    || "public".equals(localName)
+                    || "private".equals(localName)) {
+                return;
+            }
+        }
+        if (namespace.equals(Name.XML_NS)
+                || namespace.equals(Name.XS_NS)
+                || namespace.equals(Name.XSI_NS)
+                || namespace.equals(Name.FN_NS)
+                || namespace.equals(Name.MATH_NS)
+                || namespace.equals(Name.MAP_NS)
+                || namespace.equals(Name.ARRAY_NS)
+                || namespace.equals(Name.XQUERY_ANNOTATIONS_NS)) {
+            throw new InvalidAnnotationNamespaceException(
+                    "Annotations cannot be declared in the reserved namespace " + namespace + ".", metadata);
+        }
     }
 }

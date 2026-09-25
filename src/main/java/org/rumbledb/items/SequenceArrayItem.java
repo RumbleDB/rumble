@@ -1,25 +1,39 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.CannotAtomizeException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SequenceArrayItem implements Item {
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
+public class SequenceArrayItem extends AbstractArrayItem {
+
+    @Serial
     private static final long serialVersionUID = 1L;
-    private List<List<Item>> memberSequences;
+
+    private final List<List<Item>> memberSequences;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -27,17 +41,6 @@ public class SequenceArrayItem implements Item {
     private Collection collection;
     private boolean allSingletons;
     private boolean allSingletonsCached;
-
-    public SequenceArrayItem() {
-        this.memberSequences = new ArrayList<>();
-        this.mutabilityLevel = -1;
-        this.topLevelID = -1;
-        this.pathIn = "null";
-        this.location = "null";
-        this.collection = null;
-        this.allSingletons = true;
-        this.allSingletonsCached = true;
-    }
 
     public SequenceArrayItem(List<List<Item>> memberSequences) {
         this.memberSequences = memberSequences;
@@ -50,30 +53,25 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
-        }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
-            return false;
-        }
-        if (getSize() != o.getSize()) {
-            return false;
-        }
-        for (int i = 0; i < getSize(); ++i) {
-            List<Item> thisMember = this.getSequenceAt(i);
-            List<Item> otherMember = o.getSequenceAt(i);
-            if (thisMember.size() != otherMember.size()) {
-                return false;
+    public Item copy(boolean mutable) {
+        if (mutable) {
+            List<Item> copiedItems = new ArrayList<>(this.getItemMembers().size());
+            for (Item item : this.getItemMembers()) {
+                copiedItems.add(item.copy(mutable));
             }
-            for (int j = 0; j < thisMember.size(); j++) {
-                if (!thisMember.get(j).equals(otherMember.get(j))) {
-                    return false;
-                }
-            }
+            ArrayItem copy = new ArrayItem(copiedItems);
+            copy.setMutabilityLevel(0);
+            return copy;
         }
-        return true;
+        List<List<Item>> copiedMemberSequences = new ArrayList<>(this.memberSequences.size());
+        for (List<Item> member : this.memberSequences) {
+            List<Item> copiedMember = new ArrayList<>(member.size());
+            for (Item item : member) {
+                copiedMember.add(item.copy(mutable));
+            }
+            copiedMemberSequences.add(copiedMember);
+        }
+        return new SequenceArrayItem(copiedMemberSequences);
     }
 
     // region arrays
@@ -104,18 +102,12 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public List<Item> getItems() {
-        return this.getItemMembers();
-    }
-
-    @Override
     public List<Item> getItemMembers() throws OurBadException {
         List<Item> members = new ArrayList<>(this.memberSequences.size());
         for (List<Item> member : this.memberSequences) {
             if (member.size() != 1) {
                 throw new OurBadException(
-                        "getItemMembers is not defined when an array member is a non-singleton sequence."
-                );
+                        "getItemMembers is not defined when an array member is a non-singleton sequence.");
             }
             members.add(member.get(0));
         }
@@ -136,14 +128,12 @@ public class SequenceArrayItem implements Item {
         if (position < 0 || position >= getSize()) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: " + (position + 1) + ", of array with length: " + getSize(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         List<Item> member = this.memberSequences.get(position);
         if (member.size() != 1) {
             throw new OurBadException(
-                    "getItemAt() is not defined for non-singleton member sequences; use getSequenceAt(int) instead."
-            );
+                    "getItemAt() is not defined for non-singleton member sequences; use getSequenceAt(int) instead.");
         }
         return member.get(0);
     }
@@ -153,16 +143,10 @@ public class SequenceArrayItem implements Item {
         if (position < 0 || position >= getSize()) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: " + (position + 1) + ", of array with length: " + getSize(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         List<Item> member = this.memberSequences.get(position);
         return member;
-    }
-
-    @Override
-    public void append(Item item) {
-        appendItem(item);
     }
 
     @Override
@@ -227,40 +211,6 @@ public class SequenceArrayItem implements Item {
     }
 
     // endregion arrays
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.memberSequences);
-        output.writeInt(this.mutabilityLevel);
-        output.writeLong(this.topLevelID);
-        kryo.writeObject(output, this.pathIn);
-        kryo.writeObject(output, this.location);
-        kryo.writeObjectOrNull(output, this.collection, Collection.class);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.memberSequences = kryo.readObject(input, ArrayList.class);
-        this.mutabilityLevel = input.readInt();
-        this.topLevelID = input.readLong();
-        this.pathIn = kryo.readObject(input, String.class);
-        this.location = kryo.readObject(input, String.class);
-        this.collection = kryo.readObjectOrNull(input, Collection.class);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = 0;
-        result += getSize();
-        for (int i = 0; i < getSize(); ++i) {
-            List<Item> member = this.memberSequences.get(i);
-            for (Item item : member) {
-                result += item.hashCode();
-            }
-        }
-        return result;
-    }
 
     @Override
     public ItemType getDynamicType() {
@@ -347,8 +297,7 @@ public class SequenceArrayItem implements Item {
                 // Fallback: use JSON representation of the member sequence as a scalar.
                 // This keeps Spark integration conservative for now.
                 List<Item> asSequence = member;
-                Item sequenceWrapper = ItemFactory.getInstance()
-                    .createArrayItem(asSequence, false);
+                Item sequenceWrapper = ItemFactory.getInstance().createArrayItem(asSequence, false);
                 sb.append(sequenceWrapper.getSparkSQLValue());
             }
             if (i + 1 < this.memberSequences.size()) {
@@ -390,7 +339,13 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
+        List<Item> result = new ArrayList<>();
+        for (List<Item> memberSequence : this.memberSequences) {
+            for (Item item : memberSequence) {
+                result.addAll(item.atomizedValue());
+            }
+        }
+        return result;
     }
 
     @Override

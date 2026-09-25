@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,28 +11,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.types;
 
-import org.apache.log4j.LogManager;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.functions.FunctionCoercion;
+
+@Log4j2
+@Getter
+@EqualsAndHashCode
 public class SequenceType implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private ItemType itemType;
     private Arity arity;
 
@@ -48,21 +53,15 @@ public class SequenceType implements Serializable {
         this.itemType = itemType;
         this.arity = arity;
         if (this.itemType == null) {
-            LogManager.getLogger("SequenceType")
-                .warn(
-                    "Missing item type in incomplete sequence type "
-                        + this.arity
-                        + ", defaulting to item. Please let us know as we would like to look into this!"
-                );
+            log.warn("Missing item type in incomplete sequence type "
+                    + this.arity
+                    + ", defaulting to item. Please let us know as we would like to look into this!");
             this.itemType = BuiltinTypesCatalogue.item;
         }
         if (this.arity == null) {
-            LogManager.getLogger("SequenceType")
-                .warn(
-                    "Missing arity in incomplete sequence type "
-                        + this.itemType
-                        + ", defaulting to *. Please let us know as we would like to look into this!"
-                );
+            log.warn("Missing arity in incomplete sequence type "
+                    + this.itemType
+                    + ", defaulting to *. Please let us know as we would like to look into this!");
             this.arity = Arity.ZeroOrMore;
         }
     }
@@ -105,21 +104,16 @@ public class SequenceType implements Serializable {
         return this.arity == Arity.Zero;
     }
 
-    public ItemType getItemType() {
-        return this.itemType;
-    }
-
-    public Arity getArity() {
-        return this.arity;
-    }
-
     public boolean isSubtypeOf(SequenceType superType) {
         if (isEmptySequence()) {
-            return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+            return superType.isEmptySequence()
+                    || superType.arity == Arity.OneOrZero
+                    || superType.arity == Arity.ZeroOrMore;
         }
-        return this.itemType.isSubtypeOf(superType.getItemType())
-            &&
-            this.isAritySubtypeOf(superType.arity);
+        if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
+            return hasOnlyEmptySequenceAsValue() ? emptySequenceIsSubtypeOf(superType) : true;
+        }
+        return this.itemType.isSubtypeOf(superType.getItemType()) && this.isAritySubtypeOf(superType.arity);
     }
 
     // keep in consideration also automatic promotion of integer > decimal > double and anyURI > string
@@ -127,10 +121,13 @@ public class SequenceType implements Serializable {
         if (isEmptySequence()) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }
+        if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
+            return hasOnlyEmptySequenceAsValue() ? emptySequenceIsSubtypeOf(superType) : true;
+        }
         return this.isAritySubtypeOf(superType.arity)
-            && (this.itemType.isSubtypeOf(superType.getItemType())
-                ||
-                (this.itemType.canBePromotedTo(superType.itemType)));
+                && (this.itemType.isSubtypeOf(superType.getItemType())
+                        || (this.itemType.canBePromotedTo(superType.itemType))
+                        || FunctionCoercion.canItemTypeBeFunctionCoercedTo(this.itemType, superType.itemType));
     }
 
     // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence
@@ -139,23 +136,25 @@ public class SequenceType implements Serializable {
         return this.arity.isSubtypeOf(superArity);
     }
 
+    private boolean hasOnlyEmptySequenceAsValue() {
+        return this.arity == Arity.Zero || this.arity == Arity.OneOrZero || this.arity == Arity.ZeroOrMore;
+    }
+
+    private boolean emptySequenceIsSubtypeOf(SequenceType superType) {
+        return superType.isEmptySequence() || superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+    }
+
     public boolean hasEffectiveBooleanValue() {
         if (isEmptySequence()) {
             return true;
         } else if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
             return true;
-        } else if (
-            (this.arity == Arity.One || this.arity == Arity.OneOrZero)
+        } else if ((this.arity == Arity.One || this.arity == Arity.OneOrZero)
                 && (this.itemType.isNumeric()
-                    ||
-                    this.itemType.equals(BuiltinTypesCatalogue.stringItem)
-                    ||
-                    this.itemType.equals(BuiltinTypesCatalogue.anyURIItem)
-                    ||
-                    this.itemType.equals(BuiltinTypesCatalogue.nullItem)
-                    ||
-                    this.itemType.equals(BuiltinTypesCatalogue.booleanItem))
-        ) {
+                        || this.itemType.equals(BuiltinTypesCatalogue.stringItem)
+                        || this.itemType.equals(BuiltinTypesCatalogue.anyURIItem)
+                        || this.itemType.equals(BuiltinTypesCatalogue.nullItem)
+                        || this.itemType.equals(BuiltinTypesCatalogue.booleanItem))) {
             return true;
         } else {
             return false;
@@ -166,15 +165,15 @@ public class SequenceType implements Serializable {
         // types overlap if both itemType and Arity overlap, we also need to take care of empty sequence
         if (isEmptySequence()) {
             return other.isEmptySequence()
-                || other.getArity() == Arity.OneOrZero
-                || other.getArity() == Arity.ZeroOrMore;
+                    || other.getArity() == Arity.OneOrZero
+                    || other.getArity() == Arity.ZeroOrMore;
         }
         if (other.isEmptySequence()) {
             return this.getArity() == Arity.OneOrZero || this.getArity() == Arity.ZeroOrMore;
         }
         // All arities overlap between each other
         return this.getItemType().isSubtypeOf(other.getItemType())
-            || other.getItemType().isSubtypeOf(this.getItemType());
+                || other.getItemType().isSubtypeOf(this.getItemType());
     }
 
     public SequenceType leastCommonSupertypeWith(SequenceType other) {
@@ -236,21 +235,6 @@ public class SequenceType implements Serializable {
         return this;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof SequenceType)) {
-            return false;
-        }
-        SequenceType sequenceType = (SequenceType) other;
-        if (isEmptySequence()) {
-            return sequenceType.isEmptySequence();
-        }
-        if (sequenceType.isEmptySequence()) {
-            return false;
-        }
-        return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
-    }
-
     public enum Arity {
         OneOrZero {
             @Override
@@ -292,10 +276,8 @@ public class SequenceType implements Serializable {
             if (this == Zero) {
                 return superArity == Arity.ZeroOrMore || superArity == Arity.OneOrZero;
             }
-            if (superArity == Arity.ZeroOrMore || superArity == this)
-                return true;
-            else
-                return this == Arity.One;
+            if (superArity == Arity.ZeroOrMore || superArity == this) return true;
+            else return this == Arity.One;
         }
 
         public Arity multiplyWith(Arity other) {
@@ -312,7 +294,6 @@ public class SequenceType implements Serializable {
                 return ZeroOrMore;
             }
         }
-
     }
 
     @Override
@@ -322,11 +303,15 @@ public class SequenceType implements Serializable {
         }
         ItemType itemType = this.getItemType();
         StringBuilder result = new StringBuilder();
-        Name name = itemType.getName();
-        if (name != null) {
-            result.append(name);
+        if (itemType.hasName()) {
+            Name name = itemType.getName();
+            if (name != null) {
+                result.append(name);
+            } else {
+                result.append("<anonymous>(").append(itemType).append(")");
+            }
         } else {
-            result.append("<anonymous>(" + itemType + ")");
+            result.append(itemType);
         }
         result.append(this.arity.getSymbol());
         return result.toString();
@@ -420,6 +405,18 @@ public class SequenceType implements Serializable {
                 break;
             case "anyAtomicType*":
                 st = new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "error":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.One);
+                break;
+            case "error+":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, Arity.OneOrMore);
+                break;
+            case "error?":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "error*":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.ZeroOrMore);
                 break;
             case "string":
                 st = new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.One);
@@ -649,6 +646,18 @@ public class SequenceType implements Serializable {
             case "gYearMonth+":
                 st = new SequenceType(BuiltinTypesCatalogue.gYearMonthItem, SequenceType.Arity.OneOrMore);
                 break;
+            case "language":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.One);
+                break;
+            case "language?":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "language*":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "language+":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.OneOrMore);
+                break;
             case "anyURI":
                 st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.One);
                 break;
@@ -698,77 +707,85 @@ public class SequenceType implements Serializable {
                 st = new SequenceType(BuiltinTypesCatalogue.nullItem, SequenceType.Arity.OneOrMore);
                 break;
             case "function(object*, object) as object*":
-                st = new SequenceType(
-                        ItemTypeFactory.createFunctionItemType(
-                            new FunctionSignature(
-                                    Arrays.asList(
-                                        new SequenceType(
-                                                BuiltinTypesCatalogue.objectItem,
-                                                SequenceType.Arity.ZeroOrMore
-                                        ),
-                                        new SequenceType(BuiltinTypesCatalogue.objectItem)
-                                    ),
-                                    new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore)
-                            )
-                        )
-                );
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Arrays.asList(
+                                new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
+                                new SequenceType(BuiltinTypesCatalogue.objectItem)),
+                        new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore))));
                 break;
             case "function(item*, item*) as item*":
-                st = new SequenceType(
-                        ItemTypeFactory.createFunctionItemType(
-                            new FunctionSignature(
-                                    Arrays.asList(
-                                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
-                                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
-                                    ),
-                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
-                            )
-                        )
-                );
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Arrays.asList(
+                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
+                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
+                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
                 break;
             case "function(item*) as item*":
-                st = new SequenceType(
-                        ItemTypeFactory.createFunctionItemType(
-                            new FunctionSignature(
-                                    Collections.singletonList(
-                                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
-                                    ),
-                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
-                            )
-                        )
-                );
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Collections.singletonList(
+                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
+                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
+                break;
+            case "function(item*) as boolean":
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Collections.singletonList(
+                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
+                        new SequenceType(BuiltinTypesCatalogue.booleanItem))));
+                break;
+            case "function(item) as item*":
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Collections.singletonList(new SequenceType(BuiltinTypesCatalogue.item)),
+                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
+                break;
+            case "function(item) as boolean":
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Collections.singletonList(new SequenceType(BuiltinTypesCatalogue.item)),
+                        new SequenceType(BuiltinTypesCatalogue.booleanItem))));
+                break;
+            case "function(item) as anyAtomicType*":
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Collections.singletonList(new SequenceType(BuiltinTypesCatalogue.item)),
+                        new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore))));
                 break;
             case "function(object*, object) as function(object*, object) as object*":
-                st = new SequenceType(
-                        ItemTypeFactory.createFunctionItemType(
-                            new FunctionSignature(
-                                    Arrays.asList(
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Arrays.asList(
+                                new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
+                                new SequenceType(BuiltinTypesCatalogue.objectItem)),
+                        new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                                Arrays.asList(
                                         new SequenceType(
-                                                BuiltinTypesCatalogue.objectItem,
-                                                SequenceType.Arity.ZeroOrMore
-                                        ),
-                                        new SequenceType(BuiltinTypesCatalogue.objectItem)
-                                    ),
-                                    new SequenceType(
-                                            ItemTypeFactory.createFunctionItemType(
-                                                new FunctionSignature(
-                                                        Arrays.asList(
-                                                            new SequenceType(
-                                                                    BuiltinTypesCatalogue.objectItem,
-                                                                    SequenceType.Arity.ZeroOrMore
-                                                            ),
-                                                            new SequenceType(BuiltinTypesCatalogue.objectItem)
-                                                        ),
-                                                        new SequenceType(
-                                                                BuiltinTypesCatalogue.objectItem,
-                                                                SequenceType.Arity.ZeroOrMore
-                                                        )
-                                                )
-                                            )
-                                    )
-                            )
-                        )
-                );
+                                                BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
+                                        new SequenceType(BuiltinTypesCatalogue.objectItem)),
+                                new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore)))))));
+                break;
+            case "function(anyAtomicType, item*) as item*":
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Arrays.asList(
+                                new SequenceType(BuiltinTypesCatalogue.atomicItem),
+                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
+                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
+                break;
+            case "function(item, item) as item*":
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Arrays.asList(
+                                new SequenceType(BuiltinTypesCatalogue.item),
+                                new SequenceType(BuiltinTypesCatalogue.item)),
+                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
+                break;
+            case "function(item*, item) as item*":
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Arrays.asList(
+                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
+                                new SequenceType(BuiltinTypesCatalogue.item)),
+                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
+                break;
+            case "function(item, item*) as item*":
+                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                        Arrays.asList(
+                                new SequenceType(BuiltinTypesCatalogue.item),
+                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
+                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
                 break;
             case "int":
                 st = new SequenceType(BuiltinTypesCatalogue.intItem, SequenceType.Arity.One);
@@ -927,16 +944,10 @@ public class SequenceType implements Serializable {
                 st = new SequenceType(BuiltinTypesCatalogue.mapItem, Arity.OneOrMore);
                 break;
             case "function":
-                st = new SequenceType(
-                        BuiltinTypesCatalogue.anyFunctionItem,
-                        Arity.One
-                );
+                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One);
                 break;
             case "function(*)":
-                st = new SequenceType(
-                        BuiltinTypesCatalogue.anyFunctionItem,
-                        Arity.One
-                );
+                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One);
                 break;
             case "function?":
                 st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrZero);
@@ -968,11 +979,34 @@ public class SequenceType implements Serializable {
             case "QName+":
                 st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.OneOrMore);
                 break;
+            case "NCName":
+                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.One);
+                break;
+            case "NCName?":
+                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "NCName*":
+                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "NCName+":
+                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.OneOrMore);
+                break;
+            case "node()":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.One);
+                break;
+            case "node()?":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "node()*":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "node()+":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrMore);
+                break;
             default:
                 throw new OurBadException("Unrecognized type: " + userFriendlyName);
         }
         sequenceTypes.put(userFriendlyName, st);
         return st;
     }
-
 }

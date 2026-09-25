@@ -1,57 +1,63 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
+import java.io.Serial;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Period;
 import java.time.format.DateTimeParseException;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-public class DayTimeDurationItem implements Item {
+public class DayTimeDurationItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private Duration value;
-    Pattern durationRegex = Pattern.compile(
-        "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
-    );
-    Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
-
-
-    @SuppressWarnings("unused")
-    public DayTimeDurationItem() {
-        super();
-    }
+    private static final Pattern durationRegex = Pattern.compile(
+            "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))");
+    private static final Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
 
     public DayTimeDurationItem(Duration value) {
-        super();
         this.value = value;
     }
 
     public DayTimeDurationItem(String value) {
-        super();
-        if (!this.durationRegex.matcher(value).matches() || !this.dayTimeDurationRegex.matcher(value).matches()) {
+        if (!durationRegex.matcher(value).matches()
+                || !dayTimeDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:dayTimeDuration: \"" + value + "\"");
         }
         try {
             this.value = Duration.parse(value);
         } catch (DateTimeParseException e) {
             throw new DurationOverflowOrUnderflow(
-                    "Invalid xs:dayTimeDuration: \"" + value + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Invalid xs:dayTimeDuration: \"" + value + "\"", ExceptionMetadata.EMPTY_METADATA);
         }
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new DayTimeDurationItem(this.value);
     }
 
     @Override
@@ -73,36 +79,6 @@ public class DayTimeDurationItem implements Item {
     public boolean getEffectiveBooleanValue() {
         return false;
     }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.value);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = Duration.parse(input.readString());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-    }
-
-    @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
 
     @Override
     public ItemType getDynamicType() {
@@ -129,6 +105,11 @@ public class DayTimeDurationItem implements Item {
         return Period.ZERO;
     }
 
+    @Override
+    public Duration getDayTimeDurationComponent() {
+        return this.value;
+    }
+
     public static String normalizeDuration(Duration duration) {
         if (duration.isZero()) {
             return "PT0S"; // Default value for empty dayTimeDuration
@@ -147,19 +128,15 @@ public class DayTimeDurationItem implements Item {
         double fractionalSeconds = seconds + nanos / 1_000_000_000.0;
 
         StringBuilder sb = new StringBuilder();
-        if (isNegative)
-            sb.append("-");
+        if (isNegative) sb.append("-");
 
         sb.append("P");
-        if (days > 0)
-            sb.append(days).append("D");
+        if (days > 0) sb.append(days).append("D");
 
         if (hours > 0 || minutes > 0 || fractionalSeconds > 0 || sb.toString().endsWith("P")) {
             sb.append("T");
-            if (hours > 0)
-                sb.append(hours).append("H");
-            if (minutes > 0)
-                sb.append(minutes).append("M");
+            if (hours > 0) sb.append(hours).append("H");
+            if (minutes > 0) sb.append(minutes).append("M");
 
             if (fractionalSeconds > 0) {
                 // Format seconds with optional fraction

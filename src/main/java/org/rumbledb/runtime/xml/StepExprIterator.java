@@ -1,11 +1,30 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
@@ -16,77 +35,40 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class StepExprIterator extends LocalRuntimeIterator {
+public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator axisIterator;
-    private NodeTest nodeTest;
-    private List<Item> results;
-    private Item nextResult;
-    private int resultCounter = 0;
 
-    public StepExprIterator(
-            RuntimeIterator axisIterator,
-            NodeTest nodeTest,
-            RuntimeStaticContext staticContext
-    ) {
-        super(null, staticContext);
-        this.children.add(axisIterator);
+    private final ItemRuntimePlan axisIterator;
+    private final NodeTest nodeTest;
+
+    public StepExprIterator(ItemRuntimePlan axisIterator, NodeTest nodeTest, RuntimeStaticContext staticContext) {
+        super(List.of(axisIterator), staticContext);
         this.axisIterator = axisIterator;
         this.nodeTest = nodeTest;
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        setNextResult();
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.results = null;
-        this.nextResult = null;
-        this.resultCounter = 0;
-        this.axisIterator.close();
-    }
-
-    private void setNextResult() {
-        if (this.results == null) {
-            List<Item> axisResult = applyAxis();
-            this.results = applyNodeTest(axisResult);
-        }
-        storeNextResult();
-    }
-
-    private List<Item> applyAxis() {
-        return this.axisIterator.materialize(this.currentDynamicContextForLocalExecution);
-    }
-
-    private void storeNextResult() {
-        if (this.resultCounter < this.results.size()) {
-            this.nextResult = this.results.get(this.resultCounter++);
-        } else {
-            this.hasNext = false;
-        }
-    }
-
-    private List<Item> applyNodeTest(List<Item> axisResult) {
-        List<Item> nodeTestResults = new ArrayList<>();
-        for (Item node : axisResult) {
-            Item nodeTestResult = nodeTestItem(node);
-            if (nodeTestResult != null) {
-                nodeTestResults.add(nodeTestResult);
-            }
-        }
-        return nodeTestResults;
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.axisIterator,
+                context,
+                node -> {
+                    Item result = nodeTestItem(node, this.nodeTest);
+                    return result == null
+                            ? List.<Item>of().iterator()
+                            : List.of(result).iterator();
+                },
+                getMetadata());
     }
 
     private static String nodeNameLexical(Item node) {
@@ -94,45 +76,33 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return n == null ? "" : n.toString();
     }
 
-    private Item nodeTestItem(Item node) {
-        if (this.nodeTest instanceof AnyKindTest) {
+    private Item nodeTestItem(Item node, NodeTest test) {
+        if (test instanceof SchemaNodeTest schemaTest) {
+            return InstanceOfIterator.doesItemTypeMatchItem(schemaTest.itemType(), node) ? node : null;
+        } else if (test instanceof AnyKindTest) {
             return anyKindTest(node);
-        } else if (this.nodeTest instanceof TextTest) {
+        } else if (test instanceof TextTest) {
             return textKindTest(node);
-        } else if (this.nodeTest instanceof CommentTest) {
+        } else if (test instanceof CommentTest) {
             return commentKindTest(node);
-        } else if (this.nodeTest instanceof PITest) {
-            return piKindTest(node);
-        } else if (this.nodeTest instanceof NamespaceNodeTest) {
+        } else if (test instanceof PITest piTest) {
+            return piKindTest(node, piTest);
+        } else if (test instanceof NamespaceNodeTest) {
             return namespaceNodeKindTest(node);
-        } else if (this.nodeTest instanceof AttributeTest) {
-            return attributeKindTest(node);
-        } else if (this.nodeTest instanceof ElementTest) {
-            return elementKindTest(node);
-        } else if (this.nodeTest instanceof NameTest) {
-            return nameKindTest(node);
-        } else if (this.nodeTest instanceof DocumentTest) {
-            return documentKindTest(node);
+        } else if (test instanceof AttributeTest attributeTest) {
+            return attributeKindTest(node, attributeTest);
+        } else if (test instanceof ElementTest elementTest) {
+            return elementKindTest(node, elementTest);
+        } else if (test instanceof NameTest nameTest) {
+            return nameKindTest(node, nameTest);
+        } else if (test instanceof DocumentTest documentTest) {
+            return documentKindTest(node, documentTest);
         } else {
-            throw new UnsupportedFeatureException(
-                    "Unsupported node test: " + this.nodeTest,
-                    getMetadata()
-            );
+            throw new UnsupportedFeatureException("Unsupported node test: " + test, getMetadata());
         }
     }
 
-    private Item nodeTestItem(Item node, NodeTest testToApply) {
-        NodeTest previousNodeTest = this.nodeTest;
-        this.nodeTest = testToApply;
-        try {
-            return nodeTestItem(node);
-        } finally {
-            this.nodeTest = previousNodeTest;
-        }
-    }
-
-    private Item documentKindTest(Item node) {
-        DocumentTest documentTest = (DocumentTest) this.nodeTest;
+    private Item documentKindTest(Item node, DocumentTest documentTest) {
         if (!node.isDocumentNode()) {
             return null;
         }
@@ -165,8 +135,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return null;
     }
 
-    private Item nameKindTest(Item node) {
-        NameTest nameTest = (NameTest) this.nodeTest;
+    private Item nameKindTest(Item node, NameTest nameTest) {
         if (nameTest.hasQName()) {
             if (!isPrincipalNodeKind(node)) {
                 return null;
@@ -188,7 +157,22 @@ public class StepExprIterator extends LocalRuntimeIterator {
             }
             return node;
         }
-        if (nameTest.getWildcardQName().equals(nodeNameLexical(node))) {
+        if (!isPrincipalNodeKind(node)) {
+            return null;
+        }
+        String wildcard = nameTest.getWildcardQName();
+        Name nodeName = node.nodeName();
+        if (nodeName == null) {
+            return null;
+        }
+        if (wildcard.startsWith("*:")) {
+            String localName = wildcard.substring(2);
+            if (localName.equals(nodeName.getLocalName())) {
+                return node;
+            }
+            return null;
+        }
+        if (wildcard.equals(nodeNameLexical(node))) {
             return node;
         }
         return null;
@@ -202,8 +186,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return node.isElementNode();
     }
 
-    private Item elementKindTest(Item node) {
-        ElementTest elementTest = (ElementTest) this.nodeTest;
+    private Item elementKindTest(Item node, ElementTest elementTest) {
         if (elementTest.isEmptyCheck()) {
             if (node.isElementNode()) {
                 return node;
@@ -211,10 +194,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return null;
         }
         if (elementTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isElementNode()
-                    && elementTest.getElementName().equals(node.nodeName())
-            ) {
+            if (node.isElementNode() && elementTest.getElementName().equals(node.nodeName())) {
                 return node;
             }
             return null;
@@ -229,8 +209,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return null;
     }
 
-    private Item attributeKindTest(Item node) {
-        AttributeTest attributeTest = (AttributeTest) this.nodeTest;
+    private Item attributeKindTest(Item node, AttributeTest attributeTest) {
         if (attributeTest.isEmptyCheck()) {
             if (node.isAttributeNode()) {
                 return node;
@@ -238,10 +217,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return null;
         }
         if (attributeTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isAttributeNode()
-                    && attributeTest.getAttributeName().equals(node.nodeName())
-            ) {
+            if (node.isAttributeNode() && attributeTest.getAttributeName().equals(node.nodeName())) {
                 return node;
             }
             return null;
@@ -274,8 +250,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return null;
     }
 
-    private Item piKindTest(Item node) {
-        PITest piTest = (PITest) this.nodeTest;
+    private Item piKindTest(Item node, PITest piTest) {
         if (!node.isProcessingInstructionNode()) {
             return null;
         }
@@ -295,23 +270,5 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return node;
         }
         return null;
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.nextResult;
-            setNextResult();
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in step expr",
-                getMetadata()
-        );
-    }
-
-    @Override
-    public boolean hasNext() {
-        return super.hasNext();
     }
 }

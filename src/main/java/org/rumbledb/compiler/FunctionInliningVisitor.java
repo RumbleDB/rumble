@@ -1,4 +1,24 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.compiler;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -25,28 +45,39 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
-
 
 public class FunctionInliningVisitor extends CloneVisitor {
 
-    public FunctionInliningVisitor() {
+    private String queryLanguage;
+    private Prolog prolog;
+    private boolean constructionPreserve;
+
+    private boolean hasDifferentConstructionMode(Prolog prolog, FunctionDeclaration target) {
+        for (var module : prolog.getImportedModules()) {
+            if (module.getProlog().getFunctionDeclarations().contains(target)) {
+                return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve;
+            }
+            if (hasDifferentConstructionMode(module.getProlog(), target)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean requiresSchemaParameterConversion(InlineFunctionExpression function) {
+        // Inlining runs before schema type references are resolved. Its promotion expressions do not
+        // implement union atomization and untyped conversion, so retain the normal call in these cases.
+        return function.getParams().values().stream()
+                .anyMatch(type -> !type.isResolved() || type.getItemType().isUnionType());
     }
 
     private boolean isVariableReferenced(Node expression, Name name) {
-        if (expression instanceof VariableReferenceExpression) {
-            return ((VariableReferenceExpression) expression).getVariableName().equals(name);
+        if (expression instanceof VariableReferenceExpression variableReference) {
+            return variableReference.getVariableName().equals(name);
         }
-        if (expression instanceof Clause) {
-            if (
-                ((Clause) expression).getPreviousClause() != null
-                    && isVariableReferenced(((Clause) expression).getPreviousClause(), name)
-            ) {
+        if (expression instanceof Clause clause) {
+            if (clause.getPreviousClause() != null && isVariableReferenced(clause.getPreviousClause(), name)) {
                 return true;
             }
         }
@@ -71,158 +102,129 @@ public class FunctionInliningVisitor extends CloneVisitor {
         boolean allArgumentsMatch = true;
         for (int i = 0; i < expression.getArguments().size(); i++) {
             allArgumentsMatch = allArgumentsMatch
-                && expression.getArguments().get(i) instanceof VariableReferenceExpression
-                && paramNames.get(i)
-                    .equals(((VariableReferenceExpression) expression.getArguments().get(i)).getVariableName());
+                    && expression.getArguments().get(i) instanceof VariableReferenceExpression variableReference
+                    && paramNames.get(i).equals(variableReference.getVariableName());
         }
         return allArgumentsMatch;
     }
 
     private void addCastCase(
-            List<TypeswitchCase> cases,
-            Expression expression,
-            SequenceType testType,
-            SequenceType targetType
-    ) {
+            List<TypeswitchCase> cases, Expression expression, SequenceType testType, SequenceType targetType) {
         if (testType.equals(targetType)) {
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(testType),
-                        expression
-                )
-            );
+            cases.add(new TypeswitchCase(null, Collections.singletonList(testType), expression));
         } else if (testType.getArity().isSubtypeOf(Arity.OneOrZero)) {
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(testType),
-                        new CastExpression(
-                                expression,
-                                targetType,
-                                expression.getMetadata()
-                        )
-                )
-            );
+            cases.add(new TypeswitchCase(
+                    null,
+                    Collections.singletonList(testType),
+                    new CastExpression(expression, targetType, expression.getMetadata())));
         } else {
             Name variableName = Name.createVariableInNoNamespace(
-                String.format("param%s", UUID.randomUUID().toString().replaceAll("-", ""))
-            );
+                    String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
             Clause forClause = new ForClause(
                     variableName,
                     false,
                     new SequenceType(testType.getItemType(), Arity.One),
                     null,
                     expression,
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
             Expression castExpression = new CastExpression(
                     new VariableReferenceExpression(variableName, expression.getMetadata()),
                     new SequenceType(targetType.getItemType(), Arity.One),
-                    expression.getMetadata()
-            );
-            ReturnClause returnClause = new ReturnClause(
-                    castExpression,
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
+            ReturnClause returnClause = new ReturnClause(castExpression, expression.getMetadata());
             forClause.chainWith(returnClause);
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(testType),
-                        new FlworExpression(returnClause, expression.getMetadata())
-                )
-            );
+            cases.add(new TypeswitchCase(
+                    null,
+                    Collections.singletonList(testType),
+                    new FlworExpression(returnClause, expression.getMetadata())));
         }
     }
 
-    private Expression createTypePromotion(
-            Expression expression,
-            SequenceType paramType
-    ) {
+    private Expression createTypePromotion(Expression expression, SequenceType paramType) {
+        if (isNamespaceSensitiveFunctionParameter(paramType)
+                && usesQNameCoercionErrorSemantics(expression)
+                && expression.getStaticSequenceType() != null
+                && expression.getStaticSequenceType().getItemType() != null
+                && expression
+                        .getStaticSequenceType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
+            TreatExpression result = new TreatExpression(
+                    expression, paramType, ErrorCode.CannotConvertToQNameErrorCode, expression.getMetadata());
+            result.setStaticSequenceType(paramType);
+            return result;
+        }
         // integer > decimal > double
         if (paramType.getItemType() == BuiltinTypesCatalogue.doubleItem) {
             List<TypeswitchCase> cases = new ArrayList<>();
             switch (paramType.getArity()) {
                 case One:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("integer"),
-                        SequenceType.createSequenceType("double")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("integer"),
+                            SequenceType.createSequenceType("double"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("decimal"),
-                        SequenceType.createSequenceType("double")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("decimal"),
+                            SequenceType.createSequenceType("double"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("double"),
-                        SequenceType.createSequenceType("double")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("double"),
+                            SequenceType.createSequenceType("double"));
                     break;
                 case OneOrZero:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("integer?"),
-                        SequenceType.createSequenceType("double?")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("integer?"),
+                            SequenceType.createSequenceType("double?"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("decimal?"),
-                        SequenceType.createSequenceType("double?")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("decimal?"),
+                            SequenceType.createSequenceType("double?"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("double?"),
-                        SequenceType.createSequenceType("double?")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("double?"),
+                            SequenceType.createSequenceType("double?"));
                     break;
                 case OneOrMore:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("integer+"),
-                        SequenceType.createSequenceType("double+")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("integer+"),
+                            SequenceType.createSequenceType("double+"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("decimal+"),
-                        SequenceType.createSequenceType("double+")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("decimal+"),
+                            SequenceType.createSequenceType("double+"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("double+"),
-                        SequenceType.createSequenceType("double+")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("double+"),
+                            SequenceType.createSequenceType("double+"));
                     break;
                 case ZeroOrMore:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("integer*"),
-                        SequenceType.createSequenceType("double*")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("integer*"),
+                            SequenceType.createSequenceType("double*"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("decimal*"),
-                        SequenceType.createSequenceType("double*")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("decimal*"),
+                            SequenceType.createSequenceType("double*"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("double*"),
-                        SequenceType.createSequenceType("double*")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("double*"),
+                            SequenceType.createSequenceType("double*"));
                     break;
                 case Zero:
             }
@@ -235,11 +237,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                                     expression,
                                     paramType,
                                     ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata()
-                            )
-                    ),
-                    expression.getMetadata()
-            );
+                                    expression.getMetadata())),
+                    expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
         }
@@ -248,59 +247,51 @@ public class FunctionInliningVisitor extends CloneVisitor {
             switch (paramType.getArity()) {
                 case One:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("integer"),
-                        SequenceType.createSequenceType("decimal")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("integer"),
+                            SequenceType.createSequenceType("decimal"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("decimal"),
-                        SequenceType.createSequenceType("decimal")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("decimal"),
+                            SequenceType.createSequenceType("decimal"));
                     break;
                 case OneOrZero:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("integer?"),
-                        SequenceType.createSequenceType("decimal?")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("integer?"),
+                            SequenceType.createSequenceType("decimal?"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("decimal?"),
-                        SequenceType.createSequenceType("decimal?")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("decimal?"),
+                            SequenceType.createSequenceType("decimal?"));
                     break;
                 case OneOrMore:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("integer+"),
-                        SequenceType.createSequenceType("decimal+")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("integer+"),
+                            SequenceType.createSequenceType("decimal+"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("decimal+"),
-                        SequenceType.createSequenceType("decimal+")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("decimal+"),
+                            SequenceType.createSequenceType("decimal+"));
                     break;
                 case ZeroOrMore:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("integer*"),
-                        SequenceType.createSequenceType("decimal*")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("integer*"),
+                            SequenceType.createSequenceType("decimal*"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("decimal*"),
-                        SequenceType.createSequenceType("decimal*")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("decimal*"),
+                            SequenceType.createSequenceType("decimal*"));
                     break;
                 case Zero:
             }
@@ -313,11 +304,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                                     expression,
                                     paramType,
                                     ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata()
-                            )
-                    ),
-                    expression.getMetadata()
-            );
+                                    expression.getMetadata())),
+                    expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
         }
@@ -327,59 +315,51 @@ public class FunctionInliningVisitor extends CloneVisitor {
             switch (paramType.getArity()) {
                 case One:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("anyURI"),
-                        SequenceType.createSequenceType("string")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("anyURI"),
+                            SequenceType.createSequenceType("string"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("string"),
-                        SequenceType.createSequenceType("string")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("string"),
+                            SequenceType.createSequenceType("string"));
                     break;
                 case OneOrZero:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("anyURI?"),
-                        SequenceType.createSequenceType("string?")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("anyURI?"),
+                            SequenceType.createSequenceType("string?"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("string?"),
-                        SequenceType.createSequenceType("string?")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("string?"),
+                            SequenceType.createSequenceType("string?"));
                     break;
                 case OneOrMore:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("anyURI+"),
-                        SequenceType.createSequenceType("string+")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("anyURI+"),
+                            SequenceType.createSequenceType("string+"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("string+"),
-                        SequenceType.createSequenceType("string+")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("string+"),
+                            SequenceType.createSequenceType("string+"));
                     break;
                 case ZeroOrMore:
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("anyURI*"),
-                        SequenceType.createSequenceType("string*")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("anyURI*"),
+                            SequenceType.createSequenceType("string*"));
                     addCastCase(
-                        cases,
-                        expression,
-                        SequenceType.createSequenceType("string*"),
-                        SequenceType.createSequenceType("string*")
-                    );
+                            cases,
+                            expression,
+                            SequenceType.createSequenceType("string*"),
+                            SequenceType.createSequenceType("string*"));
                     break;
                 case Zero:
             }
@@ -392,24 +372,46 @@ public class FunctionInliningVisitor extends CloneVisitor {
                                     expression,
                                     paramType,
                                     ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata()
-                            )
-                    ),
-                    expression.getMetadata()
-            );
+                                    expression.getMetadata())),
+                    expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
+        }
+        if (paramType.getItemType().equals(BuiltinTypesCatalogue.errorItem)) {
+            TreatExpression result = new TreatExpression(
+                    expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata());
+            result.setStaticSequenceType(paramType);
+            return result;
         }
         return expression;
     }
 
+    private boolean isNamespaceSensitiveFunctionParameter(SequenceType paramType) {
+        return paramType.getItemType().equals(BuiltinTypesCatalogue.QNameItem)
+                || paramType.getItemType().equals(BuiltinTypesCatalogue.NOTATIONItem);
+    }
+
+    private boolean usesQNameCoercionErrorSemantics(Expression expression) {
+        String currentQueryLanguage = this.queryLanguage;
+        if (currentQueryLanguage == null && expression.getStaticContext() != null) {
+            currentQueryLanguage = expression.getStaticContext().getQueryLanguage();
+        }
+        return currentQueryLanguage != null
+                && !currentQueryLanguage.equals("xquery10")
+                && !currentQueryLanguage.equals("jsoniq10");
+    }
+
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
+        this.prolog = mainModule.getProlog();
+        if (mainModule.getStaticContext() != null) {
+            this.queryLanguage = mainModule.getStaticContext().getQueryLanguage();
+            this.constructionPreserve = mainModule.getStaticContext().isConstructionPreserve();
+        }
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
-                mainModule.getMetadata()
-        );
+                mainModule.getMetadata());
         result.setStaticContext(mainModule.getStaticContext());
         return result;
     }
@@ -419,26 +421,22 @@ public class FunctionInliningVisitor extends CloneVisitor {
     // 2. Contain an exit statement.
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
-        FunctionDeclaration targetFunction = getFunctionDeclarationFromProlog(
-            (Prolog) argument,
-            expression.getFunctionIdentifier()
-        );
-        if (
-            expression.isPartialApplication()
+        FunctionDeclaration targetFunction =
+                getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
+        if (expression.isPartialApplication()
                 || targetFunction == null
+                // Rebuilding an inlined body in the caller's context would change its constructor semantics.
+                || hasDifferentConstructionMode(this.prolog, targetFunction)
+                || requiresSchemaParameterConversion((InlineFunctionExpression) targetFunction.getExpression())
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
-                || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()
-        ) {
+                || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
             List<Expression> arguments = new ArrayList<>();
             for (Expression arg : expression.getArguments()) {
                 arguments.add(arg == null ? null : (Expression) visit(arg, argument));
             }
-            FunctionCallExpression result = new FunctionCallExpression(
-                    expression.getFunctionName(),
-                    arguments,
-                    expression.getMetadata()
-            );
+            FunctionCallExpression result =
+                    new FunctionCallExpression(expression.getFunctionName(), arguments, expression.getMetadata());
             result.setStaticSequenceType(expression.getStaticSequenceType());
             return result;
         }
@@ -451,8 +449,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
                         body,
                         inlineFunction.getReturnType(),
                         ErrorCode.UnexpectedTypeErrorCode,
-                        expression.getMetadata()
-                );
+                        expression.getMetadata());
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
@@ -465,36 +462,23 @@ public class FunctionInliningVisitor extends CloneVisitor {
         for (int i = 0; i < expression.getArguments().size(); i++) {
             Name paramName = paramNames.get(i);
             SequenceType paramType = inlineFunction.getParams().get(paramName);
-            Expression argumentExpression = (Expression) visit(expression.getArguments().get(i), argument);
+            Expression argumentExpression =
+                    (Expression) visit(expression.getArguments().get(i), argument);
             // only use assignment clause when the variables have different names
-            if (
-                argumentExpression instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) argumentExpression).getVariableName().equals(paramName)
-            ) {
+            if (argumentExpression instanceof VariableReferenceExpression variableReference
+                    && variableReference.getVariableName().equals(paramName)) {
                 continue;
             }
 
             // if there is a name collision, use a temporary variable
             if (isVariableReferenced(expression.getArguments(), paramName, i)) {
                 Name columnName = Name.createVariableInNoNamespace(
-                    String.format("param%s", UUID.randomUUID().toString().replaceAll("-", ""))
-                );
-                Clause expressionClause = new LetClause(
-                        columnName,
-                        null,
-                        argumentExpression,
-                        expression.getMetadata()
-                );
+                        String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
+                Clause expressionClause = new LetClause(columnName, null, argumentExpression, expression.getMetadata());
                 Expression assignmentExpression = createTypePromotion(
-                    new VariableReferenceExpression(columnName, expression.getMetadata()),
-                    paramType
-                );
-                Clause assignmentClause = new LetClause(
-                        paramName,
-                        null,
-                        assignmentExpression,
-                        expression.getMetadata()
-                );
+                        new VariableReferenceExpression(columnName, expression.getMetadata()), paramType);
+                Clause assignmentClause =
+                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
                 if (assignmentClauses != null) {
                     assignmentClause.chainWith(assignmentClauses);
                 }
@@ -504,21 +488,26 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 }
                 expressionClauses = expressionClause;
             } else {
-                Expression assignmentExpression = createTypePromotion(
-                    argumentExpression,
-                    paramType
-                );
-                Clause expressionClause = new LetClause(
-                        paramName,
-                        null,
-                        assignmentExpression,
-                        expression.getMetadata()
-                );
+                Expression assignmentExpression = createTypePromotion(argumentExpression, paramType);
+                Clause expressionClause =
+                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
                 if (expressionClauses != null) {
                     expressionClause.chainWith(expressionClauses);
                 }
                 expressionClauses = expressionClause;
             }
+        }
+        if (expressionClauses == null) {
+            if (inlineFunction.getReturnType() != null) {
+                TreatExpression result = new TreatExpression(
+                        body,
+                        inlineFunction.getReturnType(),
+                        ErrorCode.UnexpectedTypeErrorCode,
+                        expression.getMetadata());
+                result.setSequential(inlineFunction.isSequential());
+                return result;
+            }
+            return body;
         }
         if (assignmentClauses != null) {
             assignmentClauses.getLastClause().chainWith(returnClause);
@@ -532,8 +521,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
                     result,
                     inlineFunction.getReturnType(),
                     ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata()
-            );
+                    expression.getMetadata());
         }
         return result;
     }

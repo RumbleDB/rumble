@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,22 +11,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * Implementation of fn:in-scope-prefixes according to
@@ -53,46 +51,17 @@ import java.util.List;
  *      Operators 3.1 : fn:in-scope-prefixes</a>
  */
 public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<Item> prefixItems;
-    private int currentIndex;
-
-    public InScopePrefixesFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public InScopePrefixesFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.prefixItems = null;
-        this.currentIndex = 0;
-
-        // fn:in-scope-prefixes($element as element()) as xs:string*
-        // The function requires exactly one argument of type element().
-        Item element = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-        this.prefixItems = computeInScopePrefixes(element);
-        this.hasNext = !this.prefixItems.isEmpty();
-    }
-
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in-scope-prefixes function",
-                    getMetadata()
-            );
-        }
-
-        Item result = this.prefixItems.get(this.currentIndex);
-        this.currentIndex++;
-
-        if (this.currentIndex >= this.prefixItems.size()) {
-            this.hasNext = false;
-        }
-
-        return result;
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.flatMapArgument(
+                this.getChild(0), context, this::computeInScopePrefixes, getMetadata());
     }
 
     /**
@@ -120,9 +89,11 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
         // "For the default namespace, if it exists, the zero-length string is returned."
         for (Item nsNode : element.namespaceNodes()) {
             Name q = nsNode.nodeName();
-            result.add(
-                ItemFactory.getInstance().createStringItem(q == null ? "" : q.toString())
-            );
+            if (q == null && nsNode.getStringValue().isEmpty()) {
+                // An explicit undeclaration xmlns="" is not an in-scope default namespace.
+                continue;
+            }
+            result.add(ItemFactory.getInstance().createStringItem(q == null ? "" : q.getLocalName()));
         }
 
         return result;

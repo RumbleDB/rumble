@@ -420,7 +420,7 @@ The returned value is an integer such that:
 - if searched_element is not found:
     - if searched_element is smaller than all values, index 0 is returned.
     - if searched_element is greater than all values, index size(arr) + 1 is returned.:)
-declare %sequential function jsoniq_numpy:binsearch($arr as array, $searched_element) {
+declare %an:sequential function jsoniq_numpy:binsearch($arr as array, $searched_element) {
     variable $low := 1;
     variable $high := size($arr) + 1;
     while ($low lt $high) {
@@ -434,7 +434,7 @@ declare %sequential function jsoniq_numpy:binsearch($arr as array, $searched_ele
 };
 
 (: returns i s.t. arr[i - 1] <= x < arr[i] :)
-declare %sequential function jsoniq_numpy:searchsorted_left($arr as array, $searched_element) {
+declare %an:sequential function jsoniq_numpy:searchsorted_left($arr as array, $searched_element) {
     variable $low := 1;
     variable $high := size($arr) + 1;
     while ($low lt $high) {
@@ -446,7 +446,7 @@ declare %sequential function jsoniq_numpy:searchsorted_left($arr as array, $sear
 };
 
 (: returns i s.t. arr[i - 1] < x <= arr[i] :)
-declare %sequential function jsoniq_numpy:searchsorted_right($arr as array, $searched_element) {
+declare %an:sequential function jsoniq_numpy:searchsorted_right($arr as array, $searched_element) {
     variable $low := 1;
     variable $high := size($arr) + 1;
     while ($low lt $high) {
@@ -954,23 +954,24 @@ declare function jsoniq_numpy:sort($array as array, $low as integer, $high as in
 declare function jsoniq_numpy:partition($array as array, $low as integer, $high as integer) {
     variable $pivot := jsoniq_numpy:random_randint($low, {"high": $high + 1, "size": [1]})[1];
     variable $end := $array[[$high]];
-    replace value of json $array[[$high]] with $array[[$pivot]];
-    replace value of json $array[[$pivot]] with $end;
+    variable $array-copy := copy $a := $array modify () return $a;
+    replace value of json $array-copy[[$high]] with $array-copy[[$pivot]];
+    replace value of json $array-copy[[$pivot]] with $end;
 
     variable $i := $low;
     for $j in $low to $high - 1
     return {
-        if ($array[[$j]] le $array[[$high]]) then {
-            variable $aux := $array[[$i]];
-            replace value of json $array[[$i]] with $array[[$j]];
-            replace value of json $array[[$j]] with $aux;
+        if ($array-copy[[$j]] le $array-copy[[$high]]) then {
+            variable $aux := $array-copy[[$i]];
+            replace value of json $array-copy[[$i]] with $array-copy[[$j]];
+            replace value of json $array-copy[[$j]] with $aux;
             $i := $i + 1;
         } else ();
     }
-    variable $aux := $array[[$i]];
-    replace value of json $array[[$i]] with $array[[$high]];
-    replace value of json $array[[$high]] with $aux;
-    exit returning ($array, $i);
+    variable $aux := $array-copy[[$i]];
+    replace value of json $array-copy[[$i]] with $array-copy[[$high]];
+    replace value of json $array-copy[[$high]] with $aux;
+    exit returning ($array-copy, $i);
 };
 
 declare function jsoniq_numpy:sort($array) {

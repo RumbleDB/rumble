@@ -1,18 +1,35 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.context;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.rumbledb.exceptions.OurBadException;
-
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class GlobalVariables implements Serializable, KryoSerializable {
+import lombok.Getter;
+
+import org.rumbledb.exceptions.OurBadException;
+
+@Getter
+public class GlobalVariables implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Set<Name> globalVariables;
+
+    private final Set<Name> globalVariables;
 
     public GlobalVariables() {
         this.globalVariables = new HashSet<>();
@@ -23,25 +40,6 @@ public class GlobalVariables implements Serializable, KryoSerializable {
             throw new OurBadException("Attempting to register global variable a second time.");
         }
         this.globalVariables.add(globalVariable);
-    }
-
-    public boolean isGlobalVariable(Name globalVariable) {
-        return this.globalVariables.contains(globalVariable);
-    }
-
-    public Set<Name> getGlobalVariables() {
-        return this.globalVariables;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.globalVariables);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.globalVariables = kryo.readObject(input, HashSet.class);
     }
 
     @Override

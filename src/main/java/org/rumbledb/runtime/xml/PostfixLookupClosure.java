@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,18 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.xml;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 
 /**
  * Spark closure for postfix lookup with XQuery 3.1 semantics: array index out of bounds
@@ -33,20 +32,17 @@ import java.util.List;
  */
 public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private final List<Item> keys;
     private final boolean wildcard;
     private final ExceptionMetadata expressionMetadata;
 
-    public PostfixLookupClosure(
-            List<Item> keys,
-            boolean wildcard,
-            ExceptionMetadata expressionMetadata
-    ) {
+    public PostfixLookupClosure(List<Item> keys, boolean wildcard, ExceptionMetadata expressionMetadata) {
         this.keys = keys;
         this.wildcard = wildcard;
-        this.expressionMetadata =
-            expressionMetadata != null ? expressionMetadata : ExceptionMetadata.EMPTY_METADATA;
+        this.expressionMetadata = expressionMetadata != null ? expressionMetadata : ExceptionMetadata.EMPTY_METADATA;
     }
 
     @Override
@@ -68,8 +64,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
                         throw new UnexpectedTypeException(
                                 "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
-                                this.expressionMetadata
-                        );
+                                this.expressionMetadata);
                     }
                     Item key = atomized.get(0);
                     if (arg0.isObject()) {
@@ -98,9 +93,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                 for (Item key : this.keys) {
                     if (key.isString()) {
                         throw new UnexpectedTypeException(
-                                "Type error; Lookup with String on Arrays is not possible",
-                                this.expressionMetadata
-                        );
+                                "Type error; Lookup with String on Arrays is not possible", this.expressionMetadata);
                     }
                     if (key.isNumeric()) {
                         int idx = key.castToIntValue() - 1;
@@ -112,7 +105,6 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     }
                 }
             }
-
         }
         return results.iterator();
     }

@@ -1,37 +1,40 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
+import java.io.Serial;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
-public class gDayItem implements Item {
+public class gDayItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private boolean hasTimeZone;
     private int day;
     private ZoneOffset offset;
-    private final Pattern gDayRegex = Pattern.compile(
-        "---(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
-    );
-
-    @SuppressWarnings("unused")
-    public gDayItem() {
-        super();
-    }
+    private static final Pattern gDayRegex =
+            Pattern.compile("---(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
 
     gDayItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.day = dateTime.getMonthValue();
@@ -48,8 +51,13 @@ public class gDayItem implements Item {
         getgDayFromString(gDayString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new gDayItem(this.getDateTimeValue(), this.hasTimeZone);
+    }
+
     private void getgDayFromString(String gDayString) {
-        Matcher matcher = this.gDayRegex.matcher(gDayString);
+        Matcher matcher = gDayRegex.matcher(gDayString);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gDay: \"" + gDayString + "\"");
         }
@@ -64,24 +72,11 @@ public class gDayItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
 
+    @Override
     public String getStringValue() {
         if (this.hasTimeZone) {
             return String.format("---%02d", this.day) + this.offset;
@@ -98,19 +93,6 @@ public class gDayItem implements Item {
     @Override
     public boolean hasTimeZone() {
         return this.hasTimeZone;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-        output.writeBoolean(this.hasTimeZone);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        String dateTimeString = input.readString();
-        this.hasTimeZone = input.readBoolean();
-        getgDayFromString(dateTimeString);
     }
 
     @Override

@@ -1,16 +1,21 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
-
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,21 +23,40 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ElementItem implements Item {
+import org.w3c.dom.Node;
+
+import lombok.NonNull;
+import lombok.Setter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.TypedValueUnavailableException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
+public class ElementItem extends AbstractNodeItem {
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private List<Item> children;
     private List<Item> attributes;
     private Map<String, String> namespaces;
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
-    // TODO: add base-uri, schema-type, is-id, is-idrefs
-    private XMLDocumentPosition documentPos;
+    private XmlSchemaTypeAnnotation typeAnnotation;
+    private NodeTypedValue nodeTypedValue;
+    private Boolean schemaNilled;
+    private boolean id;
+    private boolean idRefs;
 
-    // needed for kryo
-    @SuppressWarnings("unused")
-    public ElementItem() {
-    }
+    @Setter
+    private boolean inheritNamespacesFromParent;
+    // TODO: add base-uri
+    private XMLDocumentPosition documentPos;
 
     /**
      * Constructed element with a resolved expanded name (e.g. from XQuery direct/computed constructors).
@@ -42,7 +66,13 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        this.stringValue = "<" + this.dmNodeName + "/>";
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+        this.schemaNilled = null;
+        this.inheritNamespacesFromParent = true;
+        StringBuilder sb = new StringBuilder();
+        computeStringValue(children, sb);
+        this.stringValue = sb.toString();
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
@@ -50,23 +80,54 @@ public class ElementItem implements Item {
     }
 
     public ElementItem(
-            Node elementNode,
-            List<Item> children,
-            List<Item> attributes,
-            Map<String, String> namespaceBindings
-    ) {
+            Node elementNode, List<Item> children, List<Item> attributes, Map<String, String> namespaceBindings) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode);
         this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+        this.schemaNilled = null;
+        this.inheritNamespacesFromParent = true;
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
                 addOrReplaceNamespace(
-                    ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue())
-                );
+                        ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue()));
             }
         }
+    }
+
+    private void computeStringValue(List<Item> items, StringBuilder sb) {
+        for (Item item : items) {
+            if (item.isTextNode()) {
+                sb.append(item.getStringValue());
+            } else if (item.isElementNode() && item.children() != null) {
+                computeStringValue(item.children(), sb);
+            }
+        }
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        List<Item> copiedChildren = new ArrayList<>();
+        for (Item child : this.children) {
+            copiedChildren.add(child.copy(mutable));
+        }
+        List<Item> copiedAttributes = new ArrayList<>();
+        for (Item attribute : this.attributes) {
+            copiedAttributes.add(attribute.copy(mutable));
+        }
+        Map<String, String> copiedNamespaces = new HashMap<>(this.namespaces);
+        ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
+        copy.namespaces = copiedNamespaces;
+        copy.typeAnnotation = this.typeAnnotation;
+        copy.nodeTypedValue = this.nodeTypedValue;
+        copy.schemaNilled = this.schemaNilled;
+        copy.id = this.id;
+        copy.idRefs = this.idRefs;
+        copy.inheritNamespacesFromParent = this.inheritNamespacesFromParent;
+        return copy;
     }
 
     @Override
@@ -90,31 +151,14 @@ public class ElementItem implements Item {
 
     @Override
     public void addParentToDescendants() {
-        this.children.forEach(child -> child.setParent(this));
-        this.attributes.forEach(attribute -> attribute.setParent(this));
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.parent);
-        kryo.writeObject(output, this.children);
-        kryo.writeObject(output, this.attributes);
-        kryo.writeObject(output, this.namespaces);
-        kryo.writeObject(output, this.dmNodeName);
-        output.writeString(this.stringValue);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.parent = (Item) kryo.readClassAndObject(input);
-        this.children = kryo.readObject(input, ArrayList.class);
-        this.attributes = kryo.readObject(input, ArrayList.class);
-        this.namespaces = kryo.readObject(input, HashMap.class);
-        this.dmNodeName = kryo.readObject(input, Name.class);
-        this.stringValue = input.readString();
+        this.children.forEach(child -> {
+            child.setParent(this);
+            child.addParentToDescendants();
+        });
+        this.attributes.forEach(attribute -> {
+            attribute.setParent(this);
+            attribute.addParentToDescendants();
+        });
     }
 
     @Override
@@ -125,15 +169,6 @@ public class ElementItem implements Item {
     @Override
     public boolean isElementNode() {
         return true;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ElementItem)) {
-            return false;
-        }
-        ElementItem otherElementItem = (ElementItem) other;
-        return this.getXmlDocumentPosition().equals(otherElementItem.getXmlDocumentPosition());
     }
 
     @Override
@@ -191,8 +226,7 @@ public class ElementItem implements Item {
         }
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : this.namespaces.entrySet()) {
-            Item namespaceItem = ItemFactory.getInstance()
-                .createXmlNamespaceNode(entry.getKey(), entry.getValue());
+            Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue());
             namespaceItem.setParent(this);
             result.add(namespaceItem);
         }
@@ -207,8 +241,11 @@ public class ElementItem implements Item {
          * Recursion would instantiate namespace node instances for each ancestor element, resulting in a higher memory
          * footprint.
          * A LinkedHashMap is used so that:
-         * - Insertion order is preserved for stable iteration.
-         * - Later puts for the same prefix override earlier values.
+         *
+         * <ul>
+         * <li>Insertion order is preserved for stable iteration.</li>
+         * <li>Later puts for the same prefix override earlier values.</li>
+         * </ul>
          */
         LinkedHashMap<String, String> inScope = new LinkedHashMap<>();
 
@@ -216,51 +253,70 @@ public class ElementItem implements Item {
         // Walk up the parent chain, collecting declared namespaces from each ancestor element.
         // We collect frames in child-to-root order, then replay root-to-child for correct override semantics.
         List<Map<String, String>> ancestorFrames = new ArrayList<>();
-        Item current = this.parent;
-        // optimization: we know that no other node types apart from element nodes can have namespaces
-        // so we stop the iteration when we encounter a non-element node
-        while (current != null && current.isElementNode()) {
-            ancestorFrames.add(((ElementItem) current).namespaces);
-            current = current.parent();
+        if (this.inheritNamespacesFromParent) {
+            Item current = this.parent;
+            // optimization: we know that no other node types apart from element nodes can have namespaces
+            // so we stop the iteration when we encounter a non-element node
+            while (current != null && current.isElementNode()) {
+                ancestorFrames.add(((ElementItem) current).namespaces);
+                current = current.parent();
+            }
         }
         // Replay from root (last in the list) to direct parent (first in the list),
         // so that inner ancestors override outer ones for the same prefix.
         for (int i = ancestorFrames.size() - 1; i >= 0; i--) {
-            inScope.putAll(ancestorFrames.get(i));
+            applyNamespaceFrame(inScope, ancestorFrames.get(i));
         }
 
         // Step 2: Current element's own declared namespaces override all inherited ones.
-        inScope.putAll(this.namespaces);
+        applyNamespaceFrame(inScope, this.namespaces);
+
+        // Step 2b: The xml prefix is implicitly in-scope on every element.
+        inScope.putIfAbsent("xml", Name.XML_NS);
 
         // Step 3: Create NamespaceItem nodes from the final in-scope map.
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : inScope.entrySet()) {
-            Item namespaceItem = ItemFactory.getInstance()
-                .createXmlNamespaceNode(entry.getKey(), entry.getValue());
+            Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue());
             namespaceItem.setParent(this);
             result.add(namespaceItem);
         }
         return result;
     }
 
+    private void applyNamespaceFrame(Map<String, String> inScope, Map<String, String> frame) {
+        if (frame == null || frame.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : frame.entrySet()) {
+            String prefix = entry.getKey();
+            String uri = entry.getValue();
+            if (uri == null || uri.isEmpty()) {
+                inScope.remove(prefix);
+            } else {
+                inScope.put(prefix, uri);
+            }
+        }
+    }
+
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-id.
      *
-     * "For an Element Node, dm:is-id returns false."
+     * For schema-validated elements, this reflects whether the typed value is derived from xs:ID.
      */
     @Override
     public boolean isId() {
-        return false;
+        return this.id;
     }
 
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-idrefs.
      *
-     * "For an Element Node, dm:is-idrefs returns false."
+     * For schema-validated elements, this reflects whether the typed value contains a value derived from xs:IDREF.
      */
     @Override
     public boolean isIdrefs() {
-        return false;
+        return this.idRefs;
     }
 
     /**
@@ -269,12 +325,14 @@ public class ElementItem implements Item {
      * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
      * not nilled, or the empty sequence if the concept of nilled does not apply."
      *
-     * RumbleDB does not currently support XML Schema nilled elements, so this implementation
-     * returns the empty sequence.
+     * Schema-validated elements return the boolean value supplied by the PSVI.
+     * Stripping a schema annotation resets that value to false.
      */
     @Override
     public List<Item> nilled() {
-        return Collections.emptyList();
+        return this.schemaNilled == null
+                ? Collections.emptyList()
+                : Collections.singletonList(ItemFactory.getInstance().createBooleanItem(this.schemaNilled));
     }
 
     @Override
@@ -307,13 +365,13 @@ public class ElementItem implements Item {
      *
      * "For an Element Node, dm:type-name returns the name of the dynamic type of the element
      * node, or the empty sequence if the node is untyped."
-     *
-     * RumbleDB does not currently support schema-validated element types, so the dynamic
-     * type-name is not available and this method returns null to represent the empty sequence.
      */
     @Override
     public List<Item> typeName() {
-        return Collections.emptyList();
+        if (this.typeAnnotation == null) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.name()));
     }
 
     /**
@@ -321,46 +379,140 @@ public class ElementItem implements Item {
      *
      * "For an Element Node, dm:typed-value returns the typed value of the element node as a
      * sequence of zero or more atomic values."
-     *
-     * This implementation delegates to atomizedValue(), which currently computes a
-     * best-effort typed value by concatenating the atomized values of the element's
-     * children in document order.
      */
     @Override
     public List<Item> typedValue() {
         return this.atomizedValue();
     }
 
+    @Override
+    public void setSchemaType(@NonNull XmlSchemaTypeAnnotation typeAnnotation) {
+        this.typeAnnotation = typeAnnotation;
+        this.nodeTypedValue = NodeTypedValue.unavailable();
+        this.schemaNilled = false;
+        this.id = false;
+        this.idRefs = false;
+    }
+
+    @Override
+    public void setSchemaType(@NonNull XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
+        NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
+        this.typeAnnotation = typeAnnotation;
+        this.nodeTypedValue = newTypedValue;
+        this.schemaNilled = false;
+        this.id = false;
+        this.idRefs = false;
+    }
+
+    @Override
+    public void clearSchemaType() {
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+        this.schemaNilled = false;
+        this.id = false;
+        this.idRefs = false;
+    }
+
+    @Override
+    public XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
+        return this.typeAnnotation;
+    }
+
+    @Override
+    public void setXmlSchemaNilled(boolean nilled) {
+        if (this.typeAnnotation == null) {
+            throw new IllegalStateException("An untyped element does not have a nilled property.");
+        }
+        this.schemaNilled = nilled;
+    }
+
+    @Override
+    public void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        this.id = id;
+        this.idRefs = idRefs;
+    }
+
+    @Override
     public void addOrReplaceNamespace(Item namespaceItem) {
-        if (!(namespaceItem instanceof NamespaceItem)) {
+        if (!(namespaceItem instanceof NamespaceItem namespace)) {
             return;
         }
-        NamespaceItem namespace = (NamespaceItem) namespaceItem;
         if (this.namespaces == null) {
             this.namespaces = new HashMap<>();
         }
-        this.namespaces.put(namespace.getPrefix(), namespace.getUri());
+        String prefix = namespace.getPrefix();
+        String uri = namespace.getUri();
+
+        // Namespace declarations can conflict with the prefix retained in a
+        // constructed element/attribute QName. Preserve the expanded name by
+        // assigning a fresh prefix and declaring it for the original URI.
+        if (hasConflictingPrefix(this.dmNodeName, prefix, uri)) {
+            String replacement = freshPrefix();
+            this.dmNodeName = new Name(this.dmNodeName.getNamespace(), replacement, this.dmNodeName.getLocalName());
+            this.namespaces.put(replacement, this.dmNodeName.getNamespace());
+        }
+        this.namespaces.put(prefix, uri);
     }
 
+    /**
+     * Declares or overrides a namespace binding on this element without rewriting the element name.
+     * This is used by constructor namespace-fixup after any necessary prefix rewrites have already been decided.
+     */
+    public void declareNamespaceBinding(String prefix, String uri) {
+        if (this.namespaces == null) {
+            this.namespaces = new HashMap<>();
+        }
+        this.namespaces.put(prefix == null ? "" : prefix, uri);
+    }
 
-    @Override
-    public int hashCode() {
-        return this.documentPos.hashCode();
+    public void setDeclaredNamespaces(Map<String, String> namespaces) {
+        this.namespaces = new HashMap<>();
+        if (namespaces != null) {
+            this.namespaces.putAll(namespaces);
+        }
+    }
+
+    /**
+     * Updates the element node-name after namespace fixup chooses a non-conflicting prefix.
+     */
+    public void setNodeName(Name nodeName) {
+        this.dmNodeName = nodeName;
+    }
+
+    private boolean hasConflictingPrefix(Name name, String prefix, String uri) {
+        return name != null
+                && normalizeNamespaceComponent(name.getPrefix()).equals(normalizeNamespaceComponent(prefix))
+                && !normalizeNamespaceComponent(uri).equals(normalizeNamespaceComponent(name.getNamespace()));
+    }
+
+    private String normalizeNamespaceComponent(String value) {
+        return value == null ? "" : value;
+    }
+
+    private String freshPrefix() {
+        int counter = 0;
+        String candidate;
+        do {
+            candidate = "ns" + counter++;
+        } while (this.namespaces.containsKey(candidate));
+        return candidate;
     }
 
     @Override
     public List<Item> atomizedValue() {
-        // Reference: https://www.w3.org/TR/xpath-functions-31/#func-data
-        // If the item is a node, the typed value of the node is appended to the result sequence.
-        // The typed value is a sequence of zero or more atomic values: specifically, the result of the dm:typed-value
-        // accessor as defined in [XQuery and XPath Data Model (XDM) 3.1] (See Section 5.14 typed-value Accessor DM31).
-        // TODO: implement this following the spec. Most importantly, implement the dm:typed-value accessor.
-        // This naive implementation is enough for now
-        StringBuilder stringValueBuilder = new StringBuilder();
-        for (Item child : this.children) {
-            stringValueBuilder.append(child.atomizedValue().get(0).getStringValue());
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.AVAILABLE) {
+            return this.nodeTypedValue.getItems();
         }
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(stringValueBuilder.toString()));
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.UNAVAILABLE) {
+            throw new TypedValueUnavailableException(
+                    "The typed value is not available for element " + this.dmNodeName + ".",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
+        // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
+        // For element nodes, typed-value is based on the element's string value, which is the
+        // concatenation of descendant text nodes in document order and therefore excludes comment
+        // and processing-instruction content.
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
     @Override
@@ -368,5 +520,3 @@ public class ElementItem implements Item {
         return true;
     }
 }
-
-

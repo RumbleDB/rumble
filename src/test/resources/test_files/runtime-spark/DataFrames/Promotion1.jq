@@ -45,7 +45,7 @@ try {
   let $a := annotate({"foo" : "bar"},{"foo":"string"})
   let $b := local:at-least-one-double($a.foo)
   return $b
-} catch XPTY0004
+} catch err:XPTY0004
 {
   "good"
 },
@@ -54,7 +54,7 @@ try {
 let $a := annotate(({"foo" : 1e0}, {"foo" : 2e0}),{"foo":"double"})
 let $b := local:one-double($a.foo)
 return $b
-} catch XPTY0004
+} catch err:XPTY0004
 {
   "good"
 },
@@ -62,7 +62,7 @@ try {
 let $a := annotate(({"foo" : 1e0}, {"foo" : 2e0}),{"foo":"double"})
 let $b := local:zero-or-one-double($a.foo)
 return $b
-} catch XPTY0004
+} catch err:XPTY0004
 {
   "good"
 },
@@ -79,7 +79,7 @@ try {
 let $a := annotate((),{"foo":"double"})
 let $b := local:one-double($a.foo)
 return $b
-} catch XPTY0004
+} catch err:XPTY0004
 {
   "good"
 },
@@ -93,7 +93,7 @@ try {
 let $a := annotate((),{"foo":"double"})
 let $b := local:at-least-one-double($a.foo)
 return $b
-} catch XPTY0004
+} catch err:XPTY0004
 {
   "good"
 }

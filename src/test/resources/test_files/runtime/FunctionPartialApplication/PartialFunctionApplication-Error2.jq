@@ -1,2 +1,2 @@
-(:JIQS: ShouldCrash; ErrorCode="RBST0002";  ErrorMetadata="LINE:2:COLUMN:0:" :)
+(:JIQS: ShouldCrash; ErrorCode="SENR0001";  ErrorMetadata="LINE:1:COLUMN:0:" :)
 max(?)

@@ -1,28 +1,26 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.items;
+
+import java.math.BigDecimal;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-
-import java.math.BigDecimal;
 
 /**
  * XPath/XQuery {@code op:same-key} for map keys (atomic values), per FO 3.1 section 17.1.1.
@@ -31,8 +29,7 @@ import java.math.BigDecimal;
  */
 public final class MapAtomicSameKey {
 
-    private MapAtomicSameKey() {
-    }
+    private MapAtomicSameKey() {}
 
     public static boolean sameKey(Item left, Item right) {
         if (left == null || right == null) {
@@ -62,13 +59,13 @@ public final class MapAtomicSameKey {
 
     private static boolean isGregorian(Item k) {
         return k.isDate()
-            || k.isTime()
-            || k.isDateTime()
-            || k.isGYear()
-            || k.isGYearMonth()
-            || k.isGMonth()
-            || k.isGMonthDay()
-            || k.isGDay();
+                || k.isTime()
+                || k.isDateTime()
+                || k.isGYear()
+                || k.isGYearMonth()
+                || k.isGMonth()
+                || k.isGMonthDay()
+                || k.isGDay();
     }
 
     private static boolean isMiscDeepEqualKeyType(Item k) {
@@ -78,17 +75,16 @@ public final class MapAtomicSameKey {
         if (k.isDuration() || k.isYearMonthDuration() || k.isDayTimeDuration()) {
             return true;
         }
-        ItemType t = k.getDynamicType();
-        return BuiltinTypesCatalogue.QNameItem.equals(t) || BuiltinTypesCatalogue.NOTATIONItem.equals(t);
+        ItemType primitiveType = k.getDynamicType().getPrimitiveType();
+        return BuiltinTypesCatalogue.QNameItem.equals(primitiveType)
+                || BuiltinTypesCatalogue.NOTATIONItem.equals(primitiveType);
     }
 
     /**
      * Gregorian branch: types match, timezone precondition (FO 3.1), then {@code fn:deep-equal}.
      */
     private static boolean gregorianSameKey(Item k1, Item k2) {
-        boolean tzPrecondition = (k1.hasTimeZone() && k2.hasTimeZone())
-            || (!k1.hasTimeZone() && !k2.hasTimeZone())
-            || AtomicDeepEqual.deepEqual(k1, k2);
+        boolean tzPrecondition = k1.hasTimeZone() == k2.hasTimeZone();
         if (!tzPrecondition) {
             return false;
         }
@@ -150,8 +146,7 @@ public final class MapAtomicSameKey {
     }
 
     private static boolean isNaNFloatOrDouble(Item k) {
-        return (k.isFloat() && Float.isNaN(k.getFloatValue()))
-            || (k.isDouble() && Double.isNaN(k.getDoubleValue()));
+        return (k.isFloat() && Float.isNaN(k.getFloatValue())) || (k.isDouble() && Double.isNaN(k.getDoubleValue()));
     }
 
     private static boolean bothPositiveInfinity(Item a, Item b) {
@@ -200,11 +195,10 @@ public final class MapAtomicSameKey {
             return BigDecimal.valueOf(k.getIntValue());
         }
         if (k.isDouble()) {
-            double d = k.getDoubleValue();
-            return BigDecimal.valueOf(d);
+            return new BigDecimal(k.getDoubleValue());
         }
         if (k.isFloat()) {
-            return new BigDecimal(Float.toString(k.getFloatValue()));
+            return new BigDecimal(k.getFloatValue());
         }
         return k.castToDecimalValue();
     }

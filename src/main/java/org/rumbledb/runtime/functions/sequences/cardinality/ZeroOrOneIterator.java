@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,47 +11,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.sequences.cardinality;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.util.List;
+public class ZeroOrOneIterator extends AbstractAtMostOneItemRuntimePlan {
 
-public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public ZeroOrOneIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ZeroOrOneIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator sequenceIterator = this.children.get(0);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        ItemRuntimePlan sequenceIterator = this.getChild(0);
         Item result = null;
         try {
-            result = sequenceIterator.materializeAtMostOneItemOrNull(context);
+            result = sequenceIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new SequenceExceptionZeroOrOne(
-                    "fn:zero-or-one() called with a sequence containing more than one item",
-                    getMetadata()
-            );
+                    "fn:zero-or-one() called with a sequence containing more than one item", getMetadata());
         }
         return result;
     }
-
 }

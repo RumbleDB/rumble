@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,64 +11,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.input;
+
+import java.io.Serial;
+import java.util.List;
+import java.util.Properties;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
+import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
 
-import sparksoniq.spark.SparkSessionManager;
+public class PostgreSQLTableFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
-import java.util.List;
-import java.util.Properties;
-
-public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public PostgreSQLTableFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public PostgreSQLTableFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
 
-        String connectionString = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        String table = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+        String connectionString =
+                this.getChild(0).materializeFirstOrNull(context).getStringValue();
+        String table = this.getChild(1).materializeFirstOrNull(context).getStringValue();
         int partitions = -1;
-        if (this.children.size() > 2) {
-            partitions = this.children.get(2).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 2) {
+            partitions = this.getChild(2).materializeFirstOrNull(context).getIntValue();
         }
 
         try {
-            Properties properties = new java.util.Properties();
+            Properties properties = new Properties();
             properties.setProperty("Driver", "org.postgresql.Driver");
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .jdbc(connectionString, table, properties);
+                    .getOrCreateSession()
+                    .read()
+                    .jdbc(connectionString, table, properties);
             if (partitions != -1) {
                 dataFrame = dataFrame.repartition(partitions);
             }
-            return new JSoundDataFrame(dataFrame);
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             RumbleException ex = new CannotRetrieveResourceException(
-                    "Error retrieving PostgreSQL table: " + e.getMessage(),
-                    getMetadata()
-            );
+                    "Error retrieving PostgreSQL table: " + e.getMessage(), getMetadata());
             ex.initCause(e);
             throw ex;
         }

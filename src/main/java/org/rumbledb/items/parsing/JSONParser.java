@@ -1,18 +1,32 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.parsing;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.xml.XMLUtils;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Collections;
-
+import org.rumbledb.runtime.xml.XMLUtils;
 
 /**
  * Parser for JSON texts used by {@code fn:parse-json} and {@code fn:json-doc}.
@@ -45,7 +59,7 @@ import java.util.Collections;
  *
  * <ul>
  * <li>
- * {@code xdmValue}: the string value stored in the resulting XDM item
+ * {@code resultValue}: the string value stored in the resulting item
  * </li>
  * <li>
  * {@code keyComparisonValue}: the value used to detect duplicate object keys
@@ -58,6 +72,7 @@ import java.util.Collections;
  * </p>
  */
 public final class JSONParser {
+    private static final int MAX_NESTING_DEPTH = 1000;
 
     private final String input;
     private final ExceptionMetadata metadata;
@@ -65,14 +80,14 @@ public final class JSONParser {
     private final String xmlVersion;
     private final boolean isJSONiq10;
     private int position;
+    private int nestingDepth;
 
     private JSONParser(
             String input,
             JSONParsingOptions options,
             String xmlVersion,
             boolean isJSONiq10,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (input != null && !input.isEmpty() && input.charAt(0) == '\uFEFF') {
             this.input = input.substring(1);
         } else {
@@ -91,8 +106,7 @@ public final class JSONParser {
             JSONParsingOptions options,
             String xmlVersion,
             boolean isJSONiq10,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (jsonText == null) {
             return null;
         }
@@ -108,10 +122,9 @@ public final class JSONParser {
         if (!isEnd()) {
             throw new InvalidJSONException(
                     "Extra content found after the end of the JSON value. JSON is not well-formed! [position "
-                        + this.position
-                        + "]",
-                    this.metadata
-            );
+                            + this.position
+                            + "]",
+                    this.metadata);
         }
         return result;
     }
@@ -123,8 +136,7 @@ public final class JSONParser {
         if (isEnd()) {
             throw new InvalidJSONException(
                     "Unexpected end of input while parsing JSON value. [position " + this.position + "]",
-                    this.metadata
-            );
+                    this.metadata);
         }
 
         char c = peek();
@@ -134,17 +146,16 @@ public final class JSONParser {
             case '[':
                 return parseArray();
             case '"':
-                return ItemFactory.getInstance().createStringItem(parseString().xdmValue);
+                return ItemFactory.getInstance().createStringItem(parseString().resultValue);
             case '\'':
                 if (this.options.isLiberal()) {
-                    return ItemFactory.getInstance().createStringItem(parseString().xdmValue);
+                    return ItemFactory.getInstance().createStringItem(parseString().resultValue);
                 }
                 throw new InvalidJSONException(
                         "Single-quoted strings are not allowed unless option 'liberal' is true. [position "
-                            + this.position
-                            + "]",
-                        this.metadata
-                );
+                                + this.position
+                                + "]",
+                        this.metadata);
             case 't':
                 parseLiteral("true");
                 return ItemFactory.getInstance().createBooleanItem(true);
@@ -153,8 +164,7 @@ public final class JSONParser {
                 return ItemFactory.getInstance().createBooleanItem(false);
             case 'n':
                 parseLiteral("null");
-                if (this.isJSONiq10)
-                    return ItemFactory.getInstance().createNullItem();
+                if (this.isJSONiq10) return ItemFactory.getInstance().createNullItem();
                 return null;
             default:
                 if (c == '-' || isDigit(c) || (this.options.isLiberal() && c == '+')) {
@@ -162,17 +172,25 @@ public final class JSONParser {
                 }
                 throw new InvalidJSONException(
                         "Unexpected character '"
-                            + printable(c)
-                            + "' while parsing JSON value. [position "
-                            + this.position
-                            + "]",
-                        this.metadata
-                );
+                                + printable(c)
+                                + "' while parsing JSON value. [position "
+                                + this.position
+                                + "]",
+                        this.metadata);
         }
     }
 
     // NEVER RETURNS A JAVA NULL
     private Item parseObject() {
+        enterContainer();
+        try {
+            return parseObjectBody();
+        } finally {
+            exitContainer();
+        }
+    }
+
+    private Item parseObjectBody() {
         expect('{');
         skipIgnorable();
 
@@ -187,6 +205,12 @@ public final class JSONParser {
         while (true) {
             skipIgnorable();
 
+            if (isEnd()) {
+                throw new InvalidJSONException(
+                        "Unexpected end of input while parsing JSON object. [position " + this.position + "]",
+                        this.metadata);
+            }
+
             ParsedString key;
             char c = peek();
             if (c == '"' || (this.options.isLiberal() && c == '\'')) {
@@ -195,9 +219,7 @@ public final class JSONParser {
                 key = parseUnquotedKey();
             } else {
                 throw new InvalidJSONException(
-                        "Expected object key string. [position " + this.position + "]",
-                        this.metadata
-                );
+                        "Expected object key string. [position " + this.position + "]", this.metadata);
             }
 
             skipIgnorable();
@@ -210,20 +232,18 @@ public final class JSONParser {
 
             if (existingIndex == null) {
                 seen.put(key.keyComparisonValue, keys.size());
-                keys.add(key.xdmValue);
+                keys.add(key.resultValue);
                 values.add(parsedValue);
             } else {
                 String policy = this.options.getDuplicates();
 
                 if (JSONParsingOptions.DUPLICATES_REJECT.equals(policy)) {
                     throw new DuplicateJSONKeyException(
-                            "Duplicate key '" + key.xdmValue + "' found in JSON object.",
-                            this.metadata
-                    );
+                            "Duplicate key '" + key.resultValue + "' found in JSON object.", this.metadata);
                 }
 
                 if (JSONParsingOptions.DUPLICATES_USE_LAST.equals(policy)) {
-                    keys.set(existingIndex, key.xdmValue);
+                    keys.set(existingIndex, key.resultValue);
                     values.set(existingIndex, parsedValue);
                 }
             }
@@ -240,7 +260,6 @@ public final class JSONParser {
                 break;
             }
         }
-
 
         boolean containsJAVANull = false;
         for (Item item : values) {
@@ -259,17 +278,23 @@ public final class JSONParser {
                 newKeys.add(ItemFactory.getInstance().createStringItem(key));
             }
             for (Item value : values) {
-                if (value == null)
-                    newValues.add(Collections.emptyList());
-                else
-                    newValues.add(Collections.singletonList(value));
+                if (value == null) newValues.add(Collections.emptyList());
+                else newValues.add(Collections.singletonList(value));
             }
             return ItemFactory.getInstance().createMapItem(newKeys, newValues, this.metadata, false);
-
         }
     }
 
     private Item parseArray() {
+        enterContainer();
+        try {
+            return parseArrayBody();
+        } finally {
+            exitContainer();
+        }
+    }
+
+    private Item parseArrayBody() {
         expect('[');
         skipIgnorable();
 
@@ -337,9 +362,7 @@ public final class JSONParser {
 
         if (isEnd()) {
             throw new InvalidJSONException(
-                    "Unexpected end of input while parsing number. [position " + this.position + "]",
-                    this.metadata
-            );
+                    "Unexpected end of input while parsing number. [position " + this.position + "]", this.metadata);
         }
 
         if (peek() == '0') {
@@ -347,8 +370,7 @@ public final class JSONParser {
             if (!isEnd() && isDigit(peek()) && !this.options.isLiberal()) {
                 throw new InvalidJSONException(
                         "Leading zeroes are not allowed in JSON numbers. [position " + this.position + "]",
-                        this.metadata
-                );
+                        this.metadata);
             }
             while (this.options.isLiberal() && !isEnd() && isDigit(peek())) {
                 advance();
@@ -356,9 +378,7 @@ public final class JSONParser {
         } else {
             if (!isDigit19(peek())) {
                 throw new InvalidJSONException(
-                        "Invalid number: expected digit. [position " + this.position + "]",
-                        this.metadata
-                );
+                        "Invalid number: expected digit. [position " + this.position + "]", this.metadata);
             }
             while (!isEnd() && isDigit(peek())) {
                 advance();
@@ -370,8 +390,7 @@ public final class JSONParser {
             if (isEnd() || !isDigit(peek())) {
                 throw new InvalidJSONException(
                         "Invalid number: expected digit after decimal point. [position " + this.position + "]",
-                        this.metadata
-                );
+                        this.metadata);
             }
             while (!isEnd() && isDigit(peek())) {
                 advance();
@@ -385,9 +404,7 @@ public final class JSONParser {
             }
             if (isEnd() || !isDigit(peek())) {
                 throw new InvalidJSONException(
-                        "Invalid number: expected digit in exponent. [position " + this.position + "]",
-                        this.metadata
-                );
+                        "Invalid number: expected digit in exponent. [position " + this.position + "]", this.metadata);
             }
             while (!isEnd() && isDigit(peek())) {
                 advance();
@@ -396,12 +413,10 @@ public final class JSONParser {
 
         String number = this.input.substring(start, this.position);
         try {
-            return ItemParser.getItemFromJSONNumber(number, this.options.getNumberFormat());
+            return JSONLiteralParsingUtils.getItemFromJSONNumber(number, this.options.getNumberFormat());
         } catch (NumberFormatException e) {
             InvalidJSONException error = new InvalidJSONException(
-                    "Invalid number literal '" + number + "'. [position " + start + "]",
-                    this.metadata
-            );
+                    "Invalid number literal '" + number + "'. [position " + start + "]", this.metadata);
             error.initCause(e);
             throw error;
         }
@@ -411,12 +426,12 @@ public final class JSONParser {
      * Parses a quoted JSON string and returns both:
      *
      * <ul>
-     * <li>the XDM string value</li>
+     * <li>the result string value</li>
      * <li>the value used for duplicate-key comparison</li>
      * </ul>
      *
      * <p>
-     * The XDM value depends on the {@code escape} option:
+     * The result value depends on the {@code escape} option:
      * </p>
      *
      * <ul>
@@ -445,84 +460,49 @@ public final class JSONParser {
     private ParsedString parseString() {
         if (isEnd()) {
             throw new InvalidJSONException(
-                    "Unexpected end of input while parsing string. [position " + this.position + "]",
-                    this.metadata
-            );
+                    "Unexpected end of input while parsing string. [position " + this.position + "]", this.metadata);
         }
 
         char quote = peek();
         if (quote != '"' && !(this.options.isLiberal() && quote == '\'')) {
-            throw new InvalidJSONException(
-                    "Expected string literal. [position " + this.position + "]",
-                    this.metadata
-            );
+            throw new InvalidJSONException("Expected string literal. [position " + this.position + "]", this.metadata);
         }
         advance();
 
-        StringBuilder xdmValue = new StringBuilder();
-        StringBuilder keyComparisonValue = new StringBuilder();
+        StringBuilder resultValue = new StringBuilder();
+        StringBuilder keyComparisonValue = null;
 
         while (!isEnd()) {
             char c = advance();
 
             if (c == quote) {
-                return new ParsedString(
-                        xdmValue.toString(),
-                        keyComparisonValue.toString()
-                );
+                String result = resultValue.toString();
+                return new ParsedString(result, keyComparisonValue == null ? result : keyComparisonValue.toString());
             }
 
             if (c == '\\') {
                 if (isEnd()) {
                     throw new InvalidJSONException(
-                            "Unterminated escape sequence in string. [position " + this.position + "]",
-                            this.metadata
-                    );
+                            "Unterminated escape sequence in string. [position " + this.position + "]", this.metadata);
                 }
 
-                char esc = advance();
-                switch (esc) {
-                    case '"':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '"', "\\\"");
-                        break;
-                    case '\\':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\\', "\\\\");
-                        break;
-                    case '/':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '/', "\\/");
-                        break;
-                    case 'b':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\b', "\\b");
-                        break;
-                    case 'f':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\f', "\\f");
-                        break;
-                    case 'n':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\n', "\\n");
-                        break;
-                    case 'r':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\r', "\\r");
-                        break;
-                    case 't':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\t', "\\t");
-                        break;
-                    case '\'':
-                        if (!this.options.isLiberal()) {
-                            throw new InvalidJSONException(
-                                    "Invalid escape sequence \\" + esc + " in string. [position " + this.position + "]",
-                                    this.metadata
-                            );
-                        }
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\'', "\\'");
-                        break;
-                    case 'u':
-                        parseUnicodeEscape(xdmValue, keyComparisonValue);
-                        break;
-                    default:
-                        throw new InvalidJSONException(
-                                "Invalid escape sequence \\" + esc + " in string. [position " + this.position + "]",
-                                this.metadata
-                        );
+                if (peek() == '\'' && this.options.isLiberal()) {
+                    advance();
+                    keyComparisonValue = handleEscapedCodePoint(resultValue, keyComparisonValue, '\'', "\\'");
+                    continue;
+                }
+
+                try {
+                    JSONLiteralParsingUtils.DecodedEscape decodedEscape =
+                            JSONLiteralParsingUtils.decodeEscapeSequence(this.input, this.position - 1);
+                    this.position = decodedEscape.getNextIndex();
+                    keyComparisonValue = appendDecodedEscape(
+                            resultValue,
+                            keyComparisonValue,
+                            decodedEscape.getDecodedText(),
+                            decodedEscape.getRawEscape());
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidJSONException(e.getMessage() + " [position " + this.position + "]", this.metadata);
                 }
                 continue;
             }
@@ -531,108 +511,41 @@ public final class JSONParser {
                 if (!this.options.isLiberal()) {
                     throw new InvalidJSONException(
                             "Unescaped control character U+"
-                                + hex4(c)
-                                + " is not allowed in JSON strings. [position "
-                                + this.position
-                                + "]",
-                            this.metadata
-                    );
+                                    + hex4(c)
+                                    + " is not allowed in JSON strings. [position "
+                                    + this.position
+                                    + "]",
+                            this.metadata);
                 }
             }
 
-            if (this.options.isEscape() && shouldEscapeInXdmOutput(c)) {
+            if (this.options.isEscape() && shouldEscapeInOutput(c)) {
                 String escaped = normalizedEscapeForCodePoint(c);
-                xdmValue.append(escaped);
-                keyComparisonValue.append(escaped);
+                resultValue.append(escaped);
+                if (keyComparisonValue != null) {
+                    keyComparisonValue.append(escaped);
+                }
             } else {
-                xdmValue.append(c);
-                keyComparisonValue.append(c);
+                resultValue.append(c);
+                if (keyComparisonValue != null) {
+                    keyComparisonValue.append(c);
+                }
             }
         }
 
-        throw new InvalidJSONException(
-                "Unterminated string literal. [position " + this.position + "]",
-                this.metadata
-        );
+        throw new InvalidJSONException("Unterminated string literal. [position " + this.position + "]", this.metadata);
     }
 
-    /**
-     * Parses a JSON Unicode escape sequence after the leading {@code "\\u"} has
-     * already been consumed.
-     *
-     * <p>
-     * Handles surrogate pairs such as {@code "\\uD83D\\uDE00"} as a single Unicode
-     * code point.
-     * </p>
-     *
-     * <p>
-     * Unpaired surrogates are treated as invalid XML characters:
-     * </p>
-     *
-     * <ul>
-     * <li>
-     * {@code escape=true}: they are kept as {@code "\\uXXXX"}
-     * </li>
-     * <li>
-     * {@code escape=false}: they are passed to the fallback function for the XDM value
-     * </li>
-     * </ul>
-     */
-    private void parseUnicodeEscape(
-            StringBuilder xdmValue,
-            StringBuilder keyComparisonValue
-    ) {
-        int first = parseHexQuad();
-        String firstEscape = "\\u" + hex4(first);
-
-        if (Character.isHighSurrogate((char) first)) {
-            int save = this.position;
-
-            if (canReadLowSurrogateEscape()) {
-                expect('\\');
-                expect('u');
-
-                int second = parseHexQuad();
-                String secondEscape = "\\u" + hex4(second);
-
-                if (Character.isLowSurrogate((char) second)) {
-                    int codePoint = Character.toCodePoint((char) first, (char) second);
-
-                    handleEscapedCodePoint(
-                        xdmValue,
-                        keyComparisonValue,
-                        codePoint,
-                        firstEscape + secondEscape
-                    );
-                    return;
-                }
-
-                this.position = save;
-            }
-
-            handleEscapedCodePoint(
-                xdmValue,
-                keyComparisonValue,
-                first,
-                firstEscape
-            );
-            return;
+    private StringBuilder appendDecodedEscape(
+            StringBuilder resultValue, StringBuilder keyComparisonValue, String decodedText, String originalEscape) {
+        if (decodedText.length() == 2 && Character.isSurrogatePair(decodedText.charAt(0), decodedText.charAt(1))) {
+            return handleEscapedCodePoint(
+                    resultValue,
+                    keyComparisonValue,
+                    Character.toCodePoint(decodedText.charAt(0), decodedText.charAt(1)),
+                    originalEscape);
         }
-        if (Character.isLowSurrogate((char) first)) {
-            handleEscapedCodePoint(
-                xdmValue,
-                keyComparisonValue,
-                first,
-                firstEscape
-            );
-            return;
-        }
-        handleEscapedCodePoint(
-            xdmValue,
-            keyComparisonValue,
-            first,
-            firstEscape
-        );
+        return handleEscapedCodePoint(resultValue, keyComparisonValue, decodedText.charAt(0), originalEscape);
     }
 
     /**
@@ -644,7 +557,7 @@ public final class JSONParser {
      *
      * <ul>
      * <li>
-     * {@code xdmValue}: the actual string value stored in the XDM result
+     * {@code resultValue}: the actual string value stored in the result
      * </li>
      * <li>
      * {@code keyComparisonValue}: the string used for duplicate-key comparison
@@ -661,37 +574,46 @@ public final class JSONParser {
      * in both values
      * </li>
      * <li>
-     * {@code escape=false}: {@code xdmValue} may use the fallback for invalid XML
+     * {@code escape=false}: {@code resultValue} may use the fallback for invalid XML
      * characters, while {@code keyComparisonValue} keeps the decoded character
      * for duplicate-key comparison
      * </li>
      * </ul>
      */
-    private void handleEscapedCodePoint(
-            StringBuilder xdmValue,
-            StringBuilder keyComparisonValue,
-            int codePoint,
-            String originalEscape
-    ) {
+    private StringBuilder handleEscapedCodePoint(
+            StringBuilder resultValue, StringBuilder keyComparisonValue, int codePoint, String originalEscape) {
         if (this.options.isEscape()) {
-            if (shouldEscapeInXdmOutput(codePoint)) {
+            if (shouldEscapeInOutput(codePoint)) {
                 String escaped = normalizedEscapeForCodePoint(codePoint);
-                xdmValue.append(escaped);
-                keyComparisonValue.append(escaped);
+                resultValue.append(escaped);
+                if (keyComparisonValue != null) {
+                    keyComparisonValue.append(escaped);
+                }
             } else {
-                xdmValue.appendCodePoint(codePoint);
-                keyComparisonValue.appendCodePoint(codePoint);
+                resultValue.appendCodePoint(codePoint);
+                if (keyComparisonValue != null) {
+                    keyComparisonValue.appendCodePoint(codePoint);
+                }
             }
-            return;
+            return keyComparisonValue;
         }
 
         if (isValidXMLCodePoint(codePoint)) {
-            xdmValue.appendCodePoint(codePoint);
-        } else {
-            xdmValue.append(this.options.getFallback().apply(originalEscape));
+            resultValue.appendCodePoint(codePoint);
+            if (keyComparisonValue != null) {
+                keyComparisonValue.appendCodePoint(codePoint);
+            }
+            return keyComparisonValue;
         }
 
+        // The only point where resultValue and keyComparisonValue can actually diverge: fork
+        // keyComparisonValue from resultValue's content built so far, the first time this happens.
+        if (keyComparisonValue == null) {
+            keyComparisonValue = new StringBuilder(resultValue);
+        }
+        resultValue.append(this.options.getFallback().apply(originalEscape));
         keyComparisonValue.appendCodePoint(codePoint);
+        return keyComparisonValue;
     }
 
     private String normalizedEscapeForCodePoint(int codePoint) {
@@ -722,12 +644,10 @@ public final class JSONParser {
 
     /**
      * Returns true if a codepoint must be represented using a JSON escape sequence
-     * in the XDM output when option escape=true is enabled.
+     * in the output when option escape=true is enabled.
      */
-    private boolean shouldEscapeInXdmOutput(int codePoint) {
-        return codePoint == '\\'
-            || XMLUtils.isControlCharacter(codePoint)
-            || !isValidXMLCodePoint(codePoint);
+    private boolean shouldEscapeInOutput(int codePoint) {
+        return codePoint == '\\' || XMLUtils.isControlCharacter(codePoint) || !isValidXMLCodePoint(codePoint);
     }
 
     /**
@@ -739,19 +659,16 @@ public final class JSONParser {
         if (!this.options.isLiberal()) {
             throw new InvalidJSONException(
                     "Unquoted object keys are not allowed unless option 'liberal' is true. [position "
-                        + this.position
-                        + "]",
-                    this.metadata
-            );
+                            + this.position
+                            + "]",
+                    this.metadata);
         }
 
         int start = this.position;
         char first = peek();
         if (!isIdentifierStart(first)) {
             throw new InvalidJSONException(
-                    "Invalid unquoted object key. [position " + this.position + "]",
-                    this.metadata
-            );
+                    "Invalid unquoted object key. [position " + this.position + "]", this.metadata);
         }
 
         advance();
@@ -767,45 +684,9 @@ public final class JSONParser {
         for (int i = 0; i < literal.length(); i++) {
             if (isEnd() || advance() != literal.charAt(i)) {
                 throw new InvalidJSONException(
-                        "Expected literal '" + literal + "'. [position " + this.position + "]",
-                        this.metadata
-                );
+                        "Expected literal '" + literal + "'. [position " + this.position + "]", this.metadata);
             }
         }
-    }
-
-    private int parseHexQuad() {
-        if (this.position + 4 > this.input.length()) {
-            throw new InvalidJSONException(
-                    "Incomplete unicode escape sequence in string. [position " + this.position + "]",
-                    this.metadata
-            );
-        }
-
-        int value = 0;
-        for (int i = 0; i < 4; i++) {
-            char c = advance();
-            int digit = Character.digit(c, 16);
-            if (digit < 0) {
-                throw new InvalidJSONException(
-                        "Invalid hexadecimal digit '"
-                            + printable(c)
-                            + "' in unicode escape. [position "
-                            + this.position
-                            + "]",
-                        this.metadata
-                );
-            }
-            value = (value << 4) | digit;
-        }
-        return value;
-    }
-
-    private boolean canReadLowSurrogateEscape() {
-        if (this.position + 5 >= this.input.length()) {
-            return false;
-        }
-        return this.input.charAt(this.position) == '\\' && this.input.charAt(this.position + 1) == 'u';
     }
 
     /**
@@ -816,7 +697,7 @@ public final class JSONParser {
         while (!isEnd()) {
             char c = peek();
 
-            if (Character.isWhitespace(c)) {
+            if (isJSONWhitespace(c)) {
                 advance();
                 continue;
             }
@@ -838,15 +719,11 @@ public final class JSONParser {
                         while (true) {
                             if (isEnd()) {
                                 throw new InvalidJSONException(
-                                        "Unterminated block comment. [position " + this.position + "]",
-                                        this.metadata
-                                );
+                                        "Unterminated block comment. [position " + this.position + "]", this.metadata);
                             }
-                            if (
-                                peek() == '*'
+                            if (peek() == '*'
                                     && this.position + 1 < this.input.length()
-                                    && this.input.charAt(this.position + 1) == '/'
-                            ) {
+                                    && this.input.charAt(this.position + 1) == '/') {
                                 this.position += 2;
                                 break;
                             }
@@ -870,14 +747,13 @@ public final class JSONParser {
         if (isEnd() || peek() != expected) {
             throw new InvalidJSONException(
                     "Expected '"
-                        + expected
-                        + "', but found "
-                        + (isEnd() ? "end of input" : "'" + printable(peek()) + "'")
-                        + ". [position "
-                        + this.position
-                        + "]",
-                    this.metadata
-            );
+                            + expected
+                            + "', but found "
+                            + (isEnd() ? "end of input" : "'" + printable(peek()) + "'")
+                            + ". [position "
+                            + this.position
+                            + "]",
+                    this.metadata);
         }
         advance();
     }
@@ -892,6 +768,23 @@ public final class JSONParser {
             return true;
         }
         return false;
+    }
+
+    private void enterContainer() {
+        this.nestingDepth++;
+        if (this.nestingDepth > MAX_NESTING_DEPTH) {
+            throw new InvalidJSONException(
+                    "JSON nesting depth exceeds the maximum supported depth of "
+                            + MAX_NESTING_DEPTH
+                            + ". [position "
+                            + this.position
+                            + "]",
+                    this.metadata);
+        }
+    }
+
+    private void exitContainer() {
+        this.nestingDepth--;
     }
 
     /**
@@ -953,7 +846,7 @@ public final class JSONParser {
     }
 
     private boolean isValidXMLCodePoint(int codepoint) {
-        return XMLUtils.isValidCodePoint(codepoint, this.xmlVersion);
+        return XMLUtils.isValidXmlCharacter(codepoint, this.xmlVersion);
     }
 
     private String printable(char c) {
@@ -961,6 +854,10 @@ public final class JSONParser {
             return "\\u" + hex4(c);
         }
         return String.valueOf(c);
+    }
+
+    private boolean isJSONWhitespace(char c) {
+        return c == 0x20 || c == 0x09 || c == 0x0A || c == 0x0D;
     }
 
     /**
@@ -972,7 +869,7 @@ public final class JSONParser {
      *
      * <ul>
      * <li>
-     * {@code xdmValue}: the string value stored in the resulting XDM item
+     * {@code resultValue}: the string value stored in the resulting item
      * </li>
      * <li>
      * {@code keyComparisonValue}: the string used to detect duplicate object keys
@@ -999,7 +896,7 @@ public final class JSONParser {
      *
      * <ul>
      * <li>
-     * {@code xdmValue}: contains the fallback result
+     * {@code resultValue}: contains the fallback result
      * </li>
      * <li>
      * {@code keyComparisonValue}: keeps the decoded character for duplicate-key comparison
@@ -1007,11 +904,11 @@ public final class JSONParser {
      * </ul>
      */
     private static final class ParsedString {
-        private final String xdmValue;
+        private final String resultValue;
         private final String keyComparisonValue;
 
-        private ParsedString(String xdmValue, String keyComparisonValue) {
-            this.xdmValue = xdmValue;
+        private ParsedString(String resultValue, String keyComparisonValue) {
+            this.resultValue = resultValue;
             this.keyComparisonValue = keyComparisonValue;
         }
     }

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,15 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions;
 
+import lombok.Getter;
+import lombok.Setter;
 
 import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -42,12 +39,25 @@ import org.rumbledb.types.SequenceType.Arity;
  *
  * An expression has a classification, largely denoting it as UPDATING or SIMPLE.
  */
+@Getter
 public abstract class Expression extends Node {
 
+    /**
+     * Static context attached to this expression
+     */
+    @Setter
     protected StaticContext staticContext;
 
+    /**
+     * Statically inferred sequence type.
+     */
+    @Setter
     protected SequenceType staticSequenceType;
 
+    /**
+     * Expression Classification of the expression.
+     */
+    @Setter
     protected ExpressionClassification expressionClassification = ExpressionClassification.UNSET;
 
     protected boolean isSequential;
@@ -56,45 +66,15 @@ public abstract class Expression extends Node {
         super(metadata);
     }
 
-    /**
-     * Retrieves the static context attached to this expression.
-     * 
-     * @return the static context.
-     */
-    public StaticContext getStaticContext() {
-        return this.staticContext;
-    }
-
-    /**
-     * Sets the static context of the expression.
-     * 
-     * @param staticContext the static context to set.
-     */
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
-    }
-
-    public RuntimeStaticContext getStaticContextForRuntime(
-            RumbleRuntimeConfiguration conf,
-            VisitorConfig visitorConfig
-    ) {
-        return new RuntimeStaticContext(
-                conf,
-                getStaticSequenceType(),
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                this.staticContext
-        );
-    }
-
-    /**
-     * Provides the inferred static type, only if static analysis
-     * is activated.
-     * 
-     * @return the statically inferred sequence type.
-     */
-    public SequenceType getStaticSequenceType() {
-        return this.staticSequenceType;
+    public RuntimeStaticContext getStaticContextForRuntime(RumbleConfiguration conf, VisitorConfig visitorConfig) {
+        return RuntimeStaticContext.fromStaticContext(this.staticContext)
+                .configuration(conf)
+                .staticType(getStaticSequenceType())
+                .executionMode(getHighestExecutionMode(visitorConfig))
+                .metadata(getMetadata())
+                .isUpdating(isUpdating())
+                .isSequential(isSequential())
+                .build();
     }
 
     /**
@@ -105,38 +85,8 @@ public abstract class Expression extends Node {
      */
     public boolean alwaysReturnsAtMostOneItem() {
         return this.staticSequenceType.getArity().equals(Arity.One)
-            ||
-            this.staticSequenceType.getArity().equals(Arity.OneOrZero)
-            ||
-            this.staticSequenceType.getArity().equals(Arity.Zero);
-    }
-
-    /**
-     * Sets the inferred static type, for used by the static
-     * analysis visitor.
-     * 
-     * @param staticSequenceType the statically inferred sequence type to set.
-     */
-    public void setStaticSequenceType(SequenceType staticSequenceType) {
-        this.staticSequenceType = staticSequenceType;
-    }
-
-    /**
-     * Gets the inferred expression classification of this node, for use ...
-     *
-     * @return Expression Classification of the expression.
-     */
-    public ExpressionClassification getExpressionClassification() {
-        return this.expressionClassification;
-    }
-
-    /**
-     * Sets the inferred expression classification of this node, for use ...
-     *
-     * @param expressionClassification the statically inferred expression classification.
-     */
-    public void setExpressionClassification(ExpressionClassification expressionClassification) {
-        this.expressionClassification = expressionClassification;
+                || this.staticSequenceType.getArity().equals(Arity.OneOrZero)
+                || this.staticSequenceType.getArity().equals(Arity.Zero);
     }
 
     /**
@@ -160,9 +110,12 @@ public abstract class Expression extends Node {
     /**
      * Sets the sequential property of the expression. An expression can only
      * be one of the following:
-     * - non-updating sequential,
-     * - non-updating non-sequential,
-     * - updating non-sequential.
+     *
+     * <ul>
+     * <li>non-updating sequential,</li>
+     * <li>non-updating non-sequential,</li>
+     * <li>updating non-sequential.</li>
+     * </ul>
      *
      * @param isSequential a boolean value defining if the expression is
      *        sequential or not.
@@ -171,10 +124,17 @@ public abstract class Expression extends Node {
      */
     public void setSequential(boolean isSequential) {
         this.isSequential = isSequential;
+        if (isSequential) {
+            setIsInSequentialBlock(true);
+        }
     }
 
-    public boolean isSequential() {
-        return this.isSequential;
+    @Override
+    public void setIsInSequentialBlock(boolean isInSequentialBlock) {
+        this.isInSequentialBlock = isInSequentialBlock;
+        for (Node child : getChildren()) {
+            child.setIsInSequentialBlock(isInSequentialBlock);
+        }
     }
 
     /**
@@ -186,22 +146,33 @@ public abstract class Expression extends Node {
         return isUpdating() && !this.isSequential;
     }
 
-
     @Override
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(
-            " | "
+        if (this.isSequential) {
+            buffer.append(" | " + "sequential");
+        } else {
+            buffer.append(" | " + "non-sequential");
+        }
+        if (this.isInSequentialBlock) {
+            buffer.append(" | " + "in sequential block");
+        } else {
+            buffer.append(" | " + "not in sequential block");
+        }
+        buffer.append(" | "
                 + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
+        buffer.append(" | "
+                + (this.getStaticContext() != null && this.getStaticContext().isQuerySideEffecting()
+                        ? "query side effecting"
+                        : "query without side effects"));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
