@@ -398,18 +398,14 @@ public final class XmlDirectConstructorTranslation {
         List<Expression> attributes = new ArrayList<>();
         List<NamespaceDeclaration> namespaceDeclarations = new ArrayList<>();
 
-        List<QnameCtx> attributeNames = ctx.attributeQname();
-        List<DirAttributeValueContext<ExprCtx>> attributeValues = ctx.attributeValue();
-
         // Namespace declarations are in scope for the entire element start tag,
         // including attributes that occur lexically before the declaration.
-        for (int i = 0; i < attributeNames.size(); i++) {
-            QnameCtx qnameCtx = attributeNames.get(i);
+        for (DirAttributeListContext.DirAttributeContext<QnameCtx, ExprCtx> attr : ctx.attributes()) {
+            QnameCtx qnameCtx = attr.name();
             String lexical = qnameCtx.getText();
             if (isNamespaceDeclaration(lexical)) {
                 String declaredPrefix = "xmlns".equals(lexical) ? "" : lexical.substring("xmlns:".length());
-                String uri =
-                        getNamespaceDeclarationUri(attributeValues.get(i), tokenStream, translationContext, visitExpr);
+                String uri = getNamespaceDeclarationUri(attr.value(), tokenStream, translationContext, visitExpr);
                 namespaceDeclarations.add(
                         new NamespaceDeclaration(declaredPrefix, uri, translationContext.metadata(qnameCtx)));
                 translationContext.bindConstructorNamespace(declaredPrefix, uri);
@@ -418,22 +414,21 @@ public final class XmlDirectConstructorTranslation {
 
         // Translate non-namespace attributes after the complete namespace frame
         // has been established, while retaining their original source order.
-        for (int i = 0; i < attributeNames.size(); i++) {
-            QnameCtx qnameCtx = attributeNames.get(i);
+        for (DirAttributeListContext.DirAttributeContext<QnameCtx, ExprCtx> attr : ctx.attributes()) {
+            QnameCtx qnameCtx = attr.name();
             String lexical = qnameCtx.getText();
             if (isNamespaceDeclaration(lexical)) {
                 continue;
             }
             Name attributeName = parseName.apply(qnameCtx, NameRole.NO_DEFAULT_NAMESPACE);
 
-            List<Expression> value = getAttributeValuesExpressionsList(
-                    attributeValues.get(i), true, tokenStream, translationContext, visitExpr);
+            List<Expression> value =
+                    getAttributeValuesExpressionsList(attr.value(), true, tokenStream, translationContext, visitExpr);
             AttributeNodeExpression attributeNode = new AttributeNodeExpression(
                     attributeName,
                     value,
                     translationContext.metadata(
-                            qnameCtx.getStart(),
-                            attributeValues.get(i).context().getStop()));
+                            qnameCtx.getStart(), attr.value().context().getStop()));
             attributes.add(attributeNode);
         }
 

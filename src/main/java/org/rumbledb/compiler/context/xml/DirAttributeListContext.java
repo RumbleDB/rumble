@@ -25,23 +25,27 @@ import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
 public record DirAttributeListContext<QnameCtx extends ParserRuleContext, ExprCtx extends ParserRuleContext>(
-        List<QnameCtx> attributeQname,
-        List<DirAttributeValueContext<ExprCtx>> attributeValue,
-        ParserRuleContext context) {
+        List<DirAttributeContext<QnameCtx, ExprCtx>> attributes, ParserRuleContext context) {
+
+    public record DirAttributeContext<QnameCtx extends ParserRuleContext, ExprCtx extends ParserRuleContext>(
+            QnameCtx name, DirAttributeValueContext<ExprCtx> value) {}
 
     public static DirAttributeListContext<JsoniqParser.QnameContext, JsoniqParser.ExprContext> from(
             JsoniqParser.DirAttributeListContext c) {
         if (c == null) {
             return null;
         }
-        List<DirAttributeValueContext<JsoniqParser.ExprContext>> values = new ArrayList<>();
-        if (c.attribute_value != null) {
-            for (JsoniqParser.DirAttributeValueContext val : c.attribute_value) {
-                values.add(DirAttributeValueContext.from(val));
-            }
+        if (c.attribute_qname == null || c.attribute_value == null) {
+            return new DirAttributeListContext<>(Collections.emptyList(), c);
         }
-        return new DirAttributeListContext<>(
-                c.attribute_qname != null ? c.attribute_qname : Collections.emptyList(), values, c);
+        int count = Math.min(c.attribute_qname.size(), c.attribute_value.size());
+        List<DirAttributeContext<JsoniqParser.QnameContext, JsoniqParser.ExprContext>> attributes =
+                new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            attributes.add(new DirAttributeContext<>(
+                    c.attribute_qname.get(i), DirAttributeValueContext.from(c.attribute_value.get(i))));
+        }
+        return new DirAttributeListContext<>(attributes, c);
     }
 
     public static DirAttributeListContext<XQueryParser.QnameContext, XQueryParser.ExprContext> from(
@@ -49,13 +53,16 @@ public record DirAttributeListContext<QnameCtx extends ParserRuleContext, ExprCt
         if (c == null) {
             return null;
         }
-        List<DirAttributeValueContext<XQueryParser.ExprContext>> values = new ArrayList<>();
-        if (c.attribute_value != null) {
-            for (XQueryParser.DirAttributeValueContext val : c.attribute_value) {
-                values.add(DirAttributeValueContext.from(val));
-            }
+        if (c.attribute_qname == null || c.attribute_value == null) {
+            return new DirAttributeListContext<>(Collections.emptyList(), c);
         }
-        return new DirAttributeListContext<>(
-                c.attribute_qname != null ? c.attribute_qname : Collections.emptyList(), values, c);
+        int count = Math.min(c.attribute_qname.size(), c.attribute_value.size());
+        List<DirAttributeContext<XQueryParser.QnameContext, XQueryParser.ExprContext>> attributes =
+                new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            attributes.add(new DirAttributeContext<>(
+                    c.attribute_qname.get(i), DirAttributeValueContext.from(c.attribute_value.get(i))));
+        }
+        return new DirAttributeListContext<>(attributes, c);
     }
 }
