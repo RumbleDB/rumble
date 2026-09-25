@@ -91,6 +91,14 @@ import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
 import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
 import org.rumbledb.compiler.context.scripting.WhileStatementContext;
+import org.rumbledb.compiler.context.xml.CompAttrConstructorContext;
+import org.rumbledb.compiler.context.xml.CompCommentConstructorContext;
+import org.rumbledb.compiler.context.xml.CompDocConstructorContext;
+import org.rumbledb.compiler.context.xml.CompElemConstructorContext;
+import org.rumbledb.compiler.context.xml.CompNamespaceConstructorContext;
+import org.rumbledb.compiler.context.xml.CompPIConstructorContext;
+import org.rumbledb.compiler.context.xml.CompTextConstructorContext;
+import org.rumbledb.compiler.context.xml.EnclosedContentExprContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -112,6 +120,7 @@ import org.rumbledb.compiler.translation.scripting.ControlStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.DeclarationStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.LoopStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.MutationStatementTranslation;
+import org.rumbledb.compiler.translation.xml.XmlComputedConstructorTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
@@ -1180,110 +1189,64 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public DocumentNodeConstructorExpression visitCompDocConstructor(XQueryParser.CompDocConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-        return new DocumentNodeConstructorExpression(contentExpression, createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compDocConstructor(
+                CompDocConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
     public TextNodeConstructorExpression visitCompTextConstructor(XQueryParser.CompTextConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-
-        return new TextNodeConstructorExpression(contentExpression, createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compTextConstructor(
+                CompTextConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
     public CommentNodeConstructorExpression visitCompCommentConstructor(
             XQueryParser.CompCommentConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-
-        return new CommentNodeConstructorExpression(contentExpression, createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compCommentConstructor(
+                CompCommentConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
     public ComputedPIConstructorExpression visitCompPIConstructor(XQueryParser.CompPIConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-        if (ctx.ncName() != null) {
-            return new ComputedPIConstructorExpression(
-                    ctx.ncName().getText(), contentExpression, createMetadataFromContext(ctx));
-        }
-        if (ctx.expr() != null) {
-            Expression nameExpression = this.visitExpr(ctx.expr());
-            return new ComputedPIConstructorExpression(
-                    nameExpression, contentExpression, createMetadataFromContext(ctx));
-        }
-        throw new ParsingException(
-                "Computed processing instruction constructor must have either a static NCName or a dynamic name expression",
-                createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compPIConstructor(
+                CompPIConstructorContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitEnclosedExpression);
     }
 
     @Override
     public ComputedAttributeConstructorExpression visitCompAttrConstructor(
             XQueryParser.CompAttrConstructorContext ctx) {
-        Expression valueExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-
-        // Check if we have a static attribute name (eqName) or dynamic name expression (LBRACE expr RBRACE)
-        if (ctx.name != null) {
-            // Static attribute name: attribute attributeName { value }
-            Name attributeName = this.parseEqName(ctx.name, NameRole.NO_DEFAULT_NAMESPACE);
-            return new ComputedAttributeConstructorExpression(
-                    attributeName, valueExpression, createMetadataFromContext(ctx));
-        } else if (ctx.name_expr != null) {
-            // Dynamic attribute name: attribute { nameExpression } { value }
-            Expression nameExpression = this.visitExpr(ctx.name_expr);
-            return new ComputedAttributeConstructorExpression(
-                    nameExpression, valueExpression, createMetadataFromContext(ctx));
-        } else {
-            throw new ParsingException(
-                    "Computed attribute constructor must have either a static name or dynamic name expression",
-                    createMetadataFromContext(ctx));
-        }
+        return XmlComputedConstructorTranslation.compAttrConstructor(
+                CompAttrConstructorContext.from(ctx),
+                this.translationContext,
+                this::parseEqName,
+                this::visitExpr,
+                this::visitEnclosedExpression);
     }
 
     @Override
     public ComputedElementConstructorExpression visitCompElemConstructor(XQueryParser.CompElemConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedContentExpr(ctx.enclosedContentExpr());
-
-        // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
-        if (ctx.eqName() != null) {
-            // Static element name: element elementName { content }
-            Name elementName = parseEqName(ctx.eqName(), NameRole.ELEMENT_CONSTRUCTOR);
-            return new ComputedElementConstructorExpression(
-                    elementName, contentExpression, createMetadataFromContext(ctx));
-        } else if (ctx.expr() != null) {
-            // Dynamic element name: element { nameExpression } { content }
-            Expression nameExpression = this.visitExpr(ctx.expr());
-            return new ComputedElementConstructorExpression(
-                    nameExpression, contentExpression, createMetadataFromContext(ctx));
-        } else {
-            throw new ParsingException(
-                    "Computed element constructor must have either a static name or dynamic name expression",
-                    createMetadataFromContext(ctx));
-        }
+        return XmlComputedConstructorTranslation.compElemConstructor(
+                CompElemConstructorContext.from(ctx),
+                this.translationContext,
+                this::parseEqName,
+                this::visitExpr,
+                this::visitEnclosedContentExpr);
     }
 
     @Override
     public ComputedNamespaceConstructorExpression visitCompNamespaceConstructor(
             XQueryParser.CompNamespaceConstructorContext ctx) {
-        Expression uriExpression =
-                this.visitEnclosedExpression(ctx.enclosedURIExpr().enclosedExpression());
-        if (ctx.ncName() != null) {
-            return new ComputedNamespaceConstructorExpression(
-                    ctx.ncName().getText(), uriExpression, createMetadataFromContext(ctx));
-        }
-        if (ctx.enclosedPrefixExpr() != null) {
-            Expression prefixExpression =
-                    this.visitEnclosedExpression(ctx.enclosedPrefixExpr().enclosedExpression());
-            return new ComputedNamespaceConstructorExpression(
-                    prefixExpression, uriExpression, createMetadataFromContext(ctx));
-        }
-        throw new ParsingException(
-                "Computed namespace constructor must have either a static prefix or a dynamic prefix expression",
-                createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compNamespaceConstructor(
+                CompNamespaceConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
     public Expression visitEnclosedContentExpr(XQueryParser.EnclosedContentExprContext ctx) {
-        return this.visitEnclosedExpression(ctx.enclosedExpression());
+        return XmlComputedConstructorTranslation.enclosedContentExpr(
+                EnclosedContentExprContext.from(ctx), this::visitEnclosedExpression);
     }
 
     @Override
