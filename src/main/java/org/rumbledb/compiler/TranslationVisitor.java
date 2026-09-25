@@ -105,10 +105,23 @@ import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
+import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
+import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Module;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
@@ -117,11 +130,15 @@ import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.MapConstructorExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
@@ -250,7 +267,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region module
     @Override
-    public Node visitModule(JsoniqParser.ModuleContext ctx) {
+    public Module visitModule(JsoniqParser.ModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             String version = processStringLiteral(ctx.vers).trim();
             if (version.equals("1.0")) {
@@ -288,7 +305,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Program visitProgram(JsoniqParser.ProgramContext ctx) {
         return ModuleTranslation.program(
-                ProgramContext.from(ctx), this.translationContext, this::translateStatementsAndOptionalExpr);
+                ProgramContext.from(ctx), this.translationContext, this::visitStatementsAndOptionalExpr);
     }
 
     // end region
@@ -430,7 +447,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     TranslationVisitor.this::processAnnotations,
                     TranslationVisitor.this::parseVariableBinding,
                     TranslationVisitor.this::processSequenceType,
-                    TranslationVisitor.this::translateExprSingle));
+                    TranslationVisitor.this::visitExprSingle));
             return null;
         }
 
@@ -440,7 +457,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     ContextItemDeclContext.from(ctx),
                     TranslationVisitor.this.translationContext,
                     TranslationVisitor.this::processSequenceType,
-                    TranslationVisitor.this::translateExprSingle));
+                    TranslationVisitor.this::visitExprSingle));
             return null;
         }
 
@@ -454,7 +471,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     TranslationVisitor.this::parseVariableBinding,
                     TranslationVisitor.this::processSequenceType,
                     TranslationVisitor.this::processSequenceType,
-                    TranslationVisitor.this::translateStatementsAndOptionalExpr));
+                    TranslationVisitor.this::visitStatementsAndOptionalExpr));
             return null;
         }
 
@@ -473,15 +490,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             this.builder.addType(processTypeDecl(ctx));
             return null;
         }
-    }
-
-    private Expression translateExprSingle(JsoniqParser.ExprSingleContext ctx) {
-        return (Expression) visitExprSingle(ctx);
-    }
-
-    private StatementsAndOptionalExpr translateStatementsAndOptionalExpr(
-            JsoniqParser.StatementsAndOptionalExprContext ctx) {
-        return (StatementsAndOptionalExpr) visitStatementsAndOptionalExpr(ctx);
     }
 
     private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {
@@ -580,12 +588,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region expr
     @Override
-    public Node visitExpr(JsoniqParser.ExprContext ctx) {
+    public Expression visitExpr(JsoniqParser.ExprContext ctx) {
         return SequenceTranslation.expr(CommaExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
-    public Node visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
+    public Expression visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
         ParseTree content = ctx.children.get(0);
         if (content instanceof JsoniqParser.ExprSimpleContext exprSimpleContext) {
             return this.visitExprSimple(exprSimpleContext);
@@ -612,7 +620,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // begin region ExprSimple
     @Override
-    public Node visitExprSimple(JsoniqParser.ExprSimpleContext ctx) {
+    public Expression visitExprSimple(JsoniqParser.ExprSimpleContext ctx) {
         ParseTree content = ctx.children.get(0);
         if (content instanceof JsoniqParser.OrExprContext orExprContext) {
             return this.visitOrExpr(orExprContext);
@@ -670,7 +678,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region EnclosedExpression
     @Override
-    public Node visitEnclosedExpression(JsoniqParser.EnclosedExpressionContext ctx) {
+    public Expression visitEnclosedExpression(JsoniqParser.EnclosedExpressionContext ctx) {
         return SequenceTranslation.enclosedExpr(
                 EnclosedExprContext.from(ctx), this.translationContext, this::visitExpr);
     }
@@ -678,7 +686,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region Flowr
     @Override
-    public Node visitFlworExpr(JsoniqParser.FlworExprContext ctx) {
+    public FlworExpression visitFlworExpr(JsoniqParser.FlworExprContext ctx) {
         return FlworTranslation.flworExpr(
                 FlworExprContext.from(ctx),
                 this.translationContext,
@@ -687,7 +695,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitForClause(JsoniqParser.ForClauseContext ctx) {
+    public ForClause visitForClause(JsoniqParser.ForClauseContext ctx) {
         return FlworTranslation.forClause(
                 ForClauseContext.from(ctx),
                 this.translationContext,
@@ -697,7 +705,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitForVar(JsoniqParser.ForVarContext ctx) {
+    public ForClause visitForVar(JsoniqParser.ForVarContext ctx) {
         return FlworTranslation.forVar(
                 ForVarContext.from(ctx),
                 this.translationContext,
@@ -707,7 +715,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitLetClause(JsoniqParser.LetClauseContext ctx) {
+    public LetClause visitLetClause(JsoniqParser.LetClauseContext ctx) {
         return FlworTranslation.letClause(
                 LetClauseContext.from(ctx),
                 this.translationContext,
@@ -717,7 +725,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitLetVar(JsoniqParser.LetVarContext ctx) {
+    public LetClause visitLetVar(JsoniqParser.LetVarContext ctx) {
         return FlworTranslation.letVar(
                 LetVarContext.from(ctx),
                 this.translationContext,
@@ -727,14 +735,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitWindowClause(JsoniqParser.WindowClauseContext ctx) {
+    public WindowClause visitWindowClause(JsoniqParser.WindowClauseContext ctx) {
         return ctx.tumblingWindowClause() != null
                 ? visitTumblingWindowClause(ctx.tumblingWindowClause())
                 : visitSlidingWindowClause(ctx.slidingWindowClause());
     }
 
     @Override
-    public Node visitTumblingWindowClause(JsoniqParser.TumblingWindowClauseContext ctx) {
+    public WindowClause visitTumblingWindowClause(JsoniqParser.TumblingWindowClauseContext ctx) {
         return FlworTranslation.windowClause(
                 WindowClauseContext.from(ctx),
                 this.translationContext,
@@ -744,7 +752,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitSlidingWindowClause(JsoniqParser.SlidingWindowClauseContext ctx) {
+    public WindowClause visitSlidingWindowClause(JsoniqParser.SlidingWindowClauseContext ctx) {
         return FlworTranslation.windowClause(
                 WindowClauseContext.from(ctx),
                 this.translationContext,
@@ -754,7 +762,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitGroupByClause(JsoniqParser.GroupByClauseContext ctx) {
+    public GroupByClause visitGroupByClause(JsoniqParser.GroupByClauseContext ctx) {
         return FlworTranslation.groupByClause(
                 GroupByClauseContext.from(ctx),
                 this.translationContext,
@@ -765,7 +773,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitOrderByClause(JsoniqParser.OrderByClauseContext ctx) {
+    public OrderByClause visitOrderByClause(JsoniqParser.OrderByClauseContext ctx) {
         return FlworTranslation.orderByClause(
                 OrderByClauseContext.from(ctx),
                 this.translationContext,
@@ -774,13 +782,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitWhereClause(JsoniqParser.WhereClauseContext ctx) {
+    public WhereClause visitWhereClause(JsoniqParser.WhereClauseContext ctx) {
         return FlworTranslation.whereClause(
                 WhereClauseContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
-    public Node visitCountClause(JsoniqParser.CountClauseContext ctx) {
+    public CountClause visitCountClause(JsoniqParser.CountClauseContext ctx) {
         return FlworTranslation.countClause(
                 CountClauseContext.from(ctx), this.translationContext, this::parseVariableBinding);
     }
@@ -788,18 +796,18 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region operational
     @Override
-    public Node visitOrExpr(JsoniqParser.OrExprContext ctx) {
+    public Expression visitOrExpr(JsoniqParser.OrExprContext ctx) {
         return LogicTranslation.orExpr(OrExprContext.from(ctx), this.translationContext, this::visitAndExpr);
     }
 
     @Override
-    public Node visitAndExpr(JsoniqParser.AndExprContext ctx) {
+    public Expression visitAndExpr(JsoniqParser.AndExprContext ctx) {
         return LogicTranslation.andExpr(AndExprContext.from(ctx), this.translationContext, this::visitNotExpr);
     }
 
     @Override
-    public Node visitNotExpr(JsoniqParser.NotExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitComparisonExpr(ctx.main_expr);
+    public Expression visitNotExpr(JsoniqParser.NotExprContext ctx) {
+        Expression mainExpression = this.visitComparisonExpr(ctx.main_expr);
         if (ctx.op == null || ctx.op.isEmpty()) {
             return mainExpression;
         }
@@ -807,31 +815,31 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitComparisonExpr(JsoniqParser.ComparisonExprContext ctx) {
+    public Expression visitComparisonExpr(JsoniqParser.ComparisonExprContext ctx) {
         return ComparisonTranslation.comparisonExpr(
                 ComparisonExprContext.from(ctx), this.translationContext, this::visitStringConcatExpr);
     }
 
     @Override
-    public Node visitStringConcatExpr(JsoniqParser.StringConcatExprContext ctx) {
+    public Expression visitStringConcatExpr(JsoniqParser.StringConcatExprContext ctx) {
         return SequenceTranslation.stringConcatExpr(
                 StringConcatExprContext.from(ctx), this.translationContext, this::visitRangeExpr);
     }
 
     @Override
-    public Node visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
+    public Expression visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
         return SequenceTranslation.rangeExpr(
                 RangeExprContext.from(ctx), this.translationContext, this::visitAdditiveExpr);
     }
 
     @Override
-    public Node visitAdditiveExpr(JsoniqParser.AdditiveExprContext ctx) {
+    public Expression visitAdditiveExpr(JsoniqParser.AdditiveExprContext ctx) {
         return ArithmeticTranslation.additiveExpr(
                 AdditiveExprContext.from(ctx), this.translationContext, this::visitMultiplicativeExpr);
     }
 
     @Override
-    public Node visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
+    public Expression visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
         return ArithmeticTranslation.multiplicativeExpr(
                 MultiplicativeExprContext.from(ctx),
                 this.translationContext,
@@ -840,25 +848,25 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitUnionExpr(JsoniqParser.UnionExprContext ctx) {
+    public Expression visitUnionExpr(JsoniqParser.UnionExprContext ctx) {
         return SequenceTranslation.unionExpr(
                 UnionExprContext.from(ctx), this.translationContext, this::visitIntersectExceptExpr);
     }
 
     @Override
-    public Node visitIntersectExceptExpr(JsoniqParser.IntersectExceptExprContext ctx) {
+    public Expression visitIntersectExceptExpr(JsoniqParser.IntersectExceptExprContext ctx) {
         return SequenceTranslation.intersectExceptExpr(
                 IntersectExceptExprContext.from(ctx), this.translationContext, this::visitInstanceOfExpr);
     }
 
     @Override
-    public Node visitSimpleMapExpr(JsoniqParser.SimpleMapExprContext ctx) {
+    public Expression visitSimpleMapExpr(JsoniqParser.SimpleMapExprContext ctx) {
         return PostfixTranslation.simpleMapExpr(
                 SimpleMapExprContext.from(ctx), this.translationContext, this::visitPathExpr, this::visitPathExpr);
     }
 
     @Override
-    public Node visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
+    public Expression visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
         return TypeTranslation.instanceOfExpr(
                 TypeCheckExprContext.from(ctx),
                 this.translationContext,
@@ -867,7 +875,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitIsStaticallyExpr(JsoniqParser.IsStaticallyExprContext ctx) {
+    public Expression visitIsStaticallyExpr(JsoniqParser.IsStaticallyExprContext ctx) {
         return TypeTranslation.isStaticallyExpr(
                 TypeCheckExprContext.from(ctx),
                 this.translationContext,
@@ -876,7 +884,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
+    public Expression visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
         return TypeTranslation.treatExpr(
                 TypeCheckExprContext.from(ctx),
                 this.translationContext,
@@ -885,7 +893,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
+    public Expression visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
         return TypeTranslation.castableExpr(
                 SingleTypeCheckExprContext.from(ctx),
                 this.translationContext,
@@ -894,7 +902,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCastExpr(JsoniqParser.CastExprContext ctx) {
+    public Expression visitCastExpr(JsoniqParser.CastExprContext ctx) {
         return TypeTranslation.castExpr(
                 SingleTypeCheckExprContext.from(ctx),
                 this.translationContext,
@@ -903,7 +911,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
+    public Expression visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
         return PostfixTranslation.arrowExpr(
                 ArrowExprContext.from(ctx),
                 this.translationContext,
@@ -915,20 +923,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
+    public Expression visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
         return ArithmeticTranslation.unaryExpr(
                 UnaryExprContext.from(ctx), this.translationContext, this::visitValueExpr);
     }
 
     @Override
-    public Node visitValueExpr(JsoniqParser.ValueExprContext ctx) {
+    public Expression visitValueExpr(JsoniqParser.ValueExprContext ctx) {
         return PrimaryTranslation.valueExpr(
                 ValueExprContext.from(ctx), this.translationContext, this::visitSimpleMapExpr, this::visitValidateExpr);
     }
 
     @Override
-    public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitExpr(ctx.expr());
+    public Expression visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
+        Expression mainExpression = this.visitExpr(ctx.expr());
         if (ctx.KW_TYPE() != null) {
             SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
             return new ValidateTypeExpression(mainExpression, true, sequenceType, createMetadataFromContext(ctx));
@@ -944,14 +952,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region update
 
     @Override
-    public Node visitInsertExpr(JsoniqParser.InsertExprContext ctx) {
+    public InsertExpression visitInsertExpr(JsoniqParser.InsertExprContext ctx) {
         Expression toInsertExpr;
         Expression posExpr = null;
         if (ctx.pairConstructor() != null && !ctx.pairConstructor().isEmpty()) {
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
-                Node lhs = this.visitExprSingle(currentPair.lhs);
+                Expression lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr stepExpr) {
                     if (this.translationContext
                             .moduleContext()
@@ -965,74 +973,74 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                                 lhs.getMetadata());
                     }
                 } else {
-                    keys.add((Expression) lhs);
+                    keys.add(lhs);
                 }
-                values.add((Expression) this.visitExprSingle(currentPair.rhs));
+                values.add(this.visitExprSingle(currentPair.rhs));
             }
             toInsertExpr = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
         } else if (ctx.to_insert_expr != null) {
-            toInsertExpr = (Expression) this.visitExprSingle(ctx.to_insert_expr);
+            toInsertExpr = this.visitExprSingle(ctx.to_insert_expr);
             if (ctx.pos_expr != null) {
-                posExpr = (Expression) this.visitExprSingle(ctx.pos_expr);
+                posExpr = this.visitExprSingle(ctx.pos_expr);
             }
         } else {
             throw new OurBadException("Unrecognised expression to insert in Insert Expression");
         }
-        Expression mainExpr = (Expression) this.visitExprSingle(ctx.main_expr);
+        Expression mainExpr = this.visitExprSingle(ctx.main_expr);
 
         return new InsertExpression(mainExpr, toInsertExpr, posExpr, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
+    public DeleteExpression visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
         return new DeleteExpression(mainExpression, locatorExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
+    public RenameExpression visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression nameExpression = (Expression) this.visitExprSingle(ctx.name_expr);
+        Expression nameExpression = this.visitExprSingle(ctx.name_expr);
         return new RenameExpression(mainExpression, locatorExpression, nameExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
+    public ReplaceExpression visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression newExpression = (Expression) this.visitExprSingle(ctx.replacer_expr);
+        Expression newExpression = this.visitExprSingle(ctx.replacer_expr);
         return new ReplaceExpression(mainExpression, locatorExpression, newExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitTransformExpr(JsoniqParser.TransformExprContext ctx) {
+    public TransformExpression visitTransformExpr(JsoniqParser.TransformExprContext ctx) {
         List<CopyDeclaration> copyDecls = ctx.copyDecl().stream()
                 .map(copyDeclCtx -> {
                     Name var = parseVariableBinding(copyDeclCtx.var_ref);
-                    Expression expr = (Expression) this.visitExprSingle(copyDeclCtx.src_expr);
+                    Expression expr = this.visitExprSingle(copyDeclCtx.src_expr);
                     return new CopyDeclaration(var, expr);
                 })
                 .collect(Collectors.toList());
-        Expression modifyExpression = (Expression) this.visitExprSingle(ctx.mod_expr);
-        Expression returnExpression = (Expression) this.visitExprSingle(ctx.ret_expr);
+        Expression modifyExpression = this.visitExprSingle(ctx.mod_expr);
+        Expression returnExpression = this.visitExprSingle(ctx.ret_expr);
         return new TransformExpression(copyDecls, modifyExpression, returnExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitAppendExpr(JsoniqParser.AppendExprContext ctx) {
-        Expression arrayExpression = (Expression) this.visitExprSingle(ctx.array_expr);
-        Expression toAppendExpression = (Expression) this.visitExprSingle(ctx.to_append_expr);
+    public AppendExpression visitAppendExpr(JsoniqParser.AppendExprContext ctx) {
+        Expression arrayExpression = this.visitExprSingle(ctx.array_expr);
+        Expression toAppendExpression = this.visitExprSingle(ctx.to_append_expr);
         return new AppendExpression(arrayExpression, toAppendExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
-        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+    public CreateCollectionExpression visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
+        Expression collection = this.visitExprSimple(ctx.collection_name);
         Expression contentExpression;
         if (ctx.content != null) {
-            contentExpression = (Expression) this.visitExprSingle(ctx.content);
+            contentExpression = this.visitExprSingle(ctx.content);
         } else {
             // use a CommaExpression as placeholder if the collection is created empty
             contentExpression = new CommaExpression(createMetadataFromContext(ctx));
@@ -1042,14 +1050,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitDeleteIndexExpr(JsoniqParser.DeleteIndexExprContext ctx) {
-        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+    public DeleteIndexFromCollectionExpression visitDeleteIndexExpr(JsoniqParser.DeleteIndexExprContext ctx) {
+        Expression collection = this.visitExprSimple(ctx.collection_name);
         Mode mode = Mode.fromString(ctx.collectionMode.getText());
         boolean isFirst = (ctx.first != null);
 
         Expression numDelete = null;
         if (ctx.num != null) {
-            numDelete = (Expression) this.visitExprSingle(ctx.num);
+            numDelete = this.visitExprSingle(ctx.num);
         }
 
         return new DeleteIndexFromCollectionExpression(
@@ -1057,23 +1065,23 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitDeleteSearchExpr(JsoniqParser.DeleteSearchExprContext ctx) {
-        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+    public DeleteSearchFromCollectionExpression visitDeleteSearchExpr(JsoniqParser.DeleteSearchExprContext ctx) {
+        Expression contentExpression = this.visitExprSingle(ctx.content);
         return new DeleteSearchFromCollectionExpression(contentExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitEditCollectionExpr(JsoniqParser.EditCollectionExprContext ctx) {
-        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
-        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+    public EditCollectionExpression visitEditCollectionExpr(JsoniqParser.EditCollectionExprContext ctx) {
+        Expression targetExpression = this.visitExprSingle(ctx.target);
+        Expression contentExpression = this.visitExprSingle(ctx.content);
         return new EditCollectionExpression(targetExpression, contentExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitInsertIndexExpr(JsoniqParser.InsertIndexExprContext ctx) {
-        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
-        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
-        Expression pos = ctx.pos != null ? (Expression) this.visitExprSingle(ctx.pos) : null;
+    public InsertIndexIntoCollectionExpression visitInsertIndexExpr(JsoniqParser.InsertIndexExprContext ctx) {
+        Expression collection = this.visitExprSimple(ctx.collection_name);
+        Expression contentExpression = this.visitExprSingle(ctx.content);
+        Expression pos = ctx.pos != null ? this.visitExprSingle(ctx.pos) : null;
         Mode mode = Mode.fromString(ctx.collectionMode.getText());
         boolean isLast = (ctx.last != null);
         boolean isFirst = (ctx.first != null);
@@ -1083,23 +1091,23 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitInsertSearchExpr(JsoniqParser.InsertSearchExprContext ctx) {
-        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
-        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+    public InsertSearchIntoCollectionExpression visitInsertSearchExpr(JsoniqParser.InsertSearchExprContext ctx) {
+        Expression targetExpression = this.visitExprSingle(ctx.target);
+        Expression contentExpression = this.visitExprSingle(ctx.content);
         boolean isBefore = (ctx.before != null);
         return new InsertSearchIntoCollectionExpression(
                 targetExpression, contentExpression, isBefore, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
-        Expression collectionName = (Expression) this.visitExprSimple(ctx.collection_name);
+    public TruncateCollectionExpression visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
+        Expression collectionName = this.visitExprSimple(ctx.collection_name);
         Mode mode = Mode.fromString(ctx.collectionMode.getText());
         return new TruncateCollectionExpression(collectionName, mode, createMetadataFromContext(ctx));
     }
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = (Expression) this.visitPostfixExpr(ctx.main_expr);
+        Expression mainExpression = this.visitPostfixExpr(ctx.main_expr);
         if (mainExpression instanceof ObjectLookupExpression objectLookupExpression) {
             return objectLookupExpression.getMainExpression();
         } else if (mainExpression instanceof ArrayLookupExpression arrayLookupExpression) {
@@ -1110,7 +1118,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = (Expression) this.visitPostfixExpr(ctx.main_expr);
+        Expression mainExpression = this.visitPostfixExpr(ctx.main_expr);
         if (mainExpression instanceof ObjectLookupExpression objectLookupExpression) {
             return objectLookupExpression.getLookupExpression();
         } else if (mainExpression instanceof ArrayLookupExpression arrayLookupExpression) {
@@ -1124,29 +1132,29 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region postfix
     @Override
-    public Node visitPostfixExpr(JsoniqParser.PostfixExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
+    public Expression visitPostfixExpr(JsoniqParser.PostfixExprContext ctx) {
+        Expression mainExpression = this.visitPrimaryExpr(ctx.main_expr);
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
             if (child instanceof JsoniqParser.PredicateContext predicateContext) {
-                Expression expr = (Expression) this.visitPredicate(predicateContext);
+                Expression expr = this.visitPredicate(predicateContext);
                 mainExpression = new FilterExpression(
                         mainExpression,
                         expr,
                         createMetadataFromRange(ctx.main_expr.getStart(), predicateContext.getStop()));
             } else if (child instanceof JsoniqParser.LookupContext lookupContext) {
-                Expression expr = (Expression) this.visitLookup(lookupContext);
+                Expression expr = this.visitLookup(lookupContext);
                 mainExpression = new PostfixLookupExpression(
                         mainExpression,
                         expr,
                         createMetadataFromRange(ctx.main_expr.getStart(), lookupContext.getStop()));
             } else if (child instanceof JsoniqParser.ObjectLookupContext objectLookupContext) {
-                Expression expr = (Expression) this.visitObjectLookup(objectLookupContext);
+                Expression expr = this.visitObjectLookup(objectLookupContext);
                 mainExpression = new ObjectLookupExpression(
                         mainExpression,
                         expr,
                         createMetadataFromRange(ctx.main_expr.getStart(), objectLookupContext.getStop()));
             } else if (child instanceof JsoniqParser.ArrayLookupContext arrayLookupContext) {
-                Expression expr = (Expression) this.visitArrayLookup(arrayLookupContext);
+                Expression expr = this.visitArrayLookup(arrayLookupContext);
                 mainExpression = new ArrayLookupExpression(
                         mainExpression,
                         expr,
@@ -1170,22 +1178,22 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitPredicate(JsoniqParser.PredicateContext ctx) {
+    public Expression visitPredicate(JsoniqParser.PredicateContext ctx) {
         return this.visitExpr(ctx.expr());
     }
 
     @Override
-    public Node visitLookup(JsoniqParser.LookupContext ctx) {
+    public Expression visitLookup(JsoniqParser.LookupContext ctx) {
         return this.visitKeySpecifier(ctx.keySpecifier());
     }
 
     @Override
-    public Node visitUnaryLookup(JsoniqParser.UnaryLookupContext ctx) {
+    public Expression visitUnaryLookup(JsoniqParser.UnaryLookupContext ctx) {
         return this.visitKeySpecifier(ctx.keySpecifier());
     }
 
     @Override
-    public Node visitKeySpecifier(JsoniqParser.KeySpecifierContext ctx) {
+    public Expression visitKeySpecifier(JsoniqParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
             return new StringLiteralExpression(processStringLiteral(ctx.lt), createMetadataFromContext(ctx));
         }
@@ -1210,7 +1218,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
+    public Expression visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
         // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
         if (ctx.lt != null) {
             return new StringLiteralExpression(processStringLiteral(ctx.lt), createMetadataFromContext(ctx));
@@ -1235,7 +1243,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitArrayLookup(JsoniqParser.ArrayLookupContext ctx) {
+    public Expression visitArrayLookup(JsoniqParser.ArrayLookupContext ctx) {
         return this.visitExpr(ctx.expr());
     }
 
@@ -1244,7 +1252,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region primary
     // TODO [EXPRVISITOR] orderedExpr unorderedExpr;
     @Override
-    public Node visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
+    public Expression visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.VarRefContext varRefContext) {
             return this.visitVarRef(varRefContext);
@@ -1274,8 +1282,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return this.visitBlockExpr(blockExprContext);
         }
         if (child instanceof JsoniqParser.UnaryLookupContext unaryLookupContext) {
-            return new UnaryLookupExpression(
-                    (Expression) this.visitUnaryLookup(unaryLookupContext), createMetadataFromContext(ctx));
+            return new UnaryLookupExpression(this.visitUnaryLookup(unaryLookupContext), createMetadataFromContext(ctx));
         }
         if (child instanceof JsoniqParser.NodeConstructorContext nodeConstructorContext) {
             return this.visitNodeConstructor(nodeConstructorContext);
@@ -1290,13 +1297,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitLiteral(JsoniqParser.LiteralContext ctx) {
+    public Expression visitLiteral(JsoniqParser.LiteralContext ctx) {
         return PrimaryTranslation.literal(
                 LiteralExprContext.from(ctx), this.translationContext, this::processStringLiteral);
     }
 
     @Override
-    public Node visitObjectConstructor(JsoniqParser.ObjectConstructorContext ctx) {
+    public Expression visitObjectConstructor(JsoniqParser.ObjectConstructorContext ctx) {
         // no merging constructor, just visit the k/v pairs
         if (ctx.merge_operator == null
                 || ctx.merge_operator.size() == 0
@@ -1304,7 +1311,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
-                Node lhs = this.visitExprSingle(currentPair.lhs);
+                Expression lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr stepExpr) {
                     if (this.translationContext
                             .moduleContext()
@@ -1318,9 +1325,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                                 lhs.getMetadata());
                     }
                 } else {
-                    keys.add((Expression) lhs);
+                    keys.add(lhs);
                 }
-                values.add((Expression) this.visitExprSingle(currentPair.rhs));
+                values.add(this.visitExprSingle(currentPair.rhs));
             }
             if (this.translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
                 return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
@@ -1330,12 +1337,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
 
         Expression childExpr;
-        childExpr = (Expression) this.visitExpr(ctx.expr());
+        childExpr = this.visitExpr(ctx.expr());
         return new ObjectConstructorExpression(childExpr, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitNodeConstructor(JsoniqParser.NodeConstructorContext ctx) {
+    public Expression visitNodeConstructor(JsoniqParser.NodeConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.DirectConstructorContext directConstructorContext) {
             return this.visitDirectConstructor(directConstructorContext);
@@ -1347,7 +1354,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitDirectConstructor(JsoniqParser.DirectConstructorContext ctx) {
+    public Expression visitDirectConstructor(JsoniqParser.DirectConstructorContext ctx) {
         if (ctx.COMMENT() != null) {
             String commentText = ctx.COMMENT().getText();
             String commentContent = commentText.substring(4, commentText.length() - 3);
@@ -1363,7 +1370,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         throw new UnsupportedFeatureException("Direct constructor not yet implemented", createMetadataFromContext(ctx));
     }
 
-    private Node visitDirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
+    private DirPIConstructorExpression visitDirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
         String tokenText = piToken.getText();
         String inner = tokenText.substring(2, tokenText.length() - 2);
         int whitespaceIndex = indexOfWhitespace(inner);
@@ -1389,7 +1396,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return -1;
     }
 
-    private Node visitDirElemConstructorOpenClose(JsoniqParser.DirectConstructorContext ctx) {
+    private DirElemConstructorExpression visitDirElemConstructorOpenClose(JsoniqParser.DirectConstructorContext ctx) {
         JsoniqParser.DirElemConstructorOpenCloseContext openClose = ctx.open_close;
         // check that the start and end tags are the same
         if (openClose.close_tag_name != null
@@ -1411,7 +1418,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     openClose.endOpen,
                     openClose.dirElemContent(),
                     this.translationContext.moduleContext().isBoundarySpacePreserve(),
-                    child -> (Expression) this.visitDirElemContent(child));
+                    this::visitDirElemContent);
 
             return new DirElemConstructorExpression(
                     parseName(ctx.open_tag_name, NameRole.ELEMENT_CONSTRUCTOR),
@@ -1424,7 +1431,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
     }
 
-    private Node visitDirElemConstructorSingleTag(JsoniqParser.DirectConstructorContext ctx) {
+    private DirElemConstructorExpression visitDirElemConstructorSingleTag(JsoniqParser.DirectConstructorContext ctx) {
         this.translationContext.pushConstructorNamespaceFrame();
         try {
             DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
@@ -1444,7 +1451,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitDirElemContent(JsoniqParser.DirElemContentContext ctx) {
+    public Expression visitDirElemContent(JsoniqParser.DirElemContentContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.DirectConstructorContext directConstructorContext) {
             return this.visitDirectConstructor(directConstructorContext);
@@ -1462,9 +1469,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCommonContent(JsoniqParser.CommonContentContext ctx) {
+    public Expression visitCommonContent(JsoniqParser.CommonContentContext ctx) {
         if (ctx.expr() != null) {
-            return (Expression) this.visitExpr(ctx.expr());
+            return this.visitExpr(ctx.expr());
         }
         String processedContent = DirectConstructorUtils.processLiteralContent(ctx.getText());
         return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
@@ -1480,7 +1487,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitComputedConstructor(JsoniqParser.ComputedConstructorContext ctx) {
+    public Expression visitComputedConstructor(JsoniqParser.ComputedConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.CompDocConstructorContext compDocConstructorContext) {
             return this.visitCompDocConstructor(compDocConstructorContext);
@@ -1501,34 +1508,35 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCompDocConstructor(JsoniqParser.CompDocConstructorContext ctx) {
-        Expression contentExpression = (Expression) this.visitEnclosedExpression(ctx.enclosedExpression());
+    public DocumentNodeConstructorExpression visitCompDocConstructor(JsoniqParser.CompDocConstructorContext ctx) {
+        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
         return new DocumentNodeConstructorExpression(contentExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitCompTextConstructor(JsoniqParser.CompTextConstructorContext ctx) {
-        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+    public TextNodeConstructorExpression visitCompTextConstructor(JsoniqParser.CompTextConstructorContext ctx) {
+        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
 
         return new TextNodeConstructorExpression(contentExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitCompCommentConstructor(JsoniqParser.CompCommentConstructorContext ctx) {
-        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+    public CommentNodeConstructorExpression visitCompCommentConstructor(
+            JsoniqParser.CompCommentConstructorContext ctx) {
+        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
 
         return new CommentNodeConstructorExpression(contentExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitCompPIConstructor(JsoniqParser.CompPIConstructorContext ctx) {
-        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+    public ComputedPIConstructorExpression visitCompPIConstructor(JsoniqParser.CompPIConstructorContext ctx) {
+        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
         if (ctx.ncName() != null) {
             return new ComputedPIConstructorExpression(
                     ctx.ncName().getText(), contentExpression, createMetadataFromContext(ctx));
         }
         if (ctx.expr() != null) {
-            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            Expression nameExpression = this.visitExpr(ctx.expr());
             return new ComputedPIConstructorExpression(
                     nameExpression, contentExpression, createMetadataFromContext(ctx));
         }
@@ -1538,8 +1546,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCompAttrConstructor(JsoniqParser.CompAttrConstructorContext ctx) {
-        Expression valueExpression = (Expression) visit(ctx.enclosedExpression());
+    public ComputedAttributeConstructorExpression visitCompAttrConstructor(
+            JsoniqParser.CompAttrConstructorContext ctx) {
+        Expression valueExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
 
         // Check if we have a static attribute name (eqName) or dynamic name expression (LBRACE expr RBRACE)
         if (ctx.name != null) {
@@ -1549,7 +1558,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     attributeName, valueExpression, createMetadataFromContext(ctx));
         } else if (ctx.name_expr != null) {
             // Dynamic attribute name: attribute { nameExpression } { value }
-            Expression nameExpression = (Expression) this.visitExpr(ctx.name_expr);
+            Expression nameExpression = this.visitExpr(ctx.name_expr);
             return new ComputedAttributeConstructorExpression(
                     nameExpression, valueExpression, createMetadataFromContext(ctx));
         } else {
@@ -1560,8 +1569,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCompElemConstructor(JsoniqParser.CompElemConstructorContext ctx) {
-        Expression contentExpression = (Expression) this.visitEnclosedContentExpr(ctx.enclosedContentExpr());
+    public ComputedElementConstructorExpression visitCompElemConstructor(JsoniqParser.CompElemConstructorContext ctx) {
+        Expression contentExpression = this.visitEnclosedContentExpr(ctx.enclosedContentExpr());
 
         // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
         if (ctx.eqName() != null) {
@@ -1571,7 +1580,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     elementName, contentExpression, createMetadataFromContext(ctx));
         } else if (ctx.expr() != null) {
             // Dynamic element name: element { nameExpression } { content }
-            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            Expression nameExpression = this.visitExpr(ctx.expr());
             return new ComputedElementConstructorExpression(
                     nameExpression, contentExpression, createMetadataFromContext(ctx));
         } else {
@@ -1582,15 +1591,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCompNamespaceConstructor(JsoniqParser.CompNamespaceConstructorContext ctx) {
+    public ComputedNamespaceConstructorExpression visitCompNamespaceConstructor(
+            JsoniqParser.CompNamespaceConstructorContext ctx) {
         Expression uriExpression =
-                (Expression) this.visitEnclosedExpression(ctx.enclosedURIExpr().enclosedExpression());
+                this.visitEnclosedExpression(ctx.enclosedURIExpr().enclosedExpression());
         if (ctx.ncName() != null) {
             return new ComputedNamespaceConstructorExpression(
                     ctx.ncName().getText(), uriExpression, createMetadataFromContext(ctx));
         }
         if (ctx.enclosedPrefixExpr() != null) {
-            Expression prefixExpression = (Expression)
+            Expression prefixExpression =
                     this.visitEnclosedExpression(ctx.enclosedPrefixExpr().enclosedExpression());
             return new ComputedNamespaceConstructorExpression(
                     prefixExpression, uriExpression, createMetadataFromContext(ctx));
@@ -1601,12 +1611,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitEnclosedContentExpr(JsoniqParser.EnclosedContentExprContext ctx) {
+    public Expression visitEnclosedContentExpr(JsoniqParser.EnclosedContentExprContext ctx) {
         return this.visitEnclosedExpression(ctx.enclosedExpression());
     }
 
     @Override
-    public Node visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
+    public ArrayConstructorExpression visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.SquareArrayConstructorContext sqCtx) {
             List<JsoniqParser.ExprSingleContext> memberCtxs = sqCtx.exprSingle();
@@ -1618,7 +1628,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 // In JSONiq 1.0, the square array constructor behaves like the curly array constructor.
                 // Thus, we concatenate all expressions into a single comma expression.
                 for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
-                    memberExpressions.add((Expression) this.visitExprSingle(memberCtx));
+                    memberExpressions.add(this.visitExprSingle(memberCtx));
                 }
                 Expression commaExpression = new CommaExpression(memberExpressions, createMetadataFromContext(sqCtx));
                 return new ArrayConstructorExpression(commaExpression, createMetadataFromContext(sqCtx));
@@ -1626,7 +1636,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 log.debug("Not concatenating to comma.");
                 // In JSONiq 4.0, the square array constructor behaves like in XQuery 4.0.
                 for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
-                    memberExpressions.add((Expression) this.visitExprSingle(memberCtx));
+                    memberExpressions.add(this.visitExprSingle(memberCtx));
                 }
                 return new ArrayConstructorExpression(memberExpressions, true, createMetadataFromContext(sqCtx));
             }
@@ -1636,18 +1646,18 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (childCtx.enclosedExpression() == null) {
             return new ArrayConstructorExpression(createMetadataFromContext(childCtx));
         }
-        Expression content = (Expression) this.visitEnclosedExpression(childCtx.enclosedExpression());
+        Expression content = this.visitEnclosedExpression(childCtx.enclosedExpression());
         return new ArrayConstructorExpression(content, createMetadataFromContext(childCtx));
     }
 
     @Override
-    public Node visitParenthesizedExpr(JsoniqParser.ParenthesizedExprContext ctx) {
+    public Expression visitParenthesizedExpr(JsoniqParser.ParenthesizedExprContext ctx) {
         return PrimaryTranslation.parenthesizedExpr(
                 ParenthesizedExprContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
-    public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
+    public VariableReferenceExpression visitVarRef(JsoniqParser.VarRefContext ctx) {
         return PrimaryTranslation.varRef(VarRefContext.from(ctx), this.translationContext, this::parseEqName);
     }
 
@@ -1664,7 +1674,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitContextItemExpr(JsoniqParser.ContextItemExprContext ctx) {
+    public ContextItemExpression visitContextItemExpr(JsoniqParser.ContextItemExprContext ctx) {
         return PrimaryTranslation.contextItemExpr(ctx, this.translationContext);
     }
 
@@ -1877,17 +1887,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
+    public FunctionCallExpression visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
         return PrimaryTranslation.functionCall(
-                FunctionCallContext.from(ctx), this.translationContext, this::parseFunctionName, arg ->
-                        (Expression) this.visitArgument(arg));
+                FunctionCallContext.from(ctx), this.translationContext, this::parseFunctionName, this::visitArgument);
     }
 
     private List<Expression> getArgumentsFromArgumentListContext(JsoniqParser.ArgumentListContext ctx) {
         List<Expression> arguments = new ArrayList<>();
         if (ctx.args != null) {
             for (JsoniqParser.ArgumentContext arg : ctx.args) {
-                Expression currentArg = (Expression) this.visitArgument(arg);
+                Expression currentArg = this.visitArgument(arg);
                 arguments.add(currentArg);
             }
         }
@@ -1895,7 +1904,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitArgument(JsoniqParser.ArgumentContext ctx) {
+    public Expression visitArgument(JsoniqParser.ArgumentContext ctx) {
         if (ctx.exprSingle() != null) {
             return this.visitExprSingle(ctx.exprSingle());
         }
@@ -1903,7 +1912,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx) {
+    public Expression visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.NamedFunctionRefContext namedFunctionRefContext) {
             return this.visitNamedFunctionRef(namedFunctionRefContext);
@@ -1916,13 +1925,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
+    public NamedFunctionReferenceExpression visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
         return PrimaryTranslation.namedFunctionRef(
                 NamedFunctionRefContext.from(ctx), this.translationContext, this::parseFunctionName);
     }
 
     @Override
-    public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
+    public InlineFunctionExpression visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = SequenceType.createSequenceType("item*");
@@ -1951,8 +1960,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
-        StatementsAndOptionalExpr funcBody =
-                (StatementsAndOptionalExpr) this.visitStatementsAndOptionalExpr(ctx.fn_body);
+        StatementsAndOptionalExpr funcBody = this.visitStatementsAndOptionalExpr(ctx.fn_body);
 
         return new InlineFunctionExpression(
                 annotations, null, fnParams, fnReturnType, funcBody, createMetadataFromContext(ctx));
@@ -1961,13 +1969,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region control
     @Override
-    public Node visitIfExpr(JsoniqParser.IfExprContext ctx) {
+    public ConditionalExpression visitIfExpr(JsoniqParser.IfExprContext ctx) {
         return ControlTranslation.ifExpr(
                 IfExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
     }
 
     @Override
-    public Node visitSwitchExpr(JsoniqParser.SwitchExprContext ctx) {
+    public SwitchExpression visitSwitchExpr(JsoniqParser.SwitchExprContext ctx) {
         return ControlTranslation.switchExpr(
                 SwitchExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
     }
@@ -1975,7 +1983,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region quantified
     @Override
-    public Node visitTypeswitchExpr(JsoniqParser.TypeswitchExprContext ctx) {
+    public TypeSwitchExpression visitTypeswitchExpr(JsoniqParser.TypeswitchExprContext ctx) {
         return ControlTranslation.typeswitchExpr(
                 TypeswitchExprContext.from(ctx),
                 this.translationContext,
@@ -1986,7 +1994,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
+    public FunctionCallExpression visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
         return QuantifiedTranslation.quantifiedExpr(
                 QuantifiedExprContext.from(ctx),
                 this.translationContext,
@@ -1996,7 +2004,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
+    public TryCatchExpression visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
         return ControlTranslation.tryCatchExpr(
                 TryCatchExprContext.from(ctx), this.translationContext, this::visitExpr, this::parseEqName);
     }
@@ -2021,39 +2029,39 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // region scripting
     @Override
-    public Node visitStatements(JsoniqParser.StatementsContext ctx) {
+    public StatementsAndOptionalExpr visitStatements(JsoniqParser.StatementsContext ctx) {
         List<Statement> statements = new ArrayList<>();
         for (JsoniqParser.StatementContext stmt : ctx.statement()) {
-            statements.add((Statement) this.visitStatement(stmt));
+            statements.add(this.visitStatement(stmt));
         }
         return new StatementsAndOptionalExpr(statements, null, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitStatementsAndExpr(JsoniqParser.StatementsAndExprContext ctx) {
+    public StatementsAndExpr visitStatementsAndExpr(JsoniqParser.StatementsAndExprContext ctx) {
         List<Statement> statements = new ArrayList<>();
         for (JsoniqParser.StatementContext stmt : ctx.statements().statement()) {
-            statements.add((Statement) this.visitStatement(stmt));
+            statements.add(this.visitStatement(stmt));
         }
-        Expression expression = (Expression) this.visitExpr(ctx.expr());
+        Expression expression = this.visitExpr(ctx.expr());
         return new StatementsAndExpr(statements, expression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitStatementsAndOptionalExpr(JsoniqParser.StatementsAndOptionalExprContext ctx) {
+    public StatementsAndOptionalExpr visitStatementsAndOptionalExpr(JsoniqParser.StatementsAndOptionalExprContext ctx) {
         List<Statement> statements = new ArrayList<>();
         for (JsoniqParser.StatementContext stmt : ctx.statements().statement()) {
-            statements.add((Statement) this.visitStatement(stmt));
+            statements.add(this.visitStatement(stmt));
         }
         if (ctx.expr() != null) {
-            Expression expression = (Expression) this.visitExpr(ctx.expr());
+            Expression expression = this.visitExpr(ctx.expr());
             return new StatementsAndOptionalExpr(statements, expression, createMetadataFromContext(ctx));
         }
         return new StatementsAndOptionalExpr(statements, null, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitStatement(JsoniqParser.StatementContext ctx) {
+    public Statement visitStatement(JsoniqParser.StatementContext ctx) {
         ParseTree content = ctx.children.get(0);
         if (content instanceof JsoniqParser.ApplyStatementContext applyStatementContext) {
             return this.visitApplyStatement(applyStatementContext);
@@ -2099,76 +2107,76 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // mutation
     @Override
-    public Node visitApplyStatement(JsoniqParser.ApplyStatementContext ctx) {
-        Expression exprSimple = (Expression) this.visitExprSimple(ctx.exprSimple());
+    public ApplyStatement visitApplyStatement(JsoniqParser.ApplyStatementContext ctx) {
+        Expression exprSimple = this.visitExprSimple(ctx.exprSimple());
         return new ApplyStatement(exprSimple, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitAssignStatement(JsoniqParser.AssignStatementContext ctx) {
+    public AssignStatement visitAssignStatement(JsoniqParser.AssignStatementContext ctx) {
         Name paramName = parseVariableReference(ctx.var_ref);
-        Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
+        Expression exprSingle = this.visitExprSingle(ctx.exprSingle());
         return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
     }
     // end mutation
 
     // block
     @Override
-    public Node visitBlockStatement(JsoniqParser.BlockStatementContext ctx) {
+    public BlockStatement visitBlockStatement(JsoniqParser.BlockStatementContext ctx) {
         List<Statement> statements = new ArrayList<>();
         for (JsoniqParser.StatementContext statement : ctx.statements().statement()) {
-            statements.add((Statement) this.visitStatement(statement));
+            statements.add(this.visitStatement(statement));
         }
         return new BlockStatement(statements, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitBlockExpr(JsoniqParser.BlockExprContext ctx) {
-        StatementsAndExpr statementsAndExpr = (StatementsAndExpr) this.visitStatementsAndExpr(ctx.statementsAndExpr());
+    public BlockExpression visitBlockExpr(JsoniqParser.BlockExprContext ctx) {
+        StatementsAndExpr statementsAndExpr = this.visitStatementsAndExpr(ctx.statementsAndExpr());
         return new BlockExpression(statementsAndExpr, createMetadataFromContext(ctx));
     }
     // end block
 
     // loops
     @Override
-    public Node visitBreakStatement(JsoniqParser.BreakStatementContext ctx) {
+    public BreakStatement visitBreakStatement(JsoniqParser.BreakStatementContext ctx) {
         return new BreakStatement(createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitContinueStatement(JsoniqParser.ContinueStatementContext ctx) {
+    public ContinueStatement visitContinueStatement(JsoniqParser.ContinueStatementContext ctx) {
         return new ContinueStatement(createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitExitStatement(JsoniqParser.ExitStatementContext ctx) {
-        Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
+    public ExitStatement visitExitStatement(JsoniqParser.ExitStatementContext ctx) {
+        Expression exprSingle = this.visitExprSingle(ctx.exprSingle());
         return new ExitStatement(exprSingle, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitFlworStatement(JsoniqParser.FlworStatementContext ctx) {
+    public FlowrStatement visitFlworStatement(JsoniqParser.FlworStatementContext ctx) {
         Clause clause;
         // Check for start clause. Only for or let allowed.
         if (ctx.start_for == null) {
-            clause = (Clause) this.visitLetClause(ctx.start_let);
+            clause = this.visitLetClause(ctx.start_let);
         } else {
-            clause = (Clause) this.visitForClause(ctx.start_for);
+            clause = this.visitForClause(ctx.start_for);
         }
         Clause lastFlowrClause = clause.getLastClause();
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
             if (child instanceof JsoniqParser.ForClauseContext forClauseContext) {
-                clause = (Clause) this.visitForClause(forClauseContext);
+                clause = this.visitForClause(forClauseContext);
             } else if (child instanceof JsoniqParser.LetClauseContext letClauseContext) {
-                clause = (Clause) this.visitLetClause(letClauseContext);
+                clause = this.visitLetClause(letClauseContext);
             } else if (child instanceof JsoniqParser.WhereClauseContext whereClauseContext) {
-                clause = (Clause) this.visitWhereClause(whereClauseContext);
+                clause = this.visitWhereClause(whereClauseContext);
             } else if (child instanceof JsoniqParser.GroupByClauseContext groupByClauseContext) {
-                clause = (Clause) this.visitGroupByClause(groupByClauseContext);
+                clause = this.visitGroupByClause(groupByClauseContext);
             } else if (child instanceof JsoniqParser.OrderByClauseContext orderByClauseContext) {
-                clause = (Clause) this.visitOrderByClause(orderByClauseContext);
+                clause = this.visitOrderByClause(orderByClauseContext);
             } else if (child instanceof JsoniqParser.CountClauseContext countClauseContext) {
-                clause = (Clause) this.visitCountClause(countClauseContext);
+                clause = this.visitCountClause(countClauseContext);
             } else {
                 throw new UnsupportedFeatureException(
                         "FLOWR clause not implemented yet", createMetadataFromContext(ctx));
@@ -2176,7 +2184,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             lastFlowrClause.chainWith(clause.getFirstClause());
             lastFlowrClause = clause.getLastClause();
         }
-        Statement returnStatement = (Statement) this.visitStatement(ctx.returnStmt);
+        Statement returnStatement = this.visitStatement(ctx.returnStmt);
         ReturnStatementClause returnStatementClause =
                 new ReturnStatementClause(returnStatement, returnStatement.getMetadata());
         lastFlowrClause.chainWith(returnStatementClause);
@@ -2185,9 +2193,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitWhileStatement(JsoniqParser.WhileStatementContext ctx) {
-        Expression testCondition = (Expression) this.visitExpr(ctx.test_expr);
-        Statement statement = (Statement) this.visitStatement(ctx.stmt);
+    public WhileStatement visitWhileStatement(JsoniqParser.WhileStatementContext ctx) {
+        Expression testCondition = this.visitExpr(ctx.test_expr);
+        Statement statement = this.visitStatement(ctx.stmt);
         return new WhileStatement(testCondition, statement, createMetadataFromContext(ctx));
     }
 
@@ -2196,49 +2204,48 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // control
 
     @Override
-    public Node visitIfStatement(JsoniqParser.IfStatementContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.test_expr);
+    public ConditionalStatement visitIfStatement(JsoniqParser.IfStatementContext ctx) {
+        Expression condition = this.visitExpr(ctx.test_expr);
         // Verify and set branch.
         ParseTree branchContent = ctx.children.get(5);
         checkForUnsupportedStatement(branchContent);
-        Statement branch = (Statement) this.visitStatement(ctx.branch);
+        Statement branch = this.visitStatement(ctx.branch);
         // Verify and set else branch.
         ParseTree elseBranchContent = ctx.children.get(7);
         checkForUnsupportedStatement(elseBranchContent);
-        Statement elseBranch = (Statement) this.visitStatement(ctx.else_branch);
+        Statement elseBranch = this.visitStatement(ctx.else_branch);
         return new ConditionalStatement(condition, branch, elseBranch, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitSwitchStatement(JsoniqParser.SwitchStatementContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.condExpr);
+    public SwitchStatement visitSwitchStatement(JsoniqParser.SwitchStatementContext ctx) {
+        Expression condition = this.visitExpr(ctx.condExpr);
         List<SwitchCaseStatement> cases = new ArrayList<>();
         for (JsoniqParser.SwitchCaseStatementContext stmt : ctx.cases) {
             List<Expression> conditionExpressions = new ArrayList<>();
             stmt.cond.forEach(exprSingle -> {
-                conditionExpressions.add((Expression) this.visitExprSingle(exprSingle));
+                conditionExpressions.add(this.visitExprSingle(exprSingle));
             });
             // TODO: Test this behaviour with return!
             // Verify return statement
             ParseTree caseTree = stmt.children.get(stmt.children.size() - 1);
             checkForUnsupportedStatement(caseTree);
-            SwitchCaseStatement swCase =
-                    new SwitchCaseStatement(conditionExpressions, (Statement) this.visitStatement(stmt.ret));
+            SwitchCaseStatement swCase = new SwitchCaseStatement(conditionExpressions, this.visitStatement(stmt.ret));
             cases.add(swCase);
         }
         // Verify default statement
         ParseTree defaultTree = ctx.children.get(ctx.children.size() - 1);
         checkForUnsupportedStatement(defaultTree);
-        Statement defaultCase = (Statement) this.visitStatement(ctx.def);
+        Statement defaultCase = this.visitStatement(ctx.def);
         return new SwitchStatement(condition, cases, defaultCase, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitTryCatchStatement(JsoniqParser.TryCatchStatementContext ctx) {
-        BlockStatement tryBlock = (BlockStatement) this.visitBlockStatement(ctx.try_block);
+    public TryCatchStatement visitTryCatchStatement(JsoniqParser.TryCatchStatementContext ctx) {
+        BlockStatement tryBlock = this.visitBlockStatement(ctx.try_block);
         Map<CatchPattern, BlockStatement> catchBlockStatements = new LinkedHashMap<>();
         for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
-            BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
+            BlockStatement catchBlockStatement = this.visitBlockStatement(catchCtx.catch_block);
             for (var catchTarget : catchCtx.nameTest()) {
                 CatchPattern pattern = ControlTranslation.catchPattern(
                         NameTestContext.from(catchTarget), this.translationContext, this::parseEqName);
@@ -2251,8 +2258,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitTypeSwitchStatement(JsoniqParser.TypeSwitchStatementContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.cond);
+    public TypeSwitchStatement visitTypeSwitchStatement(JsoniqParser.TypeSwitchStatementContext ctx) {
+        Expression condition = this.visitExpr(ctx.cond);
         List<TypeSwitchStatementCase> cases = new ArrayList<>();
         for (JsoniqParser.CaseStatementContext stmt : ctx.cases) {
             List<SequenceType> union = new ArrayList<>();
@@ -2265,14 +2272,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     union.add(this.processSequenceType(sequenceTypeContext));
                 });
             }
-            Statement returnStatement = (Statement) this.visitStatement(stmt.ret);
+            Statement returnStatement = this.visitStatement(stmt.ret);
             cases.add(new TypeSwitchStatementCase(variableName, union, returnStatement));
         }
         Name defaultVariableName = null;
         if (ctx.var_ref != null) {
             defaultVariableName = parseVariableBinding(ctx.var_ref);
         }
-        Statement defaultStatement = (Statement) this.visitStatement(ctx.def);
+        Statement defaultStatement = this.visitStatement(ctx.def);
         return new TypeSwitchStatement(
                 condition,
                 cases,
@@ -2295,7 +2302,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // declaration
 
     @Override
-    public Node visitVarDeclStatement(JsoniqParser.VarDeclStatementContext ctx) {
+    public Statement visitVarDeclStatement(JsoniqParser.VarDeclStatementContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         List<VariableDeclStatement> variables = new ArrayList<>();
         for (JsoniqParser.VarDeclForStatementContext varDecl : ctx.varDeclForStatement()) {
@@ -2307,7 +2314,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 seq = this.processSequenceType(varDecl.sequenceType());
             }
             if (varDecl.exprSingle() != null) {
-                exprSingle = (Expression) this.visitExprSingle(varDecl.exprSingle());
+                exprSingle = this.visitExprSingle(varDecl.exprSingle());
                 if (seq != null) {
                     exprSingle = new TreatExpression(
                             exprSingle, seq, ErrorCode.UnexpectedTypeErrorCode, exprSingle.getMetadata());
@@ -2327,7 +2334,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // start xml
 
     @Override
-    public Node visitPathExpr(JsoniqParser.PathExprContext ctx) {
+    public Expression visitPathExpr(JsoniqParser.PathExprContext ctx) {
         if (ctx.singleslash != null) {
             return visitSingleSlash(ctx, ctx.singleslash);
         } else if (ctx.doubleslash != null) {
@@ -2338,12 +2345,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return visitSingleSlashNoStepExpr(ctx);
     }
 
-    private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
+    private Expression visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
         return new PathRootExpression(createMetadataFromContext(ctx));
     }
 
-    private Node visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
+    private Expression visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
         if (relativeContext.stepExpr().size() == 1
                 && relativeContext.stepExpr(0).postfixExpr() != null) {
             // We only have a postfix expression, not a path expression
@@ -2352,7 +2359,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return getSlashes(relativeContext, null);
     }
 
-    private Node visitDoubleSlash(
+    private Expression visitDoubleSlash(
             JsoniqParser.PathExprContext pathContext, JsoniqParser.RelativePathExprContext doubleSlashContext) {
         Token leadingDoubleSlash = pathContext.getStart();
         PathRootExpression functionCallExpression =
@@ -2366,7 +2373,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return getSlashes(doubleSlashContext, starter, leadingDoubleSlash);
     }
 
-    private Node visitSingleSlash(
+    private Expression visitSingleSlash(
             JsoniqParser.PathExprContext pathContext, JsoniqParser.RelativePathExprContext singleSlashContext) {
         Token leadingSlash = pathContext.getStart();
         PathRootExpression functionCallExpression =
@@ -2387,7 +2394,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         Expression currentTop = leftMost; // can be null
         Expression currentStepExpr;
         for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
-            currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));
+            currentStepExpr = this.visitStepExpr(relativePathExprContext.stepExpr(i));
             if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
                 // Unroll '//' to forward axis
                 StepExpr intermediaryStepExpr = new ForwardStepExpr(
@@ -2419,12 +2426,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitStepExpr(JsoniqParser.StepExprContext ctx) {
+    public Expression visitStepExpr(JsoniqParser.StepExprContext ctx) {
         if (ctx.postfixExpr() == null) {
             Expression stepExpr = getStep(ctx.axisStep());
             for (JsoniqParser.PredicateContext predicateContext :
                     ctx.axisStep().predicateList().predicate()) {
-                Expression predicate = (Expression) this.visitPredicate(predicateContext);
+                Expression predicate = this.visitPredicate(predicateContext);
                 stepExpr = new FilterExpression(
                         stepExpr, predicate, createMetadataFromRange(ctx.getStart(), predicateContext.getStop()));
             }
@@ -2670,7 +2677,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             if (!annotationContext.literal().isEmpty()) {
                 literals = new ArrayList<>();
                 for (JsoniqParser.LiteralContext literalContext : annotationContext.literal()) {
-                    literals.add((Expression) this.visitLiteral(literalContext));
+                    literals.add(this.visitLiteral(literalContext));
                 }
             }
             parsedAnnotations.add(new Annotation(name, literals));
@@ -2780,7 +2787,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         "Namespace declaration attributes cannot contain enclosed expressions.",
                         createMetadataFromContext(ctx));
             }
-            expressions.add((Expression) this.visitExpr(dirAttributeContentQuotContext.expr()));
+            expressions.add(this.visitExpr(dirAttributeContentQuotContext.expr()));
         } else if (ctx instanceof JsoniqParser.DirAttributeContentAposContext dirAttributeContentAposContext
                 && dirAttributeContentAposContext.expr() != null) {
             if (!allowEnclosedExpressions) {
@@ -2788,7 +2795,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         "Namespace declaration attributes cannot contain enclosed expressions.",
                         createMetadataFromContext(ctx));
             }
-            expressions.add((Expression) this.visitExpr(dirAttributeContentAposContext.expr()));
+            expressions.add(this.visitExpr(dirAttributeContentAposContext.expr()));
         } else {
             // Preserve literal content after validating direct attribute restrictions.
             String childText = this.jsoniqTokenStream.getText(ctx.getSourceInterval());

@@ -28,7 +28,6 @@ import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
@@ -40,14 +39,14 @@ public final class ArithmeticTranslation {
     public static <ChildExprCtx extends ParserRuleContext> Expression additiveExpr(
             AdditiveExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<ChildExprCtx, Node> visitMultiplicativeExpr) {
-        Expression result = (Expression) visitMultiplicativeExpr.apply(ctx.mainExpr());
+            Function<ChildExprCtx, Expression> visitMultiplicativeExpr) {
+        Expression result = visitMultiplicativeExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.rhs().size(); ++i) {
             ChildExprCtx child = ctx.rhs().get(i);
-            Expression rightExpression = (Expression) visitMultiplicativeExpr.apply(child);
+            Expression rightExpression = visitMultiplicativeExpr.apply(child);
             result = new AdditiveExpression(
                     result,
                     rightExpression,
@@ -61,8 +60,8 @@ public final class ArithmeticTranslation {
             MultiplicativeExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
             CommonTokenStream tokenStream,
-            Function<ChildExprCtx, Node> visitUnionExpr) {
-        Expression result = (Expression) visitUnionExpr.apply(ctx.mainExpr());
+            Function<ChildExprCtx, Expression> visitUnionExpr) {
+        Expression result = visitUnionExpr.apply(ctx.mainExpr());
         if (ctx.rhs() == null || ctx.rhs().isEmpty()) {
             return result;
         }
@@ -70,7 +69,7 @@ public final class ArithmeticTranslation {
             ChildExprCtx child = ctx.rhs().get(i);
             Token operator = ctx.op().get(i);
             validateMultiplicativeOperator(ctx.mainExpr(), child, operator, translationContext, tokenStream);
-            Expression rightExpression = (Expression) visitUnionExpr.apply(child);
+            Expression rightExpression = visitUnionExpr.apply(child);
             result = new MultiplicativeExpression(
                     result,
                     rightExpression,
@@ -136,8 +135,8 @@ public final class ArithmeticTranslation {
     public static <ChildExprCtx extends ParserRuleContext> Expression unaryExpr(
             UnaryExprContext<ChildExprCtx> ctx,
             TranslationContext translationContext,
-            Function<ChildExprCtx, Node> visitValueExpr) {
-        Expression mainExpression = (Expression) visitValueExpr.apply(ctx.mainExpr());
+            Function<ChildExprCtx, Expression> visitValueExpr) {
+        Expression mainExpression = visitValueExpr.apply(ctx.mainExpr());
         if (ctx.op() == null || ctx.op().isEmpty()) {
             return mainExpression;
         }

@@ -37,7 +37,6 @@ import org.rumbledb.exceptions.NumericOverflowOrUnderflow;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
@@ -54,11 +53,11 @@ public final class PrimaryTranslation {
     private PrimaryTranslation() {}
 
     public static <SimpleMapExprCtx extends ParserRuleContext, ValidateExprCtx extends ParserRuleContext>
-            Node valueExpr(
+            Expression valueExpr(
                     ValueExprContext<SimpleMapExprCtx, ValidateExprCtx> ctx,
                     TranslationContext translationContext,
-                    Function<SimpleMapExprCtx, Node> visitSimpleMapExpr,
-                    Function<ValidateExprCtx, Node> visitValidateExpr) {
+                    Function<SimpleMapExprCtx, Expression> visitSimpleMapExpr,
+                    Function<ValidateExprCtx, Expression> visitValidateExpr) {
         if (ctx.simpleMapExpr() != null) {
             return visitSimpleMapExpr.apply(ctx.simpleMapExpr());
         }
@@ -73,14 +72,14 @@ public final class PrimaryTranslation {
     public static <ExprCtx extends ParserRuleContext> Expression parenthesizedExpr(
             ParenthesizedExprContext<ExprCtx> ctx,
             TranslationContext translationContext,
-            Function<ExprCtx, Node> visitExpr) {
+            Function<ExprCtx, Expression> visitExpr) {
         if (ctx.expr() == null) {
             return new CommaExpression(translationContext.metadata(ctx.context()));
         }
-        return (Expression) visitExpr.apply(ctx.expr());
+        return visitExpr.apply(ctx.expr());
     }
 
-    public static <EqNameCtx extends ParserRuleContext> Expression varRef(
+    public static <EqNameCtx extends ParserRuleContext> VariableReferenceExpression varRef(
             VarRefContext<EqNameCtx> ctx,
             TranslationContext translationContext,
             BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
@@ -88,7 +87,7 @@ public final class PrimaryTranslation {
         return new VariableReferenceExpression(name, translationContext.metadata(ctx.context()));
     }
 
-    public static Expression contextItemExpr(ParserRuleContext ctx, TranslationContext translationContext) {
+    public static ContextItemExpression contextItemExpr(ParserRuleContext ctx, TranslationContext translationContext) {
         return new ContextItemExpression(translationContext.metadata(ctx));
     }
 

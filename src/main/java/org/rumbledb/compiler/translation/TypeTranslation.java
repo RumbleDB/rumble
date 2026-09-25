@@ -23,7 +23,6 @@ import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -39,9 +38,9 @@ public final class TypeTranslation {
             Expression instanceOfExpr(
                     TypeCheckExprContext<MainExprCtx, SeqTypeCtx> ctx,
                     TranslationContext translationContext,
-                    Function<MainExprCtx, Node> visitIsStaticallyExpr,
+                    Function<MainExprCtx, Expression> visitIsStaticallyExpr,
                     Function<SeqTypeCtx, SequenceType> processSequenceType) {
-        Expression mainExpression = (Expression) visitIsStaticallyExpr.apply(ctx.mainExpr());
+        Expression mainExpression = visitIsStaticallyExpr.apply(ctx.mainExpr());
         if (ctx.seq() == null || ctx.seq().isEmpty()) {
             return mainExpression;
         }
@@ -53,9 +52,9 @@ public final class TypeTranslation {
             Expression isStaticallyExpr(
                     TypeCheckExprContext<MainExprCtx, SeqTypeCtx> ctx,
                     TranslationContext translationContext,
-                    Function<MainExprCtx, Node> visitTreatExpr,
+                    Function<MainExprCtx, Expression> visitTreatExpr,
                     Function<SeqTypeCtx, SequenceType> processSequenceType) {
-        Expression mainExpression = (Expression) visitTreatExpr.apply(ctx.mainExpr());
+        Expression mainExpression = visitTreatExpr.apply(ctx.mainExpr());
         if (ctx.seq() == null || ctx.seq().isEmpty()) {
             return mainExpression;
         }
@@ -66,9 +65,9 @@ public final class TypeTranslation {
     public static <MainExprCtx extends ParserRuleContext, SeqTypeCtx extends ParserRuleContext> Expression treatExpr(
             TypeCheckExprContext<MainExprCtx, SeqTypeCtx> ctx,
             TranslationContext translationContext,
-            Function<MainExprCtx, Node> visitCastableExpr,
+            Function<MainExprCtx, Expression> visitCastableExpr,
             Function<SeqTypeCtx, SequenceType> processSequenceType) {
-        Expression mainExpression = (Expression) visitCastableExpr.apply(ctx.mainExpr());
+        Expression mainExpression = visitCastableExpr.apply(ctx.mainExpr());
         if (ctx.seq() == null || ctx.seq().isEmpty()) {
             return mainExpression;
         }
@@ -84,9 +83,9 @@ public final class TypeTranslation {
             Expression castableExpr(
                     SingleTypeCheckExprContext<MainExprCtx, SingleTypeCtx> ctx,
                     TranslationContext translationContext,
-                    Function<MainExprCtx, Node> visitCastExpr,
+                    Function<MainExprCtx, Expression> visitCastExpr,
                     Function<SingleTypeCtx, SequenceType> processSingleType) {
-        Expression mainExpression = (Expression) visitCastExpr.apply(ctx.mainExpr());
+        Expression mainExpression = visitCastExpr.apply(ctx.mainExpr());
         if (ctx.single() == null || ctx.single().isEmpty()) {
             return mainExpression;
         }
@@ -97,9 +96,9 @@ public final class TypeTranslation {
     public static <MainExprCtx extends ParserRuleContext, SingleTypeCtx extends ParserRuleContext> Expression castExpr(
             SingleTypeCheckExprContext<MainExprCtx, SingleTypeCtx> ctx,
             TranslationContext translationContext,
-            Function<MainExprCtx, Node> visitArrowExpr,
+            Function<MainExprCtx, Expression> visitArrowExpr,
             Function<SingleTypeCtx, SequenceType> processSingleType) {
-        Expression mainExpression = (Expression) visitArrowExpr.apply(ctx.mainExpr());
+        Expression mainExpression = visitArrowExpr.apply(ctx.mainExpr());
         if (ctx.single() == null || ctx.single().isEmpty()) {
             return mainExpression;
         }
