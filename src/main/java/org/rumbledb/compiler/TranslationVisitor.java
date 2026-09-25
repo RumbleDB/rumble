@@ -1267,7 +1267,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Expression visitNodeConstructor(JsoniqParser.NodeConstructorContext ctx) {
-        return (Expression) visit(ctx.getChild(0));
+        if (ctx.directConstructor() != null) {
+            return visitDirectConstructor(ctx.directConstructor());
+        }
+        return visitComputedConstructor(ctx.computedConstructor());
     }
 
     @Override

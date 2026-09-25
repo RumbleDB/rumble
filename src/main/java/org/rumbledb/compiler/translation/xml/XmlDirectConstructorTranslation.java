@@ -16,6 +16,7 @@
 package org.rumbledb.compiler.translation.xml;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -57,10 +58,8 @@ public final class XmlDirectConstructorTranslation {
 
     private XmlDirectConstructorTranslation() {}
 
-    private static class DirAttributeProcessingResult {
-        public final List<Expression> attributes = new ArrayList<>();
-        public final List<NamespaceDeclaration> namespaceDeclarations = new ArrayList<>();
-    }
+    private record DirAttributeProcessingResult(
+            List<Expression> attributes, List<NamespaceDeclaration> namespaceDeclarations) {}
 
     private static final class AttributeValueBuilder {
         private final BiFunction<ParseTree, ParseTree, ExceptionMetadata> metadataFactory;
@@ -193,11 +192,8 @@ public final class XmlDirectConstructorTranslation {
             String commentContent = commentText.substring(4, commentText.length() - 3);
             return new DirectCommentConstructorExpression(commentContent, translationContext.metadata(ctx.context()));
         }
-        if (ctx.openClose() != null) {
-            return dirElemConstructorOpenClose(
-                    ctx, tokenStream, translationContext, parseName, visitDirElemContent, visitExpr);
-        } else if (ctx.isSingleTag()) {
-            return dirElemConstructorSingleTag(ctx, tokenStream, translationContext, parseName, visitExpr);
+        if (ctx.openClose() != null || ctx.isSingleTag()) {
+            return dirElemConstructor(ctx, tokenStream, translationContext, parseName, visitDirElemContent, visitExpr);
         } else if (ctx.pi() != null) {
             return dirPIConstructor(ctx.pi(), translationContext.metadata(ctx.context()));
         }
@@ -235,7 +231,7 @@ public final class XmlDirectConstructorTranslation {
                     QnameCtx extends ParserRuleContext,
                     DirElemContentCtx extends ParserRuleContext,
                     ExprCtx extends ParserRuleContext>
-            DirElemConstructorExpression dirElemConstructorOpenClose(
+            DirElemConstructorExpression dirElemConstructor(
                     DirectConstructorContext<QnameCtx, ExprCtx, DirElemContentCtx> ctx,
                     CommonTokenStream tokenStream,
                     TranslationContext translationContext,
@@ -243,7 +239,8 @@ public final class XmlDirectConstructorTranslation {
                     Function<DirElemContentCtx, Expression> visitDirElemContent,
                     Function<ExprCtx, Expression> visitExpr) {
         DirElemOpenCloseContext<QnameCtx, DirElemContentCtx> openClose = ctx.openClose();
-        if (openClose.closeTagName() != null
+        if (openClose != null
+                && openClose.closeTagName() != null
                 && !openClose.closeTagName().getText().equals(ctx.openTagName().getText())) {
             throw new DirectElementConstructorTagMismatchException(
                     "The name used in the end tag must exactly match the name used in the corresponding start tag.",
@@ -252,53 +249,27 @@ public final class XmlDirectConstructorTranslation {
 
         translationContext.pushConstructorNamespaceFrame();
         try {
-            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
+            DirAttributeProcessingResult attributeResult =
+                    new DirAttributeProcessingResult(Collections.emptyList(), Collections.emptyList());
             if (ctx.attributes() != null) {
                 attributeResult = getAttributesExpressionsList(
                         ctx.attributes(), tokenStream, translationContext, parseName, visitExpr);
             }
 
-            List<Expression> content = mergeElementContent(
-                    tokenStream,
-                    openClose.endOpen(),
-                    openClose.dirElemContent(),
-                    translationContext.moduleContext().isBoundarySpacePreserve(),
-                    visitDirElemContent);
+            List<Expression> content = openClose != null
+                    ? mergeElementContent(
+                            tokenStream,
+                            openClose.endOpen(),
+                            openClose.dirElemContent(),
+                            translationContext.moduleContext().isBoundarySpacePreserve(),
+                            visitDirElemContent)
+                    : Collections.emptyList();
 
             return new DirElemConstructorExpression(
                     parseName.apply(ctx.openTagName(), NameRole.ELEMENT_CONSTRUCTOR),
                     content,
-                    attributeResult.attributes,
-                    attributeResult.namespaceDeclarations,
-                    translationContext.metadata(ctx.context()));
-        } finally {
-            translationContext.popConstructorNamespaceFrame();
-        }
-    }
-
-    private static <
-                    QnameCtx extends ParserRuleContext,
-                    DirElemContentCtx extends ParserRuleContext,
-                    ExprCtx extends ParserRuleContext>
-            DirElemConstructorExpression dirElemConstructorSingleTag(
-                    DirectConstructorContext<QnameCtx, ExprCtx, DirElemContentCtx> ctx,
-                    CommonTokenStream tokenStream,
-                    TranslationContext translationContext,
-                    BiFunction<QnameCtx, NameRole, Name> parseName,
-                    Function<ExprCtx, Expression> visitExpr) {
-        translationContext.pushConstructorNamespaceFrame();
-        try {
-            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
-            if (ctx.attributes() != null) {
-                attributeResult = getAttributesExpressionsList(
-                        ctx.attributes(), tokenStream, translationContext, parseName, visitExpr);
-            }
-
-            return new DirElemConstructorExpression(
-                    parseName.apply(ctx.openTagName(), NameRole.ELEMENT_CONSTRUCTOR),
-                    new ArrayList<>(),
-                    attributeResult.attributes,
-                    attributeResult.namespaceDeclarations,
+                    attributeResult.attributes(),
+                    attributeResult.namespaceDeclarations(),
                     translationContext.metadata(ctx.context()));
         } finally {
             translationContext.popConstructorNamespaceFrame();
@@ -344,7 +315,8 @@ public final class XmlDirectConstructorTranslation {
                     TranslationContext translationContext,
                     BiFunction<QnameCtx, NameRole, Name> parseName,
                     Function<ExprCtx, Expression> visitExpr) {
-        DirAttributeProcessingResult result = new DirAttributeProcessingResult();
+        List<Expression> attributes = new ArrayList<>();
+        List<NamespaceDeclaration> namespaceDeclarations = new ArrayList<>();
 
         List<QnameCtx> attributeNames = ctx.attributeQname();
         List<DirAttributeValueContext<ExprCtx>> attributeValues = ctx.attributeValue();
@@ -354,11 +326,11 @@ public final class XmlDirectConstructorTranslation {
         for (int i = 0; i < attributeNames.size(); i++) {
             QnameCtx qnameCtx = attributeNames.get(i);
             String lexical = qnameCtx.getText();
-            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
+            if (isNamespaceDeclaration(lexical)) {
                 String declaredPrefix = "xmlns".equals(lexical) ? "" : lexical.substring("xmlns:".length());
                 String uri =
                         getNamespaceDeclarationUri(attributeValues.get(i), tokenStream, translationContext, visitExpr);
-                result.namespaceDeclarations.add(
+                namespaceDeclarations.add(
                         new NamespaceDeclaration(declaredPrefix, uri, translationContext.metadata(qnameCtx)));
                 translationContext.bindConstructorNamespace(declaredPrefix, uri);
             }
@@ -369,7 +341,7 @@ public final class XmlDirectConstructorTranslation {
         for (int i = 0; i < attributeNames.size(); i++) {
             QnameCtx qnameCtx = attributeNames.get(i);
             String lexical = qnameCtx.getText();
-            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
+            if (isNamespaceDeclaration(lexical)) {
                 continue;
             }
             Name attributeName = parseName.apply(qnameCtx, NameRole.NO_DEFAULT_NAMESPACE);
@@ -382,10 +354,14 @@ public final class XmlDirectConstructorTranslation {
                     translationContext.metadata(
                             qnameCtx.getStart(),
                             attributeValues.get(i).context().getStop()));
-            result.attributes.add(attributeNode);
+            attributes.add(attributeNode);
         }
 
-        return result;
+        return new DirAttributeProcessingResult(attributes, namespaceDeclarations);
+    }
+
+    private static boolean isNamespaceDeclaration(String lexical) {
+        return "xmlns".equals(lexical) || lexical.startsWith("xmlns:");
     }
 
     private static <ExprCtx extends ParserRuleContext> List<Expression> getAttributeValuesExpressionsList(

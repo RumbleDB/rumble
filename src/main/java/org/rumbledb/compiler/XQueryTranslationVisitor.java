@@ -1042,7 +1042,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Expression visitNodeConstructor(XQueryParser.NodeConstructorContext ctx) {
-        return (Expression) visit(ctx.getChild(0));
+        if (ctx.directConstructor() != null) {
+            return visitDirectConstructor(ctx.directConstructor());
+        }
+        return visitComputedConstructor(ctx.computedConstructor());
     }
 
     @Override
