@@ -38,38 +38,36 @@ jobs:
             })).data.created_at);
             core.setOutput('baseline_run_id', '');
 
-            // Read every page without server-side search filters, then select locally.
-            // This avoids a search result or page limit hiding the newest eligible run.
-            const candidates = await github.paginate(
+            // Workflow runs are listed newest first. Fetch pages lazily and stop at
+            // the first usable baseline, without a search filter or fixed page limit.
+            const requiredArtifacts = ['surefire-all-jsoniq', 'surefire-all-xquery'];
+            for await (const { data } of github.paginate.iterator(
               github.rest.actions.listWorkflowRuns,
-              { ...context.repo, workflow_id: 'run-qt3.yml', per_page: 100 },
-              ({ data }) => data.filter((run) => run.id !== context.runId
+              { ...context.repo, workflow_id: 'run-qt3.yml', per_page: 100 }
+            )) {
+              const candidates = data.filter((run) => run.id !== context.runId
                 && run.head_branch === branch && run.event === event
                 && run.head_repository?.id === context.payload.repository.id
-                && (isPullRequest || Date.parse(run.created_at) < createdBefore))
-            );
-            candidates.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at) || b.id - a.id);
-            core.info(`Found ${candidates.length} ${event} run(s) on target branch ${branch}.`);
-
-            const requiredArtifacts = ['surefire-all-jsoniq', 'surefire-all-xquery'];
-            for (const run of candidates) {
-              core.info(`Checking run ${run.id} (${run.created_at}, ${run.head_sha}): ${run.status}/${run.conclusion}.`);
-              if (run.status !== 'completed' || run.conclusion !== 'success') {
-                continue;
+                && (isPullRequest || Date.parse(run.created_at) < createdBefore));
+              for (const run of candidates) {
+                core.info(`Checking run ${run.id} (${run.created_at}, ${run.head_sha}): ${run.status}/${run.conclusion}.`);
+                if (run.status !== 'completed' || run.conclusion !== 'success') {
+                  continue;
+                }
+                const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
+                  ...context.repo, run_id: run.id, per_page: 100
+                });
+                const available = new Set(artifacts.filter((artifact) => !artifact.expired)
+                  .map((artifact) => artifact.name));
+                const missing = requiredArtifacts.filter((name) => !available.has(name));
+                if (missing.length) {
+                  core.info(`Skipping run ${run.id}: missing or expired artifacts: ${missing.join(', ')}.`);
+                  continue;
+                }
+                core.info(`Using latest available baseline: ${run.html_url} (${run.head_sha}, ${run.created_at}).`);
+                core.setOutput('baseline_run_id', String(run.id));
+                return;
               }
-              const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
-                ...context.repo, run_id: run.id, per_page: 100
-              });
-              const available = new Set(artifacts.filter((artifact) => !artifact.expired)
-                .map((artifact) => artifact.name));
-              const missing = requiredArtifacts.filter((name) => !available.has(name));
-              if (missing.length) {
-                core.info(`Skipping run ${run.id}: missing or expired artifacts: ${missing.join(', ')}.`);
-                continue;
-              }
-              core.info(`Using latest available baseline: ${run.html_url} (${run.head_sha}, ${run.created_at}).`);
-              core.setOutput('baseline_run_id', String(run.id));
-              return;
             }
             core.warning(`No successful ${event} baseline with both unexpired artifacts found for ${branch}.`);
 
