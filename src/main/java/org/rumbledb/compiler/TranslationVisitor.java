@@ -1278,7 +1278,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 this.translationContext,
                 this::parseName,
                 this::visitDirElemContent,
-                this::extractExprFromAttributeContent,
                 this::visitExpr);
     }
 
@@ -1292,16 +1291,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Expression visitCommonContent(JsoniqParser.CommonContentContext ctx) {
         return XmlDirectConstructorTranslation.commonContent(
                 CommonContentContext.from(ctx), this.translationContext, this::visitExpr);
-    }
-
-    private JsoniqParser.ExprContext extractExprFromAttributeContent(ParserRuleContext ctx) {
-        if (ctx instanceof JsoniqParser.DirAttributeContentQuotContext quotCtx) {
-            return quotCtx.expr();
-        }
-        if (ctx instanceof JsoniqParser.DirAttributeContentAposContext aposCtx) {
-            return aposCtx.expr();
-        }
-        return null;
     }
 
     @Override

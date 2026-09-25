@@ -28,7 +28,9 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.text.StringEscapeUtils;
 
 import org.rumbledb.compiler.context.xml.CommonContentContext;
+import org.rumbledb.compiler.context.xml.DirAttributeContentContext;
 import org.rumbledb.compiler.context.xml.DirAttributeListContext;
+import org.rumbledb.compiler.context.xml.DirAttributeValueContext;
 import org.rumbledb.compiler.context.xml.DirElemContentContext;
 import org.rumbledb.compiler.context.xml.DirElemOpenCloseContext;
 import org.rumbledb.compiler.context.xml.DirectConstructorContext;
@@ -178,16 +180,14 @@ public final class XmlDirectConstructorTranslation {
 
     public static <
                     QnameCtx extends ParserRuleContext,
-                    DirAttrValueCtx extends ParserRuleContext,
                     DirElemContentCtx extends ParserRuleContext,
                     ExprCtx extends ParserRuleContext>
             Expression directConstructor(
-                    DirectConstructorContext<QnameCtx, DirAttrValueCtx, DirElemContentCtx> ctx,
+                    DirectConstructorContext<QnameCtx, ExprCtx, DirElemContentCtx> ctx,
                     CommonTokenStream tokenStream,
                     TranslationContext translationContext,
                     BiFunction<QnameCtx, NameRole, Name> parseName,
                     Function<DirElemContentCtx, Expression> visitDirElemContent,
-                    Function<ParserRuleContext, ExprCtx> extractExprFromAttributeContent,
                     Function<ExprCtx, Expression> visitExpr) {
         if (ctx.comment() != null) {
             String commentText = ctx.comment().getText();
@@ -196,16 +196,9 @@ public final class XmlDirectConstructorTranslation {
         }
         if (ctx.openClose() != null) {
             return dirElemConstructorOpenClose(
-                    ctx,
-                    tokenStream,
-                    translationContext,
-                    parseName,
-                    visitDirElemContent,
-                    extractExprFromAttributeContent,
-                    visitExpr);
+                    ctx, tokenStream, translationContext, parseName, visitDirElemContent, visitExpr);
         } else if (ctx.isSingleTag()) {
-            return dirElemConstructorSingleTag(
-                    ctx, tokenStream, translationContext, parseName, extractExprFromAttributeContent, visitExpr);
+            return dirElemConstructorSingleTag(ctx, tokenStream, translationContext, parseName, visitExpr);
         } else if (ctx.pi() != null) {
             return dirPIConstructor(ctx.pi(), translationContext.metadata(ctx.context()));
         }
@@ -241,16 +234,14 @@ public final class XmlDirectConstructorTranslation {
 
     private static <
                     QnameCtx extends ParserRuleContext,
-                    DirAttrValueCtx extends ParserRuleContext,
                     DirElemContentCtx extends ParserRuleContext,
                     ExprCtx extends ParserRuleContext>
             DirElemConstructorExpression dirElemConstructorOpenClose(
-                    DirectConstructorContext<QnameCtx, DirAttrValueCtx, DirElemContentCtx> ctx,
+                    DirectConstructorContext<QnameCtx, ExprCtx, DirElemContentCtx> ctx,
                     CommonTokenStream tokenStream,
                     TranslationContext translationContext,
                     BiFunction<QnameCtx, NameRole, Name> parseName,
                     Function<DirElemContentCtx, Expression> visitDirElemContent,
-                    Function<ParserRuleContext, ExprCtx> extractExprFromAttributeContent,
                     Function<ExprCtx, Expression> visitExpr) {
         DirElemOpenCloseContext<QnameCtx, DirElemContentCtx> openClose = ctx.openClose();
         if (openClose.closeTagName() != null
@@ -265,12 +256,7 @@ public final class XmlDirectConstructorTranslation {
             DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
             if (ctx.attributes() != null) {
                 attributeResult = getAttributesExpressionsList(
-                        ctx.attributes(),
-                        tokenStream,
-                        translationContext,
-                        parseName,
-                        extractExprFromAttributeContent,
-                        visitExpr);
+                        ctx.attributes(), tokenStream, translationContext, parseName, visitExpr);
             }
 
             List<Expression> content = mergeElementContent(
@@ -293,27 +279,20 @@ public final class XmlDirectConstructorTranslation {
 
     private static <
                     QnameCtx extends ParserRuleContext,
-                    DirAttrValueCtx extends ParserRuleContext,
                     DirElemContentCtx extends ParserRuleContext,
                     ExprCtx extends ParserRuleContext>
             DirElemConstructorExpression dirElemConstructorSingleTag(
-                    DirectConstructorContext<QnameCtx, DirAttrValueCtx, DirElemContentCtx> ctx,
+                    DirectConstructorContext<QnameCtx, ExprCtx, DirElemContentCtx> ctx,
                     CommonTokenStream tokenStream,
                     TranslationContext translationContext,
                     BiFunction<QnameCtx, NameRole, Name> parseName,
-                    Function<ParserRuleContext, ExprCtx> extractExprFromAttributeContent,
                     Function<ExprCtx, Expression> visitExpr) {
         translationContext.pushConstructorNamespaceFrame();
         try {
             DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
             if (ctx.attributes() != null) {
                 attributeResult = getAttributesExpressionsList(
-                        ctx.attributes(),
-                        tokenStream,
-                        translationContext,
-                        parseName,
-                        extractExprFromAttributeContent,
-                        visitExpr);
+                        ctx.attributes(), tokenStream, translationContext, parseName, visitExpr);
             }
 
             return new DirElemConstructorExpression(
@@ -357,21 +336,17 @@ public final class XmlDirectConstructorTranslation {
         return new TextNodeExpression(processedContent, translationContext.metadata(ctx.context()));
     }
 
-    private static <
-                    QnameCtx extends ParserRuleContext,
-                    DirAttrValueCtx extends ParserRuleContext,
-                    ExprCtx extends ParserRuleContext>
+    private static <QnameCtx extends ParserRuleContext, ExprCtx extends ParserRuleContext>
             DirAttributeProcessingResult getAttributesExpressionsList(
-                    DirAttributeListContext<QnameCtx, DirAttrValueCtx> ctx,
+                    DirAttributeListContext<QnameCtx, ExprCtx> ctx,
                     CommonTokenStream tokenStream,
                     TranslationContext translationContext,
                     BiFunction<QnameCtx, NameRole, Name> parseName,
-                    Function<ParserRuleContext, ExprCtx> extractExprFromAttributeContent,
                     Function<ExprCtx, Expression> visitExpr) {
         DirAttributeProcessingResult result = new DirAttributeProcessingResult();
 
         List<QnameCtx> attributeNames = ctx.attributeQname();
-        List<DirAttrValueCtx> attributeValues = ctx.attributeValue();
+        List<DirAttributeValueContext<ExprCtx>> attributeValues = ctx.attributeValue();
 
         // Namespace declarations are in scope for the entire element start tag,
         // including attributes that occur lexically before the declaration.
@@ -380,12 +355,8 @@ public final class XmlDirectConstructorTranslation {
             String lexical = qnameCtx.getText();
             if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
                 String declaredPrefix = "xmlns".equals(lexical) ? "" : lexical.substring("xmlns:".length());
-                String uri = getNamespaceDeclarationUri(
-                        attributeValues.get(i),
-                        tokenStream,
-                        translationContext,
-                        extractExprFromAttributeContent,
-                        visitExpr);
+                String uri =
+                        getNamespaceDeclarationUri(attributeValues.get(i), tokenStream, translationContext, visitExpr);
                 result.namespaceDeclarations.add(
                         new NamespaceDeclaration(declaredPrefix, uri, translationContext.metadata(qnameCtx)));
                 translationContext.bindConstructorNamespace(declaredPrefix, uri);
@@ -403,59 +374,52 @@ public final class XmlDirectConstructorTranslation {
             Name attributeName = parseName.apply(qnameCtx, NameRole.NO_DEFAULT_NAMESPACE);
 
             List<Expression> value = getAttributeValuesExpressionsList(
-                    attributeValues.get(i),
-                    true,
-                    tokenStream,
-                    translationContext,
-                    extractExprFromAttributeContent,
-                    visitExpr);
+                    attributeValues.get(i), true, tokenStream, translationContext, visitExpr);
             AttributeNodeExpression attributeNode = new AttributeNodeExpression(
                     attributeName,
                     value,
                     translationContext.metadata(
-                            qnameCtx.getStart(), attributeValues.get(i).getStop()));
+                            qnameCtx.getStart(),
+                            attributeValues.get(i).context().getStop()));
             result.attributes.add(attributeNode);
         }
 
         return result;
     }
 
-    private static <DirAttrValueCtx extends ParserRuleContext, ExprCtx extends ParserRuleContext>
-            List<Expression> getAttributeValuesExpressionsList(
-                    DirAttrValueCtx ctx,
-                    boolean allowEnclosedExpressions,
-                    CommonTokenStream tokenStream,
-                    TranslationContext translationContext,
-                    Function<ParserRuleContext, ExprCtx> extractExprFromAttributeContent,
-                    Function<ExprCtx, Expression> visitExpr) {
-        if (ctx.getChildCount() > 0 && ctx.getChild(0) instanceof ParserRuleContext quotedValue) {
+    private static <ExprCtx extends ParserRuleContext> List<Expression> getAttributeValuesExpressionsList(
+            DirAttributeValueContext<ExprCtx> ctx,
+            boolean allowEnclosedExpressions,
+            CommonTokenStream tokenStream,
+            TranslationContext translationContext,
+            Function<ExprCtx, Expression> visitExpr) {
+        if (ctx.quotedValue() != null) {
             return processQuotedValue(
                     tokenStream,
-                    quotedValue,
-                    allowEnclosedExpressions,
+                    ctx.quotedValue(),
                     translationContext::metadata,
                     translationContext::metadata,
-                    (c, allow) -> processAttributeContent(
-                            c, allow, tokenStream, translationContext, extractExprFromAttributeContent, visitExpr));
+                    (DirAttributeContentContext<ExprCtx> c) -> processAttributeContent(
+                            c, allowEnclosedExpressions, tokenStream, translationContext, visitExpr),
+                    ctx.contentAdapter());
         }
-        throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
+        throw new UnsupportedOperationException(
+                "Unsupported attribute value: " + ctx.context().getText());
     }
 
-    private static <DirAttrValueCtx extends ParserRuleContext, ExprCtx extends ParserRuleContext>
-            String getNamespaceDeclarationUri(
-                    DirAttrValueCtx ctx,
-                    CommonTokenStream tokenStream,
-                    TranslationContext translationContext,
-                    Function<ParserRuleContext, ExprCtx> extractExprFromAttributeContent,
-                    Function<ExprCtx, Expression> visitExpr) {
-        List<Expression> uriExpressions = getAttributeValuesExpressionsList(
-                ctx, false, tokenStream, translationContext, extractExprFromAttributeContent, visitExpr);
+    private static <ExprCtx extends ParserRuleContext> String getNamespaceDeclarationUri(
+            DirAttributeValueContext<ExprCtx> ctx,
+            CommonTokenStream tokenStream,
+            TranslationContext translationContext,
+            Function<ExprCtx, Expression> visitExpr) {
+        List<Expression> uriExpressions =
+                getAttributeValuesExpressionsList(ctx, false, tokenStream, translationContext, visitExpr);
         StringBuilder uriBuilder = new StringBuilder();
         for (Expression expression : uriExpressions) {
             if (!(expression instanceof AttributeNodeContentExpression attributeContent)) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
                         "Namespace declaration attributes cannot contain enclosed expressions.",
-                        translationContext.metadata(ctx));
+                        translationContext.metadata(ctx.context()));
             }
             uriBuilder.append(attributeContent.getContent());
         }
@@ -463,36 +427,34 @@ public final class XmlDirectConstructorTranslation {
     }
 
     private static <ExprCtx extends ParserRuleContext> List<Expression> processAttributeContent(
-            ParserRuleContext ctx,
+            DirAttributeContentContext<ExprCtx> ctx,
             boolean allowEnclosedExpressions,
             CommonTokenStream tokenStream,
             TranslationContext translationContext,
-            Function<ParserRuleContext, ExprCtx> extractExprFromAttributeContent,
             Function<ExprCtx, Expression> visitExpr) {
-        ExprCtx expr = extractExprFromAttributeContent.apply(ctx);
-        if (expr != null) {
+        if (ctx.isEnclosed()) {
             if (!allowEnclosedExpressions) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
                         "Namespace declaration attributes cannot contain enclosed expressions.",
-                        translationContext.metadata(ctx));
+                        translationContext.metadata(ctx.context()));
             }
-            return List.of(visitExpr.apply(expr));
+            return List.of(visitExpr.apply(ctx.expr()));
         }
 
-        String childText = tokenStream.getText(ctx.getSourceInterval());
-        validateLiteral(childText, ctx, translationContext::metadata);
+        String childText = tokenStream.getText(ctx.context().getSourceInterval());
+        validateLiteral(childText, ctx.context(), translationContext::metadata);
         String processedContent = processLiteralContent(childText);
-        ParseTree child = ctx.getChildCount() > 0 ? ctx.getChild(0) : ctx;
+        ParseTree child = ctx.context().getChildCount() > 0 ? ctx.context().getChild(0) : ctx.context();
         return List.of(new AttributeNodeContentExpression(processedContent, translationContext.metadata(child)));
     }
 
-    private static List<Expression> processQuotedValue(
+    private static <ExprCtx extends ParserRuleContext> List<Expression> processQuotedValue(
             CommonTokenStream tokenStream,
             ParserRuleContext ctx,
-            boolean allowEnclosedExpressions,
             Function<ParseTree, ExceptionMetadata> metadataFactory,
             BiFunction<ParseTree, ParseTree, ExceptionMetadata> rangeMetadataFactory,
-            BiFunction<ParserRuleContext, Boolean, List<Expression>> contentProcessor) {
+            Function<DirAttributeContentContext<ExprCtx>, List<Expression>> contentProcessor,
+            Function<ParserRuleContext, DirAttributeContentContext<ExprCtx>> contentAdapter) {
         AttributeValueBuilder result = new AttributeValueBuilder(rangeMetadataFactory);
         Token previousToken = ctx.getStart();
         String delimiter = previousToken.getText();
@@ -511,10 +473,12 @@ public final class XmlDirectConstructorTranslation {
                         child);
             } else if (childText.equals(escapeSequence)) {
                 result.append(new AttributeNodeContentExpression(delimiter, metadataFactory.apply(child)), child);
-            } else {
-                for (Expression expression :
-                        contentProcessor.apply((ParserRuleContext) child, allowEnclosedExpressions)) {
-                    result.append(expression, child);
+            } else if (child instanceof ParserRuleContext ruleContext) {
+                DirAttributeContentContext<ExprCtx> contentCtx = contentAdapter.apply(ruleContext);
+                if (contentCtx != null) {
+                    for (Expression expression : contentProcessor.apply(contentCtx)) {
+                        result.append(expression, child);
+                    }
                 }
             }
             previousToken = getStopToken(child);

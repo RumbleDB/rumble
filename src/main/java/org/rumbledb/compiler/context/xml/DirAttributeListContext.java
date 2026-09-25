@@ -15,6 +15,8 @@
  */
 package org.rumbledb.compiler.context.xml;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -22,22 +24,38 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record DirAttributeListContext<QnameCtx extends ParserRuleContext, DirAttrValueCtx extends ParserRuleContext>(
-        List<QnameCtx> attributeQname, List<DirAttrValueCtx> attributeValue, ParserRuleContext context) {
+public record DirAttributeListContext<QnameCtx extends ParserRuleContext, ExprCtx extends ParserRuleContext>(
+        List<QnameCtx> attributeQname,
+        List<DirAttributeValueContext<ExprCtx>> attributeValue,
+        ParserRuleContext context) {
 
-    public static DirAttributeListContext<JsoniqParser.QnameContext, JsoniqParser.DirAttributeValueContext> from(
+    public static DirAttributeListContext<JsoniqParser.QnameContext, JsoniqParser.ExprContext> from(
             JsoniqParser.DirAttributeListContext c) {
         if (c == null) {
             return null;
         }
-        return new DirAttributeListContext<>(c.attribute_qname, c.attribute_value, c);
+        List<DirAttributeValueContext<JsoniqParser.ExprContext>> values = new ArrayList<>();
+        if (c.attribute_value != null) {
+            for (JsoniqParser.DirAttributeValueContext val : c.attribute_value) {
+                values.add(DirAttributeValueContext.from(val));
+            }
+        }
+        return new DirAttributeListContext<>(
+                c.attribute_qname != null ? c.attribute_qname : Collections.emptyList(), values, c);
     }
 
-    public static DirAttributeListContext<XQueryParser.QnameContext, XQueryParser.DirAttributeValueContext> from(
+    public static DirAttributeListContext<XQueryParser.QnameContext, XQueryParser.ExprContext> from(
             XQueryParser.DirAttributeListContext c) {
         if (c == null) {
             return null;
         }
-        return new DirAttributeListContext<>(c.attribute_qname, c.attribute_value, c);
+        List<DirAttributeValueContext<XQueryParser.ExprContext>> values = new ArrayList<>();
+        if (c.attribute_value != null) {
+            for (XQueryParser.DirAttributeValueContext val : c.attribute_value) {
+                values.add(DirAttributeValueContext.from(val));
+            }
+        }
+        return new DirAttributeListContext<>(
+                c.attribute_qname != null ? c.attribute_qname : Collections.emptyList(), values, c);
     }
 }

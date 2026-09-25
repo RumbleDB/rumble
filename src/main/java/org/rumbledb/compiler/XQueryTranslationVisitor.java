@@ -1053,7 +1053,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 this.translationContext,
                 this::parseName,
                 this::visitDirElemContent,
-                this::extractExprFromAttributeContent,
                 this::visitExpr);
     }
 
@@ -1067,16 +1066,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Expression visitCommonContent(XQueryParser.CommonContentContext ctx) {
         return XmlDirectConstructorTranslation.commonContent(
                 CommonContentContext.from(ctx), this.translationContext, this::visitExpr);
-    }
-
-    private XQueryParser.ExprContext extractExprFromAttributeContent(ParserRuleContext ctx) {
-        if (ctx instanceof XQueryParser.DirAttributeContentQuotContext quotCtx) {
-            return quotCtx.expr();
-        }
-        if (ctx instanceof XQueryParser.DirAttributeContentAposContext aposCtx) {
-            return aposCtx.expr();
-        }
-        return null;
     }
 
     @Override

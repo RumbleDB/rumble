@@ -23,20 +23,18 @@ import org.rumbledb.parser.xquery.XQueryParser;
 
 public record DirectConstructorContext<
         QnameCtx extends ParserRuleContext,
-        DirAttrValueCtx extends ParserRuleContext,
+        ExprCtx extends ParserRuleContext,
         DirElemContentCtx extends ParserRuleContext>(
         TerminalNode comment,
         TerminalNode pi,
         QnameCtx openTagName,
-        DirAttributeListContext<QnameCtx, DirAttrValueCtx> attributes,
+        DirAttributeListContext<QnameCtx, ExprCtx> attributes,
         boolean isSingleTag,
         DirElemOpenCloseContext<QnameCtx, DirElemContentCtx> openClose,
         ParserRuleContext context) {
 
     public static DirectConstructorContext<
-                    JsoniqParser.QnameContext,
-                    JsoniqParser.DirAttributeValueContext,
-                    JsoniqParser.DirElemContentContext>
+                    JsoniqParser.QnameContext, JsoniqParser.ExprContext, JsoniqParser.DirElemContentContext>
             from(JsoniqParser.DirectConstructorContext c) {
         if (c == null) {
             return null;
@@ -52,9 +50,7 @@ public record DirectConstructorContext<
     }
 
     public static DirectConstructorContext<
-                    XQueryParser.QnameContext,
-                    XQueryParser.DirAttributeValueContext,
-                    XQueryParser.DirElemContentContext>
+                    XQueryParser.QnameContext, XQueryParser.ExprContext, XQueryParser.DirElemContentContext>
             from(XQueryParser.DirectConstructorContext c) {
         if (c == null) {
             return null;
