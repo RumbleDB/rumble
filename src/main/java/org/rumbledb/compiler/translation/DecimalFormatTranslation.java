@@ -13,13 +13,11 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.compiler;
+package org.rumbledb.compiler.translation;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.context.Name;
@@ -31,23 +29,17 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 
-public final class DecimalFormatDeclarationProcessor {
+public final class DecimalFormatTranslation {
 
-    private DecimalFormatDeclarationProcessor() {}
+    private DecimalFormatTranslation() {}
 
     public static void process(
             boolean isDefaultDecimalFormat,
-            ParseTree nameContext,
-            List<? extends ParseTree> propertyNames,
-            List<String> stringLiterals,
+            Name name,
+            List<String> propertyNames,
+            List<String> propertyValues,
             StaticContext moduleContext,
-            boolean isJSONiq,
             ExceptionMetadata metadata) {
-        Name name = null;
-        if (!isDefaultDecimalFormat) {
-            name = processDecimalFormatName(nameContext, moduleContext, metadata);
-        }
-
         DecimalFormatDefinition defaults = DecimalFormatDefinition.defaultInstance();
 
         int decimalSeparator = defaults.getDecimalSeparator();
@@ -65,8 +57,8 @@ public final class DecimalFormatDeclarationProcessor {
         Set<String> seenProperties = new HashSet<>();
 
         for (int i = 0; i < propertyNames.size(); i++) {
-            String propertyName = propertyNames.get(i).getText();
-            String value = parseStringLiteral(stringLiterals.get(i), isJSONiq, metadata);
+            String propertyName = propertyNames.get(i);
+            String value = propertyValues.get(i);
 
             boolean hasSeen = !seenProperties.add(propertyName);
             if (hasSeen) {
@@ -137,11 +129,7 @@ public final class DecimalFormatDeclarationProcessor {
         }
     }
 
-    private static String parseStringLiteral(String text, boolean isJSONiq, ExceptionMetadata metadata) {
-        return isJSONiq ? StringLiteralUtils.parseJsoniq(text, metadata) : StringLiteralUtils.parseXQuery(text);
-    }
-
-    public static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {
+    private static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {
         if (value == null || value.codePointCount(0, value.length()) != 1) {
             throw new DecimalFormatPropertyInvalidValueException(
                     "Decimal format property '" + propertyName + "' must be exactly one character.", metadata);
@@ -149,7 +137,7 @@ public final class DecimalFormatDeclarationProcessor {
         return value.codePointAt(0);
     }
 
-    public static void addUnique(
+    private static void addUnique(
             Set<Integer> characters, int codePoint, String propertyName, ExceptionMetadata metadata) {
         if (!characters.add(codePoint)) {
             throw new DecimalFormatPropertyConflictException(
@@ -158,7 +146,7 @@ public final class DecimalFormatDeclarationProcessor {
         }
     }
 
-    public static void validateDecimalFormat(DecimalFormatDefinition decimalFormat, ExceptionMetadata metadata) {
+    private static void validateDecimalFormat(DecimalFormatDefinition decimalFormat, ExceptionMetadata metadata) {
         Set<Integer> characters = new HashSet<>();
 
         addUnique(characters, decimalFormat.getDecimalSeparator(), "decimal-separator", metadata);
@@ -174,7 +162,7 @@ public final class DecimalFormatDeclarationProcessor {
         }
     }
 
-    public static void requireValidZeroDigitFamily(int zeroDigit, ExceptionMetadata metadata) {
+    private static void requireValidZeroDigitFamily(int zeroDigit, ExceptionMetadata metadata) {
         for (int i = 0; i < 10; i++) {
             int cp = zeroDigit + i;
             if (!Character.isDigit(cp)) {
@@ -182,54 +170,5 @@ public final class DecimalFormatDeclarationProcessor {
                         "The zero-digit property must define a family of 10 consecutive digits.", metadata);
             }
         }
-    }
-
-    public static Name processDecimalFormatName(
-            ParseTree nameContext, StaticContext moduleContext, ExceptionMetadata metadata) {
-        if (nameContext == null) {
-            throw new OurBadException("Decimal format name context must not be null.");
-        }
-
-        String text = nameContext.getText();
-        if (text == null || text.isEmpty()) {
-            throw new SemanticException("Invalid empty decimal format name.", metadata);
-        }
-
-        if (text.startsWith("Q{")) {
-            int closingBrace = text.indexOf('}');
-            if (closingBrace < 0 || closingBrace == text.length() - 1) {
-                throw new SemanticException("Invalid URIQualifiedName: " + text, metadata);
-            }
-
-            String namespace = text.substring(2, closingBrace);
-            String localName = text.substring(closingBrace + 1);
-
-            if (localName.isEmpty()) {
-                throw new SemanticException("Invalid URIQualifiedName, missing local name: " + text, metadata);
-            }
-
-            return new Name(namespace, null, localName);
-        }
-
-        int colon = text.indexOf(':');
-
-        if (colon < 0) {
-            return Name.createVariableInNoNamespace(text);
-        }
-
-        String prefix = text.substring(0, colon);
-        String localName = text.substring(colon + 1);
-
-        if (prefix.isEmpty() || localName.isEmpty()) {
-            throw new SemanticException("Invalid QName: " + text, metadata);
-        }
-
-        String namespace = moduleContext.resolveNamespace(prefix);
-        if (namespace == null) {
-            throw new SemanticException(
-                    "Prefix " + prefix + " could not be resolved against a namespace in scope.", metadata);
-        }
-
-        return new Name(namespace, prefix, localName);
     }
 }

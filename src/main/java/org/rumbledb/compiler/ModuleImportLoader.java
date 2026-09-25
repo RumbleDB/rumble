@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.LibraryModule;
 
 /** Shared module import semantics for the JSONiq and XQuery frontends. */
-final class ModuleImportLoader {
+public final class ModuleImportLoader {
 
     private ModuleImportLoader() {}
 

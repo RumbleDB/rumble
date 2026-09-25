@@ -17,11 +17,9 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -38,26 +36,34 @@ import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.CommaExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
+import org.rumbledb.compiler.context.ContextItemDeclContext;
 import org.rumbledb.compiler.context.CountClauseContext;
 import org.rumbledb.compiler.context.EnclosedExprContext;
 import org.rumbledb.compiler.context.FlworExprContext;
 import org.rumbledb.compiler.context.ForClauseContext;
 import org.rumbledb.compiler.context.ForVarContext;
 import org.rumbledb.compiler.context.FunctionCallContext;
+import org.rumbledb.compiler.context.FunctionDeclContext;
 import org.rumbledb.compiler.context.GroupByClauseContext;
 import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.LetClauseContext;
 import org.rumbledb.compiler.context.LetVarContext;
+import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
+import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
+import org.rumbledb.compiler.context.OptionDeclContext;
 import org.rumbledb.compiler.context.OrExprContext;
 import org.rumbledb.compiler.context.OrderByClauseContext;
 import org.rumbledb.compiler.context.ParenthesizedExprContext;
+import org.rumbledb.compiler.context.ProgramContext;
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
+import org.rumbledb.compiler.context.SchemaImportContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
@@ -68,22 +74,26 @@ import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
+import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
+import org.rumbledb.compiler.translation.DeclarationTranslation;
 import org.rumbledb.compiler.translation.FlworTranslation;
+import org.rumbledb.compiler.translation.ImportTranslation;
 import org.rumbledb.compiler.translation.LogicTranslation;
+import org.rumbledb.compiler.translation.ModuleTranslation;
 import org.rumbledb.compiler.translation.PostfixTranslation;
 import org.rumbledb.compiler.translation.PrimaryTranslation;
+import org.rumbledb.compiler.translation.PrologBuilder;
 import org.rumbledb.compiler.translation.QuantifiedTranslation;
 import org.rumbledb.compiler.translation.SequenceTranslation;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.translation.TypeTranslation;
-import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
@@ -94,15 +104,9 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.flowr.Clause;
-import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.module.SchemaImport;
-import org.rumbledb.expressions.module.SchemaImport.BindingKind;
-import org.rumbledb.expressions.module.TypeDeclaration;
-import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
@@ -171,9 +175,6 @@ import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.parser.xquery.XQueryParser;
-import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
-import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
-import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.types.AttributeNodeItemType;
@@ -184,9 +185,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
-
-import static org.rumbledb.types.SequenceType.createSequenceType;
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -197,7 +195,6 @@ import static org.rumbledb.types.SequenceType.createSequenceType;
 @Log4j2
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
-    private String libraryModuleNamespace;
     private final CommonTokenStream xQueryTokenStream;
     private final TranslationContext translationContext;
 
@@ -260,330 +257,203 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitMainModule(XQueryParser.MainModuleContext ctx) {
-        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        Program program = (Program) this.visitProgram(ctx.program());
-        if (ExternalVariableDeclarationProcessor.process(
-                prolog, this.translationContext.externalBindings(), createMetadataFromContext(ctx))) {
-            log.warn("Adding context item declaration.");
-        }
-
-        MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
-        module.setStaticContext(this.translationContext.moduleContext());
-        return module;
+    public MainModule visitMainModule(XQueryParser.MainModuleContext ctx) {
+        return ModuleTranslation.mainModule(
+                MainModuleContext.from(ctx), this.translationContext, this::visitProlog, this::visitProgram);
     }
 
     // region program
     @Override
-    public Node visitProgram(XQueryParser.ProgramContext ctx) {
-        StatementsAndOptionalExpr statementsAndOptionalExpr =
-                (StatementsAndOptionalExpr) this.visitStatementsAndOptionalExpr(ctx.statementsAndOptionalExpr());
-        return new Program(statementsAndOptionalExpr, createMetadataFromContext(ctx));
+    public Program visitProgram(XQueryParser.ProgramContext ctx) {
+        return ModuleTranslation.program(
+                ProgramContext.from(ctx), this.translationContext, this::translateStatementsAndOptionalExpr);
     }
 
     // end region
 
     @Override
-    public Node visitLibraryModule(XQueryParser.LibraryModuleContext ctx) {
-        String prefix = ctx.ncName().getText();
-        String namespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.uriLiteral()));
-        if (namespace.equals("")) {
-            throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
-        }
-        this.libraryModuleNamespace = namespace;
-        bindNamespace(prefix, namespace, createMetadataFromContext(ctx));
-
-        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        LibraryModule module = new LibraryModule(prolog, namespace, createMetadataFromContext(ctx));
-        module.setStaticContext(this.translationContext.moduleContext());
-        return module;
+    public LibraryModule visitLibraryModule(XQueryParser.LibraryModuleContext ctx) {
+        return ModuleTranslation.libraryModule(
+                LibraryModuleContext.from(ctx), this.translationContext, this::processURILiteral, this::visitProlog);
     }
 
     @Override
-    public Node visitProlog(XQueryParser.PrologContext ctx) {
-        List<LibraryModule> libraryModules = new ArrayList<>();
-        List<SchemaImport> schemaImports = new ArrayList<>();
-        List<OptionDeclaration> optionDeclarations = new ArrayList<>();
-        Set<String> namespaces = new HashSet<>();
-        Set<String> schemaNamespaces = new HashSet<>();
-        PrologPhase1Flags phase1 = new PrologPhase1Flags();
-        for (int ci = 0; ci < ctx.getChildCount(); ci++) {
-            ParseTree child = ctx.getChild(ci);
-            if (child instanceof TerminalNode) {
-                continue;
-            }
-            if (child instanceof XQueryParser.AnnotatedDeclContext) {
-                break;
-            }
-            if (child instanceof XQueryParser.DefaultNamespaceDeclContext defaultNamespaceDeclContext) {
-                processDefaultNamespaceDecl(defaultNamespaceDeclContext, phase1);
-            } else if (child instanceof XQueryParser.NamespaceDeclContext namespaceDeclContext) {
-                processNamespaceDecl(namespaceDeclContext);
-            } else if (child instanceof SetterContext setterContext) {
-                processPrologPhase1Setter(setterContext, phase1);
-            } else if (child instanceof XQueryParser.SchemaImportContext schemaImportContext) {
-                SchemaImport schemaImport = translateSchemaImport(schemaImportContext);
-                if (!schemaNamespaces.add(schemaImport.getTargetNamespace())) {
-                    throw new SemanticException(
-                            "The schema namespace "
-                                    + schemaImport.getTargetNamespace()
-                                    + " is imported more than once.",
-                            ErrorCode.DuplicateSchemaImportErrorCode,
-                            createMetadataFromContext(schemaImportContext));
-                }
-                bindSchemaImportNamespace(schemaImport);
-                schemaImports.add(schemaImport);
-            } else if (child instanceof XQueryParser.ModuleImportContext namespace) {
-                LibraryModule libraryModule = this.processModuleImport(namespace);
-                libraryModules.add(libraryModule);
-                if (namespaces.contains(libraryModule.getNamespace())) {
-                    throw new DuplicateModuleTargetNamespaceException(
-                            "Duplicate module target namespace: " + libraryModule.getNamespace(),
-                            createMetadataFromContext(namespace));
-                }
-                namespaces.add(libraryModule.getNamespace());
-            }
-        }
-        XmlSchemaCatalogLoader.load(
-                        schemaImports,
-                        this.translationContext.moduleContext().getStaticBaseURI(),
-                        this.translationContext.compilationConfiguration())
-                .ifPresent(catalog -> {
-                    this.translationContext
-                            .moduleContext()
-                            .getInScopeSchemaTypes()
-                            .importSchema(catalog, createMetadataFromContext(ctx));
-                });
-
-        // parse variables and function
-        List<VariableDeclaration> globalVariables = new ArrayList<>();
-        List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
-        List<TypeDeclaration> typeDeclarations = new ArrayList<>();
-        for (XQueryParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
-            if (annotatedDeclaration.varDecl() != null) {
-                VariableDeclaration variableDeclaration =
-                        (VariableDeclaration) this.visitVarDecl(annotatedDeclaration.varDecl());
-                if (!this.translationContext.isMainModule()) {
-                    String variableNamespace =
-                            variableDeclaration.getVariableName().getNamespace();
-                    if (variableNamespace == null || !variableNamespace.equals(this.libraryModuleNamespace)) {
-                        throw new NamespaceDoesNotMatchModuleException(
-                                "Variable "
-                                        + variableDeclaration.getVariableName().getLocalName()
-                                        + ": namespace "
-                                        + variableNamespace
-                                        + " must match module namespace "
-                                        + this.libraryModuleNamespace,
-                                createMetadataFromContext(annotatedDeclaration.varDecl()));
-                    }
-                }
-                globalVariables.add(variableDeclaration);
-            } else if (annotatedDeclaration.contextItemDecl() != null) {
-                VariableDeclaration variableDeclaration =
-                        (VariableDeclaration) this.visitContextItemDecl(annotatedDeclaration.contextItemDecl());
-                globalVariables.add(variableDeclaration);
-            } else if (annotatedDeclaration.functionDecl() != null) {
-                InlineFunctionExpression inlineFunctionExpression =
-                        (InlineFunctionExpression) this.visitFunctionDecl(annotatedDeclaration.functionDecl());
-                if (!this.translationContext.isMainModule()) {
-                    String functionNamespace =
-                            inlineFunctionExpression.getName().getNamespace();
-                    if (functionNamespace == null || !functionNamespace.equals(this.libraryModuleNamespace)) {
-                        throw new NamespaceDoesNotMatchModuleException(
-                                "Function "
-                                        + inlineFunctionExpression.getName().getLocalName()
-                                        + ": namespace "
-                                        + functionNamespace
-                                        + " must match module namespace "
-                                        + this.libraryModuleNamespace,
-                                createMetadataFromContext(annotatedDeclaration.functionDecl()));
-                    }
-                }
-                functionDeclarations.add(new FunctionDeclaration(
-                        inlineFunctionExpression, createMetadataFromContext(annotatedDeclaration.functionDecl())));
-            } else if (annotatedDeclaration.optionDecl() != null) {
-                optionDeclarations.add((OptionDeclaration) this.visitOptionDecl(annotatedDeclaration.optionDecl()));
-            }
-        }
-        for (XQueryParser.ModuleImportContext module : ctx.moduleImport()) {
-            this.visitModuleImport(module);
-        }
-
-        Prolog prolog =
-                new Prolog(globalVariables, functionDeclarations, typeDeclarations, createMetadataFromContext(ctx));
-        for (LibraryModule libraryModule : libraryModules) {
-            prolog.addImportedModule(libraryModule);
-        }
-        for (SchemaImport schemaImport : schemaImports) {
-            prolog.addSchemaImport(schemaImport);
-        }
-        for (OptionDeclaration optionDeclaration : optionDeclarations) {
-            prolog.addDeclaration(optionDeclaration);
-        }
-        return prolog;
+    public Prolog visitProlog(XQueryParser.PrologContext ctx) {
+        return new PrologVisitor().build(ctx);
     }
 
-    private SchemaImport translateSchemaImport(XQueryParser.SchemaImportContext ctx) {
-        String targetNamespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.nsURI));
-        BindingKind bindingKind = BindingKind.NONE;
-        String prefix = null;
-        if (ctx.schemaPrefix() != null) {
-            if (ctx.schemaPrefix().ncName() != null) {
-                bindingKind = BindingKind.PREFIX;
-                prefix = ctx.schemaPrefix().ncName().getText();
-            } else {
-                bindingKind = BindingKind.DEFAULT_ELEMENT_NAMESPACE;
+    private class PrologVisitor extends XQueryParserBaseVisitor<Void> {
+        private final PrologBuilder builder = new PrologBuilder(XQueryTranslationVisitor.this.translationContext);
+
+        Prolog build(XQueryParser.PrologContext ctx) {
+            if (ctx == null) {
+                return null;
             }
+            for (XQueryParser.PrologHeaderContext header : ctx.headers) {
+                visit(header);
+            }
+            this.builder.finishHeader(createMetadataFromContext(ctx));
+            for (XQueryParser.AnnotatedDeclContext declaration : ctx.declarations) {
+                visit(declaration);
+            }
+            return this.builder.build(createMetadataFromContext(ctx));
         }
-        List<String> locationHints = ctx.locations.stream()
-                .map(this::processURILiteral)
-                .map(URILiteralUtils::normalizeAsAnyURI)
-                .collect(Collectors.toList());
-        return new SchemaImport(targetNamespace, bindingKind, prefix, locationHints, createMetadataFromContext(ctx));
+
+        @Override
+        public Void visitNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
+            this.builder.bindNamespace(
+                    ctx.ncName().getText(), processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitDefaultNamespaceDecl(XQueryParser.DefaultNamespaceDeclContext ctx) {
+            boolean isFunction = ctx.type.getType() == XQueryParser.KW_FUNCTION;
+            this.builder.applyDefaultNamespace(
+                    isFunction, processStringLiteral(ctx.stringLiteral()), createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitModuleImport(XQueryParser.ModuleImportContext ctx) {
+            this.builder.importModule(
+                    ImportTranslation.moduleImport(
+                            ModuleImportContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processURILiteral),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitSchemaImport(XQueryParser.SchemaImportContext ctx) {
+            this.builder.importSchema(
+                    ImportTranslation.schemaImport(
+                            SchemaImportContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processURILiteral),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitConstructionDecl(XQueryParser.ConstructionDeclContext ctx) {
+            boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
+            this.builder.applyConstruction(value, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitBoundarySpaceDecl(XQueryParser.BoundarySpaceDeclContext ctx) {
+            boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
+            this.builder.applyBoundarySpace(value, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitEmptyOrderDecl(XQueryParser.EmptyOrderDeclContext ctx) {
+            boolean value = ctx.emptySequenceOrder.getText().equals("least");
+            this.builder.applyEmptyOrder(value, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitCopyNamespacesDecl(XQueryParser.CopyNamespacesDeclContext ctx) {
+            boolean preserve = ctx.preserveMode().KW_PRESERVE() != null;
+            boolean inherit = ctx.inheritMode().KW_INHERIT() != null;
+            this.builder.applyCopyNamespaces(preserve, inherit, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitBaseURIDecl(XQueryParser.BaseURIDeclContext ctx) {
+            this.builder.applyBaseUri(processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitDefaultCollationDecl(XQueryParser.DefaultCollationDeclContext ctx) {
+            this.builder.applyDefaultCollation(
+                    processURILiteral(ctx.uriLiteral()),
+                    createMetadataFromContext(ctx.uriLiteral()),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
+            Name name = ctx.eqName() == null ? null : parseEqName(ctx.eqName(), NameRole.NO_DEFAULT_NAMESPACE);
+            this.builder.applyDecimalFormat(
+                    ctx.KW_DEFAULT() != null,
+                    name,
+                    ctx.DFPropertyName().stream().map(ParseTree::getText).toList(),
+                    ctx.stringLiteral().stream()
+                            .map(XQueryTranslationVisitor.this::processStringLiteral)
+                            .toList(),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitOrderingModeDecl(XQueryParser.OrderingModeDeclContext ctx) {
+            this.builder.applyUnsupportedHeader(createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitVarDecl(XQueryParser.VarDeclContext ctx) {
+            this.builder.addVariable(DeclarationTranslation.varDecl(
+                    VarDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processAnnotations,
+                    XQueryTranslationVisitor.this::parseVariableBinding,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::translateExprSingle));
+            return null;
+        }
+
+        @Override
+        public Void visitContextItemDecl(XQueryParser.ContextItemDeclContext ctx) {
+            this.builder.addContextItem(DeclarationTranslation.contextItemDecl(
+                    ContextItemDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::translateExprSingle));
+            return null;
+        }
+
+        @Override
+        public Void visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
+            this.builder.addFunction(DeclarationTranslation.functionDecl(
+                    FunctionDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processAnnotations,
+                    XQueryTranslationVisitor.this::parseFunctionName,
+                    XQueryTranslationVisitor.this::parseVariableBinding,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::translateStatementsAndOptionalExpr));
+            return null;
+        }
+
+        @Override
+        public Void visitOptionDecl(XQueryParser.OptionDeclContext ctx) {
+            this.builder.addOption(DeclarationTranslation.optionDecl(
+                    OptionDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName,
+                    XQueryTranslationVisitor.this::processStringLiteral));
+            return null;
+        }
     }
 
-    private void bindSchemaImportNamespace(SchemaImport schemaImport) {
-        if (schemaImport.getBindingKind() == BindingKind.NONE) {
-            return;
-        }
-        String namespace = schemaImport.getTargetNamespace();
-        if (schemaImport.getBindingKind() == BindingKind.DEFAULT_ELEMENT_NAMESPACE) {
-            bindNamespace("", namespace, schemaImport.getMetadata());
-            return;
-        }
-        String prefix = schemaImport.getPrefix();
-        if (namespace.isEmpty()) {
-            throw new SemanticException(
-                    "A schema import cannot bind a prefix to a zero-length target namespace.",
-                    ErrorCode.SchemaImportWithoutTargetNamespaceErrorCode,
-                    schemaImport.getMetadata());
-        }
-        if (prefix.equals("xml") || prefix.equals("xmlns")) {
-            throw new PredefinedPrefixInNamespaceDeclarationException(
-                    "Schema import prefix " + prefix + " is reserved.", schemaImport.getMetadata());
-        }
-        bindNamespace(prefix, namespace, schemaImport.getMetadata());
+    private Expression translateExprSingle(XQueryParser.ExprSingleContext ctx) {
+        return (Expression) visitExprSingle(ctx);
     }
 
-    @Override
-    public Node visitOptionDecl(XQueryParser.OptionDeclContext ctx) {
-        Name name = parseEqName(ctx.name, NameRole.NO_DEFAULT_NAMESPACE);
-        String value = processStringLiteral(ctx.value);
-        return new OptionDeclaration(name, value, createMetadataFromContext(ctx));
-    }
-
-    private static final class PrologPhase1Flags {
-        boolean constructionSet;
-        boolean emptyOrderSet;
-        boolean boundarySpaceSet;
-        boolean copyNamespacesSet;
-        boolean defaultCollationSet;
-        boolean baseURISet;
-        boolean defaultFunctionNamespaceDeclared;
-    }
-
-    private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
-        if (setterContext.constructionDecl() != null) {
-            if (flags.constructionSet) {
-                throw new SemanticException(
-                        "The construction mode was already set.",
-                        ErrorCode.MoreThanOneConstructionDeclarationErrorCode,
-                        createMetadataFromContext(setterContext.constructionDecl()));
-            }
-            this.translationContext
-                    .moduleContext()
-                    .setConstructionPreserve(
-                            setterContext.constructionDecl().type.getType() == XQueryParser.KW_PRESERVE);
-            flags.constructionSet = true;
-            return;
-        }
-        if (setterContext.boundarySpaceDecl() != null) {
-            if (flags.boundarySpaceSet) {
-                throw new MoreThanOneBoundarySpaceDeclarationException(
-                        "The boundary-space policy was already set.",
-                        createMetadataFromContext(setterContext.boundarySpaceDecl()));
-            }
-            this.translationContext
-                    .moduleContext()
-                    .setBoundarySpacePreserve(
-                            setterContext.boundarySpaceDecl().type.getType() == XQueryParser.KW_PRESERVE);
-            flags.boundarySpaceSet = true;
-            return;
-        }
-        if (setterContext.copyNamespacesDecl() != null) {
-            if (flags.copyNamespacesSet) {
-                throw new MoreThanOneCopyNamespacesDeclarationException(
-                        "The copy-namespaces mode was already set.",
-                        createMetadataFromContext(setterContext.copyNamespacesDecl()));
-            }
-            this.translationContext
-                    .moduleContext()
-                    .setCopyNamespacesMode(
-                            setterContext.copyNamespacesDecl().preserveMode().KW_PRESERVE() != null,
-                            setterContext.copyNamespacesDecl().inheritMode().KW_INHERIT() != null);
-            flags.copyNamespacesSet = true;
-            return;
-        }
-        if (setterContext.emptyOrderDecl() != null) {
-            if (flags.emptyOrderSet) {
-                throw new MoreThanOneEmptyOrderDeclarationException(
-                        "The empty order was already set.", createMetadataFromContext(setterContext.emptyOrderDecl()));
-            }
-            processEmptySequenceOrder(setterContext.emptyOrderDecl());
-            flags.emptyOrderSet = true;
-            return;
-        }
-        if (setterContext.decimalFormatDecl() != null) {
-            processDecimalFormatDeclaration(
-                    setterContext.decimalFormatDecl(), createMetadataFromContext(setterContext.decimalFormatDecl()));
-            return;
-        }
-        if (setterContext.defaultCollationDecl() != null) {
-            if (flags.defaultCollationSet) {
-                throw new DefaultCollationException(
-                        "The default collation was already set.",
-                        createMetadataFromContext(setterContext.defaultCollationDecl()));
-            }
-            processDefaultCollation(setterContext.defaultCollationDecl());
-            flags.defaultCollationSet = true;
-            return;
-        }
-        if (setterContext.baseURIDecl() != null) {
-            if (flags.baseURISet) {
-                throw new MultipleBaseURIException(
-                        "The base-uri was already set.", createMetadataFromContext(setterContext.baseURIDecl()));
-            }
-            String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-            URI uri = URILiteralUtils.resolve(
-                    this.translationContext.moduleContext().getStaticBaseURI(),
-                    uriString,
-                    createMetadataFromContext(setterContext.baseURIDecl()));
-            this.translationContext
-                    .moduleContext()
-                    .setStaticBaseUri(uri, URILiteralUtils.toStaticBaseUriString(uri, uriString));
-            flags.baseURISet = true;
-            return;
-        }
-        throw new UnsupportedFeatureException(
-                "Setters are not supported yet, except for empty sequence ordering and default collations.",
-                createMetadataFromContext(setterContext));
-    }
-
-    private void processDefaultNamespaceDecl(XQueryParser.DefaultNamespaceDeclContext ctx, PrologPhase1Flags flags) {
-        String uri = processStringLiteral(ctx.stringLiteral());
-        int declType = ctx.type.getType();
-        if (declType == XQueryParser.KW_ELEMENT) {
-            bindNamespace("", uri, createMetadataFromContext(ctx));
-        } else if (declType == XQueryParser.KW_FUNCTION) {
-            if (flags.defaultFunctionNamespaceDeclared) {
-                throw new SemanticException(
-                        "The default function namespace has already been declared.", createMetadataFromContext(ctx));
-            }
-            this.translationContext.moduleContext().setDefaultFunctionNamespaceUri(uri);
-            flags.defaultFunctionNamespaceDeclared = true;
-        } else {
-            throw new OurBadException("Unexpected default namespace declaration kind.");
-        }
+    private StatementsAndOptionalExpr translateStatementsAndOptionalExpr(
+            XQueryParser.StatementsAndOptionalExprContext ctx) {
+        return (StatementsAndOptionalExpr) visitStatementsAndOptionalExpr(ctx);
     }
 
     private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
@@ -615,51 +485,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         ctx.local_name == null ? null : ctx.local_name.getText(),
                         role,
                         createMetadataFromContext(ctx));
-    }
-
-    @Override
-    public Node visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
-        List<Annotation> annotations = processAnnotations(ctx.annotations());
-        Name name = parseFunctionName(ctx.functionName());
-        FunctionDeclarationValidator.validateFunctionName(name, createMetadataFromContext(ctx.functionName()));
-        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = null;
-        Name paramName;
-        SequenceType paramType;
-        if (ctx.paramList() != null) {
-            for (XQueryParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseVariableBinding(param.name);
-                paramType = createSequenceType("item*");
-                if (fnParams.containsKey(paramName)) {
-                    throw new DuplicateParamNameException(name, paramName, createMetadataFromContext(param));
-                }
-                if (param.sequenceType() != null) {
-                    paramType = this.processSequenceType(param.sequenceType());
-                } else {
-                    paramType = SequenceType.createSequenceType("item*");
-                }
-                fnParams.put(paramName, paramType);
-            }
-        }
-
-        if (ctx.return_type != null) {
-            fnReturnType = this.processSequenceType(ctx.return_type);
-        }
-
-        StatementsAndOptionalExpr funcBody =
-                (StatementsAndOptionalExpr) this.visitStatementsAndOptionalExpr(ctx.fn_body);
-
-        boolean isExternal = ctx.is_external != null;
-
-        return new InlineFunctionExpression(
-                annotations,
-                name,
-                fnParams,
-                fnReturnType,
-                funcBody,
-                isExternal,
-                createMetadataFromContext(ctx),
-                createMetadataFromContext(ctx.functionName()));
     }
 
     // endregion
@@ -1944,57 +1769,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return this.translationContext.metadata(startTree, endTree);
     }
 
-    @Override
-    public Node visitVarDecl(XQueryParser.VarDeclContext ctx) {
-        // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
-        // but it is actually treated as if it was item*
-        List<Annotation> annotations = processAnnotations(ctx.annotations());
-        SequenceType seq = null;
-        boolean external;
-        Name var = parseVariableBinding(ctx.varBinding());
-        if (ctx.sequenceType() != null) {
-            seq = this.processSequenceType(ctx.sequenceType());
-        }
-        external = (ctx.external != null);
-        Expression expr = null;
-        if (ctx.exprSingle() != null) {
-            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-            if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-        }
-        return new VariableDeclaration(
-                var,
-                external,
-                seq,
-                expr,
-                annotations,
-                createMetadataFromContext(ctx),
-                createMetadataFromContext(ctx.varBinding()));
-    }
-
-    @Override
-    public Node visitContextItemDecl(XQueryParser.ContextItemDeclContext ctx) {
-        // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
-        // but it is actually treated as if it was item*
-        SequenceType seq = null;
-        boolean external;
-        Name var = Name.CONTEXT_ITEM;
-        if (ctx.sequenceType() != null) {
-            seq = this.processSequenceType(ctx.sequenceType());
-        }
-        external = (ctx.external != null);
-        Expression expr = null;
-        if (ctx.exprSingle() != null) {
-            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-            if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-        }
-
-        return new VariableDeclaration(var, external, seq, expr, null, createMetadataFromContext(ctx));
-    }
-
     // region scripting
     @Override
     public Node visitStatements(XQueryParser.StatementsContext ctx) {
@@ -2613,45 +2387,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     // end region
 
-    public void processNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
-        bindNamespace(ctx.ncName().getText(), processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
-    }
-
-    public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
-        if (!prefix.isEmpty() && namespace.isEmpty()) {
-            if (this.translationContext.moduleContext().unbindNamespace(prefix)) {
-                return;
-            }
-            throw new NamespacePrefixBoundTwiceException("Prefix " + prefix + " is bound twice.", metadata);
-        }
-        boolean success = this.translationContext.moduleContext().bindNamespace(prefix, namespace);
-        if (!success) {
-            throw new NamespacePrefixBoundTwiceException("Prefix " + prefix + " is bound twice.", metadata);
-        }
-    }
-
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
         // predefined entity references and character references
         return processStringLiteral(ctx.stringLiteral());
-    }
-
-    private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
-        if (ctx.emptySequenceOrder.getText().equals("least")) {
-            this.translationContext.moduleContext().setEmptySequenceOrderLeast(true);
-        }
-        if (ctx.emptySequenceOrder.getText().equals("greatest")) {
-            this.translationContext.moduleContext().setEmptySequenceOrderLeast(false);
-        }
-    }
-
-    private void processDefaultCollation(DefaultCollationDeclContext ctx) {
-        String uri = resolveCollationUri(ctx.uriLiteral());
-        if (!this.translationContext.moduleContext().isStaticallyKnownCollation(uri)) {
-            throw new DefaultCollationException(
-                    "Unknown collation: " + uri, createMetadataFromContext(ctx.uriLiteral()));
-        }
-        this.translationContext.moduleContext().setDefaultCollation(uri);
     }
 
     private String resolveCollationUri(UriLiteralContext ctx) {
@@ -2659,36 +2398,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         URI uri = URILiteralUtils.resolve(
                 this.translationContext.moduleContext().getStaticBaseURI(), uriString, createMetadataFromContext(ctx));
         return uri.toString();
-    }
-
-    public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
-        ExceptionMetadata metadata = createMetadataFromContext(ctx);
-        String namespace = processURILiteral(ctx.targetNamespace);
-        if (namespace.isEmpty()) {
-            throw new EmptyModuleURIException("Module URI is empty.", metadata);
-        }
-        if (ctx.ncName() != null) {
-            String prefix = ctx.ncName().getText();
-            if (prefix.equals("xml") || prefix.equals("xmlns")) {
-                throw new PredefinedPrefixInNamespaceDeclarationException(
-                        "Module import prefix " + prefix + " is reserved.", metadata);
-            }
-        }
-        namespace = URILiteralUtils.normalizeAsAnyURI(namespace);
-        List<String> locationHints = ctx.locations.stream()
-                .map(this::processURILiteral)
-                .map(URILiteralUtils::normalizeAsAnyURI)
-                .collect(Collectors.toList());
-        LibraryModule libraryModule = ModuleImportLoader.load(
-                namespace,
-                locationHints,
-                this.translationContext.moduleContext(),
-                this.translationContext.compilationConfiguration(),
-                metadata);
-        if (ctx.ncName() != null) {
-            bindNamespace(ctx.ncName().getText(), libraryModule.getNamespace(), metadata);
-        }
-        return libraryModule;
     }
 
     private List<Annotation> processAnnotations(XQueryParser.AnnotationsContext annotations) {
@@ -2832,24 +2541,5 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         DirectConstructorUtils.validateLiteral(childText, ctx, this::createMetadataFromTree);
         String processedContent = DirectConstructorUtils.processLiteralContent(childText);
         return List.of(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
-    }
-
-    @Override
-    public Node visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
-        return visitChildren(ctx);
-    }
-
-    private void processDecimalFormatDeclaration(
-            XQueryParser.DecimalFormatDeclContext ctx, ExceptionMetadata metadata) {
-        DecimalFormatDeclarationProcessor.process(
-                ctx.KW_DEFAULT() != null,
-                ctx.eqName(),
-                ctx.DFPropertyName(),
-                ctx.stringLiteral().stream()
-                        .map(stringLiteral -> this.xQueryTokenStream.getText(stringLiteral.getSourceInterval()))
-                        .toList(),
-                this.translationContext.moduleContext(),
-                false,
-                metadata);
     }
 }
